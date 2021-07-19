@@ -1,0 +1,33 @@
+trace:
+  verbose: false
+
+collectors:
+  dnstap-unix:
+    enable: false
+    sock-path: null
+  dnstap-tcp:
+    enable: true
+    listen-ip: 0.0.0.0
+    listen-port: 6000
+
+generators:
+  stdout:
+    enable: true
+  metrics:
+    enable: true
+    listen-ip: 0.0.0.0
+    listen-port: 8080
+    top-max-items: 100
+  logfile:
+    enable: true
+    file-path: /home/denis/Lab/logs-dnstap/dnstap.log
+    max-size: 100
+    max-files: 10
+    log-queries: true
+    log-replies: true
+  dnstapsender:
+    enable: false
+    remote-ip: 10.0.0.1
+    remote-port: 6000
+    retry: 10
+    dnstap-identity: dnscollector
