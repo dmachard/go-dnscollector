@@ -29,6 +29,7 @@ type DnstapConsumer struct {
 }
 
 func NewDnstapConsumer(logger *logger.Logger) DnstapConsumer {
+	logger.Info("new dnstap consumer")
 	d := DnstapConsumer{
 		done:      make(chan bool),
 		recv_from: make(chan []byte, 512),

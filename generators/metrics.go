@@ -342,6 +342,13 @@ func (c *StatisticsMutex) GetTotalDomains() (ret int) {
 	return
 }
 
+func (c *StatisticsMutex) GetTotalClients() (ret int) {
+	c.rw.RLock()
+	ret = len(c.clients)
+	c.rw.RUnlock()
+	return
+}
+
 type Metrics struct {
 	done        chan bool
 	done_api    chan bool
@@ -414,9 +421,14 @@ func (s *Metrics) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	suffix := "dnscollector"
 	counters := s.stats.Get()
 
+	// total uniq clients
+	fmt.Fprintf(w, "# HELP %s_clients_total Number of clients\n", suffix)
+	fmt.Fprintf(w, "# TYPE %s_clients_total counter\n", suffix)
+	fmt.Fprintf(w, "%s_clients_total %d\n", suffix, s.stats.GetTotalClients())
+
 	// total uniq domains
 	fmt.Fprintf(w, "# HELP %s_domains_total Number of domains\n", suffix)
-	fmt.Fprintf(w, "# TYPE %s_domains_total gauge\n", suffix)
+	fmt.Fprintf(w, "# TYPE %s_domains_total counter\n", suffix)
 	fmt.Fprintf(w, "%s_domains_total %d\n", suffix, s.stats.GetTotalDomains())
 
 	// pps, qps and rps
