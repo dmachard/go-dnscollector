@@ -19,8 +19,8 @@ generators:
     listen-port: 8080
     top-max-items: 100
   logfile:
-    enable: true
-    file-path: /home/denis/Lab/logs-dnstap/dnstap.log
+    enable: false
+    file-path: null
     max-size: 100
     max-files: 10
     log-queries: true

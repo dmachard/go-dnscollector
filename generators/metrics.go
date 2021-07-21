@@ -360,6 +360,7 @@ type Metrics struct {
 	config      *common.Config
 	logger      *logger.Logger
 	stats       StatisticsMutex
+	testing     bool
 }
 
 func NewMetrics(config *common.Config, logger *logger.Logger) *Metrics {
@@ -371,6 +372,7 @@ func NewMetrics(config *common.Config, logger *logger.Logger) *Metrics {
 		channel:  make(chan dnsmessage.DnsMessage, 512),
 		logger:   logger,
 		stats:    StatisticsMutex{},
+		testing:  false,
 	}
 	o.ReadConfig()
 	o.stats.total = Counters{}
@@ -601,8 +603,12 @@ func (s *Metrics) ServeApi() {
 func (s *Metrics) Run() {
 	s.logger.Info("generator metrics - running in background...")
 
-	go s.ServeApi()
+	// start http server
+	if !s.testing {
+		go s.ServeApi()
+	}
 
+	// init timer to compute qps
 	t1_interval := 1 * time.Second
 	t1 := time.NewTimer(t1_interval)
 
@@ -618,6 +624,10 @@ LOOP:
 			// record the dnstap message
 			s.stats.Record(dm)
 
+			if s.testing {
+				break LOOP
+			}
+
 		case <-t1.C:
 			// compute qps each second
 			s.stats.Compute()
@@ -630,5 +640,7 @@ LOOP:
 	s.logger.Info("generator metrics - run terminated")
 
 	// the job is done
-	s.done <- true
+	if !s.testing {
+		s.done <- true
+	}
 }

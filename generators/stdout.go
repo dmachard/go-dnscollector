@@ -1,7 +1,8 @@
 package generators
 
 import (
-	"fmt"
+	"log"
+	"os"
 
 	"github.com/dmachard/go-dnscollector/common"
 	"github.com/dmachard/go-dnscollector/dnsmessage"
@@ -9,17 +10,21 @@ import (
 )
 
 type StdOut struct {
-	done    chan bool
-	channel chan dnsmessage.DnsMessage
-	logger  *logger.Logger
+	done         chan bool
+	channel      chan dnsmessage.DnsMessage
+	logger       *logger.Logger
+	stdoutLogger *log.Logger
+	testing      bool
 }
 
-func NewStdOut(config *common.Config, logger *logger.Logger) *StdOut {
-	logger.Info("generator stdout - enabled")
+func NewStdOut(config *common.Config, console *logger.Logger) *StdOut {
+	console.Info("generator stdout - enabled")
 	o := &StdOut{
-		done:    make(chan bool),
-		channel: make(chan dnsmessage.DnsMessage, 512),
-		logger:  logger,
+		done:         make(chan bool),
+		channel:      make(chan dnsmessage.DnsMessage, 512),
+		logger:       console,
+		stdoutLogger: log.New(os.Stdout, "", 0),
+		testing:      false,
 	}
 	return o
 }
@@ -45,10 +50,17 @@ func (o *StdOut) Run() {
 
 	for dm := range o.channel {
 		line := dnsmessage.TransformToText(dm)
-		fmt.Print(string(line))
+		o.stdoutLogger.Print(string(line))
+
+		// run only once if testing mode is enabled
+		if o.testing {
+			break
+		}
 	}
 	o.logger.Info("generator stdout - run terminated")
 
 	// the job is done
-	o.done <- true
+	if !o.testing {
+		o.done <- true
+	}
 }

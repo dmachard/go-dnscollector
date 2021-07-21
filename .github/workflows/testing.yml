@@ -15,5 +15,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
 
-    - name: Test
+    - name: Test dnsmessage
       run: go test -timeout 5s ./dnsmessage/ -cover -v
+
+    - name: Test generators
+      run: go test -timeout 5s ./generators/ -cover -v

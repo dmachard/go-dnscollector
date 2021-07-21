@@ -42,7 +42,7 @@ func NewLogFile(config *common.Config, logger *logger.Logger) *LogFile {
 	o.ReadConfig()
 
 	if err := o.OpenFile(o.fpath); err != nil {
-		o.logger.Fatal("generator logfile - unable to open output file: %s", err)
+		o.logger.Fatal("generator logfile - unable to open output file:", err)
 	}
 
 	return o
@@ -197,10 +197,10 @@ L:
 				break L
 			}
 
-			if dm.Type == "query" && o.logqueries == false {
+			if dm.Type == "query" && !o.logqueries {
 				continue
 			}
-			if dm.Type == "reply" && o.logreplies == false {
+			if dm.Type == "reply" && !o.logreplies {
 				continue
 			}
 
