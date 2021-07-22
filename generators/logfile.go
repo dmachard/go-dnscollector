@@ -28,6 +28,7 @@ type LogFile struct {
 	maxsize    int
 	logqueries bool
 	logreplies bool
+	testing    bool
 }
 
 func NewLogFile(config *common.Config, logger *logger.Logger) *LogFile {
@@ -37,6 +38,7 @@ func NewLogFile(config *common.Config, logger *logger.Logger) *LogFile {
 		channel: make(chan dnsmessage.DnsMessage, 512),
 		config:  config,
 		logger:  logger,
+		testing: false,
 	}
 
 	o.ReadConfig()
@@ -54,6 +56,7 @@ func (c *LogFile) ReadConfig() {
 	c.maxsize = c.config.Generators.LogFile.MaxSize
 	c.logqueries = c.config.Generators.LogFile.LogQueries
 	c.logreplies = c.config.Generators.LogFile.LogReplies
+
 }
 
 func (o *LogFile) OpenFile(fpath string) error {
@@ -188,13 +191,13 @@ func (o *LogFile) Run() {
 
 	tflush_interval := 5 * time.Second
 	tflush := time.NewTimer(tflush_interval)
-L:
+LOOP:
 	for {
 		select {
 		case dm, opened := <-o.channel:
 			if !opened {
 				o.logger.Info("generator logfile - channel closed")
-				break L
+				break LOOP
 			}
 
 			if dm.Type == "query" && !o.logqueries {
@@ -209,6 +212,10 @@ L:
 
 			// write to file
 			o.Write(line)
+
+			if o.testing {
+				break LOOP
+			}
 		case <-tflush.C:
 			o.writer.Flush()
 			tflush.Reset(tflush_interval)
@@ -222,5 +229,7 @@ L:
 	o.logger.Info("generator logfile - run terminated")
 
 	// the job is done
-	o.done <- true
+	if !o.testing {
+		o.done <- true
+	}
 }
