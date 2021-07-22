@@ -12,7 +12,7 @@ collectors:
 
 generators:
   stdout:
-    enable: true
+    enable: false
   metrics:
     enable: true
     listen-ip: 0.0.0.0

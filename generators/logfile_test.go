@@ -21,6 +21,10 @@ func TestLogfileRun(t *testing.T) {
 	// config
 	config := &common.Config{}
 	config.Generators.LogFile.FilePath = f.Name()
+	config.Generators.LogFile.LogQueries = true
+	config.Generators.LogFile.LogReplies = true
+	config.Generators.LogFile.MaxSize = 1
+	config.Generators.LogFile.MaxFiles = 1
 	logger := logger.New(false)
 
 	// init generator in testing mode

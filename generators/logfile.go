@@ -213,6 +213,7 @@ LOOP:
 			// write to file
 			o.Write(line)
 
+			// exit on testing mode
 			if o.testing {
 				break LOOP
 			}
