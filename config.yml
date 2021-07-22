@@ -13,7 +13,7 @@ collectors:
 generators:
   stdout:
     enable: false
-  metrics:
+  webserver:
     enable: true
     listen-ip: 0.0.0.0
     listen-port: 8080

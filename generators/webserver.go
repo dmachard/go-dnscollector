@@ -13,7 +13,7 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-type Metrics struct {
+type Webserver struct {
 	done        chan bool
 	done_api    chan bool
 	httpserver  net.Listener
@@ -23,13 +23,13 @@ type Metrics struct {
 	channel     chan dnsmessage.DnsMessage
 	config      *common.Config
 	logger      *logger.Logger
-	stats       *Statistics
+	stats       *dnsmessage.Statistics
 	testing     bool
 }
 
-func NewMetrics(config *common.Config, logger *logger.Logger) *Metrics {
-	logger.Info("generator metrics - enabled")
-	o := &Metrics{
+func NewWebserver(config *common.Config, logger *logger.Logger) *Webserver {
+	logger.Info("generator webserver - enabled")
+	o := &Webserver{
 		done:     make(chan bool),
 		done_api: make(chan bool),
 		config:   config,
@@ -41,28 +41,28 @@ func NewMetrics(config *common.Config, logger *logger.Logger) *Metrics {
 	o.ReadConfig()
 
 	// init engine to compute statistics
-	o.stats = NewStatistics(o.topMaxItems)
+	o.stats = dnsmessage.NewStatistics(o.topMaxItems)
 	return o
 }
 
-func (c *Metrics) ReadConfig() {
-	c.listenIp = c.config.Generators.Metrics.ListenIP
-	c.listenPort = c.config.Generators.Metrics.ListenPort
-	c.topMaxItems = c.config.Generators.Metrics.TopMaxItems
+func (c *Webserver) ReadConfig() {
+	c.listenIp = c.config.Generators.WebServer.ListenIP
+	c.listenPort = c.config.Generators.WebServer.ListenPort
+	c.topMaxItems = c.config.Generators.WebServer.TopMaxItems
 }
 
-func (o *Metrics) Channel() chan dnsmessage.DnsMessage {
+func (o *Webserver) Channel() chan dnsmessage.DnsMessage {
 	return o.channel
 }
 
-func (o *Metrics) Stop() {
-	o.logger.Info("generator metrics - stopping...")
+func (o *Webserver) Stop() {
+	o.logger.Info("generator webserver - stopping...")
 
 	// stopping http server
 	o.httpserver.Close()
 
 	// close output channel
-	o.logger.Info("generator metrics - closing channel")
+	o.logger.Info("generator webserver - closing channel")
 	close(o.channel)
 
 	// read done channel and block until run is terminated
@@ -74,10 +74,10 @@ func (o *Metrics) Stop() {
 	close(o.done_api)
 }
 
-func (s *Metrics) metricsHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 
 	suffix := "dnscollector"
-	counters := s.stats.Get()
+	counters := s.stats.GetCounters()
 
 	// total uniq clients
 	fmt.Fprintf(w, "# HELP %s_clients_total Number of clients\n", suffix)
@@ -92,149 +92,149 @@ func (s *Metrics) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	// pps, qps and rps
 	fmt.Fprintf(w, "# HELP %s_pps_total Number of packet per second received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_pps_total gauge\n", suffix)
-	fmt.Fprintf(w, "%s_pps_total %d\n", suffix, counters.pps)
+	fmt.Fprintf(w, "%s_pps_total %d\n", suffix, counters.Pps)
 
 	fmt.Fprintf(w, "# HELP %s_qps_total Number of queries per second received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_qps_total gauge\n", suffix)
-	fmt.Fprintf(w, "%s_qps_total %d\n", suffix, counters.qps)
+	fmt.Fprintf(w, "%s_qps_total %d\n", suffix, counters.Qps)
 
 	fmt.Fprintf(w, "# HELP %s_rps_total Number of replies per second received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_rps_total gauge\n", suffix)
-	fmt.Fprintf(w, "%s_rps_total %d\n", suffix, counters.rps)
+	fmt.Fprintf(w, "%s_rps_total %d\n", suffix, counters.Rps)
 
 	// number of queries - udp, tcp, ipv4 and ipv6
 	fmt.Fprintf(w, "# HELP %s_queries_total Number of queries received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_queries_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_queries_total %d\n", suffix, counters.queries)
+	fmt.Fprintf(w, "%s_queries_total %d\n", suffix, counters.Queries)
 
 	fmt.Fprintf(w, "# HELP %s_queries_udp_total Number of UDP queries received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_queries_udp_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_queries_udp_total %d\n", suffix, counters.queries_udp)
+	fmt.Fprintf(w, "%s_queries_udp_total %d\n", suffix, counters.Queries_udp)
 
 	fmt.Fprintf(w, "# HELP %s_queries_tcp_total Number of TCP queries received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_queries_tcp_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_queries_tcp_total %d\n", suffix, counters.queries_tcp)
+	fmt.Fprintf(w, "%s_queries_tcp_total %d\n", suffix, counters.Queries_tcp)
 
 	fmt.Fprintf(w, "# HELP %s_queries_doh_total Number of DOH queries received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_queries_doh_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_queries_doh_total %d\n", suffix, counters.queries_doh)
+	fmt.Fprintf(w, "%s_queries_doh_total %d\n", suffix, counters.Queries_doh)
 
 	fmt.Fprintf(w, "# HELP %s_queries_dot_total Number of DOT queries received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_queries_dot_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_queries_dot_total %d\n", suffix, counters.queries_dot)
+	fmt.Fprintf(w, "%s_queries_dot_total %d\n", suffix, counters.Queries_dot)
 
 	fmt.Fprintf(w, "# HELP %s_queries_ipv4_total Number of IPv4 queries received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_queries_ipv4_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_queries_ipv4_total %d\n", suffix, counters.queries_ipv4)
+	fmt.Fprintf(w, "%s_queries_ipv4_total %d\n", suffix, counters.Queries_ipv4)
 
 	fmt.Fprintf(w, "# HELP %s_queries_ipv6_total Number of IPv6 queries received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_queries_ipv6_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_queries_ipv6_total %d\n", suffix, counters.queries_ipv6)
+	fmt.Fprintf(w, "%s_queries_ipv6_total %d\n", suffix, counters.Queries_ipv6)
 
 	// number of replies - udp, tcp, ipv4 and ipv6
 	fmt.Fprintf(w, "# HELP %s_replies_total Number of responses received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_replies_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_replies_total %d\n", suffix, counters.replies)
+	fmt.Fprintf(w, "%s_replies_total %d\n", suffix, counters.Replies)
 
 	fmt.Fprintf(w, "# HELP %s_replies_udp_total Number of UDP replies received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_replies_udp_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_replies_udp_total %d\n", suffix, counters.replies_udp)
+	fmt.Fprintf(w, "%s_replies_udp_total %d\n", suffix, counters.Replies_udp)
 
 	fmt.Fprintf(w, "# HELP %s_replies_tcp_total Number of TCP replies received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_replies_tcp_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_replies_tcp_total %d\n", suffix, counters.replies_tcp)
+	fmt.Fprintf(w, "%s_replies_tcp_total %d\n", suffix, counters.Replies_tcp)
 
 	fmt.Fprintf(w, "# HELP %s_replies_doh_total Number of DOH replies received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_replies_doh_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_replies_doh_total %d\n", suffix, counters.replies_doh)
+	fmt.Fprintf(w, "%s_replies_doh_total %d\n", suffix, counters.Replies_doh)
 
 	fmt.Fprintf(w, "# HELP %s_replies_dot_total Number of DOT replies received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_replies_dot_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_replies_dot_total %d\n", suffix, counters.replies_dot)
+	fmt.Fprintf(w, "%s_replies_dot_total %d\n", suffix, counters.Replies_dot)
 
 	fmt.Fprintf(w, "# HELP %s_replies_ipv4_total Number of IPv4 replies received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_replies_ipv4_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_replies_ipv4_total %d\n", suffix, counters.replies_ipv4)
+	fmt.Fprintf(w, "%s_replies_ipv4_total %d\n", suffix, counters.Replies_ipv4)
 
 	fmt.Fprintf(w, "# HELP %s_replies_ipv6_total Number of IPv6 replies received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_replies_ipv6_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_replies_ipv6_total %d\n", suffix, counters.replies_ipv6)
+	fmt.Fprintf(w, "%s_replies_ipv6_total %d\n", suffix, counters.Replies_ipv6)
 
 	//rtype
 	fmt.Fprintf(w, "# HELP %s_rtype_a_total Number of qtype A received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_rtype_a_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_rtype_a_total %d\n", suffix, counters.qtype_a)
+	fmt.Fprintf(w, "%s_rtype_a_total %d\n", suffix, counters.Qtype_a)
 
 	fmt.Fprintf(w, "# HELP %s_rtype_aaaa_total Number of qtype AAAA received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_rtype_aaaa_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_rtype_aaaa_total %d\n", suffix, counters.qtype_aaaa)
+	fmt.Fprintf(w, "%s_rtype_aaaa_total %d\n", suffix, counters.Qtype_aaaa)
 
 	fmt.Fprintf(w, "# HELP %s_rtype_cname_total Number of qtype CNAME received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_rtype_cname_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_rtype_cname_total %d\n", suffix, counters.qtype_cname)
+	fmt.Fprintf(w, "%s_rtype_cname_total %d\n", suffix, counters.Qtype_cname)
 
 	fmt.Fprintf(w, "# HELP %s_rtype_txt_total Number of qtype TXT received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_rtype_txt_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_rtype_txt_total %d\n", suffix, counters.qtype_txt)
+	fmt.Fprintf(w, "%s_rtype_txt_total %d\n", suffix, counters.Qtype_txt)
 
 	fmt.Fprintf(w, "# HELP %s_rtype_ptr_total Number of qtype PTR received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_rtype_ptr_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_rtype_ptr_total %d\n", suffix, counters.qtype_ptr)
+	fmt.Fprintf(w, "%s_rtype_ptr_total %d\n", suffix, counters.Qtype_ptr)
 
 	fmt.Fprintf(w, "# HELP %s_rtype_srv_total Number of qtype SRV received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_rtype_srv_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_rtype_srv_total %d\n", suffix, counters.qtype_srv)
+	fmt.Fprintf(w, "%s_rtype_srv_total %d\n", suffix, counters.Qtype_srv)
 
 	// rcode
 	fmt.Fprintf(w, "# HELP %s_rcode_noerror_total Number of rcode NOERROR received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_rcode_noerror_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_rcode_noerror_total %d\n", suffix, counters.rcode_noerror)
+	fmt.Fprintf(w, "%s_rcode_noerror_total %d\n", suffix, counters.Rcode_noerror)
 
 	fmt.Fprintf(w, "# HELP %s_rcode_nxdomain_total Number of rcode NXDOMAIN received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_rcode_nxdomain_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_rcode_nxdomain_total %d\n", suffix, counters.rcode_nxdomain)
+	fmt.Fprintf(w, "%s_rcode_nxdomain_total %d\n", suffix, counters.Rcode_nxdomain)
 
 	fmt.Fprintf(w, "# HELP %s_rcode_servfail_total Number of rcode SERVFAIL received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_rcode_servfail_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_rcode_servfail_total %d\n", suffix, counters.rcode_servfail)
+	fmt.Fprintf(w, "%s_rcode_servfail_total %d\n", suffix, counters.Rcode_servfail)
 
 	fmt.Fprintf(w, "# HELP %s_rcode_refused_total Number of rcode REFUSED received\n", suffix)
 	fmt.Fprintf(w, "# TYPE %s_rcode_refused_total counter\n", suffix)
-	fmt.Fprintf(w, "%s_rcode_refused_total %d\n", suffix, counters.rcode_refused)
+	fmt.Fprintf(w, "%s_rcode_refused_total %d\n", suffix, counters.Rcode_refused)
 }
 
-func (s *Metrics) tablesQnamesHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Webserver) tablesQnamesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	t := s.stats.qnamestop.Get()
+	t := s.stats.GetTopQnames()
 	json.NewEncoder(w).Encode(t)
 }
 
-func (s *Metrics) tablesClientsHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Webserver) tablesClientsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	t := s.stats.clientstop.Get()
+	t := s.stats.GetTopClients()
 	json.NewEncoder(w).Encode(t)
 }
 
-func (s *Metrics) tablesRcodesHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Webserver) tablesRcodesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	t := s.stats.rcodestop.Get()
+	t := s.stats.GetTopRcodes()
 	json.NewEncoder(w).Encode(t)
 }
 
-func (s *Metrics) tablesRrtypesHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Webserver) tablesRrtypesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	t := s.stats.rrtypestop.Get()
+	t := s.stats.GetTopRrtypes()
 	json.NewEncoder(w).Encode(t)
 }
 
-func (s *Metrics) tablesOperationsHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Webserver) tablesOperationsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	t := s.stats.operationstop.Get()
+	t := s.stats.GetTopOperations()
 	json.NewEncoder(w).Encode(t)
 }
 
-func (s *Metrics) ServeApi() {
-	s.logger.Info("generator httpapi - starting http api...")
+func (s *Webserver) ServeApi() {
+	s.logger.Info("generator webserver - starting http api...")
 
 	http.HandleFunc("/metrics", s.metricsHandler)
 	http.HandleFunc("/tables/domains", s.tablesQnamesHandler)
@@ -245,19 +245,19 @@ func (s *Metrics) ServeApi() {
 
 	listener, err := net.Listen("tcp", s.listenIp+":"+strconv.Itoa(s.listenPort))
 	if err != nil {
-		s.logger.Fatal("generator httpapi - listen error - ", err)
+		s.logger.Fatal("generator webserver - listen error - ", err)
 	}
 
 	s.httpserver = listener
-	s.logger.Info("generator httpapi - is listening on %s", listener.Addr())
+	s.logger.Info("generator webserver - is listening on %s", listener.Addr())
 
 	http.Serve(listener, nil)
-	s.logger.Info("generator httpapi - terminated")
+	s.logger.Info("generator webserver - terminated")
 	s.done_api <- true
 }
 
-func (s *Metrics) Run() {
-	s.logger.Info("generator metrics - running in background...")
+func (s *Webserver) Run() {
+	s.logger.Info("generator webserver - running in background...")
 
 	// start http server
 	if !s.testing {
@@ -274,7 +274,7 @@ LOOP:
 
 		case dm, opened := <-s.channel:
 			if !opened {
-				s.logger.Info("metrics - channel closed")
+				s.logger.Info("generator webserver - channel closed")
 				break LOOP
 			}
 			// record the dnstap message
@@ -293,7 +293,7 @@ LOOP:
 		}
 	}
 
-	s.logger.Info("generator metrics - run terminated")
+	s.logger.Info("generator webserver - run terminated")
 
 	// the job is done
 	if !s.testing {

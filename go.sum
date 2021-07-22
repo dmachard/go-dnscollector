@@ -8,6 +8,10 @@ github.com/dmachard/go-framestream v0.1.0 h1:SwBZSamv1S3T4zHeUZFMNSo3u09WKyyOOwZ
 github.com/dmachard/go-framestream v0.1.0/go.mod h1:NTkjiWoRSjLVyx/PxDjZoTCb6bE40DHJ8fe29xOHBcg=
 github.com/dmachard/go-logger v0.1.0 h1:E4kmxIZx+/hrx6Iusa7ygbcSbP+jQnYoeLKhqsjUOxY=
 github.com/dmachard/go-logger v0.1.0/go.mod h1:vg6cMQBmx+SgH45XsqEyqScXp9eJhS6yuvvJZOgBbvU=
+github.com/dmachard/go-topmap v0.2.0 h1:zdzCrh02CMztDMxXZiea2+4tZkx3cnEGf6Sl6wGfwEc=
+github.com/dmachard/go-topmap v0.2.0/go.mod h1:EpVNlcJO8kJjXzTgstKBXOQumsmSUz5bTxSxTE4DRrk=
+github.com/dmachard/go-topmap v0.3.0 h1:zM8plibgeNFEW+rnGuCuF3ukdrhmI4x8LE9qzRafl34=
+github.com/dmachard/go-topmap v0.3.0/go.mod h1:EpVNlcJO8kJjXzTgstKBXOQumsmSUz5bTxSxTE4DRrk=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=

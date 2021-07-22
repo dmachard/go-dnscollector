@@ -29,8 +29,8 @@ func main() {
 	// load generators
 	var genwrks []common.Worker
 
-	if config.Generators.Metrics.Enable {
-		genwrks = append(genwrks, generators.NewMetrics(config, logger))
+	if config.Generators.WebServer.Enable {
+		genwrks = append(genwrks, generators.NewWebserver(config, logger))
 	}
 	if config.Generators.Stdout.Enable {
 		genwrks = append(genwrks, generators.NewStdOut(config, logger))

@@ -28,12 +28,12 @@ type Config struct {
 		Stdout struct {
 			Enable bool `yaml:"enable"`
 		} `yaml:"stdout"`
-		Metrics struct {
+		WebServer struct {
 			Enable      bool   `yaml:"enable"`
 			ListenIP    string `yaml:"listen-ip"`
 			ListenPort  int    `yaml:"listen-port"`
 			TopMaxItems int    `yaml:"top-max-items"`
-		} `yaml:"metrics"`
+		} `yaml:"webserver"`
 		LogFile struct {
 			Enable     bool   `yaml:"enable"`
 			FilePath   string `yaml:"file-path"`
