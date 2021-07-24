@@ -1,20 +1,55 @@
-# go-dns-collector
+# go-dnscollector
 
-`go-dns-collector` acts as a high speed passive analyser for DNS traffic.
+`go-dnscollector` acts as a high speed passive analyser for DNS traffic.
 
 Features:
-- Support for (Dnstap)[https://dnstap.info/] (TCP, Unix) receiver
+- Support for [Dnstap](https://dnstap.info/) (TCP, Unix) receiver
 - Prometheus metrics support
 - Written in Go
 
-## Docker image
+## From binary
 
-todo
+```go
+./go-dnscollector -config config.yml
+```
 
 ## Configuration
 
-todo
+See [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml) file.
 
-## Benchmarks
 
-todo
+## Metrics
+
+```
+curl http://127.0.0.1:8080/metrics
+```
+
+## Top domains
+
+```
+curl http://127.0.0.1:8080/tables/domains
+```
+
+## Top clients
+
+```
+curl http://127.0.0.1:8080/tables/clients
+```
+
+## Top rcodes
+
+```
+curl http://127.0.0.1:8080/tables/rcodes
+```
+
+## Top operations
+
+```
+curl http://127.0.0.1:8080/tables/operations
+```
+
+## Top rrtypes
+
+```
+curl http://127.0.0.1:8080/tables/rrtypes
+```
