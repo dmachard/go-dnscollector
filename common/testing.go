@@ -19,6 +19,7 @@ func GetFakeConfig() *Config {
 func GetFakeDnsMessage() dnsmessage.DnsMessage {
 	dm := dnsmessage.DnsMessage{}
 	dm.Init()
+	dm.Identity = "collector"
 	dm.Operation = "CLIENT_QUERY"
 	dm.Type = "query"
 	dm.Qname = "dns.collector"
