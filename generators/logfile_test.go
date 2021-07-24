@@ -6,11 +6,9 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/common"
-	"github.com/dmachard/go-dnscollector/dnsmessage"
-	"github.com/dmachard/go-logger"
 )
 
-func TestLogfileRun(t *testing.T) {
+func TestLogfileWrite(t *testing.T) {
 	// create a temp file
 	f, err := os.CreateTemp("", "temp_logfile")
 	if err != nil {
@@ -25,19 +23,15 @@ func TestLogfileRun(t *testing.T) {
 	config.Generators.LogFile.LogReplies = true
 	config.Generators.LogFile.MaxSize = 1
 	config.Generators.LogFile.MaxFiles = 1
-	logger := logger.New(false)
+	logger, _ := common.GetFakeLogger(false)
 
 	// init generator in testing mode
 	g := NewLogFile(config, logger)
-	g.testing = true
 
-	// fake dns message
-	dm := dnsmessage.DnsMessage{}
-	dm.Init()
-
-	// send dns message in the channel and run-it
-	g.Channel() <- dm
-	g.Run()
+	// write fake dns message
+	dm := common.GetFakeDnsMessage()
+	g.Write(dm.Bytes())
+	g.Flush()
 
 	// read temp file and check content
 	data := make([]byte, 100)
@@ -45,7 +39,7 @@ func TestLogfileRun(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if string(data[:count]) != "1970-01-01T00:00:00Z - - - - - - - 0b - - 0.000000\n" {
+	if string(data[:count]) != dm.String() {
 		t.Errorf("invalid logfile output - %s", data[:count])
 	}
 }

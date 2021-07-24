@@ -8,38 +8,15 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/common"
-	"github.com/dmachard/go-dnscollector/dnsmessage"
-	"github.com/dmachard/go-logger"
 )
-
-func GetLogger() *logger.Logger {
-	logger := logger.New(false)
-	return logger
-}
-
-func GetFakeConfig() *common.Config {
-	config := &common.Config{}
-	return config
-}
-
-func GetFakeDnsMessage() dnsmessage.DnsMessage {
-	dm := dnsmessage.DnsMessage{}
-	dm.Init()
-	dm.Operation = "CLIENT_QUERY"
-	dm.Type = "query"
-	dm.Qname = "dns.collector"
-	dm.QueryIp = "1.2.3.4"
-	dm.Rcode = "NOERROR"
-	dm.Qtype = "A"
-	return dm
-}
 
 func TestWebServerGet(t *testing.T) {
 	// init the generator
-	g := NewWebserver(GetFakeConfig(), GetLogger())
+	logger, _ := common.GetFakeLogger(false)
+	g := NewWebserver(common.GetFakeConfig(), logger)
 
 	// record one dns message to simulate some incoming data
-	g.stats.Record(GetFakeDnsMessage())
+	g.stats.Record(common.GetFakeDnsMessage())
 
 	tt := []struct {
 		name       string
@@ -167,10 +144,11 @@ func TestWebServerGet(t *testing.T) {
 
 func TestWebServerBadMethod(t *testing.T) {
 	// init the generator
-	g := NewWebserver(GetFakeConfig(), GetLogger())
+	logger, _ := common.GetFakeLogger(false)
+	g := NewWebserver(common.GetFakeConfig(), logger)
 
 	// record one dns message to simulate some incoming data
-	g.stats.Record(GetFakeDnsMessage())
+	g.stats.Record(common.GetFakeDnsMessage())
 
 	tt := []struct {
 		name       string

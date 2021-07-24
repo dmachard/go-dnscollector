@@ -29,17 +29,17 @@ type DnsMessage struct {
 	Timensec     int
 }
 
-func (d *DnsMessage) Init() {
-	d.Operation, d.Type = "-", "-"
-	d.Identity = "-"
-	d.Family, d.Protocol = "-", "-"
-	d.QueryIp, d.QueryPort = "-", "-"
-	d.ResponseIp, d.ResponsePort = "-", "-"
-	d.Rcode, d.Qtype = "-", "-"
-	d.Qname = "-"
+func (dm *DnsMessage) Init() {
+	dm.Operation, dm.Type = "-", "-"
+	dm.Identity = "-"
+	dm.Family, dm.Protocol = "-", "-"
+	dm.QueryIp, dm.QueryPort = "-", "-"
+	dm.ResponseIp, dm.ResponsePort = "-", "-"
+	dm.Rcode, dm.Qtype = "-", "-"
+	dm.Qname = "-"
 }
 
-func TransformToText(dm DnsMessage) []byte {
+func (dm *DnsMessage) Bytes() []byte {
 	var s bytes.Buffer
 
 	ts := time.Unix(int64(dm.Timesec), int64(dm.Timensec))
@@ -58,4 +58,8 @@ func TransformToText(dm DnsMessage) []byte {
 	s.WriteString(fmt.Sprintf("%.6f", dm.Latency) + "\n")
 
 	return s.Bytes()
+}
+
+func (dm *DnsMessage) String() string {
+	return string(dm.Bytes())
 }

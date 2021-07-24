@@ -1,6 +1,7 @@
 package generators
 
 import (
+	"bytes"
 	"log"
 	"os"
 
@@ -10,27 +11,33 @@ import (
 )
 
 type StdOut struct {
-	done         chan bool
-	channel      chan dnsmessage.DnsMessage
-	logger       *logger.Logger
-	stdoutLogger *log.Logger
-	testing      bool
+	done    chan bool
+	channel chan dnsmessage.DnsMessage
+	logger  *logger.Logger
+	stdout  *log.Logger
 }
 
 func NewStdOut(config *common.Config, console *logger.Logger) *StdOut {
 	console.Info("generator stdout - enabled")
 	o := &StdOut{
-		done:         make(chan bool),
-		channel:      make(chan dnsmessage.DnsMessage, 512),
-		logger:       console,
-		stdoutLogger: log.New(os.Stdout, "", 0),
-		testing:      false,
+		done:    make(chan bool),
+		channel: make(chan dnsmessage.DnsMessage, 512),
+		logger:  console,
+		stdout:  log.New(os.Stdout, "", 0),
 	}
 	return o
 }
 
+func (o *StdOut) SetBuffer(b *bytes.Buffer) {
+	o.stdout.SetOutput(b)
+}
+
 func (o *StdOut) Channel() chan dnsmessage.DnsMessage {
 	return o.channel
+}
+
+func (o *StdOut) Print(dm dnsmessage.DnsMessage) {
+	o.stdout.Print(dm.String())
 }
 
 func (o *StdOut) Stop() {
@@ -49,18 +56,10 @@ func (o *StdOut) Run() {
 	o.logger.Info("generator stdout - running in background...")
 
 	for dm := range o.channel {
-		line := dnsmessage.TransformToText(dm)
-		o.stdoutLogger.Print(string(line))
-
-		// run only once if testing mode is enabled
-		if o.testing {
-			break
-		}
+		o.Print(dm)
 	}
 	o.logger.Info("generator stdout - run terminated")
 
 	// the job is done
-	if !o.testing {
-		o.done <- true
-	}
+	o.done <- true
 }

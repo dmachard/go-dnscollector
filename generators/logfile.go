@@ -28,7 +28,6 @@ type LogFile struct {
 	maxsize    int
 	logqueries bool
 	logreplies bool
-	testing    bool
 }
 
 func NewLogFile(config *common.Config, logger *logger.Logger) *LogFile {
@@ -38,7 +37,6 @@ func NewLogFile(config *common.Config, logger *logger.Logger) *LogFile {
 		channel: make(chan dnsmessage.DnsMessage, 512),
 		config:  config,
 		logger:  logger,
-		testing: false,
 	}
 
 	o.ReadConfig()
@@ -101,6 +99,10 @@ func (o *LogFile) Write(d []byte) {
 
 	// increase size file
 	o.size += int64(n)
+}
+
+func (o *LogFile) Flush() {
+	o.writer.Flush()
 }
 
 func (o *LogFile) Stop() {
@@ -208,15 +210,10 @@ LOOP:
 			}
 
 			// transform dnstap message to flat text
-			line := dnsmessage.TransformToText(dm)
+			//line := dnsmessage.TransformToText(dm)
 
 			// write to file
-			o.Write(line)
-
-			// exit on testing mode
-			if o.testing {
-				break LOOP
-			}
+			o.Write(dm.Bytes())
 		case <-tflush.C:
 			o.writer.Flush()
 			tflush.Reset(tflush_interval)
@@ -230,7 +227,5 @@ LOOP:
 	o.logger.Info("generator logfile - run terminated")
 
 	// the job is done
-	if !o.testing {
-		o.done <- true
-	}
+	o.done <- true
 }
