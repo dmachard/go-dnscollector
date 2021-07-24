@@ -42,13 +42,13 @@ type Config struct {
 			LogQueries bool   `yaml:"log-queries"`
 			LogReplies bool   `yaml:"log-replies"`
 		} `yaml:"logfile"`
-		DnstapSender struct {
+		DnstapTcp struct {
 			Enable         bool   `yaml:"enable"`
 			RemoteIP       string `yaml:"remote-ip"`
 			RemotePort     int    `yaml:"remote-port"`
 			Retry          int    `yaml:"retry"`
 			DnstapIdentity string `yaml:"dnstap-identity"`
-		} `yaml:"dnstapsender"`
+		} `yaml:"dnstap-tcp"`
 	} `yaml:"generators"`
 }
 
@@ -59,7 +59,28 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnstapTcp.ListenIP = "0.0.0.0"
 	c.Collectors.DnstapTcp.ListenPort = 6000
 
+	c.Collectors.DnstapUnix.Enable = false
+	c.Collectors.DnstapUnix.SockPath = ""
+
 	c.Generators.Stdout.Enable = true
+
+	c.Generators.DnstapTcp.Enable = false
+	c.Generators.DnstapTcp.RemoteIP = "127.0.0.1"
+	c.Generators.DnstapTcp.RemotePort = 6000
+	c.Generators.DnstapTcp.Retry = 5
+	c.Generators.DnstapTcp.DnstapIdentity = "collector"
+
+	c.Generators.LogFile.Enable = false
+	c.Generators.LogFile.FilePath = ""
+	c.Generators.LogFile.LogQueries = true
+	c.Generators.LogFile.LogReplies = true
+	c.Generators.LogFile.MaxSize = 1
+	c.Generators.LogFile.MaxFiles = 1
+
+	c.Generators.WebServer.Enable = false
+	c.Generators.WebServer.ListenIP = "127.0.0.1"
+	c.Generators.WebServer.ListenPort = 8080
+	c.Generators.WebServer.TopMaxItems = 100
 }
 
 func LoadConfig() (*Config, error) {

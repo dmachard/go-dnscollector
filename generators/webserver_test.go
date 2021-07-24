@@ -12,8 +12,7 @@ import (
 
 func TestWebServerGet(t *testing.T) {
 	// init the generator
-	logger, _ := common.GetFakeLogger(false)
-	g := NewWebserver(common.GetFakeConfig(), logger)
+	g := NewWebserver(common.GetFakeConfig(), common.GetFakeLogger(false))
 
 	// record one dns message to simulate some incoming data
 	g.stats.Record(common.GetFakeDnsMessage())
@@ -144,8 +143,7 @@ func TestWebServerGet(t *testing.T) {
 
 func TestWebServerBadMethod(t *testing.T) {
 	// init the generator
-	logger, _ := common.GetFakeLogger(false)
-	g := NewWebserver(common.GetFakeConfig(), logger)
+	g := NewWebserver(common.GetFakeConfig(), common.GetFakeLogger(false))
 
 	// record one dns message to simulate some incoming data
 	g.stats.Record(common.GetFakeDnsMessage())

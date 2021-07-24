@@ -25,9 +25,9 @@ generators:
     max-files: 10
     log-queries: true
     log-replies: true
-  dnstapsender:
+  dnstap-tcp:
     enable: false
     remote-ip: 10.0.0.1
     remote-port: 6000
-    retry: 10
+    retry: 5
     dnstap-identity: dnscollector

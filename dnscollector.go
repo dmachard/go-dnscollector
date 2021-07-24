@@ -38,7 +38,7 @@ func main() {
 	if config.Generators.LogFile.Enable {
 		genwrks = append(genwrks, generators.NewLogFile(config, logger))
 	}
-	if config.Generators.DnstapSender.Enable {
+	if config.Generators.Dnstap.Enable {
 		genwrks = append(genwrks, generators.NewDnstapSender(config, logger))
 	}
 
@@ -47,6 +47,10 @@ func main() {
 
 	if config.Collectors.DnstapTcp.Enable {
 		collwrks = append(collwrks, collectors.NewDnstapTcp(genwrks, config, logger))
+	}
+
+	if config.Collectors.DnstapUnix.Enable {
+		collwrks = append(collwrks, collectors.NewDnstapUnix(genwrks, config, logger))
 	}
 
 	// Handle Ctrl-C

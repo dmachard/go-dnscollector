@@ -34,6 +34,7 @@ func NewDnstapSender(config *common.Config, logger *logger.Logger) *DnstapSender
 		exit:    make(chan bool),
 		channel: make(chan dnsmessage.DnsMessage, 512),
 		logger:  logger,
+		config:  config,
 	}
 
 	s.ReadConfig()
@@ -42,10 +43,10 @@ func NewDnstapSender(config *common.Config, logger *logger.Logger) *DnstapSender
 }
 
 func (o *DnstapSender) ReadConfig() {
-	o.remoteIP = o.config.Generators.DnstapSender.RemoteIP
-	o.remotePort = o.config.Generators.DnstapSender.RemotePort
-	o.identity = o.config.Generators.DnstapSender.DnstapIdentity
-	o.retry = o.config.Generators.DnstapSender.Retry
+	o.remoteIP = o.config.Generators.DnstapTcp.RemoteIP
+	o.remotePort = o.config.Generators.DnstapTcp.RemotePort
+	o.identity = o.config.Generators.DnstapTcp.DnstapIdentity
+	o.retry = o.config.Generators.DnstapTcp.Retry
 }
 
 func (o *DnstapSender) Channel() chan dnsmessage.DnsMessage {

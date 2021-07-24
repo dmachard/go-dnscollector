@@ -9,9 +9,8 @@ import (
 
 func TestStdoutPrint(t *testing.T) {
 	// init generator and redirect stdout output to bytes buffer
-	logger, _ := common.GetFakeLogger(false)
 	var stdout bytes.Buffer
-	g := NewStdOut(common.GetFakeConfig(), logger)
+	g := NewStdOut(common.GetFakeConfig(), common.GetFakeLogger(false))
 	g.SetBuffer(&stdout)
 
 	// print dns message to stdout buffer

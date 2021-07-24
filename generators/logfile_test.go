@@ -17,16 +17,11 @@ func TestLogfileWrite(t *testing.T) {
 	defer os.Remove(f.Name()) // clean up
 
 	// config
-	config := &common.Config{}
+	config := common.GetFakeConfig()
 	config.Generators.LogFile.FilePath = f.Name()
-	config.Generators.LogFile.LogQueries = true
-	config.Generators.LogFile.LogReplies = true
-	config.Generators.LogFile.MaxSize = 1
-	config.Generators.LogFile.MaxFiles = 1
-	logger, _ := common.GetFakeLogger(false)
 
 	// init generator in testing mode
-	g := NewLogFile(config, logger)
+	g := NewLogFile(config, common.GetFakeLogger(false))
 
 	// write fake dns message
 	dm := common.GetFakeDnsMessage()

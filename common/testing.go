@@ -1,21 +1,18 @@
 package common
 
 import (
-	"bytes"
-
 	"github.com/dmachard/go-dnscollector/dnsmessage"
 	"github.com/dmachard/go-logger"
 )
 
-func GetFakeLogger(debug bool) (*logger.Logger, bytes.Buffer) {
+func GetFakeLogger(debug bool) *logger.Logger {
 	logger := logger.New(debug)
-	var o bytes.Buffer
-	logger.SetOutput(&o)
-	return logger, o
+	return logger
 }
 
 func GetFakeConfig() *Config {
 	config := &Config{}
+	config.SetDefault()
 	return config
 }
 
@@ -26,6 +23,9 @@ func GetFakeDnsMessage() dnsmessage.DnsMessage {
 	dm.Type = "query"
 	dm.Qname = "dns.collector"
 	dm.QueryIp = "1.2.3.4"
+	dm.QueryPort = "1234"
+	dm.ResponseIp = "4.3.2.1"
+	dm.ResponsePort = "4321"
 	dm.Rcode = "NOERROR"
 	dm.Qtype = "A"
 	return dm
