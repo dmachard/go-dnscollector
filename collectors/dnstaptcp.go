@@ -42,6 +42,7 @@ func (c *DnstapTcp) Generators() []chan dnsmessage.DnsMessage {
 	}
 	return channels
 }
+
 func (c *DnstapTcp) ReadConfig() {
 	c.listenIP = c.config.Collectors.DnstapTcp.ListenIP
 	c.listenPort = c.config.Collectors.DnstapTcp.ListenPort
@@ -105,18 +106,26 @@ func (c *DnstapTcp) Stop() {
 	close(c.done)
 }
 
-func (c *DnstapTcp) Run() {
+func (c *DnstapTcp) Listen() error {
 	c.logger.Info("collector dnstap tcp - running in background...")
 	listener, err := net.Listen("tcp", c.listenIP+":"+strconv.Itoa(c.listenPort))
 	if err != nil {
-		c.logger.Fatal("collector dnstap tcp - ", err)
+		return err
 	}
 	c.logger.Info("collector dnstap tcp - is listening on %s", listener.Addr())
 	c.listen = listener
+	return nil
+}
 
+func (c *DnstapTcp) Run() {
+	if c.listen == nil {
+		if err := c.Listen(); err != nil {
+			c.logger.Fatal("collector dnstap tcp listening - ", err)
+		}
+	}
 	for {
 		// Accept() blocks waiting for new connection.
-		conn, err := listener.Accept()
+		conn, err := c.listen.Accept()
 		if err != nil {
 			break
 		}

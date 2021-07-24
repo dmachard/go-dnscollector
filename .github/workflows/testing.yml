@@ -20,5 +20,8 @@ jobs:
     - name: Test dnsmessage
       run: go test -timeout 5s ./dnsmessage/ -cover -v
 
+    - name: Test collectors
+      run: go test -timeout 5s ./collecters/ -cover -v
+
     - name: Test generators
       run: go test -timeout 5s ./generators/ -cover -v

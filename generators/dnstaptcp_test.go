@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func TestDnstapRun(t *testing.T) {
+func TestDnstapTcpRun(t *testing.T) {
 	// init generator
 	g := NewDnstapSender(common.GetFakeConfig(), common.GetFakeLogger(false))
 

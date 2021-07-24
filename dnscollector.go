@@ -38,7 +38,7 @@ func main() {
 	if config.Generators.LogFile.Enable {
 		genwrks = append(genwrks, generators.NewLogFile(config, logger))
 	}
-	if config.Generators.Dnstap.Enable {
+	if config.Generators.DnstapTcp.Enable {
 		genwrks = append(genwrks, generators.NewDnstapSender(config, logger))
 	}
 
