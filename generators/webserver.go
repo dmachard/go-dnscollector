@@ -17,6 +17,7 @@ type Webserver struct {
 	done        chan bool
 	done_api    chan bool
 	httpserver  net.Listener
+	httpmux     *http.ServeMux
 	listenIp    string
 	listenPort  int
 	topMaxItems int
@@ -24,7 +25,6 @@ type Webserver struct {
 	config      *common.Config
 	logger      *logger.Logger
 	stats       *dnsmessage.Statistics
-	testing     bool
 }
 
 func NewWebserver(config *common.Config, logger *logger.Logger) *Webserver {
@@ -35,7 +35,6 @@ func NewWebserver(config *common.Config, logger *logger.Logger) *Webserver {
 		config:   config,
 		channel:  make(chan dnsmessage.DnsMessage, 512),
 		logger:   logger,
-		testing:  false,
 	}
 	// set the config
 	o.ReadConfig()
@@ -72,6 +71,8 @@ func (o *Webserver) Stop() {
 	// block and wait until http api is terminated
 	<-o.done_api
 	close(o.done_api)
+
+	o.logger.Info("generator webserver - stopped")
 }
 
 func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
@@ -203,7 +204,7 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s_rcode_refused_total %d\n", suffix, counters.Rcode_refused)
 }
 
-func (s *Webserver) tablesQnamesHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Webserver) tablesDomainsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	t := s.stats.GetTopQnames()
 	json.NewEncoder(w).Encode(t)
@@ -233,25 +234,27 @@ func (s *Webserver) tablesOperationsHandler(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(t)
 }
 
-func (s *Webserver) ServeApi() {
+func (s *Webserver) ListenAndServe() {
 	s.logger.Info("generator webserver - starting http api...")
 
-	http.HandleFunc("/metrics", s.metricsHandler)
-	http.HandleFunc("/tables/domains", s.tablesQnamesHandler)
-	http.HandleFunc("/tables/clients", s.tablesClientsHandler)
-	http.HandleFunc("/tables/rcodes", s.tablesRcodesHandler)
-	http.HandleFunc("/tables/rrtypes", s.tablesRrtypesHandler)
-	http.HandleFunc("/tables/operations", s.tablesOperationsHandler)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/metrics", s.metricsHandler)
+	mux.HandleFunc("/tables/domains", s.tablesDomainsHandler)
+	mux.HandleFunc("/tables/clients", s.tablesClientsHandler)
+	mux.HandleFunc("/tables/rcodes", s.tablesRcodesHandler)
+	mux.HandleFunc("/tables/rrtypes", s.tablesRrtypesHandler)
+	mux.HandleFunc("/tables/operations", s.tablesOperationsHandler)
 
 	listener, err := net.Listen("tcp", s.listenIp+":"+strconv.Itoa(s.listenPort))
 	if err != nil {
-		s.logger.Fatal("generator webserver - listen error - ", err)
+		s.logger.Fatal("listening failed ", err)
 	}
 
 	s.httpserver = listener
+	s.httpmux = mux
 	s.logger.Info("generator webserver - is listening on %s", listener.Addr())
 
-	http.Serve(listener, nil)
+	http.Serve(s.httpserver, s.httpmux)
 	s.logger.Info("generator webserver - terminated")
 	s.done_api <- true
 }
@@ -260,9 +263,7 @@ func (s *Webserver) Run() {
 	s.logger.Info("generator webserver - running in background...")
 
 	// start http server
-	if !s.testing {
-		go s.ServeApi()
-	}
+	go s.ListenAndServe()
 
 	// init timer to compute qps
 	t1_interval := 1 * time.Second
@@ -280,10 +281,6 @@ LOOP:
 			// record the dnstap message
 			s.stats.Record(dm)
 
-			if s.testing {
-				break LOOP
-			}
-
 		case <-t1.C:
 			// compute qps each second
 			s.stats.Compute()
@@ -296,7 +293,5 @@ LOOP:
 	s.logger.Info("generator webserver - run terminated")
 
 	// the job is done
-	if !s.testing {
-		s.done <- true
-	}
+	s.done <- true
 }
