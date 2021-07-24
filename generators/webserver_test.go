@@ -34,164 +34,208 @@ func GetFakeDnsMessage() dnsmessage.DnsMessage {
 	return dm
 }
 
-func TestServerMetrics(t *testing.T) {
+func TestWebServerGet(t *testing.T) {
 	// init the generator
 	g := NewWebserver(GetFakeConfig(), GetLogger())
 
 	// record one dns message to simulate some incoming data
 	g.stats.Record(GetFakeDnsMessage())
 
-	// init httptest
-	request := httptest.NewRequest(http.MethodGet, "/metrics", strings.NewReader(""))
-	responseRecorder := httptest.NewRecorder()
-
-	// call handler
-	g.metricsHandler(responseRecorder, request)
-
-	// checking status code
-	if responseRecorder.Code != http.StatusOK {
-		t.Errorf("Want status '%d', got '%d'", http.StatusOK, responseRecorder.Code)
+	tt := []struct {
+		name       string
+		uri        string
+		handler    func(w http.ResponseWriter, r *http.Request)
+		method     string
+		body       string
+		want       string
+		statusCode int
+	}{
+		{
+			name:       "total domains",
+			uri:        "/metrics",
+			handler:    g.metricsHandler,
+			method:     http.MethodGet,
+			body:       "",
+			want:       `dnscollector_domains_total 1`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "total clients",
+			uri:        "/metrics",
+			handler:    g.metricsHandler,
+			method:     http.MethodGet,
+			body:       "",
+			want:       `dnscollector_clients_total 1`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "total queries",
+			uri:        "/metrics",
+			handler:    g.metricsHandler,
+			method:     http.MethodGet,
+			body:       "",
+			want:       `dnscollector_queries_total 1`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "total replies",
+			uri:        "/metrics",
+			handler:    g.metricsHandler,
+			method:     http.MethodGet,
+			body:       "",
+			want:       `dnscollector_replies_total 0`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "top domains",
+			uri:        "/tables/domains",
+			handler:    g.tablesDomainsHandler,
+			method:     http.MethodGet,
+			body:       "",
+			want:       `\[{"key":"dns.collector","hit":1}]`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "top domains",
+			uri:        "/tables/domains",
+			handler:    g.tablesDomainsHandler,
+			method:     http.MethodGet,
+			body:       "",
+			want:       `\[{"key":"dns.collector","hit":1}]`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "top clients",
+			uri:        "/tables/clients",
+			handler:    g.tablesClientsHandler,
+			method:     http.MethodGet,
+			body:       "",
+			want:       `\[{"key":"1.2.3.4","hit":1}]`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "top rcodes",
+			uri:        "/tables/rcodes",
+			handler:    g.tablesRcodesHandler,
+			method:     http.MethodGet,
+			body:       "",
+			want:       `\[{"key":"NOERROR","hit":1}]`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "top rrtypes",
+			uri:        "/tables/rrtypes",
+			handler:    g.tablesRrtypesHandler,
+			method:     http.MethodGet,
+			body:       "",
+			want:       `\[{"key":"A","hit":1}]`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "top operations",
+			uri:        "/tables/operations",
+			handler:    g.tablesOperationsHandler,
+			method:     http.MethodGet,
+			body:       "",
+			want:       `\[{"key":"CLIENT_QUERY","hit":1}]`,
+			statusCode: http.StatusOK,
+		},
 	}
 
-	// checking content
-	var pattern = `dnscollector_queries_total 1`
-	metrics := strings.TrimSpace(responseRecorder.Body.String())
-	if regexp.MustCompile(pattern).MatchString(string(metrics)) != true {
-		t.Errorf("Want '%s', got '%s'", pattern, responseRecorder.Body)
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// init httptest
+			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
+			responseRecorder := httptest.NewRecorder()
+
+			// call handler
+			tc.handler(responseRecorder, request)
+
+			// checking status code
+			if responseRecorder.Code != tc.statusCode {
+				t.Errorf("Want status '%d', got '%d'", tc.statusCode, responseRecorder.Code)
+			}
+
+			// checking content
+			metrics := strings.TrimSpace(responseRecorder.Body.String())
+			if regexp.MustCompile(tc.want).MatchString(string(metrics)) != true {
+				t.Errorf("Want '%s', got '%s'", tc.want, responseRecorder.Body)
+			}
+		})
 	}
 }
 
-func TestServerDomains(t *testing.T) {
+func TestWebServerBadMethod(t *testing.T) {
 	// init the generator
 	g := NewWebserver(GetFakeConfig(), GetLogger())
 
 	// record one dns message to simulate some incoming data
 	g.stats.Record(GetFakeDnsMessage())
 
-	// init httptest
-	request := httptest.NewRequest(http.MethodGet, "/tables/domains", strings.NewReader(""))
-	responseRecorder := httptest.NewRecorder()
-
-	// call handler
-	g.tablesDomainsHandler(responseRecorder, request)
-
-	// checking status code
-	if responseRecorder.Code != http.StatusOK {
-		t.Errorf("Want status '%d', got '%d'", http.StatusOK, responseRecorder.Code)
+	tt := []struct {
+		name       string
+		uri        string
+		handler    func(w http.ResponseWriter, r *http.Request)
+		method     string
+		statusCode int
+	}{
+		{
+			name:       "metrics",
+			uri:        "/metrics",
+			handler:    g.metricsHandler,
+			method:     http.MethodPost,
+			statusCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:       "domains",
+			uri:        "/tables/domains",
+			handler:    g.tablesDomainsHandler,
+			method:     http.MethodPost,
+			statusCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:       "clients",
+			uri:        "/tables/clients",
+			handler:    g.tablesClientsHandler,
+			method:     http.MethodPost,
+			statusCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:       "rcodes",
+			uri:        "/tables/rcodes",
+			handler:    g.tablesRcodesHandler,
+			method:     http.MethodPost,
+			statusCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:       "rrtypes",
+			uri:        "/tables/rrtypes",
+			handler:    g.tablesRrtypesHandler,
+			method:     http.MethodPost,
+			statusCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:       "operations",
+			uri:        "/tables/operations",
+			handler:    g.tablesOperationsHandler,
+			method:     http.MethodPost,
+			statusCode: http.StatusMethodNotAllowed,
+		},
 	}
 
-	// checking content
-	domains := strings.TrimSpace(responseRecorder.Body.String())
-	want := `[{"key":"dns.collector","hit":1}]`
-	if strings.TrimSpace(responseRecorder.Body.String()) != want {
-		t.Errorf("Want '%s', got '%s'", want, domains)
-	}
-}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// init httptest
+			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
+			responseRecorder := httptest.NewRecorder()
 
-func TestServerClients(t *testing.T) {
-	// init the generator
-	g := NewWebserver(GetFakeConfig(), GetLogger())
+			// call handler
+			tc.handler(responseRecorder, request)
 
-	// record one dns message to simulate some incoming data
-	g.stats.Record(GetFakeDnsMessage())
-
-	// init httptest
-	request := httptest.NewRequest(http.MethodGet, "/tables/clients", strings.NewReader(""))
-	responseRecorder := httptest.NewRecorder()
-
-	// call handler
-	g.tablesClientsHandler(responseRecorder, request)
-
-	// checking status code
-	if responseRecorder.Code != http.StatusOK {
-		t.Errorf("Want status '%d', got '%d'", http.StatusOK, responseRecorder.Code)
-	}
-
-	// checking content
-	domains := strings.TrimSpace(responseRecorder.Body.String())
-	want := `[{"key":"1.2.3.4","hit":1}]`
-	if strings.TrimSpace(responseRecorder.Body.String()) != want {
-		t.Errorf("Want '%s', got '%s'", want, domains)
-	}
-}
-
-func TestServerRcodes(t *testing.T) {
-	// init the generator
-	g := NewWebserver(GetFakeConfig(), GetLogger())
-
-	// record one dns message to simulate some incoming data
-	g.stats.Record(GetFakeDnsMessage())
-
-	// init httptest
-	request := httptest.NewRequest(http.MethodGet, "/tables/rcodes", strings.NewReader(""))
-	responseRecorder := httptest.NewRecorder()
-
-	// call handler
-	g.tablesRcodesHandler(responseRecorder, request)
-
-	// checking status code
-	if responseRecorder.Code != http.StatusOK {
-		t.Errorf("Want status '%d', got '%d'", http.StatusOK, responseRecorder.Code)
-	}
-
-	// checking content
-	domains := strings.TrimSpace(responseRecorder.Body.String())
-	want := `[{"key":"NOERROR","hit":1}]`
-	if strings.TrimSpace(responseRecorder.Body.String()) != want {
-		t.Errorf("Want '%s', got '%s'", want, domains)
-	}
-}
-
-func TestServerRrtypes(t *testing.T) {
-	// init the generator
-	g := NewWebserver(GetFakeConfig(), GetLogger())
-
-	// record one dns message to simulate some incoming data
-	g.stats.Record(GetFakeDnsMessage())
-
-	// init httptest
-	request := httptest.NewRequest(http.MethodGet, "/tables/rrtypes", strings.NewReader(""))
-	responseRecorder := httptest.NewRecorder()
-
-	// call handler
-	g.tablesRrtypesHandler(responseRecorder, request)
-
-	// checking status code
-	if responseRecorder.Code != http.StatusOK {
-		t.Errorf("Want status '%d', got '%d'", http.StatusOK, responseRecorder.Code)
-	}
-
-	// checking content
-	domains := strings.TrimSpace(responseRecorder.Body.String())
-	want := `[{"key":"A","hit":1}]`
-	if strings.TrimSpace(responseRecorder.Body.String()) != want {
-		t.Errorf("Want '%s', got '%s'", want, domains)
-	}
-}
-
-func TestServerOperations(t *testing.T) {
-	// init the generator
-	g := NewWebserver(GetFakeConfig(), GetLogger())
-
-	// record one dns message to simulate some incoming data
-	g.stats.Record(GetFakeDnsMessage())
-
-	// init httptest
-	request := httptest.NewRequest(http.MethodGet, "/tables/operations", strings.NewReader(""))
-	responseRecorder := httptest.NewRecorder()
-
-	// call handler
-	g.tablesOperationsHandler(responseRecorder, request)
-
-	// checking status code
-	if responseRecorder.Code != http.StatusOK {
-		t.Errorf("Want status '%d', got '%d'", http.StatusOK, responseRecorder.Code)
-	}
-
-	// checking content
-	domains := strings.TrimSpace(responseRecorder.Body.String())
-	want := `[{"key":"CLIENT_QUERY","hit":1}]`
-	if strings.TrimSpace(responseRecorder.Body.String()) != want {
-		t.Errorf("Want '%s', got '%s'", want, domains)
+			// checking status code
+			if responseRecorder.Code != tc.statusCode {
+				t.Errorf("Want status '%d', got '%d'", tc.statusCode, responseRecorder.Code)
+			}
+		})
 	}
 }
