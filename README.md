@@ -17,7 +17,7 @@ Features:
 
 See [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml) file.
 
-![overview](doc/overview.svg)
+![overview](doc/overview.png)
 
 ## Metrics
 
