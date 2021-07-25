@@ -1,0 +1,19 @@
+name: Build
+
+on:
+  workflow_run:
+    workflows:
+      - Testing
+    types:
+      - completed
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+
+    - name: build binary
+      run: go build

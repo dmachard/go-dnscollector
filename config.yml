@@ -1,5 +1,5 @@
 trace:
-  verbose: true
+  verbose: false
 
 collectors:
   dnstap-unix:
