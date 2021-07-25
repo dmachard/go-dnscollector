@@ -1,11 +1,11 @@
-name: Releaser
+name: Publish
 on:
   push:
     tags:
       - 'v*'
 
 jobs:
-  goreleaser:
+  go:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
