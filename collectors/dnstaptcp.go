@@ -120,7 +120,7 @@ func (c *DnstapTcp) Listen() error {
 func (c *DnstapTcp) Run() {
 	if c.listen == nil {
 		if err := c.Listen(); err != nil {
-			c.logger.Fatal("collector dnstap tcp listening - ", err)
+			c.logger.Fatal("collector dnstap tcp listening failed: ", err)
 		}
 	}
 	for {

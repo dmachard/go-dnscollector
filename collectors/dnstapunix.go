@@ -104,21 +104,30 @@ func (c *DnstapUnix) Stop() {
 	close(c.done)
 }
 
-func (c *DnstapUnix) Run() {
+func (c *DnstapUnix) Listen() error {
 	c.logger.Info("collector dnstap unix receiver - running in background...")
 
 	_ = os.Remove(c.sockPath)
 
 	listener, err := net.Listen("unix", c.sockPath)
 	if err != nil {
-		c.logger.Fatal("collector dnstap unix receiver - ", err)
+		return err
 	}
 	c.logger.Info("collector dnstap unix receiver - is listening on %s", listener.Addr())
 	c.listen = listener
+	return nil
+}
+
+func (c *DnstapUnix) Run() {
+	if c.listen == nil {
+		if err := c.Listen(); err != nil {
+			c.logger.Fatal("collector dnstap unix listening failed: ", err)
+		}
+	}
 
 	for {
 		// Accept() blocks waiting for new connection.
-		conn, err := listener.Accept()
+		conn, err := c.listen.Accept()
 		if err != nil {
 			break
 		}
