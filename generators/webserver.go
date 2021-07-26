@@ -111,17 +111,29 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%s_domains_total %d\n", suffix, s.stats.GetTotalDomains())
 
 		// pps, qps and rps
-		fmt.Fprintf(w, "# HELP %s_pps_total Number of packet per second received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_pps_total gauge\n", suffix)
-		fmt.Fprintf(w, "%s_pps_total %d\n", suffix, counters.Pps)
+		fmt.Fprintf(w, "# HELP %s_pps Number of packet per second received\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_pps gauge\n", suffix)
+		fmt.Fprintf(w, "%s_pps %d\n", suffix, counters.Pps)
 
-		fmt.Fprintf(w, "# HELP %s_qps_total Number of queries per second received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_qps_total gauge\n", suffix)
-		fmt.Fprintf(w, "%s_qps_total %d\n", suffix, counters.Qps)
+		fmt.Fprintf(w, "# HELP %s_qps Number of queries per second received\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_qps gauge\n", suffix)
+		fmt.Fprintf(w, "%s_qps %d\n", suffix, counters.Qps)
 
-		fmt.Fprintf(w, "# HELP %s_rps_total Number of replies per second received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_rps_total gauge\n", suffix)
-		fmt.Fprintf(w, "%s_rps_total %d\n", suffix, counters.Rps)
+		fmt.Fprintf(w, "# HELP %s_rps Number of replies per second received\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_rps gauge\n", suffix)
+		fmt.Fprintf(w, "%s_rps %d\n", suffix, counters.Rps)
+
+		fmt.Fprintf(w, "# HELP %s_pps_max Maximum number of packet per second received\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_pps_max counter\n", suffix)
+		fmt.Fprintf(w, "%s_pps_max %d\n", suffix, counters.Pps_max)
+
+		fmt.Fprintf(w, "# HELP %s_qps_max Maximum number of queries per second received\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_qps_max counter\n", suffix)
+		fmt.Fprintf(w, "%s_qps_max %d\n", suffix, counters.Qps_max)
+
+		fmt.Fprintf(w, "# HELP %s_rps_max Maximum number of replies per second received\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_rps_max counter\n", suffix)
+		fmt.Fprintf(w, "%s_rps_max %d\n", suffix, counters.Rps_max)
 
 		// number of queries - udp, tcp, ipv4 and ipv6
 		fmt.Fprintf(w, "# HELP %s_queries_total Number of queries received\n", suffix)

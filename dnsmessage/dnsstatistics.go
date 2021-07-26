@@ -7,9 +7,12 @@ import (
 )
 
 type Counters struct {
-	Pps uint64
-	Qps uint64
-	Rps uint64
+	Pps     uint64
+	Pps_max uint64
+	Qps     uint64
+	Qps_max uint64
+	Rps     uint64
+	Rps_max uint64
 
 	Queries_prev uint64
 	Replies_prev uint64
@@ -246,15 +249,24 @@ func (c *Statistics) Compute() {
 		c.total.Qps = c.total.Queries - c.total.Queries_prev
 	}
 	c.total.Queries_prev = c.total.Queries
+	if c.total.Qps > c.total.Qps_max {
+		c.total.Qps_max = c.total.Qps
+	}
 
 	// compute rps
 	if c.total.Replies > 0 && c.total.Replies_prev > 0 {
 		c.total.Rps = c.total.Replies - c.total.Replies_prev
 	}
 	c.total.Replies_prev = c.total.Replies
+	if c.total.Rps > c.total.Rps_max {
+		c.total.Rps_max = c.total.Rps
+	}
 
 	// total pps
 	c.total.Pps = c.total.Qps + c.total.Rps
+	if c.total.Pps > c.total.Pps_max {
+		c.total.Pps_max = c.total.Pps
+	}
 
 	c.rw.Unlock()
 }
