@@ -25,6 +25,8 @@ type Webserver struct {
 	config      *common.Config
 	logger      *logger.Logger
 	stats       *dnsmessage.Statistics
+	basicLogin  string
+	basicPwd    string
 }
 
 func NewWebserver(config *common.Config, logger *logger.Logger) *Webserver {
@@ -48,6 +50,8 @@ func (c *Webserver) ReadConfig() {
 	c.listenIp = c.config.Generators.WebServer.ListenIP
 	c.listenPort = c.config.Generators.WebServer.ListenPort
 	c.topMaxItems = c.config.Generators.WebServer.TopMaxItems
+	c.basicLogin = c.config.Generators.WebServer.BasicAuthLogin
+	c.basicPwd = c.config.Generators.WebServer.BasicAuthPwd
 }
 
 func (o *Webserver) Channel() chan dnsmessage.DnsMessage {
@@ -75,7 +79,21 @@ func (o *Webserver) Stop() {
 	o.logger.Info("generator webserver - stopped")
 }
 
+func (o *Webserver) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
+	login, password, authOK := r.BasicAuth()
+	if !authOK {
+		return false
+	}
+
+	return (login == o.basicLogin) && (password == o.basicPwd)
+}
+
 func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 
@@ -210,6 +228,11 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Webserver) tablesDomainsHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 
 	switch r.Method {
@@ -222,6 +245,11 @@ func (s *Webserver) tablesDomainsHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Webserver) tablesClientsHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 
 	switch r.Method {
@@ -234,6 +262,11 @@ func (s *Webserver) tablesClientsHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Webserver) tablesRcodesHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 
 	switch r.Method {
@@ -246,6 +279,11 @@ func (s *Webserver) tablesRcodesHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *Webserver) tablesRrtypesHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 
 	switch r.Method {
@@ -258,6 +296,11 @@ func (s *Webserver) tablesRrtypesHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Webserver) tablesOperationsHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 
 	switch r.Method {

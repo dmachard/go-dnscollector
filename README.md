@@ -25,38 +25,41 @@ Run-it from binary
 
 See [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml) file.
 
-## Metrics
+## Build-in Webserver
+
+
+### Metrics
 
 ```
-curl http://127.0.0.1:8080/metrics
+curl -user admin:changeme http://127.0.0.1:8080/metrics
 ```
 
-## Top domains
+### Top domains
 
 ```
-curl http://127.0.0.1:8080/tables/domains
+curl -user admin:changeme http://127.0.0.1:8080/tables/domains
 ```
 
-## Top clients
+### Top clients
 
 ```
-curl http://127.0.0.1:8080/tables/clients
+curl -user admin:changeme http://127.0.0.1:8080/tables/clients
 ```
 
-## Top rcodes
+### Top rcodes
 
 ```
-curl http://127.0.0.1:8080/tables/rcodes
+curl -user admin:changeme http://127.0.0.1:8080/tables/rcodes
 ```
 
-## Top operations
+### Top operations
 
 ```
-curl http://127.0.0.1:8080/tables/operations
+curl -user admin:changeme http://127.0.0.1:8080/tables/operations
 ```
 
-## Top rrtypes
+### Top rrtypes
 
 ```
-curl http://127.0.0.1:8080/tables/rrtypes
+curl -user admin:changeme http://127.0.0.1:8080/tables/rrtypes
 ```

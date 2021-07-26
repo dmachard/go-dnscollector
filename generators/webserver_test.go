@@ -10,6 +10,107 @@ import (
 	"github.com/dmachard/go-dnscollector/common"
 )
 
+func TestWebServerBadBasicAuth(t *testing.T) {
+	// init the generator
+	g := NewWebserver(common.GetFakeConfig(), common.GetFakeLogger(false))
+
+	tt := []struct {
+		name       string
+		uri        string
+		handler    func(w http.ResponseWriter, r *http.Request)
+		method     string
+		statusCode int
+	}{
+		{
+			name:       "total domains",
+			uri:        "/metrics",
+			handler:    g.metricsHandler,
+			method:     http.MethodGet,
+			statusCode: http.StatusUnauthorized,
+		},
+		{
+			name:       "total clients",
+			uri:        "/metrics",
+			handler:    g.metricsHandler,
+			method:     http.MethodGet,
+			statusCode: http.StatusUnauthorized,
+		},
+		{
+			name:       "total queries",
+			uri:        "/metrics",
+			handler:    g.metricsHandler,
+			method:     http.MethodGet,
+			statusCode: http.StatusUnauthorized,
+		},
+		{
+			name:       "total replies",
+			uri:        "/metrics",
+			handler:    g.metricsHandler,
+			method:     http.MethodGet,
+			statusCode: http.StatusUnauthorized,
+		},
+		{
+			name:       "top domains",
+			uri:        "/tables/domains",
+			handler:    g.tablesDomainsHandler,
+			method:     http.MethodGet,
+			statusCode: http.StatusUnauthorized,
+		},
+		{
+			name:       "top domains",
+			uri:        "/tables/domains",
+			handler:    g.tablesDomainsHandler,
+			method:     http.MethodGet,
+			statusCode: http.StatusUnauthorized,
+		},
+		{
+			name:       "top clients",
+			uri:        "/tables/clients",
+			handler:    g.tablesClientsHandler,
+			method:     http.MethodGet,
+			statusCode: http.StatusUnauthorized,
+		},
+		{
+			name:       "top rcodes",
+			uri:        "/tables/rcodes",
+			handler:    g.tablesRcodesHandler,
+			method:     http.MethodGet,
+			statusCode: http.StatusUnauthorized,
+		},
+		{
+			name:       "top rrtypes",
+			uri:        "/tables/rrtypes",
+			handler:    g.tablesRrtypesHandler,
+			method:     http.MethodGet,
+			statusCode: http.StatusUnauthorized,
+		},
+		{
+			name:       "top operations",
+			uri:        "/tables/operations",
+			handler:    g.tablesOperationsHandler,
+			method:     http.MethodGet,
+			statusCode: http.StatusUnauthorized,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// init httptest
+			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
+			request.SetBasicAuth(g.basicLogin, "badpassword")
+			responseRecorder := httptest.NewRecorder()
+
+			// call handler
+			tc.handler(responseRecorder, request)
+
+			// checking status code
+			if responseRecorder.Code != tc.statusCode {
+				t.Errorf("Want status '%d', got '%d'", tc.statusCode, responseRecorder.Code)
+			}
+		})
+	}
+}
+
 func TestWebServerGet(t *testing.T) {
 	// init the generator
 	g := NewWebserver(common.GetFakeConfig(), common.GetFakeLogger(false))
@@ -22,7 +123,6 @@ func TestWebServerGet(t *testing.T) {
 		uri        string
 		handler    func(w http.ResponseWriter, r *http.Request)
 		method     string
-		body       string
 		want       string
 		statusCode int
 	}{
@@ -31,7 +131,6 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/metrics",
 			handler:    g.metricsHandler,
 			method:     http.MethodGet,
-			body:       "",
 			want:       `dnscollector_domains_total 1`,
 			statusCode: http.StatusOK,
 		},
@@ -40,7 +139,6 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/metrics",
 			handler:    g.metricsHandler,
 			method:     http.MethodGet,
-			body:       "",
 			want:       `dnscollector_clients_total 1`,
 			statusCode: http.StatusOK,
 		},
@@ -49,7 +147,6 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/metrics",
 			handler:    g.metricsHandler,
 			method:     http.MethodGet,
-			body:       "",
 			want:       `dnscollector_queries_total 1`,
 			statusCode: http.StatusOK,
 		},
@@ -58,7 +155,6 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/metrics",
 			handler:    g.metricsHandler,
 			method:     http.MethodGet,
-			body:       "",
 			want:       `dnscollector_replies_total 0`,
 			statusCode: http.StatusOK,
 		},
@@ -67,7 +163,6 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/tables/domains",
 			handler:    g.tablesDomainsHandler,
 			method:     http.MethodGet,
-			body:       "",
 			want:       `\[{"key":"dns.collector","hit":1}]`,
 			statusCode: http.StatusOK,
 		},
@@ -76,7 +171,6 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/tables/domains",
 			handler:    g.tablesDomainsHandler,
 			method:     http.MethodGet,
-			body:       "",
 			want:       `\[{"key":"dns.collector","hit":1}]`,
 			statusCode: http.StatusOK,
 		},
@@ -85,7 +179,6 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/tables/clients",
 			handler:    g.tablesClientsHandler,
 			method:     http.MethodGet,
-			body:       "",
 			want:       `\[{"key":"1.2.3.4","hit":1}]`,
 			statusCode: http.StatusOK,
 		},
@@ -94,7 +187,6 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/tables/rcodes",
 			handler:    g.tablesRcodesHandler,
 			method:     http.MethodGet,
-			body:       "",
 			want:       `\[{"key":"NOERROR","hit":1}]`,
 			statusCode: http.StatusOK,
 		},
@@ -103,7 +195,6 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/tables/rrtypes",
 			handler:    g.tablesRrtypesHandler,
 			method:     http.MethodGet,
-			body:       "",
 			want:       `\[{"key":"A","hit":1}]`,
 			statusCode: http.StatusOK,
 		},
@@ -112,7 +203,6 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/tables/operations",
 			handler:    g.tablesOperationsHandler,
 			method:     http.MethodGet,
-			body:       "",
 			want:       `\[{"key":"CLIENT_QUERY","hit":1}]`,
 			statusCode: http.StatusOK,
 		},
@@ -122,6 +212,7 @@ func TestWebServerGet(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// init httptest
 			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
+			request.SetBasicAuth(g.basicLogin, g.basicPwd)
 			responseRecorder := httptest.NewRecorder()
 
 			// call handler
@@ -203,6 +294,7 @@ func TestWebServerBadMethod(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// init httptest
 			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
+			request.SetBasicAuth(g.basicLogin, g.basicPwd)
 			responseRecorder := httptest.NewRecorder()
 
 			// call handler

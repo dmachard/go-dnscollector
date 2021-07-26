@@ -29,10 +29,12 @@ type Config struct {
 			Enable bool `yaml:"enable"`
 		} `yaml:"stdout"`
 		WebServer struct {
-			Enable      bool   `yaml:"enable"`
-			ListenIP    string `yaml:"listen-ip"`
-			ListenPort  int    `yaml:"listen-port"`
-			TopMaxItems int    `yaml:"top-max-items"`
+			Enable         bool   `yaml:"enable"`
+			ListenIP       string `yaml:"listen-ip"`
+			ListenPort     int    `yaml:"listen-port"`
+			TopMaxItems    int    `yaml:"top-max-items"`
+			BasicAuthLogin string `yaml:"basic-auth-login"`
+			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
 		} `yaml:"webserver"`
 		LogFile struct {
 			Enable     bool   `yaml:"enable"`
@@ -81,6 +83,8 @@ func (c *Config) SetDefault() {
 	c.Generators.WebServer.ListenIP = "127.0.0.1"
 	c.Generators.WebServer.ListenPort = 8080
 	c.Generators.WebServer.TopMaxItems = 100
+	c.Generators.WebServer.BasicAuthLogin = "admin"
+	c.Generators.WebServer.BasicAuthPwd = "changeme"
 }
 
 func LoadConfig() (*Config, error) {
