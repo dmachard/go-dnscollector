@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  tu:
+  dev:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -22,3 +22,21 @@ jobs:
 
     - name: Test ${{ matrix.package }}
       run: go test -timeout 5s ./${{ matrix.package }}/ -cover -v
+
+  int:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        package: ['config']
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+    - uses: actions/setup-python@v2
+
+    - name: build binary
+      run: go build
+
+    - name: Test ${{ matrix.package }}
+      run: |
+        sudo python3 -m pip install dnstap_pb fstrm dnspython
+        sudo python3 -m unittest tests.${{ matrix.package }} -v

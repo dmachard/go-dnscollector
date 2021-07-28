@@ -1,5 +1,5 @@
 trace:
-  verbose: false
+  verbose: true
 
 collectors:
   dnstap-unix:
@@ -13,7 +13,7 @@ collectors:
 
 generators:
   stdout:
-    enable: false
+    enable: true
 
   webserver:
     enable: true

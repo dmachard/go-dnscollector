@@ -24,6 +24,8 @@ func main() {
 	}
 
 	logger.SetVerbose(config.Trace.Verbose)
+
+	logger.Info("main - config loaded...")
 	logger.Info("main - starting dnscollector...")
 
 	// load generators

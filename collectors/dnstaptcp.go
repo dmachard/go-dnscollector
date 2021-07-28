@@ -67,7 +67,7 @@ func (c *DnstapTcp) HandleConn(conn net.Conn) {
 
 	// init framestream receiver
 	if err := fs.InitReceiver(); err != nil {
-		c.logger.Error("collector dnstap tcp - error stream receiver initialization %s", err)
+		c.logger.Error("collector dnstap tcp - error stream receiver initialization: %s", err)
 		return
 	} else {
 		c.logger.Info("collector dnstap tcp - receiver framestream initialized")
