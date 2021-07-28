@@ -39,4 +39,5 @@ jobs:
     - name: Test ${{ matrix.package }}
       run: |
         sudo python3 -m pip install dnstap_pb fstrm dnspython
+        sudo python3 -m pip install --upgrade protobuf
         sudo python3 -m unittest tests.${{ matrix.package }} -v
