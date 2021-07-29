@@ -45,12 +45,13 @@ class TestDnstap(unittest.TestCase):
         self.loop = asyncio.get_event_loop()
 
     def test_stdout_recv(self):
-        """test to receive dnstap query in stdout"""
+        """test to receive dnstap response in stdout"""
         async def run():
             # run collector
             is_ready = asyncio.Future()
             is_clientresponse = asyncio.Future()
             args = ( "sudo", "-u", COLLECTOR_USER, "-s", "./go-dnscollector", "-config", "./tests/config_stdout_dnstapunix.yml",)
+            print(args)
             transport_collector, protocol_collector =  await self.loop.subprocess_exec(lambda: ProcessProtocol(is_ready, is_clientresponse),
                                                                                        *args, stdout=asyncio.subprocess.PIPE)
 

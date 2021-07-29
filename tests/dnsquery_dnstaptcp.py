@@ -41,7 +41,7 @@ class TestDnstap(unittest.TestCase):
         self.loop = asyncio.get_event_loop()
 
     def test_stdout_recv(self):
-        """test to receive dnstap query in stdout"""
+        """test to receive dnstap response in stdout"""
         async def run():
             # run collector
             is_ready = asyncio.Future()
