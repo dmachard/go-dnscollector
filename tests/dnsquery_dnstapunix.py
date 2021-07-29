@@ -10,6 +10,8 @@ if COLLECTOR_USER is None:
 my_resolver = dns.resolver.Resolver(configure=False)
 my_resolver.nameservers = ['127.0.0.1']
 my_resolver.port = 5553
+my_resolver.timeout = 20
+my_resolver.lifetime = 20
 
 class ProcessProtocol(asyncio.SubprocessProtocol):
     def __init__(self, is_ready, is_clientresponse):
