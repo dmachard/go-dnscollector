@@ -48,6 +48,11 @@ class TestDnstap(unittest.TestCase):
             transport_collector, protocol_collector =  await self.loop.subprocess_exec(lambda: ProcessProtocol(is_ready, is_clientresponse),
                                                                                        *args, stdout=asyncio.subprocess.PIPE)
 
+            # make some dns queries to force the dns server to connect to the collector
+            # in some products (dnsdist), connection is after  incoming dns traffic
+            for i in range(20):
+                my_resolver.resolve('www.github.com', 'a')
+
             # waiting for connection between collector and dns server is ok
             try:
                 await asyncio.wait_for(is_ready, timeout=5.0)

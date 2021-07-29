@@ -1,6 +1,11 @@
 import unittest
 import asyncio
 import dns.resolver
+import os
+
+COLLECTOR_USER = os.getenv('COLLECTOR_USER')
+if COLLECTOR_USER is None:
+    COLLECTOR_USER  = "root"
 
 my_resolver = dns.resolver.Resolver(configure=False)
 my_resolver.nameservers = ['127.0.0.1']
@@ -43,9 +48,14 @@ class TestDnstap(unittest.TestCase):
             # run collector
             is_ready = asyncio.Future()
             is_clientresponse = asyncio.Future()
-            args = ( "./go-dnscollector", "-config", "./tests/config_stdout_dnstapunix.yml",)
+            args = ( "sudo", "-u", COLLECTOR_USER, "-s", "./go-dnscollector", "-config", "./tests/config_stdout_dnstapunix.yml",)
             transport_collector, protocol_collector =  await self.loop.subprocess_exec(lambda: ProcessProtocol(is_ready, is_clientresponse),
                                                                                        *args, stdout=asyncio.subprocess.PIPE)
+
+            # make some dns queries to force the dns server to connect to the collector
+            # in some products (dnsdist), connection is after  incoming dns traffic
+            for i in range(20):
+                my_resolver.resolve('www.github.com', 'a')
 
             # waiting for connection between collector and dns server is ok
             try:
@@ -55,7 +65,7 @@ class TestDnstap(unittest.TestCase):
                 transport_collector.close()
                 self.fail("collector framestream timeout")
 
-            # make some dns queries
+            # make some dns queries again
             for i in range(20):
                 my_resolver.resolve('www.github.com', 'a')
 

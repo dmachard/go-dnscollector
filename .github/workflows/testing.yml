@@ -52,7 +52,7 @@ jobs:
     strategy:
       matrix:
         coredns: [ '1.8.4' ]
-        package: [ 'tcp', 'unix' ]
+        mode: [ 'tcp', 'unix' ]
 
     steps:
     - uses: actions/checkout@v2
@@ -68,8 +68,43 @@ jobs:
         sudo docker logs coredns > /tmp/core.out
         sudo cat /tmp/core.out
 
-    - name: Test ${{ matrix.package }}
+    - name: Test ${{ matrix.mode }}
       run: |
         sudo python3 -m pip install dnstap_pb fstrm dnspython
         sudo python3 -m pip install --upgrade protobuf
-        sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.package }} -v
+        sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
+
+  e2e-dnsdist:
+    runs-on: ubuntu-20.04
+    env:
+      COLLETOR_USER: pdns
+
+    strategy:
+      matrix:
+        dnsdist: [ '16' ]
+        mode: [ 'tcp', 'unix' ]
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+    - uses: actions/setup-python@v2
+
+    - name: build binary
+      run: go build
+
+    - name: add pdns user
+      run: |
+        sudo addgroup --system --gid 953 pdns
+        sudo adduser --system --disabled-password --no-create-home -uid 953 --gid 953 pdns
+
+    - name: Deploy dnsdist docker image
+      run: |
+        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/dnsdist_${{ matrix.mode }}.conf:/etc/dnsdist/conf.d/dnsdist.conf:ro -v /tmp/:/tmp/ powerdns/dnsdist-${{ matrix.dnsdist }}
+
+    - name: Test ${{ matrix.mode }}
+      run: |
+        sudo python3 -m pip install dnstap_pb fstrm dnspython
+        sudo python3 -m pip install --upgrade protobuf
+        sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
+
+
