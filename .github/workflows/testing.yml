@@ -46,7 +46,7 @@ jobs:
         sudo python3 -m pip install --upgrade protobuf
         sudo python3 -m unittest tests.${{ matrix.package }} -v
 
-  2e2:
+  e2e:
     runs-on: ubuntu-20.04
 
     strategy:
