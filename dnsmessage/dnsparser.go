@@ -228,7 +228,7 @@ func DecodeQuestion(payload []byte) (string, int, int) {
 	| 1  1|                OFFSET                   |
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func DecodeAnswers(ancount int, start_offset int, payload []byte) []answer {
+func DecodeAnswer(ancount int, start_offset int, payload []byte) []answer {
 	offset := start_offset
 	answers := []answer{}
 	for i := 0; i < ancount; i++ {

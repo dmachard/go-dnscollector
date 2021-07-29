@@ -136,7 +136,7 @@ func (d *DnstapConsumer) Run(send_to []chan DnsMessage) {
 		}
 
 		if dns_ancount > 0 {
-			dm.Answers = DecodeAnswers(dns_ancount, dns_offsetrr, dm.Payload)
+			dm.Answers = DecodeAnswer(dns_ancount, dns_offsetrr, dm.Payload)
 		}
 
 		// compute latency if possible

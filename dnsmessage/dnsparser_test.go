@@ -1,6 +1,7 @@
 package dnsmessage
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/miekg/dns"
@@ -73,5 +74,25 @@ func TestDecodeQuestion(t *testing.T) {
 	}
 	if offset_rr != len(payload) {
 		t.Errorf("invalid offset: %d, payload len: %d", offset_rr, len(payload))
+	}
+}
+
+func TestDecodeAnswer(t *testing.T) {
+	fqdn := "dnstapcollector.test."
+
+	dm := new(dns.Msg)
+	dm.SetQuestion(fqdn, dns.TypeA)
+	rr1, _ := dns.NewRR(fmt.Sprintf("%s A 127.0.0.1", fqdn))
+	rr2, _ := dns.NewRR(fmt.Sprintf("%s A 127.0.0.2", fqdn))
+	dm.Answer = append(dm.Answer, rr1)
+	dm.Answer = append(dm.Answer, rr2)
+
+	payload, _ := dm.Pack()
+
+	_, _, offset_rr := DecodeQuestion(payload)
+	answer := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+
+	if len(answer) != len(dm.Answer) {
+		t.Errorf("invalid decode answer, want %d, got: %d", len(dm.Answer), len(answer))
 	}
 }
