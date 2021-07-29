@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        package: ['config', 'dnstap']
+        package: ['config', 'clientquery_dnstaptcp', 'clientquery_dnstapunix' ]
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
