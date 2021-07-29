@@ -183,7 +183,6 @@ func DecodeDns(payload []byte) (int, int, int, int, error) {
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func DecodeQuestion(payload []byte) (string, int, int) {
-	fmt.Println("decoding question")
 	// Decode QNAME
 	qname, offset := ParseLabels(DnsLen, payload)
 
@@ -223,7 +222,6 @@ func DecodeQuestion(payload []byte) (string, int, int) {
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func DecodeAnswers(ancount int, start_offset int, payload []byte) []answer {
-	fmt.Println("decoding answer")
 	offset := start_offset
 	answers := []answer{}
 	for i := 0; i < ancount; i++ {
@@ -254,14 +252,12 @@ func DecodeAnswers(ancount int, start_offset int, payload []byte) []answer {
 		}
 		answers = append(answers, a)
 
-		offset += offset_next + 10 + int(rdlength)
+		offset = offset_next + 10 + int(rdlength)
 	}
 	return answers
 }
 
 func ParseLabels(offset int, payload []byte) (string, int) {
-	fmt.Printf("decoding label: %d", offset)
-	fmt.Print(payload)
 	labels := []string{}
 	for {
 		length := int(payload[offset])
@@ -271,7 +267,7 @@ func ParseLabels(offset int, payload []byte) (string, int) {
 		}
 
 		if length>>6 == 3 {
-			fmt.Println("label compressed!")
+			fmt.Println("todo - compressed label not yet supported")
 			break
 		} else {
 			label := payload[offset+1 : offset+length+1]
