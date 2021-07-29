@@ -13,7 +13,7 @@ collectors:
 
 generators:
   stdout:
-    enable: true
+    enable: false
 
   webserver:
     enable: true

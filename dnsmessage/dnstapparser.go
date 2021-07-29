@@ -116,10 +116,10 @@ func (d *DnstapConsumer) Run(send_to []chan DnsMessage) {
 		dm.Timestamp = float64(dm.Timesec) + float64(dm.Timensec)/1e9
 
 		// decode the dns payload to get id, rcode and the number of question
-		// ignore invalid packet
-		dns_id, dns_rcode, dns_qdcount, err := DecodeDns(dm.Payload)
+		// number of answer, ignore invalid packet
+		dns_id, dns_rcode, dns_qdcount, dns_ancount, err := DecodeDns(dm.Payload)
 		if err != nil {
-			d.logger.Error("dnstap parser error: %s", err)
+			d.logger.Error("dns parser error: %s", err)
 			continue
 		}
 
@@ -127,10 +127,16 @@ func (d *DnstapConsumer) Run(send_to []chan DnsMessage) {
 		dm.Rcode = RcodeToString(dns_rcode)
 
 		// continue to decode the dns payload to extract the qname and rrtype
+		var dns_offsetrr int
 		if dns_qdcount > 0 {
-			dns_qname, dns_rrtype := DecodeQuestion(dm.Payload)
+			dns_qname, dns_rrtype, offsetrr := DecodeQuestion(dm.Payload)
 			dm.Qname = dns_qname
 			dm.Qtype = RdatatypeToString(dns_rrtype)
+			dns_offsetrr = offsetrr
+		}
+
+		if dns_ancount > 0 {
+			dm.Answers = DecodeAnswers(dns_ancount, dns_offsetrr, dm.Payload)
 		}
 
 		// compute latency if possible

@@ -27,6 +27,7 @@ type DnsMessage struct {
 	Timestamp    float64
 	Timesec      int
 	Timensec     int
+	Answers      []answer
 }
 
 func (dm *DnsMessage) Init() {

@@ -3,6 +3,8 @@ package dnsmessage
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -110,6 +112,14 @@ var (
 	}
 )
 
+type answer struct {
+	name      string
+	rdatatype int
+	class     int
+	ttl       int
+	rdata     string
+}
+
 func RdatatypeToString(rrtype int) string {
 	if value, ok := Rdatatypes[rrtype]; ok {
 		return value
@@ -124,36 +134,170 @@ func RcodeToString(rcode int) string {
 	return "-"
 }
 
-func DecodeDns(payload []byte) (int, int, int, error) {
+/*
+	DNS HEADER
+									1  1  1  1  1  1
+	  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                      ID                       |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|QR|   Opcode  |AA|TC|RD|RA| Z|AD|CD|   RCODE   |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                    QDCOUNT                    |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                    ANCOUNT                    |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                    NSCOUNT                    |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                    ARCOUNT                    |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+*/
+
+func DecodeDns(payload []byte) (int, int, int, int, error) {
 	if len(payload) < DnsLen {
-		return 0, 0, 0, errors.New("dns message too short")
+		return 0, 0, 0, 0, errors.New("dns message too short")
 	}
+	// decode ID
 	id := binary.BigEndian.Uint16(payload[:2])
+	// decode RCODE
 	rcode := binary.BigEndian.Uint16(payload[2:4]) & 15
+	// decode QDCOUNT
 	qdcount := binary.BigEndian.Uint16(payload[4:6])
-	return int(id), int(rcode), int(qdcount), nil
+	// decode ANCOUNT
+	ancount := binary.BigEndian.Uint16(payload[6:8])
+	return int(id), int(rcode), int(qdcount), int(ancount), nil
 }
 
-func DecodeQuestion(payload []byte) (string, int) {
-	dns_rr := payload[DnsLen:]
-	qname := []string{}
-	for len(dns_rr) > 0 {
-		length := dns_rr[0]
+/*
+	DNS QUERY
+								   1  1  1  1  1  1
+	 0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                                               |
+	/                     QNAME                     /
+	/                                               /
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                     QTYPE                     |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                     QCLASS                    |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+*/
+func DecodeQuestion(payload []byte) (string, int, int) {
+	// Decode QNAME
+	qname, offset := ParseLabels(DnsLen, payload)
+
+	// decode QTYPE and support invalid packet, some abuser sends it...
+	var qtype uint16
+	if len(payload[offset:]) < 4 {
+		qtype = 0
+		offset += len(payload[offset:])
+	} else {
+		qtype = binary.BigEndian.Uint16(payload[offset : offset+2])
+		offset += 4
+	}
+	return qname, int(qtype), offset
+}
+
+/*
+    DNS ANSWERS
+	                               1  1  1  1  1  1
+	 0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                                               |
+	/                                               /
+	/                      NAME                     /
+	|                                               |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                      TYPE                     |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                     CLASS                     |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                      TTL                      |
+	|                                               |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                   RDLENGTH                    |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--|
+	/                     RDATA                     /
+	/                                               /
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+*/
+func DecodeAnswers(ancount int, start_offset int, payload []byte) []answer {
+	offset := start_offset
+	answers := []answer{}
+	for i := 0; i < ancount; i++ {
+		// Decode NAME
+		name, offset_next := ParseLabels(offset, payload)
+
+		// decode TYPE
+		t := binary.BigEndian.Uint16(payload[offset_next : offset_next+2])
+		// decode CLASS
+		class := binary.BigEndian.Uint16(payload[offset_next+2 : offset_next+4])
+		// decode TTL
+		ttl := binary.BigEndian.Uint32(payload[offset_next+4 : offset_next+8])
+		// decode RDLENGTH
+		rdlength := binary.BigEndian.Uint16(payload[offset_next+8 : offset_next+10])
+		// decode RDATA
+		rdata := payload[offset_next+10 : offset_next+10+int(rdlength)]
+
+		// parse rdata
+		parsed := ParseRdata(int(t), rdata)
+
+		// append answer
+		a := answer{
+			name:      name,
+			rdatatype: int(t),
+			class:     int(class),
+			ttl:       int(ttl),
+			rdata:     parsed,
+		}
+		answers = append(answers, a)
+
+		offset += offset_next + 10 + int(rdlength)
+	}
+	return answers
+}
+
+func ParseLabels(offset int, payload []byte) (string, int) {
+	labels := []string{}
+	for {
+		length := int(payload[offset])
 		if length == 0 {
+			offset++
 			break
 		}
 
-		label := dns_rr[1 : length+1]
-		qname = append(qname, string(label))
+		label := payload[offset+1 : offset+length+1]
+		labels = append(labels, string(label))
 
-		dns_rr = dns_rr[length+1:]
+		offset += length + 1
 	}
-	var qtype uint16
-	// condition to handle invalid packet, some abuser sends it...
-	if len(dns_rr) <= 4 {
-		qtype = 0
-	} else {
-		qtype = binary.BigEndian.Uint16(dns_rr[1:3])
+	return strings.Join(labels[:], "."), offset
+}
+
+func ParseRdata(t int, rdata []byte) string {
+	rdatatype := RdatatypeToString(t)
+	switch rdatatype {
+	case "A":
+		return ParseA(rdata)
+	case "AAAA":
+		return ParseAAAA(rdata)
+	default:
+		return "..."
 	}
-	return strings.Join(qname[:], "."), int(qtype)
+}
+
+func ParseA(r []byte) string {
+	var ip []string
+	for i := 0; i < len(r); i++ {
+		ip = append(ip, strconv.Itoa(int(r[i])))
+	}
+	return strings.Join(ip, ".")
+}
+
+func ParseAAAA(rdata []byte) string {
+	var ip []string
+	for i := 0; i < len(rdata); i += 2 {
+		ip = append(ip, fmt.Sprintf("%x", binary.BigEndian.Uint16(rdata[i:i+2])))
+	}
+	return strings.Join(ip, ":")
 }

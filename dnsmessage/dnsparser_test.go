@@ -1,6 +1,7 @@
 package dnsmessage
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/miekg/dns"
@@ -50,7 +51,7 @@ func TestDecodeDnsInvalid(t *testing.T) {
 	dm.SetQuestion("dnstapcollector.test.", dns.TypeA)
 
 	payload, _ := dm.Pack()
-	_, _, _, err := DecodeDns(payload[:4])
+	_, _, _, _, err := DecodeDns(payload[:4])
 	if err == nil {
 		t.Errorf("invalid packet dns error expected")
 	}
@@ -63,7 +64,7 @@ func TestDecodeQuestion(t *testing.T) {
 	dm.SetQuestion(fqdn, dns.TypeA)
 	payload, _ := dm.Pack()
 
-	qname, qtype := DecodeQuestion(payload)
+	qname, qtype, offset_rr := DecodeQuestion(payload)
 	if qname+"." != fqdn {
 		t.Errorf("invalid qname: %s", qname)
 	}
@@ -71,4 +72,6 @@ func TestDecodeQuestion(t *testing.T) {
 	if RdatatypeToString(qtype) != "A" {
 		t.Errorf("invalid qtype: %d", qtype)
 	}
+
+	fmt.Println(offset_rr)
 }
