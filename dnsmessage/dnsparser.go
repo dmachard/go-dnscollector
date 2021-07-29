@@ -220,6 +220,13 @@ func DecodeQuestion(payload []byte) (string, int, int) {
 	/                     RDATA                     /
 	/                                               /
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
+	PTR can be used on NAME for compression
+									1  1  1  1  1  1
+	  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	| 1  1|                OFFSET                   |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func DecodeAnswers(ancount int, start_offset int, payload []byte) []answer {
 	offset := start_offset
@@ -266,9 +273,14 @@ func ParseLabels(offset int, payload []byte) (string, int) {
 			break
 		}
 
+		// label pointer support ?
 		if length>>6 == 3 {
-			fmt.Println("todo - compressed label not yet supported")
+			ptr := binary.BigEndian.Uint16(payload[offset:offset+2]) & 16383
+			label, _ := ParseLabels(int(ptr), payload)
+			labels = append(labels, label)
+			offset += 2
 			break
+
 		} else {
 			label := payload[offset+1 : offset+length+1]
 			labels = append(labels, string(label))
