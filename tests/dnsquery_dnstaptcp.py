@@ -47,7 +47,7 @@ class TestDnstap(unittest.TestCase):
 
             # wait if is listening
             try:
-                await asyncio.wait_for(is_listening, timeout=1.0)
+                await asyncio.wait_for(is_listening, timeout=5.0)
             except asyncio.TimeoutError:
                 protocol_collector.kill()
                 transport_collector.close()
@@ -59,7 +59,7 @@ class TestDnstap(unittest.TestCase):
 
             # wait client response on collector
             try:
-                await asyncio.wait_for(is_clientresponse, timeout=10.0)
+                await asyncio.wait_for(is_clientresponse, timeout=20.0)
             except asyncio.TimeoutError:
                 protocol_collector.kill()
                 transport_collector.close()
