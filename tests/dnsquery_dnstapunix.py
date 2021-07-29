@@ -7,8 +7,8 @@ my_resolver.nameservers = ['127.0.0.1']
 my_resolver.port = 5553
 
 class ProcessProtocol(asyncio.SubprocessProtocol):
-    def __init__(self, is_listening, is_clientresponse):
-        self.is_listening = is_listening
+    def __init__(self, is_ready, is_clientresponse):
+        self.is_ready = is_ready
         self.is_clientresponse = is_clientresponse
         self.transport = None
         self.proc = None
@@ -20,8 +20,8 @@ class ProcessProtocol(asyncio.SubprocessProtocol):
     def pipe_data_received(self, fd, data):
         print(data.decode(), end="")
 
-        if b"collector dnstap unix receiver - is listening on" in data:
-            self.is_listening.set_result(True)
+        if b"collector dnstap unix receiver - receiver framestream initialized" in data:
+            self.is_ready.set_result(True)
         
         if not self.is_clientresponse.done():
             if b"CLIENT_RESPONSE NOERROR" in data:
@@ -39,27 +39,27 @@ class TestDnstap(unittest.TestCase):
         """test to receive dnstap query in stdout"""
         async def run():
             # run collector
-            is_listening = asyncio.Future()
+            is_ready = asyncio.Future()
             is_clientresponse = asyncio.Future()
             args = ( "./go-dnscollector", "-config", "./tests/config_stdout_dnstapunix.yml",)
-            transport_collector, protocol_collector =  await self.loop.subprocess_exec(lambda: ProcessProtocol(is_listening, is_clientresponse),
+            transport_collector, protocol_collector =  await self.loop.subprocess_exec(lambda: ProcessProtocol(is_ready, is_clientresponse),
                                                                                        *args, stdout=asyncio.subprocess.PIPE)
 
-            # wait if is listening
+            # waiting for connection between collector and dns server is ok
             try:
-                await asyncio.wait_for(is_listening, timeout=5.0)
+                await asyncio.wait_for(is_ready, timeout=5.0)
             except asyncio.TimeoutError:
                 protocol_collector.kill()
                 transport_collector.close()
-                self.fail("collector listening timeout")
+                self.fail("collector framestream timeout")
 
             # make some dns queries
-            for i in range(15):
+            for i in range(20):
                 my_resolver.resolve('www.github.com', 'a')
 
             # wait client response on collector
             try:
-                await asyncio.wait_for(is_clientresponse, timeout=20.0)
+                await asyncio.wait_for(is_clientresponse, timeout=30.0)
             except asyncio.TimeoutError:
                 protocol_collector.kill()
                 transport_collector.close()
