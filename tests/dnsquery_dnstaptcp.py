@@ -29,7 +29,10 @@ class ProcessProtocol(asyncio.SubprocessProtocol):
                 self.kill()
 
     def kill(self):
-        self.proc.kill()
+        try:
+            self.proc.kill()
+        except ProcessLookupError: pass
+        
 
 class TestDnstap(unittest.TestCase):
     def setUp(self):
