@@ -74,7 +74,7 @@ class TestDnstap(unittest.TestCase):
     def setUp(self):
         self.loop = asyncio.get_event_loop()
 
-    def test1_stdout_recv(self):
+    def test_stdout_recv(self):
         """test to receive dnstap query in stdout"""
         async def run():
             # run collector
