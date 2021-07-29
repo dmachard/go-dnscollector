@@ -270,10 +270,15 @@ func ParseLabels(offset int, payload []byte) (string, int) {
 			break
 		}
 
-		label := payload[offset+1 : offset+length+1]
-		labels = append(labels, string(label))
+		if length>>6 == 3 {
+			fmt.Println("label compressed!")
+			break
+		} else {
+			label := payload[offset+1 : offset+length+1]
+			labels = append(labels, string(label))
 
-		offset += length + 1
+			offset += length + 1
+		}
 	}
 	return strings.Join(labels[:], "."), offset
 }
