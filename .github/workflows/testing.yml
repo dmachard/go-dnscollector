@@ -64,7 +64,7 @@ jobs:
 
     - name: Deploy coredns docker image
       run: |
-        sudo docker run -d --network="host" --name=coredns -v $PWD/tests/:$PWD/tests/ -v /tmp/:/tmp/ coredns/coredns:${{ matrix.coredns }} -conf $PWD/tests/coredns_${{ matrix.package }}.conf
+        sudo docker run -d --network="host" --name=coredns -v $PWD/tests/:$PWD/tests/ -v /tmp/:/tmp/ coredns/coredns:${{ matrix.coredns }} -conf $PWD/tests/coredns_${{ matrix.mode }}.conf
         sudo docker logs coredns > /tmp/core.out
         sudo cat /tmp/core.out
 
