@@ -77,7 +77,7 @@ jobs:
   e2e-dnsdist:
     runs-on: ubuntu-20.04
     env:
-      COLLETOR_USER: pdns
+      COLLECTOR_USER: pdns
 
     strategy:
       matrix:
