@@ -28,14 +28,8 @@ jobs:
       run: |
         cd app/
         go build .
-        ls -alrt
         cd ../gen/
         go build .
-        ls -alrt
-
-    - name: Load testing
-      run: |
-        ls -alrt
 
     - name: Loading testing
       run: |

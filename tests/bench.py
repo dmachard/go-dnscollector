@@ -75,7 +75,7 @@ class TestBench(unittest.TestCase):
             # Shutdown all
             protocol_collector.kill()
             transport_collector.close()
-            protocol_gen.close()
+            protocol_gen.kill()
             transport_gen.close()
 
 
