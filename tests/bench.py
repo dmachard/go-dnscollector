@@ -1,6 +1,7 @@
 import unittest
 import asyncio
 import requests
+import re
 
 class CollectorProc(asyncio.SubprocessProtocol):
     def __init__(self, is_listening):
@@ -74,6 +75,15 @@ class TestBench(unittest.TestCase):
 
 
             r = requests.get("http://127.0.0.1:8080/metrics", auth=('admin', 'changeme'))
+            for l in r.text.splitlines():
+                print(re.search("^dnscollector_domains_total.*", l))
+                print(re.search("^dnscollector_clients_total.*", l))
+                print(re.search("^dnscollector_pps_max.*", l))
+                print(re.search("^dnscollector_pps_max.*", l))
+                print(re.search("^dnscollector_queries_total.*", l))
+                print(re.search("^dnscollector_replies_total.*", l))
+
+
             print(r.text)
 
             # Shutdown all
