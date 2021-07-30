@@ -3,9 +3,9 @@
 `go-dnscollector` acts as a high speed passive analyser for DNS traffic.
 
 Features:
-- Support for [Dnstap](https://dnstap.info/) (TCP, Unix) collector
-- Support for [Dnstap](https://dnstap.info/) (TCP) generator
-- Support for dns log files generator
+- Collector for [Dnstap](https://dnstap.info/) (TCP, unix) 
+- Generator for [Dnstap](https://dnstap.info/) (TCP, unix) 
+- Generator dns log files 
 - Prometheus metrics support (qps, total queries/replies...)
 - Dns statistics usage support (top domains, clients, rcodes...) 
 - Written in Go
@@ -23,43 +23,5 @@ Run-it from binary
 
 ## Configuration
 
-See [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml) file.
-
-## Build-in Webserver
-
-
-### Metrics
-
-```
-curl -user admin:changeme http://127.0.0.1:8080/metrics
-```
-
-### Top domains
-
-```
-curl -user admin:changeme http://127.0.0.1:8080/tables/domains
-```
-
-### Top clients
-
-```
-curl -user admin:changeme http://127.0.0.1:8080/tables/clients
-```
-
-### Top rcodes
-
-```
-curl -user admin:changeme http://127.0.0.1:8080/tables/rcodes
-```
-
-### Top operations
-
-```
-curl -user admin:changeme http://127.0.0.1:8080/tables/operations
-```
-
-### Top rrtypes
-
-```
-curl -user admin:changeme http://127.0.0.1:8080/tables/rrtypes
-```
+A typically configuration would have one or more collector to receive DNS traffic or logs, and severals generetors to process the 
+incoming traffics. See [Configuration gude](doc/configuration.md) file.
