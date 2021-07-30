@@ -66,7 +66,7 @@ class TestBench(unittest.TestCase):
                 self.fail("collector listening timeout")
             
 
-            nb_packets = [500000]
+            nb_packets = [250000]
             for nb in nb_packets:
                 print("STARTING BENCHMARK: %s packets" % nb)
                 # start gen
