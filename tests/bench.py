@@ -71,7 +71,7 @@ class TestBench(unittest.TestCase):
                 print("STARTING BENCHMARK: %s packets" % nb)
                 # start gen
                 is_existed = asyncio.Future()
-                args = ( "./../gen/go-dnstap-generator", "-c", "2", "-n", str(nb) )
+                args = ( "./../gen/go-dnstap-generator", "-c", "1", "-n", str(nb) )
                 transport_gen, protocol_gen =  await self.loop.subprocess_exec(lambda: GeneratorProc(is_existed),
                                                                                         *args, stdout=asyncio.subprocess.PIPE)
                 await is_existed
@@ -81,7 +81,6 @@ class TestBench(unittest.TestCase):
                 for l in r.text.splitlines():
                     if l.startswith("dnscollector_domains_total"): print(l)
                     if l.startswith("dnscollector_clients_total"): print(l)
-                    if l.startswith("dnscollector_pps_max"): print(l)
                     if l.startswith("dnscollector_pps_max"): print(l)
                     if l.startswith("dnscollector_queries_total"): print(l)
                     if l.startswith("dnscollector_replies_total"): print(l)
