@@ -36,3 +36,8 @@ jobs:
     - name: Load testing
       run: |
         ls -alrt
+
+    - name: Loading testing
+      run: |
+        cd app/
+        sudo python3 -m unittest tests.bench -v
