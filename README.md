@@ -3,11 +3,10 @@
 `go-dnscollector` acts as a high speed passive analyser for DNS traffic.
 
 Features:
-- Collector for [Dnstap](https://dnstap.info/) (TCP, unix) 
-- Generator for [Dnstap](https://dnstap.info/) (TCP, unix) 
-- Generator dns log files 
-- Prometheus metrics support (qps, total queries/replies...)
-- Dns statistics usage support (top domains, clients, rcodes...) 
+- DNS logs collector from [Dnstap](https://dnstap.info/) (TCP, unix) streams
+- Stream generator to [Dnstap](https://dnstap.info/) (TCP, unix)
+- Log files generator to plain text
+- Web server with prometheus metrics and usage support (qps, total queries/replies, top domains, clients, rcodes...) 
 - Written in Go
 
 ![overview](doc/overview.png)

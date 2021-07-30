@@ -37,3 +37,9 @@ generators:
     remote-port: 6000
     retry: 5
     dnstap-identity: dnscollector
+
+  dnstap-unix:
+    enable: false
+    sock-path: null
+    retry: 5
+    dnstap-identity: dnscollector
