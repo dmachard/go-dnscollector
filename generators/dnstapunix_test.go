@@ -2,7 +2,9 @@ package generators
 
 import (
 	"bufio"
+	"log"
 	"net"
+	"os"
 	"testing"
 	"time"
 
@@ -12,12 +14,20 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func TestDnstapTcpRun(t *testing.T) {
+func TestDnstapUnixRun(t *testing.T) {
+
+	sockAddr := "/tmp/test.sock"
+
 	// init generator
-	g := NewDnstapTcpSender(common.GetFakeConfig(), common.GetFakeLogger(false))
+	config := common.GetFakeConfig()
+	config.Generators.DnstapUnix.SockPath = sockAddr
+	g := NewDnstapUnixSender(config, common.GetFakeLogger(false))
 
 	// fake dnstap receiver
-	fakeRcvr, err := net.Listen("tcp", ":6000")
+	if err := os.RemoveAll(sockAddr); err != nil {
+		log.Fatal(err)
+	}
+	fakeRcvr, err := net.Listen("unix", sockAddr)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -41,7 +41,10 @@ func main() {
 		genwrks = append(genwrks, generators.NewLogFile(config, logger))
 	}
 	if config.Generators.DnstapTcp.Enable {
-		genwrks = append(genwrks, generators.NewDnstapSender(config, logger))
+		genwrks = append(genwrks, generators.NewDnstapTcpSender(config, logger))
+	}
+	if config.Generators.DnstapUnix.Enable {
+		genwrks = append(genwrks, generators.NewDnstapUnixSender(config, logger))
 	}
 
 	// load collectors

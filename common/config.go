@@ -51,6 +51,12 @@ type Config struct {
 			Retry          int    `yaml:"retry"`
 			DnstapIdentity string `yaml:"dnstap-identity"`
 		} `yaml:"dnstap-tcp"`
+		DnstapUnix struct {
+			Enable         bool   `yaml:"enable"`
+			SockPath       string `yaml:"sock-path"`
+			DnstapIdentity string `yaml:"dnstap-identity"`
+			Retry          int    `yaml:"retry"`
+		} `yaml:"dnstap-unix"`
 	} `yaml:"generators"`
 }
 
@@ -71,6 +77,11 @@ func (c *Config) SetDefault() {
 	c.Generators.DnstapTcp.RemotePort = 6000
 	c.Generators.DnstapTcp.Retry = 5
 	c.Generators.DnstapTcp.DnstapIdentity = "collector"
+
+	c.Generators.DnstapUnix.Enable = false
+	c.Collectors.DnstapUnix.SockPath = ""
+	c.Generators.DnstapUnix.Retry = 5
+	c.Generators.DnstapUnix.DnstapIdentity = "collector"
 
 	c.Generators.LogFile.Enable = false
 	c.Generators.LogFile.FilePath = ""

@@ -14,22 +14,21 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type DnstapTcpSender struct {
-	done       chan bool
-	channel    chan dnsmessage.DnsMessage
-	config     *common.Config
-	logger     *logger.Logger
-	exit       chan bool
-	conn       net.Conn
-	remoteIP   string
-	remotePort int
-	identity   string
-	retry      int
+type DnstapUnixSender struct {
+	done     chan bool
+	channel  chan dnsmessage.DnsMessage
+	config   *common.Config
+	logger   *logger.Logger
+	exit     chan bool
+	conn     net.Conn
+	sockPath string
+	identity string
+	retry    int
 }
 
-func NewDnstapTcpSender(config *common.Config, logger *logger.Logger) *DnstapTcpSender {
-	logger.Info("generator dnstap tcp sender - enabled")
-	s := &DnstapTcpSender{
+func NewDnstapUnixSender(config *common.Config, logger *logger.Logger) *DnstapUnixSender {
+	logger.Info("generator dnstap unix sender - enabled")
+	s := &DnstapUnixSender{
 		done:    make(chan bool),
 		exit:    make(chan bool),
 		channel: make(chan dnsmessage.DnsMessage, 512),
@@ -42,26 +41,25 @@ func NewDnstapTcpSender(config *common.Config, logger *logger.Logger) *DnstapTcp
 	return s
 }
 
-func (o *DnstapTcpSender) ReadConfig() {
-	o.remoteIP = o.config.Generators.DnstapTcp.RemoteIP
-	o.remotePort = o.config.Generators.DnstapTcp.RemotePort
-	o.identity = o.config.Generators.DnstapTcp.DnstapIdentity
-	o.retry = o.config.Generators.DnstapTcp.Retry
+func (o *DnstapUnixSender) ReadConfig() {
+	o.sockPath = o.config.Generators.DnstapUnix.SockPath
+	o.identity = o.config.Generators.DnstapUnix.DnstapIdentity
+	o.retry = o.config.Generators.DnstapUnix.Retry
 }
 
-func (o *DnstapTcpSender) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("generator dnstap tcp sender - "+msg, v...)
+func (o *DnstapUnixSender) LogInfo(msg string, v ...interface{}) {
+	o.logger.Info("generator dnstap unix sender - "+msg, v...)
 }
 
-func (o *DnstapTcpSender) LogError(msg string, v ...interface{}) {
-	o.logger.Error("generator dnstap tcp sender - "+msg, v...)
+func (o *DnstapUnixSender) LogError(msg string, v ...interface{}) {
+	o.logger.Error("generator dnstap unix sender - "+msg, v...)
 }
 
-func (o *DnstapTcpSender) Channel() chan dnsmessage.DnsMessage {
+func (o *DnstapUnixSender) Channel() chan dnsmessage.DnsMessage {
 	return o.channel
 }
 
-func (o *DnstapTcpSender) Stop() {
+func (o *DnstapUnixSender) Stop() {
 	o.LogInfo("stopping...")
 
 	// exit to close properly
@@ -72,7 +70,7 @@ func (o *DnstapTcpSender) Stop() {
 	close(o.done)
 }
 
-func (o *DnstapTcpSender) Run() {
+func (o *DnstapUnixSender) Run() {
 	o.LogInfo("running in background...")
 
 	dt := &dnstap.Dnstap{}
@@ -86,13 +84,13 @@ LOOP:
 			case <-o.exit:
 				break LOOP
 			default:
-				o.LogInfo("connecting to remote destination")
-				conn, err := net.Dial("tcp", o.remoteIP+":"+strconv.Itoa(o.remotePort))
+				o.LogInfo("connecting to unix socket %s", o.sockPath)
+				conn, err := net.Dial("unix", o.sockPath)
 				if err != nil {
 					o.LogError("connect error: %s", err)
 				}
 				if conn != nil {
-					o.LogInfo("connected with remote")
+					o.LogInfo("connected")
 					o.conn = conn
 					// frame stream library
 					r := bufio.NewReader(conn)
@@ -184,7 +182,7 @@ LOOP:
 	}
 
 	if o.conn != nil {
-		o.LogInfo("closing tcp connection")
+		o.LogInfo("closing connection")
 		o.conn.Close()
 	}
 	o.LogInfo("run terminated")
