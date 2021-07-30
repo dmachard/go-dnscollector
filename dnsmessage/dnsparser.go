@@ -169,7 +169,7 @@ func DecodeDns(payload []byte) (int, int, int, int, error) {
 }
 
 /*
-	DNS QUERY
+	DNS QUESTION
 								   1  1  1  1  1  1
 	 0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
@@ -199,7 +199,7 @@ func DecodeQuestion(payload []byte) (string, int, int) {
 }
 
 /*
-    DNS ANSWERS
+    DNS ANSWER
 	                               1  1  1  1  1  1
 	 0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
@@ -303,6 +303,15 @@ func ParseRdata(t int, rdata []byte) string {
 	}
 }
 
+/*
+    IPv4
+	                               1  1  1  1  1  1
+	 0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                    ADDRESS                    |
+	|                                               |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+*/
 func ParseA(r []byte) string {
 	var ip []string
 	for i := 0; i < len(r); i++ {
@@ -311,6 +320,21 @@ func ParseA(r []byte) string {
 	return strings.Join(ip, ".")
 }
 
+/*
+    IPv6
+	                               1  1  1  1  1  1
+	 0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	|                                               |
+	|                                               |
+	|                                               |
+	|                    ADDRESS                    |
+	|                                               |
+	|                                               |
+	|                                               |
+	|                                               |
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+*/
 func ParseAAAA(rdata []byte) string {
 	var ip []string
 	for i := 0; i < len(rdata); i += 2 {

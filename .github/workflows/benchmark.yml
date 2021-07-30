@@ -1,0 +1,27 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+obs:
+  bench:
+    runs-on: ubuntu-20.04
+
+  steps:
+  - uses: actions/checkout@v2
+    with:
+      path: app
+      
+  - uses: actions/checkout@v2
+    with:
+      repository: dmachard/go-dnstap-generator
+      path: gen
+
+  - name: debug
+    run: |
+      ls -alrt
