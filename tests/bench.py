@@ -1,5 +1,6 @@
 import unittest
 import asyncio
+import requests
 
 class CollectorProc(asyncio.SubprocessProtocol):
     def __init__(self, is_listening):
@@ -66,11 +67,14 @@ class TestBench(unittest.TestCase):
 
             # start gen
             is_existed = asyncio.Future()
-            args = ( "./../gen/go-dnstap-generator", "-h",)
+            args = ( "./../gen/go-dnstap-generator", "-n", "1000000")
             transport_gen, protocol_gen =  await self.loop.subprocess_exec(lambda: GeneratorProc(is_existed),
                                                                                        *args, stdout=asyncio.subprocess.PIPE)
             await is_existed
 
+
+            r = requests.get("http://127.0.0.1:8080/metrics", auth=('admin', 'changeme'))
+            print(r.text)
 
             # Shutdown all
             protocol_collector.kill()
