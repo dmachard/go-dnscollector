@@ -35,5 +35,4 @@ jobs:
 
     - name: Load testing
       run: |
-        cd ../
         ls -alrt
