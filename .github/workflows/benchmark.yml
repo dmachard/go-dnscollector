@@ -28,5 +28,7 @@ jobs:
       run: |
         cd app/
         go build .
+        ls -alrt
         cd ../gen/
         go build .
+        ls -alrt
