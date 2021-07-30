@@ -12,15 +12,21 @@ jobs:
   bench:
     runs-on: ubuntu-20.04
     steps:
+    - uses: actions/setup-go@v2
+    - uses: actions/setup-python@v2
+
     - uses: actions/checkout@v2
       with:
         path: app
-        
+
     - uses: actions/checkout@v2
       with:
         repository: dmachard/go-dnstap-generator
         path: gen
 
-    - name: debug
+    - name: Build
       run: |
-        ls -alrt
+        cd app/
+        go build .
+        cd ../gen/
+        go build .
