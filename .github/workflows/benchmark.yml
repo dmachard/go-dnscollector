@@ -32,3 +32,8 @@ jobs:
         cd ../gen/
         go build .
         ls -alrt
+
+    - name: Load testing
+      run: |
+        cd ../
+        ls -alrt
