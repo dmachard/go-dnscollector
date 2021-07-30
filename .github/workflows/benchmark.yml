@@ -1,4 +1,4 @@
-name: Test
+name: Benchmark
 
 on:
   push:
@@ -11,17 +11,16 @@ on:
 jobs:
   bench:
     runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        path: app
+        
+    - uses: actions/checkout@v2
+      with:
+        repository: dmachard/go-dnstap-generator
+        path: gen
 
-  steps:
-  - uses: actions/checkout@v2
-    with:
-      path: app
-      
-  - uses: actions/checkout@v2
-    with:
-      repository: dmachard/go-dnstap-generator
-      path: gen
-
-  - name: debug
-    run: |
-      ls -alrt
+    - name: debug
+      run: |
+        ls -alrt
