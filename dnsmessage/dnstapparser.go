@@ -115,6 +115,8 @@ func (d *DnstapConsumer) Run(send_to []chan DnsMessage) {
 
 		// compute timestamp
 		dm.Timestamp = float64(dm.TimeSec) + float64(dm.TimeNsec)/1e9
+		ts := time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec))
+		dm.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
 		// decode the dns payload to get id, rcode and the number of question
 		// number of answer, ignore invalid packet
@@ -158,7 +160,9 @@ func (d *DnstapConsumer) Run(send_to []chan DnsMessage) {
 			}
 		}
 
+		// convert latency to human
 		dm.LatencySec = fmt.Sprintf("%.6f", dm.Latency)
+
 		for i := range send_to {
 			send_to[i] <- dm
 		}
