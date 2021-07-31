@@ -112,12 +112,12 @@ var (
 	}
 )
 
-type answer struct {
-	name      string
-	rdatatype int
-	class     int
-	ttl       int
-	rdata     string
+type Answer struct {
+	Name      string `json:"name"`
+	Rdatatype string `json:"rdatatype"`
+	Class     int    `json:"-"`
+	Ttl       int    `json:"ttl"`
+	Rdata     string `json:"rdata"`
 }
 
 func RdatatypeToString(rrtype int) string {
@@ -228,9 +228,9 @@ func DecodeQuestion(payload []byte) (string, int, int) {
 	| 1  1|                OFFSET                   |
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func DecodeAnswer(ancount int, start_offset int, payload []byte) []answer {
+func DecodeAnswer(ancount int, start_offset int, payload []byte) []Answer {
 	offset := start_offset
-	answers := []answer{}
+	answers := []Answer{}
 	for i := 0; i < ancount; i++ {
 		// Decode NAME
 		name, offset_next := ParseLabels(offset, payload)
@@ -247,15 +247,16 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) []answer {
 		rdata := payload[offset_next+10 : offset_next+10+int(rdlength)]
 
 		// parse rdata
-		parsed := ParseRdata(int(t), rdata)
+		rdatatype := RdatatypeToString(int(t))
+		parsed := ParseRdata(rdatatype, rdata)
 
 		// append answer
-		a := answer{
-			name:      name,
-			rdatatype: int(t),
-			class:     int(class),
-			ttl:       int(ttl),
-			rdata:     parsed,
+		a := Answer{
+			Name:      name,
+			Rdatatype: rdatatype,
+			Class:     int(class),
+			Ttl:       int(ttl),
+			Rdata:     parsed,
 		}
 		answers = append(answers, a)
 
@@ -291,15 +292,14 @@ func ParseLabels(offset int, payload []byte) (string, int) {
 	return strings.Join(labels[:], "."), offset
 }
 
-func ParseRdata(t int, rdata []byte) string {
-	rdatatype := RdatatypeToString(t)
+func ParseRdata(rdatatype string, rdata []byte) string {
 	switch rdatatype {
 	case "A":
 		return ParseA(rdata)
 	case "AAAA":
 		return ParseAAAA(rdata)
 	default:
-		return "..."
+		return "-"
 	}
 }
 

@@ -46,7 +46,7 @@ func (o *DnstapTcpSender) ReadConfig() {
 	o.remoteIP = o.config.Generators.DnstapTcp.RemoteIP
 	o.remotePort = o.config.Generators.DnstapTcp.RemotePort
 	o.identity = o.config.Generators.DnstapTcp.DnstapIdentity
-	o.retry = o.config.Generators.DnstapTcp.Retry
+	o.retry = o.config.Generators.DnstapTcp.RetryInterval
 }
 
 func (o *DnstapTcpSender) LogInfo(msg string, v ...interface{}) {
@@ -80,7 +80,7 @@ func (o *DnstapTcpSender) Run() {
 
 LOOP:
 	for {
-	LOOP_RECONNET:
+	LOOP_RECONNECT:
 		for {
 			select {
 			case <-o.exit:
@@ -121,8 +121,8 @@ LOOP:
 							mt := dnstap.Message_Type(dnstap.Message_Type_value[dm.Operation])
 							sf := dnstap.SocketFamily(dnstap.SocketFamily_value[dm.Family])
 							sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.Protocol])
-							tsec := uint64(dm.Timesec)
-							tnsec := uint32(dm.Timensec)
+							tsec := uint64(dm.TimeSec)
+							tnsec := uint32(dm.TimeNsec)
 							rportint, err := strconv.Atoi(dm.ResponsePort)
 							if err != nil {
 								o.LogError("error to encode dnstap response port %s", err)
@@ -165,7 +165,7 @@ LOOP:
 							frame.Write(data)
 							if err := fs.SendFrame(frame); err != nil {
 								o.LogError("send frame error %s", err)
-								break LOOP_RECONNET
+								break LOOP_RECONNECT
 							}
 						case <-o.exit:
 							o.logger.Info("closing framestream")

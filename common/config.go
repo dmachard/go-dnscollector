@@ -48,15 +48,21 @@ type Config struct {
 			Enable         bool   `yaml:"enable"`
 			RemoteIP       string `yaml:"remote-ip"`
 			RemotePort     int    `yaml:"remote-port"`
-			Retry          int    `yaml:"retry"`
+			RetryInterval  int    `yaml:"retry-interval"`
 			DnstapIdentity string `yaml:"dnstap-identity"`
 		} `yaml:"dnstap-tcp"`
 		DnstapUnix struct {
 			Enable         bool   `yaml:"enable"`
 			SockPath       string `yaml:"sock-path"`
 			DnstapIdentity string `yaml:"dnstap-identity"`
-			Retry          int    `yaml:"retry"`
+			RetryInterval  int    `yaml:"retry-interval"`
 		} `yaml:"dnstap-unix"`
+		JsonTcp struct {
+			Enable        bool   `yaml:"enable"`
+			RemoteIP      string `yaml:"remote-ip"`
+			RemotePort    int    `yaml:"remote-port"`
+			RetryInterval int    `yaml:"retry-interval"`
+		} `yaml:"json-tcp"`
 	} `yaml:"generators"`
 }
 
@@ -75,12 +81,12 @@ func (c *Config) SetDefault() {
 	c.Generators.DnstapTcp.Enable = false
 	c.Generators.DnstapTcp.RemoteIP = "127.0.0.1"
 	c.Generators.DnstapTcp.RemotePort = 6000
-	c.Generators.DnstapTcp.Retry = 5
+	c.Generators.DnstapTcp.RetryInterval = 5
 	c.Generators.DnstapTcp.DnstapIdentity = "collector"
 
 	c.Generators.DnstapUnix.Enable = false
 	c.Collectors.DnstapUnix.SockPath = ""
-	c.Generators.DnstapUnix.Retry = 5
+	c.Generators.DnstapUnix.RetryInterval = 5
 	c.Generators.DnstapUnix.DnstapIdentity = "collector"
 
 	c.Generators.LogFile.Enable = false
@@ -96,6 +102,11 @@ func (c *Config) SetDefault() {
 	c.Generators.WebServer.TopMaxItems = 100
 	c.Generators.WebServer.BasicAuthLogin = "admin"
 	c.Generators.WebServer.BasicAuthPwd = "changeme"
+
+	c.Generators.JsonTcp.Enable = false
+	c.Generators.JsonTcp.RemoteIP = "127.0.0.1"
+	c.Generators.JsonTcp.RemotePort = 6000
+	c.Generators.JsonTcp.RetryInterval = 5
 }
 
 func LoadConfig() (*Config, error) {

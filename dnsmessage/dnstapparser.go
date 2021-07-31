@@ -1,6 +1,7 @@
 package dnsmessage
 
 import (
+	"fmt"
 	"hash/fnv"
 	"net"
 	"strconv"
@@ -101,19 +102,19 @@ func (d *DnstapConsumer) Run(send_to []chan DnsMessage) {
 			dm.Payload = dns_payload
 			dm.Length = len(dns_payload)
 			dm.Type = "query"
-			dm.Timesec = int(dt.GetMessage().GetQueryTimeSec())
-			dm.Timensec = int(dt.GetMessage().GetQueryTimeNsec())
+			dm.TimeSec = int(dt.GetMessage().GetQueryTimeSec())
+			dm.TimeNsec = int(dt.GetMessage().GetQueryTimeNsec())
 		} else {
 			dns_payload := dt.GetMessage().GetResponseMessage()
 			dm.Payload = dns_payload
 			dm.Length = len(dns_payload)
 			dm.Type = "reply"
-			dm.Timesec = int(dt.GetMessage().GetResponseTimeSec())
-			dm.Timensec = int(dt.GetMessage().GetResponseTimeNsec())
+			dm.TimeSec = int(dt.GetMessage().GetResponseTimeSec())
+			dm.TimeNsec = int(dt.GetMessage().GetResponseTimeNsec())
 		}
 
 		// compute timestamp
-		dm.Timestamp = float64(dm.Timesec) + float64(dm.Timensec)/1e9
+		dm.Timestamp = float64(dm.TimeSec) + float64(dm.TimeNsec)/1e9
 
 		// decode the dns payload to get id, rcode and the number of question
 		// number of answer, ignore invalid packet
@@ -157,6 +158,7 @@ func (d *DnstapConsumer) Run(send_to []chan DnsMessage) {
 			}
 		}
 
+		dm.LatencySec = fmt.Sprintf("%.6f", dm.Latency)
 		for i := range send_to {
 			send_to[i] <- dm
 		}

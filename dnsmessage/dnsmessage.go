@@ -8,26 +8,27 @@ import (
 )
 
 type DnsMessage struct {
-	Operation    string
-	Identity     string
-	Family       string
-	Protocol     string
-	QueryIp      string
-	QueryPort    string
-	ResponseIp   string
-	ResponsePort string
-	Type         string
-	Payload      []byte
-	Length       int
-	Id           int
-	Rcode        string
-	Qname        string
-	Qtype        string
-	Latency      float64
-	Timestamp    float64
-	Timesec      int
-	Timensec     int
-	Answers      []answer
+	Operation    string  `json:"operation"`
+	Identity     string  `json:"identiy"`
+	Family       string  `json:"family"`
+	Protocol     string  `json:"protocol"`
+	QueryIp      string  `json:"query-ip"`
+	QueryPort    string  `json:"query-port"`
+	ResponseIp   string  `json:"response-ip"`
+	ResponsePort string  `json:"response-port"`
+	Type         string  `json:"-"`
+	Payload      []byte  `json:"-"`
+	Length       int     `json:"length"`
+	Id           int     `json:"-"`
+	Rcode        string  `json:"rcode"`
+	Qname        string  `json:"qname"`
+	Qtype        string  `json:"qtype"`
+	Latency      float64 `json:"-"`
+	LatencySec   string  `json:"latency"`
+	Timestamp    float64 `json:"timestamp"`
+	TimeSec      int     `json:"-"`
+	TimeNsec     int     `json:"-"`
+	Answers      []Answer
 }
 
 func (dm *DnsMessage) Init() {
@@ -37,13 +38,13 @@ func (dm *DnsMessage) Init() {
 	dm.QueryIp, dm.QueryPort = "-", "-"
 	dm.ResponseIp, dm.ResponsePort = "-", "-"
 	dm.Rcode, dm.Qtype = "-", "-"
-	dm.Qname = "-"
+	dm.Qname, dm.LatencySec = "-", "-"
 }
 
 func (dm *DnsMessage) Bytes() []byte {
 	var s bytes.Buffer
 
-	ts := time.Unix(int64(dm.Timesec), int64(dm.Timensec))
+	ts := time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec))
 	s.WriteString(ts.UTC().Format(time.RFC3339Nano) + " ")
 
 	s.WriteString(dm.Identity + " ")

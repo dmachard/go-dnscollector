@@ -46,6 +46,9 @@ func main() {
 	if config.Generators.DnstapUnix.Enable {
 		genwrks = append(genwrks, generators.NewDnstapUnixSender(config, logger))
 	}
+	if config.Generators.JsonTcp.Enable {
+		genwrks = append(genwrks, generators.NewJsonTcpSender(config, logger))
+	}
 
 	// load collectors
 	var collwrks []common.Worker

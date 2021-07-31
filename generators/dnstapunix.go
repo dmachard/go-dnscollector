@@ -44,7 +44,7 @@ func NewDnstapUnixSender(config *common.Config, logger *logger.Logger) *DnstapUn
 func (o *DnstapUnixSender) ReadConfig() {
 	o.sockPath = o.config.Generators.DnstapUnix.SockPath
 	o.identity = o.config.Generators.DnstapUnix.DnstapIdentity
-	o.retry = o.config.Generators.DnstapUnix.Retry
+	o.retry = o.config.Generators.DnstapUnix.RetryInterval
 }
 
 func (o *DnstapUnixSender) LogInfo(msg string, v ...interface{}) {
@@ -78,7 +78,7 @@ func (o *DnstapUnixSender) Run() {
 
 LOOP:
 	for {
-	LOOP_RECONNET:
+	LOOP_RECONNECT:
 		for {
 			select {
 			case <-o.exit:
@@ -119,8 +119,8 @@ LOOP:
 							mt := dnstap.Message_Type(dnstap.Message_Type_value[dm.Operation])
 							sf := dnstap.SocketFamily(dnstap.SocketFamily_value[dm.Family])
 							sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.Protocol])
-							tsec := uint64(dm.Timesec)
-							tnsec := uint32(dm.Timensec)
+							tsec := uint64(dm.TimeSec)
+							tnsec := uint32(dm.TimeNsec)
 							rportint, err := strconv.Atoi(dm.ResponsePort)
 							if err != nil {
 								o.LogError("error to encode dnstap response port %s", err)
@@ -163,7 +163,7 @@ LOOP:
 							frame.Write(data)
 							if err := fs.SendFrame(frame); err != nil {
 								o.LogError("send frame error %s", err)
-								break LOOP_RECONNET
+								break LOOP_RECONNECT
 							}
 						case <-o.exit:
 							o.logger.Info("closing framestream")
