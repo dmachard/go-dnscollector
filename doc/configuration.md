@@ -11,7 +11,8 @@ See [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml) f
   - [Log File](#Log-File)
   - [Dnstap TCP](#Dnstap-TCP-Generator)
   - [Dnstap Unix](#Dnstap-Unix-Generator)
-  
+  - [JSON TCP](#JSON-TCP)
+
 ## Collectors
 
 ### DNStap TCP
@@ -92,10 +93,51 @@ dnstap-tcp:
 ### DNStap Unix Generator
 
 Same the previous one but uses a unix socket instead of a tcp socket
+
 ```yaml
 dnstap-unix:
     enable: false
     sock-path: null
     retry: 5
     dnstap-identity: dnscollector
+```
+
+### JSON tcp
+
+```yaml
+json-tcp:
+    enable: true
+    remote-ip: 127.0.0.1
+    remote-port: 9999
+    retry-interval: 5
+```
+
+Example:
+
+```json
+{
+  "operation": "AUTH_RESPONSE",
+  "identiy": "dnstap-generator",
+  "family": "INET",
+  "protocol": "DOH",
+  "query-ip": "127.0.126.114",
+  "query-port": "42978",
+  "response-ip": "127.0.240.58",
+  "response-port": "53",
+  "length": 160,
+  "rcode": "NOERROR",
+  "qname": "mondomaine.fr",
+  "qtype": "A",
+  "latency": "0.000011",
+  "timestamp-rfc3339": "2021-07-31T18:16:46.068840539Z",
+  "resource-records": [
+    {
+      "name": "mondomaine.fr",
+      "rdatatype": "A",
+      "ttl": 3600,
+      "rdata": "127.0.0.1"
+    }
+  ]
+}
+
 ```

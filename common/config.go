@@ -105,7 +105,7 @@ func (c *Config) SetDefault() {
 
 	c.Generators.JsonTcp.Enable = false
 	c.Generators.JsonTcp.RemoteIP = "127.0.0.1"
-	c.Generators.JsonTcp.RemotePort = 6000
+	c.Generators.JsonTcp.RemotePort = 9999
 	c.Generators.JsonTcp.RetryInterval = 5
 }
 
