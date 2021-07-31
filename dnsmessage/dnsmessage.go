@@ -23,7 +23,7 @@ type DnsMessage struct {
 	Qtype            string  `json:"qtype"`
 	Latency          float64 `json:"-"`
 	LatencySec       string  `json:"latency"`
-	TimestampRFC3339 string  `json:"timestamp"`
+	TimestampRFC3339 string  `json:"timestamp-rfc3339"`
 	Timestamp        float64 `json:"-"`
 	TimeSec          int     `json:"-"`
 	TimeNsec         int     `json:"-"`
@@ -43,9 +43,6 @@ func (dm *DnsMessage) Init() {
 
 func (dm *DnsMessage) Bytes() []byte {
 	var s bytes.Buffer
-
-	//ts := time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec))
-	//s.WriteString(ts.UTC().Format(time.RFC3339Nano) + " ")
 
 	s.WriteString(dm.TimestampRFC3339 + " ")
 	s.WriteString(dm.Identity + " ")

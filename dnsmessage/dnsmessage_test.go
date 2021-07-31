@@ -10,7 +10,7 @@ func TestDnsMessageToText(t *testing.T) {
 
 	line := dm.String()
 
-	if string(line) != "1970-01-01T00:00:00Z - - - - - - - 0b - - 0.000000\n" {
-		t.Errorf("text dns message invalid")
+	if string(line) != "- - - - - - - - 0b - - -\n" {
+		t.Errorf("text dns message invalid; %s", line)
 	}
 }
