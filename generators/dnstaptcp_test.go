@@ -9,12 +9,13 @@ import (
 	"github.com/dmachard/go-dnscollector/common"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-framestream"
+	"github.com/dmachard/go-logger"
 	"google.golang.org/protobuf/proto"
 )
 
 func TestDnstapTcpRun(t *testing.T) {
 	// init generator
-	g := NewDnstapTcpSender(common.GetFakeConfig(), common.GetFakeLogger(false))
+	g := NewDnstapTcpSender(common.GetFakeConfig(), logger.New(false))
 
 	// fake dnstap receiver
 	fakeRcvr, err := net.Listen("tcp", ":6000")

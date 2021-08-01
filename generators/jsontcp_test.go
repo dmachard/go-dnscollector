@@ -8,11 +8,12 @@ import (
 
 	"github.com/dmachard/go-dnscollector/common"
 	"github.com/dmachard/go-dnscollector/dnsmessage"
+	"github.com/dmachard/go-logger"
 )
 
 func TestJsonTcpRun(t *testing.T) {
 	// init generator
-	g := NewJsonTcpSender(common.GetFakeConfig(), common.GetFakeLogger(false))
+	g := NewJsonTcpSender(common.GetFakeConfig(), logger.New(false))
 
 	// fake json receiver
 	fakeRcvr, err := net.Listen("tcp", ":9999")

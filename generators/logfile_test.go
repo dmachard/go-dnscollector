@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/common"
+	"github.com/dmachard/go-logger"
 )
 
 func TestLogfileWrite(t *testing.T) {
@@ -21,7 +22,7 @@ func TestLogfileWrite(t *testing.T) {
 	config.Generators.LogFile.FilePath = f.Name()
 
 	// init generator in testing mode
-	g := NewLogFile(config, common.GetFakeLogger(false))
+	g := NewLogFile(config, logger.New(false))
 
 	// write fake dns message
 	dm := common.GetFakeDnsMessage()

@@ -11,6 +11,7 @@ import (
 	"github.com/dmachard/go-dnscollector/common"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-framestream"
+	"github.com/dmachard/go-logger"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -21,7 +22,7 @@ func TestDnstapUnixRun(t *testing.T) {
 	// init generator
 	config := common.GetFakeConfig()
 	config.Generators.DnstapUnix.SockPath = sockAddr
-	g := NewDnstapUnixSender(config, common.GetFakeLogger(false))
+	g := NewDnstapUnixSender(config, logger.New(false))
 
 	// fake dnstap receiver
 	if err := os.RemoveAll(sockAddr); err != nil {

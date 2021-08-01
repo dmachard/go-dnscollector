@@ -135,3 +135,9 @@ func LoadConfig() (*Config, error) {
 
 	return config, nil
 }
+
+func GetFakeConfig() *Config {
+	config := &Config{}
+	config.SetDefault()
+	return config
+}

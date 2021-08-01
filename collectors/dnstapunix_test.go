@@ -9,6 +9,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/common"
 	"github.com/dmachard/go-framestream"
+	"github.com/dmachard/go-logger"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -16,7 +17,7 @@ func TestDnstapUnixRun(t *testing.T) {
 	g := common.NewFakeGenerator()
 	config := common.GetFakeConfig()
 	config.Collectors.DnstapUnix.SockPath = "/tmp/dnscollector.sock"
-	c := NewDnstapUnix([]common.Worker{g}, config, common.GetFakeLogger(false))
+	c := NewDnstapUnix([]common.Worker{g}, config, logger.New(false))
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector dnstap unix listening  error: ", err)
 	}

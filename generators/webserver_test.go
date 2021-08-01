@@ -8,11 +8,12 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/common"
+	"github.com/dmachard/go-logger"
 )
 
 func TestWebServerBadBasicAuth(t *testing.T) {
 	// init the generator
-	g := NewWebserver(common.GetFakeConfig(), common.GetFakeLogger(false))
+	g := NewWebserver(common.GetFakeConfig(), logger.New(false))
 
 	tt := []struct {
 		name       string
@@ -113,7 +114,7 @@ func TestWebServerBadBasicAuth(t *testing.T) {
 
 func TestWebServerGet(t *testing.T) {
 	// init the generator
-	g := NewWebserver(common.GetFakeConfig(), common.GetFakeLogger(false))
+	g := NewWebserver(common.GetFakeConfig(), logger.New(false))
 
 	// record one dns message to simulate some incoming data
 	g.stats.Record(common.GetFakeDnsMessage())
@@ -234,7 +235,7 @@ func TestWebServerGet(t *testing.T) {
 
 func TestWebServerBadMethod(t *testing.T) {
 	// init the generator
-	g := NewWebserver(common.GetFakeConfig(), common.GetFakeLogger(false))
+	g := NewWebserver(common.GetFakeConfig(), logger.New(false))
 
 	// record one dns message to simulate some incoming data
 	g.stats.Record(common.GetFakeDnsMessage())

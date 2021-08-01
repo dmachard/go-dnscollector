@@ -9,12 +9,13 @@ import (
 
 	"github.com/dmachard/go-dnscollector/common"
 	"github.com/dmachard/go-framestream"
+	"github.com/dmachard/go-logger"
 	"google.golang.org/protobuf/proto"
 )
 
 func TestDnstapTcpRun(t *testing.T) {
 	g := common.NewFakeGenerator()
-	c := NewDnstapTcp([]common.Worker{g}, common.GetFakeConfig(), common.GetFakeLogger(false))
+	c := NewDnstapTcp([]common.Worker{g}, common.GetFakeConfig(), logger.New(false))
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector dnstap tcp listening  error: ", err)
 	}
