@@ -1,4 +1,4 @@
-package dnsmessage
+package processors
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dmachard/go-dnscollector/dnsmessage"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-logger"
 	"google.golang.org/protobuf/proto"
@@ -23,15 +24,15 @@ dnstap --> channel in -> --- (dnstapdecoder)-----|---> channel 2
 
 */
 
-type DnstapConsumer struct {
+type DnstapProcessor struct {
 	done      chan bool
 	recv_from chan []byte
 	logger    *logger.Logger
 }
 
-func NewDnstapConsumer(logger *logger.Logger) DnstapConsumer {
-	logger.Info("dnstap consumer - initialization...")
-	d := DnstapConsumer{
+func NewDnstapProcessor(logger *logger.Logger) DnstapProcessor {
+	logger.Info("dnstap processor - initialization...")
+	d := DnstapProcessor{
 		done:      make(chan bool),
 		recv_from: make(chan []byte, 512),
 		logger:    logger,
@@ -39,11 +40,11 @@ func NewDnstapConsumer(logger *logger.Logger) DnstapConsumer {
 	return d
 }
 
-func (d *DnstapConsumer) GetChannel() chan []byte {
+func (d *DnstapProcessor) GetChannel() chan []byte {
 	return d.recv_from
 }
 
-func (d *DnstapConsumer) Stop() {
+func (d *DnstapProcessor) Stop() {
 	close(d.recv_from)
 
 	// read done channel and block until run is terminated
@@ -51,10 +52,10 @@ func (d *DnstapConsumer) Stop() {
 	close(d.done)
 }
 
-func (d *DnstapConsumer) Run(send_to []chan DnsMessage) {
+func (d *DnstapProcessor) Run(send_to []chan dnsmessage.DnsMessage) {
 
 	dt := &dnstap.Dnstap{}
-	cache_ttl := NewCacheDns(10 * time.Second)
+	cache_ttl := dnsmessage.NewCacheDns(10 * time.Second)
 
 	for data := range d.recv_from {
 
@@ -63,7 +64,7 @@ func (d *DnstapConsumer) Run(send_to []chan DnsMessage) {
 			continue
 		}
 
-		dm := DnsMessage{}
+		dm := dnsmessage.DnsMessage{}
 		dm.Init()
 
 		identity := dt.GetIdentity()
@@ -143,7 +144,7 @@ func (d *DnstapConsumer) Run(send_to []chan DnsMessage) {
 		}
 
 		// compute latency if possible
-		if len(queryip) > 0 && queryport > 0 {
+		if len(dm.QueryIp) > 0 && queryport > 0 {
 			// compute the hash of the query
 			hash_data := []string{dm.QueryIp, dm.QueryPort, strconv.Itoa(dm.Id)}
 
@@ -168,6 +169,6 @@ func (d *DnstapConsumer) Run(send_to []chan DnsMessage) {
 		}
 	}
 
-	// dnstap channel consumer closed
+	// dnstap channel closed
 	d.done <- true
 }

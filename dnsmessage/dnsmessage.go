@@ -5,29 +5,37 @@ import (
 	"strconv"
 )
 
+type DnsAnswer struct {
+	Name      string `json:"name"`
+	Rdatatype string `json:"rdatatype"`
+	Class     int    `json:"-"`
+	Ttl       int    `json:"ttl"`
+	Rdata     string `json:"rdata"`
+}
+
 type DnsMessage struct {
-	Operation        string   `json:"operation"`
-	Identity         string   `json:"identiy"`
-	Family           string   `json:"family"`
-	Protocol         string   `json:"protocol"`
-	QueryIp          string   `json:"query-ip"`
-	QueryPort        string   `json:"query-port"`
-	ResponseIp       string   `json:"response-ip"`
-	ResponsePort     string   `json:"response-port"`
-	Type             string   `json:"-"`
-	Payload          []byte   `json:"-"`
-	Length           int      `json:"length"`
-	Id               int      `json:"-"`
-	Rcode            string   `json:"rcode"`
-	Qname            string   `json:"qname"`
-	Qtype            string   `json:"qtype"`
-	Latency          float64  `json:"-"`
-	LatencySec       string   `json:"latency"`
-	TimestampRFC3339 string   `json:"timestamp-rfc3339"`
-	Timestamp        float64  `json:"-"`
-	TimeSec          int      `json:"-"`
-	TimeNsec         int      `json:"-"`
-	Answers          []Answer `json:"resource-records"`
+	Operation        string      `json:"operation"`
+	Identity         string      `json:"identiy"`
+	Family           string      `json:"family"`
+	Protocol         string      `json:"protocol"`
+	QueryIp          string      `json:"query-ip"`
+	QueryPort        string      `json:"query-port"`
+	ResponseIp       string      `json:"response-ip"`
+	ResponsePort     string      `json:"response-port"`
+	Type             string      `json:"-"`
+	Payload          []byte      `json:"-"`
+	Length           int         `json:"length"`
+	Id               int         `json:"-"`
+	Rcode            string      `json:"rcode"`
+	Qname            string      `json:"qname"`
+	Qtype            string      `json:"qtype"`
+	Latency          float64     `json:"-"`
+	LatencySec       string      `json:"latency"`
+	TimestampRFC3339 string      `json:"timestamp-rfc3339"`
+	Timestamp        float64     `json:"-"`
+	TimeSec          int         `json:"-"`
+	TimeNsec         int         `json:"-"`
+	Answers          []DnsAnswer `json:"answers"`
 }
 
 func (dm *DnsMessage) Init() {

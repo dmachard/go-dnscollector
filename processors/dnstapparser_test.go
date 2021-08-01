@@ -1,23 +1,24 @@
-package dnsmessage
+package processors
 
 import (
 	"bytes"
 	"testing"
 
+	"github.com/dmachard/go-dnscollector/dnsmessage"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-logger"
 	"github.com/miekg/dns"
 	"google.golang.org/protobuf/proto"
 )
 
-func TestDnstapConsumer(t *testing.T) {
+func TestDnstapProcessor(t *testing.T) {
 	logger := logger.New(true)
 	var o bytes.Buffer
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewDnstapConsumer(logger)
-	chan_to := make(chan DnsMessage, 512)
+	consumer := NewDnstapProcessor(logger)
+	chan_to := make(chan dnsmessage.DnsMessage, 512)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
@@ -34,7 +35,7 @@ func TestDnstapConsumer(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	go consumer.Run([]chan DnsMessage{chan_to})
+	go consumer.Run([]chan dnsmessage.DnsMessage{chan_to})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 

@@ -45,7 +45,7 @@ generators:
     dnstap-identity: dnscollector
 
   json-tcp:
-    enable: true
+    enable: false
     remote-ip: 127.0.0.1
     remote-port: 9999
     retry-interval: 5

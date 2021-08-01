@@ -8,6 +8,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/common"
 	"github.com/dmachard/go-dnscollector/dnsmessage"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 )
@@ -57,8 +58,8 @@ func (c *DnstapTcp) HandleConn(conn net.Conn) {
 	c.logger.Info("collector dnstap tcp - %s - new connection\n", peer)
 
 	// start dnstap consumer
-	dnstap_consumer := dnsmessage.NewDnstapConsumer(c.logger)
-	go dnstap_consumer.Run(c.Generators())
+	dnstap_processor := processors.NewDnstapProcessor(c.logger)
+	go dnstap_processor.Run(c.Generators())
 
 	// frame stream library
 	r := bufio.NewReader(conn)
@@ -74,12 +75,12 @@ func (c *DnstapTcp) HandleConn(conn net.Conn) {
 	}
 
 	// process incoming frame and send it to dnstap consumer channel
-	if err := fs.ProcessFrame(dnstap_consumer.GetChannel()); err != nil {
+	if err := fs.ProcessFrame(dnstap_processor.GetChannel()); err != nil {
 		c.logger.Error("collector dnstap tcp - transport error: %s", err)
 	}
 
-	// stop dnstap consumer
-	dnstap_consumer.Stop()
+	// stop all processors
+	dnstap_processor.Stop()
 
 	c.logger.Info("collector dnstap tcp - %s - connection closed\n", peer)
 }

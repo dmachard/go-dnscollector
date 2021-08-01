@@ -1,11 +1,16 @@
-package dnsmessage
+package processors
 
 import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/dmachard/go-dnscollector/dnsmessage"
+	"github.com/dmachard/go-logger"
 )
 
 const DnsLen = 12
@@ -112,12 +117,95 @@ var (
 	}
 )
 
-type Answer struct {
-	Name      string `json:"name"`
-	Rdatatype string `json:"rdatatype"`
-	Class     int    `json:"-"`
-	Ttl       int    `json:"ttl"`
-	Rdata     string `json:"rdata"`
+type DnsProcessor struct {
+	done      chan bool
+	recv_from chan dnsmessage.DnsMessage
+	logger    *logger.Logger
+}
+
+func NewDnsProcessor(logger *logger.Logger) DnsProcessor {
+	logger.Info("dns processor - initialization...")
+	d := DnsProcessor{
+		done:      make(chan bool),
+		recv_from: make(chan dnsmessage.DnsMessage, 512),
+		logger:    logger,
+	}
+	return d
+}
+
+func (d *DnsProcessor) GetChannel() []chan dnsmessage.DnsMessage {
+	channel := []chan dnsmessage.DnsMessage{}
+	channel = append(channel, d.recv_from)
+	return channel
+}
+
+func (d *DnsProcessor) Stop() {
+	close(d.recv_from)
+
+	// read done channel and block until run is terminated
+	<-d.done
+	close(d.done)
+}
+
+func (d *DnsProcessor) Run(send_to []chan dnsmessage.DnsMessage) {
+
+	cache_ttl := dnsmessage.NewCacheDns(10 * time.Second)
+
+	for dm := range d.recv_from {
+
+		// decode the dns payload to get id, rcode and the number of question
+		// number of answer, ignore invalid packet
+		dns_id, dns_rcode, dns_qdcount, dns_ancount, err := DecodeDns(dm.Payload)
+		if err != nil {
+			d.logger.Error("dns parser error: %s", err)
+			continue
+		}
+
+		dm.Id = dns_id
+		dm.Rcode = RcodeToString(dns_rcode)
+
+		// continue to decode the dns payload to extract the qname and rrtype
+		var dns_offsetrr int
+		if dns_qdcount > 0 {
+			dns_qname, dns_rrtype, offsetrr := DecodeQuestion(dm.Payload)
+			dm.Qname = dns_qname
+			dm.Qtype = RdatatypeToString(dns_rrtype)
+			dns_offsetrr = offsetrr
+		}
+
+		if dns_ancount > 0 {
+			dm.Answers = DecodeAnswer(dns_ancount, dns_offsetrr, dm.Payload)
+		}
+
+		// compute latency if possible
+		queryport, _ := strconv.Atoi(dm.QueryPort)
+		if len(dm.QueryIp) > 0 && queryport > 0 {
+			// compute the hash of the query
+			hash_data := []string{dm.QueryIp, dm.QueryPort, strconv.Itoa(dm.Id)}
+
+			hashfnv := fnv.New64a()
+			hashfnv.Write([]byte(strings.Join(hash_data[:], "+")))
+
+			if dm.Type == "query" {
+				cache_ttl.Set(hashfnv.Sum64(), dm.Timestamp)
+			} else {
+				value, ok := cache_ttl.Get(hashfnv.Sum64())
+				if ok {
+					dm.Latency = dm.Timestamp - value
+				}
+			}
+		}
+
+		// convert latency to human
+		dm.LatencySec = fmt.Sprintf("%.6f", dm.Latency)
+
+		for i := range send_to {
+			send_to[i] <- dm
+		}
+	}
+
+	// dnstap channel consumer closed
+	d.done <- true
 }
 
 func RdatatypeToString(rrtype int) string {
@@ -228,9 +316,9 @@ func DecodeQuestion(payload []byte) (string, int, int) {
 	| 1  1|                OFFSET                   |
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func DecodeAnswer(ancount int, start_offset int, payload []byte) []Answer {
+func DecodeAnswer(ancount int, start_offset int, payload []byte) []dnsmessage.DnsAnswer {
 	offset := start_offset
-	answers := []Answer{}
+	answers := []dnsmessage.DnsAnswer{}
 	for i := 0; i < ancount; i++ {
 		// Decode NAME
 		name, offset_next := ParseLabels(offset, payload)
@@ -251,7 +339,7 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) []Answer {
 		parsed := ParseRdata(rdatatype, rdata)
 
 		// append answer
-		a := Answer{
+		a := dnsmessage.DnsAnswer{
 			Name:      name,
 			Rdatatype: rdatatype,
 			Class:     int(class),
