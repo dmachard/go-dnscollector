@@ -1,4 +1,4 @@
-package dnsmessage
+package dnsutils
 
 import (
 	"bytes"
@@ -70,4 +70,20 @@ func (dm *DnsMessage) Bytes() []byte {
 
 func (dm *DnsMessage) String() string {
 	return string(dm.Bytes())
+}
+
+func GetFakeDnsMessage() DnsMessage {
+	dm := DnsMessage{}
+	dm.Init()
+	dm.Identity = "collector"
+	dm.Operation = "CLIENT_QUERY"
+	dm.Type = "query"
+	dm.Qname = "dns.collector"
+	dm.QueryIp = "1.2.3.4"
+	dm.QueryPort = "1234"
+	dm.ResponseIp = "4.3.2.1"
+	dm.ResponsePort = "4321"
+	dm.Rcode = "NOERROR"
+	dm.Qtype = "A"
+	return dm
 }

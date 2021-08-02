@@ -6,8 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/common"
-	"github.com/dmachard/go-dnscollector/dnsmessage"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -19,12 +18,12 @@ type DnstapTcp struct {
 	conns      []net.Conn
 	listenIP   string
 	listenPort int
-	generators []common.Worker
-	config     *common.Config
+	generators []dnsutils.Worker
+	config     *dnsutils.Config
 	logger     *logger.Logger
 }
 
-func NewDnstapTcp(generators []common.Worker, config *common.Config, logger *logger.Logger) *DnstapTcp {
+func NewDnstapTcp(generators []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) *DnstapTcp {
 	logger.Info("collector dnstap tcp - enabled")
 	s := &DnstapTcp{
 		done:       make(chan bool),
@@ -36,8 +35,8 @@ func NewDnstapTcp(generators []common.Worker, config *common.Config, logger *log
 	return s
 }
 
-func (c *DnstapTcp) Generators() []chan dnsmessage.DnsMessage {
-	channels := []chan dnsmessage.DnsMessage{}
+func (c *DnstapTcp) Generators() []chan dnsutils.DnsMessage {
+	channels := []chan dnsutils.DnsMessage{}
 	for _, p := range c.generators {
 		channels = append(channels, p.Channel())
 	}
@@ -85,7 +84,7 @@ func (c *DnstapTcp) HandleConn(conn net.Conn) {
 	c.logger.Info("collector dnstap tcp - %s - connection closed\n", peer)
 }
 
-func (c *DnstapTcp) Channel() chan dnsmessage.DnsMessage {
+func (c *DnstapTcp) Channel() chan dnsutils.DnsMessage {
 	return nil
 }
 

@@ -8,21 +8,46 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/dnsmessage"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-logger"
 	"google.golang.org/protobuf/proto"
 )
 
-/*
+func GetFakeDnstap(dnsquery []byte) *dnstap.Dnstap {
+	dt_query := &dnstap.Dnstap{}
 
-dnstap decoder from one channel to dnsmessage in N channels
+	dt := dnstap.Dnstap_MESSAGE
+	dt_query.Identity = []byte("dnstap-generator")
+	dt_query.Version = []byte("-")
+	dt_query.Type = &dt
 
-                                                 |---> channel 1 (dnsmessage)
-dnstap --> channel in -> --- (dnstapdecoder)-----|---> channel 2
-                                                 |---> channel n
+	mt := dnstap.Message_CLIENT_QUERY
+	sf := dnstap.SocketFamily_INET
+	sp := dnstap.SocketProtocol_UDP
 
-*/
+	now := time.Now()
+	tsec := uint64(now.Unix())
+	tnsec := uint32(uint64(now.UnixNano()) - uint64(now.Unix())*1e9)
+
+	rport := uint32(53)
+	qport := uint32(5300)
+
+	msg := &dnstap.Message{Type: &mt}
+	msg.SocketFamily = &sf
+	msg.SocketProtocol = &sp
+	msg.QueryAddress = net.ParseIP("127.0.0.1")
+	msg.QueryPort = &qport
+	msg.ResponseAddress = net.ParseIP("127.0.0.2")
+	msg.ResponsePort = &rport
+
+	msg.QueryMessage = dnsquery
+	msg.QueryTimeSec = &tsec
+	msg.QueryTimeNsec = &tnsec
+
+	dt_query.Message = msg
+	return dt_query
+}
 
 type DnstapProcessor struct {
 	done      chan bool
@@ -52,10 +77,10 @@ func (d *DnstapProcessor) Stop() {
 	close(d.done)
 }
 
-func (d *DnstapProcessor) Run(send_to []chan dnsmessage.DnsMessage) {
+func (d *DnstapProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 
 	dt := &dnstap.Dnstap{}
-	cache_ttl := dnsmessage.NewCacheDns(10 * time.Second)
+	cache_ttl := dnsutils.NewCacheDns(10 * time.Second)
 
 	for data := range d.recv_from {
 
@@ -64,7 +89,7 @@ func (d *DnstapProcessor) Run(send_to []chan dnsmessage.DnsMessage) {
 			continue
 		}
 
-		dm := dnsmessage.DnsMessage{}
+		dm := dnsutils.DnsMessage{}
 		dm.Init()
 
 		identity := dt.GetIdentity()

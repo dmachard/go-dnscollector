@@ -6,14 +6,13 @@ import (
 	"net"
 	"testing"
 
-	"github.com/dmachard/go-dnscollector/common"
-	"github.com/dmachard/go-dnscollector/dnsmessage"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
 
 func TestJsonTcpRun(t *testing.T) {
 	// init generator
-	g := NewJsonTcpSender(common.GetFakeConfig(), logger.New(false))
+	g := NewJsonTcpSender(dnsutils.GetFakeConfig(), logger.New(false))
 
 	// fake json receiver
 	fakeRcvr, err := net.Listen("tcp", ":9999")
@@ -33,12 +32,12 @@ func TestJsonTcpRun(t *testing.T) {
 	defer conn.Close()
 
 	// send fake dns message to generator
-	dm := common.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDnsMessage()
 	g.channel <- dm
 
 	// read data on server side and decode-it
 	reader := bufio.NewReader(conn)
-	var dmRcv dnsmessage.DnsMessage
+	var dmRcv dnsutils.DnsMessage
 	if err := json.NewDecoder(reader).Decode(&dmRcv); err != nil {
 		t.Errorf("error to decode json: %s", err)
 	}

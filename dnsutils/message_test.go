@@ -1,4 +1,4 @@
-package dnsmessage
+package dnsutils
 
 import (
 	"testing"

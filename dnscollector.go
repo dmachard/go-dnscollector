@@ -6,7 +6,7 @@ import (
 	"syscall"
 
 	"github.com/dmachard/go-dnscollector/collectors"
-	"github.com/dmachard/go-dnscollector/common"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/generators"
 	"github.com/dmachard/go-logger"
 )
@@ -18,7 +18,7 @@ func main() {
 	logger := logger.New(true)
 
 	// load config
-	config, err := common.LoadConfig()
+	config, err := dnsutils.LoadConfig()
 	if err != nil {
 		logger.Fatal("main - config error: ", err)
 	}
@@ -29,7 +29,7 @@ func main() {
 	logger.Info("main - starting dnscollector...")
 
 	// load generators
-	var genwrks []common.Worker
+	var genwrks []dnsutils.Worker
 
 	if config.Generators.WebServer.Enable {
 		genwrks = append(genwrks, generators.NewWebserver(config, logger))
@@ -51,7 +51,7 @@ func main() {
 	}
 
 	// load collectors
-	var collwrks []common.Worker
+	var collwrks []dnsutils.Worker
 
 	if config.Collectors.DnstapTcp.Enable {
 		collwrks = append(collwrks, collectors.NewDnstapTcp(genwrks, config, logger))

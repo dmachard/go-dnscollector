@@ -10,17 +10,16 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/common"
-	"github.com/dmachard/go-dnscollector/dnsmessage"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
 
 type LogFile struct {
 	done       chan bool
-	channel    chan dnsmessage.DnsMessage
+	channel    chan dnsutils.DnsMessage
 	writer     *bufio.Writer
 	file       *os.File
-	config     *common.Config
+	config     *dnsutils.Config
 	logger     *logger.Logger
 	size       int64
 	fpath      string
@@ -30,11 +29,11 @@ type LogFile struct {
 	logreplies bool
 }
 
-func NewLogFile(config *common.Config, logger *logger.Logger) *LogFile {
+func NewLogFile(config *dnsutils.Config, logger *logger.Logger) *LogFile {
 	logger.Info("generator logfile - enabled")
 	o := &LogFile{
 		done:    make(chan bool),
-		channel: make(chan dnsmessage.DnsMessage, 512),
+		channel: make(chan dnsutils.DnsMessage, 512),
 		config:  config,
 		logger:  logger,
 	}
@@ -76,7 +75,7 @@ func (o *LogFile) OpenFile(fpath string) error {
 	return nil
 }
 
-func (o *LogFile) Channel() chan dnsmessage.DnsMessage {
+func (o *LogFile) Channel() chan dnsutils.DnsMessage {
 	return o.channel
 }
 
@@ -208,9 +207,6 @@ LOOP:
 			if dm.Type == "reply" && !o.logreplies {
 				continue
 			}
-
-			// transform dnstap message to flat text
-			//line := dnsmessage.TransformToText(dm)
 
 			// write to file
 			o.Write(dm.Bytes())

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/dmachard/go-dnscollector/dnsmessage"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-logger"
 	"github.com/miekg/dns"
@@ -18,7 +18,7 @@ func TestDnstapProcessor(t *testing.T) {
 
 	// init the dnstap consumer
 	consumer := NewDnstapProcessor(logger)
-	chan_to := make(chan dnsmessage.DnsMessage, 512)
+	chan_to := make(chan dnsutils.DnsMessage, 512)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
@@ -35,7 +35,7 @@ func TestDnstapProcessor(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	go consumer.Run([]chan dnsmessage.DnsMessage{chan_to})
+	go consumer.Run([]chan dnsutils.DnsMessage{chan_to})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 

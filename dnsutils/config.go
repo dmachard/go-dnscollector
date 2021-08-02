@@ -1,4 +1,4 @@
-package common
+package dnsutils
 
 import (
 	"flag"

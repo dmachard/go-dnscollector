@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/common"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -15,7 +15,7 @@ import (
 
 func TestDnstapTcpRun(t *testing.T) {
 	// init generator
-	g := NewDnstapTcpSender(common.GetFakeConfig(), logger.New(false))
+	g := NewDnstapTcpSender(dnsutils.GetFakeConfig(), logger.New(false))
 
 	// fake dnstap receiver
 	fakeRcvr, err := net.Listen("tcp", ":6000")
@@ -41,7 +41,7 @@ func TestDnstapTcpRun(t *testing.T) {
 	}
 
 	// send fake dns message to generator
-	dm := common.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDnsMessage()
 	g.channel <- dm
 
 	// receive frame on server side ?, timeout 5s

@@ -5,23 +5,22 @@ import (
 	"log"
 	"os"
 
-	"github.com/dmachard/go-dnscollector/common"
-	"github.com/dmachard/go-dnscollector/dnsmessage"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
 
 type StdOut struct {
 	done    chan bool
-	channel chan dnsmessage.DnsMessage
+	channel chan dnsutils.DnsMessage
 	logger  *logger.Logger
 	stdout  *log.Logger
 }
 
-func NewStdOut(config *common.Config, console *logger.Logger) *StdOut {
+func NewStdOut(config *dnsutils.Config, console *logger.Logger) *StdOut {
 	console.Info("generator stdout - enabled")
 	o := &StdOut{
 		done:    make(chan bool),
-		channel: make(chan dnsmessage.DnsMessage, 512),
+		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  console,
 		stdout:  log.New(os.Stdout, "", 0),
 	}
@@ -32,11 +31,11 @@ func (o *StdOut) SetBuffer(b *bytes.Buffer) {
 	o.stdout.SetOutput(b)
 }
 
-func (o *StdOut) Channel() chan dnsmessage.DnsMessage {
+func (o *StdOut) Channel() chan dnsutils.DnsMessage {
 	return o.channel
 }
 
-func (o *StdOut) Print(dm dnsmessage.DnsMessage) {
+func (o *StdOut) Print(dm dnsutils.DnsMessage) {
 	o.stdout.Print(dm.String())
 }
 

@@ -6,8 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/common"
-	"github.com/dmachard/go-dnscollector/dnsmessage"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -18,12 +17,12 @@ type DnstapUnix struct {
 	listen     net.Listener
 	conns      []net.Conn
 	sockPath   string
-	generators []common.Worker
-	config     *common.Config
+	generators []dnsutils.Worker
+	config     *dnsutils.Config
 	logger     *logger.Logger
 }
 
-func NewDnstapUnix(generators []common.Worker, config *common.Config, logger *logger.Logger) *DnstapUnix {
+func NewDnstapUnix(generators []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) *DnstapUnix {
 	logger.Info("collector dnstap unix - enabled")
 	s := &DnstapUnix{
 		done:       make(chan bool),
@@ -35,8 +34,8 @@ func NewDnstapUnix(generators []common.Worker, config *common.Config, logger *lo
 	return s
 }
 
-func (c *DnstapUnix) Generators() []chan dnsmessage.DnsMessage {
-	channels := []chan dnsmessage.DnsMessage{}
+func (c *DnstapUnix) Generators() []chan dnsutils.DnsMessage {
+	channels := []chan dnsutils.DnsMessage{}
 	for _, p := range c.generators {
 		channels = append(channels, p.Channel())
 	}
@@ -46,7 +45,7 @@ func (c *DnstapUnix) ReadConfig() {
 	c.sockPath = c.config.Collectors.DnstapUnix.SockPath
 }
 
-func (c *DnstapUnix) Channel() chan dnsmessage.DnsMessage {
+func (c *DnstapUnix) Channel() chan dnsutils.DnsMessage {
 	return nil
 }
 

@@ -7,15 +7,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/common"
-	"github.com/dmachard/go-dnscollector/dnsmessage"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
 
 type JsonTcpSender struct {
 	done       chan bool
-	channel    chan dnsmessage.DnsMessage
-	config     *common.Config
+	channel    chan dnsutils.DnsMessage
+	config     *dnsutils.Config
 	logger     *logger.Logger
 	exit       chan bool
 	conn       net.Conn
@@ -25,12 +24,12 @@ type JsonTcpSender struct {
 	retry      int
 }
 
-func NewJsonTcpSender(config *common.Config, logger *logger.Logger) *JsonTcpSender {
+func NewJsonTcpSender(config *dnsutils.Config, logger *logger.Logger) *JsonTcpSender {
 	logger.Info("generator json tcp sender - enabled")
 	s := &JsonTcpSender{
 		done:    make(chan bool),
 		exit:    make(chan bool),
-		channel: make(chan dnsmessage.DnsMessage, 512),
+		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  logger,
 		config:  config,
 	}
@@ -54,7 +53,7 @@ func (o *JsonTcpSender) LogError(msg string, v ...interface{}) {
 	o.logger.Error("generator json tcp sender - "+msg, v...)
 }
 
-func (o *JsonTcpSender) Channel() chan dnsmessage.DnsMessage {
+func (o *JsonTcpSender) Channel() chan dnsutils.DnsMessage {
 	return o.channel
 }
 

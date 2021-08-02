@@ -6,8 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/common"
-	"github.com/dmachard/go-dnscollector/dnsmessage"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -16,8 +15,8 @@ import (
 
 type DnstapUnixSender struct {
 	done     chan bool
-	channel  chan dnsmessage.DnsMessage
-	config   *common.Config
+	channel  chan dnsutils.DnsMessage
+	config   *dnsutils.Config
 	logger   *logger.Logger
 	exit     chan bool
 	conn     net.Conn
@@ -26,12 +25,12 @@ type DnstapUnixSender struct {
 	retry    int
 }
 
-func NewDnstapUnixSender(config *common.Config, logger *logger.Logger) *DnstapUnixSender {
+func NewDnstapUnixSender(config *dnsutils.Config, logger *logger.Logger) *DnstapUnixSender {
 	logger.Info("generator dnstap unix sender - enabled")
 	s := &DnstapUnixSender{
 		done:    make(chan bool),
 		exit:    make(chan bool),
-		channel: make(chan dnsmessage.DnsMessage, 512),
+		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  logger,
 		config:  config,
 	}
@@ -55,7 +54,7 @@ func (o *DnstapUnixSender) LogError(msg string, v ...interface{}) {
 	o.logger.Error("generator dnstap unix sender - "+msg, v...)
 }
 
-func (o *DnstapUnixSender) Channel() chan dnsmessage.DnsMessage {
+func (o *DnstapUnixSender) Channel() chan dnsutils.DnsMessage {
 	return o.channel
 }
 

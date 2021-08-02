@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/common"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -20,7 +20,7 @@ func TestDnstapUnixRun(t *testing.T) {
 	sockAddr := "/tmp/test.sock"
 
 	// init generator
-	config := common.GetFakeConfig()
+	config := dnsutils.GetFakeConfig()
 	config.Generators.DnstapUnix.SockPath = sockAddr
 	g := NewDnstapUnixSender(config, logger.New(false))
 
@@ -51,7 +51,7 @@ func TestDnstapUnixRun(t *testing.T) {
 	}
 
 	// send fake dns message to generator
-	dm := common.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDnsMessage()
 	g.channel <- dm
 
 	// receive frame on server side ?, timeout 5s

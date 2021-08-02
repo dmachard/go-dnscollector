@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/dnsmessage"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
+	"github.com/miekg/dns"
 )
 
 const DnsLen = 12
@@ -117,9 +118,15 @@ var (
 	}
 )
 
+func GetFakeDns() ([]byte, error) {
+	dnsmsg := new(dns.Msg)
+	dnsmsg.SetQuestion("dns.collector.", dns.TypeA)
+	return dnsmsg.Pack()
+}
+
 type DnsProcessor struct {
 	done      chan bool
-	recv_from chan dnsmessage.DnsMessage
+	recv_from chan dnsutils.DnsMessage
 	logger    *logger.Logger
 }
 
@@ -127,14 +134,14 @@ func NewDnsProcessor(logger *logger.Logger) DnsProcessor {
 	logger.Info("dns processor - initialization...")
 	d := DnsProcessor{
 		done:      make(chan bool),
-		recv_from: make(chan dnsmessage.DnsMessage, 512),
+		recv_from: make(chan dnsutils.DnsMessage, 512),
 		logger:    logger,
 	}
 	return d
 }
 
-func (d *DnsProcessor) GetChannel() []chan dnsmessage.DnsMessage {
-	channel := []chan dnsmessage.DnsMessage{}
+func (d *DnsProcessor) GetChannel() []chan dnsutils.DnsMessage {
+	channel := []chan dnsutils.DnsMessage{}
 	channel = append(channel, d.recv_from)
 	return channel
 }
@@ -147,9 +154,9 @@ func (d *DnsProcessor) Stop() {
 	close(d.done)
 }
 
-func (d *DnsProcessor) Run(send_to []chan dnsmessage.DnsMessage) {
+func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 
-	cache_ttl := dnsmessage.NewCacheDns(10 * time.Second)
+	cache_ttl := dnsutils.NewCacheDns(10 * time.Second)
 
 	for dm := range d.recv_from {
 
@@ -316,9 +323,9 @@ func DecodeQuestion(payload []byte) (string, int, int) {
 	| 1  1|                OFFSET                   |
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func DecodeAnswer(ancount int, start_offset int, payload []byte) []dnsmessage.DnsAnswer {
+func DecodeAnswer(ancount int, start_offset int, payload []byte) []dnsutils.DnsAnswer {
 	offset := start_offset
-	answers := []dnsmessage.DnsAnswer{}
+	answers := []dnsutils.DnsAnswer{}
 	for i := 0; i < ancount; i++ {
 		// Decode NAME
 		name, offset_next := ParseLabels(offset, payload)
@@ -339,7 +346,7 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) []dnsmessage.Dn
 		parsed := ParseRdata(rdatatype, rdata)
 
 		// append answer
-		a := dnsmessage.DnsAnswer{
+		a := dnsutils.DnsAnswer{
 			Name:      name,
 			Rdatatype: rdatatype,
 			Class:     int(class),

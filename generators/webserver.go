@@ -8,8 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/common"
-	"github.com/dmachard/go-dnscollector/dnsmessage"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
 
@@ -21,28 +20,28 @@ type Webserver struct {
 	listenIp    string
 	listenPort  int
 	topMaxItems int
-	channel     chan dnsmessage.DnsMessage
-	config      *common.Config
+	channel     chan dnsutils.DnsMessage
+	config      *dnsutils.Config
 	logger      *logger.Logger
-	stats       *dnsmessage.Statistics
+	stats       *dnsutils.Statistics
 	basicLogin  string
 	basicPwd    string
 }
 
-func NewWebserver(config *common.Config, logger *logger.Logger) *Webserver {
+func NewWebserver(config *dnsutils.Config, logger *logger.Logger) *Webserver {
 	logger.Info("generator webserver - enabled")
 	o := &Webserver{
 		done:     make(chan bool),
 		done_api: make(chan bool),
 		config:   config,
-		channel:  make(chan dnsmessage.DnsMessage, 512),
+		channel:  make(chan dnsutils.DnsMessage, 512),
 		logger:   logger,
 	}
 	// set the config
 	o.ReadConfig()
 
 	// init engine to compute statistics
-	o.stats = dnsmessage.NewStatistics(o.topMaxItems)
+	o.stats = dnsutils.NewStatistics(o.topMaxItems)
 	return o
 }
 
@@ -54,7 +53,7 @@ func (c *Webserver) ReadConfig() {
 	c.basicPwd = c.config.Generators.WebServer.BasicAuthPwd
 }
 
-func (o *Webserver) Channel() chan dnsmessage.DnsMessage {
+func (o *Webserver) Channel() chan dnsutils.DnsMessage {
 	return o.channel
 }
 

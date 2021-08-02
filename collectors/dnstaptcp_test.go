@@ -7,15 +7,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/common"
+	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/generators"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 	"google.golang.org/protobuf/proto"
 )
 
 func TestDnstapTcpRun(t *testing.T) {
-	g := common.NewFakeGenerator()
-	c := NewDnstapTcp([]common.Worker{g}, common.GetFakeConfig(), logger.New(false))
+	g := generators.NewFakeGenerator()
+	c := NewDnstapTcp([]dnsutils.Worker{g}, dnsutils.GetFakeConfig(), logger.New(false))
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector dnstap tcp listening  error: ", err)
 	}
@@ -36,13 +38,13 @@ func TestDnstapTcpRun(t *testing.T) {
 		frame := &framestream.Frame{}
 
 		// get fake dns question
-		dnsquery, err := common.GetFakeDns()
+		dnsquery, err := processors.GetFakeDns()
 		if err != nil {
 			t.Fatalf("dns question pack error")
 		}
 
 		// get fake dnstap message
-		dt_query := common.GetFakeDnstap(dnsquery)
+		dt_query := processors.GetFakeDnstap(dnsquery)
 
 		// serialize to bytes
 		data, err := proto.Marshal(dt_query)
