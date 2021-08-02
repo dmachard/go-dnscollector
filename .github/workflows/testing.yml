@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        package: ['dnsmessage', 'collectors', 'generators', 'processors']
+        package: ['dnsutils', 'collectors', 'generators', 'processors']
 
     steps:
     - uses: actions/checkout@v2
