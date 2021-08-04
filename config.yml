@@ -1,5 +1,5 @@
 trace:
-  verbose: true
+  verbose: false
 
 collectors:
   dnstap-unix:
@@ -7,13 +7,19 @@ collectors:
     sock-path: null
 
   dnstap-tcp:
-    enable: true
+    enable: false
     listen-ip: 0.0.0.0
     listen-port: 6000
 
+  dns-sniffer:
+    enable: true
+    device: wlp2s0
+    filter: port 53 and host 10.0.0.51
+    identity: dnscollector
+
 generators:
   stdout:
-    enable: false
+    enable: true
 
   webserver:
     enable: true

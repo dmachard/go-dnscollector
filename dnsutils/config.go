@@ -22,6 +22,12 @@ type Config struct {
 			ListenIP   string `yaml:"listen-ip"`
 			ListenPort int    `yaml:"listen-port"`
 		} `yaml:"dnstap-tcp"`
+		DnsSniffer struct {
+			Enable   bool   `yaml:"enable"`
+			Device   string `yaml:"device"`
+			Filter   string `yaml:"filter"`
+			Identity string `yaml:"identity"`
+		} `yaml:"dns-sniffer"`
 	} `yaml:"collectors"`
 
 	Generators struct {
@@ -75,6 +81,11 @@ func (c *Config) SetDefault() {
 
 	c.Collectors.DnstapUnix.Enable = false
 	c.Collectors.DnstapUnix.SockPath = ""
+
+	c.Collectors.DnsSniffer.Enable = false
+	c.Collectors.DnsSniffer.Device = "eth0"
+	c.Collectors.DnsSniffer.Filter = "port 53 and host 127.0.0.1"
+	c.Collectors.DnsSniffer.Identity = "collector"
 
 	c.Generators.Stdout.Enable = true
 

@@ -40,7 +40,7 @@ func TestDecodeDns(t *testing.T) {
 	dm.SetQuestion("dnstapcollector.test.", dns.TypeA)
 
 	payload, _ := dm.Pack()
-	_, _, _, _, err := DecodeDns(payload)
+	_, _, _, _, _, err := DecodeDns(payload)
 	if err != nil {
 		t.Errorf("decode dns error: %s", err)
 	}
@@ -51,7 +51,7 @@ func TestDecodeDnsInvalid(t *testing.T) {
 	dm.SetQuestion("dnstapcollector.test.", dns.TypeA)
 
 	payload, _ := dm.Pack()
-	_, _, _, _, err := DecodeDns(payload[:4])
+	_, _, _, _, _, err := DecodeDns(payload[:4])
 	if err == nil {
 		t.Errorf("invalid packet dns error expected")
 	}

@@ -61,6 +61,10 @@ func main() {
 		collwrks = append(collwrks, collectors.NewDnstapUnix(genwrks, config, logger))
 	}
 
+	if config.Collectors.DnsSniffer.Enable {
+		collwrks = append(collwrks, collectors.NewDnsSniffer(genwrks, config, logger))
+	}
+
 	// Handle Ctrl-C
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)

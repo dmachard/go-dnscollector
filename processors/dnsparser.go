@@ -137,10 +137,15 @@ func NewDnsProcessor(logger *logger.Logger) DnsProcessor {
 		recv_from: make(chan dnsutils.DnsMessage, 512),
 		logger:    logger,
 	}
+	logger.Info("dns processor - ready")
 	return d
 }
 
-func (d *DnsProcessor) GetChannel() []chan dnsutils.DnsMessage {
+func (d *DnsProcessor) GetChannel() chan dnsutils.DnsMessage {
+	return d.recv_from
+}
+
+func (d *DnsProcessor) GetChannelList() []chan dnsutils.DnsMessage {
 	channel := []chan dnsutils.DnsMessage{}
 	channel = append(channel, d.recv_from)
 	return channel
@@ -155,17 +160,36 @@ func (d *DnsProcessor) Stop() {
 }
 
 func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
+	d.logger.Info("dns processor - running...")
 
 	cache_ttl := dnsutils.NewCacheDns(10 * time.Second)
 
 	for dm := range d.recv_from {
+		// compute timestamp
+		dm.Timestamp = float64(dm.TimeSec) + float64(dm.TimeNsec)/1e9
+		ts := time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec))
+		dm.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
-		// decode the dns payload to get id, rcode and the number of question
-		// number of answer, ignore invalid packet
-		dns_id, dns_rcode, dns_qdcount, dns_ancount, err := DecodeDns(dm.Payload)
+		// decode the dns payload
+		dns_id, dns_qr, dns_rcode, dns_qdcount, dns_ancount, err := DecodeDns(dm.Payload)
 		if err != nil {
 			d.logger.Error("dns parser error: %s", err)
 			continue
+		}
+
+		// dns reply ?
+		if dns_qr == 1 {
+			dm.Operation = "CLIENT_RESPONSE"
+			dm.Type = "reply"
+			qip := dm.QueryIp
+			qport := dm.QueryPort
+			dm.QueryIp = dm.ResponseIp
+			dm.QueryPort = dm.ResponsePort
+			dm.ResponseIp = qip
+			dm.ResponsePort = qport
+		} else {
+			dm.Type = "query"
+			dm.Operation = "CLIENT_QUERY"
 		}
 
 		dm.Id = dns_id
@@ -180,6 +204,7 @@ func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 			dns_offsetrr = offsetrr
 		}
 
+		// decode dns answers
 		if dns_ancount > 0 {
 			dm.Answers = DecodeAnswer(dns_ancount, dns_offsetrr, dm.Payload)
 		}
@@ -248,19 +273,21 @@ func RcodeToString(rcode int) string {
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 
-func DecodeDns(payload []byte) (int, int, int, int, error) {
+func DecodeDns(payload []byte) (int, int, int, int, int, error) {
 	if len(payload) < DnsLen {
-		return 0, 0, 0, 0, errors.New("dns message too short")
+		return 0, 0, 0, 0, 0, errors.New("dns message too short")
 	}
 	// decode ID
 	id := binary.BigEndian.Uint16(payload[:2])
+	// decode QR
+	qr := binary.BigEndian.Uint16(payload[2:4]) >> 15
 	// decode RCODE
 	rcode := binary.BigEndian.Uint16(payload[2:4]) & 15
 	// decode QDCOUNT
 	qdcount := binary.BigEndian.Uint16(payload[4:6])
 	// decode ANCOUNT
 	ancount := binary.BigEndian.Uint16(payload[6:8])
-	return int(id), int(rcode), int(qdcount), int(ancount), nil
+	return int(id), int(qr), int(rcode), int(qdcount), int(ancount), nil
 }
 
 /*

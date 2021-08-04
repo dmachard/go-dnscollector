@@ -146,7 +146,7 @@ func (d *DnstapProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 
 		// decode the dns payload to get id, rcode and the number of question
 		// number of answer, ignore invalid packet
-		dns_id, dns_rcode, dns_qdcount, dns_ancount, err := DecodeDns(dm.Payload)
+		dns_id, _, dns_rcode, dns_qdcount, dns_ancount, err := DecodeDns(dm.Payload)
 		if err != nil {
 			d.logger.Error("dns parser error: %s", err)
 			continue
