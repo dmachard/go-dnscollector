@@ -16,6 +16,10 @@ jobs:
         with:
           go-version: 1.16
 
+      - name: Install additionnal libraries
+        run: |
+          sudo apt-get install libpcap-dev
+        
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:

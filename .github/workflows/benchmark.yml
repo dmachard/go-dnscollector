@@ -24,6 +24,10 @@ jobs:
         repository: dmachard/go-dnstap-generator
         path: gen
 
+    - name: Install additionnal libraries
+      run: |
+        sudo apt-get install libpcap-dev
+        
     - name: Build
       run: |
         cd app/
