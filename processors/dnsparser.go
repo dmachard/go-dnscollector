@@ -172,8 +172,9 @@ func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 
 		// decode the dns payload
 		dns_id, dns_qr, dns_rcode, dns_qdcount, dns_ancount, err := DecodeDns(dm.Payload)
+		//fmt.Println(dns_id, dns_qr, dns_rcode, dns_qdcount, dns_ancount)
 		if err != nil {
-			d.logger.Error("dns parser error: %s", err)
+			d.logger.Error("dns parser packet error: %s - %v+", err, dm)
 			continue
 		}
 
@@ -198,7 +199,11 @@ func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 		// continue to decode the dns payload to extract the qname and rrtype
 		var dns_offsetrr int
 		if dns_qdcount > 0 {
-			dns_qname, dns_rrtype, offsetrr := DecodeQuestion(dm.Payload)
+			dns_qname, dns_rrtype, offsetrr, err := DecodeQuestion(dm.Payload)
+			if err != nil {
+				d.logger.Error("dns parser question error: %s - %v+", err, dm)
+				continue
+			}
 			dm.Qname = dns_qname
 			dm.Qtype = RdatatypeToString(dns_rrtype)
 			dns_offsetrr = offsetrr
@@ -206,7 +211,11 @@ func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 
 		// decode dns answers
 		if dns_ancount > 0 {
-			dm.Answers = DecodeAnswer(dns_ancount, dns_offsetrr, dm.Payload)
+			dm.Answers, err = DecodeAnswer(dns_ancount, dns_offsetrr, dm.Payload)
+			if err != nil {
+				d.logger.Error("dns parser answer error: %s - %v+", err, dm)
+				continue
+			}
 		}
 
 		// compute latency if possible
@@ -275,7 +284,7 @@ func RcodeToString(rcode int) string {
 
 func DecodeDns(payload []byte) (int, int, int, int, int, error) {
 	if len(payload) < DnsLen {
-		return 0, 0, 0, 0, 0, errors.New("dns message too short")
+		return 0, 0, 0, 0, 0, errors.New("dns payload too short to decode header")
 	}
 	// decode ID
 	id := binary.BigEndian.Uint16(payload[:2])
@@ -304,9 +313,12 @@ func DecodeDns(payload []byte) (int, int, int, int, int, error) {
 	|                     QCLASS                    |
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func DecodeQuestion(payload []byte) (string, int, int) {
+func DecodeQuestion(payload []byte) (string, int, int, error) {
 	// Decode QNAME
-	qname, offset := ParseLabels(DnsLen, payload)
+	qname, offset, err := ParseLabels(DnsLen, payload)
+	if err != nil {
+		return "", 0, 0, err
+	}
 
 	// decode QTYPE and support invalid packet, some abuser sends it...
 	var qtype uint16
@@ -317,7 +329,7 @@ func DecodeQuestion(payload []byte) (string, int, int) {
 		qtype = binary.BigEndian.Uint16(payload[offset : offset+2])
 		offset += 4
 	}
-	return qname, int(qtype), offset
+	return qname, int(qtype), offset, err
 }
 
 /*
@@ -350,13 +362,15 @@ func DecodeQuestion(payload []byte) (string, int, int) {
 	| 1  1|                OFFSET                   |
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func DecodeAnswer(ancount int, start_offset int, payload []byte) []dnsutils.DnsAnswer {
+func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.DnsAnswer, error) {
 	offset := start_offset
 	answers := []dnsutils.DnsAnswer{}
 	for i := 0; i < ancount; i++ {
 		// Decode NAME
-		name, offset_next := ParseLabels(offset, payload)
-
+		name, offset_next, err := ParseLabels(offset, payload)
+		if err != nil {
+			return answers, err
+		}
 		// decode TYPE
 		t := binary.BigEndian.Uint16(payload[offset_next : offset_next+2])
 		// decode CLASS
@@ -384,22 +398,25 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) []dnsutils.DnsA
 
 		offset = offset_next + 10 + int(rdlength)
 	}
-	return answers
+	return answers, nil
 }
 
-func ParseLabels(offset int, payload []byte) (string, int) {
+func ParseLabels(offset int, payload []byte) (string, int, error) {
 	labels := []string{}
 	for {
+		if offset >= len(payload) {
+			return "", 0, errors.New("dns payload too short to decode labels")
+		}
+
 		length := int(payload[offset])
 		if length == 0 {
 			offset++
 			break
 		}
-
 		// label pointer support ?
 		if length>>6 == 3 {
 			ptr := binary.BigEndian.Uint16(payload[offset:offset+2]) & 16383
-			label, _ := ParseLabels(int(ptr), payload)
+			label, _, _ := ParseLabels(int(ptr), payload)
 			labels = append(labels, label)
 			offset += 2
 			break
@@ -411,7 +428,7 @@ func ParseLabels(offset int, payload []byte) (string, int) {
 			offset += length + 1
 		}
 	}
-	return strings.Join(labels[:], "."), offset
+	return strings.Join(labels[:], "."), offset, nil
 }
 
 func ParseRdata(rdatatype string, rdata []byte) string {

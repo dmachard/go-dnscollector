@@ -1,16 +1,21 @@
 package collectors
 
 import (
-	"io"
-	"log"
+	"encoding/binary"
+	"fmt"
+	"syscall"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
-	"github.com/google/gopacket/pcap"
 )
+
+// Convert a uint16 to host byte order (big endian)
+func Htons(v uint16) int {
+	return int((v << 8) | (v >> 8))
+}
 
 type DnsSniffer struct {
 	done       chan bool
@@ -51,7 +56,6 @@ func (c *DnsSniffer) Generators() []chan dnsutils.DnsMessage {
 	}
 	return channels
 }
-
 func (c *DnsSniffer) ReadConfig() {
 	c.device = c.config.Collectors.DnsSniffer.Device
 	c.filter = c.config.Collectors.DnsSniffer.Filter
@@ -74,43 +78,72 @@ func (c *DnsSniffer) Stop() {
 }
 
 func (c *DnsSniffer) Run() {
-	// Open device
-	handle, err := pcap.OpenLive(c.device, 1600, false, pcap.BlockForever)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer handle.Close()
-
-	// filter
-	err = handle.SetBPFFilter(c.filter)
-	if err != nil {
-		c.logger.Fatal(err)
-	}
-
 	dns_processor := processors.NewDnsProcessor(c.logger)
 	go dns_processor.Run(c.Generators())
 
+	sd, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_RAW, Htons(syscall.ETH_P_ALL))
+	if err != nil {
+		panic(err)
+	}
+	defer syscall.Close(sd)
+
+	// set nano timestamp
+	err = syscall.SetsockoptInt(sd, syscall.SOL_SOCKET, syscall.SO_TIMESTAMPNS, 1)
+	if err != nil {
+		panic(err)
+	}
+
 	go func() {
-		var eth layers.Ethernet
-		var ip4 layers.IPv4
-		var ip6 layers.IPv6
-		var tcp layers.TCP
-		var udp layers.UDP
-		parser := gopacket.NewDecodingLayerParser(layers.LayerTypeEthernet, &eth, &ip4, &ip6, &tcp, &udp)
-		decodedLayers := make([]gopacket.LayerType, 0, 10)
+		buf := make([]byte, 65536)
+		oob := make([]byte, 100)
 		for {
-			data, capinfo, err := handle.ReadPacketData()
-			if err == io.EOF {
-				break
-			}
+			//flags, from
+			bufN, oobn, _, _, err := syscall.Recvmsg(sd, buf, oob, 0)
 			if err != nil {
+				panic(err)
+			}
+			if bufN == 0 {
+				panic("buf empty")
+			}
+			if bufN > len(buf) {
+				panic("buf overflow")
+			}
+			if oobn == 0 {
+				panic("oob missing")
+			}
+
+			scms, err := syscall.ParseSocketControlMessage(oob[:oobn])
+			if err != nil {
+				panic(err)
+			}
+			if len(scms) != 1 {
 				continue
 			}
-			parser.DecodeLayers(data, &decodedLayers)
+			scm := scms[0]
+			if scm.Header.Type != syscall.SCM_TIMESTAMPNS {
+				panic("scm timestampns missing")
+			}
+			tsec := binary.LittleEndian.Uint32(scm.Data[:4])
+			nsec := binary.LittleEndian.Uint32(scm.Data[8:12])
 
+			var eth layers.Ethernet
+			var ip4 layers.IPv4
+			var ip6 layers.IPv6
+			var tcp layers.TCP
+			var udp layers.UDP
+			parser := gopacket.NewDecodingLayerParser(layers.LayerTypeEthernet, &eth, &ip4, &ip6, &tcp, &udp)
+			decodedLayers := make([]gopacket.LayerType, 0, 10)
+
+			// copy packet data from buffer
+			pkt := make([]byte, bufN)
+			copy(pkt, buf[:bufN])
+
+			// decode-it
+			parser.DecodeLayers(pkt, &decodedLayers)
 			dm := dnsutils.DnsMessage{}
 			dm.Init()
 
+			dnspacket := false
 			for _, layertyp := range decodedLayers {
 				switch layertyp {
 				case layers.LayerTypeIPv4:
@@ -128,29 +161,40 @@ func (c *DnsSniffer) Run() {
 					dm.ResponseIp = ip6.DstIP.String()
 					dm.Family = "INET6"
 				case layers.LayerTypeUDP:
-					dm.QueryPort = udp.SrcPort.String()
-					dm.ResponsePort = udp.DstPort.String()
+					dm.QueryPort = fmt.Sprint(int(udp.SrcPort))
+					dm.ResponsePort = fmt.Sprint(int(udp.DstPort))
 					dm.Payload = udp.Payload
 					dm.Length = len(udp.Payload)
 					dm.Protocol = "UDP"
+
+					if dm.QueryPort != "53" && dm.ResponsePort != "53" {
+						continue
+					}
+					dnspacket = true
 				case layers.LayerTypeTCP:
-					dm.QueryPort = tcp.SrcPort.String()
-					dm.ResponsePort = tcp.DstPort.String()
+					dm.QueryPort = fmt.Sprint(int(tcp.SrcPort))
+					dm.ResponsePort = fmt.Sprint(int(tcp.DstPort))
 					dm.Payload = tcp.Payload
 					dm.Length = len(tcp.Payload)
 					dm.Protocol = "TCP"
+
+					if dm.QueryPort != "53" && dm.ResponsePort != "53" {
+						continue
+					}
+					dnspacket = true
 				}
 			}
 
-			// set identity
-			dm.Identity = c.identity
+			if dnspacket {
+				// set identity
+				dm.Identity = c.identity
 
-			// set timestamp
-			ts := capinfo.Timestamp.UnixNano()
-			dm.TimeSec = int(ts / 1e9)
-			dm.TimeNsec = int(ts) - dm.TimeSec*1e9
+				// set timestamp
+				dm.TimeSec = int(tsec)
+				dm.TimeNsec = int(nsec)
 
-			dns_processor.GetChannel() <- dm
+				dns_processor.GetChannel() <- dm
+			}
 		}
 	}()
 

@@ -148,7 +148,7 @@ func (d *DnstapProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 		// number of answer, ignore invalid packet
 		dns_id, _, dns_rcode, dns_qdcount, dns_ancount, err := DecodeDns(dm.Payload)
 		if err != nil {
-			d.logger.Error("dns parser error: %s", err)
+			d.logger.Error("dns parser packet error: %s", err)
 			continue
 		}
 
@@ -158,14 +158,22 @@ func (d *DnstapProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 		// continue to decode the dns payload to extract the qname and rrtype
 		var dns_offsetrr int
 		if dns_qdcount > 0 {
-			dns_qname, dns_rrtype, offsetrr := DecodeQuestion(dm.Payload)
+			dns_qname, dns_rrtype, offsetrr, err := DecodeQuestion(dm.Payload)
+			if err != nil {
+				d.logger.Error("dns parser question error: %s", err)
+				continue
+			}
 			dm.Qname = dns_qname
 			dm.Qtype = RdatatypeToString(dns_rrtype)
 			dns_offsetrr = offsetrr
 		}
 
 		if dns_ancount > 0 {
-			dm.Answers = DecodeAnswer(dns_ancount, dns_offsetrr, dm.Payload)
+			dm.Answers, err = DecodeAnswer(dns_ancount, dns_offsetrr, dm.Payload)
+			if err != nil {
+				d.logger.Error("dns parser answer error: %s", err)
+				continue
+			}
 		}
 
 		// compute latency if possible
