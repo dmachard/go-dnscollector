@@ -422,6 +422,9 @@ func ParseLabels(offset int, payload []byte) (string, int, error) {
 			break
 
 		} else {
+			if offset+length+1 >= len(payload) {
+				return "", 0, errors.New("dns payload too short to get label")
+			}
 			label := payload[offset+1 : offset+length+1]
 			labels = append(labels, string(label))
 
