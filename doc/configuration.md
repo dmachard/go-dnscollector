@@ -42,9 +42,10 @@ dnstap-unix:
 Raw DNS packets sniffer
 
 ```yaml
-dnstap-unix:
-  enable: false
-  sock-path: null
+dns-sniffer:
+  enable: true
+  port: 53
+  identity: dnscollector
 ```
 
 ## Generators

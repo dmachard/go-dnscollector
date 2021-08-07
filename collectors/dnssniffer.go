@@ -227,6 +227,7 @@ func (c *DnsSniffer) Run() {
 			dm := dnsutils.DnsMessage{}
 			dm.Init()
 
+			ignore_packet := false
 			for _, layertyp := range decodedLayers {
 				switch layertyp {
 				case layers.LayerTypeIPv4:
@@ -245,22 +246,36 @@ func (c *DnsSniffer) Run() {
 					dm.Length = len(udp.Payload)
 					dm.Protocol = "UDP"
 				case layers.LayerTypeTCP:
+					// ignore SYN/ACK packet
+					if !tcp.PSH {
+						ignore_packet = true
+						continue
+					}
+
+					dnsLengthField := binary.BigEndian.Uint16(tcp.Payload[0:2])
+					if len(tcp.Payload) < int(dnsLengthField) {
+						ignore_packet = true
+						continue
+					}
+
 					dm.QueryPort = fmt.Sprint(int(tcp.SrcPort))
 					dm.ResponsePort = fmt.Sprint(int(tcp.DstPort))
-					dm.Payload = tcp.Payload
-					dm.Length = len(tcp.Payload)
+					dm.Payload = tcp.Payload[2:]
+					dm.Length = len(tcp.Payload[2:])
 					dm.Protocol = "TCP"
+
 				}
 			}
 
-			dm.Identity = c.identity
+			if !ignore_packet {
+				dm.Identity = c.identity
 
-			// set timestamp
-			dm.TimeSec = int(tsec)
-			dm.TimeNsec = int(nsec)
+				// set timestamp
+				dm.TimeSec = int(tsec)
+				dm.TimeNsec = int(nsec)
 
-			dns_processor.GetChannel() <- dm
-
+				dns_processor.GetChannel() <- dm
+			}
 		}
 	}()
 

@@ -1,9 +1,12 @@
 trace:
   verbose: false
 
+# list of supported collectors
 collectors:
+  # dnstap logging support with unix socket. To enable, set the enable to true
   dnstap-unix:
     enable: false
+    # unix socket path
     sock-path: null
 
   dnstap-tcp:
@@ -16,10 +19,11 @@ collectors:
     port: 53
     identity: dnscollector
 
+# list of generators
 generators:
   stdout:
     enable: true
-    mode: json
+    mode: text
 
   webserver:
     enable: true
