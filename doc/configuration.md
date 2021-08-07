@@ -46,6 +46,8 @@ dns-sniffer:
   enable: true
   port: 53
   identity: dnscollector
+  record-dns-queries: true
+  record-dns-replies: true
 ```
 
 ## Generators

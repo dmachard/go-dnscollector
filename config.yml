@@ -18,6 +18,8 @@ collectors:
     enable: true
     port: 53
     identity: dnscollector
+    record-dns-queries: false
+    record-dns-replies: true
 
 # list of generators
 generators:

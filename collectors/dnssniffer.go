@@ -94,13 +94,15 @@ func RemoveBpfFilter(fd int) (err error) {
 }
 
 type DnsSniffer struct {
-	done       chan bool
-	exit       chan bool
-	port       int
-	identity   string
-	generators []dnsutils.Worker
-	config     *dnsutils.Config
-	logger     *logger.Logger
+	done          chan bool
+	exit          chan bool
+	port          int
+	recordqueries bool
+	recordreplies bool
+	identity      string
+	generators    []dnsutils.Worker
+	config        *dnsutils.Config
+	logger        *logger.Logger
 }
 
 func NewDnsSniffer(generators []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) *DnsSniffer {
@@ -135,6 +137,8 @@ func (c *DnsSniffer) Generators() []chan dnsutils.DnsMessage {
 func (c *DnsSniffer) ReadConfig() {
 	c.port = c.config.Collectors.DnsSniffer.Port
 	c.identity = c.config.Collectors.DnsSniffer.Identity
+	c.recordqueries = c.config.Collectors.DnsSniffer.RecordDnsQueries
+	c.recordreplies = c.config.Collectors.DnsSniffer.RecordDnsReplies
 }
 
 func (c *DnsSniffer) Channel() chan dnsutils.DnsMessage {
@@ -234,17 +238,20 @@ func (c *DnsSniffer) Run() {
 					dm.Family = "INET"
 					dm.QueryIp = ip4.SrcIP.String()
 					dm.ResponseIp = ip4.DstIP.String()
+
 				case layers.LayerTypeIPv6:
 					dm.QueryIp = ip6.SrcIP.String()
 					dm.ResponseIp = ip6.DstIP.String()
 					dm.Family = "INET6"
 					fmt.Println(eth)
+
 				case layers.LayerTypeUDP:
 					dm.QueryPort = fmt.Sprint(int(udp.SrcPort))
 					dm.ResponsePort = fmt.Sprint(int(udp.DstPort))
 					dm.Payload = udp.Payload
 					dm.Length = len(udp.Payload)
 					dm.Protocol = "UDP"
+
 				case layers.LayerTypeTCP:
 					// ignore SYN/ACK packet
 					if !tcp.PSH {
@@ -274,7 +281,18 @@ func (c *DnsSniffer) Run() {
 				dm.TimeSec = int(tsec)
 				dm.TimeNsec = int(nsec)
 
-				dns_processor.GetChannel() <- dm
+				// just decode QR
+				if len(dm.Payload) < 4 {
+					continue
+				}
+				qr := binary.BigEndian.Uint16(dm.Payload[2:4]) >> 15
+
+				if int(qr) == 0 && c.recordqueries {
+					dns_processor.GetChannel() <- dm
+				}
+				if int(qr) == 1 && c.recordreplies {
+					dns_processor.GetChannel() <- dm
+				}
 			}
 		}
 	}()

@@ -23,9 +23,11 @@ type Config struct {
 			ListenPort int    `yaml:"listen-port"`
 		} `yaml:"dnstap-tcp"`
 		DnsSniffer struct {
-			Enable   bool   `yaml:"enable"`
-			Port     int    `yaml:"port"`
-			Identity string `yaml:"identity"`
+			Enable           bool   `yaml:"enable"`
+			Port             int    `yaml:"port"`
+			Identity         string `yaml:"identity"`
+			RecordDnsQueries bool   `yaml:"record-dns-queries"`
+			RecordDnsReplies bool   `yaml:"record-dns-replies"`
 		} `yaml:"dns-sniffer"`
 	} `yaml:"collectors"`
 
@@ -85,6 +87,8 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnsSniffer.Enable = false
 	c.Collectors.DnsSniffer.Port = 53
 	c.Collectors.DnsSniffer.Identity = "collector"
+	c.Collectors.DnsSniffer.RecordDnsQueries = true
+	c.Collectors.DnsSniffer.RecordDnsReplies = true
 
 	c.Generators.Stdout.Enable = true
 	c.Generators.Stdout.Mode = "text"
