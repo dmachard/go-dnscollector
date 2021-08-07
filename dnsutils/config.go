@@ -24,7 +24,6 @@ type Config struct {
 		} `yaml:"dnstap-tcp"`
 		DnsSniffer struct {
 			Enable   bool   `yaml:"enable"`
-			Device   string `yaml:"device"`
 			Port     int    `yaml:"port"`
 			Identity string `yaml:"identity"`
 		} `yaml:"dns-sniffer"`
@@ -32,7 +31,8 @@ type Config struct {
 
 	Generators struct {
 		Stdout struct {
-			Enable bool `yaml:"enable"`
+			Enable bool   `yaml:"enable"`
+			Mode   string `yaml:"mode"`
 		} `yaml:"stdout"`
 		WebServer struct {
 			Enable         bool   `yaml:"enable"`
@@ -83,11 +83,11 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnstapUnix.SockPath = ""
 
 	c.Collectors.DnsSniffer.Enable = false
-	c.Collectors.DnsSniffer.Device = "eth0"
 	c.Collectors.DnsSniffer.Port = 53
 	c.Collectors.DnsSniffer.Identity = "collector"
 
 	c.Generators.Stdout.Enable = true
+	c.Generators.Stdout.Mode = "text"
 
 	c.Generators.DnstapTcp.Enable = false
 	c.Generators.DnstapTcp.RemoteIP = "127.0.0.1"

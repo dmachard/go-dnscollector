@@ -96,7 +96,6 @@ func RemoveBpfFilter(fd int) (err error) {
 type DnsSniffer struct {
 	done       chan bool
 	exit       chan bool
-	device     string
 	port       int
 	identity   string
 	generators []dnsutils.Worker
@@ -132,8 +131,8 @@ func (c *DnsSniffer) Generators() []chan dnsutils.DnsMessage {
 	}
 	return channels
 }
+
 func (c *DnsSniffer) ReadConfig() {
-	c.device = c.config.Collectors.DnsSniffer.Device
 	c.port = c.config.Collectors.DnsSniffer.Port
 	c.identity = c.config.Collectors.DnsSniffer.Identity
 }

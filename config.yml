@@ -1,5 +1,5 @@
 trace:
-  verbose: true
+  verbose: false
 
 collectors:
   dnstap-unix:
@@ -13,13 +13,13 @@ collectors:
 
   dns-sniffer:
     enable: true
-    device: wlp2s0
     port: 53
     identity: dnscollector
 
 generators:
   stdout:
     enable: true
+    mode: json
 
   webserver:
     enable: true

@@ -2,6 +2,8 @@ package generators
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 
@@ -12,6 +14,8 @@ import (
 type StdOut struct {
 	done    chan bool
 	channel chan dnsutils.DnsMessage
+	mode    string
+	config  *dnsutils.Config
 	logger  *logger.Logger
 	stdout  *log.Logger
 }
@@ -22,9 +26,15 @@ func NewStdOut(config *dnsutils.Config, console *logger.Logger) *StdOut {
 		done:    make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  console,
+		config:  config,
 		stdout:  log.New(os.Stdout, "", 0),
 	}
+	o.ReadConfig()
 	return o
+}
+
+func (c *StdOut) ReadConfig() {
+	c.mode = c.config.Generators.Stdout.Mode
 }
 
 func (o *StdOut) SetBuffer(b *bytes.Buffer) {
@@ -54,8 +64,16 @@ func (o *StdOut) Stop() {
 func (o *StdOut) Run() {
 	o.logger.Info("generator stdout - running in background...")
 
+	buffer := new(bytes.Buffer)
 	for dm := range o.channel {
-		o.Print(dm)
+		switch o.mode {
+		case "text":
+			o.Print(dm)
+		case "json":
+			json.NewEncoder(buffer).Encode(dm)
+			fmt.Print(buffer.String())
+			buffer.Reset()
+		}
 	}
 	o.logger.Info("generator stdout - run terminated")
 
