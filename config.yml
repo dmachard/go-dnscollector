@@ -14,7 +14,7 @@ collectors:
   dns-sniffer:
     enable: true
     device: wlp2s0
-    filter: port 53 and host 10.0.0.51
+    port: 53
     identity: dnscollector
 
 generators:

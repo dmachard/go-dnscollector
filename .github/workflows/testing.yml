@@ -46,7 +46,7 @@ jobs:
         sudo apt-get install libpcap-dev
         
     - name: build binary
-      run: go build
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 
     - name: Test ${{ matrix.package }}
       run: |
@@ -72,7 +72,7 @@ jobs:
         sudo apt-get install libpcap-dev
         
     - name: build binary
-      run: go build
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 
     - name: Deploy coredns docker image
       run: |
@@ -106,7 +106,7 @@ jobs:
         sudo apt-get install libpcap-dev
         
     - name: build binary
-      run: go build
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 
     - name: add pdns user
       run: |

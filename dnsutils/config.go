@@ -25,7 +25,7 @@ type Config struct {
 		DnsSniffer struct {
 			Enable   bool   `yaml:"enable"`
 			Device   string `yaml:"device"`
-			Filter   string `yaml:"filter"`
+			Port     int    `yaml:"port"`
 			Identity string `yaml:"identity"`
 		} `yaml:"dns-sniffer"`
 	} `yaml:"collectors"`
@@ -84,7 +84,7 @@ func (c *Config) SetDefault() {
 
 	c.Collectors.DnsSniffer.Enable = false
 	c.Collectors.DnsSniffer.Device = "eth0"
-	c.Collectors.DnsSniffer.Filter = "port 53 and host 127.0.0.1"
+	c.Collectors.DnsSniffer.Port = 53
 	c.Collectors.DnsSniffer.Identity = "collector"
 
 	c.Generators.Stdout.Enable = true
