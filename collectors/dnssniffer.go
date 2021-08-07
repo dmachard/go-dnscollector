@@ -85,7 +85,7 @@ func ApplyBpfFilter(filter []bpf.Instruction, fd int) (err error) {
 		Len:    uint16(len(assembled)),
 		Filter: (*unix.SockFilter)(unsafe.Pointer(&assembled[0])),
 	}
-	//b := (*[unix.SizeofSockFprog]byte)(unsafe.Pointer(&prog))[:unix.SizeofSockFprog]
+
 	return unix.SetsockoptSockFprog(fd, syscall.SOL_SOCKET, syscall.SO_ATTACH_FILTER, prog)
 }
 
@@ -225,12 +225,9 @@ func (c *DnsSniffer) Run() {
 			// decode-it
 			parser.DecodeLayers(pkt, &decodedLayers)
 
-			//	fmt.Println(eth)
-
 			dm := dnsutils.DnsMessage{}
 			dm.Init()
 
-			//			dnspacket := false
 			for _, layertyp := range decodedLayers {
 				switch layertyp {
 				case layers.LayerTypeIPv4:
@@ -248,27 +245,15 @@ func (c *DnsSniffer) Run() {
 					dm.Payload = udp.Payload
 					dm.Length = len(udp.Payload)
 					dm.Protocol = "UDP"
-
-				/*	if dm.QueryPort != "53" && dm.ResponsePort != "53" {
-					continue
-				}*/
-				//	dnspacket = true
 				case layers.LayerTypeTCP:
 					dm.QueryPort = fmt.Sprint(int(tcp.SrcPort))
 					dm.ResponsePort = fmt.Sprint(int(tcp.DstPort))
 					dm.Payload = tcp.Payload
 					dm.Length = len(tcp.Payload)
 					dm.Protocol = "TCP"
-
-					/*	if dm.QueryPort != "53" && dm.ResponsePort != "53" {
-							continue
-						}
-						dnspacket = true*/
 				}
 			}
 
-			//	if dnspacket {
-			// set identity
 			dm.Identity = c.identity
 
 			// set timestamp
@@ -276,7 +261,7 @@ func (c *DnsSniffer) Run() {
 			dm.TimeNsec = int(nsec)
 
 			dns_processor.GetChannel() <- dm
-			//	}
+
 		}
 	}()
 
