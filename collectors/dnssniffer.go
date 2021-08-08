@@ -3,6 +3,9 @@ package collectors
 import (
 	"encoding/binary"
 	"fmt"
+	"log"
+	"net"
+	"os"
 	"syscall"
 	"unsafe"
 
@@ -94,15 +97,16 @@ func RemoveBpfFilter(fd int) (err error) {
 }
 
 type DnsSniffer struct {
-	done          chan bool
-	exit          chan bool
-	port          int
-	recordqueries bool
-	recordreplies bool
-	identity      string
-	generators    []dnsutils.Worker
-	config        *dnsutils.Config
-	logger        *logger.Logger
+	done           chan bool
+	exit           chan bool
+	port           int
+	device         string
+	capturequeries bool
+	capturereplies bool
+	identity       string
+	generators     []dnsutils.Worker
+	config         *dnsutils.Config
+	logger         *logger.Logger
 }
 
 func NewDnsSniffer(generators []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) *DnsSniffer {
@@ -137,8 +141,9 @@ func (c *DnsSniffer) Generators() []chan dnsutils.DnsMessage {
 func (c *DnsSniffer) ReadConfig() {
 	c.port = c.config.Collectors.DnsSniffer.Port
 	c.identity = c.config.Collectors.DnsSniffer.Identity
-	c.recordqueries = c.config.Collectors.DnsSniffer.RecordDnsQueries
-	c.recordreplies = c.config.Collectors.DnsSniffer.RecordDnsReplies
+	c.capturequeries = c.config.Collectors.DnsSniffer.CaptureDnsQueries
+	c.capturereplies = c.config.Collectors.DnsSniffer.CaptureDnsReplies
+	c.device = c.config.Collectors.DnsSniffer.Device
 }
 
 func (c *DnsSniffer) Channel() chan dnsutils.DnsMessage {
@@ -163,20 +168,40 @@ func (c *DnsSniffer) Run() {
 	// raw socket
 	sd, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_RAW, Htons(syscall.ETH_P_ALL))
 	if err != nil {
-		panic(err)
+		c.LogError("init raw socket: %v\n", err)
+		os.Exit(1)
 	}
 	defer syscall.Close(sd)
+
+	// bind to device ?
+	if c.device != "" {
+		iface, err := net.InterfaceByName(c.device)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		ll := syscall.SockaddrLinklayer{
+			Ifindex: iface.Index,
+		}
+
+		if err := syscall.Bind(sd, &ll); err != nil {
+			c.LogError("binding to %s failed: %v\n", c.device, err)
+			os.Exit(1)
+		}
+	}
 
 	// set nano timestamp
 	err = syscall.SetsockoptInt(sd, syscall.SOL_SOCKET, syscall.SO_TIMESTAMPNS, 1)
 	if err != nil {
-		panic(err)
+		c.LogError("set nano timestamp on socket failed: %v\n", err)
+		os.Exit(1)
 	}
 
 	filter := GetBpfFilter(c.port)
 	err = ApplyBpfFilter(filter, sd)
 	if err != nil {
-		panic(err)
+		c.LogError("set bpf filter failed: %v\n", err)
+		os.Exit(1)
 	}
 	defer RemoveBpfFilter(sd)
 
@@ -287,10 +312,10 @@ func (c *DnsSniffer) Run() {
 				}
 				qr := binary.BigEndian.Uint16(dm.Payload[2:4]) >> 15
 
-				if int(qr) == 0 && c.recordqueries {
+				if int(qr) == 0 && c.capturequeries {
 					dns_processor.GetChannel() <- dm
 				}
-				if int(qr) == 1 && c.recordreplies {
+				if int(qr) == 1 && c.capturereplies {
 					dns_processor.GetChannel() <- dm
 				}
 			}

@@ -1,5 +1,5 @@
-trace:
-  verbose: false
+verbose: false
+server-id: ""
 
 # list of supported collectors
 collectors:
@@ -14,12 +14,18 @@ collectors:
     listen-ip: 0.0.0.0
     listen-port: 6000
 
+  # raw sniffer
   dns-sniffer:
     enable: true
+    # filter on source and destination port
     port: 53
+    # if "" bind on all interfaces
+    device: wlp2s0
     identity: dnscollector
-    record-dns-queries: false
-    record-dns-replies: true
+    # capture dns queries
+    capture-dns-queries: true
+    # capture dns replies
+    capture-dns-replies: true
 
 # list of generators
 generators:

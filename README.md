@@ -8,7 +8,9 @@ Features:
     - DNS packets sniffer (IPv4 and IPv6 support)
 - Generators
     - Stream [Dnstap](https://dnstap.info/) (TCP, unix)
-    - Plain text or JSON to stdout, log files or tcp remote destination
+    - Plain text or JSON to stdout
+    - Plain text to log files
+    - JSON to tcp remote destination
     - Web server with prometheus metrics and usage support (qps, total queries/replies, top domains, clients, rcodes...) 
 - Written in Go
 

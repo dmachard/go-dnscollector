@@ -23,7 +23,7 @@ func main() {
 		logger.Fatal("main - config error: ", err)
 	}
 
-	logger.SetVerbose(config.Trace.Verbose)
+	logger.SetVerbose(config.Verbose)
 
 	logger.Info("main - config loaded...")
 	logger.Info("main - starting dnscollector...")

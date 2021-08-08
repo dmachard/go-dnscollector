@@ -8,9 +8,8 @@ import (
 )
 
 type Config struct {
-	Trace struct {
-		Verbose bool `yaml:"verbose"`
-	} `yaml:"trace"`
+	Verbose  bool   `yaml:"verbose"`
+	ServerId string `yaml:"server-id"`
 
 	Collectors struct {
 		DnstapUnix struct {
@@ -23,11 +22,12 @@ type Config struct {
 			ListenPort int    `yaml:"listen-port"`
 		} `yaml:"dnstap-tcp"`
 		DnsSniffer struct {
-			Enable           bool   `yaml:"enable"`
-			Port             int    `yaml:"port"`
-			Identity         string `yaml:"identity"`
-			RecordDnsQueries bool   `yaml:"record-dns-queries"`
-			RecordDnsReplies bool   `yaml:"record-dns-replies"`
+			Enable            bool   `yaml:"enable"`
+			Port              int    `yaml:"port"`
+			Device            string `yaml:"device"`
+			Identity          string `yaml:"identity"`
+			CaptureDnsQueries bool   `yaml:"capture-dns-queries"`
+			CaptureDnsReplies bool   `yaml:"capture-dns-replies"`
 		} `yaml:"dns-sniffer"`
 	} `yaml:"collectors"`
 
@@ -75,7 +75,8 @@ type Config struct {
 }
 
 func (c *Config) SetDefault() {
-	c.Trace.Verbose = false
+	c.Verbose = false
+	c.ServerId = ""
 
 	c.Collectors.DnstapTcp.Enable = true
 	c.Collectors.DnstapTcp.ListenIP = "0.0.0.0"
@@ -86,9 +87,10 @@ func (c *Config) SetDefault() {
 
 	c.Collectors.DnsSniffer.Enable = false
 	c.Collectors.DnsSniffer.Port = 53
+	c.Collectors.DnsSniffer.Device = ""
 	c.Collectors.DnsSniffer.Identity = "collector"
-	c.Collectors.DnsSniffer.RecordDnsQueries = true
-	c.Collectors.DnsSniffer.RecordDnsReplies = true
+	c.Collectors.DnsSniffer.CaptureDnsQueries = true
+	c.Collectors.DnsSniffer.CaptureDnsReplies = true
 
 	c.Generators.Stdout.Enable = true
 	c.Generators.Stdout.Mode = "text"
