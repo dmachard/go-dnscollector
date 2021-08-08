@@ -22,6 +22,11 @@ jobs:
       with:
         go-version: '1.16'
 
+    - name: Set up Go for root
+      run: |
+        sudo ln -sf `which go` `sudo which go` || true
+        sudo go version
+        
     - name: Test ${{ matrix.package }}
       run: sudo go test -timeout 5s ./${{ matrix.package }}/ -cover -v
 
