@@ -1,5 +1,4 @@
-trace:
-  verbose: true
+verbose: true
 
 collectors:
   dnstap-tcp:

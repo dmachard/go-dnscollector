@@ -1,5 +1,4 @@
-trace:
-  verbose: false
+verbose: false
 
  collectors:
   dnstap-unix:
