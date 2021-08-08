@@ -55,9 +55,4 @@ func TestDnstapTcpRun(t *testing.T) {
 	if err := proto.Unmarshal(fs.Data(), dt); err != nil {
 		t.Errorf("error to decode dnstap")
 	}
-
-	if string(dt.Identity) != dm.Identity {
-		t.Errorf("want: %s, got: %s", dm.Identity, string(dt.Identity))
-	}
-
 }

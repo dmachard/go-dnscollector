@@ -52,17 +52,15 @@ type Config struct {
 			LogReplies bool   `yaml:"log-replies"`
 		} `yaml:"logfile"`
 		DnstapTcp struct {
-			Enable         bool   `yaml:"enable"`
-			RemoteIP       string `yaml:"remote-ip"`
-			RemotePort     int    `yaml:"remote-port"`
-			RetryInterval  int    `yaml:"retry-interval"`
-			DnstapIdentity string `yaml:"dnstap-identity"`
+			Enable        bool   `yaml:"enable"`
+			RemoteIP      string `yaml:"remote-ip"`
+			RemotePort    int    `yaml:"remote-port"`
+			RetryInterval int    `yaml:"retry-interval"`
 		} `yaml:"dnstap-tcp"`
 		DnstapUnix struct {
-			Enable         bool   `yaml:"enable"`
-			SockPath       string `yaml:"sock-path"`
-			DnstapIdentity string `yaml:"dnstap-identity"`
-			RetryInterval  int    `yaml:"retry-interval"`
+			Enable        bool   `yaml:"enable"`
+			SockPath      string `yaml:"sock-path"`
+			RetryInterval int    `yaml:"retry-interval"`
 		} `yaml:"dnstap-unix"`
 		JsonTcp struct {
 			Enable        bool   `yaml:"enable"`

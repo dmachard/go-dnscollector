@@ -1,22 +1,25 @@
 # If turned on, log some debug informations
 verbose: false
 # Server identity, if empty  the hostname is used
-server-id: "aa"
+server-id: ""
 
 # list of supported collectors
 collectors:
-  # dnstap logging support with unix socket. To enable, set the enable to true
+  # To enable, set the enable to True
   dnstap-unix:
     enable: false
     # unix socket path
     sock-path: null
 
+  # To enable, set the enable to True
   dnstap-tcp:
     enable: false
+    # listen on ip
     listen-ip: 0.0.0.0
+    # listening on port
     listen-port: 6000
 
-  # raw sniffer
+  # To enable, set the enable to True
   dns-sniffer:
     enable: true
     # filter on source and destination port
@@ -30,10 +33,12 @@ collectors:
 
 # list of generators
 generators:
+  # To enable, set the enable to True
   stdout:
     enable: true
     mode: text
 
+  # To enable, set the enable to True
   webserver:
     enable: true
     listen-ip: 0.0.0.0
@@ -42,6 +47,7 @@ generators:
     basic-auth-login: admin
     basic-auth-pwd: changeme
 
+  # To enable, set the enable to True
   logfile:
     enable: false
     file-path: null
@@ -50,19 +56,20 @@ generators:
     log-queries: true
     log-replies: true
 
+  # To enable, set the enable to True
   dnstap-tcp:
     enable: false
     remote-ip: 10.0.0.1
     remote-port: 6000
     retry-interval: 5
-    dnstap-identity: dnscollector
-
+  
+  # To enable, set the enable to True
   dnstap-unix:
     enable: false
     sock-path: null
     retry-interval: 5
-    dnstap-identity: dnscollector
 
+  # To enable, set the enable to True
   json-tcp:
     enable: false
     remote-ip: 127.0.0.1
