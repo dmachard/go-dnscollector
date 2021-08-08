@@ -23,7 +23,18 @@ func main() {
 		logger.Fatal("main - config error: ", err)
 	}
 
+	// enable the verbose mode ?
 	logger.SetVerbose(config.Verbose)
+
+	// get hostname
+	if config.ServerId == "" {
+		hostname, err := os.Hostname()
+		if err != nil {
+			logger.Error("failed to get hostname: %v\n", err)
+		} else {
+			config.ServerId = hostname
+		}
+	}
 
 	logger.Info("main - config loaded...")
 	logger.Info("main - starting dnscollector...")

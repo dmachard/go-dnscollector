@@ -44,7 +44,7 @@ func NewDnstapTcpSender(config *dnsutils.Config, logger *logger.Logger) *DnstapT
 func (o *DnstapTcpSender) ReadConfig() {
 	o.remoteIP = o.config.Generators.DnstapTcp.RemoteIP
 	o.remotePort = o.config.Generators.DnstapTcp.RemotePort
-	o.identity = o.config.Generators.DnstapTcp.DnstapIdentity
+	o.identity = o.config.ServerId
 	o.retry = o.config.Generators.DnstapTcp.RetryInterval
 }
 

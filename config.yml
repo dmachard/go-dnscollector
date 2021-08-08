@@ -1,5 +1,7 @@
+# If turned on, log some debug informations
 verbose: false
-server-id: ""
+# Server identity, if empty  the hostname is used
+server-id: "aa"
 
 # list of supported collectors
 collectors:
@@ -21,7 +23,6 @@ collectors:
     port: 53
     # if "" bind on all interfaces
     device: wlp2s0
-    identity: dnscollector
     # capture dns queries
     capture-dns-queries: true
     # capture dns replies

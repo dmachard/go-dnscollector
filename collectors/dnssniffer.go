@@ -140,7 +140,7 @@ func (c *DnsSniffer) Generators() []chan dnsutils.DnsMessage {
 
 func (c *DnsSniffer) ReadConfig() {
 	c.port = c.config.Collectors.DnsSniffer.Port
-	c.identity = c.config.Collectors.DnsSniffer.Identity
+	c.identity = c.config.ServerId
 	c.capturequeries = c.config.Collectors.DnsSniffer.CaptureDnsQueries
 	c.capturereplies = c.config.Collectors.DnsSniffer.CaptureDnsReplies
 	c.device = c.config.Collectors.DnsSniffer.Device

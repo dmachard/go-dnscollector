@@ -25,7 +25,6 @@ type Config struct {
 			Enable            bool   `yaml:"enable"`
 			Port              int    `yaml:"port"`
 			Device            string `yaml:"device"`
-			Identity          string `yaml:"identity"`
 			CaptureDnsQueries bool   `yaml:"capture-dns-queries"`
 			CaptureDnsReplies bool   `yaml:"capture-dns-replies"`
 		} `yaml:"dns-sniffer"`
@@ -88,7 +87,6 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnsSniffer.Enable = false
 	c.Collectors.DnsSniffer.Port = 53
 	c.Collectors.DnsSniffer.Device = ""
-	c.Collectors.DnsSniffer.Identity = "collector"
 	c.Collectors.DnsSniffer.CaptureDnsQueries = true
 	c.Collectors.DnsSniffer.CaptureDnsReplies = true
 
@@ -99,12 +97,10 @@ func (c *Config) SetDefault() {
 	c.Generators.DnstapTcp.RemoteIP = "127.0.0.1"
 	c.Generators.DnstapTcp.RemotePort = 6000
 	c.Generators.DnstapTcp.RetryInterval = 5
-	c.Generators.DnstapTcp.DnstapIdentity = "collector"
 
 	c.Generators.DnstapUnix.Enable = false
-	c.Collectors.DnstapUnix.SockPath = ""
+	c.Generators.DnstapUnix.SockPath = ""
 	c.Generators.DnstapUnix.RetryInterval = 5
-	c.Generators.DnstapUnix.DnstapIdentity = "collector"
 
 	c.Generators.LogFile.Enable = false
 	c.Generators.LogFile.FilePath = ""
