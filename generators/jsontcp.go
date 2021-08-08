@@ -20,7 +20,6 @@ type JsonTcpSender struct {
 	conn       net.Conn
 	remoteIP   string
 	remotePort int
-	identity   string
 	retry      int
 }
 

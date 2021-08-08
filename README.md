@@ -28,3 +28,7 @@ Run-it from binary
 
 A typically configuration would have one or more collector to receive DNS traffic or logs, and severals generetors to process the 
 incoming traffics. See [Configuration guide](doc/configuration.md) file.
+
+## Benchmark
+
+tbc

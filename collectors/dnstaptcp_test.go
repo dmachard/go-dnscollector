@@ -19,7 +19,7 @@ func TestDnstapTcpRun(t *testing.T) {
 	g := generators.NewFakeGenerator()
 	c := NewDnstapTcp([]dnsutils.Worker{g}, dnsutils.GetFakeConfig(), logger.New(false))
 	if err := c.Listen(); err != nil {
-		log.Fatal("collector dnstap tcp listening  error: ", err)
+		log.Fatal("collector dnstap tcp listening error: ", err)
 	}
 	go c.Run()
 

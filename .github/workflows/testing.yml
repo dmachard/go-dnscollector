@@ -23,7 +23,7 @@ jobs:
         go-version: '1.16'
 
     - name: Test ${{ matrix.package }}
-      run: go test -timeout 5s ./${{ matrix.package }}/ -cover -v
+      run: sudo go test -timeout 5s ./${{ matrix.package }}/ -cover -v
 
   int:
     runs-on: ubuntu-20.04

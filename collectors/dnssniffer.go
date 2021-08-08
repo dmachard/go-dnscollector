@@ -3,7 +3,6 @@ package collectors
 import (
 	"encoding/binary"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"syscall"
@@ -99,6 +98,7 @@ func RemoveBpfFilter(fd int) (err error) {
 type DnsSniffer struct {
 	done           chan bool
 	exit           chan bool
+	fd             int
 	port           int
 	device         string
 	capturequeries bool
@@ -161,56 +161,66 @@ func (c *DnsSniffer) Stop() {
 	close(c.done)
 }
 
-func (c *DnsSniffer) Run() {
-	dns_processor := processors.NewDnsProcessor(c.logger)
-	go dns_processor.Run(c.Generators())
+func (c *DnsSniffer) Listen() error {
 
 	// raw socket
-	sd, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_RAW, Htons(syscall.ETH_P_ALL))
+	fd, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_RAW, Htons(syscall.ETH_P_ALL))
 	if err != nil {
-		c.LogError("init raw socket: %v\n", err)
-		os.Exit(1)
+		return err
 	}
-	defer syscall.Close(sd)
 
 	// bind to device ?
 	if c.device != "" {
 		iface, err := net.InterfaceByName(c.device)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		ll := syscall.SockaddrLinklayer{
 			Ifindex: iface.Index,
 		}
 
-		if err := syscall.Bind(sd, &ll); err != nil {
-			c.LogError("binding to %s failed: %v\n", c.device, err)
-			os.Exit(1)
+		if err := syscall.Bind(fd, &ll); err != nil {
+			return err
 		}
 	}
 
 	// set nano timestamp
-	err = syscall.SetsockoptInt(sd, syscall.SOL_SOCKET, syscall.SO_TIMESTAMPNS, 1)
+	err = syscall.SetsockoptInt(fd, syscall.SOL_SOCKET, syscall.SO_TIMESTAMPNS, 1)
 	if err != nil {
-		c.LogError("set nano timestamp on socket failed: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	filter := GetBpfFilter(c.port)
-	err = ApplyBpfFilter(filter, sd)
+	err = ApplyBpfFilter(filter, fd)
 	if err != nil {
-		c.LogError("set bpf filter failed: %v\n", err)
-		os.Exit(1)
+		return err
 	}
-	defer RemoveBpfFilter(sd)
+
+	c.fd = fd
+	return nil
+}
+
+func (c *DnsSniffer) Run() {
+	defer RemoveBpfFilter(c.fd)
+	defer syscall.Close(c.fd)
+
+	if c.fd == 0 {
+		if err := c.Listen(); err != nil {
+			c.LogError("init raw socket failed: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	dns_processor := processors.NewDnsProcessor(c.logger)
+	go dns_processor.Run(c.Generators())
 
 	go func() {
 		buf := make([]byte, 65536)
 		oob := make([]byte, 100)
 		for {
 			//flags, from
-			bufN, oobn, _, _, err := syscall.Recvmsg(sd, buf, oob, 0)
+			bufN, oobn, _, _, err := syscall.Recvmsg(c.fd, buf, oob, 0)
 			if err != nil {
 				panic(err)
 			}

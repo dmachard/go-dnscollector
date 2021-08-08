@@ -39,12 +39,20 @@ dnstap-unix:
 
 ### Sniffer
 
-Raw DNS packets sniffer
+Raw DNS packets sniffer. Setting `CAP_NET_RAW` capabilities on executables allows you to run these 
+program without having to run-it with the root user.
+
+```
+sudo setcap cap_net_admin,cap_net_raw=eip go-dnscollector
+```
+
+Enable the sniffer
 
 ```yaml
 dns-sniffer:
   enable: true
   port: 53
+  device: ""
   identity: dnscollector
   record-dns-queries: true
   record-dns-replies: true
