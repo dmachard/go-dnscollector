@@ -1,4 +1,4 @@
-name: lint
+name: Linter
 
 on:
   push:
@@ -9,9 +9,11 @@ on:
       - main
 
 jobs:
-  golang-ci:
+  go:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
+        with:
+          args: --out-format=tab
