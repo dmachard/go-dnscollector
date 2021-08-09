@@ -31,4 +31,10 @@ incoming traffics. See [Configuration guide](doc/configuration.md) file.
 
 ## Benchmark
 
-tbc
+Tested on the following machine: 8 vCPUs, 32 GB memory
+
+| packet per sec received| DnsCollector |
+| ---- | ---- | 
+| 50k   | OK - 0% lost| 
+| 100k   | OK - 0% lost| 
+| 150k   | OK (0.07% lost)|
