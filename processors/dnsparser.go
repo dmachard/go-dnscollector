@@ -128,14 +128,16 @@ type DnsProcessor struct {
 	done      chan bool
 	recv_from chan dnsutils.DnsMessage
 	logger    *logger.Logger
+	config    *dnsutils.Config
 }
 
-func NewDnsProcessor(logger *logger.Logger) DnsProcessor {
+func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger) DnsProcessor {
 	logger.Info("dns processor - initialization...")
 	d := DnsProcessor{
 		done:      make(chan bool),
 		recv_from: make(chan dnsutils.DnsMessage, 512),
 		logger:    logger,
+		config:    config,
 	}
 	logger.Info("dns processor - ready")
 	return d

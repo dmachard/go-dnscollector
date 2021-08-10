@@ -53,14 +53,16 @@ type DnstapProcessor struct {
 	done      chan bool
 	recv_from chan []byte
 	logger    *logger.Logger
+	config    *dnsutils.Config
 }
 
-func NewDnstapProcessor(logger *logger.Logger) DnstapProcessor {
+func NewDnstapProcessor(config *dnsutils.Config, logger *logger.Logger) DnstapProcessor {
 	logger.Info("dnstap processor - initialization...")
 	d := DnstapProcessor{
 		done:      make(chan bool),
 		recv_from: make(chan []byte, 512),
 		logger:    logger,
+		config:    config,
 	}
 	return d
 }

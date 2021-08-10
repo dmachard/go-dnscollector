@@ -58,7 +58,7 @@ func (c *DnstapUnix) HandleConn(conn net.Conn) {
 	c.logger.Info("collector dnstap unix receiver - %s - new connection\n", peer)
 
 	// start dnstap consumer
-	dnstap_processor := processors.NewDnstapProcessor(c.logger)
+	dnstap_processor := processors.NewDnstapProcessor(c.config, c.logger)
 	go dnstap_processor.Run(c.Generators())
 
 	// frame stream library

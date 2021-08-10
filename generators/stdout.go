@@ -21,7 +21,7 @@ type StdOut struct {
 }
 
 func NewStdOut(config *dnsutils.Config, console *logger.Logger) *StdOut {
-	console.Info("generator stdout - enabled")
+	console.Info("generator stdout logging - enabled")
 	o := &StdOut{
 		done:    make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),

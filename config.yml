@@ -30,7 +30,7 @@ collectors:
     capture-dns-queries: true
     # capture dns replies
     capture-dns-replies: true
-
+    
 # list of generators
 generators:
   # To enable, set the enable to True

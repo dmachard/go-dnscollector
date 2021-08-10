@@ -212,7 +212,7 @@ func (c *DnsSniffer) Run() {
 		}
 	}
 
-	dns_processor := processors.NewDnsProcessor(c.logger)
+	dns_processor := processors.NewDnsProcessor(c.config, c.logger)
 	go dns_processor.Run(c.Generators())
 
 	go func() {
