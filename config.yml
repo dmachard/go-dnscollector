@@ -78,23 +78,31 @@ generators:
     max-files: 10
     # flush every x seconds
     flush-interval: 10
-    
+
   # To enable, set the enable to True
   dnstap-tcp:
     enable: false
-    remote-ip: 10.0.0.1
+     # remote address
+    remote-address: 10.0.0.1
+    # remote tcp port
     remote-port: 6000
+    # retry interval in second
     retry-interval: 5
   
   # To enable, set the enable to True
   dnstap-unix:
     enable: false
+    # unix socket path
     sock-path: null
+    # retry interval in second
     retry-interval: 5
 
   # To enable, set the enable to True
   json-tcp:
     enable: false
-    remote-ip: 127.0.0.1
+    # remote address
+    remote-address: 127.0.0.1
+    # remote tcp port
     remote-port: 9999
+    # retry interval in second
     retry-interval: 5

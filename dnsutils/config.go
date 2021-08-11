@@ -63,7 +63,7 @@ type Config struct {
 		} `yaml:"logfile"`
 		DnstapTcp struct {
 			Enable        bool   `yaml:"enable"`
-			RemoteIP      string `yaml:"remote-ip"`
+			RemoteAddress string `yaml:"remote-address"`
 			RemotePort    int    `yaml:"remote-port"`
 			RetryInterval int    `yaml:"retry-interval"`
 		} `yaml:"dnstap-tcp"`
@@ -74,7 +74,7 @@ type Config struct {
 		} `yaml:"dnstap-unix"`
 		JsonTcp struct {
 			Enable        bool   `yaml:"enable"`
-			RemoteIP      string `yaml:"remote-ip"`
+			RemoteAddress string `yaml:"remote-address"`
 			RemotePort    int    `yaml:"remote-port"`
 			RetryInterval int    `yaml:"retry-interval"`
 		} `yaml:"json-tcp"`
@@ -107,7 +107,7 @@ func (c *Config) SetDefault() {
 	c.Generators.Stdout.Mode = "text"
 
 	c.Generators.DnstapTcp.Enable = false
-	c.Generators.DnstapTcp.RemoteIP = "127.0.0.1"
+	c.Generators.DnstapTcp.RemoteAddress = "127.0.0.1"
 	c.Generators.DnstapTcp.RemotePort = 6000
 	c.Generators.DnstapTcp.RetryInterval = 5
 
@@ -129,7 +129,7 @@ func (c *Config) SetDefault() {
 	c.Generators.WebServer.BasicAuthPwd = "changeme"
 
 	c.Generators.JsonTcp.Enable = false
-	c.Generators.JsonTcp.RemoteIP = "127.0.0.1"
+	c.Generators.JsonTcp.RemoteAddress = "127.0.0.1"
 	c.Generators.JsonTcp.RemotePort = 9999
 	c.Generators.JsonTcp.RetryInterval = 5
 }

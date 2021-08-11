@@ -18,7 +18,7 @@ type JsonTcpSender struct {
 	logger     *logger.Logger
 	exit       chan bool
 	conn       net.Conn
-	remoteIP   string
+	remoteAddr string
 	remotePort int
 	retry      int
 }
@@ -39,7 +39,7 @@ func NewJsonTcpSender(config *dnsutils.Config, logger *logger.Logger) *JsonTcpSe
 }
 
 func (o *JsonTcpSender) ReadConfig() {
-	o.remoteIP = o.config.Generators.JsonTcp.RemoteIP
+	o.remoteAddr = o.config.Generators.JsonTcp.RemoteAddress
 	o.remotePort = o.config.Generators.JsonTcp.RemotePort
 	o.retry = o.config.Generators.JsonTcp.RetryInterval
 }
@@ -79,7 +79,7 @@ LOOP:
 				break LOOP
 			default:
 				o.LogInfo("connecting to remote destination")
-				conn, err := net.Dial("tcp", o.remoteIP+":"+strconv.Itoa(o.remotePort))
+				conn, err := net.Dial("tcp", o.remoteAddr+":"+strconv.Itoa(o.remotePort))
 				if err != nil {
 					o.LogError("connect error: %s", err)
 				}

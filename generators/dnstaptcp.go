@@ -20,7 +20,7 @@ type DnstapTcpSender struct {
 	logger     *logger.Logger
 	exit       chan bool
 	conn       net.Conn
-	remoteIP   string
+	remoteAddr string
 	remotePort int
 	identity   string
 	retry      int
@@ -42,7 +42,7 @@ func NewDnstapTcpSender(config *dnsutils.Config, logger *logger.Logger) *DnstapT
 }
 
 func (o *DnstapTcpSender) ReadConfig() {
-	o.remoteIP = o.config.Generators.DnstapTcp.RemoteIP
+	o.remoteAddr = o.config.Generators.DnstapTcp.RemoteAddress
 	o.remotePort = o.config.Generators.DnstapTcp.RemotePort
 	o.identity = o.config.ServerId
 	o.retry = o.config.Generators.DnstapTcp.RetryInterval
@@ -86,7 +86,7 @@ LOOP:
 				break LOOP
 			default:
 				o.LogInfo("connecting to remote destination")
-				conn, err := net.Dial("tcp", o.remoteIP+":"+strconv.Itoa(o.remotePort))
+				conn, err := net.Dial("tcp", o.remoteAddr+":"+strconv.Itoa(o.remotePort))
 				if err != nil {
 					o.LogError("connect error: %s", err)
 				}
