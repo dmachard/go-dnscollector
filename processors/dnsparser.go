@@ -155,6 +155,14 @@ func (d *DnsProcessor) ReadConfig() {
 	d.geoipDb = d.config.Processors.GeoIP.DbFile
 }
 
+func (c *DnsProcessor) LogInfo(msg string, v ...interface{}) {
+	c.logger.Info("processor dns parser - "+msg, v...)
+}
+
+func (c *DnsProcessor) LogError(msg string, v ...interface{}) {
+	c.logger.Error("procesor dns parser - "+msg, v...)
+}
+
 func (d *DnsProcessor) GetChannel() chan dnsutils.DnsMessage {
 	return d.recvFrom
 }
@@ -174,7 +182,6 @@ func (d *DnsProcessor) Stop() {
 }
 
 func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
-	d.logger.Info("dns processor - running...")
 
 	// dns cache to compute latency between response and query
 	cache_ttl := dnsutils.NewCacheDns(10 * time.Second)
@@ -188,9 +195,10 @@ func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 		} `maxminddb:"country"`
 	}
 	if d.geoipSupport {
+		d.LogInfo("geoip enabled")
 		geoipdb, err = maxminddb.Open(d.geoipDb)
 		if err != nil {
-			d.logger.Error("geoip init failed: %v+", err)
+			d.LogError("geoip init failed: %v+", err)
 			d.geoipSupport = false
 		}
 		defer geoipdb.Close()
@@ -198,6 +206,7 @@ func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 	}
 
 	// read incoming dns message
+	d.LogInfo("running... waiting incoming dns message")
 	for dm := range d.recvFrom {
 		// compute timestamp
 		dm.Timestamp = float64(dm.TimeSec) + float64(dm.TimeNsec)/1e9
@@ -234,7 +243,7 @@ func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 		if dns_qdcount > 0 {
 			dns_qname, dns_rrtype, offsetrr, err := DecodeQuestion(dm.Payload)
 			if err != nil {
-				d.logger.Error("dns parser question error: %s - %v+", err, dm)
+				d.LogError("dns parser question error: %s - %v+", err, dm)
 				continue
 			}
 			dm.Qname = dns_qname
@@ -246,7 +255,7 @@ func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 		if dns_ancount > 0 {
 			dm.Answers, err = DecodeAnswer(dns_ancount, dns_offsetrr, dm.Payload)
 			if err != nil {
-				d.logger.Error("dns parser answer error: %s - %v+", err, dm)
+				d.LogError("dns parser answer error: %s - %v+", err, dm)
 				continue
 			}
 		}
@@ -278,7 +287,7 @@ func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 			ip := net.ParseIP(dm.QueryIp)
 			err = geoipdb.Lookup(ip, &record)
 			if err != nil {
-				d.logger.Error("geoip loopkup failed: %v+", err)
+				d.LogError("geoip loopkup failed: %v+", err)
 				continue
 			}
 			dm.CountryIsoCode = record.Country.ISOCode

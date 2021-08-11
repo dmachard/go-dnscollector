@@ -1,5 +1,5 @@
 # If turned on, log some debug informations
-verbose: false
+verbose: true
 # Server identity, if empty  the hostname is used
 server-id: ""
 
@@ -31,10 +31,11 @@ collectors:
     # capture dns replies
     capture-dns-replies: true
 
+# settings for processors
 processors:
   geoip:
-    enable: true
-    db-file: "/home/denis/Downloads/GeoLite2-Country_20210803/GeoLite2-Country.mmdb"
+    enable: false
+    db-file: null
 
 # list of generators
 generators:
