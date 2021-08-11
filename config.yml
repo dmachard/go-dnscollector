@@ -1,26 +1,27 @@
-# If turned on, log some debug informations
+# If turned on, log some debug informations to stdout
 verbose: true
 # Server identity, if empty  the hostname is used
+# This settings is used in dnstap generator as dnstap-identity
 server-id: ""
 
 # list of supported collectors
 collectors:
-  # To enable, set the enable to True
   dnstap-unix:
+    # to enable, set the enable to true
     enable: false
     # unix socket path
     sock-path: null
 
-  # To enable, set the enable to True
   dnstap-tcp:
+    # to enable, set the enable to true
     enable: false
     # listen on ip
     listen-ip: 0.0.0.0
     # listening on port
     listen-port: 6000
 
-  # To enable, set the enable to True
   dns-sniffer:
+    # to enable, set the enable to true
     enable: true
     # filter on source and destination port
     port: 53
@@ -47,14 +48,15 @@ processors:
 
 # list of generators
 generators:
-  # To enable, set the enable to True
+
   stdout:
+    # to enable, set the enable to true
     enable: true
     # text|json
     mode: text
 
-  # To enable, set the enable to True
   webserver:
+    # to enable, set the enable to true
     enable: true
     # listening IP
     listen-ip: 0.0.0.0
@@ -67,8 +69,8 @@ generators:
     # default password
     basic-auth-pwd: changeme
 
-  # To enable, set the enable to True
   logfile:
+    # to enable, set the enable to true
     enable: false
     # output logfile name
     file-path: null
@@ -79,8 +81,8 @@ generators:
     # flush every x seconds
     flush-interval: 10
 
-  # To enable, set the enable to True
   dnstap-tcp:
+    # to enable, set the enable to true
     enable: false
      # remote address
     remote-address: 10.0.0.1
@@ -88,17 +90,17 @@ generators:
     remote-port: 6000
     # retry interval in second
     retry-interval: 5
-  
-  # To enable, set the enable to True
+
   dnstap-unix:
+    # to enable, set the enable to true
     enable: false
     # unix socket path
     sock-path: null
     # retry interval in second
     retry-interval: 5
 
-  # To enable, set the enable to True
   json-tcp:
+    # to enable, set the enable to true
     enable: false
     # remote address
     remote-address: 127.0.0.1
