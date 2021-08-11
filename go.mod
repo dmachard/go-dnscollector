@@ -9,6 +9,7 @@ require (
 	github.com/dmachard/go-topmap v0.3.0 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/miekg/dns v1.1.43 // indirect
+	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
 	github.com/oschwald/maxminddb-golang v1.8.0 // indirect
 	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect

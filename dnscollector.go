@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,6 +10,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/generators"
 	"github.com/dmachard/go-logger"
+	"github.com/natefinch/lumberjack"
 )
 
 func main() {
@@ -20,19 +22,28 @@ func main() {
 	// load config
 	config, err := dnsutils.LoadConfig()
 	if err != nil {
-		logger.Fatal("main - config error: ", err)
+		panic(fmt.Sprintf("main - config error:  %v", err))
+	}
+
+	// redirect app logs to file ?
+	if len(config.Trace.Filename) > 0 {
+		logger.SetOutput(&lumberjack.Logger{
+			Filename:   config.Trace.Filename,
+			MaxSize:    config.Trace.MaxSize,
+			MaxBackups: config.Trace.MaxBackups,
+		})
 	}
 
 	// enable the verbose mode ?
-	logger.SetVerbose(config.Verbose)
+	logger.SetVerbose(config.Trace.Verbose)
 
 	// get hostname
-	if config.ServerId == "" {
+	if config.Processors.ServerId == "" {
 		hostname, err := os.Hostname()
 		if err != nil {
 			logger.Error("failed to get hostname: %v\n", err)
 		} else {
-			config.ServerId = hostname
+			config.Processors.ServerId = hostname
 		}
 	}
 

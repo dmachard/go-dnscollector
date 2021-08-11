@@ -8,8 +8,12 @@ import (
 )
 
 type Config struct {
-	Verbose  bool   `yaml:"verbose"`
-	ServerId string `yaml:"server-id"`
+	Trace struct {
+		Verbose    bool   `yaml:"verbose"`
+		Filename   string `yaml:"filename"`
+		MaxSize    int    `yaml:"max-size"`
+		MaxBackups int    `yaml:"max-backups"`
+	} `yaml:"trace"`
 
 	Collectors struct {
 		DnstapUnix struct {
@@ -31,6 +35,7 @@ type Config struct {
 	} `yaml:"collectors"`
 
 	Processors struct {
+		ServerId  string `yaml:"server-id"`
 		Filtering struct {
 			IgnoreQname string `yaml:"ignore-qname"`
 			LogQueries  bool   `yaml:"log-queries"`
@@ -82,8 +87,10 @@ type Config struct {
 }
 
 func (c *Config) SetDefault() {
-	c.Verbose = false
-	c.ServerId = ""
+	c.Trace.Verbose = false
+	c.Trace.Filename = ""
+	c.Trace.MaxSize = 10
+	c.Trace.MaxBackups = 10
 
 	c.Collectors.DnstapTcp.Enable = true
 	c.Collectors.DnstapTcp.ListenIP = "0.0.0.0"
@@ -98,9 +105,12 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnsSniffer.CaptureDnsQueries = true
 	c.Collectors.DnsSniffer.CaptureDnsReplies = true
 
+	c.Processors.ServerId = ""
+
 	c.Processors.Filtering.IgnoreQname = ""
 	c.Processors.Filtering.LogQueries = true
 	c.Processors.Filtering.LogReplies = true
+
 	c.Processors.GeoIP.DbFile = ""
 
 	c.Generators.Stdout.Enable = true

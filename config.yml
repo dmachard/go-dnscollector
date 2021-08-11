@@ -1,8 +1,13 @@
-# If turned on, log some debug informations to stdout
-verbose: true
-# Server identity, if empty  the hostname is used
-# This settings is used in dnstap generator as dnstap-identity
-server-id: ""
+# If turned on, log some applications messages
+trace:
+  # debug informations
+  verbose: true
+  # filename is the file to write logs to.
+  filename: ""
+  # maximum size in megabytes of the log file it gets rotated
+  max-size: 10
+  # maximum number of old log files to retain
+  max-backups: 10
 
 # list of supported collectors
 collectors:
@@ -34,6 +39,11 @@ collectors:
 
 # settings for processors
 processors:
+  # Server identity, if empty  the hostname is used
+  # This settings is used in dnstap generator as dnstap-identity
+  server-id: ""
+
+  # filtering feature
   filtering:
     # regexp to ignore incoming qname
     ignore-qname: ""
@@ -42,6 +52,7 @@ processors:
     # log replies or not
     log-replies: true
 
+  # geoip maxmind support
   geoip:
     # path file to your database
     db-file: ""
@@ -74,9 +85,9 @@ generators:
     enable: false
     # output logfile name
     file-path: null
-    # maximum size of each in Mbit
+    # maximum size in megabytes of the file before rotation
     max-size: 100
-    # maximum number of file
+    # maximum number of files to retain.
     max-files: 10
     # flush every x seconds
     flush-interval: 10
