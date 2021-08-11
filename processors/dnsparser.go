@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -127,12 +128,10 @@ func GetFakeDns() ([]byte, error) {
 }
 
 type DnsProcessor struct {
-	done         chan bool
-	recvFrom     chan dnsutils.DnsMessage
-	geoipSupport bool
-	geoipDb      string
-	logger       *logger.Logger
-	config       *dnsutils.Config
+	done     chan bool
+	recvFrom chan dnsutils.DnsMessage
+	logger   *logger.Logger
+	config   *dnsutils.Config
 }
 
 func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger) DnsProcessor {
@@ -151,8 +150,7 @@ func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger) DnsProcesso
 }
 
 func (d *DnsProcessor) ReadConfig() {
-	d.geoipSupport = d.config.Processors.GeoIP.Enable
-	d.geoipDb = d.config.Processors.GeoIP.DbFile
+	// todo - checking settings
 }
 
 func (c *DnsProcessor) LogInfo(msg string, v ...interface{}) {
@@ -181,7 +179,7 @@ func (d *DnsProcessor) Stop() {
 	close(d.done)
 }
 
-func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
+func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 	// dns cache to compute latency between response and query
 	cache_ttl := dnsutils.NewCacheDns(10 * time.Second)
@@ -189,20 +187,29 @@ func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 	// geoip feature
 	var geoipdb *maxminddb.Reader
 	var err error
+	var geoipSupport bool
 	var record struct {
 		Country struct {
 			ISOCode string `maxminddb:"iso_code"`
 		} `maxminddb:"country"`
 	}
-	if d.geoipSupport {
+	if len(d.config.Processors.GeoIP.DbFile) > 0 {
 		d.LogInfo("geoip enabled")
-		geoipdb, err = maxminddb.Open(d.geoipDb)
+		geoipSupport = true
+		geoipdb, err = maxminddb.Open(d.config.Processors.GeoIP.DbFile)
 		if err != nil {
 			d.LogError("geoip init failed: %v+", err)
-			d.geoipSupport = false
+			geoipSupport = false
 		}
 		defer geoipdb.Close()
+	}
 
+	// filter
+	var qnamePatternIgnore *regexp.Regexp
+	var qnameFiltering bool
+	if len(d.config.Processors.Filtering.IgnoreQname) > 0 {
+		qnamePatternIgnore = regexp.MustCompile(d.config.Processors.Filtering.IgnoreQname)
+		qnameFiltering = true
 	}
 
 	// read incoming dns message
@@ -235,6 +242,16 @@ func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 			dm.Operation = "CLIENT_QUERY"
 		}
 
+		// filtering, ignore queries ?
+		if !d.config.Processors.Filtering.LogQueries && dm.Type == "query" {
+			continue
+		}
+
+		// filtering, ignore replies ?
+		if !d.config.Processors.Filtering.LogReplies && dm.Type == "reply" {
+			continue
+		}
+
 		dm.Id = dns_id
 		dm.Rcode = RcodeToString(dns_rcode)
 
@@ -249,6 +266,13 @@ func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 			dm.Qname = dns_qname
 			dm.Qtype = RdatatypeToString(dns_rrtype)
 			dns_offsetrr = offsetrr
+		}
+
+		// filter qname
+		if qnameFiltering {
+			if qnamePatternIgnore.MatchString(dm.Qname) {
+				continue
+			}
 		}
 
 		// decode dns answers
@@ -283,7 +307,7 @@ func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 		dm.LatencySec = fmt.Sprintf("%.6f", dm.Latency)
 
 		// geoip feature
-		if d.geoipSupport {
+		if geoipSupport {
 			ip := net.ParseIP(dm.QueryIp)
 			err = geoipdb.Lookup(ip, &record)
 			if err != nil {
@@ -294,8 +318,8 @@ func (d *DnsProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 		}
 
 		// dispatch dns message to all generators
-		for i := range send_to {
-			send_to[i] <- dm
+		for i := range sendTo {
+			sendTo[i] <- dm
 		}
 	}
 

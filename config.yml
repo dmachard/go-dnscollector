@@ -33,33 +33,52 @@ collectors:
 
 # settings for processors
 processors:
+  filtering:
+    # regexp to ignore incoming qname
+    ignore-qname: ""
+    # log queries or not
+    log-queries: true
+    # log replies or not
+    log-replies: true
+
   geoip:
-    enable: false
-    db-file: null
+    # path file to your database
+    db-file: ""
 
 # list of generators
 generators:
   # To enable, set the enable to True
   stdout:
     enable: true
-    mode: json
+    # text|json
+    mode: text
 
   # To enable, set the enable to True
   webserver:
     enable: true
+    # listening IP
     listen-ip: 0.0.0.0
+    # listening port
     listen-port: 8080
+    # default number of items to return
     top-max-items: 100
+    # default login
     basic-auth-login: admin
+    # default password
     basic-auth-pwd: changeme
 
   # To enable, set the enable to True
   logfile:
     enable: false
+    # output logfile name
     file-path: null
+    # maximum size of each in Mbit
     max-size: 100
+    # maximum number of file
     max-files: 10
+    # log queries or not
     log-queries: true
+    # log replies or not
     log-replies: true
 
   # To enable, set the enable to True

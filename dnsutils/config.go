@@ -31,8 +31,12 @@ type Config struct {
 	} `yaml:"collectors"`
 
 	Processors struct {
+		Filtering struct {
+			IgnoreQname string `yaml:"ignore-qname"`
+			LogQueries  bool   `yaml:"log-queries"`
+			LogReplies  bool   `yaml:"log-replies"`
+		} `yaml:"filtering"`
 		GeoIP struct {
-			Enable bool   `yaml:"enable"`
 			DbFile string `yaml:"db-file"`
 		} `yaml:"geoip"`
 	} `yaml:"processors"`
@@ -95,7 +99,9 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnsSniffer.CaptureDnsQueries = true
 	c.Collectors.DnsSniffer.CaptureDnsReplies = true
 
-	c.Processors.GeoIP.Enable = false
+	c.Processors.Filtering.IgnoreQname = ""
+	c.Processors.Filtering.LogQueries = true
+	c.Processors.Filtering.LogReplies = true
 	c.Processors.GeoIP.DbFile = ""
 
 	c.Generators.Stdout.Enable = true
