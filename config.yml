@@ -30,13 +30,18 @@ collectors:
     capture-dns-queries: true
     # capture dns replies
     capture-dns-replies: true
-    
+
+processors:
+  geoip:
+    enable: true
+    db-file: "/home/denis/Downloads/GeoLite2-Country_20210803/GeoLite2-Country.mmdb"
+
 # list of generators
 generators:
   # To enable, set the enable to True
   stdout:
     enable: true
-    mode: text
+    mode: json
 
   # To enable, set the enable to True
   webserver:

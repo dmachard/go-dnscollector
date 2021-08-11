@@ -36,6 +36,7 @@ type DnsMessage struct {
 	TimeSec          int         `json:"-"`
 	TimeNsec         int         `json:"-"`
 	Answers          []DnsAnswer `json:"answers"`
+	CountryIsoCode   string      `json:"country-isocode"`
 }
 
 func (dm *DnsMessage) Init() {
@@ -47,6 +48,7 @@ func (dm *DnsMessage) Init() {
 	dm.Rcode, dm.Qtype = "-", "-"
 	dm.Qname, dm.LatencySec = "-", "-"
 	dm.TimestampRFC3339 = "-"
+	dm.CountryIsoCode = "-"
 }
 
 func (dm *DnsMessage) Bytes() []byte {

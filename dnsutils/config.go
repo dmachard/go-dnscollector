@@ -30,6 +30,13 @@ type Config struct {
 		} `yaml:"dns-sniffer"`
 	} `yaml:"collectors"`
 
+	Processors struct {
+		GeoIP struct {
+			Enable bool   `yaml:"enable"`
+			DbFile string `yaml:"db-file"`
+		} `yaml:"geoip"`
+	} `yaml:"processors"`
+
 	Generators struct {
 		Stdout struct {
 			Enable bool   `yaml:"enable"`
@@ -87,6 +94,9 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnsSniffer.Device = ""
 	c.Collectors.DnsSniffer.CaptureDnsQueries = true
 	c.Collectors.DnsSniffer.CaptureDnsReplies = true
+
+	c.Processors.GeoIP.Enable = false
+	c.Processors.GeoIP.DbFile = ""
 
 	c.Generators.Stdout.Enable = true
 	c.Generators.Stdout.Mode = "text"

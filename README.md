@@ -6,6 +6,7 @@ Features:
 - Collectors 
     - Streams [Dnstap](https://dnstap.info/) (TCP, unix) 
     - DNS packets sniffer (IPv4 and IPv6 support)
+    - GeoIP support (Country Code)
 - Generators
     - Stream [Dnstap](https://dnstap.info/) (TCP, unix)
     - Plain text or JSON to stdout

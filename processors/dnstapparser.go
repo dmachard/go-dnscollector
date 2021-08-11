@@ -11,6 +11,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-logger"
+	"github.com/oschwald/maxminddb-golang"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -50,29 +51,39 @@ func GetFakeDnstap(dnsquery []byte) *dnstap.Dnstap {
 }
 
 type DnstapProcessor struct {
-	done      chan bool
-	recv_from chan []byte
-	logger    *logger.Logger
-	config    *dnsutils.Config
+	done         chan bool
+	recvFrom     chan []byte
+	geoipSupport bool
+	geoipDb      string
+	logger       *logger.Logger
+	config       *dnsutils.Config
 }
 
 func NewDnstapProcessor(config *dnsutils.Config, logger *logger.Logger) DnstapProcessor {
 	logger.Info("dnstap processor - initialization...")
 	d := DnstapProcessor{
-		done:      make(chan bool),
-		recv_from: make(chan []byte, 512),
-		logger:    logger,
-		config:    config,
+		done:     make(chan bool),
+		recvFrom: make(chan []byte, 512),
+		logger:   logger,
+		config:   config,
 	}
+
+	d.ReadConfig()
+
 	return d
 }
 
+func (d *DnstapProcessor) ReadConfig() {
+	d.geoipSupport = d.config.Processors.GeoIP.Enable
+	d.geoipDb = d.config.Processors.GeoIP.DbFile
+}
+
 func (d *DnstapProcessor) GetChannel() chan []byte {
-	return d.recv_from
+	return d.recvFrom
 }
 
 func (d *DnstapProcessor) Stop() {
-	close(d.recv_from)
+	close(d.recvFrom)
 
 	// read done channel and block until run is terminated
 	<-d.done
@@ -84,7 +95,26 @@ func (d *DnstapProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 	dt := &dnstap.Dnstap{}
 	cache_ttl := dnsutils.NewCacheDns(10 * time.Second)
 
-	for data := range d.recv_from {
+	// geoip ?
+	var geoipdb *maxminddb.Reader
+	var err error
+	var record struct {
+		Country struct {
+			ISOCode string `maxminddb:"iso_code"`
+		} `maxminddb:"country"`
+	}
+	if d.geoipSupport {
+		geoipdb, err = maxminddb.Open(d.geoipDb)
+		if err != nil {
+			d.logger.Error("geoip init failed: %v+", err)
+			d.geoipSupport = false
+		}
+		defer geoipdb.Close()
+
+	}
+
+	// read incoming dns message
+	for data := range d.recvFrom {
 
 		err := proto.Unmarshal(data, dt)
 		if err != nil {
@@ -199,6 +229,18 @@ func (d *DnstapProcessor) Run(send_to []chan dnsutils.DnsMessage) {
 		// convert latency to human
 		dm.LatencySec = fmt.Sprintf("%.6f", dm.Latency)
 
+		//geoip ?
+		if d.geoipSupport {
+			ip := net.ParseIP(dm.QueryIp)
+			err = geoipdb.Lookup(ip, &record)
+			if err != nil {
+				d.logger.Error("geoip loopkup failed: %v+", err)
+				continue
+			}
+			dm.CountryIsoCode = record.Country.ISOCode
+		}
+
+		// dispatch dns message to all generators
 		for i := range send_to {
 			send_to[i] <- dm
 		}
