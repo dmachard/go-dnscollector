@@ -76,11 +76,9 @@ generators:
     max-size: 100
     # maximum number of file
     max-files: 10
-    # log queries or not
-    log-queries: true
-    # log replies or not
-    log-replies: true
-
+    # flush every x seconds
+    flush-interval: 10
+    
   # To enable, set the enable to True
   dnstap-tcp:
     enable: false

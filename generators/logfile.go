@@ -15,18 +15,17 @@ import (
 )
 
 type LogFile struct {
-	done       chan bool
-	channel    chan dnsutils.DnsMessage
-	writer     *bufio.Writer
-	file       *os.File
-	config     *dnsutils.Config
-	logger     *logger.Logger
-	size       int64
-	fpath      string
-	maxfiles   int
-	maxsize    int
-	logqueries bool
-	logreplies bool
+	done          chan bool
+	channel       chan dnsutils.DnsMessage
+	writer        *bufio.Writer
+	file          *os.File
+	config        *dnsutils.Config
+	logger        *logger.Logger
+	size          int64
+	fpath         string
+	maxfiles      int
+	maxsize       int
+	flushinterval int
 }
 
 func NewLogFile(config *dnsutils.Config, logger *logger.Logger) *LogFile {
@@ -51,9 +50,7 @@ func (c *LogFile) ReadConfig() {
 	c.fpath = c.config.Generators.LogFile.FilePath
 	c.maxfiles = c.config.Generators.LogFile.MaxFiles
 	c.maxsize = c.config.Generators.LogFile.MaxSize
-	c.logqueries = c.config.Generators.LogFile.LogQueries
-	c.logreplies = c.config.Generators.LogFile.LogReplies
-
+	c.flushinterval = c.config.Generators.LogFile.FlushInterval
 }
 
 func (o *LogFile) OpenFile(fpath string) error {
@@ -190,7 +187,7 @@ func (o *LogFile) Rotate() error {
 func (o *LogFile) Run() {
 	o.logger.Info("generator logfile - running in background...")
 
-	tflush_interval := 5 * time.Second
+	tflush_interval := time.Duration(o.flushinterval) * time.Second
 	tflush := time.NewTimer(tflush_interval)
 LOOP:
 	for {
@@ -199,13 +196,6 @@ LOOP:
 			if !opened {
 				o.logger.Info("generator logfile - channel closed")
 				break LOOP
-			}
-
-			if dm.Type == "query" && !o.logqueries {
-				continue
-			}
-			if dm.Type == "reply" && !o.logreplies {
-				continue
 			}
 
 			// write to file

@@ -55,12 +55,11 @@ type Config struct {
 			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
 		} `yaml:"webserver"`
 		LogFile struct {
-			Enable     bool   `yaml:"enable"`
-			FilePath   string `yaml:"file-path"`
-			MaxSize    int    `yaml:"max-size"`
-			MaxFiles   int    `yaml:"max-files"`
-			LogQueries bool   `yaml:"log-queries"`
-			LogReplies bool   `yaml:"log-replies"`
+			Enable        bool   `yaml:"enable"`
+			FilePath      string `yaml:"file-path"`
+			MaxSize       int    `yaml:"max-size"`
+			MaxFiles      int    `yaml:"max-files"`
+			FlushInterval int    `yaml:"flush-interval"`
 		} `yaml:"logfile"`
 		DnstapTcp struct {
 			Enable        bool   `yaml:"enable"`
@@ -118,8 +117,7 @@ func (c *Config) SetDefault() {
 
 	c.Generators.LogFile.Enable = false
 	c.Generators.LogFile.FilePath = ""
-	c.Generators.LogFile.LogQueries = true
-	c.Generators.LogFile.LogReplies = true
+	c.Generators.LogFile.FlushInterval = 10
 	c.Generators.LogFile.MaxSize = 1
 	c.Generators.LogFile.MaxFiles = 1
 
