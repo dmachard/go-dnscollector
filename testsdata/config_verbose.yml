@@ -1,0 +1,12 @@
+trace:
+  verbose: true
+
+collectors:
+  dnstap-tcp:
+    enable: true
+    listen-ip: 0.0.0.0
+    listen-port: 6000
+
+generators:
+  stdout:
+    enable: true

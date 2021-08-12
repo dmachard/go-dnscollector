@@ -50,7 +50,7 @@ class TestDnstap(unittest.TestCase):
             # run collector
             is_ready = asyncio.Future()
             is_clientresponse = asyncio.Future()
-            args = ( "sudo", "-u", COLLECTOR_USER, "-s", "./go-dnscollector", "-config", "./tests/config_stdout_dnstapunix.yml",)
+            args = ( "sudo", "-u", COLLECTOR_USER, "-s", "./go-dnscollector", "-config", "./testsdata/config_stdout_dnstapunix.yml",)
             transport_collector, protocol_collector =  await self.loop.subprocess_exec(lambda: ProcessProtocol(is_ready, is_clientresponse),
                                                                                        *args, stdout=asyncio.subprocess.PIPE)
 
