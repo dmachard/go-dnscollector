@@ -64,7 +64,7 @@ generators:
     # to enable, set the enable to true
     enable: true
     # text|json
-    mode: text
+    mode: json
 
   webserver:
     # to enable, set the enable to true
