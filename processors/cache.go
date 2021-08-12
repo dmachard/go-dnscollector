@@ -1,4 +1,4 @@
-package dnsutils
+package processors
 
 import (
 	"sync"
@@ -11,7 +11,7 @@ type MapTTL struct {
 	kv  map[uint64]float64
 }
 
-func NewCacheDns(ttl time.Duration) *MapTTL {
+func NewCacheDnsProcessor(ttl time.Duration) *MapTTL {
 	return &MapTTL{
 		ttl: ttl,
 		kv:  make(map[uint64]float64),

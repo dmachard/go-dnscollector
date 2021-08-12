@@ -39,6 +39,11 @@ collectors:
 
 # settings for processors
 processors:
+
+  # The cache is used to compute latency between replies and queries
+  # Ttl in second 
+  cache-ttl: 10
+
   # Server identity, if empty  the hostname is used
   # This settings is used in dnstap generator as dnstap-identity
   server-id: ""

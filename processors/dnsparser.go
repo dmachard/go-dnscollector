@@ -182,7 +182,7 @@ func (d *DnsProcessor) Stop() {
 func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 	// dns cache to compute latency between response and query
-	cache_ttl := dnsutils.NewCacheDns(10 * time.Second)
+	cache_ttl := NewCacheDnsProcessor(time.Duration(d.config.Processors.CacheTtl) * time.Second)
 
 	// geoip feature
 	var geoipdb *maxminddb.Reader

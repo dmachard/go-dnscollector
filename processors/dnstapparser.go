@@ -98,7 +98,7 @@ func (d *DnstapProcessor) Stop() {
 
 func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	dt := &dnstap.Dnstap{}
-	cache_ttl := dnsutils.NewCacheDns(10 * time.Second)
+	cache_ttl := NewCacheDnsProcessor(time.Duration(d.config.Processors.CacheTtl) * time.Second)
 
 	// geoip ?
 	var geoipdb *maxminddb.Reader

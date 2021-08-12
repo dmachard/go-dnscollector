@@ -35,6 +35,7 @@ type Config struct {
 	} `yaml:"collectors"`
 
 	Processors struct {
+		CacheTtl  int    `yaml:"cache-ttl"`
 		ServerId  string `yaml:"server-id"`
 		Filtering struct {
 			IgnoreQname string `yaml:"ignore-qname"`
@@ -92,6 +93,7 @@ func (c *Config) SetDefault() {
 	c.Trace.MaxSize = 10
 	c.Trace.MaxBackups = 10
 
+	// Collectors
 	c.Collectors.DnstapTcp.Enable = true
 	c.Collectors.DnstapTcp.ListenIP = "0.0.0.0"
 	c.Collectors.DnstapTcp.ListenPort = 6000
@@ -105,6 +107,8 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnsSniffer.CaptureDnsQueries = true
 	c.Collectors.DnsSniffer.CaptureDnsReplies = true
 
+	// Processors
+	c.Processors.CacheTtl = 10
 	c.Processors.ServerId = ""
 
 	c.Processors.Filtering.IgnoreQname = ""
@@ -113,6 +117,7 @@ func (c *Config) SetDefault() {
 
 	c.Processors.GeoIP.DbFile = ""
 
+	// Generators
 	c.Generators.Stdout.Enable = true
 	c.Generators.Stdout.Mode = "text"
 
