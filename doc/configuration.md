@@ -1,20 +1,20 @@
 # DnsCollector Configuration Guide
 
-See [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml) file.
-
 - [Trace](#Trace)
 - [Collectors](#Collectors)
-  - [Dnstap TCP](#Dnstap-TCP)
-  - [Dnstap Unix](#Dnstap-Unix)
+  - [DNStap tcp](#Dnstap-TCP)
+  - [DNStap unix](#Dnstap-Unix)
   - [Sniffer](#Sniffer)
   - [GeoIP Support](#GeoIP-Support)
 - [Generators](#Generators)
   - [Stdout](#Stdout)
   - [Build-in Webserver](#Build-in-Webserver)
   - [Log File](#Log-File)
-  - [Dnstap TCP](#Dnstap-TCP-Generator)
-  - [Dnstap Unix](#Dnstap-Unix-Generator)
-  - [JSON TCP](#JSON-TCP)
+  - [DNStap tcp](#Dnstap-TCP-Generator)
+  - [DNStap unix](#Dnstap-Unix-Generator)
+  - [JSON tcp](#JSON-TCP)
+
+See [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml) file.
 
 ## Trace
 
@@ -228,6 +228,8 @@ dnstap-unix:
 ```
 
 ### JSON tcp
+
+JSON tcp stream generator.
 
 ```yaml
 json-tcp:
