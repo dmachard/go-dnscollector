@@ -12,7 +12,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-logger"
-	"github.com/oschwald/maxminddb-golang"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -98,28 +97,19 @@ func (d *DnstapProcessor) Stop() {
 
 func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	dt := &dnstap.Dnstap{}
+
+	// dns cache to compute latency between response and query
 	cache_ttl := NewCacheDnsProcessor(time.Duration(d.config.Processors.CacheTtl) * time.Second)
 
-	// geoip ?
-	var geoipdb *maxminddb.Reader
-	var err error
-	var geoipSupport bool
-	var record struct {
-		Country struct {
-			ISOCode string `maxminddb:"iso_code"`
-		} `maxminddb:"country"`
+	// geoip
+	geoip := NewDnsGeoIpProcessor(d.config)
+	if err := geoip.Open(); err != nil {
+		d.LogError("geoip init failed: %v+", err)
 	}
-	if len(d.config.Processors.GeoIP.DbFile) > 0 {
-		d.LogInfo("geoip enabled")
-		geoipSupport = true
-		geoipdb, err = maxminddb.Open(d.config.Processors.GeoIP.DbFile)
-		if err != nil {
-			d.LogError("geoip init failed: %v+", err)
-			geoipSupport = false
-		}
-		defer geoipdb.Close()
-
+	if geoip.IsEnabled() {
+		d.LogInfo("geoip is enabled")
 	}
+	defer geoip.Close()
 
 	// filter
 	var qnamePatternIgnore *regexp.Regexp
@@ -263,15 +253,13 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		// convert latency to human
 		dm.LatencySec = fmt.Sprintf("%.6f", dm.Latency)
 
-		//geoip ?
-		if geoipSupport {
-			ip := net.ParseIP(dm.QueryIp)
-			err = geoipdb.Lookup(ip, &record)
+		// geoip feature
+		if geoip.IsEnabled() {
+			country, err := geoip.Lookup(dm.QueryIp)
 			if err != nil {
 				d.LogError("geoip loopkup failed: %v+", err)
-				continue
 			}
-			dm.CountryIsoCode = record.Country.ISOCode
+			dm.CountryIsoCode = country
 		}
 
 		// dispatch dns message to all generators

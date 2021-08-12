@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
-	"net"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,7 +13,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 	"github.com/miekg/dns"
-	"github.com/oschwald/maxminddb-golang"
 )
 
 const DnsLen = 12
@@ -135,7 +133,7 @@ type DnsProcessor struct {
 }
 
 func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger) DnsProcessor {
-	logger.Info("dns processor - initialization...")
+	logger.Info("processor dns - initialization...")
 	d := DnsProcessor{
 		done:     make(chan bool),
 		recvFrom: make(chan dnsutils.DnsMessage, 512),
@@ -145,7 +143,6 @@ func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger) DnsProcesso
 
 	d.ReadConfig()
 
-	logger.Info("dns processor - ready")
 	return d
 }
 
@@ -154,11 +151,11 @@ func (d *DnsProcessor) ReadConfig() {
 }
 
 func (c *DnsProcessor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("processor dns parser - "+msg, v...)
+	c.logger.Info("processor dns - "+msg, v...)
 }
 
 func (c *DnsProcessor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("procesor dns parser - "+msg, v...)
+	c.logger.Error("procesor dns - "+msg, v...)
 }
 
 func (d *DnsProcessor) GetChannel() chan dnsutils.DnsMessage {
@@ -184,25 +181,15 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	// dns cache to compute latency between response and query
 	cache_ttl := NewCacheDnsProcessor(time.Duration(d.config.Processors.CacheTtl) * time.Second)
 
-	// geoip feature
-	var geoipdb *maxminddb.Reader
-	var err error
-	var geoipSupport bool
-	var record struct {
-		Country struct {
-			ISOCode string `maxminddb:"iso_code"`
-		} `maxminddb:"country"`
+	// geoip
+	geoip := NewDnsGeoIpProcessor(d.config)
+	if err := geoip.Open(); err != nil {
+		d.LogError("geoip init failed: %v+", err)
 	}
-	if len(d.config.Processors.GeoIP.DbFile) > 0 {
-		d.LogInfo("geoip enabled")
-		geoipSupport = true
-		geoipdb, err = maxminddb.Open(d.config.Processors.GeoIP.DbFile)
-		if err != nil {
-			d.LogError("geoip init failed: %v+", err)
-			geoipSupport = false
-		}
-		defer geoipdb.Close()
+	if geoip.IsEnabled() {
+		d.LogInfo("geoip is enabled")
 	}
+	defer geoip.Close()
 
 	// filter
 	var qnamePatternIgnore *regexp.Regexp
@@ -307,14 +294,12 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		dm.LatencySec = fmt.Sprintf("%.6f", dm.Latency)
 
 		// geoip feature
-		if geoipSupport {
-			ip := net.ParseIP(dm.QueryIp)
-			err = geoipdb.Lookup(ip, &record)
+		if geoip.IsEnabled() {
+			country, err := geoip.Lookup(dm.QueryIp)
 			if err != nil {
 				d.LogError("geoip loopkup failed: %v+", err)
-				continue
 			}
-			dm.CountryIsoCode = record.Country.ISOCode
+			dm.CountryIsoCode = country
 		}
 
 		// dispatch dns message to all generators
