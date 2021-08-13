@@ -29,8 +29,8 @@ func NewDnsGeoIpProcessor(config *dnsutils.Config) GeoIpProcessor {
 }
 
 func (p *GeoIpProcessor) Open() (err error) {
-	if len(p.config.Processors.GeoIP.DbFile) > 0 {
-		p.db, err = maxminddb.Open(p.config.Processors.GeoIP.DbFile)
+	if len(p.config.Subprocessors.GeoIP.DbFile) > 0 {
+		p.db, err = maxminddb.Open(p.config.Subprocessors.GeoIP.DbFile)
 		if err != nil {
 			p.enabled = false
 			return

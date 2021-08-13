@@ -34,7 +34,7 @@ type Config struct {
 		} `yaml:"dns-sniffer"`
 	} `yaml:"collectors"`
 
-	Processors struct {
+	Subprocessors struct {
 		CacheTtl  int    `yaml:"cache-ttl"`
 		ServerId  string `yaml:"server-id"`
 		Filtering struct {
@@ -45,7 +45,7 @@ type Config struct {
 		GeoIP struct {
 			DbFile string `yaml:"db-file"`
 		} `yaml:"geoip"`
-	} `yaml:"processors"`
+	} `yaml:"subprocessors"`
 
 	Generators struct {
 		Stdout struct {
@@ -107,15 +107,15 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnsSniffer.CaptureDnsQueries = true
 	c.Collectors.DnsSniffer.CaptureDnsReplies = true
 
-	// Processors
-	c.Processors.CacheTtl = 10
-	c.Processors.ServerId = ""
+	// Subprocessors
+	c.Subprocessors.CacheTtl = 10
+	c.Subprocessors.ServerId = ""
 
-	c.Processors.Filtering.IgnoreQname = ""
-	c.Processors.Filtering.LogQueries = true
-	c.Processors.Filtering.LogReplies = true
+	c.Subprocessors.Filtering.IgnoreQname = ""
+	c.Subprocessors.Filtering.LogQueries = true
+	c.Subprocessors.Filtering.LogReplies = true
 
-	c.Processors.GeoIP.DbFile = ""
+	c.Subprocessors.GeoIP.DbFile = ""
 
 	// Generators
 	c.Generators.Stdout.Enable = true

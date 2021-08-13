@@ -9,7 +9,7 @@ import (
 func TestGeoIP(t *testing.T) {
 	// enable geoip
 	config := dnsutils.GetFakeConfig()
-	config.Processors.GeoIP.DbFile = "../testsdata/GeoLite2-Country.mmdb"
+	config.Subprocessors.GeoIP.DbFile = "../testsdata/GeoLite2-Country.mmdb"
 
 	// init the processor
 	geoip := NewDnsGeoIpProcessor(config)

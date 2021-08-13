@@ -37,8 +37,8 @@ collectors:
     # capture dns replies
     capture-dns-replies: true
 
-# settings for processors
-processors:
+# settings for subprocessors
+subprocessors:
 
   # The cache is used to compute latency between replies and queries
   # Ttl in second 

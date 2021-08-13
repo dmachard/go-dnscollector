@@ -42,7 +42,7 @@ func NewDnstapUnixSender(config *dnsutils.Config, logger *logger.Logger) *Dnstap
 
 func (o *DnstapUnixSender) ReadConfig() {
 	o.sockPath = o.config.Generators.DnstapUnix.SockPath
-	o.identity = o.config.Processors.ServerId
+	o.identity = o.config.Subprocessors.ServerId
 	o.retry = o.config.Generators.DnstapUnix.RetryInterval
 }
 

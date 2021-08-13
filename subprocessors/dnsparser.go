@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -179,7 +178,7 @@ func (d *DnsProcessor) Stop() {
 func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 	// dns cache to compute latency between response and query
-	cache_ttl := NewCacheDnsProcessor(time.Duration(d.config.Processors.CacheTtl) * time.Second)
+	cache_ttl := NewCacheDnsProcessor(time.Duration(d.config.Subprocessors.CacheTtl) * time.Second)
 
 	// geoip
 	geoip := NewDnsGeoIpProcessor(d.config)
@@ -191,13 +190,8 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	}
 	defer geoip.Close()
 
-	// filter
-	var qnamePatternIgnore *regexp.Regexp
-	var qnameFiltering bool
-	if len(d.config.Processors.Filtering.IgnoreQname) > 0 {
-		qnamePatternIgnore = regexp.MustCompile(d.config.Processors.Filtering.IgnoreQname)
-		qnameFiltering = true
-	}
+	// filtering
+	filtering := NewFilteringProcessor(d.config)
 
 	// read incoming dns message
 	d.LogInfo("running... waiting incoming dns message")
@@ -229,16 +223,6 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.Operation = "CLIENT_QUERY"
 		}
 
-		// filtering, ignore queries ?
-		if !d.config.Processors.Filtering.LogQueries && dm.Type == "query" {
-			continue
-		}
-
-		// filtering, ignore replies ?
-		if !d.config.Processors.Filtering.LogReplies && dm.Type == "reply" {
-			continue
-		}
-
 		dm.Id = dns_id
 		dm.Rcode = RcodeToString(dns_rcode)
 
@@ -255,11 +239,9 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dns_offsetrr = offsetrr
 		}
 
-		// filter qname
-		if qnameFiltering {
-			if qnamePatternIgnore.MatchString(dm.Qname) {
-				continue
-			}
+		// filtering
+		if filtering.Ignore(&dm) {
+			continue
 		}
 
 		// decode dns answers
