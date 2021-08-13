@@ -9,7 +9,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/generators"
-	"github.com/dmachard/go-dnscollector/processors"
+	"github.com/dmachard/go-dnscollector/subprocessors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 	"google.golang.org/protobuf/proto"
@@ -40,13 +40,13 @@ func TestDnstapUnixRun(t *testing.T) {
 		frame := &framestream.Frame{}
 
 		// get fake dns question
-		dnsquery, err := processors.GetFakeDns()
+		dnsquery, err := subprocessors.GetFakeDns()
 		if err != nil {
 			t.Fatalf("dns question pack error")
 		}
 
 		// get fake dnstap message
-		dt_query := processors.GetFakeDnstap(dnsquery)
+		dt_query := subprocessors.GetFakeDnstap(dnsquery)
 
 		// serialize to bytes
 		data, err := proto.Marshal(dt_query)
