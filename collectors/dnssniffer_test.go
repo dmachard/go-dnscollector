@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnslogger/dnsutils"
-	"github.com/dmachard/go-dnslogger/generators"
+	"github.com/dmachard/go-dnslogger/loggers"
 	"github.com/dmachard/go-logger"
 )
 
 func TestDnsSnifferRun(t *testing.T) {
-	g := generators.NewFakeGenerator()
+	g := loggers.NewFakeGenerator()
 	c := NewDnsSniffer([]dnsutils.Worker{g}, dnsutils.GetFakeConfig(), logger.New(false))
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector sniffer listening error: ", err)

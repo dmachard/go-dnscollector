@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnslogger/dnsutils"
-	"github.com/dmachard/go-dnslogger/generators"
+	"github.com/dmachard/go-dnslogger/loggers"
 	"github.com/dmachard/go-dnslogger/subprocessors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -16,7 +16,7 @@ import (
 )
 
 func TestDnstapTcpRun(t *testing.T) {
-	g := generators.NewFakeGenerator()
+	g := loggers.NewFakeGenerator()
 	c := NewDnstapTcp([]dnsutils.Worker{g}, dnsutils.GetFakeConfig(), logger.New(false))
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector dnstap tcp listening error: ", err)

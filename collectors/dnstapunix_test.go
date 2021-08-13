@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnslogger/dnsutils"
-	"github.com/dmachard/go-dnslogger/generators"
+	"github.com/dmachard/go-dnslogger/loggers"
 	"github.com/dmachard/go-dnslogger/subprocessors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -16,7 +16,7 @@ import (
 )
 
 func TestDnstapUnixRun(t *testing.T) {
-	g := generators.NewFakeGenerator()
+	g := loggers.NewFakeGenerator()
 	config := dnsutils.GetFakeConfig()
 	config.Collectors.DnstapUnix.SockPath = "/tmp/dnscollector.sock"
 	c := NewDnstapUnix([]dnsutils.Worker{g}, config, logger.New(false))
