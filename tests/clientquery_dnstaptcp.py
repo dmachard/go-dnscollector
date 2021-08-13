@@ -83,7 +83,7 @@ class TestDnstap(unittest.TestCase):
             # run collector
             is_listening = asyncio.Future()
             is_clientquery = asyncio.Future()
-            args = ( "./go-dnscollector", "-config", "./testsdata/config_stdout_dnstaptcp.yml",)
+            args = ( "./go-dnslogger", "-config", "./testsdata/config_stdout_dnstaptcp.yml",)
             transport_collector, protocol_collector =  await self.loop.subprocess_exec(lambda: ProcessProtocol(is_listening, is_clientquery),
                                                                                        *args, stdout=asyncio.subprocess.PIPE)
 

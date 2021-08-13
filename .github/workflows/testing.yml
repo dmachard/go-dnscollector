@@ -43,7 +43,7 @@ jobs:
     - uses: actions/setup-python@v2
  
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnslogger *.go
 
     - name: Test ${{ matrix.package }}
       run: |
@@ -65,7 +65,7 @@ jobs:
     - uses: actions/setup-python@v2
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnslogger *.go
 
     - name: Deploy coredns docker image
       run: |
@@ -95,7 +95,7 @@ jobs:
     - uses: actions/setup-python@v2
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnslogger *.go
 
     - name: add pdns user
       run: |

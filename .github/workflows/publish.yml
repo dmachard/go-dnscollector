@@ -18,10 +18,10 @@ jobs:
 
       - name: Build
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
-          tar -cvzf go-dnscollector_${{ github.event.release.tag_name }}_linux_amd64.tar.gz go-dnscollector config.yml
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnslogger *.go
+          tar -cvzf go-dnslogger_${{ github.event.release.tag_name }}_linux_amd64.tar.gz go-dnslogger config.yml
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: go-dnscollector_${{ github.event.release.tag_name }}_linux_amd64.tar.gz
+          files: go-dnslogger_${{ github.event.release.tag_name }}_linux_amd64.tar.gz

@@ -54,7 +54,7 @@ class TestBench(unittest.TestCase):
         async def run():
             # run collector
             is_listening = asyncio.Future()
-            args = ( "./go-dnscollector", "-config", "./testsdata/config_metrics_dnstaptcp.yml",)
+            args = ( "./go-dnslogger", "-config", "./testsdata/config_metrics_dnstaptcp.yml",)
             transport_collector, protocol_collector =  await self.loop.subprocess_exec(lambda: CollectorProc(is_listening),
                                                                                        *args, stdout=asyncio.subprocess.PIPE)
 
