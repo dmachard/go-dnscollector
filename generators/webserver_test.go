@@ -132,7 +132,7 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/metrics",
 			handler:    g.metricsHandler,
 			method:     http.MethodGet,
-			want:       `dnscollector_domains_total 1`,
+			want:       `dnslogger_domains_total 1`,
 			statusCode: http.StatusOK,
 		},
 		{
@@ -140,7 +140,7 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/metrics",
 			handler:    g.metricsHandler,
 			method:     http.MethodGet,
-			want:       `dnscollector_clients_total 1`,
+			want:       `dnslogger_clients_total 1`,
 			statusCode: http.StatusOK,
 		},
 		{
@@ -148,7 +148,7 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/metrics",
 			handler:    g.metricsHandler,
 			method:     http.MethodGet,
-			want:       `dnscollector_queries_total 1`,
+			want:       `dnslogger_queries_total 1`,
 			statusCode: http.StatusOK,
 		},
 		{
@@ -156,7 +156,7 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/metrics",
 			handler:    g.metricsHandler,
 			method:     http.MethodGet,
-			want:       `dnscollector_replies_total 0`,
+			want:       `dnslogger_replies_total 0`,
 			statusCode: http.StatusOK,
 		},
 		{
