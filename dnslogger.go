@@ -8,7 +8,7 @@ import (
 
 	"github.com/dmachard/go-dnslogger/collectors"
 	"github.com/dmachard/go-dnslogger/dnsutils"
-	"github.com/dmachard/go-dnslogger/generators"
+	"github.com/dmachard/go-dnslogger/loggers"
 	"github.com/dmachard/go-logger"
 	"github.com/natefinch/lumberjack"
 )
@@ -54,22 +54,22 @@ func main() {
 	var genwrks []dnsutils.Worker
 
 	if config.Generators.WebServer.Enable {
-		genwrks = append(genwrks, generators.NewWebserver(config, logger))
+		genwrks = append(genwrks, loggers.NewWebserver(config, logger))
 	}
 	if config.Generators.Stdout.Enable {
-		genwrks = append(genwrks, generators.NewStdOut(config, logger))
+		genwrks = append(genwrks, loggers.NewStdOut(config, logger))
 	}
 	if config.Generators.LogFile.Enable {
-		genwrks = append(genwrks, generators.NewLogFile(config, logger))
+		genwrks = append(genwrks, loggers.NewLogFile(config, logger))
 	}
 	if config.Generators.DnstapTcp.Enable {
-		genwrks = append(genwrks, generators.NewDnstapTcpSender(config, logger))
+		genwrks = append(genwrks, loggers.NewDnstapTcpSender(config, logger))
 	}
 	if config.Generators.DnstapUnix.Enable {
-		genwrks = append(genwrks, generators.NewDnstapUnixSender(config, logger))
+		genwrks = append(genwrks, loggers.NewDnstapUnixSender(config, logger))
 	}
 	if config.Generators.JsonTcp.Enable {
-		genwrks = append(genwrks, generators.NewJsonTcpSender(config, logger))
+		genwrks = append(genwrks, loggers.NewJsonTcpSender(config, logger))
 	}
 
 	// load collectors

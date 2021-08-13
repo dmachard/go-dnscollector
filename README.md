@@ -8,7 +8,7 @@ Features:
     - DNS packets sniffer (IPv4 and IPv6 support)
     - GeoIP support (Country code)
     - Qname filtering (regex support)
-- Generators
+- Loggers
     - Stream [Dnstap](https://dnstap.info/) (TCP, unix)
     - Plain text or JSON to stdout
     - Plain text to log files
@@ -28,7 +28,7 @@ Run-it from binary
 
 ## Configuration
 
-A typically configuration would have one or more collector to receive DNS traffic or logs, and severals generetors to process the 
+A typically configuration would have one or more collector to receive DNS traffic or logs, and severals loggers to process the 
 incoming traffics. See [Configuration guide](doc/configuration.md) file.
 
 ## Benchmark

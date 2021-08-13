@@ -1,4 +1,4 @@
-package generators
+package loggers
 
 import "github.com/dmachard/go-dnslogger/dnsutils"
 

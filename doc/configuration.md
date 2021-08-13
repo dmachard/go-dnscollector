@@ -6,7 +6,7 @@
   - [DNStap unix](#Dnstap-Unix)
   - [Sniffer](#Sniffer)
   - [GeoIP Support](#GeoIP-Support)
-- [Generators](#Generators)
+- [Loggers](#Loggers)
   - [Stdout](#Stdout)
   - [Build-in Webserver](#Build-in-Webserver)
   - [Log File](#Log-File)
@@ -121,7 +121,7 @@ When the feature is enable, tne `country-isocode` field is populated with the co
 }
 ```
 
-## Generators
+## Loggers
 
 ### Stdout
 
