@@ -79,11 +79,11 @@ class TestBench(unittest.TestCase):
 
                 r = requests.get("http://127.0.0.1:8080/metrics", auth=('admin', 'changeme'))
                 for l in r.text.splitlines():
-                    if l.startswith("dnscollector_domains_total"): print(l)
-                    if l.startswith("dnscollector_clients_total"): print(l)
-                    if l.startswith("dnscollector_pps_max"): print(l)
-                    if l.startswith("dnscollector_queries_total"): print(l)
-                    if l.startswith("dnscollector_replies_total"): print(l)
+                    if l.startswith("dnslogger_domains_total"): print(l)
+                    if l.startswith("dnslogger_clients_total"): print(l)
+                    if l.startswith("dnslogger_pps_max"): print(l)
+                    if l.startswith("dnslogger_queries_total"): print(l)
+                    if l.startswith("dnslogger_replies_total"): print(l)
 
 
                 protocol_gen.kill()

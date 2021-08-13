@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/subprocessors"
+	"github.com/dmachard/go-dnslogger/dnsutils"
+	"github.com/dmachard/go-dnslogger/subprocessors"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"

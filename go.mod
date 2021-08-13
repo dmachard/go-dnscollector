@@ -1,4 +1,4 @@
-module github.com/dmachard/go-dnscollector
+module github.com/dmachard/go-dnslogger
 
 go 1.16
 

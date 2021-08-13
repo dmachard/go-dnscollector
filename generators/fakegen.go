@@ -1,6 +1,6 @@
 package generators
 
-import "github.com/dmachard/go-dnscollector/dnsutils"
+import "github.com/dmachard/go-dnslogger/dnsutils"
 
 type FakeGen struct {
 	channel chan dnsutils.DnsMessage

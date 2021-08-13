@@ -3,7 +3,7 @@ package subprocessors
 import (
 	"testing"
 
-	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnslogger/dnsutils"
 )
 
 func TestFilteringQR(t *testing.T) {

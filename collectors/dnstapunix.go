@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/subprocessors"
+	"github.com/dmachard/go-dnslogger/dnsutils"
+	"github.com/dmachard/go-dnslogger/subprocessors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 )

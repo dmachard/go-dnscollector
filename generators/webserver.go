@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnslogger/dnsutils"
 	"github.com/dmachard/go-logger"
 )
 
@@ -96,7 +96,7 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 
-		suffix := "dnscollector"
+		suffix := "dnslogger"
 		counters := s.stats.GetCounters()
 
 		// total uniq clients

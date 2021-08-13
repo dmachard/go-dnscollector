@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnslogger/dnsutils"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-logger"
 	"google.golang.org/protobuf/proto"
