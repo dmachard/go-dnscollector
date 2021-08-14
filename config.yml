@@ -67,7 +67,7 @@ generators:
 
   stdout:
     # to enable, set the enable to true
-    enable: true
+    enable: false
     # text|json
     mode: json
 
@@ -124,3 +124,16 @@ generators:
     remote-port: 9999
     # retry interval in second
     retry-interval: 5
+
+  syslog:
+    # to enable, set the enable to true
+    enable: false
+    # Set the syslog logging severity 
+    severity: INFO
+    # Set the syslog logging facility 
+    facility: DAEMON
+    # Transport to use to a remote log daemon or local one
+    # local|tcp|udp|unix
+    transport: local
+    # Remote address host:port
+    remote-address: ""

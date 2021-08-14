@@ -71,6 +71,9 @@ func main() {
 	if config.Generators.JsonTcp.Enable {
 		genwrks = append(genwrks, loggers.NewJsonTcpSender(config, logger))
 	}
+	if config.Generators.Syslog.Enable {
+		genwrks = append(genwrks, loggers.NewSyslog(config, logger))
+	}
 
 	// load collectors
 	var collwrks []dnsutils.Worker

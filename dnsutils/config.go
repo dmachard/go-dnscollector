@@ -84,6 +84,13 @@ type Config struct {
 			RemotePort    int    `yaml:"remote-port"`
 			RetryInterval int    `yaml:"retry-interval"`
 		} `yaml:"json-tcp"`
+		Syslog struct {
+			Enable        bool   `yaml:"enable"`
+			Severity      string `yaml:"severity"`
+			Facility      string `yaml:"facility"`
+			Transport     string `yaml:"transport"`
+			RemoteAddress string `yaml:"remote-address"`
+		} `yaml:"syslog"`
 	} `yaml:"generators"`
 }
 
@@ -147,6 +154,12 @@ func (c *Config) SetDefault() {
 	c.Generators.JsonTcp.RemoteAddress = "127.0.0.1"
 	c.Generators.JsonTcp.RemotePort = 9999
 	c.Generators.JsonTcp.RetryInterval = 5
+
+	c.Generators.Syslog.Enable = false
+	c.Generators.Syslog.Severity = "INFO"
+	c.Generators.Syslog.Facility = "DAEMON"
+	c.Generators.Syslog.Transport = "local"
+	c.Generators.Syslog.RemoteAddress = "127.0.0.1:514"
 }
 
 func LoadConfig() (*Config, error) {

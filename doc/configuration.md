@@ -13,6 +13,7 @@
   - [DNStap tcp](#Dnstap-TCP-Generator)
   - [DNStap unix](#Dnstap-Unix-Generator)
   - [JSON tcp](#JSON-TCP)
+  - [Syslog](#Syslog)
 
 See [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml) file.
 
@@ -267,4 +268,21 @@ Example:
   ],
   "country-isocode":"-"
 }
+```
+
+### Syslog
+
+```yaml
+syslog:
+  # to enable, set the enable to true
+  enable: false
+  # Set the syslog logging severity 
+  severity: INFO
+  # Set the syslog logging facility 
+  facility: DAEMON
+  # Transport to use to a remote log daemon or local one
+  # local|tcp|udp|unix
+  transport: local
+  # Remote address host:port
+  remote-address: ""
 ```
