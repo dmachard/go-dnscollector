@@ -1,6 +1,6 @@
 # go-dnslogger
 
-`go-dnslogger` acts as a high speed passive analyser for DNS traffic.
+`go-dnslogger` acts as a high speed passive analyser for DNS traffic written in Go
 
 Features:
 - Collectors 
@@ -14,7 +14,7 @@ Features:
     - Plain text to log files
     - JSON to tcp remote destination
     - Web server with prometheus metrics and usage support (qps, total queries/replies, top domains, clients, rcodes...) 
-- Written in Go
+    - Syslog server (local or remote)
 
 ![overview](doc/overview.png)
 
