@@ -2,16 +2,14 @@
 
 - [Trace](#Trace)
 - [Collectors](#Collectors)
-  - [DNStap tcp](#Dnstap-TCP)
-  - [DNStap unix](#Dnstap-Unix)
+  - [DNStap](#Dnstap)
   - [Sniffer](#Sniffer)
   - [GeoIP Support](#GeoIP-Support)
 - [Loggers](#Loggers)
   - [Stdout](#Stdout)
   - [Build-in Webserver](#Build-in-Webserver)
   - [Log File](#Log-File)
-  - [DNStap tcp](#Dnstap-TCP-Generator)
-  - [DNStap unix](#Dnstap-Unix-Generator)
+  - [DNStap](#Dnstap-Logger)
   - [JSON tcp](#JSON-TCP)
   - [Syslog](#Syslog)
 
@@ -56,22 +54,13 @@ INFO: 2021/08/12 07:10:12.362372 processor dns parser - running... waiting incom
 
 ### DNStap TCP
 
-Dnstap TCP stream collector.
+Dnstap TCP stream collector or unix socket.
 
 ```yaml
 dnstap-tcp:
   enable: true
   listen-ip: 0.0.0.0
   listen-port: 6000
-```
-
-### DNStap Unix
-
-Similar to the previous one, but uses a unix socket instead of a tcp socket.
-
-```yaml
-dnstap-unix:
-  enable: false
   sock-path: null
 ```
 
@@ -191,7 +180,7 @@ webserver:
 
 ### Log File
 
-Enable this generator if you want to log to a file.
+Enable this logger if you want to log to a file.
 
 ```yaml
 logfile:
@@ -203,26 +192,15 @@ logfile:
   log-replies: true
 ```
 
-### DNStap TCP Generator
+### DNStap Logger
 
-DNStap tcp stream generator to a remote destination.
+DNStap stream logger to a remote tcp destination or unix socket.
 
 ```yaml
 dnstap-tcp:
   enable: false
   remote-ip: 10.0.0.1
   remote-port: 6000
-  retry: 5
-  dnstap-identity: dnscollector
-```
-
-### DNStap Unix Generator
-
-Same the previous one but uses a unix socket instead of a tcp socket
-
-```yaml
-dnstap-unix:
-  enable: false
   sock-path: null
   retry: 5
   dnstap-identity: dnscollector
@@ -230,7 +208,7 @@ dnstap-unix:
 
 ### JSON tcp
 
-JSON tcp stream generator.
+JSON tcp stream logger.
 
 ```yaml
 json-tcp:
@@ -245,7 +223,7 @@ Example:
 ```json
 {
   "operation": "AUTH_RESPONSE",
-  "identiy": "dnstap-generator",
+  "identiy": "dnstap-logger",
   "family": "INET",
   "protocol": "DOH",
   "query-ip": "127.0.126.114",

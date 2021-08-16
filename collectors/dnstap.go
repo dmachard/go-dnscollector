@@ -3,6 +3,7 @@ package collectors
 import (
 	"bufio"
 	"net"
+	"os"
 	"strconv"
 	"time"
 
@@ -12,20 +13,21 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-type DnstapTcp struct {
+type Dnstap struct {
 	done       chan bool
 	listen     net.Listener
 	conns      []net.Conn
 	listenIP   string
 	listenPort int
+	sockPath   string
 	generators []dnsutils.Worker
 	config     *dnsutils.Config
 	logger     *logger.Logger
 }
 
-func NewDnstapTcp(generators []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) *DnstapTcp {
-	logger.Info("collector dnstap tcp - enabled")
-	s := &DnstapTcp{
+func NewDnstap(generators []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) *Dnstap {
+	logger.Info("collector dnstap - enabled")
+	s := &Dnstap{
 		done:       make(chan bool),
 		config:     config,
 		generators: generators,
@@ -35,7 +37,7 @@ func NewDnstapTcp(generators []dnsutils.Worker, config *dnsutils.Config, logger 
 	return s
 }
 
-func (c *DnstapTcp) Generators() []chan dnsutils.DnsMessage {
+func (c *Dnstap) Generators() []chan dnsutils.DnsMessage {
 	channels := []chan dnsutils.DnsMessage{}
 	for _, p := range c.generators {
 		channels = append(channels, p.Channel())
@@ -43,18 +45,19 @@ func (c *DnstapTcp) Generators() []chan dnsutils.DnsMessage {
 	return channels
 }
 
-func (c *DnstapTcp) ReadConfig() {
-	c.listenIP = c.config.Collectors.DnstapTcp.ListenIP
-	c.listenPort = c.config.Collectors.DnstapTcp.ListenPort
+func (c *Dnstap) ReadConfig() {
+	c.listenIP = c.config.Collectors.Dnstap.ListenIP
+	c.listenPort = c.config.Collectors.Dnstap.ListenPort
+	c.sockPath = c.config.Collectors.Dnstap.SockPath
 }
 
-func (c *DnstapTcp) HandleConn(conn net.Conn) {
+func (c *Dnstap) HandleConn(conn net.Conn) {
 	// close connection on function exit
 	defer conn.Close()
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.logger.Info("collector dnstap tcp - %s - new connection\n", peer)
+	c.logger.Info("collector dnstap - %s - new connection\n", peer)
 
 	// start dnstap consumer
 	dnstap_processor := subprocessors.NewDnstapProcessor(c.config, c.logger)
@@ -67,38 +70,38 @@ func (c *DnstapTcp) HandleConn(conn net.Conn) {
 
 	// init framestream receiver
 	if err := fs.InitReceiver(); err != nil {
-		c.logger.Error("collector dnstap tcp - error stream receiver initialization: %s", err)
+		c.logger.Error("collector dnstap - error stream receiver initialization: %s", err)
 		return
 	} else {
-		c.logger.Info("collector dnstap tcp - receiver framestream initialized")
+		c.logger.Info("collector dnstap - receiver framestream initialized")
 	}
 
 	// process incoming frame and send it to dnstap consumer channel
 	if err := fs.ProcessFrame(dnstap_processor.GetChannel()); err != nil {
-		c.logger.Error("collector dnstap tcp - transport error: %s", err)
+		c.logger.Error("collector dnstap - transport error: %s", err)
 	}
 
 	// stop all processors
 	dnstap_processor.Stop()
 
-	c.logger.Info("collector dnstap tcp - %s - connection closed\n", peer)
+	c.logger.Info("collector dnstap - %s - connection closed\n", peer)
 }
 
-func (c *DnstapTcp) Channel() chan dnsutils.DnsMessage {
+func (c *Dnstap) Channel() chan dnsutils.DnsMessage {
 	return nil
 }
 
-func (c *DnstapTcp) Stop() {
-	c.logger.Info("collector dnstap tcp - stopping...")
+func (c *Dnstap) Stop() {
+	c.logger.Info("collector dnstap - stopping...")
 
 	// closing properly current connections if exists
 	for _, conn := range c.conns {
 		peer := conn.RemoteAddr().String()
-		c.logger.Info("collector dnstap tcp - %s - closing connection...", peer)
+		c.logger.Info("collector dnstap - %s - closing connection...", peer)
 		conn.Close()
 	}
 	// Finally close the listener to unblock accept
-	c.logger.Info("collector dnstap tcp - stop listening...")
+	c.logger.Info("collector dnstap - stop listening...")
 	c.listen.Close()
 
 	// read done channel and block until run is terminated
@@ -106,21 +109,31 @@ func (c *DnstapTcp) Stop() {
 	close(c.done)
 }
 
-func (c *DnstapTcp) Listen() error {
-	c.logger.Info("collector dnstap tcp - running in background...")
-	listener, err := net.Listen("tcp", c.listenIP+":"+strconv.Itoa(c.listenPort))
+func (c *Dnstap) Listen() error {
+	c.logger.Info("collector dnstap - running in background...")
+
+	var err error
+	var listener net.Listener
+	if len(c.sockPath) > 0 {
+		_ = os.Remove(c.sockPath)
+		listener, err = net.Listen("unix", c.sockPath)
+
+	} else {
+		listener, err = net.Listen("tcp", c.listenIP+":"+strconv.Itoa(c.listenPort))
+
+	}
 	if err != nil {
 		return err
 	}
-	c.logger.Info("collector dnstap tcp - is listening on %s", listener.Addr())
+	c.logger.Info("collector dnstap - is listening on %s", listener.Addr())
 	c.listen = listener
 	return nil
 }
 
-func (c *DnstapTcp) Run() {
+func (c *Dnstap) Run() {
 	if c.listen == nil {
 		if err := c.Listen(); err != nil {
-			c.logger.Fatal("collector dnstap tcp listening failed: ", err)
+			c.logger.Fatal("collector dnstap listening failed: ", err)
 		}
 	}
 	for {
@@ -135,6 +148,6 @@ func (c *DnstapTcp) Run() {
 
 	}
 
-	c.logger.Info("collector dnstap tcp - run terminated")
+	c.logger.Info("collector dnstap - run terminated")
 	c.done <- true
 }

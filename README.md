@@ -1,15 +1,15 @@
 # go-dnslogger
 
-`go-dnslogger` acts as a high speed passive analyser for DNS traffic written in Go
+`go-dnslogger` acts as a high speed passive analyser for DNS traffic written in Go.
 
 Features:
 - Collectors 
-    - Streams [Dnstap](https://dnstap.info/) (tcp, unix transport) 
+    - Streams [Dnstap](https://dnstap.info/) (tcp or unix transport) 
     - DNS packets sniffer (IPv4 and IPv6 support)
     - GeoIP support (Country code)
     - Qname filtering (regex support)
 - Loggers
-    - Stream [Dnstap](https://dnstap.info/) (tcp, unix transport)
+    - Stream [Dnstap](https://dnstap.info/) (tcp or unix transport)
     - Plain text or JSON to stdout
     - Plain text to log files
     - JSON to tcp remote destination

@@ -97,19 +97,13 @@ generators:
     # flush every x seconds
     flush-interval: 10
 
-  dnstap-tcp:
+  dnstap:
     # to enable, set the enable to true
     enable: false
      # remote address
     remote-address: 10.0.0.1
     # remote tcp port
     remote-port: 6000
-    # retry interval in second
-    retry-interval: 5
-
-  dnstap-unix:
-    # to enable, set the enable to true
-    enable: false
     # unix socket path
     sock-path: null
     # retry interval in second

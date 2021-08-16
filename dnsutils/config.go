@@ -16,15 +16,12 @@ type Config struct {
 	} `yaml:"trace"`
 
 	Collectors struct {
-		DnstapUnix struct {
-			Enable   bool   `yaml:"enable"`
-			SockPath string `yaml:"sock-path"`
-		} `yaml:"dnstap-unix"`
-		DnstapTcp struct {
+		Dnstap struct {
 			Enable     bool   `yaml:"enable"`
 			ListenIP   string `yaml:"listen-ip"`
 			ListenPort int    `yaml:"listen-port"`
-		} `yaml:"dnstap-tcp"`
+			SockPath   string `yaml:"sock-path"`
+		} `yaml:"dnstap"`
 		DnsSniffer struct {
 			Enable            bool   `yaml:"enable"`
 			Port              int    `yaml:"port"`
@@ -67,17 +64,13 @@ type Config struct {
 			MaxFiles      int    `yaml:"max-files"`
 			FlushInterval int    `yaml:"flush-interval"`
 		} `yaml:"logfile"`
-		DnstapTcp struct {
+		Dnstap struct {
 			Enable        bool   `yaml:"enable"`
 			RemoteAddress string `yaml:"remote-address"`
 			RemotePort    int    `yaml:"remote-port"`
-			RetryInterval int    `yaml:"retry-interval"`
-		} `yaml:"dnstap-tcp"`
-		DnstapUnix struct {
-			Enable        bool   `yaml:"enable"`
 			SockPath      string `yaml:"sock-path"`
 			RetryInterval int    `yaml:"retry-interval"`
-		} `yaml:"dnstap-unix"`
+		} `yaml:"dnstap"`
 		JsonTcp struct {
 			Enable        bool   `yaml:"enable"`
 			RemoteAddress string `yaml:"remote-address"`
@@ -101,12 +94,10 @@ func (c *Config) SetDefault() {
 	c.Trace.MaxBackups = 10
 
 	// Collectors
-	c.Collectors.DnstapTcp.Enable = true
-	c.Collectors.DnstapTcp.ListenIP = "0.0.0.0"
-	c.Collectors.DnstapTcp.ListenPort = 6000
-
-	c.Collectors.DnstapUnix.Enable = false
-	c.Collectors.DnstapUnix.SockPath = ""
+	c.Collectors.Dnstap.Enable = true
+	c.Collectors.Dnstap.ListenIP = "0.0.0.0"
+	c.Collectors.Dnstap.ListenPort = 6000
+	c.Collectors.Dnstap.SockPath = ""
 
 	c.Collectors.DnsSniffer.Enable = false
 	c.Collectors.DnsSniffer.Port = 53
@@ -128,14 +119,11 @@ func (c *Config) SetDefault() {
 	c.Generators.Stdout.Enable = true
 	c.Generators.Stdout.Mode = "text"
 
-	c.Generators.DnstapTcp.Enable = false
-	c.Generators.DnstapTcp.RemoteAddress = "127.0.0.1"
-	c.Generators.DnstapTcp.RemotePort = 6000
-	c.Generators.DnstapTcp.RetryInterval = 5
-
-	c.Generators.DnstapUnix.Enable = false
-	c.Generators.DnstapUnix.SockPath = ""
-	c.Generators.DnstapUnix.RetryInterval = 5
+	c.Generators.Dnstap.Enable = false
+	c.Generators.Dnstap.RemoteAddress = "127.0.0.1"
+	c.Generators.Dnstap.RemotePort = 6000
+	c.Generators.Dnstap.RetryInterval = 5
+	c.Generators.Dnstap.SockPath = ""
 
 	c.Generators.LogFile.Enable = false
 	c.Generators.LogFile.FilePath = ""

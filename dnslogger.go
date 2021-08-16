@@ -62,11 +62,8 @@ func main() {
 	if config.Generators.LogFile.Enable {
 		genwrks = append(genwrks, loggers.NewLogFile(config, logger))
 	}
-	if config.Generators.DnstapTcp.Enable {
-		genwrks = append(genwrks, loggers.NewDnstapTcpSender(config, logger))
-	}
-	if config.Generators.DnstapUnix.Enable {
-		genwrks = append(genwrks, loggers.NewDnstapUnixSender(config, logger))
+	if config.Generators.Dnstap.Enable {
+		genwrks = append(genwrks, loggers.NewDnstapSender(config, logger))
 	}
 	if config.Generators.JsonTcp.Enable {
 		genwrks = append(genwrks, loggers.NewJsonTcpSender(config, logger))
@@ -78,12 +75,8 @@ func main() {
 	// load collectors
 	var collwrks []dnsutils.Worker
 
-	if config.Collectors.DnstapTcp.Enable {
-		collwrks = append(collwrks, collectors.NewDnstapTcp(genwrks, config, logger))
-	}
-
-	if config.Collectors.DnstapUnix.Enable {
-		collwrks = append(collwrks, collectors.NewDnstapUnix(genwrks, config, logger))
+	if config.Collectors.Dnstap.Enable {
+		collwrks = append(collwrks, collectors.NewDnstap(genwrks, config, logger))
 	}
 
 	if config.Collectors.DnsSniffer.Enable {
