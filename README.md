@@ -5,9 +5,10 @@
 Features:
 - Collectors 
     - Streams [Dnstap](https://dnstap.info/) (tcp or unix transport) 
-    - DNS packets sniffer (IPv4 and IPv6 support)
+    - DNS packets sniffer (IPv4, IPv6 support, UDP and TCP transport)
     - GeoIP support (Country code)
     - Qname filtering (regex support)
+    - Query IP-Addresses anonymizer
 - Loggers
     - Stream [Dnstap](https://dnstap.info/) (tcp or unix transport)
     - Plain text or JSON to stdout

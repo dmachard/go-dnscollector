@@ -32,9 +32,10 @@ type Config struct {
 	} `yaml:"collectors"`
 
 	Subprocessors struct {
-		CacheTtl  int    `yaml:"cache-ttl"`
-		ServerId  string `yaml:"server-id"`
-		Filtering struct {
+		AnonymizeIP bool   `yaml:"anonymize-ip"`
+		CacheTtl    int    `yaml:"cache-ttl"`
+		ServerId    string `yaml:"server-id"`
+		Filtering   struct {
 			IgnoreQname string `yaml:"ignore-qname"`
 			LogQueries  bool   `yaml:"log-queries"`
 			LogReplies  bool   `yaml:"log-replies"`
@@ -106,6 +107,8 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnsSniffer.CaptureDnsReplies = true
 
 	// Subprocessors
+	c.Subprocessors.AnonymizeIP = false
+
 	c.Subprocessors.CacheTtl = 10
 	c.Subprocessors.ServerId = ""
 

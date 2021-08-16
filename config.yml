@@ -40,6 +40,9 @@ collectors:
 # settings for subprocessors
 subprocessors:
 
+  # IP-Addresses are anonymities by zeroing the host-part of an address.
+  anonymize-ip: true
+
   # The cache is used to compute latency between replies and queries
   # Ttl in second 
   cache-ttl: 10
@@ -67,9 +70,9 @@ generators:
 
   stdout:
     # to enable, set the enable to true
-    enable: false
+    enable: true
     # text|json
-    mode: json
+    mode: text
 
   webserver:
     # to enable, set the enable to true

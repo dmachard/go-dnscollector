@@ -113,6 +113,9 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	// filtering
 	filtering := NewFilteringProcessor(d.config)
 
+	// ip anonymizer
+	anonIp := NewIpAnonymizerSubprocessor(d.config)
+
 	// read incoming dns message
 	d.LogInfo("running... waiting incoming dns message")
 	for data := range d.recvFrom {
@@ -242,6 +245,11 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 				d.LogError("geoip loopkup failed: %v+", err)
 			}
 			dm.CountryIsoCode = country
+		}
+
+		// ip anonymisation ?
+		if anonIp.IsEnabled() {
+			dm.QueryIp = anonIp.Anonymize(dm.QueryIp)
 		}
 
 		// dispatch dns message to all generators
