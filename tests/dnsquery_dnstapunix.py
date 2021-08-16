@@ -27,7 +27,7 @@ class ProcessProtocol(asyncio.SubprocessProtocol):
     def pipe_data_received(self, fd, data):
         print(data.decode(), end="")
 
-        if b"collector dnstap unix receiver - incoming framestream initialized" in data:
+        if b"collector dnstap - incoming framestream initialized" in data:
             self.is_ready.set_result(True)
         
         if not self.is_clientresponse.done():
