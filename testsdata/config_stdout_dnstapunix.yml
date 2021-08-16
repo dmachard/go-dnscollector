@@ -2,10 +2,7 @@ trace:
   verbose: true
 
 collectors:
-  dnstap-tcp:
-    enable: false
-    
-  dnstap-unix:
+  dnstap:
     enable: true
     sock-path: /tmp/dnstap.sock
 

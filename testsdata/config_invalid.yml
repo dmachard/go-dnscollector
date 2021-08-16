@@ -2,4 +2,4 @@ trace:
   verbose: false
 
  collectors:
-  dnstap-unix:
+  dnstap:
