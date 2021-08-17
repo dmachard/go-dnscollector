@@ -14,7 +14,9 @@ Features:
     - Plain text or JSON to stdout
     - Plain text to log files
     - JSON to tcp remote destination
-    - Web server with prometheus metrics and usage support (qps, total queries/replies, top domains, clients, rcodes...) 
+    - Rest API Web server with prometheus metrics and DNS usage support 
+        * qps, total queries/replies, top domains, clients, rcodes...
+        * basic auth and tls support
     - Syslog server (local or remote)
 
 ![overview](doc/overview.png)
