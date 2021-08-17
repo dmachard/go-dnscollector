@@ -51,12 +51,16 @@ type Config struct {
 			Mode   string `yaml:"mode"`
 		} `yaml:"stdout"`
 		WebServer struct {
-			Enable         bool   `yaml:"enable"`
-			ListenIP       string `yaml:"listen-ip"`
-			ListenPort     int    `yaml:"listen-port"`
-			TopMaxItems    int    `yaml:"top-max-items"`
-			BasicAuthLogin string `yaml:"basic-auth-login"`
-			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
+			Enable           bool   `yaml:"enable"`
+			ListenIP         string `yaml:"listen-ip"`
+			ListenPort       int    `yaml:"listen-port"`
+			TopMaxItems      int    `yaml:"top-max-items"`
+			BasicAuthLogin   string `yaml:"basic-auth-login"`
+			BasicAuthPwd     string `yaml:"basic-auth-pwd"`
+			TlsSupport       bool   `yaml:"tls-support"`
+			CertFile         string `yaml:"cert-file"`
+			KeyFile          string `yaml:"key-file"`
+			PrometheusSuffix string `yaml:"prometheus-suffix"`
 		} `yaml:"webserver"`
 		LogFile struct {
 			Enable        bool   `yaml:"enable"`
@@ -140,6 +144,10 @@ func (c *Config) SetDefault() {
 	c.Generators.WebServer.TopMaxItems = 100
 	c.Generators.WebServer.BasicAuthLogin = "admin"
 	c.Generators.WebServer.BasicAuthPwd = "changeme"
+	c.Generators.WebServer.TlsSupport = false
+	c.Generators.WebServer.CertFile = ""
+	c.Generators.WebServer.KeyFile = ""
+	c.Generators.WebServer.PrometheusSuffix = "dnslogger"
 
 	c.Generators.JsonTcp.Enable = false
 	c.Generators.JsonTcp.RemoteAddress = "127.0.0.1"

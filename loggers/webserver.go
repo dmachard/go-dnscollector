@@ -1,6 +1,7 @@
 package loggers
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -13,23 +14,18 @@ import (
 )
 
 type Webserver struct {
-	done        chan bool
-	done_api    chan bool
-	httpserver  net.Listener
-	httpmux     *http.ServeMux
-	listenIp    string
-	listenPort  int
-	topMaxItems int
-	channel     chan dnsutils.DnsMessage
-	config      *dnsutils.Config
-	logger      *logger.Logger
-	stats       *dnsutils.Statistics
-	basicLogin  string
-	basicPwd    string
+	done       chan bool
+	done_api   chan bool
+	httpserver net.Listener
+	httpmux    *http.ServeMux
+	channel    chan dnsutils.DnsMessage
+	config     *dnsutils.Config
+	logger     *logger.Logger
+	stats      *dnsutils.Statistics
 }
 
 func NewWebserver(config *dnsutils.Config, logger *logger.Logger) *Webserver {
-	logger.Info("generator webserver - enabled")
+	logger.Info("webserver - enabled")
 	o := &Webserver{
 		done:     make(chan bool),
 		done_api: make(chan bool),
@@ -41,16 +37,20 @@ func NewWebserver(config *dnsutils.Config, logger *logger.Logger) *Webserver {
 	o.ReadConfig()
 
 	// init engine to compute statistics
-	o.stats = dnsutils.NewStatistics(o.topMaxItems)
+	o.stats = dnsutils.NewStatistics(config.Generators.WebServer.TopMaxItems)
 	return o
 }
 
 func (c *Webserver) ReadConfig() {
-	c.listenIp = c.config.Generators.WebServer.ListenIP
-	c.listenPort = c.config.Generators.WebServer.ListenPort
-	c.topMaxItems = c.config.Generators.WebServer.TopMaxItems
-	c.basicLogin = c.config.Generators.WebServer.BasicAuthLogin
-	c.basicPwd = c.config.Generators.WebServer.BasicAuthPwd
+	// todo, checking value
+}
+
+func (o *Webserver) LogInfo(msg string, v ...interface{}) {
+	o.logger.Info("webserver - "+msg, v...)
+}
+
+func (o *Webserver) LogError(msg string, v ...interface{}) {
+	o.logger.Error("webserver - "+msg, v...)
 }
 
 func (o *Webserver) Channel() chan dnsutils.DnsMessage {
@@ -58,13 +58,13 @@ func (o *Webserver) Channel() chan dnsutils.DnsMessage {
 }
 
 func (o *Webserver) Stop() {
-	o.logger.Info("generator webserver - stopping...")
+	o.LogInfo("stopping...")
 
 	// stopping http server
 	o.httpserver.Close()
 
 	// close output channel
-	o.logger.Info("generator webserver - closing channel")
+	o.LogInfo("closing channel")
 	close(o.channel)
 
 	// read done channel and block until run is terminated
@@ -75,7 +75,7 @@ func (o *Webserver) Stop() {
 	<-o.done_api
 	close(o.done_api)
 
-	o.logger.Info("generator webserver - stopped")
+	o.LogInfo(" stopped")
 }
 
 func (o *Webserver) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
@@ -84,7 +84,7 @@ func (o *Webserver) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	return (login == o.basicLogin) && (password == o.basicPwd)
+	return (login == o.config.Generators.WebServer.BasicAuthLogin) && (password == o.config.Generators.WebServer.BasicAuthPwd)
 }
 
 func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +96,7 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 
-		suffix := "dnslogger"
+		suffix := s.config.Generators.WebServer.PrometheusSuffix
 		counters := s.stats.GetCounters()
 
 		// total uniq clients
@@ -324,7 +324,7 @@ func (s *Webserver) tablesOperationsHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *Webserver) ListenAndServe() {
-	s.logger.Info("generator webserver - starting http api...")
+	s.LogInfo("starting http api...")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/metrics", s.metricsHandler)
@@ -334,22 +334,41 @@ func (s *Webserver) ListenAndServe() {
 	mux.HandleFunc("/tables/rrtypes", s.tablesRrtypesHandler)
 	mux.HandleFunc("/tables/operations", s.tablesOperationsHandler)
 
-	listener, err := net.Listen("tcp", s.listenIp+":"+strconv.Itoa(s.listenPort))
+	var err error
+	var listener net.Listener
+	addrlisten := s.config.Generators.WebServer.ListenIP + ":" + strconv.Itoa(s.config.Generators.WebServer.ListenPort)
+	// listening with tls enabled ?
+	if s.config.Generators.WebServer.TlsSupport {
+		s.LogInfo("tls support enabled")
+		var cer tls.Certificate
+		cer, err = tls.LoadX509KeyPair(s.config.Generators.WebServer.CertFile, s.config.Generators.WebServer.KeyFile)
+		if err != nil {
+			s.logger.Fatal("loading certificate failed:", err)
+		}
+		config := &tls.Config{Certificates: []tls.Certificate{cer}}
+		listener, err = tls.Listen("tcp", addrlisten, config)
+
+	} else {
+		// basic listening
+		listener, err = net.Listen("tcp", addrlisten)
+	}
+
+	// something wrong ?
 	if err != nil {
-		s.logger.Fatal("listening failed ", err)
+		s.logger.Fatal("listening failed:", err)
 	}
 
 	s.httpserver = listener
 	s.httpmux = mux
-	s.logger.Info("generator webserver - is listening on %s", listener.Addr())
+	s.LogInfo("is listening on %s", listener.Addr())
 
 	http.Serve(s.httpserver, s.httpmux)
-	s.logger.Info("generator webserver - terminated")
+	s.LogInfo("terminated")
 	s.done_api <- true
 }
 
 func (s *Webserver) Run() {
-	s.logger.Info("generator webserver - running in background...")
+	s.LogInfo("running in background...")
 
 	// start http server
 	go s.ListenAndServe()
@@ -364,7 +383,7 @@ LOOP:
 
 		case dm, opened := <-s.channel:
 			if !opened {
-				s.logger.Info("generator webserver - channel closed")
+				s.LogInfo("channel closed")
 				break LOOP
 			}
 			// record the dnstap message
@@ -379,7 +398,7 @@ LOOP:
 		}
 	}
 
-	s.logger.Info("generator webserver - run terminated")
+	s.LogInfo("run terminated")
 
 	// the job is done
 	s.done <- true
