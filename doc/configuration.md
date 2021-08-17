@@ -87,12 +87,16 @@ Enable the sniffer
 
 ```yaml
 dns-sniffer:
+  # to enable, set the enable to true
   enable: true
+  # filter on source and destination port
   port: 53
-  device: ""
-  identity: dnscollector
-  record-dns-queries: true
-  record-dns-replies: true
+  # if "" bind on all interfaces
+  device: wlp2s0
+  # capture dns queries
+  capture-dns-queries: true
+  # capture dns replies
+  capture-dns-replies: true
 ```
 
 ### GeoIP Support
@@ -107,16 +111,15 @@ processors:
   # geoip maxmind support
   geoip:
     # path file to your database
-    db-file: ""
+    db-file: "/GeoLite2-Country.mmdb"
 ```
 
-When the feature is enable, tne `country-isocode` field is populated with the country code.
+When the feature is enable, the `country-isocode` field is populated with the country code.
 
 ```json
 {
   "operation": "AUTH_RESPONSE",
   "query-ip": "127.0.126.114",
-  ...
   "country-isocode":"FR"
 }
 ```
@@ -129,7 +132,9 @@ Print to your standard output, all DNS logs received in text or json format
 
 ```yaml
 stdout:
-  enable: false
+  # to enable, set the enable to true
+  enable: true
+  # text|json
   mode: text
 ```
 
@@ -208,12 +213,16 @@ Enable this logger if you want to log to a file.
 
 ```yaml
 logfile:
+  # to enable, set the enable to true
   enable: false
+  # output logfile name
   file-path: null
+  # maximum size in megabytes of the file before rotation
   max-size: 100
+  # maximum number of files to retain.
   max-files: 10
-  log-queries: true
-  log-replies: true
+  # flush every x seconds
+  flush-interval: 10
 ```
 
 ### DNStap Logger
@@ -221,13 +230,17 @@ logfile:
 DNStap stream logger to a remote tcp destination or unix socket.
 
 ```yaml
-dnstap-tcp:
+dnstap:
+  # to enable, set the enable to true
   enable: false
-  remote-ip: 10.0.0.1
+  # remote address
+  remote-address: 10.0.0.1
+  # remote tcp port
   remote-port: 6000
+  # unix socket path
   sock-path: null
-  retry: 5
-  dnstap-identity: dnscollector
+  # retry interval in second
+  retry-interval: 5
 ```
 
 ### JSON tcp
@@ -236,9 +249,13 @@ JSON tcp stream logger.
 
 ```yaml
 json-tcp:
-  enable: true
-  remote-ip: 127.0.0.1
+  # to enable, set the enable to true
+  enable: false
+  # remote address
+  remote-address: 127.0.0.1
+  # remote tcp port
   remote-port: 9999
+  # retry interval in second
   retry-interval: 5
 ```
 
