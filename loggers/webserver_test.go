@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dmachard/go-dnslogger/dnsutils"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
 
@@ -114,7 +114,8 @@ func TestWebServerBadBasicAuth(t *testing.T) {
 
 func TestWebServerGet(t *testing.T) {
 	// init the generator
-	g := NewWebserver(dnsutils.GetFakeConfig(), logger.New(false))
+	config := dnsutils.GetFakeConfig()
+	g := NewWebserver(config, logger.New(false))
 
 	// record one dns message to simulate some incoming data
 	g.stats.Record(dnsutils.GetFakeDnsMessage())
@@ -132,7 +133,7 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/metrics",
 			handler:    g.metricsHandler,
 			method:     http.MethodGet,
-			want:       `dnslogger_domains_total 1`,
+			want:       config.Generators.WebServer.PrometheusSuffix + `_domains_total 1`,
 			statusCode: http.StatusOK,
 		},
 		{
@@ -140,7 +141,7 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/metrics",
 			handler:    g.metricsHandler,
 			method:     http.MethodGet,
-			want:       `dnslogger_clients_total 1`,
+			want:       config.Generators.WebServer.PrometheusSuffix + `_clients_total 1`,
 			statusCode: http.StatusOK,
 		},
 		{
@@ -148,7 +149,7 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/metrics",
 			handler:    g.metricsHandler,
 			method:     http.MethodGet,
-			want:       `dnslogger_queries_total 1`,
+			want:       config.Generators.WebServer.PrometheusSuffix + `_queries_total 1`,
 			statusCode: http.StatusOK,
 		},
 		{
@@ -156,7 +157,7 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/metrics",
 			handler:    g.metricsHandler,
 			method:     http.MethodGet,
-			want:       `dnslogger_replies_total 0`,
+			want:       config.Generators.WebServer.PrometheusSuffix + `_replies_total 0`,
 			statusCode: http.StatusOK,
 		},
 		{
@@ -213,7 +214,7 @@ func TestWebServerGet(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// init httptest
 			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
-			request.SetBasicAuth("admin", "changeme")
+			request.SetBasicAuth(config.Generators.WebServer.BasicAuthLogin, config.Generators.WebServer.BasicAuthPwd)
 			responseRecorder := httptest.NewRecorder()
 
 			// call handler
@@ -235,7 +236,8 @@ func TestWebServerGet(t *testing.T) {
 
 func TestWebServerBadMethod(t *testing.T) {
 	// init the generator
-	g := NewWebserver(dnsutils.GetFakeConfig(), logger.New(false))
+	config := dnsutils.GetFakeConfig()
+	g := NewWebserver(config, logger.New(false))
 
 	// record one dns message to simulate some incoming data
 	g.stats.Record(dnsutils.GetFakeDnsMessage())
@@ -295,7 +297,7 @@ func TestWebServerBadMethod(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// init httptest
 			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
-			request.SetBasicAuth("admin", "changeme")
+			request.SetBasicAuth(config.Generators.WebServer.BasicAuthLogin, config.Generators.WebServer.BasicAuthPwd)
 			responseRecorder := httptest.NewRecorder()
 
 			// call handler

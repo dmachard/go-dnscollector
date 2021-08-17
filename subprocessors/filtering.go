@@ -3,7 +3,7 @@ package subprocessors
 import (
 	"regexp"
 
-	"github.com/dmachard/go-dnslogger/dnsutils"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 )
 
 type FilteringProcessor struct {

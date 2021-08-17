@@ -1,6 +1,6 @@
-# go-dnslogger
+# go-dnscollector
 
-`go-dnslogger` acts as a high speed passive analyser for DNS traffic written in Go.
+`go-dnscollector` acts as a high speed passive analyser for DNS traffic written in Go.
 
 Features:
 - Collectors 

@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/dmachard/go-dnslogger/dnsutils"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
 

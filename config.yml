@@ -94,7 +94,7 @@ generators:
     # private key server file
     key-file: "./testsdata/server.key"
     # prometheus suffix
-    prometheus-suffix: "dnslogger"
+    prometheus-suffix: "dnscollector"
 
   logfile:
     # to enable, set the enable to true

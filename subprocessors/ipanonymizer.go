@@ -4,7 +4,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/dmachard/go-dnslogger/dnsutils"
+	"github.com/dmachard/go-dnscollector/dnsutils"
 )
 
 var (

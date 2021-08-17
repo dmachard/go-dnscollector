@@ -147,7 +147,7 @@ func (c *Config) SetDefault() {
 	c.Generators.WebServer.TlsSupport = false
 	c.Generators.WebServer.CertFile = ""
 	c.Generators.WebServer.KeyFile = ""
-	c.Generators.WebServer.PrometheusSuffix = "dnslogger"
+	c.Generators.WebServer.PrometheusSuffix = "dnscollector"
 
 	c.Generators.JsonTcp.Enable = false
 	c.Generators.JsonTcp.RemoteAddress = "127.0.0.1"
