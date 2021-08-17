@@ -4,7 +4,9 @@
 
 Features:
 - Collectors 
-    - Streams [Dnstap](https://dnstap.info/) (tcp or unix transport) 
+    - Streams [Dnstap](https://dnstap.info/)
+        * tcp or unix socket listener
+        * tls support
     - DNS packets sniffer (IPv4, IPv6 support, UDP and TCP transport)
     - GeoIP support (Country code)
     - Qname filtering (regex support)

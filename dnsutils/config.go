@@ -21,6 +21,9 @@ type Config struct {
 			ListenIP   string `yaml:"listen-ip"`
 			ListenPort int    `yaml:"listen-port"`
 			SockPath   string `yaml:"sock-path"`
+			TlsSupport bool   `yaml:"tls-support"`
+			CertFile   string `yaml:"cert-file"`
+			KeyFile    string `yaml:"key-file"`
 		} `yaml:"dnstap"`
 		DnsSniffer struct {
 			Enable            bool   `yaml:"enable"`
@@ -103,6 +106,9 @@ func (c *Config) SetDefault() {
 	c.Collectors.Dnstap.ListenIP = "0.0.0.0"
 	c.Collectors.Dnstap.ListenPort = 6000
 	c.Collectors.Dnstap.SockPath = ""
+	c.Collectors.Dnstap.TlsSupport = false
+	c.Collectors.Dnstap.CertFile = ""
+	c.Collectors.Dnstap.KeyFile = ""
 
 	c.Collectors.DnsSniffer.Enable = false
 	c.Collectors.DnsSniffer.Port = 53

@@ -11,19 +11,22 @@ trace:
 
 # list of supported collectors
 collectors:
-  dnstap-unix:
-    # to enable, set the enable to true
-    enable: false
-    # unix socket path
-    sock-path: null
 
-  dnstap-tcp:
+  dnstap:
     # to enable, set the enable to true
     enable: false
     # listen on ip
     listen-ip: 0.0.0.0
     # listening on port
     listen-port: 6000
+    # unix socket path
+    sock-path: null
+    # tls support
+    tls-support: false
+    # certificate server file
+    cert-file: ""
+    # private key server file
+    key-file: ""
 
   dns-sniffer:
     # to enable, set the enable to true

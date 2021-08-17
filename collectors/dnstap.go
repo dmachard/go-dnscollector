@@ -2,6 +2,7 @@ package collectors
 
 import (
 	"bufio"
+	"crypto/tls"
 	"net"
 	"os"
 	"strconv"
@@ -17,8 +18,6 @@ type Dnstap struct {
 	done       chan bool
 	listen     net.Listener
 	conns      []net.Conn
-	listenIP   string
-	listenPort int
 	sockPath   string
 	generators []dnsutils.Worker
 	config     *dnsutils.Config
@@ -46,9 +45,15 @@ func (c *Dnstap) Generators() []chan dnsutils.DnsMessage {
 }
 
 func (c *Dnstap) ReadConfig() {
-	c.listenIP = c.config.Collectors.Dnstap.ListenIP
-	c.listenPort = c.config.Collectors.Dnstap.ListenPort
 	c.sockPath = c.config.Collectors.Dnstap.SockPath
+}
+
+func (o *Dnstap) LogInfo(msg string, v ...interface{}) {
+	o.logger.Info("collector dnstap - "+msg, v...)
+}
+
+func (o *Dnstap) LogError(msg string, v ...interface{}) {
+	o.logger.Error("collector dnstap - "+msg, v...)
 }
 
 func (c *Dnstap) HandleConn(conn net.Conn) {
@@ -57,7 +62,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.logger.Info("collector dnstap - %s - new connection\n", peer)
+	c.LogInfo("%s - new connection\n", peer)
 
 	// start dnstap consumer
 	dnstap_processor := subprocessors.NewDnstapProcessor(c.config, c.logger)
@@ -70,21 +75,21 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// init framestream receiver
 	if err := fs.InitReceiver(); err != nil {
-		c.logger.Error("collector dnstap - error stream receiver initialization: %s", err)
+		c.LogError("error stream receiver initialization: %s", err)
 		return
 	} else {
-		c.logger.Info("collector dnstap - receiver framestream initialized")
+		c.LogInfo("receiver framestream initialized")
 	}
 
 	// process incoming frame and send it to dnstap consumer channel
 	if err := fs.ProcessFrame(dnstap_processor.GetChannel()); err != nil {
-		c.logger.Error("collector dnstap - transport error: %s", err)
+		c.LogError("transport error: %s", err)
 	}
 
 	// stop all processors
 	dnstap_processor.Stop()
 
-	c.logger.Info("collector dnstap - %s - connection closed\n", peer)
+	c.LogInfo("%s - connection closed\n", peer)
 }
 
 func (c *Dnstap) Channel() chan dnsutils.DnsMessage {
@@ -92,16 +97,16 @@ func (c *Dnstap) Channel() chan dnsutils.DnsMessage {
 }
 
 func (c *Dnstap) Stop() {
-	c.logger.Info("collector dnstap - stopping...")
+	c.LogInfo("stopping...")
 
 	// closing properly current connections if exists
 	for _, conn := range c.conns {
 		peer := conn.RemoteAddr().String()
-		c.logger.Info("collector dnstap - %s - closing connection...", peer)
+		c.LogInfo("%s - closing connection...", peer)
 		conn.Close()
 	}
 	// Finally close the listener to unblock accept
-	c.logger.Info("collector dnstap - stop listening...")
+	c.LogInfo("stop listening...")
 	c.listen.Close()
 
 	// read done channel and block until run is terminated
@@ -110,22 +115,46 @@ func (c *Dnstap) Stop() {
 }
 
 func (c *Dnstap) Listen() error {
-	c.logger.Info("collector dnstap - running in background...")
+	c.LogInfo("running in background...")
 
 	var err error
 	var listener net.Listener
+	addrlisten := c.config.Collectors.Dnstap.ListenIP + ":" + strconv.Itoa(c.config.Collectors.Dnstap.ListenPort)
+
 	if len(c.sockPath) > 0 {
 		_ = os.Remove(c.sockPath)
-		listener, err = net.Listen("unix", c.sockPath)
+	}
+
+	// listening with tls enabled ?
+	if c.config.Collectors.Dnstap.TlsSupport {
+		c.LogInfo("tls support enabled")
+		var cer tls.Certificate
+		cer, err = tls.LoadX509KeyPair(c.config.Collectors.Dnstap.CertFile, c.config.Collectors.Dnstap.KeyFile)
+		if err != nil {
+			c.logger.Fatal("loading certificate failed:", err)
+		}
+		config := &tls.Config{Certificates: []tls.Certificate{cer}}
+
+		if len(c.sockPath) > 0 {
+			listener, err = tls.Listen("unix", c.sockPath, config)
+		} else {
+			listener, err = tls.Listen("tcp", addrlisten, config)
+		}
 
 	} else {
-		listener, err = net.Listen("tcp", c.listenIP+":"+strconv.Itoa(c.listenPort))
-
+		// basic listening
+		if len(c.sockPath) > 0 {
+			listener, err = net.Listen("unix", c.sockPath)
+		} else {
+			listener, err = net.Listen("tcp", addrlisten)
+		}
 	}
+
+	// something is wrong ?
 	if err != nil {
 		return err
 	}
-	c.logger.Info("collector dnstap - is listening on %s", listener.Addr())
+	c.LogInfo("is listening on %s", listener.Addr())
 	c.listen = listener
 	return nil
 }
@@ -148,6 +177,6 @@ func (c *Dnstap) Run() {
 
 	}
 
-	c.logger.Info("collector dnstap - run terminated")
+	c.LogInfo("run terminated")
 	c.done <- true
 }

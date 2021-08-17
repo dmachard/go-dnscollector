@@ -52,16 +52,26 @@ INFO: 2021/08/12 07:10:12.362372 processor dns parser - running... waiting incom
 
 ## Collectors
 
-### DNStap TCP
+### DNStap
 
-Dnstap TCP stream collector or unix socket.
+Dnstap stream collector tcp or unix socket with tls support.
 
 ```yaml
-dnstap-tcp:
-  enable: true
+dnstap:
+  # to enable, set the enable to true
+  enable: false
+  # listen on ip
   listen-ip: 0.0.0.0
+  # listening on port
   listen-port: 6000
+  # unix socket path
   sock-path: null
+  # tls support
+  tls-support: false
+  # certificate server file
+  cert-file: ""
+  # private key server file
+  key-file: ""
 ```
 
 ### Sniffer
@@ -169,12 +179,26 @@ Basic authentication supported.
 
 ```yaml
 webserver:
+  # to enable, set the enable to true
   enable: true
+  # listening IP
   listen-ip: 0.0.0.0
+  # listening port
   listen-port: 8080
+  # default number of items to return
   top-max-items: 100
+  # default login
   basic-auth-login: admin
+  # default password
   basic-auth-pwd: changeme
+  # tls support
+  tls-support: true
+  # certificate server file
+  cert-file: "./testsdata/server.crt"
+  # private key server file
+  key-file: "./testsdata/server.key"
+  # prometheus suffix
+  prometheus-suffix: "dnscollector"
 ```
 
 
