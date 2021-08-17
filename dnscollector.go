@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/dmachard/go-dnslogger/collectors"
-	"github.com/dmachard/go-dnslogger/dnsutils"
-	"github.com/dmachard/go-dnslogger/loggers"
+	"github.com/dmachard/go-dnscollector/collectors"
+	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-logger"
 	"github.com/natefinch/lumberjack"
 )
