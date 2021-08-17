@@ -98,7 +98,7 @@ func TestWebServerBadBasicAuth(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// init httptest
 			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
-			request.SetBasicAuth(g.basicLogin, "badpassword")
+			request.SetBasicAuth("admin", "badpassword")
 			responseRecorder := httptest.NewRecorder()
 
 			// call handler
@@ -213,7 +213,7 @@ func TestWebServerGet(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// init httptest
 			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
-			request.SetBasicAuth(g.basicLogin, g.basicPwd)
+			request.SetBasicAuth("admin", "changeme")
 			responseRecorder := httptest.NewRecorder()
 
 			// call handler
@@ -295,7 +295,7 @@ func TestWebServerBadMethod(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// init httptest
 			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
-			request.SetBasicAuth(g.basicLogin, g.basicPwd)
+			request.SetBasicAuth("admin", "changeme")
 			responseRecorder := httptest.NewRecorder()
 
 			// call handler
