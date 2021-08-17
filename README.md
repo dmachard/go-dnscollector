@@ -7,12 +7,16 @@ Features:
     - Streams [Dnstap](https://dnstap.info/)
         * tcp or unix socket listener
         * tls support
-    - DNS packets sniffer (IPv4, IPv6 support, UDP and TCP transport)
+    - DNS packets sniffer
+        * IPv4, IPv6 support (fragmented packet ignored)
+        * UDP and TCP transport
+        * BFP filtering
     - GeoIP support (Country code)
     - Qname filtering (regex support)
     - Query IP-Addresses anonymizer
 - Loggers
-    - Stream [Dnstap](https://dnstap.info/) (tcp or unix transport)
+    - Stream [Dnstap](https://dnstap.info/)
+        * tcp or unix client
     - Plain text or JSON to stdout
     - Plain text to log files
     - JSON to tcp remote destination
