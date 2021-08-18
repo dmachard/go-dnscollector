@@ -6,6 +6,6 @@ collectors:
     enable: true
     sock-path: /tmp/dnstap.sock
 
-generators:
+loggers:
   stdout:
     enable: true

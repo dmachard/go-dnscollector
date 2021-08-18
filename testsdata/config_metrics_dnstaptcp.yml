@@ -7,7 +7,7 @@ collectors:
     listen-ip: 0.0.0.0
     listen-port: 6000
 
-generators:
+loggers:
   stdout:
     enable: false
 
