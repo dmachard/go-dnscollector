@@ -11,9 +11,6 @@ Features:
         * IPv4, IPv6 support (fragmented packet ignored)
         * UDP and TCP transport
         * BFP filtering
-    - GeoIP support (Country code)
-    - Qname filtering (regex support)
-    - Query IP-Addresses anonymizer
 - Loggers
     - Stream [Dnstap](https://dnstap.info/)
         * tcp or unix client
@@ -24,6 +21,9 @@ Features:
         * qps, total queries/replies, top domains, clients, rcodes...
         * basic auth and tls support
     - Syslog server (local or remote)
+- GeoIP support (Country code)
+- Packet filtering (regex support)
+- Query IP-Addresses anonymizer
 
 ![overview](doc/overview.png)
 
