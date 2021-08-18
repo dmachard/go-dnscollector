@@ -2,12 +2,16 @@
 
 - [Trace](#Trace)
 - [Collectors](#Collectors)
-  - [DNStap](#Dnstap)
-  - [Sniffer](#Sniffer)
+  - [DNS tap](#Dnstap)
+  - [DNS sniffer](#Dns-Sniffer)
+- [Subprocessors](#Subprocessors)
+  - [IP anonymization](#Ip-Anonymization)
   - [GeoIP Support](#GeoIP-Support)
+  - [DNS Caching](#DNS-Caching)
+  - [Packet Filtering](#Packet-Filtering)
 - [Loggers](#Loggers)
   - [Stdout](#Stdout)
-  - [Build-in Webserver](#Build-in-Webserver)
+  - [REST API](#REST-API)
   - [Log File](#Log-File)
   - [DNStap](#Dnstap-Logger)
   - [JSON tcp](#JSON-TCP)
@@ -52,7 +56,7 @@ INFO: 2021/08/12 07:10:12.362372 processor dns parser - running... waiting incom
 
 ## Collectors
 
-### DNStap
+### DNS tap
 
 Dnstap stream collector tcp or unix socket with tls support.
 
@@ -74,7 +78,7 @@ dnstap:
   key-file: ""
 ```
 
-### Sniffer
+### DNS sniffer
 
 Raw DNS packets sniffer. Setting `CAP_NET_RAW` capabilities on executables allows you to run these 
 program without having to run-it with the root user.
@@ -98,6 +102,12 @@ dns-sniffer:
   # capture dns replies
   capture-dns-replies: true
 ```
+
+## Subprocessors
+
+### IP Anonymization
+
+tbc
 
 ### GeoIP Support
 
@@ -123,6 +133,14 @@ When the feature is enable, the `country-isocode` field is populated with the co
   "country-isocode":"FR"
 }
 ```
+
+### DNS Caching
+
+tbc
+
+### Packet Filtering
+
+tbc
 
 ## Loggers
 
@@ -177,9 +195,9 @@ Example:
 }
 ```
 
-### Build-in Webserver
+### REST API
 
-Build-in webserver to retrieve somes statistics like top domains, clients and more...
+Build-in webserver with REST API to retrieve somes statistics like top domains, clients and more...
 Basic authentication supported.
 
 ```yaml
