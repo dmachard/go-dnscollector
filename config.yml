@@ -122,6 +122,10 @@ loggers:
     sock-path: null
     # interval in second between retry reconnect
     retry-interval: 5
+    # enable tls
+    tls-support: false
+    # insecure skip verify
+    tls-insecure: false
 
   tcpclient:
     # to enable, set the enable to true

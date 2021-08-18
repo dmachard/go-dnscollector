@@ -65,8 +65,8 @@ func main() {
 	if config.Loggers.Dnstap.Enable {
 		logwrks = append(logwrks, loggers.NewDnstapSender(config, logger))
 	}
-	if config.Loggers.JsonTcp.Enable {
-		logwrks = append(logwrks, loggers.NewJsonTcpSender(config, logger))
+	if config.Loggers.TcpClient.Enable {
+		logwrks = append(logwrks, loggers.NewTcpClient(config, logger))
 	}
 	if config.Loggers.Syslog.Enable {
 		logwrks = append(logwrks, loggers.NewSyslog(config, logger))

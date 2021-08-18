@@ -12,7 +12,7 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-type SocketSender struct {
+type TcpClient struct {
 	done    chan bool
 	channel chan dnsutils.DnsMessage
 	config  *dnsutils.Config
@@ -21,9 +21,9 @@ type SocketSender struct {
 	conn    net.Conn
 }
 
-func NewSocketSender(config *dnsutils.Config, logger *logger.Logger) *SocketSender {
-	logger.Info("logger to socket sender - enabled")
-	s := &SocketSender{
+func NewTcpClient(config *dnsutils.Config, logger *logger.Logger) *TcpClient {
+	logger.Info("logger to tcp client - enabled")
+	s := &TcpClient{
 		done:    make(chan bool),
 		exit:    make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
@@ -36,23 +36,23 @@ func NewSocketSender(config *dnsutils.Config, logger *logger.Logger) *SocketSend
 	return s
 }
 
-func (o *SocketSender) ReadConfig() {
+func (o *TcpClient) ReadConfig() {
 	//tbc
 }
 
-func (o *SocketSender) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("logger to socket sender - "+msg, v...)
+func (o *TcpClient) LogInfo(msg string, v ...interface{}) {
+	o.logger.Info("logger to tcp client - "+msg, v...)
 }
 
-func (o *SocketSender) LogError(msg string, v ...interface{}) {
-	o.logger.Error("logger to socket sender - "+msg, v...)
+func (o *TcpClient) LogError(msg string, v ...interface{}) {
+	o.logger.Error("logger to tcp client - "+msg, v...)
 }
 
-func (o *SocketSender) Channel() chan dnsutils.DnsMessage {
+func (o *TcpClient) Channel() chan dnsutils.DnsMessage {
 	return o.channel
 }
 
-func (o *SocketSender) Stop() {
+func (o *TcpClient) Stop() {
 	o.LogInfo("stopping...")
 
 	// exit to close properly
@@ -63,7 +63,7 @@ func (o *SocketSender) Stop() {
 	close(o.done)
 }
 
-func (o *SocketSender) Run() {
+func (o *TcpClient) Run() {
 	o.LogInfo("running in background...")
 
 LOOP:

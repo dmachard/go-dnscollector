@@ -78,6 +78,8 @@ type Config struct {
 			RemotePort    int    `yaml:"remote-port"`
 			SockPath      string `yaml:"sock-path"`
 			RetryInterval int    `yaml:"retry-interval"`
+			TlsSupport    bool   `yaml:"tls-support"`
+			TlsInsecure   bool   `yaml:"tls-insecure"`
 		} `yaml:"dnstap"`
 		TcpClient struct {
 			Enable        bool   `yaml:"enable"`
@@ -141,6 +143,8 @@ func (c *Config) SetDefault() {
 	c.Loggers.Dnstap.RemotePort = 6000
 	c.Loggers.Dnstap.RetryInterval = 5
 	c.Loggers.Dnstap.SockPath = ""
+	c.Loggers.Dnstap.TlsSupport = false
+	c.Loggers.Dnstap.TlsInsecure = false
 
 	c.Loggers.LogFile.Enable = false
 	c.Loggers.LogFile.FilePath = ""

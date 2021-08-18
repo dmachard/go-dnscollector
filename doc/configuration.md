@@ -251,14 +251,18 @@ DNStap stream logger to a remote tcp destination or unix socket.
 dnstap:
   # to enable, set the enable to true
   enable: false
-  # remote address
+    # remote address
   remote-address: 10.0.0.1
   # remote tcp port
   remote-port: 6000
   # unix socket path
   sock-path: null
-  # retry interval in second
+  # interval in second between retry reconnect
   retry-interval: 5
+  # enable tls
+  tls-support: false
+  # insecure skip verify
+  tls-insecure: false
 ```
 
 ### TCP Client

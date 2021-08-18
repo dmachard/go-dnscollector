@@ -3,6 +3,7 @@
 `go-dnscollector` acts as a high speed passive analyser for DNS traffic written in Go.
 
 Features:
+
 - Collectors 
     - Streams [Dnstap](https://dnstap.info/)
         * tcp or unix socket listener
@@ -11,11 +12,14 @@ Features:
         * IPv4, IPv6 support (fragmented packet ignored)
         * UDP and TCP transport
         * BFP filtering
+
 - Loggers
-    - [Dnstap](https://dnstap.info/) stream client
-        * to remote tcp destination or unix socket
     - Stdout in plain text or JSON 
     - Log files in plain text
+    - [Dnstap](https://dnstap.info/) stream client
+        * to remote tcp destination or unix socket
+        * tls support
+        * ip4/ip6 support
     - TCP client
         * to remote tcp destination or unix socket
         * tls support
@@ -24,6 +28,7 @@ Features:
         * qps, total queries/replies, top domains, clients, rcodes...
         * basic auth and tls support
     - Syslog server (local or remote)
+    
 - GeoIP support (Country code)
 - Packet filtering (regex support)
 - Query IP-Addresses anonymizer

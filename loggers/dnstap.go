@@ -2,6 +2,7 @@ package loggers
 
 import (
 	"bufio"
+	"crypto/tls"
 	"net"
 	"strconv"
 	"time"
@@ -14,17 +15,12 @@ import (
 )
 
 type DnstapSender struct {
-	done       chan bool
-	channel    chan dnsutils.DnsMessage
-	config     *dnsutils.Config
-	logger     *logger.Logger
-	exit       chan bool
-	conn       net.Conn
-	remoteAddr string
-	remotePort int
-	sockPath   string
-	identity   string
-	retry      int
+	done    chan bool
+	channel chan dnsutils.DnsMessage
+	config  *dnsutils.Config
+	logger  *logger.Logger
+	exit    chan bool
+	conn    net.Conn
 }
 
 func NewDnstapSender(config *dnsutils.Config, logger *logger.Logger) *DnstapSender {
@@ -43,11 +39,7 @@ func NewDnstapSender(config *dnsutils.Config, logger *logger.Logger) *DnstapSend
 }
 
 func (o *DnstapSender) ReadConfig() {
-	o.sockPath = o.config.Loggers.Dnstap.SockPath
-	o.remoteAddr = o.config.Loggers.Dnstap.RemoteAddress
-	o.remotePort = o.config.Loggers.Dnstap.RemotePort
-	o.identity = o.config.Subprocessors.ServerId
-	o.retry = o.config.Loggers.Dnstap.RetryInterval
+	//tbc
 }
 
 func (o *DnstapSender) LogInfo(msg string, v ...interface{}) {
@@ -87,18 +79,35 @@ LOOP:
 			case <-o.exit:
 				break LOOP
 			default:
-				var err error
-				var conn net.Conn
-				if len(o.sockPath) > 0 {
-					o.LogInfo("connecting to unix socket %s", o.sockPath)
-					conn, err = net.Dial("unix", o.sockPath)
+				// prepare the address
+				var address string
+				var transport string
+				if len(o.config.Loggers.Dnstap.SockPath) > 0 {
+					address = o.config.Loggers.Dnstap.SockPath
+					transport = "unix"
 				} else {
-					o.LogInfo("connecting to remote destination")
-					conn, err = net.Dial("tcp", o.remoteAddr+":"+strconv.Itoa(o.remotePort))
+					address = o.config.Loggers.Dnstap.RemoteAddress + ":" + strconv.Itoa(o.config.Loggers.Dnstap.RemotePort)
+					transport = "tcp"
 				}
+
+				// make the connection
+				o.LogInfo("connecting to %s", address)
+				var conn net.Conn
+				var err error
+				if o.config.Loggers.Dnstap.TlsSupport {
+					conf := &tls.Config{
+						InsecureSkipVerify: o.config.Loggers.Dnstap.TlsInsecure,
+					}
+					conn, err = tls.Dial(transport, address, conf)
+				} else {
+					conn, err = net.Dial(transport, address)
+				}
+
+				// something is wrong during connection ?
 				if err != nil {
 					o.LogError("connect error: %s", err)
 				}
+
 				if conn != nil {
 					o.LogInfo("connected with remote")
 					o.conn = conn
@@ -122,7 +131,7 @@ LOOP:
 							dt.Reset()
 
 							t := dnstap.Dnstap_MESSAGE
-							dt.Identity = []byte(o.identity)
+							dt.Identity = []byte(o.config.Subprocessors.ServerId)
 							dt.Version = []byte("-")
 							dt.Type = &t
 
@@ -186,7 +195,7 @@ LOOP:
 
 				}
 				o.LogInfo("retry to connect in 5 seconds")
-				time.Sleep(time.Duration(o.retry) * time.Second)
+				time.Sleep(time.Duration(o.config.Loggers.Dnstap.RetryInterval) * time.Second)
 			}
 		}
 	}
