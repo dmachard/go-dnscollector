@@ -11,7 +11,7 @@ import (
 )
 
 func TestJsonTcpRun(t *testing.T) {
-	// init generator
+	// init logger
 	g := NewJsonTcpSender(dnsutils.GetFakeConfig(), logger.New(false))
 
 	// fake json receiver
@@ -21,17 +21,17 @@ func TestJsonTcpRun(t *testing.T) {
 	}
 	defer fakeRcvr.Close()
 
-	// start the generator
+	// start the logger
 	go g.Run()
 
-	// accept conn from generator
+	// accept conn from logger
 	conn, err := fakeRcvr.Accept()
 	if err != nil {
 		return
 	}
 	defer conn.Close()
 
-	// send fake dns message to generator
+	// send fake dns message to logger
 	dm := dnsutils.GetFakeDnsMessage()
 	g.channel <- dm
 

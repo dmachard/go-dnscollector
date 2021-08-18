@@ -29,7 +29,7 @@ type LogFile struct {
 }
 
 func NewLogFile(config *dnsutils.Config, logger *logger.Logger) *LogFile {
-	logger.Info("generator logfile - enabled")
+	logger.Info("logger logfile - enabled")
 	o := &LogFile{
 		done:    make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
@@ -40,17 +40,17 @@ func NewLogFile(config *dnsutils.Config, logger *logger.Logger) *LogFile {
 	o.ReadConfig()
 
 	if err := o.OpenFile(o.fpath); err != nil {
-		o.logger.Fatal("generator logfile - unable to open output file:", err)
+		o.logger.Fatal("logger logfile - unable to open output file:", err)
 	}
 
 	return o
 }
 
 func (c *LogFile) ReadConfig() {
-	c.fpath = c.config.Generators.LogFile.FilePath
-	c.maxfiles = c.config.Generators.LogFile.MaxFiles
-	c.maxsize = c.config.Generators.LogFile.MaxSize
-	c.flushinterval = c.config.Generators.LogFile.FlushInterval
+	c.fpath = c.config.Loggers.LogFile.FilePath
+	c.maxfiles = c.config.Loggers.LogFile.MaxFiles
+	c.maxsize = c.config.Loggers.LogFile.MaxSize
+	c.flushinterval = c.config.Loggers.LogFile.FlushInterval
 }
 
 func (o *LogFile) OpenFile(fpath string) error {
@@ -102,13 +102,13 @@ func (o *LogFile) Flush() {
 }
 
 func (o *LogFile) Stop() {
-	o.logger.Info("generator logfile - stopping...")
+	o.logger.Info("logger to file - stopping...")
 
 	// close output channel
 	close(o.channel)
 
 	// close the file
-	o.logger.Info("generator logfile - closing file")
+	o.logger.Info("logger to file - closing file")
 	o.file.Close()
 
 	// read done channel and block until run is terminated
@@ -136,13 +136,13 @@ func (o *LogFile) Rotate() error {
 
 	err := os.Rename(o.fpath, rfpath)
 	if err != nil {
-		o.logger.Error("generator logfile - unable to rename file: %s", err)
+		o.logger.Error("logger to file - unable to rename file: %s", err)
 	}
 
 	// remove old files ?
 	files, err := ioutil.ReadDir(filedir)
 	if err != nil {
-		o.logger.Error("generator logfile - unable to list log file: %s", err)
+		o.logger.Error("logger to file - unable to list log file: %s", err)
 	}
 
 	logFiles := []int{}
@@ -170,7 +170,7 @@ func (o *LogFile) Rotate() error {
 			f := filepath.Join(filedir, fmt.Sprintf("%s-%d%s", fileprefix, logFiles[i], fileext))
 			err := os.Remove(f)
 			if err != nil {
-				o.logger.Error("generator logfile - unable to delete log file: %s", err)
+				o.logger.Error("logger to file - unable to delete log file: %s", err)
 			}
 
 		}
@@ -178,14 +178,14 @@ func (o *LogFile) Rotate() error {
 
 	// re-create the main log file.
 	if err := o.OpenFile(o.fpath); err != nil {
-		o.logger.Error("generator logfile - unable to re-create output file: %s", err)
+		o.logger.Error("logger to file - unable to re-create output file: %s", err)
 	}
 
 	return nil
 }
 
 func (o *LogFile) Run() {
-	o.logger.Info("generator logfile - running in background...")
+	o.logger.Info("logger to file - running in background...")
 
 	tflush_interval := time.Duration(o.flushinterval) * time.Second
 	tflush := time.NewTimer(tflush_interval)
@@ -194,7 +194,7 @@ LOOP:
 		select {
 		case dm, opened := <-o.channel:
 			if !opened {
-				o.logger.Info("generator logfile - channel closed")
+				o.logger.Info("logger to file - channel closed")
 				break LOOP
 			}
 
@@ -210,7 +210,7 @@ LOOP:
 	tflush.Stop()
 	o.writer.Flush()
 
-	o.logger.Info("generator logfile - run terminated")
+	o.logger.Info("logger to file - run terminated")
 
 	// the job is done
 	o.done <- true

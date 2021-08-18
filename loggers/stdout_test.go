@@ -9,7 +9,7 @@ import (
 )
 
 func TestStdoutPrint(t *testing.T) {
-	// init generator and redirect stdout output to bytes buffer
+	// init logger and redirect stdout output to bytes buffer
 	var stdout bytes.Buffer
 	g := NewStdOut(dnsutils.GetFakeConfig(), logger.New(false))
 	g.SetBuffer(&stdout)

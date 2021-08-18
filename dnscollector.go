@@ -50,37 +50,37 @@ func main() {
 	logger.Info("main - config loaded...")
 	logger.Info("main - starting dnslogger...")
 
-	// load generators
-	var genwrks []dnsutils.Worker
+	// load loggers
+	var logwrks []dnsutils.Worker
 
-	if config.Generators.WebServer.Enable {
-		genwrks = append(genwrks, loggers.NewWebserver(config, logger))
+	if config.Loggers.WebServer.Enable {
+		logwrks = append(logwrks, loggers.NewWebserver(config, logger))
 	}
-	if config.Generators.Stdout.Enable {
-		genwrks = append(genwrks, loggers.NewStdOut(config, logger))
+	if config.Loggers.Stdout.Enable {
+		logwrks = append(logwrks, loggers.NewStdOut(config, logger))
 	}
-	if config.Generators.LogFile.Enable {
-		genwrks = append(genwrks, loggers.NewLogFile(config, logger))
+	if config.Loggers.LogFile.Enable {
+		logwrks = append(logwrks, loggers.NewLogFile(config, logger))
 	}
-	if config.Generators.Dnstap.Enable {
-		genwrks = append(genwrks, loggers.NewDnstapSender(config, logger))
+	if config.Loggers.Dnstap.Enable {
+		logwrks = append(logwrks, loggers.NewDnstapSender(config, logger))
 	}
-	if config.Generators.JsonTcp.Enable {
-		genwrks = append(genwrks, loggers.NewJsonTcpSender(config, logger))
+	if config.Loggers.JsonTcp.Enable {
+		logwrks = append(logwrks, loggers.NewJsonTcpSender(config, logger))
 	}
-	if config.Generators.Syslog.Enable {
-		genwrks = append(genwrks, loggers.NewSyslog(config, logger))
+	if config.Loggers.Syslog.Enable {
+		logwrks = append(logwrks, loggers.NewSyslog(config, logger))
 	}
 
 	// load collectors
 	var collwrks []dnsutils.Worker
 
 	if config.Collectors.Dnstap.Enable {
-		collwrks = append(collwrks, collectors.NewDnstap(genwrks, config, logger))
+		collwrks = append(collwrks, collectors.NewDnstap(logwrks, config, logger))
 	}
 
 	if config.Collectors.DnsSniffer.Enable {
-		collwrks = append(collwrks, collectors.NewDnsSniffer(genwrks, config, logger))
+		collwrks = append(collwrks, collectors.NewDnsSniffer(logwrks, config, logger))
 	}
 
 	// Handle Ctrl-C
@@ -91,11 +91,11 @@ func main() {
 			logger.Info("main - system interrupt, exiting...")
 
 			// stop all workers
-			logger.Info("main - stopping all collectors and generators...")
+			logger.Info("main - stopping all collectors and loggers...")
 			for _, p := range collwrks {
 				p.Stop()
 			}
-			for _, p := range genwrks {
+			for _, p := range logwrks {
 				p.Stop()
 			}
 
@@ -107,8 +107,8 @@ func main() {
 	}()
 
 	// run all workers in background
-	logger.Info("main - running all collectors and generators...")
-	for _, p := range genwrks {
+	logger.Info("main - running all collectors and loggers...")
+	for _, p := range logwrks {
 		go p.Run()
 	}
 	for _, p := range collwrks {

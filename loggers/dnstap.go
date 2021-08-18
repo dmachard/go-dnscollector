@@ -28,7 +28,7 @@ type DnstapSender struct {
 }
 
 func NewDnstapSender(config *dnsutils.Config, logger *logger.Logger) *DnstapSender {
-	logger.Info("generator dnstap sender - enabled")
+	logger.Info("logger dnstap sender - enabled")
 	s := &DnstapSender{
 		done:    make(chan bool),
 		exit:    make(chan bool),
@@ -43,19 +43,19 @@ func NewDnstapSender(config *dnsutils.Config, logger *logger.Logger) *DnstapSend
 }
 
 func (o *DnstapSender) ReadConfig() {
-	o.sockPath = o.config.Generators.Dnstap.SockPath
-	o.remoteAddr = o.config.Generators.Dnstap.RemoteAddress
-	o.remotePort = o.config.Generators.Dnstap.RemotePort
+	o.sockPath = o.config.Loggers.Dnstap.SockPath
+	o.remoteAddr = o.config.Loggers.Dnstap.RemoteAddress
+	o.remotePort = o.config.Loggers.Dnstap.RemotePort
 	o.identity = o.config.Subprocessors.ServerId
-	o.retry = o.config.Generators.Dnstap.RetryInterval
+	o.retry = o.config.Loggers.Dnstap.RetryInterval
 }
 
 func (o *DnstapSender) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("generator dnstap sender - "+msg, v...)
+	o.logger.Info("logger dnstap sender - "+msg, v...)
 }
 
 func (o *DnstapSender) LogError(msg string, v ...interface{}) {
-	o.logger.Error("generator dnstap sender - "+msg, v...)
+	o.logger.Error("logger dnstap sender - "+msg, v...)
 }
 
 func (o *DnstapSender) Channel() chan dnsutils.DnsMessage {

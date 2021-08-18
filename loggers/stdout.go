@@ -21,7 +21,7 @@ type StdOut struct {
 }
 
 func NewStdOut(config *dnsutils.Config, console *logger.Logger) *StdOut {
-	console.Info("generator stdout logging - enabled")
+	console.Info("logger to stdout - enabled")
 	o := &StdOut{
 		done:    make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
@@ -34,7 +34,7 @@ func NewStdOut(config *dnsutils.Config, console *logger.Logger) *StdOut {
 }
 
 func (c *StdOut) ReadConfig() {
-	c.mode = c.config.Generators.Stdout.Mode
+	c.mode = c.config.Loggers.Stdout.Mode
 }
 
 func (o *StdOut) SetBuffer(b *bytes.Buffer) {
@@ -50,10 +50,10 @@ func (o *StdOut) Print(dm dnsutils.DnsMessage) {
 }
 
 func (o *StdOut) Stop() {
-	o.logger.Info("generator stdout - stopping...")
+	o.logger.Info("logger to stdout - stopping...")
 
 	// close output channel
-	o.logger.Info("generator stdout - closing channel")
+	o.logger.Info("logger to stdout - closing channel")
 	close(o.channel)
 
 	// read done channel and block until run is terminated
@@ -62,7 +62,7 @@ func (o *StdOut) Stop() {
 }
 
 func (o *StdOut) Run() {
-	o.logger.Info("generator stdout - running in background...")
+	o.logger.Info("logger to stdout - running in background...")
 
 	buffer := new(bytes.Buffer)
 	for dm := range o.channel {
@@ -75,7 +75,7 @@ func (o *StdOut) Run() {
 			buffer.Reset()
 		}
 	}
-	o.logger.Info("generator stdout - run terminated")
+	o.logger.Info("logger to stdout - run terminated")
 
 	// the job is done
 	o.done <- true

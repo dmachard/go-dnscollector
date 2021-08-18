@@ -68,8 +68,8 @@ subprocessors:
     # path file to your database
     db-file: ""
 
-# list of generators
-generators:
+# list of loggers
+loggers:
 
   stdout:
     # to enable, set the enable to true

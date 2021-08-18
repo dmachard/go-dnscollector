@@ -24,7 +24,7 @@ type JsonTcpSender struct {
 }
 
 func NewJsonTcpSender(config *dnsutils.Config, logger *logger.Logger) *JsonTcpSender {
-	logger.Info("generator json tcp sender - enabled")
+	logger.Info("logger json tcp sender - enabled")
 	s := &JsonTcpSender{
 		done:    make(chan bool),
 		exit:    make(chan bool),
@@ -39,17 +39,17 @@ func NewJsonTcpSender(config *dnsutils.Config, logger *logger.Logger) *JsonTcpSe
 }
 
 func (o *JsonTcpSender) ReadConfig() {
-	o.remoteAddr = o.config.Generators.JsonTcp.RemoteAddress
-	o.remotePort = o.config.Generators.JsonTcp.RemotePort
-	o.retry = o.config.Generators.JsonTcp.RetryInterval
+	o.remoteAddr = o.config.Loggers.JsonTcp.RemoteAddress
+	o.remotePort = o.config.Loggers.JsonTcp.RemotePort
+	o.retry = o.config.Loggers.JsonTcp.RetryInterval
 }
 
 func (o *JsonTcpSender) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("generator json tcp sender - "+msg, v...)
+	o.logger.Info("logger json tcp sender - "+msg, v...)
 }
 
 func (o *JsonTcpSender) LogError(msg string, v ...interface{}) {
-	o.logger.Error("generator json tcp sender - "+msg, v...)
+	o.logger.Error("logger json tcp sender - "+msg, v...)
 }
 
 func (o *JsonTcpSender) Channel() chan dnsutils.DnsMessage {

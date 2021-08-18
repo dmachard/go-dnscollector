@@ -37,7 +37,7 @@ func NewWebserver(config *dnsutils.Config, logger *logger.Logger) *Webserver {
 	o.ReadConfig()
 
 	// init engine to compute statistics
-	o.stats = dnsutils.NewStatistics(config.Generators.WebServer.TopMaxItems)
+	o.stats = dnsutils.NewStatistics(config.Loggers.WebServer.TopMaxItems)
 	return o
 }
 
@@ -84,7 +84,7 @@ func (o *Webserver) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	return (login == o.config.Generators.WebServer.BasicAuthLogin) && (password == o.config.Generators.WebServer.BasicAuthPwd)
+	return (login == o.config.Loggers.WebServer.BasicAuthLogin) && (password == o.config.Loggers.WebServer.BasicAuthPwd)
 }
 
 func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +96,7 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 
-		suffix := s.config.Generators.WebServer.PrometheusSuffix
+		suffix := s.config.Loggers.WebServer.PrometheusSuffix
 		counters := s.stats.GetCounters()
 
 		// total uniq clients
@@ -336,12 +336,12 @@ func (s *Webserver) ListenAndServe() {
 
 	var err error
 	var listener net.Listener
-	addrlisten := s.config.Generators.WebServer.ListenIP + ":" + strconv.Itoa(s.config.Generators.WebServer.ListenPort)
+	addrlisten := s.config.Loggers.WebServer.ListenIP + ":" + strconv.Itoa(s.config.Loggers.WebServer.ListenPort)
 	// listening with tls enabled ?
-	if s.config.Generators.WebServer.TlsSupport {
+	if s.config.Loggers.WebServer.TlsSupport {
 		s.LogInfo("tls support enabled")
 		var cer tls.Certificate
-		cer, err = tls.LoadX509KeyPair(s.config.Generators.WebServer.CertFile, s.config.Generators.WebServer.KeyFile)
+		cer, err = tls.LoadX509KeyPair(s.config.Loggers.WebServer.CertFile, s.config.Loggers.WebServer.KeyFile)
 		if err != nil {
 			s.logger.Fatal("loading certificate failed:", err)
 		}

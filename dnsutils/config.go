@@ -48,7 +48,7 @@ type Config struct {
 		} `yaml:"geoip"`
 	} `yaml:"subprocessors"`
 
-	Generators struct {
+	Loggers struct {
 		Stdout struct {
 			Enable bool   `yaml:"enable"`
 			Mode   string `yaml:"mode"`
@@ -92,7 +92,7 @@ type Config struct {
 			Transport     string `yaml:"transport"`
 			RemoteAddress string `yaml:"remote-address"`
 		} `yaml:"syslog"`
-	} `yaml:"generators"`
+	} `yaml:"loggers"`
 }
 
 func (c *Config) SetDefault() {
@@ -128,43 +128,43 @@ func (c *Config) SetDefault() {
 
 	c.Subprocessors.GeoIP.DbFile = ""
 
-	// Generators
-	c.Generators.Stdout.Enable = true
-	c.Generators.Stdout.Mode = "text"
+	// Loggers
+	c.Loggers.Stdout.Enable = true
+	c.Loggers.Stdout.Mode = "text"
 
-	c.Generators.Dnstap.Enable = false
-	c.Generators.Dnstap.RemoteAddress = "127.0.0.1"
-	c.Generators.Dnstap.RemotePort = 6000
-	c.Generators.Dnstap.RetryInterval = 5
-	c.Generators.Dnstap.SockPath = ""
+	c.Loggers.Dnstap.Enable = false
+	c.Loggers.Dnstap.RemoteAddress = "127.0.0.1"
+	c.Loggers.Dnstap.RemotePort = 6000
+	c.Loggers.Dnstap.RetryInterval = 5
+	c.Loggers.Dnstap.SockPath = ""
 
-	c.Generators.LogFile.Enable = false
-	c.Generators.LogFile.FilePath = ""
-	c.Generators.LogFile.FlushInterval = 10
-	c.Generators.LogFile.MaxSize = 1
-	c.Generators.LogFile.MaxFiles = 1
+	c.Loggers.LogFile.Enable = false
+	c.Loggers.LogFile.FilePath = ""
+	c.Loggers.LogFile.FlushInterval = 10
+	c.Loggers.LogFile.MaxSize = 1
+	c.Loggers.LogFile.MaxFiles = 1
 
-	c.Generators.WebServer.Enable = false
-	c.Generators.WebServer.ListenIP = "127.0.0.1"
-	c.Generators.WebServer.ListenPort = 8080
-	c.Generators.WebServer.TopMaxItems = 100
-	c.Generators.WebServer.BasicAuthLogin = "admin"
-	c.Generators.WebServer.BasicAuthPwd = "changeme"
-	c.Generators.WebServer.TlsSupport = false
-	c.Generators.WebServer.CertFile = ""
-	c.Generators.WebServer.KeyFile = ""
-	c.Generators.WebServer.PrometheusSuffix = "dnscollector"
+	c.Loggers.WebServer.Enable = false
+	c.Loggers.WebServer.ListenIP = "127.0.0.1"
+	c.Loggers.WebServer.ListenPort = 8080
+	c.Loggers.WebServer.TopMaxItems = 100
+	c.Loggers.WebServer.BasicAuthLogin = "admin"
+	c.Loggers.WebServer.BasicAuthPwd = "changeme"
+	c.Loggers.WebServer.TlsSupport = false
+	c.Loggers.WebServer.CertFile = ""
+	c.Loggers.WebServer.KeyFile = ""
+	c.Loggers.WebServer.PrometheusSuffix = "dnscollector"
 
-	c.Generators.JsonTcp.Enable = false
-	c.Generators.JsonTcp.RemoteAddress = "127.0.0.1"
-	c.Generators.JsonTcp.RemotePort = 9999
-	c.Generators.JsonTcp.RetryInterval = 5
+	c.Loggers.JsonTcp.Enable = false
+	c.Loggers.JsonTcp.RemoteAddress = "127.0.0.1"
+	c.Loggers.JsonTcp.RemotePort = 9999
+	c.Loggers.JsonTcp.RetryInterval = 5
 
-	c.Generators.Syslog.Enable = false
-	c.Generators.Syslog.Severity = "INFO"
-	c.Generators.Syslog.Facility = "DAEMON"
-	c.Generators.Syslog.Transport = "local"
-	c.Generators.Syslog.RemoteAddress = "127.0.0.1:514"
+	c.Loggers.Syslog.Enable = false
+	c.Loggers.Syslog.Severity = "INFO"
+	c.Loggers.Syslog.Facility = "DAEMON"
+	c.Loggers.Syslog.Transport = "local"
+	c.Loggers.Syslog.RemoteAddress = "127.0.0.1:514"
 }
 
 func LoadConfig() (*Config, error) {

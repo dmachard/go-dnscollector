@@ -16,7 +16,7 @@ import (
 )
 
 func TestDnstapTcpRun(t *testing.T) {
-	// init generator
+	// init logger
 	g := NewDnstapSender(dnsutils.GetFakeConfig(), logger.New(false))
 
 	// fake dnstap receiver
@@ -26,10 +26,10 @@ func TestDnstapTcpRun(t *testing.T) {
 	}
 	defer fakeRcvr.Close()
 
-	// start the generator
+	// start the logger
 	go g.Run()
 
-	// accept conn from generator
+	// accept conn from logger
 	conn, err := fakeRcvr.Accept()
 	if err != nil {
 		return
@@ -42,7 +42,7 @@ func TestDnstapTcpRun(t *testing.T) {
 		t.Errorf("error to init framestream receiver: %s", err)
 	}
 
-	// send fake dns message to generator
+	// send fake dns message to logger
 	dm := dnsutils.GetFakeDnsMessage()
 	g.channel <- dm
 
@@ -63,9 +63,9 @@ func TestDnstapUnixRun(t *testing.T) {
 
 	sockAddr := "/tmp/test.sock"
 
-	// init generator
+	// init logger
 	config := dnsutils.GetFakeConfig()
-	config.Generators.Dnstap.SockPath = sockAddr
+	config.Loggers.Dnstap.SockPath = sockAddr
 	g := NewDnstapSender(config, logger.New(false))
 
 	// fake dnstap receiver
@@ -78,10 +78,10 @@ func TestDnstapUnixRun(t *testing.T) {
 	}
 	defer fakeRcvr.Close()
 
-	// start the generator
+	// start the logger
 	go g.Run()
 
-	// accept conn from generator
+	// accept conn from logger
 	conn, err := fakeRcvr.Accept()
 	if err != nil {
 		return
@@ -94,7 +94,7 @@ func TestDnstapUnixRun(t *testing.T) {
 		t.Errorf("error to init framestream receiver: %s", err)
 	}
 
-	// send fake dns message to generator
+	// send fake dns message to logger
 	dm := dnsutils.GetFakeDnsMessage()
 	g.channel <- dm
 

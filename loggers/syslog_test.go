@@ -11,10 +11,10 @@ import (
 )
 
 func TestSyslogRun(t *testing.T) {
-	// init generator
+	// init logger
 	config := dnsutils.GetFakeConfig()
-	config.Generators.Syslog.Transport = "tcp"
-	config.Generators.Syslog.RemoteAddress = ":4000"
+	config.Loggers.Syslog.Transport = "tcp"
+	config.Loggers.Syslog.RemoteAddress = ":4000"
 	g := NewSyslog(config, logger.New(false))
 
 	// fake json receiver
@@ -24,17 +24,17 @@ func TestSyslogRun(t *testing.T) {
 	}
 	defer fakeRcvr.Close()
 
-	// start the generator
+	// start the logger
 	go g.Run()
 
-	// accept conn from generator
+	// accept conn from logger
 	conn, err := fakeRcvr.Accept()
 	if err != nil {
 		return
 	}
 	defer conn.Close()
 
-	// send fake dns message to generator
+	// send fake dns message to logger
 	dm := dnsutils.GetFakeDnsMessage()
 	g.channel <- dm
 

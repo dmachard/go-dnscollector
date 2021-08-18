@@ -19,7 +19,7 @@ func TestLogfileWrite(t *testing.T) {
 
 	// config
 	config := dnsutils.GetFakeConfig()
-	config.Generators.LogFile.FilePath = f.Name()
+	config.Loggers.LogFile.FilePath = f.Name()
 
 	// init generator in testing mode
 	g := NewLogFile(config, logger.New(false))

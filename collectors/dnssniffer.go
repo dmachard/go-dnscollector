@@ -104,19 +104,19 @@ type DnsSniffer struct {
 	capturequeries bool
 	capturereplies bool
 	identity       string
-	generators     []dnsutils.Worker
+	loggers        []dnsutils.Worker
 	config         *dnsutils.Config
 	logger         *logger.Logger
 }
 
-func NewDnsSniffer(generators []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) *DnsSniffer {
+func NewDnsSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) *DnsSniffer {
 	logger.Info("collector dns sniffer - enabled")
 	s := &DnsSniffer{
-		done:       make(chan bool),
-		exit:       make(chan bool),
-		config:     config,
-		generators: generators,
-		logger:     logger,
+		done:    make(chan bool),
+		exit:    make(chan bool),
+		config:  config,
+		loggers: loggers,
+		logger:  logger,
 	}
 	s.ReadConfig()
 	return s
@@ -130,9 +130,9 @@ func (c *DnsSniffer) LogError(msg string, v ...interface{}) {
 	c.logger.Error("collector dns sniffer - "+msg, v...)
 }
 
-func (c *DnsSniffer) Generators() []chan dnsutils.DnsMessage {
+func (c *DnsSniffer) Loggers() []chan dnsutils.DnsMessage {
 	channels := []chan dnsutils.DnsMessage{}
-	for _, p := range c.generators {
+	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
 	}
 	return channels
@@ -212,8 +212,8 @@ func (c *DnsSniffer) Run() {
 		}
 	}
 
-	dns_processor := subprocessors.NewDnsProcessor(c.config, c.logger)
-	go dns_processor.Run(c.Generators())
+	dns_subprocessor := subprocessors.NewDnsProcessor(c.config, c.logger)
+	go dns_subprocessor.Run(c.Loggers())
 
 	go func() {
 		buf := make([]byte, 65536)
@@ -323,10 +323,10 @@ func (c *DnsSniffer) Run() {
 				qr := binary.BigEndian.Uint16(dm.Payload[2:4]) >> 15
 
 				if int(qr) == 0 && c.capturequeries {
-					dns_processor.GetChannel() <- dm
+					dns_subprocessor.GetChannel() <- dm
 				}
 				if int(qr) == 1 && c.capturereplies {
-					dns_processor.GetChannel() <- dm
+					dns_subprocessor.GetChannel() <- dm
 				}
 			}
 		}
@@ -335,7 +335,7 @@ func (c *DnsSniffer) Run() {
 	<-c.exit
 
 	// stop dns processor
-	dns_processor.Stop()
+	dns_subprocessor.Stop()
 
 	c.LogInfo("run terminated")
 	c.done <- true

@@ -15,30 +15,30 @@ import (
 )
 
 type Dnstap struct {
-	done       chan bool
-	listen     net.Listener
-	conns      []net.Conn
-	sockPath   string
-	generators []dnsutils.Worker
-	config     *dnsutils.Config
-	logger     *logger.Logger
+	done     chan bool
+	listen   net.Listener
+	conns    []net.Conn
+	sockPath string
+	loggers  []dnsutils.Worker
+	config   *dnsutils.Config
+	logger   *logger.Logger
 }
 
-func NewDnstap(generators []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) *Dnstap {
+func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) *Dnstap {
 	logger.Info("collector dnstap - enabled")
 	s := &Dnstap{
-		done:       make(chan bool),
-		config:     config,
-		generators: generators,
-		logger:     logger,
+		done:    make(chan bool),
+		config:  config,
+		loggers: loggers,
+		logger:  logger,
 	}
 	s.ReadConfig()
 	return s
 }
 
-func (c *Dnstap) Generators() []chan dnsutils.DnsMessage {
+func (c *Dnstap) Loggers() []chan dnsutils.DnsMessage {
 	channels := []chan dnsutils.DnsMessage{}
-	for _, p := range c.generators {
+	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
 	}
 	return channels
@@ -64,9 +64,9 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	peer := conn.RemoteAddr().String()
 	c.LogInfo("%s - new connection\n", peer)
 
-	// start dnstap consumer
-	dnstap_processor := subprocessors.NewDnstapProcessor(c.config, c.logger)
-	go dnstap_processor.Run(c.Generators())
+	// start dnstap subprocessor
+	dnstap_subprocessor := subprocessors.NewDnstapProcessor(c.config, c.logger)
+	go dnstap_subprocessor.Run(c.Loggers())
 
 	// frame stream library
 	r := bufio.NewReader(conn)
@@ -82,12 +82,12 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	}
 
 	// process incoming frame and send it to dnstap consumer channel
-	if err := fs.ProcessFrame(dnstap_processor.GetChannel()); err != nil {
+	if err := fs.ProcessFrame(dnstap_subprocessor.GetChannel()); err != nil {
 		c.LogError("transport error: %s", err)
 	}
 
-	// stop all processors
-	dnstap_processor.Stop()
+	// stop all subprocessors
+	dnstap_subprocessor.Stop()
 
 	c.LogInfo("%s - connection closed\n", peer)
 }

@@ -56,7 +56,7 @@ type Syslog struct {
 }
 
 func NewSyslog(config *dnsutils.Config, console *logger.Logger) *Syslog {
-	console.Info("generator syslog logging - enabled")
+	console.Info("logger syslog - enabled")
 	o := &Syslog{
 		done:    make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
@@ -68,13 +68,13 @@ func NewSyslog(config *dnsutils.Config, console *logger.Logger) *Syslog {
 }
 
 func (c *Syslog) ReadConfig() {
-	severity, err := GetPriority(c.config.Generators.Syslog.Severity)
+	severity, err := GetPriority(c.config.Loggers.Syslog.Severity)
 	if err != nil {
 		c.logger.Fatal("logger syslog - invalid severity")
 	}
 	c.severity = severity
 
-	facility, err := GetPriority(c.config.Generators.Syslog.Facility)
+	facility, err := GetPriority(c.config.Loggers.Syslog.Facility)
 	if err != nil {
 		c.logger.Fatal("logger syslog - invalid facility")
 	}
@@ -114,13 +114,13 @@ func (o *Syslog) Run() {
 
 	var syslogconn *syslog.Writer
 	var err error
-	if o.config.Generators.Syslog.Transport == "local" {
+	if o.config.Loggers.Syslog.Transport == "local" {
 		syslogconn, err = syslog.New(o.facility|o.severity, "")
 		if err != nil {
 			o.logger.Fatal("failed to connect to the local syslog daemon:", err)
 		}
 	} else {
-		syslogconn, err = syslog.Dial(o.config.Generators.Syslog.Transport, o.config.Generators.Syslog.RemoteAddress, o.facility|o.severity, "")
+		syslogconn, err = syslog.Dial(o.config.Loggers.Syslog.Transport, o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity, "")
 		if err != nil {
 			o.logger.Fatal("failed to connect to the remote syslog daemon:", err)
 		}
