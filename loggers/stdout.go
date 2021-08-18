@@ -37,6 +37,14 @@ func (c *StdOut) ReadConfig() {
 	c.mode = c.config.Loggers.Stdout.Mode
 }
 
+func (c *StdOut) LogInfo(msg string, v ...interface{}) {
+	c.logger.Info("logger to stdout - "+msg, v...)
+}
+
+func (c *StdOut) LogError(msg string, v ...interface{}) {
+	c.logger.Error("logger to stdout - "+msg, v...)
+}
+
 func (o *StdOut) SetBuffer(b *bytes.Buffer) {
 	o.stdout.SetOutput(b)
 }
@@ -50,10 +58,10 @@ func (o *StdOut) Print(dm dnsutils.DnsMessage) {
 }
 
 func (o *StdOut) Stop() {
-	o.logger.Info("logger to stdout - stopping...")
+	o.LogInfo("stopping...")
 
 	// close output channel
-	o.logger.Info("logger to stdout - closing channel")
+	o.LogInfo("closing channel")
 	close(o.channel)
 
 	// read done channel and block until run is terminated
@@ -62,7 +70,7 @@ func (o *StdOut) Stop() {
 }
 
 func (o *StdOut) Run() {
-	o.logger.Info("logger to stdout - running in background...")
+	o.LogInfo("running in background...")
 
 	buffer := new(bytes.Buffer)
 	for dm := range o.channel {
@@ -75,7 +83,7 @@ func (o *StdOut) Run() {
 			buffer.Reset()
 		}
 	}
-	o.logger.Info("logger to stdout - run terminated")
+	o.LogInfo("run terminated")
 
 	// the job is done
 	o.done <- true

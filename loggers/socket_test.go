@@ -10,9 +10,9 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func TestJsonTcpRun(t *testing.T) {
+func TestSocketJsonRun(t *testing.T) {
 	// init logger
-	g := NewJsonTcpSender(dnsutils.GetFakeConfig(), logger.New(false))
+	g := NewSocketSender(dnsutils.GetFakeConfig(), logger.New(false))
 
 	// fake json receiver
 	fakeRcvr, err := net.Listen("tcp", ":9999")

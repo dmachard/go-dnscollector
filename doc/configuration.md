@@ -14,7 +14,7 @@
   - [REST API](#REST-API)
   - [Log File](#Log-File)
   - [DNStap](#Dnstap-Logger)
-  - [JSON tcp](#JSON-TCP)
+  - [TCP](#TCP-Client)
   - [Syslog](#Syslog)
 
 See [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml) file.
@@ -243,7 +243,7 @@ logfile:
   flush-interval: 10
 ```
 
-### DNStap Logger
+### DNStap
 
 DNStap stream logger to a remote tcp destination or unix socket.
 
@@ -261,20 +261,28 @@ dnstap:
   retry-interval: 5
 ```
 
-### JSON tcp
+### TCP Client
 
-JSON tcp stream logger.
+Tcp/unix stream client logger.
 
 ```yaml
-json-tcp:
+tcpclient:
   # to enable, set the enable to true
-  enable: false
-  # remote address
-  remote-address: 127.0.0.1
-  # remote tcp port
-  remote-port: 9999
-  # retry interval in second
-  retry-interval: 5
+    enable: false
+    # network transport to use: tcp|unix
+    transport: tcp
+    # remote address
+    remote-address: 127.0.0.1
+    # remote tcp port
+    remote-port: 9999
+    # unix socket path
+    sock-path: null
+    # interval in second between retry reconnect
+    retry-interval: 5
+    # enable tls
+    tls-support: false
+    # insecure skip verify
+    tls-insecure: false
 ```
 
 Example:

@@ -12,11 +12,14 @@ Features:
         * UDP and TCP transport
         * BFP filtering
 - Loggers
-    - Stream [Dnstap](https://dnstap.info/)
-        * tcp or unix client
-    - Plain text or JSON to stdout
-    - Plain text to log files
-    - JSON to tcp remote destination
+    - [Dnstap](https://dnstap.info/) stream client
+        * to remote tcp destination or unix socket
+    - Stdout in plain text or JSON 
+    - Log files in plain text
+    - TCP client
+        * to remote tcp destination or unix socket
+        * tls support
+        * ip4/ip6 support
     - Rest API Web server with prometheus metrics and DNS usage support 
         * qps, total queries/replies, top domains, clients, rcodes...
         * basic auth and tls support

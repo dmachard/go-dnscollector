@@ -79,12 +79,16 @@ type Config struct {
 			SockPath      string `yaml:"sock-path"`
 			RetryInterval int    `yaml:"retry-interval"`
 		} `yaml:"dnstap"`
-		JsonTcp struct {
+		TcpClient struct {
 			Enable        bool   `yaml:"enable"`
 			RemoteAddress string `yaml:"remote-address"`
 			RemotePort    int    `yaml:"remote-port"`
+			SockPath      string `yaml:"sock-path"`
 			RetryInterval int    `yaml:"retry-interval"`
-		} `yaml:"json-tcp"`
+			Transport     string `yaml:"transport"`
+			TlsSupport    bool   `yaml:"tls-support"`
+			TlsInsecure   bool   `yaml:"tls-insecure"`
+		} `yaml:"tcpclient"`
 		Syslog struct {
 			Enable        bool   `yaml:"enable"`
 			Severity      string `yaml:"severity"`
@@ -155,10 +159,14 @@ func (c *Config) SetDefault() {
 	c.Loggers.WebServer.KeyFile = ""
 	c.Loggers.WebServer.PrometheusSuffix = "dnscollector"
 
-	c.Loggers.JsonTcp.Enable = false
-	c.Loggers.JsonTcp.RemoteAddress = "127.0.0.1"
-	c.Loggers.JsonTcp.RemotePort = 9999
-	c.Loggers.JsonTcp.RetryInterval = 5
+	c.Loggers.TcpClient.Enable = false
+	c.Loggers.TcpClient.RemoteAddress = "127.0.0.1"
+	c.Loggers.TcpClient.RemotePort = 9999
+	c.Loggers.TcpClient.SockPath = ""
+	c.Loggers.TcpClient.RetryInterval = 5
+	c.Loggers.TcpClient.Transport = "tcp"
+	c.Loggers.TcpClient.TlsSupport = false
+	c.Loggers.TcpClient.TlsInsecure = false
 
 	c.Loggers.Syslog.Enable = false
 	c.Loggers.Syslog.Severity = "INFO"

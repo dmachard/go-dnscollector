@@ -86,11 +86,11 @@ func (o *Syslog) Channel() chan dnsutils.DnsMessage {
 }
 
 func (c *Syslog) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("logger syslog - "+msg, v...)
+	c.logger.Info("logger to syslog - "+msg, v...)
 }
 
 func (c *Syslog) LogError(msg string, v ...interface{}) {
-	c.logger.Error("logger syslog - "+msg, v...)
+	c.logger.Error("logger to syslog - "+msg, v...)
 }
 
 func (o *Syslog) Stop() {
