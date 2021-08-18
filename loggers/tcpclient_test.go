@@ -12,7 +12,7 @@ import (
 
 func TestSocketJsonRun(t *testing.T) {
 	// init logger
-	g := NewSocketSender(dnsutils.GetFakeConfig(), logger.New(false))
+	g := NewTcpClient(dnsutils.GetFakeConfig(), logger.New(false))
 
 	// fake json receiver
 	fakeRcvr, err := net.Listen("tcp", ":9999")
