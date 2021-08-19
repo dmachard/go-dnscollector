@@ -6,8 +6,7 @@ Features:
 
 - Collectors 
     - Streams [Dnstap](https://dnstap.info/)
-        * tcp or unix socket listener
-        * tls support
+        * tcp or unix socket listener with tls support
     - DNS packets sniffer
         * IPv4, IPv6 support (fragmented packet ignored)
         * UDP and TCP transport
@@ -16,18 +15,17 @@ Features:
     - Stdout in text or json 
     - Log files in plain text
     - [Dnstap](https://dnstap.info/) stream client
-        * to remote tcp destination or unix socket
-        * tls support
-        * ip4/ip6 support
+        * to remote tcp destination or unix socket with tls support
     - TCP client
-        * to remote tcp destination or unix socket
+        * to remote tcp destination or unix socket with tls support
         * supported format: text, json, [msgpask](https://msgpack.org/)
-        * tls support
-        * ip4/ip6 support
     - Rest API Web server with prometheus metrics and DNS usage support 
         * qps, total queries/replies, top domains, clients, rcodes...
         * basic auth and tls support
     - Syslog server (local or remote)
+    - Fluentd client
+        * to remote fluentd collector or unix socket with tls support
+        * [msgpask](https://msgpack.org/)
 - GeoIP support (Country code)
 - Packet filtering (regex support)
 - Query IP-Addresses anonymizer

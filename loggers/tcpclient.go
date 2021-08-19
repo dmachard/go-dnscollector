@@ -10,7 +10,6 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
-	"github.com/vmihailenco/msgpack"
 )
 
 type TcpClient struct {
@@ -112,19 +111,6 @@ LOOP:
 
 							if o.config.Loggers.TcpClient.Mode == "text" {
 								w.Write(dm.Bytes())
-							}
-
-							if o.config.Loggers.TcpClient.Mode == "msgpack" {
-								tag, _ := msgpack.Marshal("dns.collector")
-								tm, _ := msgpack.Marshal(dm.Timestamp)
-								record, _ := msgpack.Marshal(dm)
-
-								encoded := []byte{0x93}
-								encoded = append(encoded, tag...)
-								encoded = append(encoded, tm...)
-								encoded = append(encoded, record...)
-
-								w.Write(encoded)
 							}
 
 							if o.config.Loggers.TcpClient.Mode == "json" {

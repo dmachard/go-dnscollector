@@ -1,21 +1,20 @@
 package loggers
 
 import (
-	"bufio"
-	"encoding/json"
 	"net"
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
+	"github.com/vmihailenco/msgpack"
 )
 
-func TestTcpClientJsonRun(t *testing.T) {
+func TestFluentClientdRun(t *testing.T) {
 	// init logger
-	g := NewTcpClient(dnsutils.GetFakeConfig(), logger.New(false))
+	g := NewFluentdClient(dnsutils.GetFakeConfig(), logger.New(false))
 
-	// fake json receiver
-	fakeRcvr, err := net.Listen("tcp", ":9999")
+	// fake msgpack receiver
+	fakeRcvr, err := net.Listen("tcp", ":24224")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,11 +34,18 @@ func TestTcpClientJsonRun(t *testing.T) {
 	dm := dnsutils.GetFakeDnsMessage()
 	g.channel <- dm
 
-	// read data on server side and decode-it
-	reader := bufio.NewReader(conn)
+	// read data on fake server side
+	buf := make([]byte, 4096)
+	_, err = conn.Read(buf)
+	if err != nil {
+		t.Errorf("error to read msgpack: %s", err)
+	}
+
+	// unpack msgpack
 	var dmRcv dnsutils.DnsMessage
-	if err := json.NewDecoder(reader).Decode(&dmRcv); err != nil {
-		t.Errorf("error to decode json: %s", err)
+	err = msgpack.Unmarshal(buf[24:], &dmRcv)
+	if err != nil {
+		t.Errorf("error to unpack msgpack: %s", err)
 	}
 	if dm.Qname != dmRcv.Qname {
 		t.Errorf("qname error want %s, got %s", dm.Qname, dmRcv.Qname)

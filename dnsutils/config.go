@@ -99,6 +99,17 @@ type Config struct {
 			Transport     string `yaml:"transport"`
 			RemoteAddress string `yaml:"remote-address"`
 		} `yaml:"syslog"`
+		Fluentd struct {
+			Enable        bool   `yaml:"enable"`
+			RemoteAddress string `yaml:"remote-address"`
+			RemotePort    int    `yaml:"remote-port"`
+			SockPath      string `yaml:"sock-path"`
+			RetryInterval int    `yaml:"retry-interval"`
+			Transport     string `yaml:"transport"`
+			TlsSupport    bool   `yaml:"tls-support"`
+			TlsInsecure   bool   `yaml:"tls-insecure"`
+			Tag           string `yaml:"tag"`
+		} `yaml:"fluentd"`
 	} `yaml:"loggers"`
 }
 
@@ -179,6 +190,16 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.Facility = "DAEMON"
 	c.Loggers.Syslog.Transport = "local"
 	c.Loggers.Syslog.RemoteAddress = "127.0.0.1:514"
+
+	c.Loggers.Fluentd.Enable = false
+	c.Loggers.Fluentd.RemoteAddress = "127.0.0.1"
+	c.Loggers.Fluentd.RemotePort = 24224
+	c.Loggers.Fluentd.SockPath = ""
+	c.Loggers.Fluentd.RetryInterval = 5
+	c.Loggers.Fluentd.Transport = "tcp"
+	c.Loggers.Fluentd.TlsSupport = false
+	c.Loggers.Fluentd.TlsInsecure = false
+	c.Loggers.Fluentd.Tag = "dns.collector"
 }
 
 func LoadConfig() (*Config, error) {

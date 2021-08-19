@@ -71,6 +71,9 @@ func main() {
 	if config.Loggers.Syslog.Enable {
 		logwrks = append(logwrks, loggers.NewSyslog(config, logger))
 	}
+	if config.Loggers.Fluentd.Enable {
+		logwrks = append(logwrks, loggers.NewFluentdClient(config, logger))
+	}
 
 	// load collectors
 	var collwrks []dnsutils.Worker

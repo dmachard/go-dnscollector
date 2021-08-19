@@ -129,13 +129,13 @@ loggers:
 
   tcpclient:
     # to enable, set the enable to true
-    enable: true
+    enable: false
     # network transport to use: tcp|unix
     transport: tcp
     # remote address
     remote-address: 127.0.0.1
     # remote tcp port
-    remote-port: 24224
+    remote-port: 9999
     # unix socket path
     sock-path: null
     # interval in second between retry reconnect
@@ -144,8 +144,8 @@ loggers:
     tls-support: false
     # insecure skip verify
     tls-insecure: false
-    # output format: text|json|msgpack
-    mode: msgpack
+    # output format: text|json
+    mode: json
 
   syslog:
     # to enable, set the enable to true
@@ -159,3 +159,23 @@ loggers:
     transport: local
     # Remote address host:port
     remote-address: ""
+
+  fluentd:
+    # to enable, set the enable to true
+    enable: true
+    # network transport to use: tcp|unix
+    transport: tcp
+    # remote address
+    remote-address: 127.0.0.1
+    # remote tcp port
+    remote-port: 24224
+    # unix socket path
+    sock-path: null
+    # interval in second between retry reconnect
+    retry-interval: 5
+    # tag name
+    tag: "dns.collector"
+    # enable tls
+    tls-support: false
+    # insecure skip verify
+    tls-insecure: false

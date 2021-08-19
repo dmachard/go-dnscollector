@@ -16,6 +16,7 @@
   - [DNStap](#Dnstap-Logger)
   - [TCP](#TCP-Client)
   - [Syslog](#Syslog)
+  - [Fluentd](#Fluentd-Client)
 
 See [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml) file.
 
@@ -321,6 +322,8 @@ Example:
 
 ### Syslog
 
+Syslog logger to local syslog system or remote one.
+
 ```yaml
 syslog:
   # to enable, set the enable to true
@@ -334,4 +337,30 @@ syslog:
   transport: local
   # Remote address host:port
   remote-address: ""
+```
+
+### Fluentd Client
+
+Fluentd client to remote server or unix socket.
+
+```yaml
+fluentd:
+    # to enable, set the enable to true
+    enable: true
+    # network transport to use: tcp|unix
+    transport: tcp
+    # remote address
+    remote-address: 127.0.0.1
+    # remote tcp port
+    remote-port: 24224
+    # unix socket path
+    sock-path: null
+    # interval in second between retry reconnect
+    retry-interval: 5
+    # tag name
+    tag: "dns.collector"
+    # enable tls
+    tls-support: false
+    # insecure skip verify
+    tls-insecure: false
 ```
