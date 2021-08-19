@@ -10,6 +10,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
+	"github.com/vmihailenco/msgpack"
 )
 
 type TcpClient struct {
@@ -108,7 +109,29 @@ LOOP:
 					for {
 						select {
 						case dm := <-o.channel:
-							json.NewEncoder(w).Encode(dm)
+
+							if o.config.Loggers.TcpClient.Mode == "text" {
+								w.Write(dm.Bytes())
+							}
+
+							if o.config.Loggers.TcpClient.Mode == "msgpack" {
+								tag, _ := msgpack.Marshal("dns.collector")
+								tm, _ := msgpack.Marshal(dm.Timestamp)
+								record, _ := msgpack.Marshal(dm)
+
+								encoded := []byte{0x93}
+								encoded = append(encoded, tag...)
+								encoded = append(encoded, tm...)
+								encoded = append(encoded, record...)
+
+								w.Write(encoded)
+							}
+
+							if o.config.Loggers.TcpClient.Mode == "json" {
+								json.NewEncoder(w).Encode(dm)
+							}
+
+							// flusth the buffer
 							err = w.Flush()
 							if err != nil {
 								o.LogError("connection error:", err.Error())
@@ -121,7 +144,7 @@ LOOP:
 					}
 
 				}
-				o.LogInfo("retry to connect in xx seconds")
+				o.LogInfo("retry to connect in %d seconds", o.config.Loggers.TcpClient.RetryInterval)
 				time.Sleep(time.Duration(o.config.Loggers.TcpClient.RetryInterval) * time.Second)
 			}
 		}

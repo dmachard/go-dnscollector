@@ -90,6 +90,7 @@ type Config struct {
 			Transport     string `yaml:"transport"`
 			TlsSupport    bool   `yaml:"tls-support"`
 			TlsInsecure   bool   `yaml:"tls-insecure"`
+			Mode          string `yaml:"mode"`
 		} `yaml:"tcpclient"`
 		Syslog struct {
 			Enable        bool   `yaml:"enable"`
@@ -171,6 +172,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.TcpClient.Transport = "tcp"
 	c.Loggers.TcpClient.TlsSupport = false
 	c.Loggers.TcpClient.TlsInsecure = false
+	c.Loggers.TcpClient.Mode = "json"
 
 	c.Loggers.Syslog.Enable = false
 	c.Loggers.Syslog.Severity = "INFO"

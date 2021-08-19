@@ -12,9 +12,8 @@ Features:
         * IPv4, IPv6 support (fragmented packet ignored)
         * UDP and TCP transport
         * BFP filtering
-
 - Loggers
-    - Stdout in plain text or JSON 
+    - Stdout in text or json 
     - Log files in plain text
     - [Dnstap](https://dnstap.info/) stream client
         * to remote tcp destination or unix socket
@@ -22,13 +21,13 @@ Features:
         * ip4/ip6 support
     - TCP client
         * to remote tcp destination or unix socket
+        * supported format: text, json, [msgpask](https://msgpack.org/)
         * tls support
         * ip4/ip6 support
     - Rest API Web server with prometheus metrics and DNS usage support 
         * qps, total queries/replies, top domains, clients, rcodes...
         * basic auth and tls support
     - Syslog server (local or remote)
-    
 - GeoIP support (Country code)
 - Packet filtering (regex support)
 - Query IP-Addresses anonymizer

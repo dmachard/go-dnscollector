@@ -6,37 +6,37 @@ import (
 )
 
 type DnsAnswer struct {
-	Name      string `json:"name"`
-	Rdatatype string `json:"rdatatype"`
-	Class     int    `json:"-"`
-	Ttl       int    `json:"ttl"`
-	Rdata     string `json:"rdata"`
+	Name      string `json:"name" msgpack:"name"`
+	Rdatatype string `json:"rdatatype" msgpack:"rdatatype"`
+	Class     int    `json:"-" msgpack:"-"`
+	Ttl       int    `json:"ttl" msgpack:"ttl"`
+	Rdata     string `json:"rdata" msgpack:"rdata"`
 }
 
 type DnsMessage struct {
-	Operation        string      `json:"operation"`
-	Identity         string      `json:"identiy"`
-	Family           string      `json:"family"`
-	Protocol         string      `json:"protocol"`
-	QueryIp          string      `json:"query-ip"`
-	QueryPort        string      `json:"query-port"`
-	ResponseIp       string      `json:"response-ip"`
-	ResponsePort     string      `json:"response-port"`
-	Type             string      `json:"-"`
-	Payload          []byte      `json:"-"`
-	Length           int         `json:"length"`
-	Id               int         `json:"-"`
-	Rcode            string      `json:"rcode"`
-	Qname            string      `json:"qname"`
-	Qtype            string      `json:"qtype"`
-	Latency          float64     `json:"-"`
-	LatencySec       string      `json:"latency"`
-	TimestampRFC3339 string      `json:"timestamp-rfc3339"`
-	Timestamp        float64     `json:"-"`
-	TimeSec          int         `json:"-"`
-	TimeNsec         int         `json:"-"`
-	Answers          []DnsAnswer `json:"answers"`
-	CountryIsoCode   string      `json:"country-isocode"`
+	Operation        string      `json:"operation" msgpack:"operation"`
+	Identity         string      `json:"identiy" msgpack:"identiy"`
+	Family           string      `json:"family" msgpack:"family"`
+	Protocol         string      `json:"protocol" msgpack:"protocol"`
+	QueryIp          string      `json:"query-ip" msgpack:"query-ip"`
+	QueryPort        string      `json:"query-port" msgpack:"query-port"`
+	ResponseIp       string      `json:"response-ip" msgpack:"response-ip"`
+	ResponsePort     string      `json:"response-port" msgpack:"response-port"`
+	Type             string      `json:"-" msgpack:"-"`
+	Payload          []byte      `json:"-" msgpack:"-"`
+	Length           int         `json:"length" msgpack:"-"`
+	Id               int         `json:"-" msgpack:"-"`
+	Rcode            string      `json:"rcode" msgpack:"rcode"`
+	Qname            string      `json:"qname" msgpack:"qname"`
+	Qtype            string      `json:"qtype" msgpack:"qtype"`
+	Latency          float64     `json:"-" msgpack:"-"`
+	LatencySec       string      `json:"latency" msgpack:"latency"`
+	TimestampRFC3339 string      `json:"timestamp-rfc3339" msgpack:"timestamp-rfc3339"`
+	Timestamp        float64     `json:"-" msgpack:"-"`
+	TimeSec          int         `json:"-" msgpack:"-"`
+	TimeNsec         int         `json:"-" msgpack:"-"`
+	Answers          []DnsAnswer `json:"answers" msgpack:"answers"`
+	CountryIsoCode   string      `json:"country-isocode" msgpack:"country-isocode"`
 }
 
 func (dm *DnsMessage) Init() {

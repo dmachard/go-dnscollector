@@ -44,7 +44,7 @@ collectors:
 subprocessors:
 
   # IP-Addresses are anonymities by zeroing the host-part of an address.
-  anonymize-ip: true
+  anonymize-ip: false
 
   # The cache is used to compute latency between replies and queries
   # Ttl in second 
@@ -74,7 +74,7 @@ loggers:
   stdout:
     # to enable, set the enable to true
     enable: true
-    # text|json
+    # output format: text|json
     mode: text
 
   webserver:
@@ -129,13 +129,13 @@ loggers:
 
   tcpclient:
     # to enable, set the enable to true
-    enable: false
+    enable: true
     # network transport to use: tcp|unix
     transport: tcp
     # remote address
     remote-address: 127.0.0.1
     # remote tcp port
-    remote-port: 9999
+    remote-port: 24224
     # unix socket path
     sock-path: null
     # interval in second between retry reconnect
@@ -144,6 +144,8 @@ loggers:
     tls-support: false
     # insecure skip verify
     tls-insecure: false
+    # output format: text|json|msgpack
+    mode: msgpack
 
   syslog:
     # to enable, set the enable to true
