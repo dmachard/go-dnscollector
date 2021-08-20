@@ -201,6 +201,8 @@ Example:
 Build-in webserver with REST API to retrieve somes statistics like top domains, clients and more...
 Basic authentication supported.
 
+See the [swagger](swagger.yml) documentation.
+
 ```yaml
 webserver:
   # to enable, set the enable to true

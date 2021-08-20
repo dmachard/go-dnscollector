@@ -1,0 +1,63 @@
+openapi: 3.0.2
+info:
+  title: Swagger for dnscollector tool
+  version: 3.0.0
+  description: This is a swagger for the API of the dnscollector.
+  contact:
+    email: d.machard@gmail.com
+  license:
+    name: MIT
+    url: 'https://github.com/dmachard/go-dnscollector/blob/main/LICENSE'
+  x-logo:
+    url: ''
+servers:
+  - url: 'http://localhost:8080/'
+paths:
+  /metrics:
+    get:
+      responses:
+        '200':
+          description: Metrics in prometheus format
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Get metrics
+  /tables/domains:
+    get:
+      responses:
+        '200':
+          description: ''
+      summary: Get top domains
+      description: Get top domains
+  /tables/clients:
+    get:
+      responses:
+        '200':
+          description: ''
+      summary: Get top clients
+      description: Get top clients
+  /tables/rcodes:
+    get:
+      responses:
+        '200':
+          description: ''
+      summary: Get top rcodes
+      description: Get top rcodes
+  /tables/rrtypês:
+    get:
+      responses:
+        '200':
+          description: ''
+      summary: Get top rrtypes
+      description: Get top rrtypes
+  /tables/operations:
+    get:
+      responses:
+        '200':
+          description: ''
+      summary: Get top operations
+      description: Get top operations
+security: []
+externalDocs:
+  url: 'https://github.com/dmachard/go-dnscollector'
