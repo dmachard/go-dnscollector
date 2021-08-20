@@ -14,7 +14,7 @@ collectors:
 
   dnstap:
     # to enable, set the enable to true
-    enable: false
+    enable: true
     # listen on ip
     listen-ip: 0.0.0.0
     # listening on port
@@ -30,7 +30,7 @@ collectors:
 
   dns-sniffer:
     # to enable, set the enable to true
-    enable: true
+    enable: false
     # filter on source and destination port
     port: 53
     # if "" bind on all interfaces
@@ -162,7 +162,7 @@ loggers:
 
   fluentd:
     # to enable, set the enable to true
-    enable: true
+    enable: false
     # network transport to use: tcp|unix
     transport: tcp
     # remote address

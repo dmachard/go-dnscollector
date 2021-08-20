@@ -3,7 +3,6 @@
 `go-dnscollector` acts as a high speed passive analyser for DNS traffic written in Go.
 
 Features:
-
 - Collectors 
     - Streams [Dnstap](https://dnstap.info/)
         * tcp or unix socket listener with tls support
@@ -12,17 +11,21 @@ Features:
         * UDP and TCP transport
         * BFP filtering
 - Loggers
-    - Stdout in text or json 
-    - Log files in plain text
+    - To Stdout
+        * supported format: text, json
+    - Log files
+        * rotation log file support
+        * supported format: text
     - [Dnstap](https://dnstap.info/) stream client
         * to remote tcp destination or unix socket with tls support
-    - TCP client
+    - Raw TCP client
         * to remote tcp destination or unix socket with tls support
-        * supported format: text, json, [msgpask](https://msgpack.org/)
+        * supported format: text, json
     - Rest API Web server with prometheus metrics and DNS usage support 
         * qps, total queries/replies, top domains, clients, rcodes...
         * basic auth and tls support
-    - Syslog server (local or remote)
+    - Syslog server
+        * local or remote one
     - Fluentd client
         * to remote fluentd collector or unix socket with tls support
         * [msgpask](https://msgpack.org/)
