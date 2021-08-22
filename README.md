@@ -14,7 +14,7 @@ Features:
     - To Stdout
         * supported format: text, json
     - Log files
-        * rotation log file support
+        * with rotation file support
         * supported format: text
     - [Dnstap](https://dnstap.info/) stream client
         * to remote tcp destination or unix socket with tls support
@@ -29,6 +29,8 @@ Features:
     - Fluentd client
         * to remote fluentd collector or unix socket with tls support
         * [msgpask](https://msgpack.org/)
+    - Pcap files
+        * with rotation file support
 - GeoIP support (Country code)
 - Packet filtering (regex support)
 - Query IP-Addresses anonymizer

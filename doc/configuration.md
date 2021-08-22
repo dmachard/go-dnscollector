@@ -17,6 +17,7 @@
   - [TCP](#TCP-Client)
   - [Syslog](#Syslog)
   - [Fluentd](#Fluentd-Client)
+  - [Pcap File](#Pcap-File)
 
 See [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml) file.
 
@@ -108,7 +109,11 @@ dns-sniffer:
 
 ### IP Anonymization
 
-tbc
+This feature can be used to anonymize all IP queries.
+
+```yaml
+processors:
+```
 
 ### GeoIP Support
 
@@ -137,11 +142,19 @@ When the feature is enable, the `country-isocode` field is populated with the co
 
 ### DNS Caching
 
-tbc
+The caching feature is used to compute latency between replies and queries.
+
+```yaml
+processors:
+```
 
 ### Packet Filtering
 
-tbc
+This feature can be use to ignore somes qnames.
+
+```yaml
+processors:
+```
 
 ## Loggers
 
@@ -226,7 +239,6 @@ webserver:
   # prometheus suffix
   prometheus-suffix: "dnscollector"
 ```
-
 
 ### Log File
 
@@ -365,4 +377,20 @@ fluentd:
     tls-support: false
     # insecure skip verify
     tls-insecure: false
+```
+
+### Pcap File
+
+Enable this logger if you want to log into a pcap file.
+
+```yaml
+pcapfile:
+  # to enable, set the enable to true
+  enable: true
+  # output logfile name
+  file-path: /tmp/trace-dns.pcap
+  # maximum size in megabytes of the file before rotation
+  max-size: 1
+  # maximum number of files to retain.
+  max-files: 3
 ```

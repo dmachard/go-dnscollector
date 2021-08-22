@@ -110,6 +110,12 @@ type Config struct {
 			TlsInsecure   bool   `yaml:"tls-insecure"`
 			Tag           string `yaml:"tag"`
 		} `yaml:"fluentd"`
+		PcapFile struct {
+			Enable   bool   `yaml:"enable"`
+			FilePath string `yaml:"file-path"`
+			MaxSize  int    `yaml:"max-size"`
+			MaxFiles int    `yaml:"max-files"`
+		} `yaml:"pcapfile"`
 	} `yaml:"loggers"`
 }
 
@@ -200,6 +206,11 @@ func (c *Config) SetDefault() {
 	c.Loggers.Fluentd.TlsSupport = false
 	c.Loggers.Fluentd.TlsInsecure = false
 	c.Loggers.Fluentd.Tag = "dns.collector"
+
+	c.Loggers.PcapFile.Enable = false
+	c.Loggers.PcapFile.FilePath = ""
+	c.Loggers.PcapFile.MaxSize = 1
+	c.Loggers.PcapFile.MaxFiles = 1
 }
 
 func LoadConfig() (*Config, error) {

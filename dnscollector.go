@@ -74,6 +74,9 @@ func main() {
 	if config.Loggers.Fluentd.Enable {
 		logwrks = append(logwrks, loggers.NewFluentdClient(config, logger))
 	}
+	if config.Loggers.PcapFile.Enable {
+		logwrks = append(logwrks, loggers.NewPcapFile(config, logger))
+	}
 
 	// load collectors
 	var collwrks []dnsutils.Worker
@@ -81,7 +84,6 @@ func main() {
 	if config.Collectors.Dnstap.Enable {
 		collwrks = append(collwrks, collectors.NewDnstap(logwrks, config, logger))
 	}
-
 	if config.Collectors.DnsSniffer.Enable {
 		collwrks = append(collwrks, collectors.NewDnsSniffer(logwrks, config, logger))
 	}

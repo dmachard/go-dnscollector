@@ -30,7 +30,7 @@ collectors:
 
   dns-sniffer:
     # to enable, set the enable to true
-    enable: false
+    enable: true
     # filter on source and destination port
     port: 53
     # if "" bind on all interfaces
@@ -179,3 +179,13 @@ loggers:
     tls-support: false
     # insecure skip verify
     tls-insecure: false
+
+  pcapfile:
+    # to enable, set the enable to true
+    enable: false
+    # output logfile name
+    file-path: null
+    # maximum size in megabytes of the file before rotation
+    max-size: 1
+    # maximum number of files to retain.
+    max-files: 3
