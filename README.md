@@ -21,16 +21,19 @@ Features:
     - Raw TCP client
         * to remote tcp destination or unix socket with tls support
         * supported format: text, json
-    - Rest API Web server with prometheus metrics and DNS usage support 
+    - [Rest API]((https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) 
+        * prometheus metrics format
         * qps, total queries/replies, top domains, clients, rcodes...
-        * basic auth and tls support
+        * basic auth
+        * tls support
     - Syslog server
         * local or remote one
     - [Fluentd](https://www.fluentd.org/) client
         * to remote fluentd collector or unix socket with tls support
         * [msgpask](https://msgpack.org/)
-    - [Pcap](https://en.wikipedia.org/wiki/Pcap) files
+    - [Pcap file](https://en.wikipedia.org/wiki/Pcap) files
         * with rotation file support
+        * binary format
 - GeoIP support (Country code)
 - Packet filtering (regex support)
 - Query IP-Addresses anonymizer
