@@ -30,7 +30,7 @@ collectors:
 
   dns-sniffer:
     # to enable, set the enable to true
-    enable: true
+    enable: false
     # filter on source and destination port
     port: 53
     # if "" bind on all interfaces
