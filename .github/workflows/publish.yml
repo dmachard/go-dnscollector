@@ -5,14 +5,13 @@ on:
     types: [published]
 
 jobs:
+
   go:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-      - name: Set up Go
-        uses: actions/setup-go@v2
+      - uses: actions/setup-go@v2
         with:
           go-version: 1.16
 
@@ -25,3 +24,23 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: go-dnscollector_${{ github.event.release.tag_name }}_linux_amd64.tar.gz
+
+  dockerhub:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build the Docker image
+      run: |
+        docker build . --file Dockerfile -t go-dnscollector
+
+    - name: Tag image
+      run: |
+        docker tag go-dnscollector dmachard/go-dnscollector:${{ github.event.release.tag_name }}
+        docker tag go-dnscollector dmachard/go-dnscollector:latest
+
+    - name: Upload to DockerHub
+      run: |
+        docker login -u ${{ secrets.DOCKERHUB_LOGIN }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+        docker push dmachard/go-dnscollector:latest
+        docker push dmachard/go-dnscollector:${{ github.event.release.tag_name }}
