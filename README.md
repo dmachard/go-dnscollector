@@ -4,16 +4,16 @@
 
 Features:
 - Collectors 
-    - Streams [Dnstap](https://dnstap.info/)
+    - [Dnstap](https://dnstap.info/) Streams
         * tcp or unix socket listener with tls support
     - DNS packets sniffer
         * IPv4, IPv6 support (fragmented packet ignored)
         * UDP and TCP transport
         * BFP filtering
 - Loggers
-    - To Stdout
+    - Stdout
         * supported format: text, json
-    - text files
+    - Text files
         * with rotation file support
         * supported format: text
     - [Dnstap](https://dnstap.info/) stream client
@@ -31,7 +31,7 @@ Features:
     - [Fluentd](https://www.fluentd.org/) client
         * to remote fluentd collector or unix socket with tls support
         * [msgpask](https://msgpack.org/)
-    - [Pcap file](https://en.wikipedia.org/wiki/Pcap) files
+    - [Pcap](https://en.wikipedia.org/wiki/Pcap) files
         * with rotation file support
         * binary format
 - GeoIP support (Country code)
