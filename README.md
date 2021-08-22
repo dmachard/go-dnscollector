@@ -5,7 +5,8 @@
 Features:
 - Collectors 
     - [Dnstap](https://dnstap.info/) Streams
-        * tcp or unix socket listener with tls support
+        * tcp or unix socket listener
+        * tls support
     - DNS packets sniffer
         * IPv4, IPv6 support (fragmented packet ignored)
         * UDP and TCP transport
