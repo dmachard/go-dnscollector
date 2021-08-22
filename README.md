@@ -13,7 +13,7 @@ Features:
 - Loggers
     - To Stdout
         * supported format: text, json
-    - Log files
+    - text files
         * with rotation file support
         * supported format: text
     - [Dnstap](https://dnstap.info/) stream client
@@ -26,7 +26,7 @@ Features:
         * qps, total queries/replies, top domains, clients, rcodes...
         * basic auth
         * tls support
-    - Syslog server
+    - [Syslog](https://en.wikipedia.org/wiki/Syslog) server
         * local or remote one
     - [Fluentd](https://www.fluentd.org/) client
         * to remote fluentd collector or unix socket with tls support
