@@ -21,7 +21,7 @@ Features:
     - Raw TCP client
         * to remote tcp destination or unix socket with tls support
         * supported format: text, json
-    - [Rest API]((https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) 
+    - [Rest API](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) 
         * prometheus metrics format
         * qps, total queries/replies, top domains, clients, rcodes...
         * basic auth
