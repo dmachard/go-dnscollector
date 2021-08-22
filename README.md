@@ -26,10 +26,10 @@ Features:
         * basic auth and tls support
     - Syslog server
         * local or remote one
-    - Fluentd client
+    - [Fluentd](https://www.fluentd.org/) client
         * to remote fluentd collector or unix socket with tls support
         * [msgpask](https://msgpack.org/)
-    - Pcap files
+    - [Pcap](https://en.wikipedia.org/wiki/Pcap) files
         * with rotation file support
 - GeoIP support (Country code)
 - Packet filtering (regex support)
