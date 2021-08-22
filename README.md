@@ -43,10 +43,30 @@ Features:
 
 ## Installation
 
-Run-it from binary
+**Run-it from binary**
 
 ```go
 ./go-dnscollector -config config.yml
+```
+
+**Run-it from dockerhub**
+
+Use the default config (dnstap -> stdout + rest api):
+
+```bash
+docker run -d --rm --network host dmachard/go-dnscollector
+```
+
+Override the default configuration (/config.yml) with a config file on the host:
+
+```bash
+docker run -d --rm --network host -v $(pwd)/config.yml:/config.yml dmachard/go-dnscollector
+```
+
+Listen on custom ports:
+
+```bash
+docker run -d -p 6000:6000 -p 8080:8080 -v $(pwd)/config.yml:/config.yml dmachard/go-dnscollector
 ```
 
 ## Configuration
