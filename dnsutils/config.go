@@ -66,11 +66,13 @@ type Config struct {
 			PrometheusSuffix string `yaml:"prometheus-suffix"`
 		} `yaml:"webserver"`
 		LogFile struct {
-			Enable        bool   `yaml:"enable"`
-			FilePath      string `yaml:"file-path"`
-			MaxSize       int    `yaml:"max-size"`
-			MaxFiles      int    `yaml:"max-files"`
-			FlushInterval int    `yaml:"flush-interval"`
+			Enable           bool   `yaml:"enable"`
+			FilePath         string `yaml:"file-path"`
+			MaxSize          int    `yaml:"max-size"`
+			MaxFiles         int    `yaml:"max-files"`
+			FlushInterval    int    `yaml:"flush-interval"`
+			Compress         bool   `yaml:"compress"`
+			CompressInterval int    `yaml:"compress-interval"`
 		} `yaml:"logfile"`
 		Dnstap struct {
 			Enable        bool   `yaml:"enable"`
@@ -169,6 +171,8 @@ func (c *Config) SetDefault() {
 	c.Loggers.LogFile.FlushInterval = 10
 	c.Loggers.LogFile.MaxSize = 1
 	c.Loggers.LogFile.MaxFiles = 1
+	c.Loggers.LogFile.Compress = false
+	c.Loggers.LogFile.CompressInterval = 60
 
 	c.Loggers.WebServer.Enable = false
 	c.Loggers.WebServer.ListenIP = "127.0.0.1"

@@ -17,6 +17,7 @@ Features:
     - Text files
         * with rotation file support
         * supported format: text
+        * Gzip compression
     - [Dnstap](https://dnstap.info/) stream client
         * to remote tcp destination or unix socket with tls support
     - Raw TCP client

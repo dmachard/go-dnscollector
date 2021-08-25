@@ -2,30 +2,43 @@ package loggers
 
 import (
 	"bufio"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
 
+const (
+	compressSuffix = ".gz"
+)
+
 type LogFile struct {
-	done          chan bool
-	channel       chan dnsutils.DnsMessage
-	writer        *bufio.Writer
-	file          *os.File
-	config        *dnsutils.Config
-	logger        *logger.Logger
-	size          int64
-	fpath         string
-	maxfiles      int
-	maxsize       int
-	flushinterval int
+	done    chan bool
+	channel chan dnsutils.DnsMessage
+	writer  *bufio.Writer
+	file    *os.File
+	config  *dnsutils.Config
+	logger  *logger.Logger
+	size    int64
+	//	fpath      string
+	filedir        string
+	filename       string
+	fileext        string
+	fileprefix     string
+	commpressTimer *time.Timer
+	//maxfiles      int
+	//maxsize       int
+	//	flushinterval int
 }
 
 func NewLogFile(config *dnsutils.Config, logger *logger.Logger) *LogFile {
@@ -39,7 +52,7 @@ func NewLogFile(config *dnsutils.Config, logger *logger.Logger) *LogFile {
 
 	o.ReadConfig()
 
-	if err := o.OpenFile(o.fpath); err != nil {
+	if err := o.OpenFile(); err != nil {
 		o.logger.Fatal("logger logfile - unable to open output file:", err)
 	}
 
@@ -47,25 +60,34 @@ func NewLogFile(config *dnsutils.Config, logger *logger.Logger) *LogFile {
 }
 
 func (c *LogFile) ReadConfig() {
-	c.fpath = c.config.Loggers.LogFile.FilePath
-	c.maxfiles = c.config.Loggers.LogFile.MaxFiles
-	c.maxsize = c.config.Loggers.LogFile.MaxSize
-	c.flushinterval = c.config.Loggers.LogFile.FlushInterval
+	c.filedir = filepath.Dir(c.config.Loggers.LogFile.FilePath)
+	c.filename = filepath.Base(c.config.Loggers.LogFile.FilePath)
+	c.fileext = filepath.Ext(c.filename)
+	c.fileprefix = strings.TrimSuffix(c.filename, c.fileext)
+
+	//c.flushinterval = c.config.Loggers.LogFile.FlushInterval
+}
+func (c *LogFile) LogInfo(msg string, v ...interface{}) {
+	c.logger.Info("logger to file - "+msg, v...)
 }
 
-func (o *LogFile) OpenFile(fpath string) error {
+func (c *LogFile) LogError(msg string, v ...interface{}) {
+	c.logger.Error("logger to file - "+msg, v...)
+}
 
-	file, err := os.OpenFile(fpath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+func (o *LogFile) OpenFile() error {
+
+	file, err := os.OpenFile(o.config.Loggers.LogFile.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return err
 	}
 	o.file = file
 
-	fileinfo, err := os.Stat(fpath)
+	fileinfo, err := os.Stat(o.config.Loggers.LogFile.FilePath)
 	if err != nil {
 		return err
 	}
-	o.fpath = fpath
+	//o.fpath = fpath
 	o.size = fileinfo.Size()
 	o.writer = bufio.NewWriter(file)
 
@@ -77,7 +99,7 @@ func (o *LogFile) Channel() chan dnsutils.DnsMessage {
 }
 
 func (o *LogFile) MaxSize() int64 {
-	return int64(1024*1024) * int64(o.maxsize)
+	return int64(1024*1024) * int64(o.config.Loggers.LogFile.MaxSize)
 }
 
 func (o *LogFile) Write(d []byte) {
@@ -86,6 +108,7 @@ func (o *LogFile) Write(d []byte) {
 	// rotate file ?
 	if (o.size + write_len) > o.MaxSize() {
 		if err := o.Rotate(); err != nil {
+			o.LogError("faild to rotate file: %s", err)
 			return
 		}
 	}
@@ -102,13 +125,13 @@ func (o *LogFile) Flush() {
 }
 
 func (o *LogFile) Stop() {
-	o.logger.Info("logger to file - stopping...")
+	o.LogInfo("stopping...")
 
 	// close output channel
 	close(o.channel)
 
 	// close the file
-	o.logger.Info("logger to file - closing file")
+	o.LogInfo("closing file")
 	o.file.Close()
 
 	// read done channel and block until run is terminated
@@ -116,46 +139,35 @@ func (o *LogFile) Stop() {
 	close(o.done)
 }
 
-func (o *LogFile) Rotate() error {
-	// Close existing file if open
-	o.writer.Flush()
-	if err := o.file.Close(); err != nil {
-		return err
+func (o *LogFile) Cleanup() error {
+	if o.config.Loggers.LogFile.MaxFiles == 0 {
+		return nil
 	}
 
-	// Rename log file
-	filedir := filepath.Dir(o.fpath)
-	filename := filepath.Base(o.fpath)
-	fileext := filepath.Ext(filename)
-	fileprefix := filename[:len(filename)-len(fileext)]
-
-	now := time.Now()
-	timestamp := now.Unix()
-
-	rfpath := filepath.Join(filedir, fmt.Sprintf("%s-%d%s", fileprefix, timestamp, fileext))
-
-	err := os.Rename(o.fpath, rfpath)
+	// keep only max files number
+	files, err := ioutil.ReadDir(o.filedir)
 	if err != nil {
-		o.logger.Error("logger to file - unable to rename file: %s", err)
-	}
-
-	// remove old files ?
-	files, err := ioutil.ReadDir(filedir)
-	if err != nil {
-		o.logger.Error("logger to file - unable to list log file: %s", err)
+		o.LogError("unable to list log file: %s", err)
 	}
 
 	logFiles := []int{}
 	for _, f := range files {
+		// ignore folder
 		if f.IsDir() {
 			continue
 		}
+
 		// extract timestamp from filename
-		fn := f.Name()
-		ts := fn[len(fileprefix)+1 : len(fn)-len(fileext)]
+		re := regexp.MustCompile(`^` + o.fileprefix + `-(?P<ts>\d+)` + o.fileext)
+		matches := re.FindStringSubmatch(f.Name())
+
+		if len(matches) == 0 {
+			continue
+		}
 
 		// convert timestamp to int
-		i, err := strconv.Atoi(ts)
+		tsIndex := re.SubexpIndex("ts")
+		i, err := strconv.Atoi(matches[tsIndex])
 		if err != nil {
 			continue
 		}
@@ -164,45 +176,153 @@ func (o *LogFile) Rotate() error {
 	sort.Ints(logFiles)
 
 	// too much log files ?
-	diff_nb := len(logFiles) - o.maxfiles
+	diff_nb := len(logFiles) - o.config.Loggers.LogFile.MaxFiles
 	if diff_nb > 0 {
 		for i := 0; i < diff_nb; i++ {
-			f := filepath.Join(filedir, fmt.Sprintf("%s-%d%s", fileprefix, logFiles[i], fileext))
-			err := os.Remove(f)
+
+			filename := fmt.Sprintf("%s-%d%s", o.fileprefix, logFiles[i], o.fileext)
+			f := filepath.Join(o.filedir, filename)
+			if _, err := os.Stat(f); os.IsNotExist(err) {
+				f = filepath.Join(o.filedir, filename+compressSuffix)
+			}
+
+			// ignore errors on deletion
+			os.Remove(f)
+		}
+	}
+
+	return nil
+}
+
+func (o *LogFile) Compress() {
+	o.LogInfo("Compressing old log files...")
+	files, err := ioutil.ReadDir(o.filedir)
+	if err != nil {
+		o.LogError("unable to list all files: %s", err)
+	}
+
+	for _, f := range files {
+		// ignore folder
+		if f.IsDir() {
+			continue
+		}
+
+		matched, _ := regexp.MatchString(`^`+o.fileprefix+`-\d+`+o.fileext+`$`, f.Name())
+		if matched {
+			src := filepath.Join(o.filedir, f.Name())
+			dst := filepath.Join(o.filedir, f.Name()+compressSuffix)
+
+			fl, err := os.Open(src)
 			if err != nil {
-				o.logger.Error("logger to file - unable to delete log file: %s", err)
+				o.LogError("compress - failed to open log file: ", err)
+				continue
+			}
+			defer fl.Close()
+
+			fi, err := os.Stat(src)
+			if err != nil {
+				o.LogError("compress - failed to stat log file: ", err)
+				continue
+			}
+
+			gzf, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, fi.Mode())
+			if err != nil {
+				o.LogError("compress - failed to open compressed log file: ", err)
+				continue
+			}
+			defer gzf.Close()
+
+			gz := gzip.NewWriter(gzf)
+
+			if _, err := io.Copy(gz, fl); err != nil {
+				o.LogError("compress - failed to compress log file: ", err)
+				os.Remove(dst)
+				continue
+			}
+			if err := gz.Close(); err != nil {
+				o.LogError("compress - failed to close gz writer: ", err)
+				os.Remove(dst)
+				continue
+			}
+			if err := gzf.Close(); err != nil {
+				o.LogError("compress - failed to close gz file: ", err)
+				os.Remove(dst)
+				continue
+			}
+
+			if err := fl.Close(); err != nil {
+				o.LogError("compress - failed to close log file: ", err)
+				os.Remove(dst)
+				continue
+			}
+			if err := os.Remove(src); err != nil {
+				o.LogError("compress - failed to remove log file: ", err)
+				os.Remove(dst)
+				continue
 			}
 
 		}
 	}
 
-	// re-create the main log file.
-	if err := o.OpenFile(o.fpath); err != nil {
-		o.logger.Error("logger to file - unable to re-create output file: %s", err)
+	o.commpressTimer.Reset(time.Duration(o.config.Loggers.LogFile.CompressInterval) * time.Second)
+}
+
+func (o *LogFile) Rotate() error {
+	// close existing file
+	o.writer.Flush()
+	if err := o.file.Close(); err != nil {
+		return err
+	}
+
+	// Rename current log file
+	bfpath := filepath.Join(o.filedir, fmt.Sprintf("%s-%d%s", o.fileprefix, time.Now().Unix(), o.fileext))
+	err := os.Rename(o.config.Loggers.LogFile.FilePath, bfpath)
+	if err != nil {
+		return err
+	}
+
+	// keep only max files
+	err = o.Cleanup()
+	if err != nil {
+		return err
+	}
+
+	// re-create new one
+	if err := o.OpenFile(); err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (o *LogFile) Run() {
-	o.logger.Info("logger to file - running in background...")
+	o.LogInfo("unning in background...")
 
-	tflush_interval := time.Duration(o.flushinterval) * time.Second
+	tflush_interval := time.Duration(o.config.Loggers.LogFile.FlushInterval) * time.Second
 	tflush := time.NewTimer(tflush_interval)
+	o.commpressTimer = time.NewTimer(time.Duration(o.config.Loggers.LogFile.CompressInterval) * time.Second)
+
 LOOP:
 	for {
 		select {
 		case dm, opened := <-o.channel:
 			if !opened {
-				o.logger.Info("logger to file - channel closed")
+				o.LogInfo("channel closed")
 				break LOOP
 			}
 
 			// write to file
 			o.Write(dm.Bytes())
+
 		case <-tflush.C:
 			o.writer.Flush()
 			tflush.Reset(tflush_interval)
+
+		case <-o.commpressTimer.C:
+			if o.config.Loggers.LogFile.Compress {
+				o.Compress()
+			}
+
 		}
 	}
 
@@ -210,7 +330,7 @@ LOOP:
 	tflush.Stop()
 	o.writer.Flush()
 
-	o.logger.Info("logger to file - run terminated")
+	o.LogInfo("run terminated")
 
 	// the job is done
 	o.done <- true

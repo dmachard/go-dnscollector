@@ -204,11 +204,6 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dns_offsetrr = offsetrr
 		}
 
-		// filtering
-		if filtering.Ignore(&dm) {
-			continue
-		}
-
 		if dns_ancount > 0 {
 			dm.Answers, err = DecodeAnswer(dns_ancount, dns_offsetrr, dm.Payload)
 			if err != nil {
@@ -237,6 +232,11 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// convert latency to human
 		dm.LatencySec = fmt.Sprintf("%.6f", dm.Latency)
+
+		// filtering
+		if filtering.Ignore(&dm) {
+			continue
+		}
 
 		// geoip feature
 		if geoip.IsEnabled() {

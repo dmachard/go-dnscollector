@@ -212,7 +212,7 @@ Example:
 ### REST API
 
 Build-in webserver with REST API to retrieve somes statistics like top domains, clients and more...
-Basic authentication supported.
+Basic authentication supported. Prometheus metrics is also available through this API.
 
 See the [swagger](swagger.yml) documentation.
 
@@ -242,7 +242,7 @@ webserver:
 
 ### Log File
 
-Enable this logger if you want to log to a file.
+Enable this logger if you want to log to a file. Rotation files is supported.
 
 ```yaml
 logfile:
