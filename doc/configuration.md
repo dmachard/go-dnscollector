@@ -110,9 +110,12 @@ dns-sniffer:
 ### IP Anonymization
 
 This feature can be used to anonymize all IP queries.
+For example, QueryIP 8.8.8.8 will be replaced by 8.8.0.0.
 
 ```yaml
-processors:
+subprocessors:
+  # IP-Addresses are anonymities by zeroing the host-part of an address.
+  anonymize-ip: false
 ```
 
 ### GeoIP Support
@@ -123,7 +126,7 @@ To enable this feature, you need to configure the path to your database.
 See [Downloads](https://www.maxmind.com/en/accounts/current/geoip/downloads) maxmind page to get the database.
 
 ```yaml
-processors:
+subprocessors:
   # geoip maxmind support
   geoip:
     # path file to your database
@@ -145,7 +148,10 @@ When the feature is enable, the `country-isocode` field is populated with the co
 The caching feature is used to compute latency between replies and queries.
 
 ```yaml
-processors:
+subprocessors:
+  # The cache is used to compute latency between replies and queries
+  # Ttl in second 
+  cache-ttl: 10
 ```
 
 ### Packet Filtering
@@ -153,7 +159,14 @@ processors:
 This feature can be use to ignore somes qnames.
 
 ```yaml
-processors:
+subprocessors:
+  filtering:
+    # regexp to ignore incoming qname
+    ignore-qname: ""
+    # send queries to configured loggers or or not
+    log-queries: true
+    # send replies to configured loggers or not
+    log-replies: true 
 ```
 
 ## Loggers
