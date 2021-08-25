@@ -2,7 +2,9 @@ package loggers
 
 import (
 	"bufio"
+	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -302,6 +304,7 @@ func (o *LogFile) Run() {
 	tflush := time.NewTimer(tflush_interval)
 	o.commpressTimer = time.NewTimer(time.Duration(o.config.Loggers.LogFile.CompressInterval) * time.Second)
 
+	buffer := new(bytes.Buffer)
 LOOP:
 	for {
 		select {
@@ -312,11 +315,18 @@ LOOP:
 			}
 
 			// write to file
-			o.Write(dm.Bytes())
+			switch o.config.Loggers.LogFile.Mode {
+			case "text":
+				o.Write(dm.Bytes())
+			case "json":
+				json.NewEncoder(buffer).Encode(dm)
+				o.Write(buffer.Bytes())
+			}
 
 		case <-tflush.C:
 			o.writer.Flush()
 			tflush.Reset(tflush_interval)
+			buffer.Reset()
 
 		case <-o.commpressTimer.C:
 			if o.config.Loggers.LogFile.Compress {

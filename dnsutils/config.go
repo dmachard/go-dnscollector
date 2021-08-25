@@ -73,6 +73,7 @@ type Config struct {
 			FlushInterval    int    `yaml:"flush-interval"`
 			Compress         bool   `yaml:"compress"`
 			CompressInterval int    `yaml:"compress-interval"`
+			Mode             string `yaml:"mode"`
 		} `yaml:"logfile"`
 		Dnstap struct {
 			Enable        bool   `yaml:"enable"`
@@ -173,6 +174,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.LogFile.MaxFiles = 1
 	c.Loggers.LogFile.Compress = false
 	c.Loggers.LogFile.CompressInterval = 60
+	c.Loggers.LogFile.Mode = "text"
 
 	c.Loggers.WebServer.Enable = false
 	c.Loggers.WebServer.ListenIP = "127.0.0.1"
