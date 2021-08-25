@@ -101,9 +101,9 @@ loggers:
 
   logfile:
     # to enable, set the enable to true
-    enable: true
+    enable: false
     # output logfile name
-    file-path: /tmp/tracednstap.log
+    file-path: null
     # maximum size in megabytes of the file before rotation
     # A minimum of max-size*max-files megabytes of space disk must be available
     max-size: 100
