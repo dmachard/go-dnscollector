@@ -253,6 +253,258 @@ webserver:
   prometheus-suffix: "dnscollector"
 ```
 
+**Prometheus metrics example:**
+
+Request:
+
+```
+$ curl --user admin:changeme http://127.0.0.1:8080/metrics
+```
+
+Response:
+
+```
+# HELP dnscollector_clients_total Number of clients
+# TYPE dnscollector_clients_total counter
+dnscollector_clients_total 5
+# HELP dnscollector_domains_total Number of domains
+# TYPE dnscollector_domains_total counter
+dnscollector_domains_total 46
+# HELP dnscollector_pps Number of packet per second received
+# TYPE dnscollector_pps gauge
+dnscollector_pps 0
+# HELP dnscollector_qps Number of queries per second received
+# TYPE dnscollector_qps gauge
+dnscollector_qps 0
+# HELP dnscollector_rps Number of replies per second received
+# TYPE dnscollector_rps gauge
+dnscollector_rps 0
+# HELP dnscollector_pps_max Maximum number of packet per second received
+# TYPE dnscollector_pps_max counter
+dnscollector_pps_max 14
+# HELP dnscollector_qps_max Maximum number of queries per second received
+# TYPE dnscollector_qps_max counter
+dnscollector_qps_max 7
+# HELP dnscollector_rps_max Maximum number of replies per second received
+# TYPE dnscollector_rps_max counter
+dnscollector_rps_max 7
+# HELP dnscollector_queries_total Number of queries received
+# TYPE dnscollector_queries_total counter
+dnscollector_queries_total 280
+# HELP dnscollector_queries_udp_total Number of UDP queries received
+# TYPE dnscollector_queries_udp_total counter
+dnscollector_queries_udp_total 280
+# HELP dnscollector_queries_tcp_total Number of TCP queries received
+# TYPE dnscollector_queries_tcp_total counter
+dnscollector_queries_tcp_total 0
+# HELP dnscollector_queries_doh_total Number of DOH queries received
+# TYPE dnscollector_queries_doh_total counter
+dnscollector_queries_doh_total 0
+# HELP dnscollector_queries_dot_total Number of DOT queries received
+# TYPE dnscollector_queries_dot_total counter
+dnscollector_queries_dot_total 0
+# HELP dnscollector_queries_ipv4_total Number of IPv4 queries received
+# TYPE dnscollector_queries_ipv4_total counter
+dnscollector_queries_ipv4_total 280
+# HELP dnscollector_queries_ipv6_total Number of IPv6 queries received
+# TYPE dnscollector_queries_ipv6_total counter
+dnscollector_queries_ipv6_total 0
+# HELP dnscollector_replies_total Number of responses received
+# TYPE dnscollector_replies_total counter
+dnscollector_replies_total 286
+# HELP dnscollector_replies_udp_total Number of UDP replies received
+# TYPE dnscollector_replies_udp_total counter
+dnscollector_replies_udp_total 286
+# HELP dnscollector_replies_tcp_total Number of TCP replies received
+# TYPE dnscollector_replies_tcp_total counter
+dnscollector_replies_tcp_total 0
+# HELP dnscollector_replies_doh_total Number of DOH replies received
+# TYPE dnscollector_replies_doh_total counter
+dnscollector_replies_doh_total 0
+# HELP dnscollector_replies_dot_total Number of DOT replies received
+# TYPE dnscollector_replies_dot_total counter
+dnscollector_replies_dot_total 0
+# HELP dnscollector_replies_ipv4_total Number of IPv4 replies received
+# TYPE dnscollector_replies_ipv4_total counter
+dnscollector_replies_ipv4_total 286
+# HELP dnscollector_replies_ipv6_total Number of IPv6 replies received
+# TYPE dnscollector_replies_ipv6_total counter
+dnscollector_replies_ipv6_total 0
+# HELP dnscollector_rtype_a_total Number of qtype A received
+# TYPE dnscollector_rtype_a_total counter
+dnscollector_rtype_a_total 258
+# HELP dnscollector_rtype_aaaa_total Number of qtype AAAA received
+# TYPE dnscollector_rtype_aaaa_total counter
+dnscollector_rtype_aaaa_total 308
+# HELP dnscollector_rtype_cname_total Number of qtype CNAME received
+# TYPE dnscollector_rtype_cname_total counter
+dnscollector_rtype_cname_total 0
+# HELP dnscollector_rtype_txt_total Number of qtype TXT received
+# TYPE dnscollector_rtype_txt_total counter
+dnscollector_rtype_txt_total 0
+# HELP dnscollector_rtype_ptr_total Number of qtype PTR received
+# TYPE dnscollector_rtype_ptr_total counter
+dnscollector_rtype_ptr_total 0
+# HELP dnscollector_rtype_srv_total Number of qtype SRV received
+# TYPE dnscollector_rtype_srv_total counter
+dnscollector_rtype_srv_total 0
+# HELP dnscollector_rcode_noerror_total Number of rcode NOERROR received
+# TYPE dnscollector_rcode_noerror_total counter
+dnscollector_rcode_noerror_total 541
+# HELP dnscollector_rcode_nxdomain_total Number of rcode NXDOMAIN received
+# TYPE dnscollector_rcode_nxdomain_total counter
+dnscollector_rcode_nxdomain_total 25
+# HELP dnscollector_rcode_servfail_total Number of rcode SERVFAIL received
+# TYPE dnscollector_rcode_servfail_total counter
+dnscollector_rcode_servfail_total 0
+# HELP dnscollector_rcode_refused_total Number of rcode REFUSED received
+# TYPE dnscollector_rcode_refused_total counter
+dnscollector_rcode_refused_total 0
+```
+
+**Top 100 domains example:**
+
+Request:
+
+```
+$ curl --user admin:changeme http://127.0.0.1:8080/tables/domains | jq .
+```
+
+Response:
+
+```json
+[
+  {
+    "key": "asimov.vortex.data.trafficmanager.net",
+    "hit": 93
+  },
+  {
+    "key": "global.vortex.data.trafficmanager.net",
+    "hit": 82
+  },
+  {
+    "key": "ns1-1.akamaitech.net",
+    "hit": 32
+  },
+  {
+    "key": "ssl.gstatic.com",
+    "hit": 26
+  },
+  {
+    "key": "connectivity-check.ubuntu.com",
+    "hit": 20
+  },
+]
+```
+
+**Top 100 clients example:**
+
+Request:
+
+```
+$ curl --user admin:changeme http://127.0.0.1:8080/tables/clients | jq .
+```
+
+Response:
+
+```json
+[
+  {
+    "key": "192.168.1.11",
+    "hit": 201
+  },
+  {
+    "key": "-",
+    "hit": 163
+  },
+  {
+    "key": "192.168.1.102",
+    "hit": 34
+  },
+  {
+    "key": "192.168.1.200",
+    "hit": 18
+  }
+]
+```
+
+**Top 100 RCODE example:**
+
+Request:
+
+```
+$ curl --user admin:changeme http://127.0.0.1:8080/tables/rcodes | jq .
+```
+
+Response:
+
+```json
+[
+  {
+    "key": "NOERROR",
+    "hit": 492
+  },
+  {
+    "key": "NXDOMAIN",
+    "hit": 25
+  }
+]
+```
+
+**Top 100 RRTYPES example:**
+
+Request:
+
+```
+$ curl --user admin:changeme http://127.0.0.1:8080/tables/rrtypes | jq .
+```
+
+Response:
+
+```json
+[
+  {
+    "key": "AAAA",
+    "hit": 286
+  },
+  {
+    "key": "A",
+    "hit": 236
+  }
+]
+```
+
+**Top 100 Operations example:**
+
+Request:
+
+```
+$ curl --user admin:changeme http://127.0.0.1:8080/tables/operations | jq .
+```
+
+Response:
+
+```json
+[
+  {
+    "key": "CLIENT_RESPONSE",
+    "hit": 170
+  },
+  {
+    "key": "CLIENT_QUERY",
+    "hit": 161
+  },
+  {
+    "key": "FORWARDER_QUERY",
+    "hit": 111
+  },
+  {
+    "key": "FORWARDER_RESPONSE",
+    "hit": 108
+  }
+]
+```
+
 ### Log File
 
 Enable this logger if you want to log to a file. Rotation files is supported.
