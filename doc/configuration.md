@@ -251,11 +251,20 @@ logfile:
   # output logfile name
   file-path: null
   # maximum size in megabytes of the file before rotation
+  # A minimum of max-size*max-files megabytes of space disk must be available
   max-size: 100
   # maximum number of files to retain.
+  # Set to zero if you want to disable this feature
   max-files: 10
-  # flush every x seconds
+  # flush buffer to log file every X seconds
   flush-interval: 10
+  # compress log file
+  compress: false
+  # compress interval
+  # checking every X seconds if new log files must be compressed
+  compress-interval: 5
+  # output format: text|json
+  mode: text
 ```
 
 ### DNStap
@@ -386,11 +395,16 @@ Enable this logger if you want to log into a pcap file.
 ```yaml
 pcapfile:
   # to enable, set the enable to true
-  enable: true
+  enable: false
   # output logfile name
-  file-path: /tmp/trace-dns.pcap
+  file-path: null
   # maximum size in megabytes of the file before rotation
   max-size: 1
   # maximum number of files to retain.
   max-files: 3
+  # compress pcap file
+  compress: false
+  # compress interval
+  # checking every X seconds if new log files must be compressed
+  compress-interval: 5
 ```

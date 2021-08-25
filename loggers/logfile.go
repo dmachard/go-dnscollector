@@ -25,22 +25,18 @@ const (
 )
 
 type LogFile struct {
-	done    chan bool
-	channel chan dnsutils.DnsMessage
-	writer  *bufio.Writer
-	file    *os.File
-	config  *dnsutils.Config
-	logger  *logger.Logger
-	size    int64
-	//	fpath      string
+	done           chan bool
+	channel        chan dnsutils.DnsMessage
+	writer         *bufio.Writer
+	file           *os.File
+	config         *dnsutils.Config
+	logger         *logger.Logger
+	size           int64
 	filedir        string
 	filename       string
 	fileext        string
 	fileprefix     string
 	commpressTimer *time.Timer
-	//maxfiles      int
-	//maxsize       int
-	//	flushinterval int
 }
 
 func NewLogFile(config *dnsutils.Config, logger *logger.Logger) *LogFile {
@@ -66,9 +62,8 @@ func (c *LogFile) ReadConfig() {
 	c.filename = filepath.Base(c.config.Loggers.LogFile.FilePath)
 	c.fileext = filepath.Ext(c.filename)
 	c.fileprefix = strings.TrimSuffix(c.filename, c.fileext)
-
-	//c.flushinterval = c.config.Loggers.LogFile.FlushInterval
 }
+
 func (c *LogFile) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("logger to file - "+msg, v...)
 }
@@ -110,7 +105,7 @@ func (o *LogFile) Write(d []byte) {
 	// rotate file ?
 	if (o.size + write_len) > o.MaxSize() {
 		if err := o.Rotate(); err != nil {
-			o.LogError("faild to rotate file: %s", err)
+			o.LogError("failed to rotate file: %s", err)
 			return
 		}
 	}
@@ -149,7 +144,7 @@ func (o *LogFile) Cleanup() error {
 	// keep only max files number
 	files, err := ioutil.ReadDir(o.filedir)
 	if err != nil {
-		o.LogError("unable to list log file: %s", err)
+		return err
 	}
 
 	logFiles := []int{}
@@ -197,7 +192,6 @@ func (o *LogFile) Cleanup() error {
 }
 
 func (o *LogFile) Compress() {
-	o.LogInfo("Compressing old log files...")
 	files, err := ioutil.ReadDir(o.filedir)
 	if err != nil {
 		o.LogError("unable to list all files: %s", err)
@@ -286,6 +280,7 @@ func (o *LogFile) Rotate() error {
 	// keep only max files
 	err = o.Cleanup()
 	if err != nil {
+		o.LogError("unable to cleanup log files: %s", err)
 		return err
 	}
 

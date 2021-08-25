@@ -73,7 +73,7 @@ loggers:
 
   stdout:
     # to enable, set the enable to true
-    enable: false
+    enable: true
     # output format: text|json
     mode: text
 
@@ -198,3 +198,8 @@ loggers:
     max-size: 1
     # maximum number of files to retain.
     max-files: 3
+    # compress pcap file
+    compress: false
+    # compress interval
+    # checking every X seconds if new log files must be compressed
+    compress-interval: 5

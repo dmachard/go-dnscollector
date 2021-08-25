@@ -1,16 +1,18 @@
 package loggers
 
 import (
-	"bytes"
+	"compress/gzip"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -20,16 +22,23 @@ import (
 	"github.com/google/gopacket/pcapgo"
 )
 
+const (
+	compressPcapSuffix = ".gz"
+)
+
 type PcapWriter struct {
-	done    chan bool
-	channel chan dnsutils.DnsMessage
-	mode    string
-	config  *dnsutils.Config
-	logger  *logger.Logger
-	stdout  *log.Logger
-	pcapw   *pcapgo.Writer
-	fd      *os.File
-	size    int64
+	done           chan bool
+	channel        chan dnsutils.DnsMessage
+	config         *dnsutils.Config
+	logger         *logger.Logger
+	pcapw          *pcapgo.Writer
+	fd             *os.File
+	size           int64
+	filedir        string
+	filename       string
+	fileext        string
+	fileprefix     string
+	commpressTimer *time.Timer
 }
 
 func NewPcapFile(config *dnsutils.Config, console *logger.Logger) *PcapWriter {
@@ -39,7 +48,6 @@ func NewPcapFile(config *dnsutils.Config, console *logger.Logger) *PcapWriter {
 		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  console,
 		config:  config,
-		stdout:  log.New(os.Stdout, "", 0),
 	}
 	o.ReadConfig()
 
@@ -51,7 +59,10 @@ func NewPcapFile(config *dnsutils.Config, console *logger.Logger) *PcapWriter {
 }
 
 func (c *PcapWriter) ReadConfig() {
-	c.mode = c.config.Loggers.Stdout.Mode
+	c.filedir = filepath.Dir(c.config.Loggers.PcapFile.FilePath)
+	c.filename = filepath.Base(c.config.Loggers.PcapFile.FilePath)
+	c.fileext = filepath.Ext(c.filename)
+	c.fileprefix = strings.TrimSuffix(c.filename, c.fileext)
 }
 
 func (c *PcapWriter) LogInfo(msg string, v ...interface{}) {
@@ -60,10 +71,6 @@ func (c *PcapWriter) LogInfo(msg string, v ...interface{}) {
 
 func (c *PcapWriter) LogError(msg string, v ...interface{}) {
 	c.logger.Error("logger to pcap file - "+msg, v...)
-}
-
-func (o *PcapWriter) SetBuffer(b *bytes.Buffer) {
-	o.stdout.SetOutput(b)
 }
 
 func (o *PcapWriter) Channel() chan dnsutils.DnsMessage {
@@ -111,8 +118,6 @@ func (o *PcapWriter) GetIpPort(dm *dnsutils.DnsMessage) (string, int, string, in
 }
 
 func (o *PcapWriter) OpenFile() error {
-	o.LogInfo("opening  pcap file: %s", o.config.Loggers.PcapFile.FilePath)
-
 	var err error
 	o.fd, err = os.OpenFile(o.config.Loggers.PcapFile.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -139,30 +144,11 @@ func (o *PcapWriter) MaxSize() int64 {
 	return int64(1024*1024) * int64(o.config.Loggers.PcapFile.MaxSize)
 }
 
-func (o *PcapWriter) Rotate() error {
-	// closing current file
-	o.fd.Close()
-
-	// Rename log file
-	filedir := filepath.Dir(o.config.Loggers.PcapFile.FilePath)
-	filename := filepath.Base(o.config.Loggers.PcapFile.FilePath)
-	fileext := filepath.Ext(filename)
-	fileprefix := filename[:len(filename)-len(fileext)]
-
-	now := time.Now()
-	timestamp := now.Unix()
-
-	rfpath := filepath.Join(filedir, fmt.Sprintf("%s-%d%s", fileprefix, timestamp, fileext))
-
-	err := os.Rename(o.config.Loggers.PcapFile.FilePath, rfpath)
-	if err != nil {
-		o.LogError("unable to rename pcap file: %s", err)
-	}
-
+func (o *PcapWriter) Cleanup() error {
 	// remove old files ?
-	files, err := ioutil.ReadDir(filedir)
+	files, err := ioutil.ReadDir(o.filedir)
 	if err != nil {
-		o.LogError("unable to list log file: %s", err)
+		return err
 	}
 
 	logFiles := []int{}
@@ -170,12 +156,18 @@ func (o *PcapWriter) Rotate() error {
 		if f.IsDir() {
 			continue
 		}
+
 		// extract timestamp from filename
-		fn := f.Name()
-		ts := fn[len(fileprefix)+1 : len(fn)-len(fileext)]
+		re := regexp.MustCompile(`^` + o.fileprefix + `-(?P<ts>\d+)` + o.fileext)
+		matches := re.FindStringSubmatch(f.Name())
+
+		if len(matches) == 0 {
+			continue
+		}
 
 		// convert timestamp to int
-		i, err := strconv.Atoi(ts)
+		tsIndex := re.SubexpIndex("ts")
+		i, err := strconv.Atoi(matches[tsIndex])
 		if err != nil {
 			continue
 		}
@@ -187,13 +179,107 @@ func (o *PcapWriter) Rotate() error {
 	diff_nb := len(logFiles) - o.config.Loggers.PcapFile.MaxFiles
 	if diff_nb > 0 {
 		for i := 0; i < diff_nb; i++ {
-			f := filepath.Join(filedir, fmt.Sprintf("%s-%d%s", fileprefix, logFiles[i], fileext))
-			err := os.Remove(f)
+			filename := fmt.Sprintf("%s-%d%s", o.fileprefix, logFiles[i], o.fileext)
+			f := filepath.Join(o.filedir, filename)
+			if _, err := os.Stat(f); os.IsNotExist(err) {
+				f = filepath.Join(o.filedir, filename+compressPcapSuffix)
+			}
+
+			os.Remove(f)
+		}
+	}
+
+	return nil
+}
+
+func (o *PcapWriter) Compress() {
+	files, err := ioutil.ReadDir(o.filedir)
+	if err != nil {
+		o.LogError("unable to list all files: %s", err)
+	}
+
+	for _, f := range files {
+		// ignore folder
+		if f.IsDir() {
+			continue
+		}
+
+		matched, _ := regexp.MatchString(`^`+o.fileprefix+`-\d+`+o.fileext+`$`, f.Name())
+		if matched {
+			src := filepath.Join(o.filedir, f.Name())
+			dst := filepath.Join(o.filedir, f.Name()+compressSuffix)
+
+			fl, err := os.Open(src)
 			if err != nil {
-				o.LogError("unable to delete pcap file: %s", err)
+				o.LogError("compress - failed to open pcap file: ", err)
+				continue
+			}
+			defer fl.Close()
+
+			fi, err := os.Stat(src)
+			if err != nil {
+				o.LogError("compress - failed to stat pcap file: ", err)
+				continue
+			}
+
+			gzf, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, fi.Mode())
+			if err != nil {
+				o.LogError("compress - failed to open compressed pcap file: ", err)
+				continue
+			}
+			defer gzf.Close()
+
+			gz := gzip.NewWriter(gzf)
+
+			if _, err := io.Copy(gz, fl); err != nil {
+				o.LogError("compress - failed to compress pcap file: ", err)
+				os.Remove(dst)
+				continue
+			}
+			if err := gz.Close(); err != nil {
+				o.LogError("compress - failed to close gz writer: ", err)
+				os.Remove(dst)
+				continue
+			}
+			if err := gzf.Close(); err != nil {
+				o.LogError("compress - failed to close gz file: ", err)
+				os.Remove(dst)
+				continue
+			}
+
+			if err := fl.Close(); err != nil {
+				o.LogError("compress - failed to close pcap file: ", err)
+				os.Remove(dst)
+				continue
+			}
+			if err := os.Remove(src); err != nil {
+				o.LogError("compress - failed to remove pcap file: ", err)
+				os.Remove(dst)
+				continue
 			}
 
 		}
+	}
+
+	o.commpressTimer.Reset(time.Duration(o.config.Loggers.PcapFile.CompressInterval) * time.Second)
+}
+
+func (o *PcapWriter) Rotate() error {
+	// closing current file
+	o.fd.Close()
+
+	// Rename log file
+	bfpath := filepath.Join(o.filedir, fmt.Sprintf("%s-%d%s", o.fileprefix, time.Now().Unix(), o.fileext))
+	err := os.Rename(o.config.Loggers.PcapFile.FilePath, bfpath)
+	if err != nil {
+		return err
+	}
+
+	// keep only max files
+	err = o.Cleanup()
+	if err != nil {
+		o.LogError("unable to cleanup pcap files: %s", err)
+		return err
 	}
 
 	// re-create the main log file.
@@ -220,6 +306,7 @@ func (o *PcapWriter) Write(dm dnsutils.DnsMessage, pkt []gopacket.SerializableLa
 
 	if (o.size + int64(write_len)) > o.MaxSize() {
 		if err := o.Rotate(); err != nil {
+			o.LogError("failed to rotate file: %s", err)
 			return
 		}
 	}
@@ -245,74 +332,90 @@ func (o *PcapWriter) Run() {
 	ip6 := &layers.IPv6{Version: 6}
 	udp := &layers.UDP{}
 	tcp := &layers.TCP{}
-	for dm := range o.channel {
-		// prepare ip
-		srcIp, srcPort, dstIp, dstPort := o.GetIpPort(&dm)
 
-		// packet layer array
-		pkt := []gopacket.SerializableLayer{}
+	o.commpressTimer = time.NewTimer(time.Duration(o.config.Loggers.PcapFile.CompressInterval) * time.Second)
+LOOP:
+	for {
+		select {
+		case dm, opened := <-o.channel:
+			if !opened {
+				o.LogInfo("channel closed")
+				break LOOP
+			}
 
-		// set ip and transport
-		if dm.Family == "INET6" && dm.Protocol == "UDP" {
-			eth.EthernetType = layers.EthernetTypeIPv6
-			ip6.SrcIP = net.ParseIP(srcIp)
-			ip6.DstIP = net.ParseIP(dstIp)
-			ip6.NextHeader = layers.IPProtocolUDP
-			udp.SrcPort = layers.UDPPort(srcPort)
-			udp.DstPort = layers.UDPPort(dstPort)
-			udp.SetNetworkLayerForChecksum(ip6)
+			// prepare ip
+			srcIp, srcPort, dstIp, dstPort := o.GetIpPort(&dm)
 
-			pkt = append(pkt, gopacket.Payload(dm.Payload), udp, ip6, eth)
+			// packet layer array
+			pkt := []gopacket.SerializableLayer{}
 
-		} else if dm.Family == "INET6" && dm.Protocol == "TCP" {
-			eth.EthernetType = layers.EthernetTypeIPv6
-			ip6.SrcIP = net.ParseIP(srcIp)
-			ip6.DstIP = net.ParseIP(dstIp)
-			ip6.NextHeader = layers.IPProtocolTCP
-			tcp.SrcPort = layers.TCPPort(srcPort)
-			tcp.DstPort = layers.TCPPort(dstPort)
-			tcp.PSH = true
-			tcp.Window = 65535
-			tcp.SetNetworkLayerForChecksum(ip6)
+			// set ip and transport
+			if dm.Family == "INET6" && dm.Protocol == "UDP" {
+				eth.EthernetType = layers.EthernetTypeIPv6
+				ip6.SrcIP = net.ParseIP(srcIp)
+				ip6.DstIP = net.ParseIP(dstIp)
+				ip6.NextHeader = layers.IPProtocolUDP
+				udp.SrcPort = layers.UDPPort(srcPort)
+				udp.DstPort = layers.UDPPort(dstPort)
+				udp.SetNetworkLayerForChecksum(ip6)
 
-			dnsLengthField := make([]byte, 2)
-			binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.Length))
-			pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.Payload...)), tcp, ip6, eth)
+				pkt = append(pkt, gopacket.Payload(dm.Payload), udp, ip6, eth)
 
-		} else if dm.Family == "INET" && dm.Protocol == "UDP" {
-			eth.EthernetType = layers.EthernetTypeIPv4
-			ip4.SrcIP = net.ParseIP(srcIp)
-			ip4.DstIP = net.ParseIP(dstIp)
-			ip4.Protocol = layers.IPProtocolUDP
-			udp.SrcPort = layers.UDPPort(srcPort)
-			udp.DstPort = layers.UDPPort(dstPort)
-			udp.SetNetworkLayerForChecksum(ip4)
+			} else if dm.Family == "INET6" && dm.Protocol == "TCP" {
+				eth.EthernetType = layers.EthernetTypeIPv6
+				ip6.SrcIP = net.ParseIP(srcIp)
+				ip6.DstIP = net.ParseIP(dstIp)
+				ip6.NextHeader = layers.IPProtocolTCP
+				tcp.SrcPort = layers.TCPPort(srcPort)
+				tcp.DstPort = layers.TCPPort(dstPort)
+				tcp.PSH = true
+				tcp.Window = 65535
+				tcp.SetNetworkLayerForChecksum(ip6)
 
-			pkt = append(pkt, gopacket.Payload(dm.Payload), udp, ip4, eth)
+				dnsLengthField := make([]byte, 2)
+				binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.Length))
+				pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.Payload...)), tcp, ip6, eth)
 
-		} else if dm.Family == "INET" && dm.Protocol == "TCP" {
-			// SYN
-			eth.EthernetType = layers.EthernetTypeIPv4
-			ip4.SrcIP = net.ParseIP(srcIp)
-			ip4.DstIP = net.ParseIP(dstIp)
-			ip4.Protocol = layers.IPProtocolTCP
-			tcp.SrcPort = layers.TCPPort(srcPort)
-			tcp.DstPort = layers.TCPPort(dstPort)
-			tcp.PSH = true
-			tcp.Window = 65535
-			tcp.SetNetworkLayerForChecksum(ip4)
+			} else if dm.Family == "INET" && dm.Protocol == "UDP" {
+				eth.EthernetType = layers.EthernetTypeIPv4
+				ip4.SrcIP = net.ParseIP(srcIp)
+				ip4.DstIP = net.ParseIP(dstIp)
+				ip4.Protocol = layers.IPProtocolUDP
+				udp.SrcPort = layers.UDPPort(srcPort)
+				udp.DstPort = layers.UDPPort(dstPort)
+				udp.SetNetworkLayerForChecksum(ip4)
 
-			dnsLengthField := make([]byte, 2)
-			binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.Length))
-			pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.Payload...)), tcp, ip4, eth)
+				pkt = append(pkt, gopacket.Payload(dm.Payload), udp, ip4, eth)
 
-		} else {
-			// ignore other packet
-			continue
+			} else if dm.Family == "INET" && dm.Protocol == "TCP" {
+				// SYN
+				eth.EthernetType = layers.EthernetTypeIPv4
+				ip4.SrcIP = net.ParseIP(srcIp)
+				ip4.DstIP = net.ParseIP(dstIp)
+				ip4.Protocol = layers.IPProtocolTCP
+				tcp.SrcPort = layers.TCPPort(srcPort)
+				tcp.DstPort = layers.TCPPort(dstPort)
+				tcp.PSH = true
+				tcp.Window = 65535
+				tcp.SetNetworkLayerForChecksum(ip4)
+
+				dnsLengthField := make([]byte, 2)
+				binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.Length))
+				pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.Payload...)), tcp, ip4, eth)
+
+			} else {
+				// ignore other packet
+				continue
+			}
+
+			// create the packet
+			o.Write(dm, pkt)
+
+		case <-o.commpressTimer.C:
+			if o.config.Loggers.PcapFile.Compress {
+				o.Compress()
+			}
 		}
-
-		// create the packet
-		o.Write(dm, pkt)
 	}
 	o.LogInfo("run terminated")
 

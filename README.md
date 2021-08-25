@@ -17,7 +17,7 @@ Features:
     - Text files
         * with rotation file support
         * supported format: text, json
-        * Gzip compression
+        * gzip compression
     - [Dnstap](https://dnstap.info/) stream client
         * to remote tcp destination or unix socket with tls support
     - Raw TCP client
@@ -36,6 +36,7 @@ Features:
     - [Pcap](https://en.wikipedia.org/wiki/Pcap) files
         * with rotation file support
         * binary format
+        * gzip compression
 - GeoIP support (Country code)
 - Packet filtering (regex support)
 - Query IP-Addresses anonymizer
