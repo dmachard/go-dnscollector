@@ -118,7 +118,7 @@ loggers:
     # checking every X seconds if new log files must be compressed
     compress-interval: 5
     # output format: text|json
-    mode: json
+    mode: text
 
   dnstap:
     # to enable, set the enable to true
