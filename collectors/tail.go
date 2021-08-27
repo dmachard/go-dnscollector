@@ -84,7 +84,7 @@ func (c *Tail) Run() {
 	c.LogInfo("starting collector...")
 	err := c.Follow()
 	if err != nil {
-		c.logger.Fatal("collector tailf - unable to follow file: ", err)
+		c.logger.Fatal("collector tail - unable to follow file: ", err)
 	}
 
 	// geoip

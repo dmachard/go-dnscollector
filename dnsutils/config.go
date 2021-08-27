@@ -138,7 +138,7 @@ func (c *Config) SetDefault() {
 	c.Trace.MaxBackups = 10
 
 	// Collectors
-	c.Collectors.Tail.Enable = true
+	c.Collectors.Tail.Enable = false
 	c.Collectors.Tail.TimeLayout = ""
 	c.Collectors.Tail.PatternQuery = ""
 	c.Collectors.Tail.PatternReply = ""
