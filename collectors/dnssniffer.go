@@ -202,6 +202,7 @@ func (c *DnsSniffer) Listen() error {
 }
 
 func (c *DnsSniffer) Run() {
+	c.LogInfo("starting collector...")
 	defer RemoveBpfFilter(c.fd)
 	defer syscall.Close(c.fd)
 

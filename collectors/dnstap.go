@@ -160,6 +160,7 @@ func (c *Dnstap) Listen() error {
 }
 
 func (c *Dnstap) Run() {
+	c.LogInfo("starting collector...")
 	if c.listen == nil {
 		if err := c.Listen(); err != nil {
 			c.logger.Fatal("collector dnstap listening failed: ", err)

@@ -16,6 +16,13 @@ type Config struct {
 	} `yaml:"trace"`
 
 	Collectors struct {
+		Tail struct {
+			Enable       bool   `yaml:"enable"`
+			TimeLayout   string `yaml:"time-layout"`
+			PatternQuery string `yaml:"pattern-query"`
+			PatternReply string `yaml:"pattern-reply"`
+			FilePath     string `yaml:"file-path"`
+		} `yaml:"tail"`
 		Dnstap struct {
 			Enable     bool   `yaml:"enable"`
 			ListenIP   string `yaml:"listen-ip"`
@@ -131,6 +138,12 @@ func (c *Config) SetDefault() {
 	c.Trace.MaxBackups = 10
 
 	// Collectors
+	c.Collectors.Tail.Enable = true
+	c.Collectors.Tail.TimeLayout = ""
+	c.Collectors.Tail.PatternQuery = ""
+	c.Collectors.Tail.PatternReply = ""
+	c.Collectors.Tail.FilePath = ""
+
 	c.Collectors.Dnstap.Enable = true
 	c.Collectors.Dnstap.ListenIP = "0.0.0.0"
 	c.Collectors.Dnstap.ListenPort = 6000
