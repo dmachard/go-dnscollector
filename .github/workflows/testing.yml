@@ -28,7 +28,7 @@ jobs:
         sudo go version
         
     - name: Test ${{ matrix.package }}
-      run: sudo go test -timeout 5s ./${{ matrix.package }}/ -cover -v
+      run: sudo go test -timeout 10s ./${{ matrix.package }}/ -cover -v
 
   int:
     runs-on: ubuntu-20.04
