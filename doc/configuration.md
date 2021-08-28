@@ -4,6 +4,7 @@
 - [Collectors](#Collectors)
   - [DNS tap](#Dnstap)
   - [DNS sniffer](#Dns-Sniffer)
+  - [Tail](#Tail)
 - [Subprocessors](#Subprocessors)
   - [IP anonymization](#Ip-Anonymization)
   - [GeoIP Support](#GeoIP-Support)
@@ -103,6 +104,29 @@ dns-sniffer:
   capture-dns-queries: true
   # capture dns replies
   capture-dns-replies: true
+```
+
+## Tail
+
+The tail collector enable to read DNS event from text files.
+DNS servers log server can be followed; any type of server is supported.
+
+Enable the tail by provided the path of the file to follow
+
+```yaml
+tail:
+  # to enable, set the enable to true
+  enable: false
+  # file to follow
+  file-path: null
+  # Use the exact layout numbers described https://golang.org/src/time/format.go
+  time-layout: "2006-01-02T15:04:05.999999999Z07:00"
+  # regexp pattern for queries
+  # example for unbound: "query: (?P<queryip>[^ ]*) (?P<domain>[^ ]*) (?P<qtype>[^ ]*)"
+  pattern-query: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_QUERY) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
+  # regexp pattern for replies
+  # example for unbound: "reply: (?P<queryip>[^ ]*) (?P<domain>[^ ]*) (?P<qtype>[^ ]*) IN (?P<rcode>[^ ]*) (?P<latency>[^ ]*)"
+  pattern-reply: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_RESPONSE) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
 ```
 
 ## Subprocessors

@@ -35,7 +35,7 @@ func TestTailRun(t *testing.T) {
 	go c.Run()
 
 	// write fake log
-	time.Sleep(1 * time.Second)
+	time.Sleep(5 * time.Second)
 	w := bufio.NewWriter(tmpFile)
 	linesToWrite := "2021-08-27T07:18:35.775473Z dnscollector CLIENT_QUERY NOERROR 192.168.1.5 45660 INET INET 43b www.google.org A 0.00000"
 	if _, err := w.WriteString(linesToWrite + "\n"); err != nil {

@@ -11,6 +11,9 @@ Features:
         * IPv4, IPv6 support (fragmented packet ignored)
         * UDP and TCP transport
         * BFP filtering
+    - Tail 
+        * Read DNS events from the tail of text files
+        * Regex support
 - Loggers
     - Stdout
         * supported format: text, json
