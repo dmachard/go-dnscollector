@@ -554,6 +554,10 @@ logfile:
   compress-interval: 5
   # output format: text|json
   mode: text
+  # run external script
+  postrotate-command: null
+  # delete file on script success
+  postrotate-delete-success: false
 ```
 
 ### DNStap
@@ -696,4 +700,8 @@ pcapfile:
   # compress interval
   # checking every X seconds if new log files must be compressed
   compress-interval: 5
+  # run external script after each file rotation
+  postrotate-command: null
+  # delete file on script success
+  postrotate-delete-success: true
 ```

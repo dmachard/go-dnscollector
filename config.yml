@@ -117,7 +117,7 @@ loggers:
     # to enable, set the enable to true
     enable: false
     # output logfile name
-    file-path: null
+    file-path:  null
     # maximum size in megabytes of the file before rotation
     # A minimum of max-size*max-files megabytes of space disk must be available
     max-size: 100
@@ -133,6 +133,10 @@ loggers:
     compress-interval: 5
     # output format: text|json
     mode: text
+    # run external script after each file rotation
+    postrotate-command: null
+    # delete file on script success
+    postrotate-delete-success: true
 
   dnstap:
     # to enable, set the enable to true
@@ -209,11 +213,15 @@ loggers:
     # output logfile name
     file-path: null
     # maximum size in megabytes of the file before rotation
-    max-size: 1
+    max-size: 100
     # maximum number of files to retain.
-    max-files: 3
+    max-files: 10
     # compress pcap file
     compress: false
     # compress interval
     # checking every X seconds if new log files must be compressed
     compress-interval: 5
+    # run external script after each file rotation
+    postrotate-command: null
+    # delete file on script success
+    postrotate-delete-success: true

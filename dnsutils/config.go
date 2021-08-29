@@ -73,14 +73,16 @@ type Config struct {
 			PrometheusSuffix string `yaml:"prometheus-suffix"`
 		} `yaml:"webserver"`
 		LogFile struct {
-			Enable           bool   `yaml:"enable"`
-			FilePath         string `yaml:"file-path"`
-			MaxSize          int    `yaml:"max-size"`
-			MaxFiles         int    `yaml:"max-files"`
-			FlushInterval    int    `yaml:"flush-interval"`
-			Compress         bool   `yaml:"compress"`
-			CompressInterval int    `yaml:"compress-interval"`
-			Mode             string `yaml:"mode"`
+			Enable            bool   `yaml:"enable"`
+			FilePath          string `yaml:"file-path"`
+			MaxSize           int    `yaml:"max-size"`
+			MaxFiles          int    `yaml:"max-files"`
+			FlushInterval     int    `yaml:"flush-interval"`
+			Compress          bool   `yaml:"compress"`
+			CompressInterval  int    `yaml:"compress-interval"`
+			Mode              string `yaml:"mode"`
+			PostRotateCommand string `yaml:"postrotate-command"`
+			PostRotateDelete  bool   `yaml:"postrotate-delete-success"`
 		} `yaml:"logfile"`
 		Dnstap struct {
 			Enable        bool   `yaml:"enable"`
@@ -121,12 +123,14 @@ type Config struct {
 			Tag           string `yaml:"tag"`
 		} `yaml:"fluentd"`
 		PcapFile struct {
-			Enable           bool   `yaml:"enable"`
-			FilePath         string `yaml:"file-path"`
-			MaxSize          int    `yaml:"max-size"`
-			MaxFiles         int    `yaml:"max-files"`
-			Compress         bool   `yaml:"compress"`
-			CompressInterval int    `yaml:"compress-interval"`
+			Enable            bool   `yaml:"enable"`
+			FilePath          string `yaml:"file-path"`
+			MaxSize           int    `yaml:"max-size"`
+			MaxFiles          int    `yaml:"max-files"`
+			Compress          bool   `yaml:"compress"`
+			CompressInterval  int    `yaml:"compress-interval"`
+			PostRotateCommand string `yaml:"postrotate-command"`
+			PostRotateDelete  bool   `yaml:"postrotate-delete-success"`
 		} `yaml:"pcapfile"`
 	} `yaml:"loggers"`
 }
@@ -185,11 +189,13 @@ func (c *Config) SetDefault() {
 	c.Loggers.LogFile.Enable = false
 	c.Loggers.LogFile.FilePath = ""
 	c.Loggers.LogFile.FlushInterval = 10
-	c.Loggers.LogFile.MaxSize = 1
-	c.Loggers.LogFile.MaxFiles = 1
+	c.Loggers.LogFile.MaxSize = 100
+	c.Loggers.LogFile.MaxFiles = 10
 	c.Loggers.LogFile.Compress = false
 	c.Loggers.LogFile.CompressInterval = 60
 	c.Loggers.LogFile.Mode = "text"
+	c.Loggers.LogFile.PostRotateCommand = ""
+	c.Loggers.LogFile.PostRotateDelete = false
 
 	c.Loggers.WebServer.Enable = false
 	c.Loggers.WebServer.ListenIP = "127.0.0.1"
@@ -230,10 +236,12 @@ func (c *Config) SetDefault() {
 
 	c.Loggers.PcapFile.Enable = false
 	c.Loggers.PcapFile.FilePath = ""
-	c.Loggers.PcapFile.MaxSize = 1
-	c.Loggers.PcapFile.MaxFiles = 1
+	c.Loggers.PcapFile.MaxSize = 100
+	c.Loggers.PcapFile.MaxFiles = 10
 	c.Loggers.PcapFile.Compress = false
 	c.Loggers.PcapFile.CompressInterval = 60
+	c.Loggers.PcapFile.PostRotateCommand = ""
+	c.Loggers.PcapFile.PostRotateDelete = false
 }
 
 func LoadConfig() (*Config, error) {

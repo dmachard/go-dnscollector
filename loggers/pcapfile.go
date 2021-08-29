@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -264,6 +265,20 @@ func (o *PcapWriter) Compress() {
 	o.commpressTimer.Reset(time.Duration(o.config.Loggers.PcapFile.CompressInterval) * time.Second)
 }
 
+func (o *PcapWriter) PostRotateCommand(filename string) {
+	if len(o.config.Loggers.PcapFile.PostRotateCommand) > 0 {
+		out, err := exec.Command(o.config.Loggers.PcapFile.PostRotateCommand, filename).Output()
+		if err != nil {
+			o.LogError("postrotate command error: %s", err)
+			o.LogError("postrotate output: %s", out)
+		} else {
+			if o.config.Loggers.PcapFile.PostRotateDelete {
+				os.Remove(filename)
+			}
+		}
+	}
+}
+
 func (o *PcapWriter) Rotate() error {
 	// closing current file
 	o.fd.Close()
@@ -274,6 +289,9 @@ func (o *PcapWriter) Rotate() error {
 	if err != nil {
 		return err
 	}
+
+	// post rotate command?
+	o.PostRotateCommand(bfpath)
 
 	// keep only max files
 	err = o.Cleanup()

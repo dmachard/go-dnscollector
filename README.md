@@ -21,6 +21,7 @@ Features:
         * with rotation file support
         * supported format: text, json
         * gzip compression
+        * execute external command after each rotation
     - [Dnstap](https://dnstap.info/) stream client
         * to remote tcp destination or unix socket with tls support
     - Raw TCP client
@@ -40,6 +41,7 @@ Features:
         * with rotation file support
         * binary format
         * gzip compression
+        * execute external command after each rotation
 - GeoIP support (Country code)
 - Packet filtering (regex support)
 - Query IP-Addresses anonymizer
@@ -71,7 +73,7 @@ docker run -d -p 6000:6000 -p 8080:8080 -v $(pwd)/config.yml:/config.yml dmachar
 ## Configuration
 
 A typically configuration would have one or more collector to receive DNS traffic or logs, and severals loggers to process the 
-incoming traffics. See [Configuration guide](doc/configuration.md) file.
+incoming traffics. See [Configuration guide](doc/configuration.md).
 
 ## Benchmark
 

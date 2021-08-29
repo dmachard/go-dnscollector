@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -103,6 +104,7 @@ func (o *LogFile) Write(d []byte) {
 	write_len := int64(len(d))
 
 	// rotate file ?
+
 	if (o.size + write_len) > o.MaxSize() {
 		if err := o.Rotate(); err != nil {
 			o.LogError("failed to rotate file: %s", err)
@@ -115,6 +117,7 @@ func (o *LogFile) Write(d []byte) {
 
 	// increase size file
 	o.size += int64(n)
+
 }
 
 func (o *LogFile) Flush() {
@@ -263,6 +266,20 @@ func (o *LogFile) Compress() {
 	o.commpressTimer.Reset(time.Duration(o.config.Loggers.LogFile.CompressInterval) * time.Second)
 }
 
+func (o *LogFile) PostRotateCommand(filename string) {
+	if len(o.config.Loggers.LogFile.PostRotateCommand) > 0 {
+		out, err := exec.Command(o.config.Loggers.LogFile.PostRotateCommand, filename).Output()
+		if err != nil {
+			o.LogError("postrotate command error: %s", err)
+			o.LogError("postrotate output: %s", out)
+		} else {
+			if o.config.Loggers.LogFile.PostRotateDelete {
+				os.Remove(filename)
+			}
+		}
+	}
+}
+
 func (o *LogFile) Rotate() error {
 	// close existing file
 	o.writer.Flush()
@@ -271,11 +288,14 @@ func (o *LogFile) Rotate() error {
 	}
 
 	// Rename current log file
-	bfpath := filepath.Join(o.filedir, fmt.Sprintf("%s-%d%s", o.fileprefix, time.Now().Unix(), o.fileext))
+	bfpath := filepath.Join(o.filedir, fmt.Sprintf("%s-%d%s", o.fileprefix, time.Now().UnixNano(), o.fileext))
 	err := os.Rename(o.config.Loggers.LogFile.FilePath, bfpath)
 	if err != nil {
 		return err
 	}
+
+	// post rotate command?
+	o.PostRotateCommand(bfpath)
 
 	// keep only max files
 	err = o.Cleanup()
