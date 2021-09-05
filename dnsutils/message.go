@@ -15,7 +15,7 @@ type DnsAnswer struct {
 
 type DnsMessage struct {
 	Operation        string      `json:"operation" msgpack:"operation"`
-	Identity         string      `json:"identiy" msgpack:"identiy"`
+	Identity         string      `json:"identity" msgpack:"identity"`
 	Family           string      `json:"family" msgpack:"family"`
 	Protocol         string      `json:"protocol" msgpack:"protocol"`
 	QueryIp          string      `json:"query-ip" msgpack:"query-ip"`
