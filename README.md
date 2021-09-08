@@ -56,6 +56,9 @@ Features:
 
 **Run-it from binary**
 
+Download the binary from release page.
+If you want to integrate this tool with systemd, please to follow this [tutorial](https://gist.github.com/dmachard/413ee77099046c2b1779737909e1b017).
+
 ```go
 ./go-dnscollector -config config.yml
 ```
@@ -78,6 +81,14 @@ docker run -d -p 6000:6000 -p 8080:8080 -v $(pwd)/config.yml:/config.yml dmachar
 
 A typically configuration would have one or more collector to receive DNS traffic or logs, and severals loggers to process the 
 incoming traffics. See [Configuration guide](doc/configuration.md).
+
+## Use-cases / Examples
+
+# Use case 1: collect dnstap stream and backup-it to log files
+
+With this example the collector waits incoming dnstap messages sent by dns server and backup-it in log files
+
+The full config file for this use-case can be found [here](example-config/use-case-1.yml))
 
 ## Benchmark
 

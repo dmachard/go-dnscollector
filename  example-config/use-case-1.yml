@@ -1,0 +1,23 @@
+collectors:
+  dnstap:
+    enable: true
+    listen-ip: 0.0.0.0
+    listen-port: 6000
+    sock-path: null
+    tls-support: true
+    cert-file: "/etc/dnscollector/dnscollector.crt"
+    key-file: "/etc/dnscollector/dnscollector.key"
+
+loggers:
+  logfile:
+    enable: true
+    file-path:  "/var/run/dnscollector/dnstap.log"
+    max-size: 100
+    max-files: 10
+    flush-interval: 10
+    compress: false
+    compress-interval: 5
+    mode: text
+    text-format: ""
+    postrotate-command: null
+    postrotate-delete-success: true

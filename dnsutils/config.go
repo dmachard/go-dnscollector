@@ -182,7 +182,7 @@ func (c *Config) SetDefault() {
 	c.Subprocessors.TextFormat = "timestamp identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 	// Loggers
-	c.Loggers.Stdout.Enable = true
+	c.Loggers.Stdout.Enable = false
 	c.Loggers.Stdout.Mode = "text"
 	c.Loggers.Stdout.TextFormat = ""
 
