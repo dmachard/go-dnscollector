@@ -11,9 +11,12 @@ collectors:
     key-file: "/etc/dnscollector/dnscollector.key"
 
 loggers:
-  logfile:
+  webserver:
     enable: true
-    file-path:  "/var/run/dnscollector/dnstap.log"
-    max-size: 100
-    max-files: 10
-    mode: text
+    listen-ip: 0.0.0.0
+    listen-port: 8080
+    basic-auth-login: admin
+    basic-auth-pwd: changeme
+    tls-support: true
+    cert-file: "/etc/dnscollector/dnscollector.crt"
+    key-file: "/etc/dnscollector/dnscollector.key"

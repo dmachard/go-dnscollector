@@ -90,6 +90,13 @@ With this example the collector waits incoming dnstap messages sent by dns serve
 
 The full config file for this use-case can be found [here](example-config/use-case-1.yml)
 
+### Use case 2: collect dnstap stream and generate metrics for prometheus
+
+With this example the collector waits incoming dnstap messages sent by dns server and then you 
+can requested the api to get some dns metrics for prometheus.
+
+The full config file for this use-case can be found [here](example-config/use-case-2.yml)
+
 ## Benchmark
 
 Tested on the following machine: 8 vCPUs, 32 GB memory

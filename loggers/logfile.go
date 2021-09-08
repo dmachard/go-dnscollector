@@ -320,7 +320,7 @@ func (o *LogFile) Rotate() error {
 }
 
 func (o *LogFile) Run() {
-	o.LogInfo("unning in background...")
+	o.LogInfo("running in background...")
 
 	tflush_interval := time.Duration(o.config.Loggers.LogFile.FlushInterval) * time.Second
 	tflush := time.NewTimer(tflush_interval)
