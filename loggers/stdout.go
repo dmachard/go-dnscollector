@@ -6,18 +6,20 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
 
 type StdOut struct {
-	done    chan bool
-	channel chan dnsutils.DnsMessage
-	mode    string
-	config  *dnsutils.Config
-	logger  *logger.Logger
-	stdout  *log.Logger
+	done       chan bool
+	channel    chan dnsutils.DnsMessage
+	mode       string
+	textFormat []string
+	config     *dnsutils.Config
+	logger     *logger.Logger
+	stdout     *log.Logger
 }
 
 func NewStdOut(config *dnsutils.Config, console *logger.Logger) *StdOut {
@@ -35,6 +37,11 @@ func NewStdOut(config *dnsutils.Config, console *logger.Logger) *StdOut {
 
 func (c *StdOut) ReadConfig() {
 	c.mode = c.config.Loggers.Stdout.Mode
+	if len(c.config.Loggers.Stdout.TextFormat) > 0 {
+		c.textFormat = strings.Fields(c.config.Loggers.Stdout.TextFormat)
+	} else {
+		c.textFormat = strings.Fields(c.config.Subprocessors.TextFormat)
+	}
 }
 
 func (c *StdOut) LogInfo(msg string, v ...interface{}) {
@@ -51,10 +58,6 @@ func (o *StdOut) SetBuffer(b *bytes.Buffer) {
 
 func (o *StdOut) Channel() chan dnsutils.DnsMessage {
 	return o.channel
-}
-
-func (o *StdOut) Print(dm dnsutils.DnsMessage) {
-	o.stdout.Print(dm.String())
 }
 
 func (o *StdOut) Stop() {
@@ -76,7 +79,7 @@ func (o *StdOut) Run() {
 	for dm := range o.channel {
 		switch o.mode {
 		case "text":
-			o.Print(dm)
+			o.stdout.Print(dm.String(o.textFormat))
 		case "json":
 			json.NewEncoder(buffer).Encode(dm)
 			fmt.Print(buffer.String())

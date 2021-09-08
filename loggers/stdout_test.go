@@ -16,10 +16,10 @@ func TestStdoutPrint(t *testing.T) {
 
 	// print dns message to stdout buffer
 	dm := dnsutils.GetFakeDnsMessage()
-	g.Print(dm)
+	g.stdout.Print(dm.String(g.textFormat))
 
 	// check buffer
-	if stdout.String() != dm.String() {
+	if stdout.String() != dm.String(g.textFormat) {
 		t.Errorf("invalid stdout output: %s", stdout.String())
 	}
 }

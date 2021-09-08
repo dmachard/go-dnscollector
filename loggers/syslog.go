@@ -53,6 +53,7 @@ type Syslog struct {
 	severity   syslog.Priority
 	facility   syslog.Priority
 	syslogConn *syslog.Writer
+	textFormat []string
 }
 
 func NewSyslog(config *dnsutils.Config, console *logger.Logger) *Syslog {
@@ -79,6 +80,12 @@ func (c *Syslog) ReadConfig() {
 		c.logger.Fatal("logger syslog - invalid facility")
 	}
 	c.facility = facility
+
+	if len(c.config.Loggers.Syslog.TextFormat) > 0 {
+		c.textFormat = strings.Fields(c.config.Loggers.Syslog.TextFormat)
+	} else {
+		c.textFormat = strings.Fields(c.config.Subprocessors.TextFormat)
+	}
 }
 
 func (o *Syslog) Channel() chan dnsutils.DnsMessage {
@@ -128,7 +135,7 @@ func (o *Syslog) Run() {
 	o.syslogConn = syslogconn
 
 	for dm := range o.channel {
-		o.syslogConn.Write(dm.Bytes())
+		o.syslogConn.Write(dm.Bytes(o.textFormat))
 	}
 
 	o.LogInfo("run terminated")

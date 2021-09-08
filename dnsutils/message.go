@@ -2,7 +2,9 @@ package dnsutils
 
 import (
 	"bytes"
+	"log"
 	"strconv"
+	"strings"
 )
 
 type DnsAnswer struct {
@@ -51,27 +53,69 @@ func (dm *DnsMessage) Init() {
 	dm.CountryIsoCode = "-"
 }
 
-func (dm *DnsMessage) Bytes() []byte {
+func (dm *DnsMessage) Bytes(format []string) []byte {
 	var s bytes.Buffer
 
-	s.WriteString(dm.TimestampRFC3339 + " ")
-	s.WriteString(dm.Identity + " ")
-	s.WriteString(dm.Operation + " ")
-	s.WriteString(dm.Rcode + " ")
-	s.WriteString(dm.QueryIp + " ")
-	s.WriteString(dm.QueryPort + " ")
-	s.WriteString(dm.Family + " ")
-	s.WriteString(dm.Protocol + " ")
-	s.WriteString(strconv.Itoa(dm.Length) + "b ")
-	s.WriteString(dm.Qname + " ")
-	s.WriteString(dm.Qtype + " ")
-	s.WriteString(dm.LatencySec + "\n")
+	for i, word := range format {
+		switch word {
+		case "ttl":
+			if len(dm.Answers) > 0 {
+				s.WriteString(strconv.Itoa(dm.Answers[0].Ttl))
+			} else {
+				s.WriteString("-")
+			}
+		case "answercount":
+			s.WriteString(strconv.Itoa(len(dm.Answers)))
+		case "id":
+			s.WriteString(strconv.Itoa(dm.Id))
+		case "qr":
+			s.WriteString(strings.ToUpper(dm.Type))
+		case "timestamp":
+			s.WriteString(dm.TimestampRFC3339)
+		case "identity":
+			s.WriteString(dm.Identity)
+		case "operation":
+			s.WriteString(dm.Operation)
+		case "rcode":
+			s.WriteString(dm.Rcode)
+		case "queryip":
+			s.WriteString(dm.QueryIp)
+		case "queryport":
+			s.WriteString(dm.QueryPort)
+		case "responseip":
+			s.WriteString(dm.ResponseIp)
+		case "responseport":
+			s.WriteString(dm.ResponsePort)
+		case "family":
+			s.WriteString(dm.Family)
+		case "protocol":
+			s.WriteString(dm.Protocol)
+		case "length":
+			s.WriteString(strconv.Itoa(dm.Length) + "b")
+		case "qname":
+			s.WriteString(dm.Qname)
+		case "qtype":
+			s.WriteString(dm.Qtype)
+		case "latency":
+			s.WriteString(dm.LatencySec)
+		case "country":
+			s.WriteString(dm.CountryIsoCode)
+		default:
+			log.Fatalf("unsupport directive for text format: %s", word)
+		}
+
+		if i < len(format)-1 {
+			s.WriteString(" ")
+		}
+	}
+
+	s.WriteString("\n")
 
 	return s.Bytes()
 }
 
-func (dm *DnsMessage) String() string {
-	return string(dm.Bytes())
+func (dm *DnsMessage) String(format []string) string {
+	return string(dm.Bytes(format))
 }
 
 func GetFakeDnsMessage() DnsMessage {

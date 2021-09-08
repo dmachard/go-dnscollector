@@ -53,12 +53,14 @@ type Config struct {
 		GeoIP struct {
 			DbFile string `yaml:"db-file"`
 		} `yaml:"geoip"`
+		TextFormat string `yaml:"text-format"`
 	} `yaml:"subprocessors"`
 
 	Loggers struct {
 		Stdout struct {
-			Enable bool   `yaml:"enable"`
-			Mode   string `yaml:"mode"`
+			Enable     bool   `yaml:"enable"`
+			Mode       string `yaml:"mode"`
+			TextFormat string `yaml:"text-format"`
 		} `yaml:"stdout"`
 		WebServer struct {
 			Enable           bool   `yaml:"enable"`
@@ -83,6 +85,7 @@ type Config struct {
 			Mode              string `yaml:"mode"`
 			PostRotateCommand string `yaml:"postrotate-command"`
 			PostRotateDelete  bool   `yaml:"postrotate-delete-success"`
+			TextFormat        string `yaml:"text-format"`
 		} `yaml:"logfile"`
 		Dnstap struct {
 			Enable        bool   `yaml:"enable"`
@@ -103,6 +106,7 @@ type Config struct {
 			TlsSupport    bool   `yaml:"tls-support"`
 			TlsInsecure   bool   `yaml:"tls-insecure"`
 			Mode          string `yaml:"mode"`
+			TextFormat    string `yaml:"text-format"`
 		} `yaml:"tcpclient"`
 		Syslog struct {
 			Enable        bool   `yaml:"enable"`
@@ -110,6 +114,7 @@ type Config struct {
 			Facility      string `yaml:"facility"`
 			Transport     string `yaml:"transport"`
 			RemoteAddress string `yaml:"remote-address"`
+			TextFormat    string `yaml:"text-format"`
 		} `yaml:"syslog"`
 		Fluentd struct {
 			Enable        bool   `yaml:"enable"`
@@ -136,6 +141,7 @@ type Config struct {
 }
 
 func (c *Config) SetDefault() {
+
 	c.Trace.Verbose = false
 	c.Trace.Filename = ""
 	c.Trace.MaxSize = 10
@@ -173,10 +179,12 @@ func (c *Config) SetDefault() {
 	c.Subprocessors.Filtering.LogReplies = true
 
 	c.Subprocessors.GeoIP.DbFile = ""
+	c.Subprocessors.TextFormat = "timestamp identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 	// Loggers
 	c.Loggers.Stdout.Enable = true
 	c.Loggers.Stdout.Mode = "text"
+	c.Loggers.Stdout.TextFormat = ""
 
 	c.Loggers.Dnstap.Enable = false
 	c.Loggers.Dnstap.RemoteAddress = "127.0.0.1"
@@ -196,6 +204,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.LogFile.Mode = "text"
 	c.Loggers.LogFile.PostRotateCommand = ""
 	c.Loggers.LogFile.PostRotateDelete = false
+	c.Loggers.LogFile.TextFormat = ""
 
 	c.Loggers.WebServer.Enable = false
 	c.Loggers.WebServer.ListenIP = "127.0.0.1"
@@ -217,12 +226,14 @@ func (c *Config) SetDefault() {
 	c.Loggers.TcpClient.TlsSupport = false
 	c.Loggers.TcpClient.TlsInsecure = false
 	c.Loggers.TcpClient.Mode = "json"
+	c.Loggers.TcpClient.TextFormat = ""
 
 	c.Loggers.Syslog.Enable = false
 	c.Loggers.Syslog.Severity = "INFO"
 	c.Loggers.Syslog.Facility = "DAEMON"
 	c.Loggers.Syslog.Transport = "local"
 	c.Loggers.Syslog.RemoteAddress = "127.0.0.1:514"
+	c.Loggers.Syslog.TextFormat = ""
 
 	c.Loggers.Fluentd.Enable = false
 	c.Loggers.Fluentd.RemoteAddress = "127.0.0.1"

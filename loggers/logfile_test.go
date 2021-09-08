@@ -26,7 +26,7 @@ func TestLogfileWrite(t *testing.T) {
 
 	// write fake dns message
 	dm := dnsutils.GetFakeDnsMessage()
-	g.Write(dm.Bytes())
+	g.Write(dm.Bytes(g.textFormat))
 	g.Flush()
 
 	// read temp file and check content
@@ -35,7 +35,7 @@ func TestLogfileWrite(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if string(data[:count]) != dm.String() {
+	if string(data[:count]) != dm.String(g.textFormat) {
 		t.Errorf("invalid logfile output - %s", data[:count])
 	}
 }

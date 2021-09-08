@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -13,12 +14,13 @@ import (
 )
 
 type TcpClient struct {
-	done    chan bool
-	channel chan dnsutils.DnsMessage
-	config  *dnsutils.Config
-	logger  *logger.Logger
-	exit    chan bool
-	conn    net.Conn
+	done       chan bool
+	channel    chan dnsutils.DnsMessage
+	config     *dnsutils.Config
+	logger     *logger.Logger
+	exit       chan bool
+	conn       net.Conn
+	textFormat []string
 }
 
 func NewTcpClient(config *dnsutils.Config, logger *logger.Logger) *TcpClient {
@@ -37,7 +39,11 @@ func NewTcpClient(config *dnsutils.Config, logger *logger.Logger) *TcpClient {
 }
 
 func (o *TcpClient) ReadConfig() {
-	//tbc
+	if len(o.config.Loggers.TcpClient.TextFormat) > 0 {
+		o.textFormat = strings.Fields(o.config.Loggers.TcpClient.TextFormat)
+	} else {
+		o.textFormat = strings.Fields(o.config.Subprocessors.TextFormat)
+	}
 }
 
 func (o *TcpClient) LogInfo(msg string, v ...interface{}) {
@@ -110,7 +116,7 @@ LOOP:
 						case dm := <-o.channel:
 
 							if o.config.Loggers.TcpClient.Mode == "text" {
-								w.Write(dm.Bytes())
+								w.Write(dm.Bytes(o.textFormat))
 							}
 
 							if o.config.Loggers.TcpClient.Mode == "json" {

@@ -38,6 +38,7 @@ type LogFile struct {
 	fileext        string
 	fileprefix     string
 	commpressTimer *time.Timer
+	textFormat     []string
 }
 
 func NewLogFile(config *dnsutils.Config, logger *logger.Logger) *LogFile {
@@ -63,6 +64,12 @@ func (c *LogFile) ReadConfig() {
 	c.filename = filepath.Base(c.config.Loggers.LogFile.FilePath)
 	c.fileext = filepath.Ext(c.filename)
 	c.fileprefix = strings.TrimSuffix(c.filename, c.fileext)
+
+	if len(c.config.Loggers.LogFile.TextFormat) > 0 {
+		c.textFormat = strings.Fields(c.config.Loggers.LogFile.TextFormat)
+	} else {
+		c.textFormat = strings.Fields(c.config.Subprocessors.TextFormat)
+	}
 }
 
 func (c *LogFile) LogInfo(msg string, v ...interface{}) {
@@ -332,7 +339,7 @@ LOOP:
 			// write to file
 			switch o.config.Loggers.LogFile.Mode {
 			case "text":
-				o.Write(dm.Bytes())
+				o.Write(dm.Bytes(o.textFormat))
 			case "json":
 				json.NewEncoder(buffer).Encode(dm)
 				o.Write(buffer.Bytes())
