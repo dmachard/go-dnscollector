@@ -87,7 +87,7 @@ subprocessors:
     db-file: ""
 
   # specific the default text log format used on all loggers supporting this mode
-  # all directives availables:
+  # all available directives:
   # - timestamp: timestamp rfc3339 format, with nano support
   # - identity: dnstap identity
   # - qr: query or reply flag

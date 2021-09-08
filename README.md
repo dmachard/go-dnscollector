@@ -17,16 +17,19 @@ Features:
 - Loggers
     - Stdout
         * supported format: text, json
+        * custom text format
     - Text files
         * with rotation file support
         * supported format: text, json
         * gzip compression
         * execute external command after each rotation
+        * custom text format
     - [Dnstap](https://dnstap.info/) stream client
         * to remote tcp destination or unix socket with tls support
     - Raw TCP client
         * to remote tcp destination or unix socket with tls support
         * supported format: text, json
+        * custom text format
     - [Rest API](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) 
         * prometheus metrics format
         * qps, total queries/replies, top domains, clients, rcodes...
@@ -34,6 +37,7 @@ Features:
         * tls support
     - [Syslog](https://en.wikipedia.org/wiki/Syslog) server
         * local or remote one
+        * custom text format
     - [Fluentd](https://www.fluentd.org/) client
         * to remote fluentd collector or unix socket with tls support
         * [msgpask](https://msgpack.org/)
