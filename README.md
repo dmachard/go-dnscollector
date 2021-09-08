@@ -84,7 +84,7 @@ incoming traffics. See [Configuration guide](doc/configuration.md).
 
 ## Use-cases / Examples
 
-# Use case 1: collect dnstap stream and backup-it to log files
+### Use case 1: collect dnstap stream and backup-it to log files
 
 With this example the collector waits incoming dnstap messages sent by dns server and backup-it in log files
 
