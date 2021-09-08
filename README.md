@@ -88,7 +88,7 @@ incoming traffics. See [Configuration guide](doc/configuration.md).
 
 With this example the collector waits incoming dnstap messages sent by dns server and backup-it in log files
 
-The full config file for this use-case can be found [here](example-config/use-case-1.yml))
+The full config file for this use-case can be found [here](example-config/use-case-1.yml)
 
 ## Benchmark
 
