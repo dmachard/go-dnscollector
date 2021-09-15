@@ -54,6 +54,7 @@ type Counters struct {
 	Rcode_servfail uint64
 	Rcode_nxdomain uint64
 	Rcode_refused  uint64
+	Rcode_notimp   uint64
 	Rcode_other    uint64
 }
 
@@ -187,6 +188,8 @@ func (c *Statistics) Record(dm DnsMessage) {
 		c.total.Rcode_nxdomain++
 	case dm.Rcode == "REFUSED":
 		c.total.Rcode_refused++
+	case dm.Rcode == "NOTIMP":
+		c.total.Rcode_notimp++
 	default:
 		c.total.Rcode_other++
 	}

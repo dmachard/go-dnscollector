@@ -98,6 +98,8 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 
 		suffix := s.config.Loggers.WebServer.PrometheusSuffix
 		counters := s.stats.GetCounters()
+		topDomains := s.stats.GetTopQnames()
+		topClients := s.stats.GetTopClients()
 
 		// total uniq clients
 		fmt.Fprintf(w, "# HELP %s_clients_total Number of clients\n", suffix)
@@ -122,6 +124,7 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "# TYPE %s_rps gauge\n", suffix)
 		fmt.Fprintf(w, "%s_rps %d\n", suffix, counters.Rps)
 
+		// max per second
 		fmt.Fprintf(w, "# HELP %s_pps_max Maximum number of packet per second received\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_pps_max counter\n", suffix)
 		fmt.Fprintf(w, "%s_pps_max %d\n", suffix, counters.Pps_max)
@@ -139,100 +142,75 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "# TYPE %s_queries_total counter\n", suffix)
 		fmt.Fprintf(w, "%s_queries_total %d\n", suffix, counters.Queries)
 
-		fmt.Fprintf(w, "# HELP %s_queries_udp_total Number of UDP queries received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_queries_udp_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_queries_udp_total %d\n", suffix, counters.Queries_udp)
+		// queries transport repartition
+		fmt.Fprintf(w, "# HELP %s_queries_transport Number of queries transport, partitioned by transport\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_queries_transport counter\n", suffix)
+		fmt.Fprintf(w, "%s_queries_transport{transport=\"UDP\"} %d\n", suffix, counters.Queries_udp)
+		fmt.Fprintf(w, "%s_queries_transport{transport=\"TCP\"} %d\n", suffix, counters.Queries_tcp)
+		fmt.Fprintf(w, "%s_queries_transport{transport=\"DOT\"} %d\n", suffix, counters.Queries_doh)
+		fmt.Fprintf(w, "%s_queries_transport{transport=\"DOH\"} %d\n", suffix, counters.Queries_dot)
 
-		fmt.Fprintf(w, "# HELP %s_queries_tcp_total Number of TCP queries received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_queries_tcp_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_queries_tcp_total %d\n", suffix, counters.Queries_tcp)
-
-		fmt.Fprintf(w, "# HELP %s_queries_doh_total Number of DOH queries received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_queries_doh_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_queries_doh_total %d\n", suffix, counters.Queries_doh)
-
-		fmt.Fprintf(w, "# HELP %s_queries_dot_total Number of DOT queries received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_queries_dot_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_queries_dot_total %d\n", suffix, counters.Queries_dot)
-
-		fmt.Fprintf(w, "# HELP %s_queries_ipv4_total Number of IPv4 queries received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_queries_ipv4_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_queries_ipv4_total %d\n", suffix, counters.Queries_ipv4)
-
-		fmt.Fprintf(w, "# HELP %s_queries_ipv6_total Number of IPv6 queries received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_queries_ipv6_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_queries_ipv6_total %d\n", suffix, counters.Queries_ipv6)
+		// queries family repartition
+		fmt.Fprintf(w, "# HELP %s_queries_family Number of replies, partitioned by family\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_queries_family counter\n", suffix)
+		fmt.Fprintf(w, "%s_queries_family{family=\"IPv4\"} %d\n", suffix, counters.Queries_ipv4)
+		fmt.Fprintf(w, "%s_queries_family{family=\"IPv6\"} %d\n", suffix, counters.Queries_ipv6)
 
 		// number of replies - udp, tcp, ipv4 and ipv6
 		fmt.Fprintf(w, "# HELP %s_replies_total Number of responses received\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_replies_total counter\n", suffix)
 		fmt.Fprintf(w, "%s_replies_total %d\n", suffix, counters.Replies)
 
-		fmt.Fprintf(w, "# HELP %s_replies_udp_total Number of UDP replies received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_replies_udp_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_replies_udp_total %d\n", suffix, counters.Replies_udp)
+		// replies transport repartition
+		fmt.Fprintf(w, "# HELP %s_replies_transport Number of replies transport, partitioned by transport\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_replies_transport counter\n", suffix)
+		fmt.Fprintf(w, "%s_replies_transport{transport=\"UDP\"} %d\n", suffix, counters.Replies_udp)
+		fmt.Fprintf(w, "%s_replies_transport{transport=\"TCP\"} %d\n", suffix, counters.Replies_tcp)
+		fmt.Fprintf(w, "%s_replies_transport{transport=\"DOT\"} %d\n", suffix, counters.Replies_doh)
+		fmt.Fprintf(w, "%s_replies_transport{transport=\"DOH\"} %d\n", suffix, counters.Replies_dot)
 
-		fmt.Fprintf(w, "# HELP %s_replies_tcp_total Number of TCP replies received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_replies_tcp_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_replies_tcp_total %d\n", suffix, counters.Replies_tcp)
+		// replies family repartition
+		fmt.Fprintf(w, "# HELP %s_replies_family Number of replies, partitioned by family\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_replies_family counter\n", suffix)
+		fmt.Fprintf(w, "%s_replies_family{family=\"IPv4\"} %d\n", suffix, counters.Replies_ipv4)
+		fmt.Fprintf(w, "%s_replies_family{family=\"IPv6\"} %d\n", suffix, counters.Replies_ipv6)
 
-		fmt.Fprintf(w, "# HELP %s_replies_doh_total Number of DOH replies received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_replies_doh_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_replies_doh_total %d\n", suffix, counters.Replies_doh)
+		// qtypes repartition
+		fmt.Fprintf(w, "# HELP %s_qtypes Number of rtypes, partitioned by qtype\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_qtypes counter\n", suffix)
+		fmt.Fprintf(w, "%s_qtypes{qtype=\"A\"} %d\n", suffix, counters.Qtype_a)
+		fmt.Fprintf(w, "%s_qtypes{qtype=\"AAAA\"} %d\n", suffix, counters.Qtype_aaaa)
+		fmt.Fprintf(w, "%s_qtypes{qtype=\"CNAME\"} %d\n", suffix, counters.Qtype_cname)
+		fmt.Fprintf(w, "%s_qtypes{qtype=\"TXT\"} %d\n", suffix, counters.Qtype_txt)
+		fmt.Fprintf(w, "%s_qtypes{qtype=\"SRV\"} %d\n", suffix, counters.Qtype_srv)
+		fmt.Fprintf(w, "%s_qtypes{qtype=\"PTR\"} %d\n", suffix, counters.Qtype_ptr)
+		fmt.Fprintf(w, "%s_qtypes{qtype=\"SOA\"} %d\n", suffix, counters.Qtype_soa)
+		fmt.Fprintf(w, "%s_qtypes{qtype=\"NS\"} %d\n", suffix, counters.Qtype_ns)
+		fmt.Fprintf(w, "%s_qtypes{qtype=\"other\"} %d\n", suffix, counters.Qtype_other)
 
-		fmt.Fprintf(w, "# HELP %s_replies_dot_total Number of DOT replies received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_replies_dot_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_replies_dot_total %d\n", suffix, counters.Replies_dot)
+		// rcodes repartition
+		fmt.Fprintf(w, "# HELP %s_rcodes Number of rcodes, partitioned by rcode type\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_rcodes counter\n", suffix)
+		fmt.Fprintf(w, "%s_rcodes{rcode=\"NOERROR\"} %d\n", suffix, counters.Rcode_noerror)
+		fmt.Fprintf(w, "%s_rcodes{rcode=\"NXDOMAIN\"} %d\n", suffix, counters.Rcode_nxdomain)
+		fmt.Fprintf(w, "%s_rcodes{rcode=\"REFUSED\"} %d\n", suffix, counters.Rcode_refused)
+		fmt.Fprintf(w, "%s_rcodes{rcode=\"SERVFAIL\"} %d\n", suffix, counters.Rcode_servfail)
+		fmt.Fprintf(w, "%s_rcodes{rcode=\"NOTIMP\"} %d\n", suffix, counters.Rcode_notimp)
+		fmt.Fprintf(w, "%s_rcodes{rcode=\"other\"} %d\n", suffix, counters.Rcode_other)
 
-		fmt.Fprintf(w, "# HELP %s_replies_ipv4_total Number of IPv4 replies received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_replies_ipv4_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_replies_ipv4_total %d\n", suffix, counters.Replies_ipv4)
+		// top domains
+		fmt.Fprintf(w, "# HELP %s_qnames_top100 Number of qname hit, partitioned by qname\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_qnames_top100 counter\n", suffix)
+		for _, v := range topDomains {
+			fmt.Fprintf(w, "%s_qnames_top100{qname=\"%s\"} %d\n", suffix, v.Name, v.Hit)
+		}
 
-		fmt.Fprintf(w, "# HELP %s_replies_ipv6_total Number of IPv6 replies received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_replies_ipv6_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_replies_ipv6_total %d\n", suffix, counters.Replies_ipv6)
-
-		//rtype
-		fmt.Fprintf(w, "# HELP %s_rtype_a_total Number of qtype A received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_rtype_a_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_rtype_a_total %d\n", suffix, counters.Qtype_a)
-
-		fmt.Fprintf(w, "# HELP %s_rtype_aaaa_total Number of qtype AAAA received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_rtype_aaaa_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_rtype_aaaa_total %d\n", suffix, counters.Qtype_aaaa)
-
-		fmt.Fprintf(w, "# HELP %s_rtype_cname_total Number of qtype CNAME received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_rtype_cname_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_rtype_cname_total %d\n", suffix, counters.Qtype_cname)
-
-		fmt.Fprintf(w, "# HELP %s_rtype_txt_total Number of qtype TXT received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_rtype_txt_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_rtype_txt_total %d\n", suffix, counters.Qtype_txt)
-
-		fmt.Fprintf(w, "# HELP %s_rtype_ptr_total Number of qtype PTR received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_rtype_ptr_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_rtype_ptr_total %d\n", suffix, counters.Qtype_ptr)
-
-		fmt.Fprintf(w, "# HELP %s_rtype_srv_total Number of qtype SRV received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_rtype_srv_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_rtype_srv_total %d\n", suffix, counters.Qtype_srv)
-
-		// rcode
-		fmt.Fprintf(w, "# HELP %s_rcode_noerror_total Number of rcode NOERROR received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_rcode_noerror_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_rcode_noerror_total %d\n", suffix, counters.Rcode_noerror)
-
-		fmt.Fprintf(w, "# HELP %s_rcode_nxdomain_total Number of rcode NXDOMAIN received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_rcode_nxdomain_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_rcode_nxdomain_total %d\n", suffix, counters.Rcode_nxdomain)
-
-		fmt.Fprintf(w, "# HELP %s_rcode_servfail_total Number of rcode SERVFAIL received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_rcode_servfail_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_rcode_servfail_total %d\n", suffix, counters.Rcode_servfail)
-
-		fmt.Fprintf(w, "# HELP %s_rcode_refused_total Number of rcode REFUSED received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_rcode_refused_total counter\n", suffix)
-		fmt.Fprintf(w, "%s_rcode_refused_total %d\n", suffix, counters.Rcode_refused)
+		// top clients
+		fmt.Fprintf(w, "# HELP %s_clients_top100 Number of clients hit, partitioned by client ip\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_clients_top100 counter\n", suffix)
+		for _, v := range topClients {
+			fmt.Fprintf(w, "%s_clients_top100{ip=\"%s\"} %d\n", suffix, v.Name, v.Hit)
+		}
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}

@@ -82,7 +82,7 @@ docker run -d -p 6000:6000 -p 8080:8080 -v $(pwd)/config.yml:/config.yml dmachar
 A typically configuration would have one or more collector to receive DNS traffic or logs, and severals loggers to process the 
 incoming traffics. See [Configuration guide](doc/configuration.md).
 
-## Use-cases / Examples
+## Use-cases
 
 ### Use case 1: collect dnstap stream and backup-it to log files
 
