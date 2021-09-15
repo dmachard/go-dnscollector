@@ -13,9 +13,6 @@ type Counters struct {
 	Packets     uint64
 	PacketsPrev uint64
 
-	Queries uint64
-	Replies uint64
-
 	Latency0_1      uint64
 	Latency1_10     uint64
 	Latency10_50    uint64
@@ -68,12 +65,6 @@ func (c *Statistics) Record(dm DnsMessage) {
 	c.rw.Lock()
 
 	c.total.Packets++
-
-	if dm.Type == "query" {
-		c.total.Queries++
-	} else {
-		c.total.Replies++
-	}
 
 	switch {
 	case dm.Latency == 0.0:
