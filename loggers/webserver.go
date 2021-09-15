@@ -2,7 +2,6 @@ package loggers
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -111,7 +110,7 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "# TYPE %s_clients counter\n", suffix)
 		fmt.Fprintf(w, "%s_clients %d\n", suffix, s.stats.GetTotalClients())
 
-		fmt.Fprintf(w, "# HELP %s_clients_top Number of clients hit, partitioned by client ip\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_clients_top Number of hit per client, partitioned by client ip\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_clients_top counter\n", suffix)
 		for _, v := range topClients {
 			fmt.Fprintf(w, "%s_clients_top{ip=\"%s\"} %d\n", suffix, v.Name, v.Hit)
@@ -122,7 +121,7 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "# TYPE %s_domains counter\n", suffix)
 		fmt.Fprintf(w, "%s_domains %d\n", suffix, s.stats.GetTotalDomains())
 
-		fmt.Fprintf(w, "# HELP %s_domains_top Number of qname hit, partitioned by qname\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_domains_top Number of hit per domain, partitioned by qname\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_domains_top counter\n", suffix)
 		for _, v := range topDomains {
 			fmt.Fprintf(w, "%s_domains_top{domain=\"%s\"} %d\n", suffix, v.Name, v.Hit)
@@ -191,101 +190,11 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Webserver) tablesDomainsHandler(w http.ResponseWriter, r *http.Request) {
-	if !s.BasicAuth(w, r) {
-		http.Error(w, "Not authorized", http.StatusUnauthorized)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-
-	switch r.Method {
-	case http.MethodGet:
-		t := s.stats.GetTopQnames()
-		json.NewEncoder(w).Encode(t)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
-func (s *Webserver) tablesClientsHandler(w http.ResponseWriter, r *http.Request) {
-	if !s.BasicAuth(w, r) {
-		http.Error(w, "Not authorized", http.StatusUnauthorized)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-
-	switch r.Method {
-	case http.MethodGet:
-		t := s.stats.GetTopClients()
-		json.NewEncoder(w).Encode(t)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
-func (s *Webserver) tablesRcodesHandler(w http.ResponseWriter, r *http.Request) {
-	if !s.BasicAuth(w, r) {
-		http.Error(w, "Not authorized", http.StatusUnauthorized)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-
-	switch r.Method {
-	case http.MethodGet:
-		t := s.stats.GetTopRcodes()
-		json.NewEncoder(w).Encode(t)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
-func (s *Webserver) tablesRrtypesHandler(w http.ResponseWriter, r *http.Request) {
-	if !s.BasicAuth(w, r) {
-		http.Error(w, "Not authorized", http.StatusUnauthorized)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-
-	switch r.Method {
-	case http.MethodGet:
-		t := s.stats.GetTopRrtypes()
-		json.NewEncoder(w).Encode(t)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
-func (s *Webserver) tablesOperationsHandler(w http.ResponseWriter, r *http.Request) {
-	if !s.BasicAuth(w, r) {
-		http.Error(w, "Not authorized", http.StatusUnauthorized)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-
-	switch r.Method {
-	case http.MethodGet:
-		t := s.stats.GetTopOperations()
-		json.NewEncoder(w).Encode(t)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
 func (s *Webserver) ListenAndServe() {
 	s.LogInfo("starting http api...")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/metrics", s.metricsHandler)
-	mux.HandleFunc("/tables/domains", s.tablesDomainsHandler)
-	mux.HandleFunc("/tables/clients", s.tablesClientsHandler)
-	mux.HandleFunc("/tables/rcodes", s.tablesRcodesHandler)
-	mux.HandleFunc("/tables/rrtypes", s.tablesRrtypesHandler)
-	mux.HandleFunc("/tables/operations", s.tablesOperationsHandler)
 
 	var err error
 	var listener net.Listener
