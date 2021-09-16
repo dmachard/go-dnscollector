@@ -165,7 +165,7 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "# HELP %s_qtypes Number of qtypes, partitioned by qtype\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_qtypes counter\n", suffix)
 		for _, v := range topRrtypes {
-			fmt.Fprintf(w, "%s_qtypes{rcode=\"%s\"} %d\n", suffix, v.Name, v.Hit)
+			fmt.Fprintf(w, "%s_qtypes{qtype=\"%s\"} %d\n", suffix, v.Name, v.Hit)
 		}
 
 		// top rcodes
