@@ -64,8 +64,10 @@ func NewStatistics(maxitems int) *Statistics {
 func (c *Statistics) Record(dm DnsMessage) {
 	c.rw.Lock()
 
+	// global number of packets
 	c.total.Packets++
 
+	// latency
 	switch {
 	case dm.Latency == 0.0:
 		break
@@ -225,4 +227,123 @@ func (c *Statistics) GetTopIpProto() (ret []topmap.TopMapItem) {
 	ret = c.ipprototop.Get()
 	c.rw.RUnlock()
 	return
+}
+
+type GlobalStats struct {
+	stats    map[string]*Statistics
+	maxitems int
+	sync.RWMutex
+}
+
+func NewGlobalStats(maxitems int) *GlobalStats {
+	c := &GlobalStats{
+		stats: make(map[string]*Statistics),
+	}
+	c.maxitems = maxitems
+	c.stats["global"] = NewStatistics(maxitems)
+	return c
+}
+
+func (c *GlobalStats) Record(dm DnsMessage) {
+	c.Lock()
+	defer c.Unlock()
+
+	// global record
+	c.stats["global"].Record(dm)
+
+	// record for each ident
+	if _, ok := c.stats[dm.Identity]; !ok {
+		c.stats[dm.Identity] = NewStatistics(c.maxitems)
+	}
+	c.stats[dm.Identity].Record(dm)
+
+}
+
+func (c *GlobalStats) Identities() []string {
+	c.RLock()
+	defer c.RUnlock()
+
+	ret := []string{}
+	for k, _ := range c.stats {
+		ret = append(ret, k)
+	}
+	return ret
+}
+
+func (c *GlobalStats) Compute() {
+	c.Lock()
+	for _, v := range c.stats {
+		v.Compute()
+	}
+	c.Unlock()
+}
+
+func (c *GlobalStats) GetCounters(identity string) (ret Counters) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.stats[identity].GetCounters()
+}
+
+func (c *GlobalStats) GetTotalDomains(identity string) (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.stats[identity].GetTotalDomains()
+}
+
+func (c *GlobalStats) GetTotalClients(identity string) (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.stats[identity].GetTotalClients()
+}
+
+func (c *GlobalStats) GetTopQnames(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.stats[identity].GetTopQnames()
+}
+
+func (c *GlobalStats) GetTopClients(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.stats[identity].GetTopClients()
+}
+
+func (c *GlobalStats) GetTopRcodes(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.stats[identity].GetTopRcodes()
+}
+
+func (c *GlobalStats) GetTopRrtypes(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.stats[identity].GetTopRrtypes()
+}
+
+func (c *GlobalStats) GetTopOperations(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.stats[identity].GetTopOperations()
+}
+
+func (c *GlobalStats) GetTopTransports(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.stats[identity].GetTopTransports()
+}
+
+func (c *GlobalStats) GetTopIpProto(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.stats[identity].GetTopIpProto()
 }

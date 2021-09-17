@@ -20,7 +20,8 @@ type Webserver struct {
 	channel    chan dnsutils.DnsMessage
 	config     *dnsutils.Config
 	logger     *logger.Logger
-	stats      *dnsutils.Statistics
+	//stats      *dnsutils.Statistics
+	stats *dnsutils.GlobalStats
 }
 
 func NewWebserver(config *dnsutils.Config, logger *logger.Logger) *Webserver {
@@ -36,7 +37,8 @@ func NewWebserver(config *dnsutils.Config, logger *logger.Logger) *Webserver {
 	o.ReadConfig()
 
 	// init engine to compute statistics
-	o.stats = dnsutils.NewStatistics(config.Loggers.WebServer.TopMaxItems)
+	//o.stats = dnsutils.NewStatistics(config.Loggers.WebServer.TopMaxItems)
+	o.stats = dnsutils.NewGlobalStats(config.Loggers.WebServer.TopMaxItems)
 	return o
 }
 
@@ -86,6 +88,20 @@ func (o *Webserver) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
 	return (login == o.config.Loggers.WebServer.BasicAuthLogin) && (password == o.config.Loggers.WebServer.BasicAuthPwd)
 }
 
+func (s *Webserver) resetHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodDelete:
+		fmt.Fprintf(w, "success")
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
 func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	if !s.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
@@ -96,95 +112,98 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 
 		suffix := s.config.Loggers.WebServer.PrometheusSuffix
-		counters := s.stats.GetCounters()
-		topDomains := s.stats.GetTopQnames()
-		topClients := s.stats.GetTopClients()
-		topRcodes := s.stats.GetTopRcodes()
-		topRrtypes := s.stats.GetTopRrtypes()
-		topTransports := s.stats.GetTopTransports()
-		topIpProto := s.stats.GetTopIpProto()
-		topOperations := s.stats.GetTopOperations()
 
-		// total uniq clients
-		fmt.Fprintf(w, "# HELP %s_clients Number of clients\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_clients counter\n", suffix)
-		fmt.Fprintf(w, "%s_clients %d\n", suffix, s.stats.GetTotalClients())
+		for _, ident := range s.stats.Identities() {
 
-		fmt.Fprintf(w, "# HELP %s_clients_top Number of hit per client, partitioned by client ip\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_clients_top counter\n", suffix)
-		for _, v := range topClients {
-			fmt.Fprintf(w, "%s_clients_top{ip=\"%s\"} %d\n", suffix, v.Name, v.Hit)
+			counters := s.stats.GetCounters(ident)
+			totalClients := s.stats.GetTotalClients(ident)
+			totalDomains := s.stats.GetTotalDomains(ident)
+			topDomains := s.stats.GetTopQnames(ident)
+			topClients := s.stats.GetTopClients(ident)
+			topRcodes := s.stats.GetTopRcodes(ident)
+			topRrtypes := s.stats.GetTopRrtypes(ident)
+			topTransports := s.stats.GetTopTransports(ident)
+			topIpProto := s.stats.GetTopIpProto(ident)
+			topOperations := s.stats.GetTopOperations(ident)
+
+			// docs
+			fmt.Fprintf(w, "# HELP %s_clients_total Number of clients\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_clients_total counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_clients_top Number of hit per client, partitioned by client ip\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_clients_top counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_domains_total Number of domains\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_domains_total counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_domains_top Number of hit per domain, partitioned by qname\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_domains_top counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_pps Number of packets per second received\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_pps gauge\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_pps_max Maximum number of packets per second received\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_pps_max counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_packets Number of packets\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_packets counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_operations Number of packet, partitioned by operations\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_operations counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_transports Number of packets, partitioned by transport\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_transports counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_ipproto Number of packets, partitioned by IP protocol\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_ipproto counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_qtypes Number of qtypes, partitioned by qtype\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_qtypes counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_rcodes Number of rcodes, partitioned by rcode type\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_rcodes counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_latency Number of queries answered, partitioned by latency interval\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_latency counter\n", suffix)
+
+			// total uniq clients
+			fmt.Fprintf(w, "%s_clients_total{identity=\"%s\"} %d\n", suffix, ident, totalClients)
+			for _, v := range topClients {
+				fmt.Fprintf(w, "%s_clients_top{identity=\"%s\",ip=\"%s\"} %d\n", suffix, ident, v.Name, v.Hit)
+			}
+
+			// total uniq domains
+			fmt.Fprintf(w, "%s_domains_total{identity=\"%s\"} %d\n", suffix, ident, totalDomains)
+			for _, v := range topDomains {
+				fmt.Fprintf(w, "%s_domains_top{identity=\"%s\",domain=\"%s\"} %d\n", suffix, ident, v.Name, v.Hit)
+			}
+
+			// pps
+			fmt.Fprintf(w, "%s_pps{identity=\"%s\"} %d\n", suffix, ident, counters.Pps)
+			fmt.Fprintf(w, "%s_pps_max{identity=\"%s\"} %d\n", suffix, ident, counters.PpsMax)
+
+			// number of total packet
+			fmt.Fprintf(w, "%s_packets{identity=\"%s\"} %d\n", suffix, ident, counters.Packets)
+			for _, v := range topOperations {
+				fmt.Fprintf(w, "%s_operations{identity=\"%s\",operation=\"%s\"} %d\n", suffix, ident, v.Name, v.Hit)
+			}
+
+			// transport repartition
+			for _, v := range topTransports {
+				fmt.Fprintf(w, "%s_transports{identity=\"%s\",transport=\"%s\"} %d\n", suffix, ident, v.Name, v.Hit)
+			}
+
+			// ip proto repartition
+			for _, v := range topIpProto {
+				fmt.Fprintf(w, "%s_ipproto{identity=\"%s\",ip=\"%s\"} %d\n", suffix, ident, v.Name, v.Hit)
+			}
+
+			// qtypes repartition
+			for _, v := range topRrtypes {
+				fmt.Fprintf(w, "%s_qtypes{identity=\"%s\",qtype=\"%s\"} %d\n", suffix, ident, v.Name, v.Hit)
+			}
+
+			// top rcodes
+			for _, v := range topRcodes {
+				fmt.Fprintf(w, "%s_rcodes{identity=\"%s\",rcode=\"%s\"} %d\n", suffix, ident, v.Name, v.Hit)
+			}
+
+			// latency
+			fmt.Fprintf(w, "%s_latency{identity=\"%s\",latency=\"<1ms\"} %d\n", suffix, ident, counters.Latency0_1)
+			fmt.Fprintf(w, "%s_latency{identity=\"%s\",latency=\"1-10ms\"} %d\n", suffix, ident, counters.Latency1_10)
+			fmt.Fprintf(w, "%s_latency{identity=\"%s\",latency=\"10-50ms\"} %d\n", suffix, ident, counters.Latency10_50)
+			fmt.Fprintf(w, "%s_latency{identity=\"%s\",latency=\"50-100ms\"} %d\n", suffix, ident, counters.Latency50_100)
+			fmt.Fprintf(w, "%s_latency{identity=\"%s\",latency=\"100-1s\"} %d\n", suffix, ident, counters.Latency100_1000)
+			fmt.Fprintf(w, "%s_latency{identity=\"%s\",latency=\">1s\"} %d\n", suffix, ident, counters.Latency1000_inf)
 		}
-
-		// total uniq domains
-		fmt.Fprintf(w, "# HELP %s_domains Number of domains\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_domains counter\n", suffix)
-		fmt.Fprintf(w, "%s_domains %d\n", suffix, s.stats.GetTotalDomains())
-
-		fmt.Fprintf(w, "# HELP %s_domains_top Number of hit per domain, partitioned by qname\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_domains_top counter\n", suffix)
-		for _, v := range topDomains {
-			fmt.Fprintf(w, "%s_domains_top{domain=\"%s\"} %d\n", suffix, v.Name, v.Hit)
-		}
-
-		// pps
-		fmt.Fprintf(w, "# HELP %s_pps Number of packets per second received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_pps gauge\n", suffix)
-		fmt.Fprintf(w, "%s_pps %d\n", suffix, counters.Pps)
-
-		fmt.Fprintf(w, "# HELP %s_pps_max Maximum number of packets per second received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_pps_max counter\n", suffix)
-		fmt.Fprintf(w, "%s_pps_max %d\n", suffix, counters.PpsMax)
-
-		// number of total packet
-		fmt.Fprintf(w, "# HELP %s_packets Number of packets\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_packets counter\n", suffix)
-		fmt.Fprintf(w, "%s_packets %d\n", suffix, counters.Packets)
-
-		fmt.Fprintf(w, "# HELP %s_operations Number of packet, partitioned by operations\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_operations counter\n", suffix)
-		for _, v := range topOperations {
-			fmt.Fprintf(w, "%s_operations{operation=\"%s\"} %d\n", suffix, v.Name, v.Hit)
-		}
-
-		// transport repartition
-		fmt.Fprintf(w, "# HELP %s_transports Number of packets, partitioned by transport\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_transports counter\n", suffix)
-		for _, v := range topTransports {
-			fmt.Fprintf(w, "%s_transports{transport=\"%s\"} %d\n", suffix, v.Name, v.Hit)
-		}
-
-		// ip proto repartition
-		fmt.Fprintf(w, "# HELP %s_ipproto Number of packets, partitioned by IP protocol\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_ipproto counter\n", suffix)
-		for _, v := range topIpProto {
-			fmt.Fprintf(w, "%s_ipproto{ip=\"%s\"} %d\n", suffix, v.Name, v.Hit)
-		}
-
-		// qtypes repartition
-		fmt.Fprintf(w, "# HELP %s_qtypes Number of qtypes, partitioned by qtype\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_qtypes counter\n", suffix)
-		for _, v := range topRrtypes {
-			fmt.Fprintf(w, "%s_qtypes{qtype=\"%s\"} %d\n", suffix, v.Name, v.Hit)
-		}
-
-		// top rcodes
-		fmt.Fprintf(w, "# HELP %s_rcodes Number of rcodes, partitioned by rcode type\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_rcodes counter\n", suffix)
-		for _, v := range topRcodes {
-			fmt.Fprintf(w, "%s_rcodes{rcode=\"%s\"} %d\n", suffix, v.Name, v.Hit)
-		}
-
-		// latency
-		fmt.Fprintf(w, "# HELP %s_latency Number of queries answered, partitioned by latency interval\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_latency counter\n", suffix)
-		fmt.Fprintf(w, "%s_latency{latency=\"<1ms\"} %d\n", suffix, counters.Latency0_1)
-		fmt.Fprintf(w, "%s_latency{latency=\"1-10ms\"} %d\n", suffix, counters.Latency1_10)
-		fmt.Fprintf(w, "%s_latency{latency=\"10-50ms\"} %d\n", suffix, counters.Latency10_50)
-		fmt.Fprintf(w, "%s_latency{latency=\"50-100ms\"} %d\n", suffix, counters.Latency50_100)
-		fmt.Fprintf(w, "%s_latency{latency=\"100-1s\"} %d\n", suffix, counters.Latency100_1000)
-		fmt.Fprintf(w, "%s_latency{latency=\">1s\"} %d\n", suffix, counters.Latency1000_inf)
-
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -195,6 +214,7 @@ func (s *Webserver) ListenAndServe() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/metrics", s.metricsHandler)
+	mux.HandleFunc("/reset", s.resetHandler)
 
 	var err error
 	var listener net.Listener
