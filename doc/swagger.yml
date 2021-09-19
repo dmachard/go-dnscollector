@@ -23,41 +23,16 @@ paths:
               schema:
                 type: string
       summary: Get metrics
-  /tables/domains:
+  /reset:
     get:
       responses:
         '200':
-          description: ''
-      summary: Get top domains
-      description: Get top domains
-  /tables/clients:
-    get:
-      responses:
-        '200':
-          description: ''
-      summary: Get top clients
-      description: Get top clients
-  /tables/rcodes:
-    get:
-      responses:
-        '200':
-          description: ''
-      summary: Get top rcodes
-      description: Get top rcodes
-  /tables/rrtypês:
-    get:
-      responses:
-        '200':
-          description: ''
-      summary: Get top rrtypes
-      description: Get top rrtypes
-  /tables/operations:
-    get:
-      responses:
-        '200':
-          description: ''
-      summary: Get top operations
-      description: Get top operations
+          description: Reset metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Reset metrics
 security: []
 externalDocs:
   url: 'https://github.com/dmachard/go-dnscollector'
