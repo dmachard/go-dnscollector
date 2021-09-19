@@ -21,6 +21,13 @@ type Counters struct {
 	Latency500_1000 uint64
 	Latency1000_inf uint64
 	LatencyMax      float64
+
+	QnameLength0_10    int
+	QnameLength10_20   int
+	QnameLength20_40   int
+	QnameLength40_100  int
+	QnameLength100_Inf int
+	QnameLengthMax     int
 }
 
 type Statistics struct {
@@ -29,6 +36,8 @@ type Statistics struct {
 	qnamestop     *topmap.TopMap
 	qnamesNxd     map[string]int
 	qnamesNxdtop  *topmap.TopMap
+	qnamesSlow    map[string]int
+	qnamesSlowtop *topmap.TopMap
 	clients       map[string]int
 	clientstop    *topmap.TopMap
 	rrtypes       map[string]int
@@ -51,6 +60,8 @@ func NewStatistics(maxitems int) *Statistics {
 		qnamestop:     topmap.NewTopMap(maxitems),
 		qnamesNxd:     make(map[string]int),
 		qnamesNxdtop:  topmap.NewTopMap(maxitems),
+		qnamesSlow:    make(map[string]int),
+		qnamesSlowtop: topmap.NewTopMap(maxitems),
 		clients:       make(map[string]int),
 		clientstop:    topmap.NewTopMap(maxitems),
 		rrtypes:       make(map[string]int),
@@ -72,6 +83,16 @@ func (c *Statistics) Record(dm DnsMessage) {
 
 	// global number of packets
 	c.total.Packets++
+
+	// qname length
+	qnameLen := len(dm.Qname)
+	if qnameLen > c.total.QnameLengthMax {
+		c.total.QnameLengthMax = qnameLen
+	}
+	switch {
+	case qnameLen <= 10:
+		c.total.QnameLength0_10++
+	}
 
 	// latency
 	if dm.Latency > c.total.LatencyMax {
@@ -128,6 +149,15 @@ func (c *Statistics) Record(dm DnsMessage) {
 			c.qnamesNxd[dm.Qname]++
 		}
 		c.qnamesNxdtop.Record(dm.Qname, c.qnamesNxd[dm.Qname])
+	}
+
+	if dm.Latency > 0.25 {
+		if _, ok := c.qnamesSlow[dm.Qname]; !ok {
+			c.qnamesSlow[dm.Qname] = 1
+		} else {
+			c.qnamesSlow[dm.Qname]++
+		}
+		c.qnamesSlowtop.Record(dm.Qname, c.qnamesSlow[dm.Qname])
 	}
 
 	// record all clients
@@ -201,6 +231,13 @@ func (c *Statistics) GetTotalNxdomains() (ret int) {
 	return
 }
 
+func (c *Statistics) GetTotalSlowdomains() (ret int) {
+	c.rw.RLock()
+	ret = len(c.qnamesSlow)
+	c.rw.RUnlock()
+	return
+}
+
 func (c *Statistics) GetTotalClients() (ret int) {
 	c.rw.RLock()
 	ret = len(c.clients)
@@ -218,6 +255,13 @@ func (c *Statistics) GetTopQnames() (ret []topmap.TopMapItem) {
 func (c *Statistics) GetTopNxdomains() (ret []topmap.TopMapItem) {
 	c.rw.RLock()
 	ret = c.qnamesNxdtop.Get()
+	c.rw.RUnlock()
+	return
+}
+
+func (c *Statistics) GetTopSlowdomains() (ret []topmap.TopMapItem) {
+	c.rw.RLock()
+	ret = c.qnamesSlowtop.Get()
 	c.rw.RUnlock()
 	return
 }
@@ -334,6 +378,13 @@ func (c *GlobalStats) GetTotalNxdomains(identity string) (ret int) {
 	return c.stats[identity].GetTotalNxdomains()
 }
 
+func (c *GlobalStats) GetTotalSlowdomains(identity string) (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.stats[identity].GetTotalSlowdomains()
+}
+
 func (c *GlobalStats) GetTotalClients(identity string) (ret int) {
 	c.RLock()
 	defer c.RUnlock()
@@ -353,6 +404,13 @@ func (c *GlobalStats) GetTopNxdomains(identity string) (ret []topmap.TopMapItem)
 	defer c.RUnlock()
 
 	return c.stats[identity].GetTopNxdomains()
+}
+
+func (c *GlobalStats) GetTopSlowdomains(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.stats[identity].GetTopSlowdomains()
 }
 
 func (c *GlobalStats) GetTopClients(identity string) (ret []topmap.TopMapItem) {

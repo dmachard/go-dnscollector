@@ -121,6 +121,8 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			topDomains := s.stats.GetTopQnames(stream)
 			totalNxdomains := s.stats.GetTotalNxdomains(stream)
 			topNxdomains := s.stats.GetTopNxdomains(stream)
+			totalSlowdomains := s.stats.GetTotalSlowdomains(stream)
+			topSlowdomains := s.stats.GetTopSlowdomains(stream)
 			topClients := s.stats.GetTopClients(stream)
 			topRcodes := s.stats.GetTopRcodes(stream)
 			topRrtypes := s.stats.GetTopRrtypes(stream)
@@ -141,6 +143,10 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "# TYPE %s_nxdomains_total counter\n", suffix)
 			fmt.Fprintf(w, "# HELP %s_nxdomains_top Number of hit per unknown domain, partitioned by qname\n", suffix)
 			fmt.Fprintf(w, "# TYPE %s_nxdomains_top counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_slowdomains_total Number of slow domains\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_slowdomains_total counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_slowdomains_top Number of hit per slow domain, partitioned by qname\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_slowdomains_top counter\n", suffix)
 			fmt.Fprintf(w, "# HELP %s_pps Number of packets per second received\n", suffix)
 			fmt.Fprintf(w, "# TYPE %s_pps gauge\n", suffix)
 			fmt.Fprintf(w, "# HELP %s_pps_max Maximum number of packets per second received\n", suffix)
@@ -176,6 +182,10 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%s_nxdomains_total{stream=\"%s\"} %d\n", suffix, stream, totalNxdomains)
 			for _, v := range topNxdomains {
 				fmt.Fprintf(w, "%s_nxdomains_top{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+			}
+			fmt.Fprintf(w, "%s_slowdomains_total{stream=\"%s\"} %d\n", suffix, stream, totalSlowdomains)
+			for _, v := range topSlowdomains {
+				fmt.Fprintf(w, "%s_slowdomains_top{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
 
 			// pps
