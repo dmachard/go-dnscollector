@@ -11,6 +11,7 @@
   - [DNS Caching](#DNS-Caching)
   - [Packet Filtering](#Packet-Filtering)
   - [Custom text format](#Custom-Text-Format)
+  - [Statistics](#Statistics)
 - [Loggers](#Loggers)
   - [Stdout](#Stdout)
   - [REST API](#REST-API)
@@ -222,6 +223,35 @@ subprocessors:
   text-format: "timestamp identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"
 ```
 
+### Statistics
+
+Some options to customize the statitics subprocessor.
+
+```yaml
+subprocessors:
+  # Statistics engine
+  statistics:
+    # default number of items on top 
+    top-max-items: 100
+    # expected common qtype list, other will be considered as suspicious
+    common-qtypes:
+      - A
+      - AAAA
+      - CNAME
+      - TXT
+      - PTR
+      - NAPTR
+      - DNSKEY
+      - SRV
+    # a length greater than this value will be considered as suspicious
+    threshold-qname-len: 80
+    # a size greater than this value will be considered as suspicious
+    # value in bytes
+    threshold-packet-len: 1000
+    # threshold to set a domain considered as slow, value in second
+    threshold-slow: 0.5
+```
+
 ## Loggers
 
 ### Stdout
@@ -293,8 +323,6 @@ webserver:
   listen-ip: 0.0.0.0
   # listening port
   listen-port: 8080
-  # default number of items to return
-  top-max-items: 100
   # default login
   basic-auth-login: admin
   # default password
@@ -317,55 +345,8 @@ Request:
 $ curl --user admin:changeme http://127.0.0.1:8080/metrics
 ```
 
-Response:
+The full metrics can be found [here](doc/metrics.txt).
 
-```
-# HELP dnscollector_clients Number of clients
-# TYPE dnscollector_clients counter
-dnscollector_clients 1
-# HELP dnscollector_clients_top Number of clients hit, partitioned by client ip
-# TYPE dnscollector_clients_top counter
-dnscollector_clients_top{ip="::1"} 2
-# HELP dnscollector_domains Number of domains
-# TYPE dnscollector_domains counter
-dnscollector_domains 1
-# HELP dnscollector_domains_top Number of qname hit, partitioned by qname
-# TYPE dnscollector_domains_top counter
-dnscollector_domains_top{domain="www.facebook.com"} 2
-# HELP dnscollector_pps Number of packets per second received
-# TYPE dnscollector_pps gauge
-dnscollector_pps 0
-# HELP dnscollector_pps_max Maximum number of packets per second received
-# TYPE dnscollector_pps_max counter
-dnscollector_pps_max 0
-# HELP dnscollector_packets Number of packets
-# TYPE dnscollector_packets counter
-dnscollector_packets 2
-# HELP dnscollector_operations Number of packet, partitioned by operations
-# TYPE dnscollector_operations counter
-dnscollector_operations{operation="CLIENT_QUERY"} 1
-dnscollector_operations{operation="CLIENT_RESPONSE"} 1
-# HELP dnscollector_transports Number of packets, partitioned by transport
-# TYPE dnscollector_transports counter
-dnscollector_transports{transport="UDP"} 2
-# HELP dnscollector_ipproto Number of packets, partitioned by IP protocol
-# TYPE dnscollector_ipproto counter
-dnscollector_ipproto{ip="INET6"} 2
-# HELP dnscollector_qtypes Number of qtypes, partitioned by qtype
-# TYPE dnscollector_qtypes counter
-dnscollector_qtypes{rcode="A"} 2
-# HELP dnscollector_rcodes Number of rcodes, partitioned by rcode type
-# TYPE dnscollector_rcodes counter
-dnscollector_rcodes{rcode="NOERROR"} 2
-# HELP dnscollector_latency Number of queries answered, partitioned by latency interval
-# TYPE dnscollector_latency counter
-dnscollector_latency{latency="<1ms"} 0
-dnscollector_latency{latency="1-10ms"} 1
-dnscollector_latency{latency="10-50ms"} 0
-dnscollector_latency{latency="50-100ms"} 0
-dnscollector_latency{latency="100-1s"} 0
-dnscollector_latency{latency=">1s"} 0
-```
 
 ### Log File
 

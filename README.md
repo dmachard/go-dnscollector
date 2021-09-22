@@ -90,13 +90,14 @@ With this example the collector waits incoming dnstap messages sent by dns serve
 
 The full config file for this use-case can be found [here](example-config/use-case-1.yml)
 
-### Use case 2: collect dnstap stream and get statistics usage (go-dnscollector>prometheus>grafana)
+### Use case 2: collect dnstap stream and get statistics usage (dnscollector>prometheus>grafana)
 
 With this example the collector waits incoming dnstap messages sent by your dns server, then you 
 can watch statistics and metrics on your Grafana dashboard.
 
-The full config file for this use-case can be found [here](example-config/use-case-2.yml)
-The dashboard can be found [here](example-config/grafana-dashboard.json)
+The full config file for this use-case can be found [here](example-config/use-case-2.yml).
+
+The dashboard can be found [here](example-config/grafana-dashboard.json).
 
 ## Benchmark
 

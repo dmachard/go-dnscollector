@@ -1,0 +1,121 @@
+# HELP dnscollector_requesters_total Number of clients
+# TYPE dnscollector_requesters_total counter
+# HELP dnscollector_requesters_top Number of hit per client, partitioned by client ip
+# TYPE dnscollector_requesters_top counter
+# HELP dnscollector_domains_total Number of domains
+# TYPE dnscollector_domains_total counter
+# HELP dnscollector_domains_top Number of hit per domain, partitioned by qname
+# TYPE dnscollector_domains_top counter
+# HELP dnscollector_domains_nx_total Number of unknown domains
+# TYPE dnscollector_domains_nx_total counter
+# HELP dnscollector_domains_nx_top Number of hit per unknown domain, partitioned by qname
+# TYPE dnscollector_domains_nx_top counter
+# HELP dnscollector_domains_slow_total Number of slow domains
+# TYPE dnscollector_domains_slow_total counter
+# HELP dnscollector_domains_slow_top Number of hit per slow domain, partitioned by qname
+# TYPE dnscollector_domains_slow_top counter
+# HELP dnscollector_domains_suspicious_total Number of suspicious domains
+# TYPE dnscollector_domains_suspicious_total counter
+# HELP dnscollector_domains_suspicious_top Number of hit per suspicious domains, partitioned by qname
+# TYPE dnscollector_domains_suspicious_top counter
+# HELP dnscollector_pps Number of packets per second received
+# TYPE dnscollector_pps gauge
+# HELP dnscollector_pps_max Maximum number of packets per second received
+# TYPE dnscollector_pps_max counter
+# HELP dnscollector_packets Number of packets
+# TYPE dnscollector_packets counter
+# HELP dnscollector_operations Number of packet, partitioned by operations
+# TYPE dnscollector_operations counter
+# HELP dnscollector_transports Number of packets, partitioned by transport
+# TYPE dnscollector_transports counter
+# HELP dnscollector_ipproto Number of packets, partitioned by IP protocol
+# TYPE dnscollector_ipproto counter
+# HELP dnscollector_qtypes Number of qtypes, partitioned by qtype
+# TYPE dnscollector_qtypes counter
+# HELP dnscollector_rcodes Number of rcodes, partitioned by rcode type
+# TYPE dnscollector_rcodes counter
+# HELP dnscollector_latency Number of queries answered, partitioned by latency interval
+# TYPE dnscollector_latency counter
+# HELP dnscollector_latency_max Maximum latency observed
+# TYPE dnscollector_latency_max counter
+dnscollector_requesters_total{stream="global"} 3
+dnscollector_requesters_top{stream="global",ip="192.168.1.12"} 152
+dnscollector_requesters_top{stream="global",ip="-"} 106
+dnscollector_requesters_top{stream="global",ip="192.168.1.102"} 8
+dnscollector_domains_total{stream="global"} 26
+dnscollector_domains_top{stream="global",domain="global.vortex.data.trafficmanager.net"} 48
+dnscollector_domains_top{stream="global",domain="asimov.vortex.data.trafficmanager.net"} 32
+dnscollector_domains_top{stream="global",domain="ns1-1.akamaitech.net"} 18
+dnscollector_domains_top{stream="global",domain="incoming.telemetry.mozilla.org"} 16
+dnscollector_domains_top{stream="global",domain="incoming.telemetry.mozilla.org.home"} 16
+dnscollector_domains_top{stream="global",domain="live.github.com"} 10
+dnscollector_domains_top{stream="global",domain="safebrowsing.googleapis.com"} 8
+dnscollector_domains_top{stream="global",domain="github.com"} 8
+dnscollector_domains_top{stream="global",domain="ogs.google.fr"} 8
+dnscollector_domains_top{stream="global",domain="googlehosted.l.googleusercontent.com"} 8
+dnscollector_domains_top{stream="global",domain="www.gstatic.com"} 8
+dnscollector_domains_top{stream="global",domain="scone-pa.clients6.google.com"} 8
+dnscollector_domains_top{stream="global",domain="plus.l.google.com"} 8
+dnscollector_domains_top{stream="global",domain="www3.l.google.com"} 8
+dnscollector_domains_top{stream="global",domain="translate.google.fr"} 8
+dnscollector_domains_top{stream="global",domain="connectivity-check.ubuntu.com"} 8
+dnscollector_domains_top{stream="global",domain="ssl.gstatic.com"} 8
+dnscollector_domains_top{stream="global",domain="fonts.gstatic.com"} 8
+dnscollector_domains_top{stream="global",domain="8.home"} 6
+dnscollector_domains_top{stream="global",domain="play.google.com"} 4
+dnscollector_domains_top{stream="global",domain="rtm.tnt-ea.com"} 4
+dnscollector_domains_top{stream="global",domain="raw.githubusercontent.com"} 4
+dnscollector_domains_top{stream="global",domain="gstaticadssl.l.google.com"} 4
+dnscollector_domains_top{stream="global",domain="www.google.com"} 4
+dnscollector_domains_top{stream="global",domain="antelope-rtm-prod-black-519949175.us-east-1.elb.amazonaws.com"} 2
+dnscollector_domains_top{stream="global",domain="github.githubassets.com"} 2
+dnscollector_domains_nx_total{stream="global"} 3
+dnscollector_domains_nx_top{stream="global",domain="incoming.telemetry.mozilla.org.home"} 8
+dnscollector_domains_nx_top{stream="global",domain="incoming.telemetry.mozilla.org"} 8
+dnscollector_domains_nx_top{stream="global",domain="8.home"} 3
+dnscollector_domains_slow_total{stream="global"} 0
+dnscollector_domains_suspicious_total{stream="global"} 0
+dnscollector_pps{stream="global"} 8
+dnscollector_pps_max{stream="global"} 36
+dnscollector_packets{stream="global"} 266
+dnscollector_operations{stream="global",operation="CLIENT_RESPONSE"} 81
+dnscollector_operations{stream="global",operation="CLIENT_QUERY"} 79
+dnscollector_operations{stream="global",operation="FORWARDER_QUERY"} 53
+dnscollector_operations{stream="global",operation="FORWARDER_RESPONSE"} 53
+dnscollector_transports{stream="global",transport="UDP"} 266
+dnscollector_ipproto{stream="global",ip="INET"} 266
+dnscollector_qtypes{stream="global",qtype="AAAA"} 144
+dnscollector_qtypes{stream="global",qtype="A"} 122
+dnscollector_rcodes{stream="global",rcode="NOERROR"} 247
+dnscollector_rcodes{stream="global",rcode="NXDOMAIN"} 19
+dnscollector_latency{stream="global",latency="<1ms"} 37
+dnscollector_latency{stream="global",latency="1-10ms"} 11
+dnscollector_latency{stream="global",latency="10-50ms"} 33
+dnscollector_latency{stream="global",latency="50-100ms"} 0
+dnscollector_latency{stream="global",latency="100-500ms"} 0
+dnscollector_latency{stream="global",latency="500-1s"} 0
+dnscollector_latency{stream="global",latency=">1s"} 0
+dnscollector_latency_max{stream="global"} 0.04406619071960449
+dnscollector_latency_min{stream="global"} 1.0013580322265625e-05
+dnscollector_qname_len{stream="global",length="<10"} 14
+dnscollector_qname_len{stream="global",length="10-20"} 96
+dnscollector_qname_len{stream="global",length="20-40"} 154
+dnscollector_qname_len{stream="global",length="40-60"} 0
+dnscollector_qname_len{stream="global",length="60-100"} 2
+dnscollector_qname_len{stream="global",length=">100"} 0
+dnscollector_qname_len_max{stream="global"} 61
+dnscollector_qname_len_min{stream="global"} 6
+dnscollector_query_len{stream="global",length="<50b"} 58
+dnscollector_query_len{stream="global",length="50-100b"} 74
+dnscollector_query_len{stream="global",length="100-250b"} 0
+dnscollector_query_len{stream="global",length="250-500b"} 0
+dnscollector_query_len{stream="global",length=">500b"} 0
+dnscollector_query_len_max{stream="global"} 90
+dnscollector_query_len_min{stream="global"} 24
+dnscollector_reply_len{stream="global",length="<50b"} 7
+dnscollector_reply_len{stream="global",length="50-100b"} 71
+dnscollector_reply_len{stream="global",length="100-250b"} 56
+dnscollector_reply_len{stream="global",length="250-500b"} 0
+dnscollector_reply_len{stream="global",length=">500b"} 0
+dnscollector_reply_len_max{stream="global"} 243
+dnscollector_reply_len_min{stream="global"} 24
