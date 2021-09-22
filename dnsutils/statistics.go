@@ -21,6 +21,7 @@ type Counters struct {
 	Latency500_1000 uint64
 	Latency1000_inf uint64
 	LatencyMax      float64
+	LatencyMin      float64
 
 	QnameLength0_10    int
 	QnameLength10_20   int
@@ -30,6 +31,22 @@ type Counters struct {
 	QnameLength100_Inf int
 	QnameLengthMax     int
 	QnameLengthMin     int
+
+	QueryLength0_50    int
+	QueryLength50_100  int
+	QueryLength100_250 int
+	QueryLength250_500 int
+	QueryLength500_Inf int
+	QueryLengthMax     int
+	QueryLengthMin     int
+
+	ReplyLength0_50    int
+	ReplyLength50_100  int
+	ReplyLength100_250 int
+	ReplyLength250_500 int
+	ReplyLength500_Inf int
+	ReplyLengthMax     int
+	ReplyLengthMin     int
 }
 
 type Statistics struct {
@@ -95,6 +112,61 @@ func (c *Statistics) Record(dm DnsMessage) {
 	// global number of packets
 	c.total.Packets++
 
+	// packet size repartition
+	if dm.Type == "query" {
+		if c.total.QueryLengthMin == 0 {
+			c.total.QueryLengthMin = dm.Length
+		}
+
+		// max value
+		if dm.Length > c.total.QueryLengthMax {
+			c.total.QueryLengthMax = dm.Length
+		}
+		// min value
+		if dm.Length < c.total.QueryLengthMin {
+			c.total.QueryLengthMin = dm.Length
+		}
+
+		switch {
+		case dm.Length <= 50:
+			c.total.QueryLength0_50++
+		case 50 < dm.Length && dm.Length <= 100:
+			c.total.QueryLength50_100++
+		case 100 < dm.Length && dm.Length <= 250:
+			c.total.QueryLength100_250++
+		case 250 < dm.Length && dm.Length <= 500:
+			c.total.QueryLength250_500++
+		default:
+			c.total.QueryLength500_Inf++
+		}
+	} else {
+		if c.total.ReplyLengthMin == 0 {
+			c.total.ReplyLengthMin = dm.Length
+		}
+
+		// max value
+		if dm.Length > c.total.ReplyLengthMax {
+			c.total.ReplyLengthMax = dm.Length
+		}
+		// min value
+		if dm.Length < c.total.ReplyLengthMin {
+			c.total.ReplyLengthMin = dm.Length
+		}
+
+		switch {
+		case dm.Length <= 50:
+			c.total.ReplyLength0_50++
+		case 50 < dm.Length && dm.Length <= 100:
+			c.total.ReplyLength50_100++
+		case 100 < dm.Length && dm.Length <= 250:
+			c.total.ReplyLength100_250++
+		case 250 < dm.Length && dm.Length <= 500:
+			c.total.ReplyLength250_500++
+		default:
+			c.total.ReplyLength500_Inf++
+		}
+	}
+
 	// qname length
 	qnameLen := len(dm.Qname)
 	if c.total.QnameLengthMin == 0 {
@@ -148,6 +220,15 @@ func (c *Statistics) Record(dm DnsMessage) {
 	// latency
 	if dm.Latency > c.total.LatencyMax {
 		c.total.LatencyMax = dm.Latency
+	}
+
+	if dm.Latency > 0.0 {
+		if c.total.LatencyMin == 0.0 {
+			c.total.LatencyMin = dm.Latency
+		}
+		if dm.Latency < c.total.LatencyMin {
+			c.total.LatencyMin = dm.Latency
+		}
 	}
 
 	switch {

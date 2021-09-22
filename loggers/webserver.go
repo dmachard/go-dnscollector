@@ -248,16 +248,35 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%s_latency{stream=\"%s\",latency=\"500-1s\"} %d\n", suffix, stream, counters.Latency500_1000)
 			fmt.Fprintf(w, "%s_latency{stream=\"%s\",latency=\">1s\"} %d\n", suffix, stream, counters.Latency1000_inf)
 			fmt.Fprintf(w, "%s_latency_max{stream=\"%s\"} %v\n", suffix, stream, counters.LatencyMax)
+			fmt.Fprintf(w, "%s_latency_min{stream=\"%s\"} %v\n", suffix, stream, counters.LatencyMin)
 
 			// qname length repartition
-			fmt.Fprintf(w, "%s_qname_size{stream=\"%s\",length=\"<10\"} %d\n", suffix, stream, counters.QnameLength0_10)
-			fmt.Fprintf(w, "%s_qname_size{stream=\"%s\",length=\"10-20\"} %d\n", suffix, stream, counters.QnameLength10_20)
-			fmt.Fprintf(w, "%s_qname_size{stream=\"%s\",length=\"20-40\"} %d\n", suffix, stream, counters.QnameLength20_40)
-			fmt.Fprintf(w, "%s_qname_size{stream=\"%s\",length=\"40-60\"} %d\n", suffix, stream, counters.QnameLength40_60)
-			fmt.Fprintf(w, "%s_qname_size{stream=\"%s\",length=\"60-100\"} %d\n", suffix, stream, counters.QnameLength60_100)
-			fmt.Fprintf(w, "%s_qname_size{stream=\"%s\",length=\">100\"} %d\n", suffix, stream, counters.QnameLength100_Inf)
-			fmt.Fprintf(w, "%s_qname_size_max{stream=\"%s\"} %v\n", suffix, stream, counters.QnameLengthMax)
-			fmt.Fprintf(w, "%s_qname_size_min{stream=\"%s\"} %v\n", suffix, stream, counters.QnameLengthMin)
+			fmt.Fprintf(w, "%s_qname_len{stream=\"%s\",length=\"<10\"} %d\n", suffix, stream, counters.QnameLength0_10)
+			fmt.Fprintf(w, "%s_qname_len{stream=\"%s\",length=\"10-20\"} %d\n", suffix, stream, counters.QnameLength10_20)
+			fmt.Fprintf(w, "%s_qname_len{stream=\"%s\",length=\"20-40\"} %d\n", suffix, stream, counters.QnameLength20_40)
+			fmt.Fprintf(w, "%s_qname_len{stream=\"%s\",length=\"40-60\"} %d\n", suffix, stream, counters.QnameLength40_60)
+			fmt.Fprintf(w, "%s_qname_len{stream=\"%s\",length=\"60-100\"} %d\n", suffix, stream, counters.QnameLength60_100)
+			fmt.Fprintf(w, "%s_qname_len{stream=\"%s\",length=\">100\"} %d\n", suffix, stream, counters.QnameLength100_Inf)
+			fmt.Fprintf(w, "%s_qname_len_max{stream=\"%s\"} %v\n", suffix, stream, counters.QnameLengthMax)
+			fmt.Fprintf(w, "%s_qname_len_min{stream=\"%s\"} %v\n", suffix, stream, counters.QnameLengthMin)
+
+			// query length repartition
+			fmt.Fprintf(w, "%s_query_len{stream=\"%s\",length=\"<50b\"} %d\n", suffix, stream, counters.QueryLength0_50)
+			fmt.Fprintf(w, "%s_query_len{stream=\"%s\",length=\"50-100b\"} %d\n", suffix, stream, counters.QueryLength50_100)
+			fmt.Fprintf(w, "%s_query_len{stream=\"%s\",length=\"100-250b\"} %d\n", suffix, stream, counters.QueryLength100_250)
+			fmt.Fprintf(w, "%s_query_len{stream=\"%s\",length=\"250-500b\"} %d\n", suffix, stream, counters.QueryLength250_500)
+			fmt.Fprintf(w, "%s_query_len{stream=\"%s\",length=\">500b\"} %d\n", suffix, stream, counters.QueryLength500_Inf)
+			fmt.Fprintf(w, "%s_query_len_max{stream=\"%s\"} %v\n", suffix, stream, counters.QueryLengthMax)
+			fmt.Fprintf(w, "%s_query_len_min{stream=\"%s\"} %v\n", suffix, stream, counters.QueryLengthMin)
+
+			// reply length repartition
+			fmt.Fprintf(w, "%s_reply_len{stream=\"%s\",length=\"<50b\"} %d\n", suffix, stream, counters.ReplyLength0_50)
+			fmt.Fprintf(w, "%s_reply_len{stream=\"%s\",length=\"50-100b\"} %d\n", suffix, stream, counters.ReplyLength50_100)
+			fmt.Fprintf(w, "%s_reply_len{stream=\"%s\",length=\"100-250b\"} %d\n", suffix, stream, counters.ReplyLength100_250)
+			fmt.Fprintf(w, "%s_reply_len{stream=\"%s\",length=\"250-500b\"} %d\n", suffix, stream, counters.ReplyLength250_500)
+			fmt.Fprintf(w, "%s_reply_len{stream=\"%s\",length=\">500b\"} %d\n", suffix, stream, counters.ReplyLength500_Inf)
+			fmt.Fprintf(w, "%s_reply_len_max{stream=\"%s\"} %v\n", suffix, stream, counters.ReplyLengthMax)
+			fmt.Fprintf(w, "%s_reply_len_min{stream=\"%s\"} %v\n", suffix, stream, counters.ReplyLengthMin)
 		}
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
