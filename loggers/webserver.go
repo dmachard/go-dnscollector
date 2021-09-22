@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/subprocessors"
 	"github.com/dmachard/go-logger"
 )
 
@@ -21,8 +22,7 @@ type Webserver struct {
 	channel    chan dnsutils.DnsMessage
 	config     *dnsutils.Config
 	logger     *logger.Logger
-	//stats      *dnsutils.Statistics
-	stats *dnsutils.GlobalStats
+	stats      *subprocessors.StatsStreams
 }
 
 func NewWebserver(config *dnsutils.Config, logger *logger.Logger) *Webserver {
@@ -38,8 +38,7 @@ func NewWebserver(config *dnsutils.Config, logger *logger.Logger) *Webserver {
 	o.ReadConfig()
 
 	// init engine to compute statistics
-	//o.stats = dnsutils.NewStatistics(config.Loggers.WebServer.TopMaxItems)
-	o.stats = dnsutils.NewGlobalStats(config.Loggers.WebServer.TopMaxItems)
+	o.stats = subprocessors.NewStreamsStats(config)
 	return o
 }
 
@@ -282,6 +281,7 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
+
 func (s *Webserver) topRequestersHandler(w http.ResponseWriter, r *http.Request) {
 	if !s.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)

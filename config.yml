@@ -60,6 +60,27 @@ collectors:
 
 # settings for subprocessors
 subprocessors:
+  # Statistics engine
+  statistics:
+    # default number of items on top 
+    top-max-items: 100
+    # expected common qtype list, other will be considered as suspicious
+    common-qtypes:
+      - A
+      - AAAA
+      - CNAME
+      - TXT
+      - PTR
+      - NAPTR
+      - DNSKEY
+      - SRV
+    # a length greater than this value will be considered as suspicious
+    threshold-qname-len: 80
+    # a size greater than this value will be considered as suspicious
+    # value in bytes
+    threshold-packet-len: 1000
+    # threshold to set a domain considered as slow, value in second
+    threshold-slow: 0.5
 
   # IP-Addresses are anonymities by zeroing the host-part of an address.
   anonymize-ip: false
@@ -128,8 +149,6 @@ loggers:
     listen-ip: 0.0.0.0
     # listening port
     listen-port: 8080
-    # default number of items to return
-    top-max-items: 100
     # default login
     basic-auth-login: admin
     # default password

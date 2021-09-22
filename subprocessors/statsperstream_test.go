@@ -1,11 +1,16 @@
-package dnsutils
+package subprocessors
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/dmachard/go-dnscollector/dnsutils"
+)
 
 func TestDnsStatisticsRecord(t *testing.T) {
-	stats := NewStatistics(10)
+	config := dnsutils.GetFakeConfig()
+	stats := NewStatsPerStream(config)
 
-	dm := DnsMessage{}
+	dm := dnsutils.DnsMessage{}
 	dm.Init()
 	dm.Type = "query"
 	dm.Family = "INET"

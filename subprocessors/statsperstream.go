@@ -1,8 +1,9 @@
-package dnsutils
+package subprocessors
 
 import (
 	"sync"
 
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-topmap"
 )
 
@@ -49,7 +50,9 @@ type Counters struct {
 	ReplyLengthMin     int
 }
 
-type Statistics struct {
+type StatsPerStream struct {
+	config *dnsutils.Config
+
 	total               Counters
 	qnames              map[string]int
 	qnamestop           *topmap.TopMap
@@ -72,42 +75,50 @@ type Statistics struct {
 	ipproto             map[string]int
 	ipprototop          *topmap.TopMap
 	commonQtypes        map[string]bool
-	rw                  sync.RWMutex
+	sync.RWMutex
 }
 
-func NewStatistics(maxitems int) *Statistics {
-	c := &Statistics{
+func NewStatsPerStream(config *dnsutils.Config) *StatsPerStream {
+	c := &StatsPerStream{
+		config:              config,
 		total:               Counters{},
 		qnames:              make(map[string]int),
-		qnamestop:           topmap.NewTopMap(maxitems),
+		qnamestop:           topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 		qnamesNxd:           make(map[string]int),
-		qnamesNxdtop:        topmap.NewTopMap(maxitems),
+		qnamesNxdtop:        topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 		qnamesSlow:          make(map[string]int),
-		qnamesSlowtop:       topmap.NewTopMap(maxitems),
+		qnamesSlowtop:       topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 		qnamesSuspicious:    make(map[string]int),
-		qnamesSuspicioustop: topmap.NewTopMap(maxitems),
+		qnamesSuspicioustop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 		clients:             make(map[string]int),
-		clientstop:          topmap.NewTopMap(maxitems),
+		clientstop:          topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 		rrtypes:             make(map[string]int),
-		rrtypestop:          topmap.NewTopMap(maxitems),
+		rrtypestop:          topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 		rcodes:              make(map[string]int),
-		rcodestop:           topmap.NewTopMap(maxitems),
+		rcodestop:           topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 		operations:          make(map[string]int),
-		operationstop:       topmap.NewTopMap(maxitems),
+		operationstop:       topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 		transports:          make(map[string]int),
-		transportstop:       topmap.NewTopMap(maxitems),
+		transportstop:       topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 		ipproto:             make(map[string]int),
-		ipprototop:          topmap.NewTopMap(maxitems),
+		ipprototop:          topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 		commonQtypes:        make(map[string]bool),
 	}
-	c.commonQtypes = map[string]bool{"A": true, "AAAA": true, "TXT": true,
-		"CNAME": true, "PTR": true, "NAPTR": true,
-		"DNSKEY": true, "SRV": true}
+
+	c.ReadConfig()
+
 	return c
 }
 
-func (c *Statistics) Record(dm DnsMessage) {
-	c.rw.Lock()
+func (c *StatsPerStream) ReadConfig() {
+	for _, v := range c.config.Subprocessors.Statistics.CommonQtypes {
+		c.commonQtypes[v] = true
+	}
+}
+
+func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
+	c.Lock()
+	defer c.Unlock()
 
 	// global number of packets
 	c.total.Packets++
@@ -199,7 +210,7 @@ func (c *Statistics) Record(dm DnsMessage) {
 
 	// search some suspicious domains regarding the length and
 	// the qtype requested
-	if qnameLen >= 80 {
+	if qnameLen >= c.config.Subprocessors.Statistics.ThresholdQnameLen {
 		if _, ok := c.qnamesSuspicious[dm.Qname]; !ok {
 			c.qnamesSuspicious[dm.Qname] = 1
 		} else {
@@ -209,6 +220,15 @@ func (c *Statistics) Record(dm DnsMessage) {
 	}
 
 	if _, found := c.commonQtypes[dm.Qtype]; !found {
+		if _, ok := c.qnamesSuspicious[dm.Qname]; !ok {
+			c.qnamesSuspicious[dm.Qname] = 1
+		} else {
+			c.qnamesSuspicious[dm.Qname]++
+		}
+		c.qnamesSuspicioustop.Record(dm.Qname, c.qnamesSuspicious[dm.Qname])
+	}
+
+	if dm.Length >= c.config.Subprocessors.Statistics.ThresholdPacketLen {
 		if _, ok := c.qnamesSuspicious[dm.Qname]; !ok {
 			c.qnamesSuspicious[dm.Qname] = 1
 		} else {
@@ -283,7 +303,7 @@ func (c *Statistics) Record(dm DnsMessage) {
 		c.qnamesNxdtop.Record(dm.Qname, c.qnamesNxd[dm.Qname])
 	}
 
-	if dm.Latency > 0.5 {
+	if dm.Latency > c.config.Subprocessors.Statistics.ThresholdSlow {
 		if _, ok := c.qnamesSlow[dm.Qname]; !ok {
 			c.qnamesSlow[dm.Qname] = 1
 		} else {
@@ -324,11 +344,11 @@ func (c *Statistics) Record(dm DnsMessage) {
 	}
 	c.operationstop.Record(dm.Operation, c.operations[dm.Operation])
 
-	c.rw.Unlock()
 }
 
-func (c *Statistics) Compute() {
-	c.rw.Lock()
+func (c *StatsPerStream) Compute() {
+	c.Lock()
+	defer c.Unlock()
 
 	// compute pps
 	if c.total.Packets > 0 && c.total.PacketsPrev > 0 {
@@ -338,308 +358,116 @@ func (c *Statistics) Compute() {
 	if c.total.Pps > c.total.PpsMax {
 		c.total.PpsMax = c.total.Pps
 	}
-
-	c.rw.Unlock()
 }
 
-func (c *Statistics) GetCounters() (ret Counters) {
-	c.rw.RLock()
-	ret = c.total
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTotalDomains() (ret int) {
-	c.rw.RLock()
-	ret = len(c.qnames)
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTotalNxdomains() (ret int) {
-	c.rw.RLock()
-	ret = len(c.qnamesNxd)
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTotalSlowdomains() (ret int) {
-	c.rw.RLock()
-	ret = len(c.qnamesSlow)
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTotalSuspiciousdomains() (ret int) {
-	c.rw.RLock()
-	ret = len(c.qnamesSuspicious)
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTotalClients() (ret int) {
-	c.rw.RLock()
-	ret = len(c.clients)
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTopQnames() (ret []topmap.TopMapItem) {
-	c.rw.RLock()
-	ret = c.qnamestop.Get()
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTopNxdomains() (ret []topmap.TopMapItem) {
-	c.rw.RLock()
-	ret = c.qnamesNxdtop.Get()
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTopSlowdomains() (ret []topmap.TopMapItem) {
-	c.rw.RLock()
-	ret = c.qnamesSlowtop.Get()
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTopSuspiciousdomains() (ret []topmap.TopMapItem) {
-	c.rw.RLock()
-	ret = c.qnamesSuspicioustop.Get()
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTopClients() (ret []topmap.TopMapItem) {
-	c.rw.RLock()
-	ret = c.clientstop.Get()
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTopRcodes() (ret []topmap.TopMapItem) {
-	c.rw.RLock()
-	ret = c.rcodestop.Get()
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTopRrtypes() (ret []topmap.TopMapItem) {
-	c.rw.RLock()
-	ret = c.rrtypestop.Get()
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTopOperations() (ret []topmap.TopMapItem) {
-	c.rw.RLock()
-	ret = c.operationstop.Get()
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTopTransports() (ret []topmap.TopMapItem) {
-	c.rw.RLock()
-	ret = c.transportstop.Get()
-	c.rw.RUnlock()
-	return
-}
-
-func (c *Statistics) GetTopIpProto() (ret []topmap.TopMapItem) {
-	c.rw.RLock()
-	ret = c.ipprototop.Get()
-	c.rw.RUnlock()
-	return
-}
-
-type GlobalStats struct {
-	stats    map[string]*Statistics
-	maxitems int
-	sync.RWMutex
-}
-
-func NewGlobalStats(maxitems int) *GlobalStats {
-	c := &GlobalStats{
-		stats: make(map[string]*Statistics),
-	}
-	c.maxitems = maxitems
-	c.stats["global"] = NewStatistics(maxitems)
-	return c
-}
-
-func (c *GlobalStats) Record(dm DnsMessage) {
-	c.Lock()
-	defer c.Unlock()
-
-	// global record
-	c.stats["global"].Record(dm)
-
-	// record for each ident
-	if _, ok := c.stats[dm.Identity]; !ok {
-		c.stats[dm.Identity] = NewStatistics(c.maxitems)
-	}
-	c.stats[dm.Identity].Record(dm)
-
-}
-
-func (c *GlobalStats) Streams() []string {
+func (c *StatsPerStream) GetCounters() (ret Counters) {
 	c.RLock()
 	defer c.RUnlock()
 
-	ret := []string{}
-	for k, _ := range c.stats {
-		ret = append(ret, k)
-	}
-	return ret
+	return c.total
 }
 
-func (c *GlobalStats) Compute() {
-	c.Lock()
-	for _, v := range c.stats {
-		v.Compute()
-	}
-	c.Unlock()
-}
-
-func (c *GlobalStats) GetCounters(identity string) (ret Counters) {
+func (c *StatsPerStream) GetTotalDomains() (ret int) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.stats[identity].GetCounters()
+	return len(c.qnames)
 }
 
-func (c *GlobalStats) GetTotalDomains(identity string) (ret int) {
+func (c *StatsPerStream) GetTotalNxdomains() (ret int) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.stats[identity].GetTotalDomains()
+	return len(c.qnamesNxd)
 }
 
-func (c *GlobalStats) GetTotalNxdomains(identity string) (ret int) {
+func (c *StatsPerStream) GetTotalSlowdomains() (ret int) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.stats[identity].GetTotalNxdomains()
+	return len(c.qnamesSlow)
 }
 
-func (c *GlobalStats) GetTotalSlowdomains(identity string) (ret int) {
+func (c *StatsPerStream) GetTotalSuspiciousdomains() (ret int) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.stats[identity].GetTotalSlowdomains()
+	return len(c.qnamesSuspicious)
 }
 
-func (c *GlobalStats) GetTotalSuspiciousdomains(identity string) (ret int) {
+func (c *StatsPerStream) GetTotalClients() (ret int) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.stats[identity].GetTotalSuspiciousdomains()
+	return len(c.clients)
 }
 
-func (c *GlobalStats) GetTotalClients(identity string) (ret int) {
+func (c *StatsPerStream) GetTopQnames() (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	v, found := c.stats[identity]
-	if !found {
-		return 0
-	}
-	return v.GetTotalClients()
+	return c.qnamestop.Get()
 }
 
-func (c *GlobalStats) GetTopQnames(identity string) (ret []topmap.TopMapItem) {
+func (c *StatsPerStream) GetTopNxdomains() (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	v, found := c.stats[identity]
-	if !found {
-		return []topmap.TopMapItem{}
-	}
-
-	return v.GetTopQnames()
+	return c.qnamesNxdtop.Get()
 }
 
-func (c *GlobalStats) GetTopNxdomains(identity string) (ret []topmap.TopMapItem) {
+func (c *StatsPerStream) GetTopSlowdomains() (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	v, found := c.stats[identity]
-	if !found {
-		return []topmap.TopMapItem{}
-	}
-
-	return v.GetTopNxdomains()
+	return c.qnamesSlowtop.Get()
 }
 
-func (c *GlobalStats) GetTopSlowdomains(identity string) (ret []topmap.TopMapItem) {
+func (c *StatsPerStream) GetTopSuspiciousdomains() (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	v, found := c.stats[identity]
-	if !found {
-		return []topmap.TopMapItem{}
-	}
-
-	return v.GetTopSlowdomains()
+	return c.qnamesSuspicioustop.Get()
 }
 
-func (c *GlobalStats) GetTopSuspiciousdomains(identity string) (ret []topmap.TopMapItem) {
+func (c *StatsPerStream) GetTopClients() (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	v, found := c.stats[identity]
-	if !found {
-		return []topmap.TopMapItem{}
-	}
-
-	return v.GetTopSuspiciousdomains()
+	return c.clientstop.Get()
 }
 
-func (c *GlobalStats) GetTopClients(identity string) (ret []topmap.TopMapItem) {
+func (c *StatsPerStream) GetTopRcodes() (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	v, found := c.stats[identity]
-	if !found {
-		return []topmap.TopMapItem{}
-	}
-
-	return v.GetTopClients()
+	return c.rcodestop.Get()
 }
 
-func (c *GlobalStats) GetTopRcodes(identity string) (ret []topmap.TopMapItem) {
+func (c *StatsPerStream) GetTopRrtypes() (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.stats[identity].GetTopRcodes()
+	return c.rrtypestop.Get()
 }
 
-func (c *GlobalStats) GetTopRrtypes(identity string) (ret []topmap.TopMapItem) {
+func (c *StatsPerStream) GetTopOperations() (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.stats[identity].GetTopRrtypes()
+	return c.operationstop.Get()
 }
 
-func (c *GlobalStats) GetTopOperations(identity string) (ret []topmap.TopMapItem) {
+func (c *StatsPerStream) GetTopTransports() (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.stats[identity].GetTopOperations()
+	return c.transportstop.Get()
 }
 
-func (c *GlobalStats) GetTopTransports(identity string) (ret []topmap.TopMapItem) {
+func (c *StatsPerStream) GetTopIpProto() (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.stats[identity].GetTopTransports()
-}
-
-func (c *GlobalStats) GetTopIpProto(identity string) (ret []topmap.TopMapItem) {
-	c.RLock()
-	defer c.RUnlock()
-
-	return c.stats[identity].GetTopIpProto()
+	return c.ipprototop.Get()
 }

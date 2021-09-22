@@ -42,6 +42,13 @@ type Config struct {
 	} `yaml:"collectors"`
 
 	Subprocessors struct {
+		Statistics struct {
+			TopMaxItems        int      `yaml:"top-max-items"`
+			ThresholdQnameLen  int      `yaml:"threshold-qname-len"`
+			ThresholdPacketLen int      `yaml:"threshold-packet-len"`
+			ThresholdSlow      float64  `yaml:"threshold-slow"`
+			CommonQtypes       []string `yaml:"common-qtypes,flow"`
+		} `yaml:"statistics"`
 		AnonymizeIP bool   `yaml:"anonymize-ip"`
 		CacheTtl    int    `yaml:"cache-ttl"`
 		ServerId    string `yaml:"server-id"`
@@ -66,7 +73,6 @@ type Config struct {
 			Enable           bool   `yaml:"enable"`
 			ListenIP         string `yaml:"listen-ip"`
 			ListenPort       int    `yaml:"listen-port"`
-			TopMaxItems      int    `yaml:"top-max-items"`
 			BasicAuthLogin   string `yaml:"basic-auth-login"`
 			BasicAuthPwd     string `yaml:"basic-auth-pwd"`
 			TlsSupport       bool   `yaml:"tls-support"`
@@ -169,6 +175,12 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnsSniffer.CaptureDnsReplies = true
 
 	// Subprocessors
+	c.Subprocessors.Statistics.TopMaxItems = 100
+	c.Subprocessors.Statistics.ThresholdQnameLen = 70
+	c.Subprocessors.Statistics.ThresholdPacketLen = 800
+	c.Subprocessors.Statistics.ThresholdSlow = 0.5
+	c.Subprocessors.Statistics.CommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR", "NAPTR", "DNSKEY", "SRV"}
+
 	c.Subprocessors.AnonymizeIP = false
 
 	c.Subprocessors.CacheTtl = 10
@@ -209,7 +221,6 @@ func (c *Config) SetDefault() {
 	c.Loggers.WebServer.Enable = false
 	c.Loggers.WebServer.ListenIP = "127.0.0.1"
 	c.Loggers.WebServer.ListenPort = 8080
-	c.Loggers.WebServer.TopMaxItems = 100
 	c.Loggers.WebServer.BasicAuthLogin = "admin"
 	c.Loggers.WebServer.BasicAuthPwd = "changeme"
 	c.Loggers.WebServer.TlsSupport = false
