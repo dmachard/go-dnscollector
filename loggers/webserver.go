@@ -2,6 +2,7 @@ package loggers
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -117,12 +118,19 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 
 			counters := s.stats.GetCounters(stream)
 			totalClients := s.stats.GetTotalClients(stream)
+
 			totalDomains := s.stats.GetTotalDomains(stream)
 			topDomains := s.stats.GetTopQnames(stream)
+
 			totalNxdomains := s.stats.GetTotalNxdomains(stream)
 			topNxdomains := s.stats.GetTopNxdomains(stream)
+
 			totalSlowdomains := s.stats.GetTotalSlowdomains(stream)
 			topSlowdomains := s.stats.GetTopSlowdomains(stream)
+
+			totalSuspiciousdomains := s.stats.GetTotalSuspiciousdomains(stream)
+			topSuspiciousdomains := s.stats.GetTopSuspiciousdomains(stream)
+
 			topClients := s.stats.GetTopClients(stream)
 			topRcodes := s.stats.GetTopRcodes(stream)
 			topRrtypes := s.stats.GetTopRrtypes(stream)
@@ -131,22 +139,31 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			topOperations := s.stats.GetTopOperations(stream)
 
 			// docs
-			fmt.Fprintf(w, "# HELP %s_clients_total Number of clients\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_clients_total counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_clients_top Number of hit per client, partitioned by client ip\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_clients_top counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_requesters_total Number of clients\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_requesters_total counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_requesters_top Number of hit per client, partitioned by client ip\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_requesters_top counter\n", suffix)
+
 			fmt.Fprintf(w, "# HELP %s_domains_total Number of domains\n", suffix)
 			fmt.Fprintf(w, "# TYPE %s_domains_total counter\n", suffix)
 			fmt.Fprintf(w, "# HELP %s_domains_top Number of hit per domain, partitioned by qname\n", suffix)
 			fmt.Fprintf(w, "# TYPE %s_domains_top counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_nxdomains_total Number of unknown domains\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_nxdomains_total counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_nxdomains_top Number of hit per unknown domain, partitioned by qname\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_nxdomains_top counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_slowdomains_total Number of slow domains\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_slowdomains_total counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_slowdomains_top Number of hit per slow domain, partitioned by qname\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_slowdomains_top counter\n", suffix)
+
+			fmt.Fprintf(w, "# HELP %s_domains_nx_total Number of unknown domains\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_domains_nx_total counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_domains_nx_top Number of hit per unknown domain, partitioned by qname\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_domains_nx_top counter\n", suffix)
+
+			fmt.Fprintf(w, "# HELP %s_domains_slow_total Number of slow domains\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_domains_slow_total counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_domains_slow_top Number of hit per slow domain, partitioned by qname\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_domains_slow_top counter\n", suffix)
+
+			fmt.Fprintf(w, "# HELP %s_domains_suspicious_total Number of suspicious domains\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_domains_suspicious_total counter\n", suffix)
+			fmt.Fprintf(w, "# HELP %s_domains_suspicious_top Number of hit per suspicious domains, partitioned by qname\n", suffix)
+			fmt.Fprintf(w, "# TYPE %s_domains_suspicious_top counter\n", suffix)
+
 			fmt.Fprintf(w, "# HELP %s_pps Number of packets per second received\n", suffix)
 			fmt.Fprintf(w, "# TYPE %s_pps gauge\n", suffix)
 			fmt.Fprintf(w, "# HELP %s_pps_max Maximum number of packets per second received\n", suffix)
@@ -169,9 +186,9 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "# TYPE %s_latency_max counter\n", suffix)
 
 			// total uniq clients
-			fmt.Fprintf(w, "%s_clients_total{stream=\"%s\"} %d\n", suffix, stream, totalClients)
+			fmt.Fprintf(w, "%s_requesters_total{stream=\"%s\"} %d\n", suffix, stream, totalClients)
 			for _, v := range topClients {
-				fmt.Fprintf(w, "%s_clients_top{stream=\"%s\",ip=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_requesters_top{stream=\"%s\",ip=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
 
 			// total uniq domains
@@ -179,13 +196,17 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			for _, v := range topDomains {
 				fmt.Fprintf(w, "%s_domains_top{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
-			fmt.Fprintf(w, "%s_nxdomains_total{stream=\"%s\"} %d\n", suffix, stream, totalNxdomains)
+			fmt.Fprintf(w, "%s_domains_nx_total{stream=\"%s\"} %d\n", suffix, stream, totalNxdomains)
 			for _, v := range topNxdomains {
-				fmt.Fprintf(w, "%s_nxdomains_top{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_domains_nx_top{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
-			fmt.Fprintf(w, "%s_slowdomains_total{stream=\"%s\"} %d\n", suffix, stream, totalSlowdomains)
+			fmt.Fprintf(w, "%s_domains_slow_total{stream=\"%s\"} %d\n", suffix, stream, totalSlowdomains)
 			for _, v := range topSlowdomains {
-				fmt.Fprintf(w, "%s_slowdomains_top{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_domains_slow_top{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+			}
+			fmt.Fprintf(w, "%s_domains_suspicious_total{stream=\"%s\"} %d\n", suffix, stream, totalSuspiciousdomains)
+			for _, v := range topSuspiciousdomains {
+				fmt.Fprintf(w, "%s_domains_suspicious_top{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
 
 			// pps
@@ -227,7 +248,121 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%s_latency{stream=\"%s\",latency=\"500-1s\"} %d\n", suffix, stream, counters.Latency500_1000)
 			fmt.Fprintf(w, "%s_latency{stream=\"%s\",latency=\">1s\"} %d\n", suffix, stream, counters.Latency1000_inf)
 			fmt.Fprintf(w, "%s_latency_max{stream=\"%s\"} %v\n", suffix, stream, counters.LatencyMax)
+
+			// qname length repartition
+			fmt.Fprintf(w, "%s_qname_size{stream=\"%s\",length=\"<10\"} %d\n", suffix, stream, counters.QnameLength0_10)
+			fmt.Fprintf(w, "%s_qname_size{stream=\"%s\",length=\"10-20\"} %d\n", suffix, stream, counters.QnameLength10_20)
+			fmt.Fprintf(w, "%s_qname_size{stream=\"%s\",length=\"20-40\"} %d\n", suffix, stream, counters.QnameLength20_40)
+			fmt.Fprintf(w, "%s_qname_size{stream=\"%s\",length=\"40-60\"} %d\n", suffix, stream, counters.QnameLength40_60)
+			fmt.Fprintf(w, "%s_qname_size{stream=\"%s\",length=\"60-100\"} %d\n", suffix, stream, counters.QnameLength60_100)
+			fmt.Fprintf(w, "%s_qname_size{stream=\"%s\",length=\">100\"} %d\n", suffix, stream, counters.QnameLength100_Inf)
+			fmt.Fprintf(w, "%s_qname_size_max{stream=\"%s\"} %v\n", suffix, stream, counters.QnameLengthMax)
+			fmt.Fprintf(w, "%s_qname_size_min{stream=\"%s\"} %v\n", suffix, stream, counters.QnameLengthMin)
 		}
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+func (s *Webserver) topRequestersHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case http.MethodGet:
+		stream, ok := r.URL.Query()["stream"]
+		if !ok || len(stream) < 1 {
+			stream = []string{"global"}
+		}
+		t := s.stats.GetTopClients(stream[0])
+		json.NewEncoder(w).Encode(t)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Webserver) topAllDomainsHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case http.MethodGet:
+		stream, ok := r.URL.Query()["stream"]
+		if !ok || len(stream) < 1 {
+			stream = []string{"global"}
+		}
+		t := s.stats.GetTopQnames(stream[0])
+		json.NewEncoder(w).Encode(t)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Webserver) topNxdDomainsHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case http.MethodGet:
+		stream, ok := r.URL.Query()["stream"]
+		if !ok || len(stream) < 1 {
+			stream = []string{"global"}
+		}
+		t := s.stats.GetTopNxdomains(stream[0])
+		json.NewEncoder(w).Encode(t)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Webserver) topSlowDomainsHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case http.MethodGet:
+		stream, ok := r.URL.Query()["stream"]
+		if !ok || len(stream) < 1 {
+			stream = []string{"global"}
+		}
+		t := s.stats.GetTopSlowdomains(stream[0])
+		json.NewEncoder(w).Encode(t)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Webserver) topSuspiciousDomainsHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case http.MethodGet:
+		stream, ok := r.URL.Query()["stream"]
+		if !ok || len(stream) < 1 {
+			stream = []string{"global"}
+		}
+		t := s.stats.GetTopSuspiciousdomains(stream[0])
+		json.NewEncoder(w).Encode(t)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -239,6 +374,11 @@ func (s *Webserver) ListenAndServe() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/metrics", s.metricsHandler)
 	mux.HandleFunc("/reset", s.resetHandler)
+	mux.HandleFunc("/top/requesters", s.topRequestersHandler)
+	mux.HandleFunc("/top/domains", s.topAllDomainsHandler)
+	mux.HandleFunc("/top/domains/nxd", s.topNxdDomainsHandler)
+	mux.HandleFunc("/top/domains/slow", s.topSlowDomainsHandler)
+	mux.HandleFunc("/top/domains/suspicious", s.topSuspiciousDomainsHandler)
 
 	var err error
 	var listener net.Listener

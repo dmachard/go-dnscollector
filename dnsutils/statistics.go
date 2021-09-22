@@ -25,56 +25,67 @@ type Counters struct {
 	QnameLength0_10    int
 	QnameLength10_20   int
 	QnameLength20_40   int
-	QnameLength40_100  int
+	QnameLength40_60   int
+	QnameLength60_100  int
 	QnameLength100_Inf int
 	QnameLengthMax     int
+	QnameLengthMin     int
 }
 
 type Statistics struct {
-	total         Counters
-	qnames        map[string]int
-	qnamestop     *topmap.TopMap
-	qnamesNxd     map[string]int
-	qnamesNxdtop  *topmap.TopMap
-	qnamesSlow    map[string]int
-	qnamesSlowtop *topmap.TopMap
-	clients       map[string]int
-	clientstop    *topmap.TopMap
-	rrtypes       map[string]int
-	rrtypestop    *topmap.TopMap
-	rcodes        map[string]int
-	rcodestop     *topmap.TopMap
-	operations    map[string]int
-	operationstop *topmap.TopMap
-	transports    map[string]int
-	transportstop *topmap.TopMap
-	ipproto       map[string]int
-	ipprototop    *topmap.TopMap
-	rw            sync.RWMutex
+	total               Counters
+	qnames              map[string]int
+	qnamestop           *topmap.TopMap
+	qnamesNxd           map[string]int
+	qnamesNxdtop        *topmap.TopMap
+	qnamesSlow          map[string]int
+	qnamesSlowtop       *topmap.TopMap
+	qnamesSuspicious    map[string]int
+	qnamesSuspicioustop *topmap.TopMap
+	clients             map[string]int
+	clientstop          *topmap.TopMap
+	rrtypes             map[string]int
+	rrtypestop          *topmap.TopMap
+	rcodes              map[string]int
+	rcodestop           *topmap.TopMap
+	operations          map[string]int
+	operationstop       *topmap.TopMap
+	transports          map[string]int
+	transportstop       *topmap.TopMap
+	ipproto             map[string]int
+	ipprototop          *topmap.TopMap
+	commonQtypes        map[string]bool
+	rw                  sync.RWMutex
 }
 
 func NewStatistics(maxitems int) *Statistics {
 	c := &Statistics{
-		total:         Counters{},
-		qnames:        make(map[string]int),
-		qnamestop:     topmap.NewTopMap(maxitems),
-		qnamesNxd:     make(map[string]int),
-		qnamesNxdtop:  topmap.NewTopMap(maxitems),
-		qnamesSlow:    make(map[string]int),
-		qnamesSlowtop: topmap.NewTopMap(maxitems),
-		clients:       make(map[string]int),
-		clientstop:    topmap.NewTopMap(maxitems),
-		rrtypes:       make(map[string]int),
-		rrtypestop:    topmap.NewTopMap(maxitems),
-		rcodes:        make(map[string]int),
-		rcodestop:     topmap.NewTopMap(maxitems),
-		operations:    make(map[string]int),
-		operationstop: topmap.NewTopMap(maxitems),
-		transports:    make(map[string]int),
-		transportstop: topmap.NewTopMap(maxitems),
-		ipproto:       make(map[string]int),
-		ipprototop:    topmap.NewTopMap(maxitems),
+		total:               Counters{},
+		qnames:              make(map[string]int),
+		qnamestop:           topmap.NewTopMap(maxitems),
+		qnamesNxd:           make(map[string]int),
+		qnamesNxdtop:        topmap.NewTopMap(maxitems),
+		qnamesSlow:          make(map[string]int),
+		qnamesSlowtop:       topmap.NewTopMap(maxitems),
+		qnamesSuspicious:    make(map[string]int),
+		qnamesSuspicioustop: topmap.NewTopMap(maxitems),
+		clients:             make(map[string]int),
+		clientstop:          topmap.NewTopMap(maxitems),
+		rrtypes:             make(map[string]int),
+		rrtypestop:          topmap.NewTopMap(maxitems),
+		rcodes:              make(map[string]int),
+		rcodestop:           topmap.NewTopMap(maxitems),
+		operations:          make(map[string]int),
+		operationstop:       topmap.NewTopMap(maxitems),
+		transports:          make(map[string]int),
+		transportstop:       topmap.NewTopMap(maxitems),
+		ipproto:             make(map[string]int),
+		ipprototop:          topmap.NewTopMap(maxitems),
+		commonQtypes:        make(map[string]bool),
 	}
+	c.commonQtypes = map[string]bool{"A": true, "AAAA": true, "TXT": true,
+		"CNAME": true, "PTR": true, "NAPTR": true,
+		"DNSKEY": true, "SRV": true}
 	return c
 }
 
@@ -86,12 +97,52 @@ func (c *Statistics) Record(dm DnsMessage) {
 
 	// qname length
 	qnameLen := len(dm.Qname)
+	if c.total.QnameLengthMin == 0 {
+		c.total.QnameLengthMin = qnameLen
+	}
+	// max value
 	if qnameLen > c.total.QnameLengthMax {
 		c.total.QnameLengthMax = qnameLen
 	}
+	// min value
+	if qnameLen < c.total.QnameLengthMin {
+		c.total.QnameLengthMin = qnameLen
+	}
+
+	// qname size repartition
 	switch {
 	case qnameLen <= 10:
 		c.total.QnameLength0_10++
+	case 10 < qnameLen && qnameLen <= 20:
+		c.total.QnameLength10_20++
+	case 20 < qnameLen && qnameLen <= 40:
+		c.total.QnameLength20_40++
+	case 40 < qnameLen && qnameLen <= 60:
+		c.total.QnameLength40_60++
+	case 60 < qnameLen && qnameLen <= 100:
+		c.total.QnameLength60_100++
+	default:
+		c.total.QnameLength100_Inf++
+	}
+
+	// search some suspicious domains regarding the length and
+	// the qtype requested
+	if qnameLen >= 80 {
+		if _, ok := c.qnamesSuspicious[dm.Qname]; !ok {
+			c.qnamesSuspicious[dm.Qname] = 1
+		} else {
+			c.qnamesSuspicious[dm.Qname]++
+		}
+		c.qnamesSuspicioustop.Record(dm.Qname, c.qnamesSuspicious[dm.Qname])
+	}
+
+	if _, found := c.commonQtypes[dm.Qtype]; !found {
+		if _, ok := c.qnamesSuspicious[dm.Qname]; !ok {
+			c.qnamesSuspicious[dm.Qname] = 1
+		} else {
+			c.qnamesSuspicious[dm.Qname]++
+		}
+		c.qnamesSuspicioustop.Record(dm.Qname, c.qnamesSuspicious[dm.Qname])
 	}
 
 	// latency
@@ -151,7 +202,7 @@ func (c *Statistics) Record(dm DnsMessage) {
 		c.qnamesNxdtop.Record(dm.Qname, c.qnamesNxd[dm.Qname])
 	}
 
-	if dm.Latency > 0.25 {
+	if dm.Latency > 0.5 {
 		if _, ok := c.qnamesSlow[dm.Qname]; !ok {
 			c.qnamesSlow[dm.Qname] = 1
 		} else {
@@ -238,6 +289,13 @@ func (c *Statistics) GetTotalSlowdomains() (ret int) {
 	return
 }
 
+func (c *Statistics) GetTotalSuspiciousdomains() (ret int) {
+	c.rw.RLock()
+	ret = len(c.qnamesSuspicious)
+	c.rw.RUnlock()
+	return
+}
+
 func (c *Statistics) GetTotalClients() (ret int) {
 	c.rw.RLock()
 	ret = len(c.clients)
@@ -262,6 +320,13 @@ func (c *Statistics) GetTopNxdomains() (ret []topmap.TopMapItem) {
 func (c *Statistics) GetTopSlowdomains() (ret []topmap.TopMapItem) {
 	c.rw.RLock()
 	ret = c.qnamesSlowtop.Get()
+	c.rw.RUnlock()
+	return
+}
+
+func (c *Statistics) GetTopSuspiciousdomains() (ret []topmap.TopMapItem) {
+	c.rw.RLock()
+	ret = c.qnamesSuspicioustop.Get()
 	c.rw.RUnlock()
 	return
 }
@@ -385,39 +450,82 @@ func (c *GlobalStats) GetTotalSlowdomains(identity string) (ret int) {
 	return c.stats[identity].GetTotalSlowdomains()
 }
 
+func (c *GlobalStats) GetTotalSuspiciousdomains(identity string) (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.stats[identity].GetTotalSuspiciousdomains()
+}
+
 func (c *GlobalStats) GetTotalClients(identity string) (ret int) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.stats[identity].GetTotalClients()
+	v, found := c.stats[identity]
+	if !found {
+		return 0
+	}
+	return v.GetTotalClients()
 }
 
 func (c *GlobalStats) GetTopQnames(identity string) (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.stats[identity].GetTopQnames()
+	v, found := c.stats[identity]
+	if !found {
+		return []topmap.TopMapItem{}
+	}
+
+	return v.GetTopQnames()
 }
 
 func (c *GlobalStats) GetTopNxdomains(identity string) (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.stats[identity].GetTopNxdomains()
+	v, found := c.stats[identity]
+	if !found {
+		return []topmap.TopMapItem{}
+	}
+
+	return v.GetTopNxdomains()
 }
 
 func (c *GlobalStats) GetTopSlowdomains(identity string) (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.stats[identity].GetTopSlowdomains()
+	v, found := c.stats[identity]
+	if !found {
+		return []topmap.TopMapItem{}
+	}
+
+	return v.GetTopSlowdomains()
+}
+
+func (c *GlobalStats) GetTopSuspiciousdomains(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.stats[identity]
+	if !found {
+		return []topmap.TopMapItem{}
+	}
+
+	return v.GetTopSuspiciousdomains()
 }
 
 func (c *GlobalStats) GetTopClients(identity string) (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.stats[identity].GetTopClients()
+	v, found := c.stats[identity]
+	if !found {
+		return []topmap.TopMapItem{}
+	}
+
+	return v.GetTopClients()
 }
 
 func (c *GlobalStats) GetTopRcodes(identity string) (ret []topmap.TopMapItem) {

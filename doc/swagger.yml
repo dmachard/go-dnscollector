@@ -33,6 +33,56 @@ paths:
               schema:
                 type: string
       summary: Reset metrics
+  /top/requesters:
+    get:
+      responses:
+        '200':
+          description: Top source ip requesters
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Top source ip requesters
+  /top/domains:
+    get:
+      responses:
+        '200':
+          description: Top domains list
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Top domains list
+  /top/domains/nxd:
+    get:
+      responses:
+        '200':
+          description: Top NX domains list
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Top NX domains list
+    /top/domains/slow:
+    get:
+      responses:
+        '200':
+          description: Top Slow domains list
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Top Slow domains list
+    /top/domains/suspicious:
+    get:
+      responses:
+        '200':
+          description: Top suspicious domains list
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Top suspicious domains list            
 security: []
 externalDocs:
   url: 'https://github.com/dmachard/go-dnscollector'
