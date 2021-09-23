@@ -179,7 +179,7 @@ func (c *Config) SetDefault() {
 	c.Subprocessors.Statistics.ThresholdQnameLen = 80
 	c.Subprocessors.Statistics.ThresholdPacketLen = 800
 	c.Subprocessors.Statistics.ThresholdSlow = 0.5
-	c.Subprocessors.Statistics.CommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS"}
+	c.Subprocessors.Statistics.CommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX"}
 
 	c.Subprocessors.AnonymizeIP = false
 

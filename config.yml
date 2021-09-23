@@ -76,6 +76,7 @@ subprocessors:
       - SRV
       - SOA
       - NS
+      - MX
     # a length greater than this value will be considered as suspicious
     threshold-qname-len: 80
     # a size greater than this value will be considered as suspicious
