@@ -176,7 +176,7 @@ func (c *Config) SetDefault() {
 
 	// Subprocessors
 	c.Subprocessors.Statistics.TopMaxItems = 100
-	c.Subprocessors.Statistics.ThresholdQnameLen = 70
+	c.Subprocessors.Statistics.ThresholdQnameLen = 80
 	c.Subprocessors.Statistics.ThresholdPacketLen = 800
 	c.Subprocessors.Statistics.ThresholdSlow = 0.5
 	c.Subprocessors.Statistics.CommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR", "NAPTR", "DNSKEY", "SRV"}
