@@ -65,18 +65,7 @@ subprocessors:
     # default number of items on top 
     top-max-items: 100
     # expected common qtype list, other will be considered as suspicious
-    common-qtypes:
-      - A
-      - AAAA
-      - CNAME
-      - TXT
-      - PTR
-      - NAPTR
-      - DNSKEY
-      - SRV
-      - SOA
-      - NS
-      - MX
+    common-qtypes: [ "A", "AAAA", "CNAME", "TXT", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX" ]
     # a length greater than this value will be considered as suspicious
     threshold-qname-len: 80
     # a size greater than this value will be considered as suspicious
