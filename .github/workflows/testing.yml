@@ -56,7 +56,7 @@ jobs:
 
     strategy:
       matrix:
-        coredns: [ '1.8.4' ]
+        coredns: [ '1.8.4', '1.8.5' ]
         mode: [ 'tcp', 'unix' ]
 
     steps:
@@ -86,7 +86,7 @@ jobs:
 
     strategy:
       matrix:
-        dnsdist: [ '16' ]
+        dnsdist: [ '16', '17' ]
         mode: [ 'tcp', 'unix' ]
 
     steps:
