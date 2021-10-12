@@ -4,9 +4,20 @@ WORKDIR /build
 COPY . .
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build
 
+
 FROM alpine:latest
-COPY --from=builder /build/go-dnscollector .
-COPY --from=builder /build/config.yml config.yml
+
+RUN mkdir -p /etc/dnscollector/ /var/dnscollector/
+
+COPY --from=builder /build/go-dnscollector /bin/go-dnscollector
+COPY --from=builder /build/config.yml ./etc/config.yml
+
+RUN addgroup -g 1000 dnscollector && adduser -D -H -G dnscollector -u 1000 -S dnscollector 
+RUN chown dnscollector:dnscollector /var/dnscollector /etc/dnscollector
+USER dnscollector
+
 EXPOSE 6000/tcp 8080/tcp
-ENTRYPOINT ["/go-dnscollector"]
-CMD ["config.yml"]
+
+ENTRYPOINT ["/bin/go-dnscollector"]
+
+CMD ["-config", "/etc/dnscollector/config.yml"]

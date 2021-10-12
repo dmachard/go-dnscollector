@@ -71,10 +71,10 @@ Use the default config (dnstap -> stdout + rest api):
 docker run -d --rm --network host dmachard/go-dnscollector
 ```
 
-Override the default configuration (/config.yml) with a config file on the host and custom ports:
+Override the default configuration (/etc/dnscollector/config.yml) with a config file on the host and custom ports:
 
 ```bash
-docker run -d -p 6000:6000 -p 8080:8080 -v $(pwd)/config.yml:/config.yml dmachard/go-dnscollector
+docker run -d -p 6000:6000 -p 8080:8080 -v $(pwd)/config.yml:/etc/dnscollector/config.yml dmachard/go-dnscollector
 ```
 
 ## Configuration
