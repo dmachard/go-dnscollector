@@ -14,13 +14,14 @@ jobs:
 
     strategy:
       matrix:
+        go-version: ['1.16', '1.17']
         package: ['dnsutils', 'collectors', 'loggers', 'subprocessors']
 
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
       with:
-        go-version: '1.16'
+        go-version: ${{ matrix.go-version }}
 
     - name: Set up Go for root
       run: |
@@ -56,7 +57,7 @@ jobs:
 
     strategy:
       matrix:
-        coredns: [ '1.8.4', '1.8.5' ]
+        coredns: [ '1.8.4', '1.8.5', '1.8.6' ]
         mode: [ 'tcp', 'unix' ]
 
     steps:
