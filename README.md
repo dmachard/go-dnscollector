@@ -50,6 +50,8 @@ Features:
 - Packet filtering (regex support)
 - Query IP-Addresses anonymizer
 
+For more informations about **dnstap**, please to read the following page [Dnstap: How to enable it on main dns servers](https://dmachard.github.io/posts/0001-dnstap-testing/)
+
 ![overview](doc/overview.png)
 
 ## Installation
