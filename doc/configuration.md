@@ -6,6 +6,7 @@
   - [DNS sniffer](#Dns-Sniffer)
   - [Tail](#Tail)
 - [Subprocessors](#Subprocessors)
+  - [Qname lowercase](#Qname-lowercase)
   - [IP anonymization](#Ip-Anonymization)
   - [GeoIP Support](#GeoIP-Support)
   - [DNS Caching](#DNS-Caching)
@@ -132,6 +133,17 @@ tail:
 ```
 
 ## Subprocessors
+
+### Qname lowercase
+
+Option to convert all domain to lowercase.
+This feature is enabled by default.
+
+```yaml
+subprocessors:
+  # Convert all domain to lowercase
+  qname-lowercase: true
+```
 
 ### IP Anonymization
 
