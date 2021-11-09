@@ -15,7 +15,6 @@ import (
 type StdOut struct {
 	done       chan bool
 	channel    chan dnsutils.DnsMessage
-	mode       string
 	textFormat []string
 	config     *dnsutils.Config
 	logger     *logger.Logger
@@ -76,7 +75,7 @@ func (o *StdOut) Run() {
 
 	buffer := new(bytes.Buffer)
 	for dm := range o.channel {
-		switch o.mode {
+		switch o.config.Loggers.Stdout.Mode {
 		case "text":
 			o.stdout.Print(dm.String(o.textFormat))
 		case "json":

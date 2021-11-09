@@ -10,11 +10,12 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func TestSyslogRun(t *testing.T) {
+func TestSyslogRunTextMode(t *testing.T) {
 	// init logger
 	config := dnsutils.GetFakeConfig()
 	config.Loggers.Syslog.Transport = "tcp"
 	config.Loggers.Syslog.RemoteAddress = ":4000"
+	config.Loggers.Syslog.Mode = "text"
 	g := NewSyslog(config, logger.New(false))
 
 	// fake json receiver
