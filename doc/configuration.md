@@ -495,6 +495,8 @@ syslog:
   # output text format, please refer to the default text format to see all available directives 
   # use this parameter if you want a specific format
   text-format: ""
+  # output format: text|json
+  mode: text
 ```
 
 ### Fluentd Client

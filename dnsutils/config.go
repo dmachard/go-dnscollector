@@ -7,6 +7,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func IsValidMode(mode string) bool {
+	switch mode {
+	case
+		"text",
+		"json":
+		return true
+	}
+	return false
+}
+
 type Config struct {
 	Trace struct {
 		Verbose    bool   `yaml:"verbose"`
@@ -122,6 +132,7 @@ type Config struct {
 			Transport     string `yaml:"transport"`
 			RemoteAddress string `yaml:"remote-address"`
 			TextFormat    string `yaml:"text-format"`
+			Mode          string `yaml:"mode"`
 		} `yaml:"syslog"`
 		Fluentd struct {
 			Enable        bool   `yaml:"enable"`
@@ -248,6 +259,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.Transport = "local"
 	c.Loggers.Syslog.RemoteAddress = "127.0.0.1:514"
 	c.Loggers.Syslog.TextFormat = ""
+	c.Loggers.Syslog.Mode = "text"
 
 	c.Loggers.Fluentd.Enable = false
 	c.Loggers.Fluentd.RemoteAddress = "127.0.0.1"

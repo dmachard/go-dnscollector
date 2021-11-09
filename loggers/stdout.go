@@ -36,7 +36,6 @@ func NewStdOut(config *dnsutils.Config, console *logger.Logger) *StdOut {
 }
 
 func (c *StdOut) ReadConfig() {
-	c.mode = c.config.Loggers.Stdout.Mode
 	if len(c.config.Loggers.Stdout.TextFormat) > 0 {
 		c.textFormat = strings.Fields(c.config.Loggers.Stdout.TextFormat)
 	} else {

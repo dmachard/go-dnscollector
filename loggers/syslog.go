@@ -1,6 +1,8 @@
 package loggers
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log/syslog"
 	"strings"
@@ -69,6 +71,9 @@ func NewSyslog(config *dnsutils.Config, console *logger.Logger) *Syslog {
 }
 
 func (c *Syslog) ReadConfig() {
+	if !dnsutils.IsValidMode(c.config.Loggers.Syslog.Mode) {
+		c.logger.Fatal("logger syslog - invalid mode text or json expected")
+	}
 	severity, err := GetPriority(c.config.Loggers.Syslog.Severity)
 	if err != nil {
 		c.logger.Fatal("logger syslog - invalid severity")
@@ -121,6 +126,8 @@ func (o *Syslog) Run() {
 
 	var syslogconn *syslog.Writer
 	var err error
+	buffer := new(bytes.Buffer)
+
 	if o.config.Loggers.Syslog.Transport == "local" {
 		syslogconn, err = syslog.New(o.facility|o.severity, "")
 		if err != nil {
@@ -135,7 +142,13 @@ func (o *Syslog) Run() {
 	o.syslogConn = syslogconn
 
 	for dm := range o.channel {
-		o.syslogConn.Write(dm.Bytes(o.textFormat))
+		switch o.config.Loggers.Syslog.Mode {
+		case "text":
+			o.syslogConn.Write(dm.Bytes(o.textFormat))
+		case "json":
+			json.NewEncoder(buffer).Encode(dm)
+			o.syslogConn.Write(buffer.Bytes())
+		}
 	}
 
 	o.LogInfo("run terminated")
