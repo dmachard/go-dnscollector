@@ -110,3 +110,35 @@ Tested on the following machine: 8 vCPUs, 32 GB memory
 | 50k   | OK - 0% lost| 
 | 100k   | OK - 0% lost| 
 | 150k   | OK (0.07% lost)|
+
+## For developers
+
+Run from source 
+
+```
+go run .
+```
+
+Execute testunits for collectors
+
+```
+go test -timeout 10s ./collectors/ -cover -v
+```
+
+Execute testunits for loggers
+
+```
+go test -timeout 10s ./loggers/ -cover -v
+```
+
+Execute testunits for subprocessors
+
+```
+go test -timeout 10s ./subprocessors/ -cover -v
+```
+
+Build executable
+
+```
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+```

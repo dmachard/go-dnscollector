@@ -49,10 +49,11 @@ type Config struct {
 			ThresholdSlow      float64  `yaml:"threshold-slow"`
 			CommonQtypes       []string `yaml:"common-qtypes,flow"`
 		} `yaml:"statistics"`
-		AnonymizeIP bool   `yaml:"anonymize-ip"`
-		CacheTtl    int    `yaml:"cache-ttl"`
-		ServerId    string `yaml:"server-id"`
-		Filtering   struct {
+		AnonymizeIP    bool   `yaml:"anonymize-ip"`
+		QnameLowerCase bool   `yaml:"qname-lowercase"`
+		CacheTtl       int    `yaml:"cache-ttl"`
+		ServerId       string `yaml:"server-id"`
+		Filtering      struct {
 			IgnoreQname string `yaml:"ignore-qname"`
 			LogQueries  bool   `yaml:"log-queries"`
 			LogReplies  bool   `yaml:"log-replies"`
@@ -182,6 +183,8 @@ func (c *Config) SetDefault() {
 	c.Subprocessors.Statistics.CommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS"}
 
 	c.Subprocessors.AnonymizeIP = false
+
+	c.Subprocessors.QnameLowerCase = true
 
 	c.Subprocessors.CacheTtl = 10
 	c.Subprocessors.ServerId = ""

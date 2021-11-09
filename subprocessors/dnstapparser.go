@@ -199,7 +199,11 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 				d.LogError("dns parser question error: %s", err)
 				continue
 			}
-			dm.Qname = dns_qname
+			if d.config.Subprocessors.QnameLowerCase {
+				dm.Qname = strings.ToLower(dns_qname)
+			} else {
+				dm.Qname = dns_qname
+			}
 			dm.Qtype = RdatatypeToString(dns_rrtype)
 			dns_offsetrr = offsetrr
 		}
