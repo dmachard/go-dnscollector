@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log/syslog"
+
+	//"log/syslog"
 	"strings"
+
+	syslog "github.com/RackSec/srslog"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
