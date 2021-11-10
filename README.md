@@ -91,13 +91,13 @@ incoming traffics. See [Configuration guide](doc/configuration.md).
 
 ## Use-cases
 
-### Use case 1: collect dnstap stream and backup-it to log files
+- [x] Use case 1: collect dnstap stream and backup-it to log files
 
 With this example the collector waits incoming dnstap messages sent by dns server and backup-it in log files
 
 The full config file for this use-case can be found [here](example-config/use-case-1.yml)
 
-### Use case 2: collect dnstap stream and get statistics usage (dnscollector>prometheus>grafana)
+- [x] Use case 2: collect dnstap stream and get statistics usage (dnscollector>prometheus>grafana)
 
 With this example the collector waits incoming dnstap messages sent by your dns server, then you 
 can watch statistics and metrics on your Grafana dashboard.
