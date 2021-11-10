@@ -137,6 +137,12 @@ Execute testunits for subprocessors
 go test -timeout 10s ./subprocessors/ -cover -v
 ```
 
+Execute a test for one specific testcase in a package
+
+```
+go test -timeout 10s -cover -v ./loggers -run TestSyslogRunJsonMode
+```
+
 Build executable
 
 ```
