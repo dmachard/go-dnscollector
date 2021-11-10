@@ -25,11 +25,13 @@ Features:
         * execute external command after each rotation
         * custom text format
     - [Dnstap](https://dnstap.info/) stream client
-        * to remote tcp destination or unix socket with tls support
+        * to remote tcp destination or unix socket
+        * tls support
     - Raw TCP client
-        * to remote tcp destination or unix socket with tls support
+        * to remote tcp destination or unix socket
         * supported format: text, json
         * custom text format
+        * tls support
     - [Rest API](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) 
         * prometheus metrics format
         * qps, total queries/replies, top domains, clients, rcodes...
@@ -40,8 +42,9 @@ Features:
         * custom text format
         * supported format: text, json
     - [Fluentd](https://www.fluentd.org/) client
-        * to remote fluentd collector or unix socket with tls support
+        * to remote fluentd collector or unix socket
         * [msgpask](https://msgpack.org/)
+        * tls support
     - [Pcap](https://en.wikipedia.org/wiki/Pcap) files
         * with rotation file support
         * binary format
