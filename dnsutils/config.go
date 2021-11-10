@@ -133,6 +133,8 @@ type Config struct {
 			RemoteAddress string `yaml:"remote-address"`
 			TextFormat    string `yaml:"text-format"`
 			Mode          string `yaml:"mode"`
+			TlsSupport    bool   `yaml:"tls-support"`
+			TlsInsecure   bool   `yaml:"tls-insecure"`
 		} `yaml:"syslog"`
 		Fluentd struct {
 			Enable        bool   `yaml:"enable"`
@@ -260,6 +262,8 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.RemoteAddress = "127.0.0.1:514"
 	c.Loggers.Syslog.TextFormat = ""
 	c.Loggers.Syslog.Mode = "text"
+	c.Loggers.TcpClient.TlsSupport = false
+	c.Loggers.TcpClient.TlsInsecure = false
 
 	c.Loggers.Fluentd.Enable = false
 	c.Loggers.Fluentd.RemoteAddress = "127.0.0.1"

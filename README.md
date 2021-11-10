@@ -41,6 +41,7 @@ Features:
         * local or remote one
         * custom text format
         * supported format: text, json
+        * tls support
     - [Fluentd](https://www.fluentd.org/) client
         * to remote fluentd collector or unix socket
         * [msgpask](https://msgpack.org/)

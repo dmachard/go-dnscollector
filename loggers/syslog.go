@@ -2,10 +2,10 @@ package loggers
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 
-	//"log/syslog"
 	"strings"
 
 	syslog "github.com/RackSec/srslog"
@@ -137,9 +137,19 @@ func (o *Syslog) Run() {
 			o.logger.Fatal("failed to connect to the local syslog daemon:", err)
 		}
 	} else {
-		syslogconn, err = syslog.Dial(o.config.Loggers.Syslog.Transport, o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity, "")
-		if err != nil {
-			o.logger.Fatal("failed to connect to the remote syslog daemon:", err)
+		if o.config.Loggers.Syslog.TlsSupport {
+			tlsconf := &tls.Config{
+				InsecureSkipVerify: o.config.Loggers.Syslog.TlsInsecure,
+			}
+			syslogconn, err = syslog.DialWithTLSConfig(o.config.Loggers.Syslog.Transport, o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity, "", tlsconf)
+			if err != nil {
+				o.logger.Fatal("failed to connect to the remote tls syslog:", err)
+			}
+		} else {
+			syslogconn, err = syslog.Dial(o.config.Loggers.Syslog.Transport, o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity, "")
+			if err != nil {
+				o.logger.Fatal("failed to connect to the remote syslog:", err)
+			}
 		}
 	}
 	o.syslogConn = syslogconn

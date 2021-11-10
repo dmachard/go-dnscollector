@@ -232,7 +232,7 @@ loggers:
     # Set the syslog logging facility 
     facility: DAEMON
     # Transport to use to a remote log daemon or local one
-    # local|tcp|udp|unix
+    # local|tcp|udp|unix or tcp+tls
     transport: local
     # Remote address host:port
     remote-address: ""
@@ -241,6 +241,10 @@ loggers:
     text-format: ""
     # output format: text|json
     mode: text
+    # enable tls
+    tls-support: false
+    # insecure skip verify
+    tls-insecure: false
 
   fluentd:
     # to enable, set the enable to true
