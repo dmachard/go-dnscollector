@@ -63,7 +63,7 @@ paths:
               schema:
                 type: string
       summary: Top NX domains list
-    /top/domains/slow:
+  /top/domains/slow:
     get:
       responses:
         '200':
@@ -73,7 +73,7 @@ paths:
               schema:
                 type: string
       summary: Top Slow domains list
-    /top/domains/suspicious:
+  /top/domains/suspicious:
     get:
       responses:
         '200':
