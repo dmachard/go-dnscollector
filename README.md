@@ -63,7 +63,7 @@ For more informations about **dnstap**, please to read the following page [Dnsta
 **Run-it from binary**
 
 Download the binary from release page.
-If you want to integrate this tool with systemd, please to follow this [tutorial](https://gist.github.com/dmachard/413ee77099046c2b1779737909e1b017).
+If you want to integrate this tool with systemd, please to follow this [guide](https://dmachard.github.io/posts/0007-dnscollector-install-binary/).
 
 ```go
 ./go-dnscollector -config config.yml
