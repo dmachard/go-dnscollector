@@ -38,6 +38,7 @@ Features:
     - [Syslog](https://en.wikipedia.org/wiki/Syslog) server
         * local or remote one
         * custom text format
+        * supported format: text, json
     - [Fluentd](https://www.fluentd.org/) client
         * to remote fluentd collector or unix socket with tls support
         * [msgpask](https://msgpack.org/)
