@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -13,14 +14,32 @@ import (
 	"github.com/natefinch/lumberjack"
 )
 
+var Version = "0.0.0"
+
+func showVersion() {
+	fmt.Println(Version)
+}
+
 func main() {
+	var verFlag bool
+	var configPath string
+
+	flag.BoolVar(&verFlag, "version", false, "Show version")
+	flag.StringVar(&configPath, "config", "./config.yml", "path to config file")
+	flag.Parse()
+
+	if verFlag {
+		showVersion()
+		os.Exit(0)
+	}
+
 	done := make(chan bool)
 
 	// create logger
 	logger := logger.New(true)
 
 	// load config
-	config, err := dnsutils.LoadConfig()
+	config, err := dnsutils.LoadConfig(configPath)
 	if err != nil {
 		panic(fmt.Sprintf("main - config error:  %v", err))
 	}

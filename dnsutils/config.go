@@ -1,7 +1,6 @@
 package dnsutils
 
 import (
-	"flag"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -285,14 +284,9 @@ func (c *Config) SetDefault() {
 	c.Loggers.PcapFile.PostRotateDelete = false
 }
 
-func LoadConfig() (*Config, error) {
+func LoadConfig(configPath string) (*Config, error) {
 	config := &Config{}
 	config.SetDefault()
-
-	var configPath string
-
-	flag.StringVar(&configPath, "config", "./config.yml", "path to config file")
-	flag.Parse()
 
 	// Open config file
 	file, err := os.Open(configPath)
