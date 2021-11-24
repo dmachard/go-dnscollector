@@ -79,6 +79,8 @@ jobs:
         tar xvf prometheus-$PROM_VERSION.linux-amd64.tar.gz
         cd prometheus-$PROM_VERSION.linux-amd64/
         curl -u admin:changeme http://127.0.0.1:8080/metrics | ./promtool check metrics
+      env:
+        PROM_VERSION: "2.31.1"
 
   e2e-coredns:
     runs-on: ubuntu-20.04
