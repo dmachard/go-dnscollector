@@ -139,8 +139,8 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "# HELP %s_domains_suspicious_top_total Number of hit per suspicious domains, partitioned by qname\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_domains_suspicious_top_total counter\n", suffix)
 
-		fmt.Fprintf(w, "# HELP %s_pps_total Number of packets per second received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_pps_total gauge\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_pps Number of packets per second received\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_pps gauge\n", suffix)
 		fmt.Fprintf(w, "# HELP %s_pps_max_total Maximum number of packets per second received\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_pps_max_total counter\n", suffix)
 
@@ -234,7 +234,7 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// pps
-			fmt.Fprintf(w, "%s_pps_total{stream=\"%s\"} %d\n", suffix, stream, counters.Pps)
+			fmt.Fprintf(w, "%s_pps{stream=\"%s\"} %d\n", suffix, stream, counters.Pps)
 			fmt.Fprintf(w, "%s_pps_max_total{stream=\"%s\"} %d\n", suffix, stream, counters.PpsMax)
 
 			// number of total packet
