@@ -113,6 +113,78 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 
 		suffix := s.config.Loggers.WebServer.PrometheusSuffix
 
+		// docs
+		fmt.Fprintf(w, "# HELP %s_requesters_total Number of clients\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_requesters_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_requesters_top Number of hit per client, partitioned by client ip\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_requesters_top counter\n", suffix)
+
+		fmt.Fprintf(w, "# HELP %s_domains_total Number of domains\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_domains_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_domains_top Number of hit per domain, partitioned by qname\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_domains_top counter\n", suffix)
+
+		fmt.Fprintf(w, "# HELP %s_domains_nx_total Number of unknown domains\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_domains_nx_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_domains_nx_top Number of hit per unknown domain, partitioned by qname\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_domains_nx_top counter\n", suffix)
+
+		fmt.Fprintf(w, "# HELP %s_domains_slow_total Number of slow domains\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_domains_slow_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_domains_slow_top Number of hit per slow domain, partitioned by qname\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_domains_slow_top counter\n", suffix)
+
+		fmt.Fprintf(w, "# HELP %s_domains_suspicious_total Number of suspicious domains\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_domains_suspicious_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_domains_suspicious_top Number of hit per suspicious domains, partitioned by qname\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_domains_suspicious_top counter\n", suffix)
+
+		fmt.Fprintf(w, "# HELP %s_pps Number of packets per second received\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_pps gauge\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_pps_max Maximum number of packets per second received\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_pps_max counter\n", suffix)
+
+		fmt.Fprintf(w, "# HELP %s_packets Number of packets\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_packets counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_operations Number of packet, partitioned by operations\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_operations counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_transports Number of packets, partitioned by transport\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_transports counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_ipproto Number of packets, partitioned by IP protocol\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_ipproto counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_qtypes Number of qtypes, partitioned by qtype\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_qtypes counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_rcodes Number of rcodes, partitioned by rcode type\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_rcodes counter\n", suffix)
+
+		fmt.Fprintf(w, "# HELP %s_latency Number of queries answered, partitioned by latency interval\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_latency counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_latency_max Maximum latency observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_latency_max counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_latency_min Minimum latency observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_latency_min counter\n", suffix)
+
+		fmt.Fprintf(w, "# HELP %s_qname_len Number of qname, partitioned by qname length\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_qname_len counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_qname_len_max Maximum qname length observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_qname_len_max counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_qname_len_min Minimum qname length observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_qname_len_min counter\n", suffix)
+
+		fmt.Fprintf(w, "# HELP %s_query_len Number of query, partitioned by query length\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_query_len counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_query_len_max Maximum query length observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_query_len_max counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_query_len_min Minimum query length observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_query_len_min counter\n", suffix)
+
+		fmt.Fprintf(w, "# HELP %s_reply_len Number of reply, partitioned by reply length\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_reply_len counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_reply_len_max Maximum reply length observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_reply_len_max counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_reply_len_min Minimum reply length observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_reply_len_min counter\n", suffix)
+
 		for _, stream := range s.stats.Streams() {
 
 			counters := s.stats.GetCounters(stream)
@@ -136,53 +208,6 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			topTransports := s.stats.GetTopTransports(stream)
 			topIpProto := s.stats.GetTopIpProto(stream)
 			topOperations := s.stats.GetTopOperations(stream)
-
-			// docs
-			fmt.Fprintf(w, "# HELP %s_requesters_total Number of clients\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_requesters_total counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_requesters_top Number of hit per client, partitioned by client ip\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_requesters_top counter\n", suffix)
-
-			fmt.Fprintf(w, "# HELP %s_domains_total Number of domains\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_domains_total counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_domains_top Number of hit per domain, partitioned by qname\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_domains_top counter\n", suffix)
-
-			fmt.Fprintf(w, "# HELP %s_domains_nx_total Number of unknown domains\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_domains_nx_total counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_domains_nx_top Number of hit per unknown domain, partitioned by qname\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_domains_nx_top counter\n", suffix)
-
-			fmt.Fprintf(w, "# HELP %s_domains_slow_total Number of slow domains\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_domains_slow_total counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_domains_slow_top Number of hit per slow domain, partitioned by qname\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_domains_slow_top counter\n", suffix)
-
-			fmt.Fprintf(w, "# HELP %s_domains_suspicious_total Number of suspicious domains\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_domains_suspicious_total counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_domains_suspicious_top Number of hit per suspicious domains, partitioned by qname\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_domains_suspicious_top counter\n", suffix)
-
-			fmt.Fprintf(w, "# HELP %s_pps Number of packets per second received\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_pps gauge\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_pps_max Maximum number of packets per second received\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_pps_max counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_packets Number of packets\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_packets counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_operations Number of packet, partitioned by operations\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_operations counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_transports Number of packets, partitioned by transport\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_transports counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_ipproto Number of packets, partitioned by IP protocol\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_ipproto counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_qtypes Number of qtypes, partitioned by qtype\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_qtypes counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_rcodes Number of rcodes, partitioned by rcode type\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_rcodes counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_latency Number of queries answered, partitioned by latency interval\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_latency counter\n", suffix)
-			fmt.Fprintf(w, "# HELP %s_latency_max Maximum latency observed\n", suffix)
-			fmt.Fprintf(w, "# TYPE %s_latency_max counter\n", suffix)
 
 			// total uniq clients
 			fmt.Fprintf(w, "%s_requesters_total{stream=\"%s\"} %d\n", suffix, stream, totalClients)

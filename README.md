@@ -93,6 +93,7 @@ incoming traffics. See [Configuration guide](doc/configuration.md).
 
 - [x] [Use case 1: collect dnstap stream and backup-it to log files](https://dmachard.github.io/posts/0034-dnscollector-dnstap-to-log-files/)
 - [x] [Use case 2: collect dnstap stream and get statistics usage](https://dmachard.github.io/posts/0035-dnscollector-grafana-prometheus/)
+- [x] [Use case 3: collect dnstap stream and get resolved IP in JSON](https://dmachard.github.io/posts/0041-dnscollector-dnstap-json-resolved-ip/)
 
 ## Benchmark
 
