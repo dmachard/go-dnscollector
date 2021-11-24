@@ -116,74 +116,74 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		// docs
 		fmt.Fprintf(w, "# HELP %s_requesters_total Number of clients\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_requesters_total counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_requesters_top Number of hit per client, partitioned by client ip\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_requesters_top counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_requesters_top_total Number of hit per client, partitioned by client ip\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_requesters_top_total counter\n", suffix)
 
 		fmt.Fprintf(w, "# HELP %s_domains_total Number of domains\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_domains_total counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_domains_top Number of hit per domain, partitioned by qname\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_domains_top counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_domains_top_total Number of hit per domain, partitioned by qname\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_domains_top_total counter\n", suffix)
 
 		fmt.Fprintf(w, "# HELP %s_domains_nx_total Number of unknown domains\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_domains_nx_total counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_domains_nx_top Number of hit per unknown domain, partitioned by qname\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_domains_nx_top counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_domains_nx_top_total Number of hit per unknown domain, partitioned by qname\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_domains_nx_top_total counter\n", suffix)
 
 		fmt.Fprintf(w, "# HELP %s_domains_slow_total Number of slow domains\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_domains_slow_total counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_domains_slow_top Number of hit per slow domain, partitioned by qname\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_domains_slow_top counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_domains_slow_top_total Number of hit per slow domain, partitioned by qname\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_domains_slow_top_total counter\n", suffix)
 
 		fmt.Fprintf(w, "# HELP %s_domains_suspicious_total Number of suspicious domains\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_domains_suspicious_total counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_domains_suspicious_top Number of hit per suspicious domains, partitioned by qname\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_domains_suspicious_top counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_domains_suspicious_top_total Number of hit per suspicious domains, partitioned by qname\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_domains_suspicious_top_total counter\n", suffix)
 
-		fmt.Fprintf(w, "# HELP %s_pps Number of packets per second received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_pps gauge\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_pps_max Maximum number of packets per second received\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_pps_max counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_pps_total Number of packets per second received\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_pps_total gauge\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_pps_max_total Maximum number of packets per second received\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_pps_max_total counter\n", suffix)
 
-		fmt.Fprintf(w, "# HELP %s_packets Number of packets\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_packets counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_operations Number of packet, partitioned by operations\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_operations counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_transports Number of packets, partitioned by transport\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_transports counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_ipproto Number of packets, partitioned by IP protocol\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_ipproto counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_qtypes Number of qtypes, partitioned by qtype\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_qtypes counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_rcodes Number of rcodes, partitioned by rcode type\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_rcodes counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_packets_total Number of packets\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_packets_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_operations_total Number of packet, partitioned by operations\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_operations_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_transports_total Number of packets, partitioned by transport\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_transports_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_ipproto_total Number of packets, partitioned by IP protocol\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_ipproto_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_qtypes_total Number of qtypes, partitioned by qtype\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_qtypes_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_rcodes_total Number of rcodes, partitioned by rcode type\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_rcodes_total counter\n", suffix)
 
-		fmt.Fprintf(w, "# HELP %s_latency Number of queries answered, partitioned by latency interval\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_latency counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_latency_max Maximum latency observed\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_latency_max counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_latency_min Minimum latency observed\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_latency_min counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_latency_total Number of queries answered, partitioned by latency interval\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_latency_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_latency_max_total Maximum latency observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_latency_max_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_latency_min_total Minimum latency observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_latency_min_total counter\n", suffix)
 
-		fmt.Fprintf(w, "# HELP %s_qname_len Number of qname, partitioned by qname length\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_qname_len counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_qname_len_max Maximum qname length observed\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_qname_len_max counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_qname_len_min Minimum qname length observed\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_qname_len_min counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_qname_len_total Number of qname, partitioned by qname length\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_qname_len_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_qname_len_max_total Maximum qname length observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_qname_len_max_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_qname_len_min_total Minimum qname length observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_qname_len_min_total counter\n", suffix)
 
-		fmt.Fprintf(w, "# HELP %s_query_len Number of query, partitioned by query length\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_query_len counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_query_len_max Maximum query length observed\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_query_len_max counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_query_len_min Minimum query length observed\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_query_len_min counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_query_len_total Number of query, partitioned by query length\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_query_len_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_query_len_max_total Maximum query length observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_query_len_max_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_query_len_min_total Minimum query length observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_query_len_min_total counter\n", suffix)
 
-		fmt.Fprintf(w, "# HELP %s_reply_len Number of reply, partitioned by reply length\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_reply_len counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_reply_len_max Maximum reply length observed\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_reply_len_max counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_reply_len_min Minimum reply length observed\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_reply_len_min counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_reply_len_total Number of reply, partitioned by reply length\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_reply_len_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_reply_len_max_total Maximum reply length observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_reply_len_max_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_reply_len_min_total Minimum reply length observed\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_reply_len_min_total counter\n", suffix)
 
 		for _, stream := range s.stats.Streams() {
 
@@ -212,95 +212,95 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			// total uniq clients
 			fmt.Fprintf(w, "%s_requesters_total{stream=\"%s\"} %d\n", suffix, stream, totalClients)
 			for _, v := range topClients {
-				fmt.Fprintf(w, "%s_requesters_top{stream=\"%s\",ip=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_requesters_top_total{stream=\"%s\",ip=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
 
 			// total uniq domains
 			fmt.Fprintf(w, "%s_domains_total{stream=\"%s\"} %d\n", suffix, stream, totalDomains)
 			for _, v := range topDomains {
-				fmt.Fprintf(w, "%s_domains_top{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_domains_top_total{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
 			fmt.Fprintf(w, "%s_domains_nx_total{stream=\"%s\"} %d\n", suffix, stream, totalNxdomains)
 			for _, v := range topNxdomains {
-				fmt.Fprintf(w, "%s_domains_nx_top{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_domains_nx_top_total{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
 			fmt.Fprintf(w, "%s_domains_slow_total{stream=\"%s\"} %d\n", suffix, stream, totalSlowdomains)
 			for _, v := range topSlowdomains {
-				fmt.Fprintf(w, "%s_domains_slow_top{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_domains_slow_top_total{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
 			fmt.Fprintf(w, "%s_domains_suspicious_total{stream=\"%s\"} %d\n", suffix, stream, totalSuspiciousdomains)
 			for _, v := range topSuspiciousdomains {
-				fmt.Fprintf(w, "%s_domains_suspicious_top{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_domains_suspicious_top_total{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
 
 			// pps
-			fmt.Fprintf(w, "%s_pps{stream=\"%s\"} %d\n", suffix, stream, counters.Pps)
-			fmt.Fprintf(w, "%s_pps_max{stream=\"%s\"} %d\n", suffix, stream, counters.PpsMax)
+			fmt.Fprintf(w, "%s_pps_total{stream=\"%s\"} %d\n", suffix, stream, counters.Pps)
+			fmt.Fprintf(w, "%s_pps_max_total{stream=\"%s\"} %d\n", suffix, stream, counters.PpsMax)
 
 			// number of total packet
-			fmt.Fprintf(w, "%s_packets{stream=\"%s\"} %d\n", suffix, stream, counters.Packets)
+			fmt.Fprintf(w, "%s_packets_total{stream=\"%s\"} %d\n", suffix, stream, counters.Packets)
 			for _, v := range topOperations {
-				fmt.Fprintf(w, "%s_operations{stream=\"%s\",operation=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_operations_total{stream=\"%s\",operation=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
 
 			// transport repartition
 			for _, v := range topTransports {
-				fmt.Fprintf(w, "%s_transports{stream=\"%s\",transport=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_transports_total{stream=\"%s\",transport=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
 
 			// ip proto repartition
 			for _, v := range topIpProto {
-				fmt.Fprintf(w, "%s_ipproto{stream=\"%s\",ip=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_ipproto_total{stream=\"%s\",ip=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
 
 			// qtypes repartition
 			for _, v := range topRrtypes {
-				fmt.Fprintf(w, "%s_qtypes{stream=\"%s\",qtype=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_qtypes_total{stream=\"%s\",qtype=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
 
 			// top rcodes
 			for _, v := range topRcodes {
-				fmt.Fprintf(w, "%s_rcodes{stream=\"%s\",rcode=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_rcodes_total{stream=\"%s\",rcode=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
 
 			// latency
-			fmt.Fprintf(w, "%s_latency{stream=\"%s\",latency=\"<1ms\"} %d\n", suffix, stream, counters.Latency0_1)
-			fmt.Fprintf(w, "%s_latency{stream=\"%s\",latency=\"1-10ms\"} %d\n", suffix, stream, counters.Latency1_10)
-			fmt.Fprintf(w, "%s_latency{stream=\"%s\",latency=\"10-50ms\"} %d\n", suffix, stream, counters.Latency10_50)
-			fmt.Fprintf(w, "%s_latency{stream=\"%s\",latency=\"50-100ms\"} %d\n", suffix, stream, counters.Latency50_100)
-			fmt.Fprintf(w, "%s_latency{stream=\"%s\",latency=\"100-500ms\"} %d\n", suffix, stream, counters.Latency100_500)
-			fmt.Fprintf(w, "%s_latency{stream=\"%s\",latency=\"500-1s\"} %d\n", suffix, stream, counters.Latency500_1000)
-			fmt.Fprintf(w, "%s_latency{stream=\"%s\",latency=\">1s\"} %d\n", suffix, stream, counters.Latency1000_inf)
-			fmt.Fprintf(w, "%s_latency_max{stream=\"%s\"} %v\n", suffix, stream, counters.LatencyMax)
-			fmt.Fprintf(w, "%s_latency_min{stream=\"%s\"} %v\n", suffix, stream, counters.LatencyMin)
+			fmt.Fprintf(w, "%s_latency_total{stream=\"%s\",latency=\"<1ms\"} %d\n", suffix, stream, counters.Latency0_1)
+			fmt.Fprintf(w, "%s_latency_total{stream=\"%s\",latency=\"1-10ms\"} %d\n", suffix, stream, counters.Latency1_10)
+			fmt.Fprintf(w, "%s_latency_total{stream=\"%s\",latency=\"10-50ms\"} %d\n", suffix, stream, counters.Latency10_50)
+			fmt.Fprintf(w, "%s_latency_total{stream=\"%s\",latency=\"50-100ms\"} %d\n", suffix, stream, counters.Latency50_100)
+			fmt.Fprintf(w, "%s_latency_total{stream=\"%s\",latency=\"100-500ms\"} %d\n", suffix, stream, counters.Latency100_500)
+			fmt.Fprintf(w, "%s_latency_total{stream=\"%s\",latency=\"500-1s\"} %d\n", suffix, stream, counters.Latency500_1000)
+			fmt.Fprintf(w, "%s_latency_total{stream=\"%s\",latency=\">1s\"} %d\n", suffix, stream, counters.Latency1000_inf)
+			fmt.Fprintf(w, "%s_latency_max_total{stream=\"%s\"} %v\n", suffix, stream, counters.LatencyMax)
+			fmt.Fprintf(w, "%s_latency_min_total{stream=\"%s\"} %v\n", suffix, stream, counters.LatencyMin)
 
 			// qname length repartition
-			fmt.Fprintf(w, "%s_qname_len{stream=\"%s\",length=\"<10\"} %d\n", suffix, stream, counters.QnameLength0_10)
-			fmt.Fprintf(w, "%s_qname_len{stream=\"%s\",length=\"10-20\"} %d\n", suffix, stream, counters.QnameLength10_20)
-			fmt.Fprintf(w, "%s_qname_len{stream=\"%s\",length=\"20-40\"} %d\n", suffix, stream, counters.QnameLength20_40)
-			fmt.Fprintf(w, "%s_qname_len{stream=\"%s\",length=\"40-60\"} %d\n", suffix, stream, counters.QnameLength40_60)
-			fmt.Fprintf(w, "%s_qname_len{stream=\"%s\",length=\"60-100\"} %d\n", suffix, stream, counters.QnameLength60_100)
-			fmt.Fprintf(w, "%s_qname_len{stream=\"%s\",length=\">100\"} %d\n", suffix, stream, counters.QnameLength100_Inf)
-			fmt.Fprintf(w, "%s_qname_len_max{stream=\"%s\"} %v\n", suffix, stream, counters.QnameLengthMax)
-			fmt.Fprintf(w, "%s_qname_len_min{stream=\"%s\"} %v\n", suffix, stream, counters.QnameLengthMin)
+			fmt.Fprintf(w, "%s_qname_len_total{stream=\"%s\",length=\"<10\"} %d\n", suffix, stream, counters.QnameLength0_10)
+			fmt.Fprintf(w, "%s_qname_len_total{stream=\"%s\",length=\"10-20\"} %d\n", suffix, stream, counters.QnameLength10_20)
+			fmt.Fprintf(w, "%s_qname_len_total{stream=\"%s\",length=\"20-40\"} %d\n", suffix, stream, counters.QnameLength20_40)
+			fmt.Fprintf(w, "%s_qname_len_total{stream=\"%s\",length=\"40-60\"} %d\n", suffix, stream, counters.QnameLength40_60)
+			fmt.Fprintf(w, "%s_qname_len_total{stream=\"%s\",length=\"60-100\"} %d\n", suffix, stream, counters.QnameLength60_100)
+			fmt.Fprintf(w, "%s_qname_len_total{stream=\"%s\",length=\">100\"} %d\n", suffix, stream, counters.QnameLength100_Inf)
+			fmt.Fprintf(w, "%s_qname_len_max_total{stream=\"%s\"} %v\n", suffix, stream, counters.QnameLengthMax)
+			fmt.Fprintf(w, "%s_qname_len_min_total{stream=\"%s\"} %v\n", suffix, stream, counters.QnameLengthMin)
 
 			// query length repartition
-			fmt.Fprintf(w, "%s_query_len{stream=\"%s\",length=\"<50b\"} %d\n", suffix, stream, counters.QueryLength0_50)
-			fmt.Fprintf(w, "%s_query_len{stream=\"%s\",length=\"50-100b\"} %d\n", suffix, stream, counters.QueryLength50_100)
-			fmt.Fprintf(w, "%s_query_len{stream=\"%s\",length=\"100-250b\"} %d\n", suffix, stream, counters.QueryLength100_250)
-			fmt.Fprintf(w, "%s_query_len{stream=\"%s\",length=\"250-500b\"} %d\n", suffix, stream, counters.QueryLength250_500)
-			fmt.Fprintf(w, "%s_query_len{stream=\"%s\",length=\">500b\"} %d\n", suffix, stream, counters.QueryLength500_Inf)
-			fmt.Fprintf(w, "%s_query_len_max{stream=\"%s\"} %v\n", suffix, stream, counters.QueryLengthMax)
-			fmt.Fprintf(w, "%s_query_len_min{stream=\"%s\"} %v\n", suffix, stream, counters.QueryLengthMin)
+			fmt.Fprintf(w, "%s_query_len_total{stream=\"%s\",length=\"<50b\"} %d\n", suffix, stream, counters.QueryLength0_50)
+			fmt.Fprintf(w, "%s_query_len_total{stream=\"%s\",length=\"50-100b\"} %d\n", suffix, stream, counters.QueryLength50_100)
+			fmt.Fprintf(w, "%s_query_len_total{stream=\"%s\",length=\"100-250b\"} %d\n", suffix, stream, counters.QueryLength100_250)
+			fmt.Fprintf(w, "%s_query_len_total{stream=\"%s\",length=\"250-500b\"} %d\n", suffix, stream, counters.QueryLength250_500)
+			fmt.Fprintf(w, "%s_query_len_total{stream=\"%s\",length=\">500b\"} %d\n", suffix, stream, counters.QueryLength500_Inf)
+			fmt.Fprintf(w, "%s_query_len_max_total{stream=\"%s\"} %v\n", suffix, stream, counters.QueryLengthMax)
+			fmt.Fprintf(w, "%s_query_len_min_total{stream=\"%s\"} %v\n", suffix, stream, counters.QueryLengthMin)
 
 			// reply length repartition
-			fmt.Fprintf(w, "%s_reply_len{stream=\"%s\",length=\"<50b\"} %d\n", suffix, stream, counters.ReplyLength0_50)
-			fmt.Fprintf(w, "%s_reply_len{stream=\"%s\",length=\"50-100b\"} %d\n", suffix, stream, counters.ReplyLength50_100)
-			fmt.Fprintf(w, "%s_reply_len{stream=\"%s\",length=\"100-250b\"} %d\n", suffix, stream, counters.ReplyLength100_250)
-			fmt.Fprintf(w, "%s_reply_len{stream=\"%s\",length=\"250-500b\"} %d\n", suffix, stream, counters.ReplyLength250_500)
-			fmt.Fprintf(w, "%s_reply_len{stream=\"%s\",length=\">500b\"} %d\n", suffix, stream, counters.ReplyLength500_Inf)
-			fmt.Fprintf(w, "%s_reply_len_max{stream=\"%s\"} %v\n", suffix, stream, counters.ReplyLengthMax)
-			fmt.Fprintf(w, "%s_reply_len_min{stream=\"%s\"} %v\n", suffix, stream, counters.ReplyLengthMin)
+			fmt.Fprintf(w, "%s_reply_len_total{stream=\"%s\",length=\"<50b\"} %d\n", suffix, stream, counters.ReplyLength0_50)
+			fmt.Fprintf(w, "%s_reply_len_total{stream=\"%s\",length=\"50-100b\"} %d\n", suffix, stream, counters.ReplyLength50_100)
+			fmt.Fprintf(w, "%s_reply_len_total{stream=\"%s\",length=\"100-250b\"} %d\n", suffix, stream, counters.ReplyLength100_250)
+			fmt.Fprintf(w, "%s_reply_len_total{stream=\"%s\",length=\"250-500b\"} %d\n", suffix, stream, counters.ReplyLength250_500)
+			fmt.Fprintf(w, "%s_reply_len_total{stream=\"%s\",length=\">500b\"} %d\n", suffix, stream, counters.ReplyLength500_Inf)
+			fmt.Fprintf(w, "%s_reply_len_max_total{stream=\"%s\"} %v\n", suffix, stream, counters.ReplyLengthMax)
+			fmt.Fprintf(w, "%s_reply_len_min_total{stream=\"%s\"} %v\n", suffix, stream, counters.ReplyLengthMin)
 		}
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
