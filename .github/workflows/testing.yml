@@ -73,10 +73,10 @@ jobs:
     - name: run collector
       run: ./go-dnscollector -config ./testsdata/config_webapi.yml &
 
-    - name: download prometheus
+    - name: check prometheus format metrics
       run: |
         wget -nv https://github.com/prometheus/prometheus/releases/download/v$PROM_VERSION/prometheus-$PROM_VERSION.linux-amd64.tar.gz
-        tar xvf prometheus-$PROM_VERSION.linux-amd64.tar.gz
+        tar xf prometheus-$PROM_VERSION.linux-amd64.tar.gz
         cd prometheus-$PROM_VERSION.linux-amd64/
         curl -u admin:changeme http://127.0.0.1:8080/metrics | ./promtool check metrics
       env:
