@@ -72,8 +72,13 @@ jobs:
     - name: run collector
       run: ./go-dnscollector -config ./testsdata/config_webapi.yml &
 
+    - name: download prometheus
+      run: |
+        wget https://github.com/prometheus/prometheus/releases/download/v2.31.1/prometheus-2.31.1.linux-amd64.tar.gz
+        tar xvf prometheus-2.31.1.linux-amd64.tar.gz
+
     - name: get metrics
-      run: curl -u admin:changeme http://127.0.0.1:8080/metrics
+      run: curl -u admin:changeme http://127.0.0.1:8080/metrics | ./promtool check metrics
 
 
   e2e-coredns:
