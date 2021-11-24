@@ -92,7 +92,7 @@ jobs:
     strategy:
       matrix:
         go-version: ['1.16', '1.17']
-        coredns: [ '1.8.4', '1.8.5', '1.8.6' ]
+        coredns: [ '1.8.5', '1.8.6' ]
         mode: [ 'tcp', 'unix' ]
 
     steps:
