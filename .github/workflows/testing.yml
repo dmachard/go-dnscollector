@@ -78,14 +78,7 @@ jobs:
         wget -nv https://github.com/prometheus/prometheus/releases/download/v$PROM_VERSION/prometheus-$PROM_VERSION.linux-amd64.tar.gz
         tar xvf prometheus-$PROM_VERSION.linux-amd64.tar.gz
         cd prometheus-$PROM_VERSION.linux-amd64/
-      env:
-        PROM_VERSION: "2.31.1"
-
-    - name: get metrics
-      run: |
-        pwd
         curl -u admin:changeme http://127.0.0.1:8080/metrics | ./promtool check metrics
-
 
   e2e-coredns:
     runs-on: ubuntu-20.04
