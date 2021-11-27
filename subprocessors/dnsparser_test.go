@@ -97,6 +97,186 @@ func TestDecodeAnswer(t *testing.T) {
 	}
 }
 
+func TestDecodeRdataA(t *testing.T) {
+	fqdn := "dnstapcollector.test."
+
+	dm := new(dns.Msg)
+	dm.SetQuestion(fqdn, dns.TypeA)
+
+	rdata := "127.0.0.1"
+	rr1, _ := dns.NewRR(fmt.Sprintf("%s A %s", fqdn, rdata))
+	dm.Answer = append(dm.Answer, rr1)
+
+	payload, _ := dm.Pack()
+
+	_, _, offset_rr, _ := DecodeQuestion(payload)
+	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+
+	if answer[0].Rdata != rdata {
+		t.Errorf("invalid decode for rdata A, want %s, got: %s", rdata, answer[0].Rdata)
+	}
+}
+
+func TestDecodeRdataAAAA(t *testing.T) {
+	fqdn := "dnstapcollector.test."
+
+	dm := new(dns.Msg)
+	dm.SetQuestion(fqdn, dns.TypeA)
+
+	rdata := "fe80:0:0:0:0:0:0:2"
+	rr1, _ := dns.NewRR(fmt.Sprintf("%s AAAA %s", fqdn, rdata))
+	dm.Answer = append(dm.Answer, rr1)
+
+	payload, _ := dm.Pack()
+
+	_, _, offset_rr, _ := DecodeQuestion(payload)
+	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+
+	if answer[0].Rdata != rdata {
+		t.Errorf("invalid decode for rdata AAAA, want %s, got: %s", rdata, answer[0].Rdata)
+	}
+}
+
+func TestDecodeRdataCNAME(t *testing.T) {
+	fqdn := "dnstapcollector.test."
+
+	dm := new(dns.Msg)
+	dm.SetQuestion(fqdn, dns.TypeA)
+
+	rdata := "test.collector.org"
+	rr1, _ := dns.NewRR(fmt.Sprintf("%s CNAME %s", fqdn, rdata))
+	dm.Answer = append(dm.Answer, rr1)
+
+	payload, _ := dm.Pack()
+
+	_, _, offset_rr, _ := DecodeQuestion(payload)
+	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+
+	if answer[0].Rdata != rdata {
+		t.Errorf("invalid decode for rdata CNAME, want %s, got: %s", rdata, answer[0].Rdata)
+	}
+}
+
+func TestDecodeRdataMX(t *testing.T) {
+	fqdn := "dnstapcollector.test."
+
+	dm := new(dns.Msg)
+	dm.SetQuestion(fqdn, dns.TypeA)
+
+	rdata := "5 gmail-smtp-in.l.google.com"
+	rr1, _ := dns.NewRR(fmt.Sprintf("%s MX %s", fqdn, rdata))
+	dm.Answer = append(dm.Answer, rr1)
+
+	payload, _ := dm.Pack()
+
+	_, _, offset_rr, _ := DecodeQuestion(payload)
+	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+
+	if answer[0].Rdata != rdata {
+		t.Errorf("invalid decode for rdata MX, want %s, got: %s", rdata, answer[0].Rdata)
+	}
+}
+
+func TestDecodeRdataSRV(t *testing.T) {
+	fqdn := "dnstapcollector.test."
+
+	dm := new(dns.Msg)
+	dm.SetQuestion(fqdn, dns.TypeA)
+
+	rdata := "20 0 5222 alt2.xmpp.l.google.com"
+	rr1, _ := dns.NewRR(fmt.Sprintf("%s SRV %s", fqdn, rdata))
+	dm.Answer = append(dm.Answer, rr1)
+
+	payload, _ := dm.Pack()
+
+	_, _, offset_rr, _ := DecodeQuestion(payload)
+	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+
+	if answer[0].Rdata != rdata {
+		t.Errorf("invalid decode for rdata SRV, want %s, got: %s", rdata, answer[0].Rdata)
+	}
+}
+
+func TestDecodeRdataNS(t *testing.T) {
+	fqdn := "dnstapcollector.test."
+
+	dm := new(dns.Msg)
+	dm.SetQuestion(fqdn, dns.TypeA)
+
+	rdata := "ns1.dnscollector"
+	rr1, _ := dns.NewRR(fmt.Sprintf("%s NS %s", fqdn, rdata))
+	dm.Answer = append(dm.Answer, rr1)
+
+	payload, _ := dm.Pack()
+
+	_, _, offset_rr, _ := DecodeQuestion(payload)
+	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+
+	if answer[0].Rdata != rdata {
+		t.Errorf("invalid decode for rdata NS, want %s, got: %s", rdata, answer[0].Rdata)
+	}
+}
+
+func TestDecodeRdataTXT(t *testing.T) {
+	fqdn := "dnstapcollector.test."
+
+	dm := new(dns.Msg)
+	dm.SetQuestion(fqdn, dns.TypeA)
+
+	rdata := "hello world"
+	rr1, _ := dns.NewRR(fmt.Sprintf("%s TXT \"%s\"", fqdn, rdata))
+	dm.Answer = append(dm.Answer, rr1)
+
+	payload, _ := dm.Pack()
+
+	_, _, offset_rr, _ := DecodeQuestion(payload)
+	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+
+	if answer[0].Rdata != rdata {
+		t.Errorf("invalid decode for rdata TXT, want %s, got: %s", rdata, answer[0].Rdata)
+	}
+}
+
+func TestDecodeRdataPTR(t *testing.T) {
+	fqdn := "dnstapcollector.test."
+
+	dm := new(dns.Msg)
+	dm.SetQuestion(fqdn, dns.TypeA)
+
+	rdata := "one.one.one.one"
+	rr1, _ := dns.NewRR(fmt.Sprintf("%s PTR %s", fqdn, rdata))
+	dm.Answer = append(dm.Answer, rr1)
+
+	payload, _ := dm.Pack()
+
+	_, _, offset_rr, _ := DecodeQuestion(payload)
+	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+
+	if answer[0].Rdata != rdata {
+		t.Errorf("invalid decode for rdata PTR, want %s, got: %s", rdata, answer[0].Rdata)
+	}
+}
+
+func TestDecodeRdataSOA(t *testing.T) {
+	fqdn := "dnstapcollector.test."
+
+	dm := new(dns.Msg)
+	dm.SetQuestion(fqdn, dns.TypeA)
+
+	rdata := "ns1.google.com dns-admin.google.com 412412655 900 900 1800 60"
+	rr1, _ := dns.NewRR(fmt.Sprintf("%s SOA %s", fqdn, rdata))
+	dm.Answer = append(dm.Answer, rr1)
+
+	payload, _ := dm.Pack()
+
+	_, _, offset_rr, _ := DecodeQuestion(payload)
+	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+
+	if answer[0].Rdata != rdata {
+		t.Errorf("invalid decode for rdata SOA, want %s, got: %s", rdata, answer[0].Rdata)
+	}
+}
+
 func TestDecodeInvalidHeader(t *testing.T) {
 	decoded := []byte{183, 59}
 	_, _, _, _, _, err := DecodeDns(decoded)

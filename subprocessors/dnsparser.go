@@ -497,19 +497,77 @@ func ParseRdata(rdatatype string, rdata []byte) string {
 		return ParseA(rdata)
 	case "AAAA":
 		return ParseAAAA(rdata)
+	case "CNAME":
+		return ParseCNAME(rdata)
+	case "MX":
+		return ParseMX(rdata)
+	case "SRV":
+		return ParseSRV(rdata)
+	case "NS":
+		return ParseNS(rdata)
+	case "TXT":
+		return ParseTXT(rdata)
+	case "PTR":
+		return ParsePTR(rdata)
+	case "SOA":
+		return ParseSOA(rdata)
 	default:
 		return "-"
 	}
 }
 
 /*
-    IPv4
-	                               1  1  1  1  1  1
-	 0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
-	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-	|                    ADDRESS                    |
-	|                                               |
-	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+SOA
+								1  1  1  1  1  1
+  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+/                     MNAME                     /
+/                                               /
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+/                     RNAME                     /
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                    SERIAL                     |
+|                                               |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                    REFRESH                    |
+|                                               |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                     RETRY                     |
+|                                               |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                    EXPIRE                     |
+|                                               |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                    MINIMUM                    |
+|                                               |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+*/
+func ParseSOA(rdata []byte) string {
+	var offset int
+
+	primaryNS, offset, _ := ParseLabels(0, rdata)
+	rdata = rdata[offset:]
+
+	respMailbox, offset, _ := ParseLabels(0, rdata)
+	rdata = rdata[offset:]
+
+	serial := binary.BigEndian.Uint32(rdata[0:4])
+	refresh := int32(binary.BigEndian.Uint32(rdata[4:8]))
+	retry := int32(binary.BigEndian.Uint32(rdata[8:12]))
+	expire := int32(binary.BigEndian.Uint32(rdata[12:16]))
+	minimum := binary.BigEndian.Uint32(rdata[16:20])
+
+	return fmt.Sprintf("%s %s %d %d %d %d %d", primaryNS, respMailbox, serial, refresh, retry, expire, minimum)
+}
+
+/*
+IPv4
+								1  1  1  1  1  1
+  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                    ADDRESS                    |
+|                                               |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func ParseA(r []byte) string {
 	var ip []string
@@ -520,19 +578,19 @@ func ParseA(r []byte) string {
 }
 
 /*
-    IPv6
-	                               1  1  1  1  1  1
-	 0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
-	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-	|                                               |
-	|                                               |
-	|                                               |
-	|                    ADDRESS                    |
-	|                                               |
-	|                                               |
-	|                                               |
-	|                                               |
-	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+IPv6
+								1  1  1  1  1  1
+  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                                               |
+|                                               |
+|                                               |
+|                    ADDRESS                    |
+|                                               |
+|                                               |
+|                                               |
+|                                               |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func ParseAAAA(rdata []byte) string {
 	var ip []string
@@ -540,4 +598,100 @@ func ParseAAAA(rdata []byte) string {
 		ip = append(ip, fmt.Sprintf("%x", binary.BigEndian.Uint16(rdata[i:i+2])))
 	}
 	return strings.Join(ip, ":")
+}
+
+/*
+CNAME
+								1  1  1  1  1  1
+  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+/                     NAME                      /
+/                                               /
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+*/
+func ParseCNAME(rdata []byte) string {
+	cname, _, _ := ParseLabels(0, rdata)
+	return cname
+}
+
+/*
+MX
+								1  1  1  1  1  1
+  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                  PREFERENCE                   |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+/                   EXCHANGE                    /
+/                                               /
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+*/
+func ParseMX(rdata []byte) string {
+	pref := binary.BigEndian.Uint16(rdata[0:2])
+	host, _, _ := ParseLabels(0, rdata[2:])
+	return fmt.Sprintf("%d %s", pref, host)
+}
+
+/*
+SRV
+								1  1  1  1  1  1
+  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                   PRIORITY                    |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                    WEIGHT                     |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                     PORT                      |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                    TARGET                     |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+*/
+func ParseSRV(rdata []byte) string {
+	priority := binary.BigEndian.Uint16(rdata[0:2])
+	weight := binary.BigEndian.Uint16(rdata[2:4])
+	port := binary.BigEndian.Uint16(rdata[4:6])
+	target, _, _ := ParseLabels(0, rdata[6:])
+
+	return fmt.Sprintf("%d %d %d %s", priority, weight, port, target)
+}
+
+/*
+NS
+								1  1  1  1  1  1
+  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+/                   NSDNAME                     /
+/                                               /
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+*/
+func ParseNS(rdata []byte) string {
+	ns, _, _ := ParseLabels(0, rdata)
+	return ns
+}
+
+/*
+TXT
+								1  1  1  1  1  1
+  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
++--+--+--+--+--+--+--+--+
+|         LENGTH        |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+/                   TXT-DATA                    /
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+*/
+func ParseTXT(rdata []byte) string {
+	length := int(rdata[0])
+	return string(rdata[1 : length+1])
+}
+
+/*
+PTR
+									1  1  1  1  1  1
+		0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+	/                   PTRDNAME                    /
+	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+*/
+func ParsePTR(rdata []byte) string {
+	ptr, _, _ := ParseLabels(0, rdata)
+	return ptr
 }
