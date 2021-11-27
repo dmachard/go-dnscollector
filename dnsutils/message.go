@@ -64,6 +64,12 @@ func (dm *DnsMessage) Bytes(format []string) []byte {
 			} else {
 				s.WriteString("-")
 			}
+		case "answer":
+			if len(dm.Answers) > 0 {
+				s.WriteString(dm.Answers[0].Rdata)
+			} else {
+				s.WriteString("-")
+			}
 		case "answercount":
 			s.WriteString(strconv.Itoa(len(dm.Answers)))
 		case "id":

@@ -122,7 +122,8 @@ subprocessors:
   # - latency: computed latency between queries and replies
   # - answercount: the number of answer
   # - country: country iso code
-  # - ttl: answer ttl
+  # - ttl: answer ttl, only the first one
+  # - answer: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
   text-format: "timestamp identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"
 
 # list of loggers
