@@ -1,0 +1,13 @@
+trace:
+  verbose: true
+
+collectors:
+  dnstap:
+    enable: true
+    listen-ip: 0.0.0.0
+    listen-port: 6000
+
+loggers:
+  stdout:
+    enable: true
+    mode: json
