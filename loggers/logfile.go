@@ -343,6 +343,7 @@ LOOP:
 			case "json":
 				json.NewEncoder(buffer).Encode(dm)
 				o.Write(buffer.Bytes())
+				buffer.Reset()
 			}
 
 		case <-tflush.C:

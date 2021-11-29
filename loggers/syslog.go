@@ -161,6 +161,7 @@ func (o *Syslog) Run() {
 		case "json":
 			json.NewEncoder(buffer).Encode(dm)
 			o.syslogConn.Write(buffer.Bytes())
+			buffer.Reset()
 		}
 	}
 
