@@ -422,9 +422,12 @@ func DecodeQuestion(payload []byte) (string, int, int, error) {
 func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.DnsAnswer, error) {
 	offset := start_offset
 	answers := []dnsutils.DnsAnswer{}
+
 	for i := 0; i < ancount; i++ {
+
 		// Decode NAME
 		name, offset_next, err := ParseLabels(offset, payload)
+
 		if err != nil {
 			return answers, err
 		}
@@ -441,7 +444,7 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.Dns
 
 		// parse rdata
 		rdatatype := RdatatypeToString(int(t))
-		parsed := ParseRdata(rdatatype, rdata)
+		parsed := ParseRdata(rdatatype, rdata, payload, offset_next+10)
 
 		// append answer
 		a := dnsutils.DnsAnswer{
@@ -462,7 +465,7 @@ func ParseLabels(offset int, payload []byte) (string, int, error) {
 	labels := []string{}
 	for {
 		if offset >= len(payload) {
-			return "", 0, errors.New("dns payload too short to decode labels")
+			return "", 0, errors.New("dns payload too short to decode labels offset")
 		}
 
 		length := int(payload[offset])
@@ -491,24 +494,24 @@ func ParseLabels(offset int, payload []byte) (string, int, error) {
 	return strings.Join(labels[:], "."), offset, nil
 }
 
-func ParseRdata(rdatatype string, rdata []byte) string {
+func ParseRdata(rdatatype string, rdata []byte, payload []byte, rdata_offset int) string {
 	switch rdatatype {
 	case "A":
 		return ParseA(rdata)
 	case "AAAA":
 		return ParseAAAA(rdata)
 	case "CNAME":
-		return ParseCNAME(rdata)
+		return ParseCNAME(rdata_offset, payload)
 	case "MX":
-		return ParseMX(rdata)
+		return ParseMX(rdata_offset, payload)
 	case "SRV":
-		return ParseSRV(rdata)
+		return ParseSRV(rdata_offset, payload)
 	case "NS":
-		return ParseNS(rdata)
+		return ParseNS(rdata_offset, payload)
 	case "TXT":
 		return ParseTXT(rdata)
 	case "PTR":
-		return ParsePTR(rdata)
+		return ParsePTR(rdata_offset, payload)
 	case "SOA":
 		return ParseSOA(rdata)
 	default:
@@ -609,8 +612,8 @@ CNAME
 /                                               /
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseCNAME(rdata []byte) string {
-	cname, _, _ := ParseLabels(0, rdata)
+func ParseCNAME(rdata_offset int, payload []byte) string {
+	cname, _, _ := ParseLabels(rdata_offset, payload)
 	return cname
 }
 
@@ -625,9 +628,9 @@ MX
 /                                               /
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseMX(rdata []byte) string {
-	pref := binary.BigEndian.Uint16(rdata[0:2])
-	host, _, _ := ParseLabels(0, rdata[2:])
+func ParseMX(rdata_offset int, payload []byte) string {
+	pref := binary.BigEndian.Uint16(payload[rdata_offset : rdata_offset+2])
+	host, _, _ := ParseLabels(rdata_offset+2, payload)
 	return fmt.Sprintf("%d %s", pref, host)
 }
 
@@ -645,11 +648,11 @@ SRV
 |                    TARGET                     |
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseSRV(rdata []byte) string {
-	priority := binary.BigEndian.Uint16(rdata[0:2])
-	weight := binary.BigEndian.Uint16(rdata[2:4])
-	port := binary.BigEndian.Uint16(rdata[4:6])
-	target, _, _ := ParseLabels(0, rdata[6:])
+func ParseSRV(rdata_offset int, payload []byte) string {
+	priority := binary.BigEndian.Uint16(payload[rdata_offset : rdata_offset+2])
+	weight := binary.BigEndian.Uint16(payload[rdata_offset+2 : rdata_offset+4])
+	port := binary.BigEndian.Uint16(payload[rdata_offset+4 : rdata_offset+6])
+	target, _, _ := ParseLabels(rdata_offset+6, payload)
 
 	return fmt.Sprintf("%d %d %d %s", priority, weight, port, target)
 }
@@ -663,8 +666,8 @@ NS
 /                                               /
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseNS(rdata []byte) string {
-	ns, _, _ := ParseLabels(0, rdata)
+func ParseNS(rdata_offset int, payload []byte) string {
+	ns, _, _ := ParseLabels(rdata_offset, payload)
 	return ns
 }
 
@@ -691,7 +694,7 @@ PTR
 	/                   PTRDNAME                    /
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParsePTR(rdata []byte) string {
-	ptr, _, _ := ParseLabels(0, rdata)
+func ParsePTR(rdata_offset int, payload []byte) string {
+	ptr, _, _ := ParseLabels(rdata_offset, payload)
 	return ptr
 }
