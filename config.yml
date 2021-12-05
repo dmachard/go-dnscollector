@@ -1,7 +1,7 @@
 # If turned on, log some applications messages
 trace:
   # debug informations
-  verbose: false
+  verbose: true
   # filename is the file to write logs to.
   filename: ""
   # maximum size in megabytes of the log file it gets rotated

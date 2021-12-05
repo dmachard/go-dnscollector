@@ -14,6 +14,7 @@ import (
 	"github.com/natefinch/lumberjack"
 )
 
+// Version is the package version, value is set during build phase
 var Version = "0.0.0"
 
 func showVersion() {
@@ -114,7 +115,7 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		for _ = range c {
+		for range c {
 			logger.Info("main - system interrupt, exiting...")
 
 			// stop all workers
