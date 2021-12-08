@@ -120,6 +120,7 @@ var (
 
 var ErrDecodeDnsHeaderTooShort = errors.New("invalid pkt, dns payload too short to decode header")
 var ErrDecodeDnsLabelInvalidOffset = errors.New("invalid pkt, invalid offset to decode label")
+var ErrDecodeDnsLabelInvalidOffsetInfiniteLoop = errors.New("invalid pkt, invalid offset to decode label, infinite loop")
 var ErrDecodeDnsLabelTooShort = errors.New("invalid pkt, dns payload too short to get label")
 var ErrDecodeQuestionQtypeTooShort = errors.New("invalid pkt, not enough data to decode qtype")
 var ErrDecodeDnsAnswerTooShort = errors.New("invalid pkt, not enough data to decode answer")
@@ -461,7 +462,10 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.Dns
 
 		// parse rdata
 		rdatatype := RdatatypeToString(int(t))
-		parsed := ParseRdata(rdatatype, rdata, payload, offset_next+10)
+		parsed, err := ParseRdata(rdatatype, rdata, payload, offset_next+10)
+		if err != nil {
+			return answers, err
+		}
 
 		// finnally append answer to the list
 		a := dnsutils.DnsAnswer{
@@ -480,6 +484,11 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.Dns
 }
 
 func ParseLabels(offset int, payload []byte) (string, int, error) {
+	ptrs := make(map[uint16]int)
+	return _ParseLabels(offset, payload, ptrs)
+}
+
+func _ParseLabels(offset int, payload []byte, pointers map[uint16]int) (string, int, error) {
 	labels := []string{}
 	for {
 		if offset >= len(payload) {
@@ -494,7 +503,16 @@ func ParseLabels(offset int, payload []byte) (string, int, error) {
 		// label pointer support ?
 		if length>>6 == 3 {
 			ptr := binary.BigEndian.Uint16(payload[offset:offset+2]) & 16383
-			label, _, _ := ParseLabels(int(ptr), payload)
+			_, exist := pointers[ptr]
+			if exist {
+				return "", 0, ErrDecodeDnsLabelInvalidOffsetInfiniteLoop
+			} else {
+				pointers[ptr] = 1
+			}
+			label, _, err := _ParseLabels(int(ptr), payload, pointers)
+			if err != nil {
+				return "", 0, err
+			}
 			labels = append(labels, label)
 			offset += 2
 			break
@@ -512,29 +530,33 @@ func ParseLabels(offset int, payload []byte) (string, int, error) {
 	return strings.Join(labels[:], "."), offset, nil
 }
 
-func ParseRdata(rdatatype string, rdata []byte, payload []byte, rdata_offset int) string {
+func ParseRdata(rdatatype string, rdata []byte, payload []byte, rdata_offset int) (string, error) {
+	var ret string
+	var err error
 	switch rdatatype {
 	case "A":
-		return ParseA(rdata)
+		ret, err = ParseA(rdata)
 	case "AAAA":
-		return ParseAAAA(rdata)
+		ret, err = ParseAAAA(rdata)
 	case "CNAME":
-		return ParseCNAME(rdata_offset, payload)
+		ret, err = ParseCNAME(rdata_offset, payload)
 	case "MX":
-		return ParseMX(rdata_offset, payload)
+		ret, err = ParseMX(rdata_offset, payload)
 	case "SRV":
-		return ParseSRV(rdata_offset, payload)
+		ret, err = ParseSRV(rdata_offset, payload)
 	case "NS":
-		return ParseNS(rdata_offset, payload)
+		ret, err = ParseNS(rdata_offset, payload)
 	case "TXT":
-		return ParseTXT(rdata)
+		ret, err = ParseTXT(rdata)
 	case "PTR":
-		return ParsePTR(rdata_offset, payload)
+		ret, err = ParsePTR(rdata_offset, payload)
 	case "SOA":
-		return ParseSOA(rdata)
+		ret, err = ParseSOA(rdata)
 	default:
-		return "-"
+		ret = "-"
+		err = nil
 	}
+	return ret, err
 }
 
 /*
@@ -563,13 +585,19 @@ SOA
 |                                               |
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseSOA(rdata []byte) string {
+func ParseSOA(rdata []byte) (string, error) {
 	var offset int
 
-	primaryNS, offset, _ := ParseLabels(0, rdata)
+	primaryNS, offset, err := ParseLabels(0, rdata)
+	if err != nil {
+		return "", err
+	}
 	rdata = rdata[offset:]
 
-	respMailbox, offset, _ := ParseLabels(0, rdata)
+	respMailbox, offset, err := ParseLabels(0, rdata)
+	if err != nil {
+		return "", err
+	}
 	rdata = rdata[offset:]
 
 	serial := binary.BigEndian.Uint32(rdata[0:4])
@@ -578,7 +606,8 @@ func ParseSOA(rdata []byte) string {
 	expire := int32(binary.BigEndian.Uint32(rdata[12:16]))
 	minimum := binary.BigEndian.Uint32(rdata[16:20])
 
-	return fmt.Sprintf("%s %s %d %d %d %d %d", primaryNS, respMailbox, serial, refresh, retry, expire, minimum)
+	soa := fmt.Sprintf("%s %s %d %d %d %d %d", primaryNS, respMailbox, serial, refresh, retry, expire, minimum)
+	return soa, nil
 }
 
 /*
@@ -590,12 +619,13 @@ IPv4
 |                                               |
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseA(r []byte) string {
+func ParseA(r []byte) (string, error) {
 	var ip []string
 	for i := 0; i < len(r); i++ {
 		ip = append(ip, strconv.Itoa(int(r[i])))
 	}
-	return strings.Join(ip, ".")
+	a := strings.Join(ip, ".")
+	return a, nil
 }
 
 /*
@@ -613,12 +643,13 @@ IPv6
 |                                               |
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseAAAA(rdata []byte) string {
+func ParseAAAA(rdata []byte) (string, error) {
 	var ip []string
 	for i := 0; i < len(rdata); i += 2 {
 		ip = append(ip, fmt.Sprintf("%x", binary.BigEndian.Uint16(rdata[i:i+2])))
 	}
-	return strings.Join(ip, ":")
+	aaaa := strings.Join(ip, ":")
+	return aaaa, nil
 }
 
 /*
@@ -630,9 +661,12 @@ CNAME
 /                                               /
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseCNAME(rdata_offset int, payload []byte) string {
-	cname, _, _ := ParseLabels(rdata_offset, payload)
-	return cname
+func ParseCNAME(rdata_offset int, payload []byte) (string, error) {
+	cname, _, err := ParseLabels(rdata_offset, payload)
+	if err != nil {
+		return "", err
+	}
+	return cname, err
 }
 
 /*
@@ -646,10 +680,14 @@ MX
 /                                               /
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseMX(rdata_offset int, payload []byte) string {
+func ParseMX(rdata_offset int, payload []byte) (string, error) {
 	pref := binary.BigEndian.Uint16(payload[rdata_offset : rdata_offset+2])
-	host, _, _ := ParseLabels(rdata_offset+2, payload)
-	return fmt.Sprintf("%d %s", pref, host)
+	host, _, err := ParseLabels(rdata_offset+2, payload)
+	if err != nil {
+		return "", err
+	}
+	mx := fmt.Sprintf("%d %s", pref, host)
+	return mx, err
 }
 
 /*
@@ -666,13 +704,16 @@ SRV
 |                    TARGET                     |
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseSRV(rdata_offset int, payload []byte) string {
+func ParseSRV(rdata_offset int, payload []byte) (string, error) {
 	priority := binary.BigEndian.Uint16(payload[rdata_offset : rdata_offset+2])
 	weight := binary.BigEndian.Uint16(payload[rdata_offset+2 : rdata_offset+4])
 	port := binary.BigEndian.Uint16(payload[rdata_offset+4 : rdata_offset+6])
-	target, _, _ := ParseLabels(rdata_offset+6, payload)
-
-	return fmt.Sprintf("%d %d %d %s", priority, weight, port, target)
+	target, _, err := ParseLabels(rdata_offset+6, payload)
+	if err != nil {
+		return "", err
+	}
+	srv := fmt.Sprintf("%d %d %d %s", priority, weight, port, target)
+	return srv, err
 }
 
 /*
@@ -684,9 +725,12 @@ NS
 /                                               /
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseNS(rdata_offset int, payload []byte) string {
-	ns, _, _ := ParseLabels(rdata_offset, payload)
-	return ns
+func ParseNS(rdata_offset int, payload []byte) (string, error) {
+	ns, _, err := ParseLabels(rdata_offset, payload)
+	if err != nil {
+		return "", err
+	}
+	return ns, err
 }
 
 /*
@@ -699,9 +743,10 @@ TXT
 /                   TXT-DATA                    /
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseTXT(rdata []byte) string {
+func ParseTXT(rdata []byte) (string, error) {
 	length := int(rdata[0])
-	return string(rdata[1 : length+1])
+	txt := string(rdata[1 : length+1])
+	return txt, nil
 }
 
 /*
@@ -712,7 +757,10 @@ PTR
 	/                   PTRDNAME                    /
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParsePTR(rdata_offset int, payload []byte) string {
-	ptr, _, _ := ParseLabels(rdata_offset, payload)
-	return ptr
+func ParsePTR(rdata_offset int, payload []byte) (string, error) {
+	ptr, _, err := ParseLabels(rdata_offset, payload)
+	if err != nil {
+		return "", err
+	}
+	return ptr, err
 }
