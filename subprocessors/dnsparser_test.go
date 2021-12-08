@@ -1,6 +1,7 @@
 package subprocessors
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -277,18 +278,59 @@ func TestDecodeRdataSOA(t *testing.T) {
 	}
 }
 
-func TestDecodeInvalidHeader(t *testing.T) {
+func TestDecodeDns_HeaderTooShort(t *testing.T) {
 	decoded := []byte{183, 59}
 	_, _, _, _, _, err := DecodeDns(decoded)
-	if err == nil {
-		t.Errorf("invalid decode header")
+	if !errors.Is(err, ErrDecodeDnsHeaderTooShort) {
+		t.Errorf("bad error returned: %v", err)
 	}
 }
 
-func TestDecodeInvalidQuestion(t *testing.T) {
+func TestDecodeDnsQuestion_InvalidOffset(t *testing.T) {
+	decoded := []byte{183, 59, 130, 217, 128, 16, 0, 51, 165, 67, 0, 0}
+	_, _, _, err := DecodeQuestion(decoded)
+	if !errors.Is(err, ErrDecodeDnsLabelInvalidOffset) {
+		t.Errorf("bad error returned: %v", err)
+	}
+}
+
+func TestDecodeDnsQuestion_PacketTooShort(t *testing.T) {
 	decoded := []byte{183, 59, 130, 217, 128, 16, 0, 51, 165, 67, 0, 0, 1, 1, 8, 10, 23}
 	_, _, _, err := DecodeQuestion(decoded)
-	if err == nil {
-		t.Errorf("invalid decode question")
+	if !errors.Is(err, ErrDecodeDnsLabelTooShort) {
+		t.Errorf("bad error returned: %v", err)
+	}
+}
+
+func TestDecodeDnsQuestion_QtypeMissing(t *testing.T) {
+	decoded := []byte{88, 27, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 15, 100, 110, 115, 116, 97, 112,
+		99, 111, 108, 108, 101, 99, 116, 111, 114, 4, 116, 101, 115, 116, 0}
+	_, _, _, err := DecodeQuestion(decoded)
+	if !errors.Is(err, ErrDecodeQuestionQtypeTooShort) {
+		t.Errorf("bad error returned: %v", err)
+	}
+}
+
+func TestDecodeDnsAnswer_PacketTooShort(t *testing.T) {
+	payload := []byte{46, 172, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 15, 100, 110, 115, 116, 97, 112, 99, 111, 108, 108, 101, 99, 116,
+		111, 114, 4, 116, 101, 115, 116, 0, 0, 1, 0, 1, 15, 100, 110, 115, 116, 97, 112, 99, 111, 108, 108, 101, 99, 116,
+		111, 114, 4, 116, 101, 115, 116, 0, 0, 1, 0, 1, 0, 0, 14, 16, 0}
+
+	_, _, offset_rr, _ := DecodeQuestion(payload)
+	_, err := DecodeAnswer(1, offset_rr, payload)
+	if !errors.Is(err, ErrDecodeDnsAnswerTooShort) {
+		t.Errorf("bad error returned: %v", err)
+	}
+}
+
+func TestDecodeDnsAnswer_RdataTooShort(t *testing.T) {
+	payload := []byte{46, 172, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 15, 100, 110, 115, 116, 97, 112, 99, 111, 108, 108, 101, 99, 116,
+		111, 114, 4, 116, 101, 115, 116, 0, 0, 1, 0, 1, 15, 100, 110, 115, 116, 97, 112, 99, 111, 108, 108, 101, 99, 116,
+		111, 114, 4, 116, 101, 115, 116, 0, 0, 1, 0, 1, 0, 0, 14, 16, 0, 4, 127, 0}
+
+	_, _, offset_rr, _ := DecodeQuestion(payload)
+	_, err := DecodeAnswer(1, offset_rr, payload)
+	if !errors.Is(err, ErrDecodeDnsAnswerRdataTooShort) {
+		t.Errorf("bad error returned: %v", err)
 	}
 }

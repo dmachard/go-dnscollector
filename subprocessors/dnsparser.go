@@ -118,6 +118,13 @@ var (
 	}
 )
 
+var ErrDecodeDnsHeaderTooShort = errors.New("invalid pkt, dns payload too short to decode header")
+var ErrDecodeDnsLabelInvalidOffset = errors.New("invalid pkt, invalid offset to decode label")
+var ErrDecodeDnsLabelTooShort = errors.New("invalid pkt, dns payload too short to get label")
+var ErrDecodeQuestionQtypeTooShort = errors.New("invalid pkt, not enough data to decode qtype")
+var ErrDecodeDnsAnswerTooShort = errors.New("invalid pkt, not enough data to decode answer")
+var ErrDecodeDnsAnswerRdataTooShort = errors.New("invalid pkt, not enough data to decode rdata answer")
+
 func GetFakeDns() ([]byte, error) {
 	dnsmsg := new(dns.Msg)
 	dnsmsg.SetQuestion("dns.collector.", dns.TypeA)
@@ -235,6 +242,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dns_qname, dns_rrtype, offsetrr, err := DecodeQuestion(dm.Payload)
 			if err != nil {
 				d.LogError("dns parser question error: %s - %v+", err, dm)
+				// discard this packet
 				continue
 			}
 			if d.config.Subprocessors.QnameLowerCase {
@@ -251,6 +259,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.Answers, err = DecodeAnswer(dns_ancount, dns_offsetrr, dm.Payload)
 			if err != nil {
 				d.LogError("dns parser answer error: %s - %v+", err, dm)
+				// discard this packet
 				continue
 			}
 		}
@@ -340,8 +349,9 @@ func RcodeToString(rcode int) string {
 */
 
 func DecodeDns(payload []byte) (int, int, int, int, int, error) {
+	// before to start, check to be sure to have enough data to decode
 	if len(payload) < DnsLen {
-		return 0, 0, 0, 0, 0, errors.New("dns payload too short to decode header")
+		return 0, 0, 0, 0, 0, ErrDecodeDnsHeaderTooShort
 	}
 	// decode ID
 	id := binary.BigEndian.Uint16(payload[:2])
@@ -380,8 +390,7 @@ func DecodeQuestion(payload []byte) (string, int, int, error) {
 	// decode QTYPE and support invalid packet, some abuser sends it...
 	var qtype uint16
 	if len(payload[offset:]) < 4 {
-		qtype = 0
-		offset += len(payload[offset:])
+		return "", 0, 0, ErrDecodeQuestionQtypeTooShort
 	} else {
 		qtype = binary.BigEndian.Uint16(payload[offset : offset+2])
 		offset += 4
@@ -424,12 +433,15 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.Dns
 	answers := []dnsutils.DnsAnswer{}
 
 	for i := 0; i < ancount; i++ {
-
 		// Decode NAME
 		name, offset_next, err := ParseLabels(offset, payload)
-
 		if err != nil {
 			return answers, err
+		}
+
+		// before to continue, check we have enough data
+		if len(payload[offset_next:]) < 10 {
+			return answers, ErrDecodeDnsAnswerTooShort
 		}
 		// decode TYPE
 		t := binary.BigEndian.Uint16(payload[offset_next : offset_next+2])
@@ -439,14 +451,19 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.Dns
 		ttl := binary.BigEndian.Uint32(payload[offset_next+4 : offset_next+8])
 		// decode RDLENGTH
 		rdlength := binary.BigEndian.Uint16(payload[offset_next+8 : offset_next+10])
+
 		// decode RDATA
+		// but before to continue, check we have enough data to decode the rdata
+		if len(payload[offset_next+10:]) < int(rdlength) {
+			return answers, ErrDecodeDnsAnswerRdataTooShort
+		}
 		rdata := payload[offset_next+10 : offset_next+10+int(rdlength)]
 
 		// parse rdata
 		rdatatype := RdatatypeToString(int(t))
 		parsed := ParseRdata(rdatatype, rdata, payload, offset_next+10)
 
-		// append answer
+		// finnally append answer to the list
 		a := dnsutils.DnsAnswer{
 			Name:      name,
 			Rdatatype: rdatatype,
@@ -456,6 +473,7 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.Dns
 		}
 		answers = append(answers, a)
 
+		// compute the next offset
 		offset = offset_next + 10 + int(rdlength)
 	}
 	return answers, nil
@@ -465,7 +483,7 @@ func ParseLabels(offset int, payload []byte) (string, int, error) {
 	labels := []string{}
 	for {
 		if offset >= len(payload) {
-			return "", 0, errors.New("dns payload too short to decode labels offset")
+			return "", 0, ErrDecodeDnsLabelInvalidOffset
 		}
 
 		length := int(payload[offset])
@@ -483,7 +501,7 @@ func ParseLabels(offset int, payload []byte) (string, int, error) {
 
 		} else {
 			if offset+length+1 >= len(payload) {
-				return "", 0, errors.New("dns payload too short to get label")
+				return "", 0, ErrDecodeDnsLabelTooShort
 			}
 			label := payload[offset+1 : offset+length+1]
 			labels = append(labels, string(label))
