@@ -1,8 +1,10 @@
 FROM golang:alpine as builder
 
+ARG VERSION
+
 WORKDIR /build
 COPY . .
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-X 'main.Version=$VERSION'"
 
 
 FROM alpine:latest

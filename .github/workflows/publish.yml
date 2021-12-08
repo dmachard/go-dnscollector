@@ -32,7 +32,7 @@ jobs:
 
     - name: Build the Docker image
       run: |
-        docker build . --file Dockerfile -t go-dnscollector
+        docker build --build-arg VERSION=${{ github.event.release.tag_name }} . --file Dockerfile -t go-dnscollector
 
     - name: Tag image
       run: |
