@@ -75,13 +75,13 @@ If you want to integrate this tool with systemd, please to follow this [guide](h
 Use the default config (dnstap -> stdout + rest api):
 
 ```bash
-docker run -d --rm --network host dmachard/go-dnscollector
+docker run -d --rm --network host --name=dnscollector01 dmachard/go-dnscollector
 ```
 
 Override the default configuration (/etc/dnscollector/config.yml) with a config file on the host and custom ports:
 
 ```bash
-docker run -d -p 6000:6000 -p 8080:8080 -v $(pwd)/config.yml:/etc/dnscollector/config.yml dmachard/go-dnscollector
+docker run -d -p 6000:6000 -p 8080:8080 -v $(pwd)/config.yml:/etc/dnscollector/config.yml --name=dnscollector01 dmachard/go-dnscollector
 ```
 
 ## Configuration

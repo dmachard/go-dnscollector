@@ -12,7 +12,7 @@ FROM alpine:latest
 RUN mkdir -p /etc/dnscollector/ /var/dnscollector/
 
 COPY --from=builder /build/go-dnscollector /bin/go-dnscollector
-COPY --from=builder /build/config.yml ./etc/config.yml
+COPY --from=builder /build/config.yml ./etc/dnscollector/config.yml
 
 RUN addgroup -g 1000 dnscollector && adduser -D -H -G dnscollector -u 1000 -S dnscollector 
 RUN chown dnscollector:dnscollector /var/dnscollector /etc/dnscollector
