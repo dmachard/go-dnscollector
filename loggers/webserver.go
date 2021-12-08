@@ -23,6 +23,7 @@ type Webserver struct {
 	config     *dnsutils.Config
 	logger     *logger.Logger
 	stats      *subprocessors.StatsStreams
+	ver        string
 }
 
 func NewWebserver(config *dnsutils.Config, logger *logger.Logger, version string) *Webserver {
@@ -33,6 +34,7 @@ func NewWebserver(config *dnsutils.Config, logger *logger.Logger, version string
 		config:   config,
 		channel:  make(chan dnsutils.DnsMessage, 512),
 		logger:   logger,
+		ver:      version,
 	}
 	// set the config
 	o.ReadConfig()
@@ -112,6 +114,11 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 
 		suffix := s.config.Loggers.WebServer.PrometheusSuffix
+
+		// add build version info
+		fmt.Fprintf(w, "# HELP %s_build_info Build version\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_build_info gauge\n", suffix)
+		fmt.Fprintf(w, "%s_build_info{version=\"%s\"} 1\n", suffix, s.ver)
 
 		// docs
 		fmt.Fprintf(w, "# HELP %s_requesters_total Number of clients\n", suffix)
