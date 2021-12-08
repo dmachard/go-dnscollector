@@ -118,13 +118,13 @@ var (
 	}
 )
 
-var ErrDecodeDnsHeaderTooShort = errors.New("invalid pkt, dns payload too short to decode header")
-var ErrDecodeDnsLabelInvalidOffset = errors.New("invalid pkt, invalid offset to decode label")
-var ErrDecodeDnsLabelInvalidOffsetInfiniteLoop = errors.New("invalid pkt, invalid offset to decode label, infinite loop")
-var ErrDecodeDnsLabelTooShort = errors.New("invalid pkt, dns payload too short to get label")
-var ErrDecodeQuestionQtypeTooShort = errors.New("invalid pkt, not enough data to decode qtype")
-var ErrDecodeDnsAnswerTooShort = errors.New("invalid pkt, not enough data to decode answer")
-var ErrDecodeDnsAnswerRdataTooShort = errors.New("invalid pkt, not enough data to decode rdata answer")
+var ErrDecodeDnsHeaderTooShort = errors.New("malformed pkt, dns payload too short to decode header")
+var ErrDecodeDnsLabelInvalidOffset = errors.New("malformed pkt, invalid offset to decode label")
+var ErrDecodeDnsLabelInvalidOffsetInfiniteLoop = errors.New("malformed pkt, invalid offset to decode label, infinite loop")
+var ErrDecodeDnsLabelTooShort = errors.New("malformed pkt, dns payload too short to get label")
+var ErrDecodeQuestionQtypeTooShort = errors.New("malformed pkt, not enough data to decode qtype")
+var ErrDecodeDnsAnswerTooShort = errors.New("malformed pkt, not enough data to decode answer")
+var ErrDecodeDnsAnswerRdataTooShort = errors.New("malformed pkt, not enough data to decode rdata answer")
 
 func GetFakeDns() ([]byte, error) {
 	dnsmsg := new(dns.Msg)
@@ -215,8 +215,9 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		// decode the dns payload
 		dns_id, dns_qr, dns_rcode, dns_qdcount, dns_ancount, err := DecodeDns(dm.Payload)
 		if err != nil {
-			d.logger.Error("dns parser packet error: %s - %v+", err, dm)
-			continue
+			dm.MalformedPacket = true
+			d.LogInfo("dns parser malformed packet: %s - %v+", err, dm)
+			//continue
 		}
 
 		// dns reply ?
@@ -239,12 +240,13 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// continue to decode the dns payload to extract the qname and rrtype
 		var dns_offsetrr int
-		if dns_qdcount > 0 {
+		if dns_qdcount > 0 && !dm.MalformedPacket {
 			dns_qname, dns_rrtype, offsetrr, err := DecodeQuestion(dm.Payload)
 			if err != nil {
-				d.LogError("dns parser question error: %s - %v+", err, dm)
+				dm.MalformedPacket = true
+				d.LogInfo("dns parser malformed question: %s - %v+", err, dm)
 				// discard this packet
-				continue
+				//continue
 			}
 			if d.config.Subprocessors.QnameLowerCase {
 				dm.Qname = strings.ToLower(dns_qname)
@@ -256,18 +258,19 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		// decode dns answers
-		if dns_ancount > 0 {
+		if dns_ancount > 0 && !dm.MalformedPacket {
 			dm.Answers, err = DecodeAnswer(dns_ancount, dns_offsetrr, dm.Payload)
 			if err != nil {
-				d.LogError("dns parser answer error: %s - %v+", err, dm)
+				dm.MalformedPacket = true
+				d.LogInfo("dns parser malformed answer: %s - %v+", err, dm)
 				// discard this packet
-				continue
+				//continue
 			}
 		}
 
 		// compute latency if possible
 		queryport, _ := strconv.Atoi(dm.QueryPort)
-		if len(dm.QueryIp) > 0 && queryport > 0 {
+		if len(dm.QueryIp) > 0 && queryport > 0 && !dm.MalformedPacket {
 			// compute the hash of the query
 			hash_data := []string{dm.QueryIp, dm.QueryPort, strconv.Itoa(dm.Id)}
 

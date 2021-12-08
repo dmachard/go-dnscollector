@@ -11,8 +11,9 @@ type Counters struct {
 	Pps    uint64
 	PpsMax uint64
 
-	Packets     uint64
-	PacketsPrev uint64
+	Packets          uint64
+	PacketsPrev      uint64
+	PacketsMalformed uint64
 
 	Latency0_1      uint64
 	Latency1_10     uint64
@@ -53,56 +54,60 @@ type Counters struct {
 type StatsPerStream struct {
 	config *dnsutils.Config
 
-	total               Counters
-	qnames              map[string]int
-	qnamestop           *topmap.TopMap
-	qnamesNxd           map[string]int
-	qnamesNxdtop        *topmap.TopMap
-	qnamesSlow          map[string]int
-	qnamesSlowtop       *topmap.TopMap
-	qnamesSuspicious    map[string]int
-	qnamesSuspicioustop *topmap.TopMap
-	clients             map[string]int
-	clientstop          *topmap.TopMap
-	rrtypes             map[string]int
-	rrtypestop          *topmap.TopMap
-	rcodes              map[string]int
-	rcodestop           *topmap.TopMap
-	operations          map[string]int
-	operationstop       *topmap.TopMap
-	transports          map[string]int
-	transportstop       *topmap.TopMap
-	ipproto             map[string]int
-	ipprototop          *topmap.TopMap
-	commonQtypes        map[string]bool
+	total                Counters
+	qnames               map[string]int
+	qnamestop            *topmap.TopMap
+	qnamesNxd            map[string]int
+	qnamesNxdtop         *topmap.TopMap
+	qnamesSlow           map[string]int
+	qnamesSlowtop        *topmap.TopMap
+	qnamesSuspicious     map[string]int
+	qnamesSuspicioustop  *topmap.TopMap
+	clients              map[string]int
+	clientstop           *topmap.TopMap
+	clientsSuspicious    map[string]int
+	clientsSuspicioustop *topmap.TopMap
+	rrtypes              map[string]int
+	rrtypestop           *topmap.TopMap
+	rcodes               map[string]int
+	rcodestop            *topmap.TopMap
+	operations           map[string]int
+	operationstop        *topmap.TopMap
+	transports           map[string]int
+	transportstop        *topmap.TopMap
+	ipproto              map[string]int
+	ipprototop           *topmap.TopMap
+	commonQtypes         map[string]bool
 	sync.RWMutex
 }
 
 func NewStatsPerStream(config *dnsutils.Config) *StatsPerStream {
 	c := &StatsPerStream{
-		config:              config,
-		total:               Counters{},
-		qnames:              make(map[string]int),
-		qnamestop:           topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		qnamesNxd:           make(map[string]int),
-		qnamesNxdtop:        topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		qnamesSlow:          make(map[string]int),
-		qnamesSlowtop:       topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		qnamesSuspicious:    make(map[string]int),
-		qnamesSuspicioustop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		clients:             make(map[string]int),
-		clientstop:          topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		rrtypes:             make(map[string]int),
-		rrtypestop:          topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		rcodes:              make(map[string]int),
-		rcodestop:           topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		operations:          make(map[string]int),
-		operationstop:       topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		transports:          make(map[string]int),
-		transportstop:       topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		ipproto:             make(map[string]int),
-		ipprototop:          topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		commonQtypes:        make(map[string]bool),
+		config:               config,
+		total:                Counters{},
+		qnames:               make(map[string]int),
+		qnamestop:            topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+		qnamesNxd:            make(map[string]int),
+		qnamesNxdtop:         topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+		qnamesSlow:           make(map[string]int),
+		qnamesSlowtop:        topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+		qnamesSuspicious:     make(map[string]int),
+		qnamesSuspicioustop:  topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+		clients:              make(map[string]int),
+		clientstop:           topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+		clientsSuspicious:    make(map[string]int),
+		clientsSuspicioustop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+		rrtypes:              make(map[string]int),
+		rrtypestop:           topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+		rcodes:               make(map[string]int),
+		rcodestop:            topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+		operations:           make(map[string]int),
+		operationstop:        topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+		transports:           make(map[string]int),
+		transportstop:        topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+		ipproto:              make(map[string]int),
+		ipprototop:           topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+		commonQtypes:         make(map[string]bool),
 	}
 
 	c.ReadConfig()
@@ -122,6 +127,20 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 
 	// global number of packets
 	c.total.Packets++
+
+	// malformed packet ?
+	if dm.MalformedPacket {
+		c.total.PacketsMalformed++
+
+		if _, ok := c.clientsSuspicious[dm.QueryIp]; !ok {
+			c.clientsSuspicious[dm.QueryIp] = 1
+		} else {
+			c.clientsSuspicious[dm.QueryIp]++
+		}
+		c.clientsSuspicioustop.Record(dm.QueryIp, c.clientsSuspicious[dm.QueryIp])
+
+		return
+	}
 
 	// packet size repartition
 	if dm.Type == "query" {
@@ -343,7 +362,6 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 		c.operations[dm.Operation]++
 	}
 	c.operationstop.Record(dm.Operation, c.operations[dm.Operation])
-
 }
 
 func (c *StatsPerStream) Compute() {
@@ -395,6 +413,13 @@ func (c *StatsPerStream) GetTotalSuspiciousdomains() (ret int) {
 	return len(c.qnamesSuspicious)
 }
 
+func (c *StatsPerStream) GetTotalSuspiciousClients() (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return len(c.clientsSuspicious)
+}
+
 func (c *StatsPerStream) GetTotalClients() (ret int) {
 	c.RLock()
 	defer c.RUnlock()
@@ -428,6 +453,13 @@ func (c *StatsPerStream) GetTopSuspiciousdomains() (ret []topmap.TopMapItem) {
 	defer c.RUnlock()
 
 	return c.qnamesSuspicioustop.Get()
+}
+
+func (c *StatsPerStream) GetTopSuspiciousClients() (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.clientsSuspicioustop.Get()
 }
 
 func (c *StatsPerStream) GetTopClients() (ret []topmap.TopMapItem) {

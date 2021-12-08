@@ -110,6 +110,18 @@ func (c *StatsStreams) GetTotalSuspiciousdomains(identity string) (ret int) {
 	return v.GetTotalSuspiciousdomains()
 }
 
+func (c *StatsStreams) GetTotalSuspiciousClients(identity string) (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return 0
+	}
+
+	return v.GetTotalSuspiciousClients()
+}
+
 func (c *StatsStreams) GetTotalClients(identity string) (ret int) {
 	c.RLock()
 	defer c.RUnlock()
@@ -168,6 +180,18 @@ func (c *StatsStreams) GetTopSuspiciousdomains(identity string) (ret []topmap.To
 	}
 
 	return v.GetTopSuspiciousdomains()
+}
+
+func (c *StatsStreams) GetTopSuspiciousClients(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return []topmap.TopMapItem{}
+	}
+
+	return v.GetTopSuspiciousClients()
 }
 
 func (c *StatsStreams) GetTopClients(identity string) (ret []topmap.TopMapItem) {

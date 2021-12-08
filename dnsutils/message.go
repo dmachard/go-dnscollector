@@ -39,6 +39,7 @@ type DnsMessage struct {
 	TimeNsec         int         `json:"-" msgpack:"-"`
 	Answers          []DnsAnswer `json:"answers" msgpack:"answers"`
 	CountryIsoCode   string      `json:"country-isocode" msgpack:"country-isocode"`
+	MalformedPacket  bool        `json:"malformed-packet" msgpack:"malformed-packet"`
 }
 
 func (dm *DnsMessage) Init() {
@@ -51,6 +52,7 @@ func (dm *DnsMessage) Init() {
 	dm.Qname, dm.LatencySec = "-", "-"
 	dm.TimestampRFC3339 = "-"
 	dm.CountryIsoCode = "-"
+	dm.MalformedPacket = false
 }
 
 func (dm *DnsMessage) Bytes(format []string) []byte {
@@ -106,6 +108,8 @@ func (dm *DnsMessage) Bytes(format []string) []byte {
 			s.WriteString(dm.LatencySec)
 		case "country":
 			s.WriteString(dm.CountryIsoCode)
+		case "malformed":
+			s.WriteString(strconv.FormatBool(dm.MalformedPacket))
 		default:
 			log.Fatalf("unsupport directive for text format: %s", word)
 		}

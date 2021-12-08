@@ -1,7 +1,7 @@
 # If turned on, log some applications messages
 trace:
   # debug informations
-  verbose: true
+  verbose: false
   # filename is the file to write logs to.
   filename: ""
   # maximum size in megabytes of the log file it gets rotated
@@ -124,6 +124,7 @@ subprocessors:
   # - country: country iso code
   # - ttl: answer ttl, only the first one
   # - answer: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
+  # - malformed: malformed dns packet boolean
   text-format: "timestamp identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"
 
 # list of loggers

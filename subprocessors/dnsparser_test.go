@@ -47,17 +47,6 @@ func TestDecodeDns(t *testing.T) {
 	}
 }
 
-func TestDecodeDnsInvalid(t *testing.T) {
-	dm := new(dns.Msg)
-	dm.SetQuestion("dnstapcollector.test.", dns.TypeA)
-
-	payload, _ := dm.Pack()
-	_, _, _, _, _, err := DecodeDns(payload[:4])
-	if err == nil {
-		t.Errorf("invalid packet dns error expected")
-	}
-}
-
 func TestDecodeQuestion(t *testing.T) {
 	fqdn := "dnstapcollector.test."
 

@@ -184,8 +184,10 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		// number of answer, ignore invalid packet
 		dns_id, _, dns_rcode, dns_qdcount, dns_ancount, err := DecodeDns(dm.Payload)
 		if err != nil {
-			d.LogError("dns parser packet error: %s", err)
-			continue
+			// parser error
+			dm.MalformedPacket = true
+			d.LogInfo("dns parser malformed packet: %s", err)
+			//continue
 		}
 
 		dm.Id = dns_id
@@ -193,11 +195,12 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// continue to decode the dns payload to extract the qname and rrtype
 		var dns_offsetrr int
-		if dns_qdcount > 0 {
+		if dns_qdcount > 0 && !dm.MalformedPacket {
 			dns_qname, dns_rrtype, offsetrr, err := DecodeQuestion(dm.Payload)
 			if err != nil {
-				d.LogError("dns parser question error: %s", err)
-				continue
+				dm.MalformedPacket = true
+				d.LogInfo("dns parser malformed question: %s", err)
+				//continue
 			}
 			if d.config.Subprocessors.QnameLowerCase {
 				dm.Qname = strings.ToLower(dns_qname)
@@ -208,16 +211,17 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dns_offsetrr = offsetrr
 		}
 
-		if dns_ancount > 0 {
+		if dns_ancount > 0 && !dm.MalformedPacket {
 			dm.Answers, err = DecodeAnswer(dns_ancount, dns_offsetrr, dm.Payload)
 			if err != nil {
-				d.LogError("dns parser answer error: %s", err)
-				continue
+				dm.MalformedPacket = true
+				d.LogInfo("dns parser malformed answer: %s", err)
+				//continue
 			}
 		}
 
 		// compute latency if possible
-		if len(dm.QueryIp) > 0 && queryport > 0 {
+		if len(dm.QueryIp) > 0 && queryport > 0 && !dm.MalformedPacket {
 			// compute the hash of the query
 			hash_data := []string{dm.QueryIp, dm.QueryPort, strconv.Itoa(dm.Id)}
 

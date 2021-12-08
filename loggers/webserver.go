@@ -192,6 +192,13 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "# HELP %s_reply_len_min_total Minimum reply length observed\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_reply_len_min_total counter\n", suffix)
 
+		fmt.Fprintf(w, "# HELP %s_packets_malformed_total Number of packets\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_packets_malformed_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_client_suspicious_total Number of suspicious clients\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_client_suspicious_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_client_suspicious_top_total Number of hit per suspicious clients, partitioned by ip\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_client_suspicious_top_total counter\n", suffix)
+
 		for _, stream := range s.stats.Streams() {
 
 			counters := s.stats.GetCounters(stream)
@@ -208,6 +215,9 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 
 			totalSuspiciousdomains := s.stats.GetTotalSuspiciousdomains(stream)
 			topSuspiciousdomains := s.stats.GetTopSuspiciousdomains(stream)
+
+			totalSuspiciousClients := s.stats.GetTotalSuspiciousClients(stream)
+			topSuspiciousClients := s.stats.GetTopSuspiciousClients(stream)
 
 			topClients := s.stats.GetTopClients(stream)
 			topRcodes := s.stats.GetTopRcodes(stream)
@@ -308,6 +318,13 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%s_reply_len_total{stream=\"%s\",length=\">500b\"} %d\n", suffix, stream, counters.ReplyLength500_Inf)
 			fmt.Fprintf(w, "%s_reply_len_max_total{stream=\"%s\"} %v\n", suffix, stream, counters.ReplyLengthMax)
 			fmt.Fprintf(w, "%s_reply_len_min_total{stream=\"%s\"} %v\n", suffix, stream, counters.ReplyLengthMin)
+
+			// add in v0.13.0
+			fmt.Fprintf(w, "%s_packets_malformed_total{stream=\"%s\"} %d\n", suffix, stream, counters.PacketsMalformed)
+			fmt.Fprintf(w, "%s_clients_suspicious_total{stream=\"%s\"} %d\n", suffix, stream, totalSuspiciousClients)
+			for _, v := range topSuspiciousClients {
+				fmt.Fprintf(w, "%s_clients_suspicious_top_total{stream=\"%s\",ip=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+			}
 		}
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -419,6 +436,27 @@ func (s *Webserver) topSuspiciousDomainsHandler(w http.ResponseWriter, r *http.R
 	}
 }
 
+func (s *Webserver) topSuspiciousClientsHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case http.MethodGet:
+		stream, ok := r.URL.Query()["stream"]
+		if !ok || len(stream) < 1 {
+			stream = []string{"global"}
+		}
+		t := s.stats.GetTopSuspiciousClients(stream[0])
+		json.NewEncoder(w).Encode(t)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
 func (s *Webserver) ListenAndServe() {
 	s.LogInfo("starting http api...")
 
@@ -430,6 +468,7 @@ func (s *Webserver) ListenAndServe() {
 	mux.HandleFunc("/top/domains/nxd", s.topNxdDomainsHandler)
 	mux.HandleFunc("/top/domains/slow", s.topSlowDomainsHandler)
 	mux.HandleFunc("/top/domains/suspicious", s.topSuspiciousDomainsHandler)
+	mux.HandleFunc("/top/clients/suspicious", s.topSuspiciousClientsHandler)
 
 	var err error
 	var listener net.Listener
