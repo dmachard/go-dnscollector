@@ -67,6 +67,7 @@ func main() {
 		}
 	}
 
+	logger.Info("main - version %s", Version)
 	logger.Info("main - config loaded...")
 	logger.Info("main - starting dnslogger...")
 
@@ -74,7 +75,7 @@ func main() {
 	var logwrks []dnsutils.Worker
 
 	if config.Loggers.WebServer.Enable {
-		logwrks = append(logwrks, loggers.NewWebserver(config, logger))
+		logwrks = append(logwrks, loggers.NewWebserver(config, logger, Version))
 	}
 	if config.Loggers.Stdout.Enable {
 		logwrks = append(logwrks, loggers.NewStdOut(config, logger))

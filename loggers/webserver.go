@@ -25,7 +25,7 @@ type Webserver struct {
 	stats      *subprocessors.StatsStreams
 }
 
-func NewWebserver(config *dnsutils.Config, logger *logger.Logger) *Webserver {
+func NewWebserver(config *dnsutils.Config, logger *logger.Logger, version string) *Webserver {
 	logger.Info("webserver - enabled")
 	o := &Webserver{
 		done:     make(chan bool),
