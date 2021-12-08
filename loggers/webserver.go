@@ -194,10 +194,10 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Fprintf(w, "# HELP %s_packets_malformed_total Number of packets\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_packets_malformed_total counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_client_suspicious_total Number of suspicious clients\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_client_suspicious_total counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_client_suspicious_top_total Number of hit per suspicious clients, partitioned by ip\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_client_suspicious_top_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_clients_suspicious_total Number of suspicious clients\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_clients_suspicious_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_clients_suspicious_top_total Number of hit per suspicious clients, partitioned by ip\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_clients_suspicious_top_total counter\n", suffix)
 
 		for _, stream := range s.stats.Streams() {
 
