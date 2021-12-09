@@ -323,14 +323,14 @@ func RdatatypeToString(rrtype int) string {
 	if value, ok := Rdatatypes[rrtype]; ok {
 		return value
 	}
-	return "-"
+	return "UNKNOWN"
 }
 
 func RcodeToString(rcode int) string {
 	if value, ok := Rcodes[rcode]; ok {
 		return value
 	}
-	return "-"
+	return "UNKNOWN"
 }
 
 /*
