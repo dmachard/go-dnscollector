@@ -17,7 +17,7 @@ func TestRcodeValid(t *testing.T) {
 
 func TestRcodeInvalid(t *testing.T) {
 	rcode := RcodeToString(100000)
-	if rcode != "-" {
+	if rcode != "UNKNOWN" {
 		t.Errorf("invalid rcode - expected: %s", rcode)
 	}
 }
@@ -31,7 +31,7 @@ func TestRdatatypeValid(t *testing.T) {
 
 func TestRdatatypeInvalid(t *testing.T) {
 	rdt := RdatatypeToString(100000)
-	if rdt != "-" {
+	if rdt != "UNKNOWN" {
 		t.Errorf("rdatatype - expected: %s", rdt)
 	}
 }
