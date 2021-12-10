@@ -49,6 +49,9 @@ type Counters struct {
 	ReplyLength500_Inf int
 	ReplyLengthMax     int
 	ReplyLengthMin     int
+
+	ReceivedBytesTotal int
+	SentBytesTotal     int
 }
 
 type StatsPerStream struct {
@@ -144,6 +147,8 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 
 	// packet size repartition
 	if dm.Type == "query" {
+		c.total.ReceivedBytesTotal += dm.Length
+
 		if c.total.QueryLengthMin == 0 {
 			c.total.QueryLengthMin = dm.Length
 		}
@@ -170,6 +175,8 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 			c.total.QueryLength500_Inf++
 		}
 	} else {
+		c.total.SentBytesTotal += dm.Length
+
 		if c.total.ReplyLengthMin == 0 {
 			c.total.ReplyLengthMin = dm.Length
 		}

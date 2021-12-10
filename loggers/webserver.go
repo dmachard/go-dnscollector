@@ -120,6 +120,12 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "# TYPE %s_build_info gauge\n", suffix)
 		fmt.Fprintf(w, "%s_build_info{version=\"%s\"} 1\n", suffix, s.ver)
 
+		// bytes
+		fmt.Fprintf(w, "# HELP %s_received_bytes_total Total bytes received\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_received_bytes_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_sent_bytes_total Total bytes sent\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_sent_bytes_total counter\n", suffix)
+
 		// docs
 		fmt.Fprintf(w, "# HELP %s_requesters_total Number of clients\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_requesters_total counter\n", suffix)
@@ -319,12 +325,16 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%s_reply_len_max_total{stream=\"%s\"} %v\n", suffix, stream, counters.ReplyLengthMax)
 			fmt.Fprintf(w, "%s_reply_len_min_total{stream=\"%s\"} %v\n", suffix, stream, counters.ReplyLengthMin)
 
-			// add in v0.13.0
+			// malformed
 			fmt.Fprintf(w, "%s_packets_malformed_total{stream=\"%s\"} %d\n", suffix, stream, counters.PacketsMalformed)
 			fmt.Fprintf(w, "%s_clients_suspicious_total{stream=\"%s\"} %d\n", suffix, stream, totalSuspiciousClients)
 			for _, v := range topSuspiciousClients {
 				fmt.Fprintf(w, "%s_clients_suspicious_top_total{stream=\"%s\",ip=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
+
+			// bytes
+			fmt.Fprintf(w, "%s_received_bytes_total{stream=\"%s\"} %d\n", suffix, stream, counters.ReceivedBytesTotal)
+			fmt.Fprintf(w, "%s_sent_bytes_total{stream=\"%s\"} %d\n", suffix, stream, counters.SentBytesTotal)
 		}
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
