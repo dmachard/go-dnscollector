@@ -9,12 +9,16 @@ import (
 )
 
 type Counters struct {
-	Pps    uint64
-	PpsMax uint64
-
+	Pps              uint64
+	PpsMax           uint64
 	Packets          uint64
 	PacketsPrev      uint64
 	PacketsMalformed uint64
+
+	Qps         uint64
+	QpsMax      uint64
+	Queries     uint64
+	QueriesPrev uint64
 
 	Latency0_1      uint64
 	Latency1_10     uint64
@@ -154,6 +158,7 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 
 	// packet size repartition
 	if dm.Type == "query" {
+		c.total.Queries++
 		c.total.ReceivedBytesTotal += dm.Length
 
 		if c.total.QueryLengthMin == 0 {
@@ -402,11 +407,25 @@ func (c *StatsPerStream) Compute() {
 	if c.total.Pps > c.total.PpsMax {
 		c.total.PpsMax = c.total.Pps
 	}
+
+	// compute qps
+	if c.total.Queries > 0 && c.total.QueriesPrev > 0 {
+		c.total.Qps = c.total.Queries - c.total.QueriesPrev
+	}
+	c.total.QueriesPrev = c.total.Queries
+	if c.total.Qps > c.total.QpsMax {
+		c.total.QpsMax = c.total.Qps
+	}
 }
 
 func (c *StatsPerStream) Reset() {
 	c.Lock()
 	defer c.Unlock()
+
+	c.total.Qps = 0
+	c.total.QpsMax = 0
+	c.total.Queries = 0
+	c.total.QueriesPrev = 0
 
 	c.total.Pps = 0
 	c.total.PpsMax = 0
@@ -415,6 +434,7 @@ func (c *StatsPerStream) Reset() {
 	c.total.PacketsMalformed = 0
 	c.total.ReceivedBytesTotal = 0
 	c.total.SentBytesTotal = 0
+
 	c.total.Latency0_1 = 0
 	c.total.Latency1_10 = 0
 	c.total.Latency10_50 = 0
@@ -423,6 +443,7 @@ func (c *StatsPerStream) Reset() {
 	c.total.Latency1000_inf = 0
 	c.total.LatencyMax = 0
 	c.total.LatencyMin = 0
+
 	c.total.QnameLength0_10 = 0
 	c.total.QnameLength10_20 = 0
 	c.total.QnameLength20_40 = 0
@@ -431,6 +452,7 @@ func (c *StatsPerStream) Reset() {
 	c.total.QnameLength100_Inf = 0
 	c.total.QnameLengthMax = 0
 	c.total.QnameLengthMin = 0
+
 	c.total.QueryLength0_50 = 0
 	c.total.QueryLength50_100 = 0
 	c.total.QueryLength100_250 = 0
@@ -438,6 +460,7 @@ func (c *StatsPerStream) Reset() {
 	c.total.QueryLength500_Inf = 0
 	c.total.QueryLengthMax = 0
 	c.total.QueryLengthMin = 0
+
 	c.total.ReplyLength0_50 = 0
 	c.total.ReplyLength50_100 = 0
 	c.total.ReplyLength100_250 = 0

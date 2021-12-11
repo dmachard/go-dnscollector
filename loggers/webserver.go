@@ -201,10 +201,10 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		// malformed
 		fmt.Fprintf(w, "# HELP %s_packets_malformed_total Number of packets\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_packets_malformed_total counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_clients_suspicious_total Number of suspicious clients\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_clients_suspicious_total counter\n", suffix)
-		fmt.Fprintf(w, "# HELP %s_clients_suspicious_top_total Number of hit per suspicious clients, partitioned by ip\n", suffix)
-		fmt.Fprintf(w, "# TYPE %s_clients_suspicious_top_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_requesters_suspicious_total Number of suspicious clients\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_requesters_suspicious_total counter\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_requesters_suspicious_top_total Number of hit per suspicious clients, partitioned by ip\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_requesters_suspicious_top_total counter\n", suffix)
 
 		// bytes
 		fmt.Fprintf(w, "# HELP %s_received_bytes_total Total bytes received\n", suffix)
@@ -217,6 +217,12 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "# TYPE %s_firstleveldomains_total counter\n", suffix)
 		fmt.Fprintf(w, "# HELP %s_firstleveldomains_top_total Number of hit per first level domains\n", suffix)
 		fmt.Fprintf(w, "# TYPE %s_firstleveldomains_top_total counter\n", suffix)
+
+		// qps
+		fmt.Fprintf(w, "# HELP %s_qps Number of queries per second received\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_qps gauge\n", suffix)
+		fmt.Fprintf(w, "# HELP %s_qps_max_total Maximum number of queries per second received\n", suffix)
+		fmt.Fprintf(w, "# TYPE %s_qps_max_total counter\n", suffix)
 
 		fmt.Fprintf(w, "%s_build_info{version=\"%s\"} 1\n", suffix, s.ver)
 		for _, stream := range s.stats.Streams() {
@@ -344,9 +350,9 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 
 			// malformed
 			fmt.Fprintf(w, "%s_packets_malformed_total{stream=\"%s\"} %d\n", suffix, stream, counters.PacketsMalformed)
-			fmt.Fprintf(w, "%s_clients_suspicious_total{stream=\"%s\"} %d\n", suffix, stream, totalSuspiciousClients)
+			fmt.Fprintf(w, "%s_requesters_suspicious_total{stream=\"%s\"} %d\n", suffix, stream, totalSuspiciousClients)
 			for _, v := range topSuspiciousClients {
-				fmt.Fprintf(w, "%s_clients_suspicious_top_total{stream=\"%s\",ip=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_requesters_suspicious_top_total{stream=\"%s\",ip=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
 
 			// bytes
@@ -358,6 +364,10 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			for _, v := range topFlds {
 				fmt.Fprintf(w, "%s_firstleveldomains_top_total{stream=\"%s\",domain=\"%s\"} %d\n", suffix, stream, v.Name, v.Hit)
 			}
+
+			// qps
+			fmt.Fprintf(w, "%s_qps{stream=\"%s\"} %d\n", suffix, stream, counters.Qps)
+			fmt.Fprintf(w, "%s_qps_max_total{stream=\"%s\"} %d\n", suffix, stream, counters.QpsMax)
 		}
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

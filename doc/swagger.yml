@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: Swagger for dnscollector tool
-  version: 0.11.0
+  version: 0.13.0
   description: This is a swagger for the API of the dnscollector.
   contact:
     email: d.machard@gmail.com
