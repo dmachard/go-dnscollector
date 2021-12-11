@@ -43,6 +43,26 @@ paths:
               schema:
                 type: string
       summary: Top source ip requesters
+  /top/requesters/suspicious:
+    get:
+      responses:
+        '200':
+          description: Top suspicious requesters ip list
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Top suspicious requesters ip list  
+  /top/firstleveldomains:
+    get:
+      responses:
+        '200':
+          description: Top first level domains list
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Top first level domains list
   /top/domains:
     get:
       responses:
@@ -82,7 +102,8 @@ paths:
             text/plain:
               schema:
                 type: string
-      summary: Top suspicious domains list            
+      summary: Top suspicious domains list         
+   
 security: []
 externalDocs:
   url: 'https://github.com/dmachard/go-dnscollector'
