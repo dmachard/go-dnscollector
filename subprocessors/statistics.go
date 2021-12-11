@@ -74,6 +74,18 @@ func (c *StatsStreams) GetTotalDomains(identity string) (ret int) {
 	return v.GetTotalDomains()
 }
 
+func (c *StatsStreams) GetTotalFirstLevelDomains(identity string) (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return 0
+	}
+
+	return v.GetTotalFirstLevelDomains()
+}
+
 func (c *StatsStreams) GetTotalNxdomains(identity string) (ret int) {
 	c.RLock()
 	defer c.RUnlock()
@@ -144,6 +156,18 @@ func (c *StatsStreams) GetTopQnames(identity string) (ret []topmap.TopMapItem) {
 	}
 
 	return v.GetTopQnames()
+}
+
+func (c *StatsStreams) GetTopFirstLevelDomains(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return []topmap.TopMapItem{}
+	}
+
+	return v.GetTopFirstLevelDomains()
 }
 
 func (c *StatsStreams) GetTopNxdomains(identity string) (ret []topmap.TopMapItem) {

@@ -1,6 +1,7 @@
 package subprocessors
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -58,6 +59,8 @@ type StatsPerStream struct {
 	config *dnsutils.Config
 
 	total                Counters
+	firstleveldomains    map[string]int
+	firstleveldomainstop *topmap.TopMap
 	qnames               map[string]int
 	qnamestop            *topmap.TopMap
 	qnamesNxd            map[string]int
@@ -88,6 +91,8 @@ func NewStatsPerStream(config *dnsutils.Config) *StatsPerStream {
 	c := &StatsPerStream{
 		config:               config,
 		total:                Counters{},
+		firstleveldomains:    make(map[string]int),
+		firstleveldomainstop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 		qnames:               make(map[string]int),
 		qnamestop:            topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 		qnamesNxd:            make(map[string]int),
@@ -312,6 +317,18 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 	c.transportstop.Record(dm.Protocol, c.transports[dm.Protocol])
 
+	// record first level domain
+	i := strings.LastIndex(dm.Qname, ".")
+	if i > -1 {
+		fld := dm.Qname[i+1:]
+		if _, ok := c.firstleveldomains[fld]; !ok {
+			c.firstleveldomains[fld] = 1
+		} else {
+			c.firstleveldomains[fld]++
+		}
+		c.firstleveldomainstop.Record(fld, c.firstleveldomains[fld])
+	}
+
 	// record all qnames
 	if _, ok := c.qnames[dm.Qname]; !ok {
 		c.qnames[dm.Qname] = 1
@@ -399,6 +416,13 @@ func (c *StatsPerStream) GetTotalDomains() (ret int) {
 	return len(c.qnames)
 }
 
+func (c *StatsPerStream) GetTotalFirstLevelDomains() (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return len(c.firstleveldomains)
+}
+
 func (c *StatsPerStream) GetTotalNxdomains() (ret int) {
 	c.RLock()
 	defer c.RUnlock()
@@ -439,6 +463,13 @@ func (c *StatsPerStream) GetTopQnames() (ret []topmap.TopMapItem) {
 	defer c.RUnlock()
 
 	return c.qnamestop.Get()
+}
+
+func (c *StatsPerStream) GetTopFirstLevelDomains() (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.firstleveldomainstop.Get()
 }
 
 func (c *StatsPerStream) GetTopNxdomains() (ret []topmap.TopMapItem) {
