@@ -402,6 +402,12 @@ func (c *StatsPerStream) Compute() {
 	}
 }
 
+func (c *StatsPerStream) Reset() {
+	c.Lock()
+	defer c.Unlock()
+
+}
+
 func (c *StatsPerStream) GetCounters() (ret Counters) {
 	c.RLock()
 	defer c.RUnlock()

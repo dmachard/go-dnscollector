@@ -98,6 +98,11 @@ func (s *Webserver) resetHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodDelete:
+		stream, ok := r.URL.Query()["stream"]
+		if !ok || len(stream) < 1 {
+			stream = []string{"global"}
+		}
+		s.stats.Reset(stream[0])
 		fmt.Fprintf(w, "success")
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

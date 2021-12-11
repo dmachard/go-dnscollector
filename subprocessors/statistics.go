@@ -55,6 +55,18 @@ func (c *StatsStreams) Compute() {
 	c.Unlock()
 }
 
+func (c *StatsStreams) Reset(identity string) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return
+	}
+
+	v.Reset()
+}
+
 func (c *StatsStreams) GetCounters(identity string) (ret Counters) {
 	c.RLock()
 	defer c.RUnlock()

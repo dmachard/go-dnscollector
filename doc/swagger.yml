@@ -24,7 +24,13 @@ paths:
                 type: string
       summary: Get metrics
   /reset:
-    get:
+    delete:
+      parameters:
+        - in: query
+          name: stream
+          schema:
+            type: string
+          description: stream name
       responses:
         '200':
           description: Reset metrics
@@ -35,6 +41,12 @@ paths:
       summary: Reset metrics
   /top/requesters:
     get:
+      parameters:
+        - in: query
+          name: stream
+          schema:
+            type: string
+          description: stream name
       responses:
         '200':
           description: Top source ip requesters
@@ -45,6 +57,12 @@ paths:
       summary: Top source ip requesters
   /top/requesters/suspicious:
     get:
+      parameters:
+        - in: query
+          name: stream
+          schema:
+            type: string
+          description: stream name
       responses:
         '200':
           description: Top suspicious requesters ip list
@@ -55,6 +73,12 @@ paths:
       summary: Top suspicious requesters ip list  
   /top/firstleveldomains:
     get:
+      parameters:
+        - in: query
+          name: stream
+          schema:
+            type: string
+          description: stream name
       responses:
         '200':
           description: Top first level domains list
@@ -65,6 +89,12 @@ paths:
       summary: Top first level domains list
   /top/domains:
     get:
+      parameters:
+        - in: query
+          name: stream
+          schema:
+            type: string
+          description: stream name
       responses:
         '200':
           description: Top domains list
@@ -75,6 +105,12 @@ paths:
       summary: Top domains list
   /top/domains/nxd:
     get:
+      parameters:
+        - in: query
+          name: stream
+          schema:
+            type: string
+          description: stream name
       responses:
         '200':
           description: Top NX domains list
@@ -85,6 +121,12 @@ paths:
       summary: Top NX domains list
   /top/domains/slow:
     get:
+      parameters:
+        - in: query
+          name: stream
+          schema:
+            type: string
+          description: stream name
       responses:
         '200':
           description: Top Slow domains list
@@ -95,6 +137,12 @@ paths:
       summary: Top Slow domains list
   /top/domains/suspicious:
     get:
+      parameters:
+        - in: query
+          name: stream
+          schema:
+            type: string
+          description: stream name
       responses:
         '200':
           description: Top suspicious domains list
