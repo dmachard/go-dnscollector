@@ -6,49 +6,49 @@
 
 Features:
 - Collectors 
-    - [Dnstap](https://dnstap.info/) Streams
+    - **[Dnstap](https://dnstap.info/) Streams**
         * tcp or unix socket listener
         * tls support
-    - DNS packets sniffer
+    - **DNS packets sniffer**
         * IPv4, IPv6 support (fragmented packet ignored)
         * UDP and TCP transport
         * BFP filtering
-    - Tail 
+    - **Tail**
         * Read DNS events from the tail of text files
         * Regex support
 - Loggers
-    - Stdout
+    - **Stdout**
         * supported format: text, json
         * custom text format
-    - Text files
+    - **Text files**
         * with rotation file support
         * supported format: text, json
         * gzip compression
         * execute external command after each rotation
         * custom text format
-    - [Dnstap](https://dnstap.info/) stream client
+    - **[Dnstap](https://dnstap.info/) stream client**
         * to remote tcp destination or unix socket
         * tls support
-    - Raw TCP client
+    - **Raw TCP client**
         * to remote tcp destination or unix socket
         * supported format: text, json
         * custom text format
         * tls support
-    - [Rest API](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) 
+    - **[Rest API](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml)**
         * prometheus metrics format
         * qps, total queries/replies, top domains, clients, rcodes...
         * basic auth
         * tls support
-    - [Syslog](https://en.wikipedia.org/wiki/Syslog) server
+    - **[Syslog](https://en.wikipedia.org/wiki/Syslog) server**
         * local or remote one
         * custom text format
         * supported format: text, json
         * tls support
-    - [Fluentd](https://www.fluentd.org/) client
+    - **[Fluentd](https://www.fluentd.org/) client**
         * to remote fluentd collector or unix socket
         * [msgpask](https://msgpack.org/)
         * tls support
-    - [Pcap](https://en.wikipedia.org/wiki/Pcap) files
+    - **[Pcap](https://en.wikipedia.org/wiki/Pcap) files**
         * with rotation file support
         * binary format
         * gzip compression
