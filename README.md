@@ -2,6 +2,8 @@
 
 `go-dnscollector` acts as a high speed passive analyser for DNS traffic written in Go.
 
+![overview](doc/dashboard1.png)
+
 Features:
 - Collectors 
     - [Dnstap](https://dnstap.info/) Streams
