@@ -1,6 +1,7 @@
 # go-dnscollector
 
-`go-dnscollector` acts as a high speed passive analyser for DNS traffic written in Go.
+This `dnscollector` acts as a high speed passive analyser for DNS traffic written in Go.
+It can be used with any DNS servers.
 
 ![overview](doc/dashboard1.png)
 
@@ -17,10 +18,10 @@
         * Regex support
 
 - Supported loggers:
-    - **Stdout**
+    - **Stdout**: logs your dns queries and replies to stdout
         * supported format: text, json
         * custom text format
-    - **Text files**
+    - **Text files**: logs your dns queries and replies to text files
         * with rotation file support
         * supported format: text, json
         * gzip compression
