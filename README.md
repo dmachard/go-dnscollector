@@ -95,12 +95,15 @@ incoming traffics. See [Configuration guide](doc/configuration.md).
 - [x] [Use case 2: collect dnstap stream and get statistics usage with Prometheus/Grafana](https://dmachard.github.io/posts/0035-dnscollector-grafana-prometheus/)
 - [x] [Use case 3: collect dnstap stream and log dns answers in JSON format](https://dmachard.github.io/posts/0042-dnscollector-dnstap-json-answers/)
 
-## Openmetrics
-
+## Metrics
 
 | Metric | Description |
 | ---- | ---- | 
-| xx   | xx | 
+| dnscollector_qps   | Number of queries per second received | 
+| dnscollector_requesters_total | Number of clients |
+| dnscollector_domains_total | Number of domains observed |
+| dnscollector_received_bytes_total | Total bytes received |
+| dnscollector_sent_bytes_total | Total bytes sent |
 
 ## Benchmark
 

@@ -62,7 +62,8 @@ type Counters struct {
 type StatsPerStream struct {
 	config *dnsutils.Config
 
-	total                Counters
+	total Counters
+
 	firstleveldomains    map[string]int
 	firstleveldomainstop *topmap.TopMap
 	qnames               map[string]int
@@ -87,7 +88,8 @@ type StatsPerStream struct {
 	transportstop        *topmap.TopMap
 	ipproto              map[string]int
 	ipprototop           *topmap.TopMap
-	commonQtypes         map[string]bool
+
+	commonQtypes map[string]bool
 	sync.RWMutex
 }
 
@@ -633,4 +635,28 @@ func (c *StatsPerStream) GetTopIpProto() (ret []topmap.TopMapItem) {
 	defer c.RUnlock()
 
 	return c.ipprototop.Get()
+}
+
+func (c *StatsPerStream) GetClients() (ret map[string]int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	retMap := map[string]int{}
+	for k, v := range c.clients {
+		retMap[k] = v
+	}
+
+	return retMap
+}
+
+func (c *StatsPerStream) GetDomains() (ret map[string]int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	retMap := map[string]int{}
+	for k, v := range c.qnames {
+		retMap[k] = v
+	}
+
+	return retMap
 }

@@ -374,6 +374,48 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Webserver) dumpRequestersHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case http.MethodGet:
+		stream, ok := r.URL.Query()["stream"]
+		if !ok || len(stream) < 1 {
+			stream = []string{"global"}
+		}
+		t := s.stats.GetClients(stream[0])
+		json.NewEncoder(w).Encode(t)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Webserver) dumpDomainsHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case http.MethodGet:
+		stream, ok := r.URL.Query()["stream"]
+		if !ok || len(stream) < 1 {
+			stream = []string{"global"}
+		}
+		t := s.stats.GetDomains(stream[0])
+		json.NewEncoder(w).Encode(t)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
 func (s *Webserver) topRequestersHandler(w http.ResponseWriter, r *http.Request) {
 	if !s.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
@@ -527,6 +569,7 @@ func (s *Webserver) ListenAndServe() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/metrics", s.metricsHandler)
 	mux.HandleFunc("/reset", s.resetHandler)
+
 	mux.HandleFunc("/top/requesters", s.topRequestersHandler)
 	mux.HandleFunc("/top/requesters/suspicious", s.topSuspiciousClientsHandler)
 	mux.HandleFunc("/top/firstleveldomains", s.topAllFirstLevelDomainsHandler)
@@ -534,6 +577,9 @@ func (s *Webserver) ListenAndServe() {
 	mux.HandleFunc("/top/domains/nxd", s.topNxdDomainsHandler)
 	mux.HandleFunc("/top/domains/slow", s.topSlowDomainsHandler)
 	mux.HandleFunc("/top/domains/suspicious", s.topSuspiciousDomainsHandler)
+
+	mux.HandleFunc("/dump/requesters", s.dumpRequestersHandler)
+	mux.HandleFunc("/dump/domains", s.dumpDomainsHandler)
 
 	var err error
 	var listener net.Listener

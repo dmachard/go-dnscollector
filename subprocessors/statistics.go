@@ -300,3 +300,27 @@ func (c *StatsStreams) GetTopIpProto(identity string) (ret []topmap.TopMapItem) 
 
 	return v.GetTopIpProto()
 }
+
+func (c *StatsStreams) GetClients(identity string) (ret map[string]int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return map[string]int{}
+	}
+
+	return v.GetClients()
+}
+
+func (c *StatsStreams) GetDomains(identity string) (ret map[string]int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return map[string]int{}
+	}
+
+	return v.GetDomains()
+}
