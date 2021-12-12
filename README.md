@@ -4,8 +4,7 @@
 
 ![overview](doc/dashboard1.png)
 
-Features:
-- Collectors 
+Supported dns traffic collectors:
     - **[Dnstap](https://dnstap.info/) Streams**
         * tcp or unix socket listener
         * tls support
@@ -16,7 +15,8 @@ Features:
     - **Tail**
         * Read DNS events from the tail of text files
         * Regex support
-- Loggers
+
+Supported loggers:
     - **Stdout**
         * supported format: text, json
         * custom text format
@@ -53,6 +53,8 @@ Features:
         * binary format
         * gzip compression
         * execute external command after each rotation
+
+Other features
 - GeoIP support (Country code)
 - Packet filtering (regex support)
 - Query IP-Addresses anonymizer
