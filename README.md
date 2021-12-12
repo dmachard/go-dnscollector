@@ -4,7 +4,7 @@
 
 ![overview](doc/dashboard1.png)
 
-Supported dns traffic collectors:
+- Supported dns traffic collectors:
     - **[Dnstap](https://dnstap.info/) Streams**
         * tcp or unix socket listener
         * tls support
@@ -16,7 +16,7 @@ Supported dns traffic collectors:
         * Read DNS events from the tail of text files
         * Regex support
 
-Supported loggers:
+- Supported loggers:
     - **Stdout**
         * supported format: text, json
         * custom text format
@@ -54,10 +54,10 @@ Supported loggers:
         * gzip compression
         * execute external command after each rotation
 
-Other features
-- GeoIP support (Country code)
-- Packet filtering (regex support)
-- Query IP-Addresses anonymizer
+- Other features
+    - GeoIP support (Country code)
+    - Packet filtering (regex support)
+    - Query IP-Addresses anonymizer
 
 For more informations about **dnstap**, please to read the following page [Dnstap: How to enable it on main dns servers](https://dmachard.github.io/posts/0001-dnstap-testing/)
 
