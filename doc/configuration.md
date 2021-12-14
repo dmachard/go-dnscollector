@@ -22,6 +22,7 @@
   - [Syslog](#Syslog)
   - [Fluentd](#Fluentd-Client)
   - [Pcap File](#Pcap-File)
+  - [InfluxDB](#InfluxDB)
 
 See [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml) file.
 
@@ -548,4 +549,26 @@ pcapfile:
   postrotate-command: null
   # delete file on script success
   postrotate-delete-success: true
+```
+
+### InfluxDB client
+
+InfluxDB client to remote InfluxDB server
+
+```yaml
+  influxdb:
+    # to enable, set the enable to true
+    enable: true
+    # InfluxDB server url
+    server-url: "http://localhost:8086"
+    # authentication token
+    auth-token: ""
+    # bucket
+    bucket: "db_dns"
+    # organization
+    organization: "dnscollector"
+    # enable tls
+    tls-support: false
+    # insecure skip verify
+    tls-insecure: false
 ```

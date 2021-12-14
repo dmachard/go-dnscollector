@@ -286,3 +286,19 @@ loggers:
     postrotate-command: null
     # delete file on script success
     postrotate-delete-success: true
+
+  influxdb:
+    # to enable, set the enable to true
+    enable: false
+    # InfluxDB server url
+    server-url: "http://localhost:8086"
+    # authentication token
+    auth-token: ""
+    # enable tls
+    tls-support: false
+    # insecure skip verify
+    tls-insecure: false
+    # bucket
+    bucket: "db_dns"
+    # Organization
+    organization: "dnscollector"

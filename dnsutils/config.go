@@ -156,6 +156,15 @@ type Config struct {
 			PostRotateCommand string `yaml:"postrotate-command"`
 			PostRotateDelete  bool   `yaml:"postrotate-delete-success"`
 		} `yaml:"pcapfile"`
+		InfluxDB struct {
+			Enable       bool   `yaml:"enable"`
+			ServerURL    string `yaml:"server-url"`
+			AuthToken    string `yaml:"auth-token"`
+			TlsSupport   bool   `yaml:"tls-support"`
+			TlsInsecure  bool   `yaml:"tls-insecure"`
+			Bucket       string `yaml:"bucket"`
+			Organization string `yaml:"organization"`
+		} `yaml:"influxdb"`
 	} `yaml:"loggers"`
 }
 
@@ -282,6 +291,14 @@ func (c *Config) SetDefault() {
 	c.Loggers.PcapFile.CompressInterval = 60
 	c.Loggers.PcapFile.PostRotateCommand = ""
 	c.Loggers.PcapFile.PostRotateDelete = false
+
+	c.Loggers.InfluxDB.Enable = false
+	c.Loggers.InfluxDB.ServerURL = "http://localhost:8086"
+	c.Loggers.InfluxDB.AuthToken = ""
+	c.Loggers.InfluxDB.TlsSupport = false
+	c.Loggers.InfluxDB.TlsInsecure = false
+	c.Loggers.InfluxDB.Bucket = ""
+	c.Loggers.InfluxDB.Organization = ""
 }
 
 func LoadConfig(configPath string) (*Config, error) {

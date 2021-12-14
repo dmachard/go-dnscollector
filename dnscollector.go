@@ -98,6 +98,9 @@ func main() {
 	if config.Loggers.PcapFile.Enable {
 		logwrks = append(logwrks, loggers.NewPcapFile(config, logger))
 	}
+	if config.Loggers.InfluxDB.Enable {
+		logwrks = append(logwrks, loggers.NewInfluxDBClient(config, logger))
+	}
 
 	// load collectors
 	var collwrks []dnsutils.Worker

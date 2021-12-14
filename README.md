@@ -1,9 +1,15 @@
 # go-dnscollector
 
-This `dnscollector` acts as a high speed passive analyser for DNS traffic written in Go.
-It can be used with any DNS servers.
+##  Overview
+
+This `dns collector` acts as a high speed passive analyser for DNS traffic written in Go.
+It supports several methods as input to collect dns traffic or logs and can redirect them to multiple destinations.
 
 ![overview](doc/dashboard1.png)
+
+## Features
+
+![overview](doc/overview.png)
 
 - Supported dns traffic collectors:
     - **[Dnstap](https://dnstap.info/) Streams**
@@ -54,15 +60,13 @@ It can be used with any DNS servers.
         * binary format
         * gzip compression
         * execute external command after each rotation
+    - **[InfluxDB](https://www.influxdata.com/) client**
+        * tls support
 
 - Other features
     - GeoIP support (Country code)
     - Packet filtering (regex support)
     - Query IP-Addresses anonymizer
-
-For more informations about **dnstap**, please to read the following page [Dnstap: How to enable it on main dns servers](https://dmachard.github.io/posts/0001-dnstap-testing/)
-
-![overview](doc/overview.png)
 
 ## Installation
 
@@ -96,9 +100,15 @@ incoming traffics. See [Configuration guide](doc/configuration.md).
 
 ## Use-cases
 
+As prerequisites, we assume you have a DNS server which supports DNSTap (unbound, bind, powerdns, etc)
+
 - [x] [Use case 1: collect dnstap stream and backup-it to log files](https://dmachard.github.io/posts/0034-dnscollector-dnstap-to-log-files/)
 - [x] [Use case 2: collect dnstap stream and get statistics usage with Prometheus/Grafana](https://dmachard.github.io/posts/0035-dnscollector-grafana-prometheus/)
 - [x] [Use case 3: collect dnstap stream and log dns answers in JSON format](https://dmachard.github.io/posts/0042-dnscollector-dnstap-json-answers/)
+
+
+For more informations about **dnstap**, please to read the following page [Dnstap: How to enable it on main dns servers](https://dmachard.github.io/posts/0001-dnstap-testing/)
+
 
 ## Metrics
 
