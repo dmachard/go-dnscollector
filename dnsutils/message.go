@@ -2,6 +2,7 @@ package dnsutils
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -33,7 +34,7 @@ type DnsMessage struct {
 	Qtype            string      `json:"qtype" msgpack:"qtype"`
 	Latency          float64     `json:"-" msgpack:"-"`
 	LatencySec       string      `json:"latency" msgpack:"latency"`
-	TimestampRFC3339 string      `json:"timestamp-rfc3339" msgpack:"timestamp-rfc3339"`
+	TimestampRFC3339 string      `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
 	Timestamp        float64     `json:"-" msgpack:"-"`
 	TimeSec          int         `json:"-" msgpack:"-"`
 	TimeNsec         int         `json:"-" msgpack:"-"`
@@ -78,8 +79,16 @@ func (dm *DnsMessage) Bytes(format []string) []byte {
 			s.WriteString(strconv.Itoa(dm.Id))
 		case "qr":
 			s.WriteString(strings.ToUpper(dm.Type))
-		case "timestamp":
+		case "timestamp": // keep it just for backward compatibility
 			s.WriteString(dm.TimestampRFC3339)
+		case "timestamp-rfc3339ns":
+			s.WriteString(dm.TimestampRFC3339)
+		case "timestamp-unixms":
+			s.WriteString(fmt.Sprintf("%.3f", dm.Timestamp))
+		case "timestamp-unixus":
+			s.WriteString(fmt.Sprintf("%.6f", dm.Timestamp))
+		case "timestamp-unixns":
+			s.WriteString(fmt.Sprintf("%.9f", dm.Timestamp))
 		case "identity":
 			s.WriteString(dm.Identity)
 		case "operation":

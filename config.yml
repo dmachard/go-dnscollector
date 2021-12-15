@@ -104,7 +104,10 @@ subprocessors:
 
   # specific the default text log format used on all loggers supporting this mode
   # all available directives:
-  # - timestamp: timestamp rfc3339 format, with nano support
+  # - timestamp-rfc3339ns: timestamp rfc3339 format, with nano support
+  # - timestamp-unixms: unix timestamp with ms support
+  # - timestamp-unixus: unix timestamp with us support
+  # - timestamp-unixns: unix timestamp with nano support
   # - identity: dnstap identity
   # - qr: query or reply flag
   # - operation: dnstap operation
@@ -125,7 +128,7 @@ subprocessors:
   # - ttl: answer ttl, only the first one
   # - answer: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
   # - malformed: malformed dns packet boolean
-  text-format: "timestamp identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"
+  text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"
 
 # list of loggers
 loggers:
@@ -134,7 +137,7 @@ loggers:
     # to enable, set the enable to true
     enable: true
     # output format: text|json
-    mode: text
+    mode: json
     # output text format, please refer to the default text format to see all available directives 
     # use this parameter if you want a specific format
     text-format: ""
