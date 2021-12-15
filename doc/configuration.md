@@ -214,7 +214,10 @@ subprocessors:
 subprocessors:
   # specific the default text log format used on all loggers supporting this mode
   # all available directives:
-  # - timestamp: timestamp rfc3339 format, with nano support
+  # - timestamp-rfc3339ns: timestamp rfc3339 format, with nano support
+  # - timestamp-unixms: unix timestamp with ms support
+  # - timestamp-unixus: unix timestamp with us support
+  # - timestamp-unixns: unix timestamp with nano support
   # - identity: dnstap identity
   # - qr: query or reply flag
   # - operation: dnstap operation
@@ -230,10 +233,12 @@ subprocessors:
   # - qtype: dns qtype
   # - qname: dns qname
   # - latency: computed latency between queries and replies
-  # - answercount: the number of answer
+   # - answercount: the number of answer
   # - country: country iso code
-  # - ttl: answer ttl
-  text-format: "timestamp identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"
+  # - ttl: answer ttl, only the first one
+  # - answer: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
+  # - malformed: malformed dns packet boolean
+  text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"
 ```
 
 ### Statistics
