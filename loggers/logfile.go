@@ -348,8 +348,8 @@ LOOP:
 
 		case <-tflush.C:
 			o.writer.Flush()
-			tflush.Reset(tflush_interval)
 			buffer.Reset()
+			tflush.Reset(tflush_interval)
 
 		case <-o.commpressTimer.C:
 			if o.config.Loggers.LogFile.Compress {

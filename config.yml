@@ -108,6 +108,7 @@ subprocessors:
   # - timestamp-unixms: unix timestamp with ms support
   # - timestamp-unixus: unix timestamp with us support
   # - timestamp-unixns: unix timestamp with nano support
+  # - localtime: local time
   # - identity: dnstap identity
   # - qr: query or reply flag
   # - operation: dnstap operation
@@ -137,7 +138,7 @@ loggers:
     # to enable, set the enable to true
     enable: true
     # output format: text|json
-    mode: json
+    mode: text
     # output text format, please refer to the default text format to see all available directives 
     # use this parameter if you want a specific format
     text-format: ""
@@ -305,3 +306,20 @@ loggers:
     bucket: "db_dns"
     # Organization
     organization: "dnscollector"
+
+  lokiclient:
+    # to enable, set the enable to true
+    enable: false
+    # Loki server url
+    server-url: "http://localhost:3100/loki/api/v1/push"
+    # Job name
+    job-name: "dnstap_test"
+    # flush buffer to log file every X seconds
+    flush-interval: 5
+    # buffer size for log entries in bytes
+    buffer-size: 1048576
+    # interval in second between before to retry to send log entries
+    retry-interval: 10
+    # output text format, please refer to the default text format to see all available directives 
+    # use this parameter if you want a specific format
+    text-format: "localtime identity qr queryip family protocol qname qtype rcode"

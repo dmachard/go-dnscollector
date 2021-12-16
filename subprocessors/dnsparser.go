@@ -211,6 +211,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		dm.Timestamp = float64(dm.TimeSec) + float64(dm.TimeNsec)/1e9
 		ts := time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec))
 		dm.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
+		//dm.TimestampRFC3339 = ts.Format(time.RFC3339Nano)
 
 		// decode the dns payload
 		dns_id, dns_qr, dns_rcode, dns_qdcount, dns_ancount, err := DecodeDns(dm.Payload)

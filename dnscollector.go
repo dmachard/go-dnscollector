@@ -101,6 +101,9 @@ func main() {
 	if config.Loggers.InfluxDB.Enable {
 		logwrks = append(logwrks, loggers.NewInfluxDBClient(config, logger))
 	}
+	if config.Loggers.LokiClient.Enable {
+		logwrks = append(logwrks, loggers.NewLokiClient(config, logger))
+	}
 
 	// load collectors
 	var collwrks []dnsutils.Worker

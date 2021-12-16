@@ -8,12 +8,12 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func TestInfluxDBRun(t *testing.T) {
+func TestLokiClientRun(t *testing.T) {
 	// init logger
-	g := NewInfluxDBClient(dnsutils.GetFakeConfig(), logger.New(false))
+	g := NewLokiClient(dnsutils.GetFakeConfig(), logger.New(false))
 
 	// fake msgpack receiver
-	fakeRcvr, err := net.Listen("tcp", "127.0.0.1:8086")
+	fakeRcvr, err := net.Listen("tcp", "127.0.0.1:3100")
 	if err != nil {
 		t.Fatal(err)
 	}

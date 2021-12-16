@@ -218,6 +218,7 @@ subprocessors:
   # - timestamp-unixms: unix timestamp with ms support
   # - timestamp-unixus: unix timestamp with us support
   # - timestamp-unixns: unix timestamp with nano support
+  # - localtime: local time
   # - identity: dnstap identity
   # - qr: query or reply flag
   # - operation: dnstap operation
@@ -233,7 +234,7 @@ subprocessors:
   # - qtype: dns qtype
   # - qname: dns qname
   # - latency: computed latency between queries and replies
-   # - answercount: the number of answer
+  # - answercount: the number of answer
   # - country: country iso code
   # - ttl: answer ttl, only the first one
   # - answer: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers

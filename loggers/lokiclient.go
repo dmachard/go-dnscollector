@@ -1,0 +1,239 @@
+package loggers
+
+import (
+	"bufio"
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-logger"
+	"github.com/gogo/protobuf/proto"
+	"github.com/klauspost/compress/snappy"
+
+	"github.com/grafana/loki/pkg/logproto"
+)
+
+type LokiClient struct {
+	done        chan bool
+	channel     chan dnsutils.DnsMessage
+	config      *dnsutils.Config
+	logger      *logger.Logger
+	exit        chan bool
+	stream      *logproto.Stream
+	pushrequest *logproto.PushRequest
+	httpclient  *http.Client
+	textFormat  []string
+	sizeentries int
+}
+
+func NewLokiClient(config *dnsutils.Config, logger *logger.Logger) *LokiClient {
+	logger.Info("logger loki - enabled")
+
+	s := &LokiClient{
+		done:    make(chan bool),
+		exit:    make(chan bool),
+		channel: make(chan dnsutils.DnsMessage, 512),
+		logger:  logger,
+		config:  config,
+	}
+
+	s.ReadConfig()
+
+	return s
+}
+
+func (o *LokiClient) ReadConfig() {
+	if len(o.config.Loggers.LokiClient.TextFormat) > 0 {
+		o.textFormat = strings.Fields(o.config.Loggers.LokiClient.TextFormat)
+	} else {
+		o.textFormat = strings.Fields(o.config.Subprocessors.TextFormat)
+	}
+
+	// prepare http client
+	tr := &http.Transport{
+		MaxIdleConns:       10,
+		IdleConnTimeout:    30 * time.Second,
+		DisableCompression: false,
+	}
+	o.httpclient = &http.Client{Transport: tr}
+}
+
+func (o *LokiClient) LogInfo(msg string, v ...interface{}) {
+	o.logger.Info("logger loki - "+msg, v...)
+}
+
+func (o *LokiClient) LogError(msg string, v ...interface{}) {
+	o.logger.Error("logger loki - "+msg, v...)
+}
+
+func (o *LokiClient) Channel() chan dnsutils.DnsMessage {
+	return o.channel
+}
+
+func (o *LokiClient) Stop() {
+	o.LogInfo("stopping...")
+
+	// close output channel
+	o.LogInfo("closing channel")
+	close(o.channel)
+
+	// exit to close properly
+	o.exit <- true
+
+	// read done channel and block until run is terminated
+	<-o.done
+	close(o.done)
+}
+
+func (o *LokiClient) Run() {
+	o.LogInfo("running in background...")
+
+	// prepare stream with label name
+	entry := &logproto.Entry{}
+	o.stream = &logproto.Stream{}
+	o.stream.Labels = "{job=\"" + o.config.Loggers.LokiClient.JobName + "\"}"
+
+	// creates push request
+	o.pushrequest = &logproto.PushRequest{
+		Streams: make([]logproto.Stream, 0, 1),
+	}
+
+	tflush_interval := time.Duration(o.config.Loggers.LokiClient.FlushInterval) * time.Second
+	tflush := time.NewTimer(tflush_interval)
+
+	size_entries_max := o.config.Loggers.LokiClient.BufferSize
+
+LOOP:
+	for {
+	LOOP_RECONNECT:
+		for {
+			select {
+			case dm := <-o.channel:
+				// prepare entry
+				entry.Timestamp = time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec))
+				entry.Line = dm.String(o.textFormat)
+				o.sizeentries += len(entry.Line)
+
+				// append entry to the stream
+				o.stream.Entries = append(o.stream.Entries, *entry)
+				o.pushrequest.Streams = append(o.pushrequest.Streams, *o.stream)
+
+				if o.sizeentries >= size_entries_max {
+					// encode log entries
+					buf, err := o.ProtoEncode()
+					if err != nil {
+						o.LogError("error encoding log entries", err)
+						// reset push request and entries
+						o.ResetEntries()
+						return
+					}
+
+					// send all entries
+					err = o.SendEntries(buf)
+					if err != nil {
+						o.LogError("error sending log entries", err)
+						break LOOP_RECONNECT
+					}
+
+					// reset entries and push request
+					o.ResetEntries()
+				}
+
+			case <-tflush.C:
+				if len(o.stream.Entries) > 0 {
+					// timeout
+					// encode log entries
+					buf, err := o.ProtoEncode()
+					if err != nil {
+						o.LogError("error encoding log entries", err)
+						// reset push request and entries
+						o.ResetEntries()
+						// restart timer
+						tflush.Reset(tflush_interval)
+						return
+					}
+
+					// send all entries
+					err = o.SendEntries(buf)
+					if err != nil {
+						o.LogError("error sending log entries", err)
+						// restart timer
+						tflush.Reset(tflush_interval)
+
+						break LOOP_RECONNECT
+					}
+
+					// reset entries and push request
+					o.ResetEntries()
+				}
+				// restart timer
+				tflush.Reset(tflush_interval)
+
+			case <-o.exit:
+				o.logger.Info("closing loop...")
+				break LOOP
+			}
+
+		}
+		o.LogInfo("retry in %d seconds", o.config.Loggers.LokiClient.RetryInterval)
+		time.Sleep(time.Duration(o.config.Loggers.LokiClient.RetryInterval) * time.Second)
+	}
+
+	// if buffer is not empty, we accept to lose log entries
+	o.LogInfo("run terminated")
+	// the job is done
+	o.done <- true
+}
+
+func (o *LokiClient) ProtoEncode() ([]byte, error) {
+
+	buf, err := proto.Marshal(o.pushrequest)
+	if err != nil {
+		fmt.Println(err)
+	}
+	buf = snappy.Encode(nil, buf)
+	return buf, nil
+}
+
+func (o *LokiClient) ResetEntries() {
+	o.stream.Entries = nil
+	o.sizeentries = 0
+	o.pushrequest.Reset()
+}
+
+func (o *LokiClient) SendEntries(buf []byte) error {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// send post http
+	post, err := http.NewRequest("POST", o.config.Loggers.LokiClient.ServerURL, bytes.NewReader(buf))
+	if err != nil {
+		return err
+	}
+	post = post.WithContext(ctx)
+	post.Header.Set("Content-Type", "application/x-protobuf")
+	post.Header.Set("User-Agent", "dnscollector")
+
+	// send post and read response
+	resp, err := o.httpclient.Do(post)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode/100 != 2 {
+		scanner := bufio.NewScanner(io.LimitReader(resp.Body, 1024))
+		line := ""
+		if scanner.Scan() {
+			line = scanner.Text()
+		}
+		return fmt.Errorf("server returned HTTP status %s (%d): %s", resp.Status, resp.StatusCode, line)
+	}
+
+	return nil
+}

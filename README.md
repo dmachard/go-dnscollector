@@ -36,7 +36,7 @@ It supports several methods as input to collect dns traffic or logs and can redi
     - **[Dnstap](https://dnstap.info/) stream client**
         * to remote tcp destination or unix socket
         * tls support
-    - **Raw TCP client**
+    - **Raw TCP**
         * to remote tcp destination or unix socket
         * supported format: text, json
         * custom text format
@@ -46,22 +46,25 @@ It supports several methods as input to collect dns traffic or logs and can redi
         * qps, total queries/replies, top domains, clients, rcodes...
         * basic auth
         * tls support
-    - **[Syslog](https://en.wikipedia.org/wiki/Syslog) server**
-        * local or remote one
+    - **[Syslog](https://en.wikipedia.org/wiki/Syslog)**
+        * local or remote server
         * custom text format
         * supported format: text, json
         * tls support
-    - **[Fluentd](https://www.fluentd.org/) client**
+    - **[Fluentd](https://www.fluentd.org/)**
         * to remote fluentd collector or unix socket
         * [msgpask](https://msgpack.org/)
         * tls support
-    - **[Pcap](https://en.wikipedia.org/wiki/Pcap) files**
+    - **[Pcap](https://en.wikipedia.org/wiki/Pcap)**
         * with rotation file support
         * binary format
         * gzip compression
         * execute external command after each rotation
-    - **[InfluxDB](https://www.influxdata.com/) client**
+    - **[InfluxDB](https://www.influxdata.com/)**
+        * beta support
         * tls support
+    - **[Loki](https://grafana.com/oss/loki/)**
+        * beta support
 
 - Other features
     - GeoIP support (Country code)

@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type DnsAnswer struct {
@@ -89,6 +90,9 @@ func (dm *DnsMessage) Bytes(format []string) []byte {
 			s.WriteString(fmt.Sprintf("%.6f", dm.Timestamp))
 		case "timestamp-unixns":
 			s.WriteString(fmt.Sprintf("%.9f", dm.Timestamp))
+		case "localtime":
+			ts := time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec))
+			s.WriteString(ts.Format("2006-01-02 15:04:05.999999999"))
 		case "identity":
 			s.WriteString(dm.Identity)
 		case "operation":

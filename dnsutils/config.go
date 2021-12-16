@@ -165,6 +165,15 @@ type Config struct {
 			Bucket       string `yaml:"bucket"`
 			Organization string `yaml:"organization"`
 		} `yaml:"influxdb"`
+		LokiClient struct {
+			Enable        bool   `yaml:"enable"`
+			ServerURL     string `yaml:"server-url"`
+			JobName       string `yaml:"job-name"`
+			FlushInterval int    `yaml:"flush-interval"`
+			BufferSize    int    `yaml:"buffer-size"`
+			RetryInterval int    `yaml:"retry-interval"`
+			TextFormat    string `yaml:"text-format"`
+		} `yaml:"lokiclient"`
 	} `yaml:"loggers"`
 }
 
@@ -299,6 +308,14 @@ func (c *Config) SetDefault() {
 	c.Loggers.InfluxDB.TlsInsecure = false
 	c.Loggers.InfluxDB.Bucket = ""
 	c.Loggers.InfluxDB.Organization = ""
+
+	c.Loggers.LokiClient.Enable = false
+	c.Loggers.LokiClient.ServerURL = "http://localhost:3100/loki/api/v1/push"
+	c.Loggers.LokiClient.JobName = "dnscollector"
+	c.Loggers.LokiClient.FlushInterval = 5
+	c.Loggers.LokiClient.BufferSize = 1024 * 1024
+	c.Loggers.LokiClient.RetryInterval = 10
+	c.Loggers.LokiClient.TextFormat = ""
 }
 
 func LoadConfig(configPath string) (*Config, error) {
