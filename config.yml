@@ -309,9 +309,9 @@ loggers:
 
   lokiclient:
     # to enable, set the enable to true
-    enable: true
+    enable: false
     # Loki server url
-    server-url: "http://192.168.1.221:3100/loki/api/v1/push"
+    server-url: "http://localhost:3100/loki/api/v1/push"
     # Job name
     job-name: "dnstap_test"
     # flush buffer to log file every X seconds

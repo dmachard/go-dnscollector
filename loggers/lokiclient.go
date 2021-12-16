@@ -94,7 +94,7 @@ func (o *LokiClient) Run() {
 	o.LogInfo("running in background...")
 
 	// prepare stream with label name
-	entry := &logproto.Entry{}
+
 	o.stream = &logproto.Stream{}
 	o.stream.Labels = "{job=\"" + o.config.Loggers.LokiClient.JobName + "\"}"
 
@@ -115,13 +115,13 @@ LOOP:
 			select {
 			case dm := <-o.channel:
 				// prepare entry
+				entry := logproto.Entry{}
 				entry.Timestamp = time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec))
 				entry.Line = dm.String(o.textFormat)
 				o.sizeentries += len(entry.Line)
 
 				// append entry to the stream
-				o.stream.Entries = append(o.stream.Entries, *entry)
-				o.pushrequest.Streams = append(o.pushrequest.Streams, *o.stream)
+				o.stream.Entries = append(o.stream.Entries, entry)
 
 				if o.sizeentries >= size_entries_max {
 					// encode log entries
@@ -191,6 +191,7 @@ LOOP:
 }
 
 func (o *LokiClient) ProtoEncode() ([]byte, error) {
+	o.pushrequest.Streams = append(o.pushrequest.Streams, *o.stream)
 
 	buf, err := proto.Marshal(o.pushrequest)
 	if err != nil {
