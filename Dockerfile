@@ -9,6 +9,7 @@ RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-X 'main.Version=$V
 
 FROM alpine:latest
 
+RUN apk add --no-cache tzdata
 RUN mkdir -p /etc/dnscollector/ /var/dnscollector/
 
 COPY --from=builder /build/go-dnscollector /bin/go-dnscollector
