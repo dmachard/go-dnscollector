@@ -1,0 +1,18 @@
+trace:
+  verbose: true
+
+collectors:
+  dnstap:
+    enable: true
+    listen-ip: 0.0.0.0
+    listen-port: 6000
+
+loggers:
+  stdout:
+    enable: false
+
+  lokiclient:
+    enable: true
+    server-url: "http://loki:3100/loki/api/v1/push"
+    job-name: "dnscollector"
+    text-format: "localtime identity qr queryip family protocol qname qtype rcode"

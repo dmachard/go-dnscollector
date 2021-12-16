@@ -62,7 +62,6 @@ It supports several methods as input to collect dns traffic or logs and can redi
         * execute external command after each rotation
     - **[InfluxDB](https://www.influxdata.com/)**
         * beta support
-        * tls support
     - **[Loki](https://grafana.com/oss/loki/)**
         * beta support
 
@@ -114,6 +113,8 @@ For more informations about **dnstap**, please to read the following page [Dnsta
 
 
 ## Metrics
+
+See [Metrics](doc/metrics.txt).
 
 | Metric | Description |
 | ---- | ---- | 
