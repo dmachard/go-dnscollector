@@ -11,7 +11,7 @@ trace:
 
 # list of supported collectors
 collectors:
-
+  # dnstap standard
   dnstap:
     # to enable, set the enable to true
     enable: true
@@ -28,6 +28,7 @@ collectors:
     # private key server file
     key-file: "/home/denis/Lab/logs-dnstap/stunnel.key"
 
+  # dns traffic
   dns-sniffer:
     # to enable, set the enable to true
     enable: false
@@ -40,6 +41,7 @@ collectors:
     # capture dns replies
     capture-dns-replies: true
 
+  # read text file
   tail:
     # to enable, set the enable to true
     enable: false
@@ -76,7 +78,7 @@ subprocessors:
   #  TR: TOOL_RESPONSE
   dnstap-quiet-text: false
 
-  # Statistics engine
+  # Statistics engine to compute some metrics on dns usage observed
   statistics:
     # default number of items on top 
     top-max-items: 100
@@ -91,20 +93,23 @@ subprocessors:
     threshold-slow: 0.5
 
   # IP-Addresses are anonymities by zeroing the host-part of an address.
+  # Use this option to protect user privacy
   anonymize-ip: false
 
   # Convert all domain to lowercase
+  # Wwww.GooGlE.com will be equal to www.google.com
   qname-lowercase: true
 
   # The cache is used to compute latency between replies and queries
-  # Ttl in second 
+  # Ttl in second, max time to keep the query record in memory
   cache-ttl: 10
 
   # Server identity, if empty  the hostname is used
-  # This settings is used in dnstap generator as dnstap-identity
+  # This settings is used in dnstap logger as dnstap-identity
   server-id: ""
 
-  # filtering feature
+  # filtering feature to ignore some specific qname
+  # dns logs is not redirected to loggers if the filtering regexp matched
   filtering:
     # regexp to ignore incoming qname
     ignore-qname: ""
@@ -113,7 +118,8 @@ subprocessors:
     # send replies to configured loggers or not
     log-replies: true
 
-  # geoip maxmind support
+  # geoip maxmind support, more information on https://www.maxmind.com/en/geoip-demo
+  # this feature can be used to append the country name according to the query ip
   geoip:
     # path file to your database
     db-file: ""
@@ -150,6 +156,7 @@ subprocessors:
 # list of loggers
 loggers:
 
+  # print received dns traffic to sdtout
   stdout:
     # to enable, set the enable to true
     enable: true
@@ -159,6 +166,7 @@ loggers:
     # use this parameter if you want a specific format
     text-format: ""
 
+  # rest api server
   webserver:
     # to enable, set the enable to true
     enable: true
@@ -179,6 +187,7 @@ loggers:
     # prometheus suffix
     prometheus-suffix: "dnscollector"
 
+  # write captured dns traffic to text files with rotation and compression support
   logfile:
     # to enable, set the enable to true
     enable: false
@@ -207,6 +216,7 @@ loggers:
     # delete file on script success
     postrotate-delete-success: true
 
+  # resend captured dns traffic to another dnstap collector
   dnstap:
     # to enable, set the enable to true
     enable: false
@@ -223,6 +233,7 @@ loggers:
     # insecure skip verify
     tls-insecure: false
 
+  # resend captured dns traffic to a tcp remote destination
   tcpclient:
     # to enable, set the enable to true
     enable: false
@@ -246,6 +257,7 @@ loggers:
     # use this parameter if you want a specific format
     text-format: ""
 
+  # redirect captured dns traffic to a remote syslog server or local one
   syslog:
     # to enable, set the enable to true
     enable: false
@@ -268,6 +280,7 @@ loggers:
     # insecure skip verify
     tls-insecure: false
 
+  # resend captured dns traffic to a fluentd server
   fluentd:
     # to enable, set the enable to true
     enable: false
@@ -288,6 +301,7 @@ loggers:
     # insecure skip verify
     tls-insecure: false
 
+  # write captured dns traffic to network pcap file
   pcapfile:
     # to enable, set the enable to true
     enable: false
@@ -307,6 +321,7 @@ loggers:
     # delete file on script success
     postrotate-delete-success: true
 
+  # resend captured dns traffic to a InfluxDB database
   influxdb:
     # to enable, set the enable to true
     enable: false
@@ -323,6 +338,7 @@ loggers:
     # Organization
     organization: "dnscollector"
 
+  # resend captured dns traffic to a Loki Server
   lokiclient:
     # to enable, set the enable to true
     enable: false
