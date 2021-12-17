@@ -135,6 +135,27 @@ tail:
 
 ## Subprocessors
 
+### Dnstap quiet text 
+
+Enable or disable dnstap message quiet text, this option can be useful to reduce the size of your dns logs
+
+```yaml
+subprocessors:
+  #  AQ: AUTH_QUERY
+  #  AR: AUTH_RESPONSE
+  #  RQ: RESOLVER_QUERY
+  #  RR: RESOLVER_RESPONSE
+  #  CQ: CLIENT_QUERY
+  #  CR: CLIENT_RESPONSE
+  #  FQ: FORWARDER_QUERY
+  #  FR: FORWARDER_RESPONSE
+  #  SQ: STUB_QUERY
+  #  SR: STUB_RESPONSE
+  #  TQ: TOOL_QUERY
+  #  TR: TOOL_RESPONSE
+  dnstap-quiet-text: false
+```
+
 ### Qname lowercase
 
 Option to convert all domain to lowercase.
