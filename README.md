@@ -2,9 +2,11 @@
 
 ##  Overview
 
-This `dns collector` acts as a high speed passive analyser for DNS traffic written in Go.
-It supports several methods as input to collect dns traffic (dnstap, sniffer, logs, etc.) and can redirect them to multiple destinations
-with transformation to text or json format. This collector can also be used to logs dns answers.
+This `dns collector` acts as a **high speed** passive analyser for DNS traffic written in **Golang** which give you the possibility to control dns servers, get statistics and more. It supports several methods as input to collect dns traffic (dnstap, sniffer, logs, etc.) and can redirect them to multiple destinations with transformation to text or json format. This collector can also be used to logs dns answers.
+
+![overview](doc/overview.png)
+
+Some Grafana dashboards are also available:
 
 ![overview](doc/dashboard1.png)
 
@@ -12,10 +14,8 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 ## Features
 
-![overview](doc/overview.png)
-
-- Supported dns traffic collectors:
-    - [Dnstap](https://dnstap.info/) streams
+- Supported collectors:
+    - [Dnstap streams](doc/configuration.md#Dnstap) 
     - DNS packets sniffer
     - Tail on log file
 
@@ -41,8 +41,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 **Run-it from binary**
 
-Download the binary from release page.
-If you want to integrate this tool with systemd, please to follow this [guide](https://dmachard.github.io/posts/0007-dnscollector-install-binary/).
+Download the binary from release page. If you want to integrate this tool with systemd, please to follow this [guide](https://dmachard.github.io/posts/0007-dnscollector-install-binary/).
 
 ```go
 ./go-dnscollector -config config.yml
@@ -65,7 +64,7 @@ Override the default configuration (/etc/dnscollector/config.yml) with a config 
 ## Configuration
 
 A typically configuration would have one or more collector to receive DNS traffic or logs, and severals loggers to process the 
-incoming traffics. See [Configuration guide](doc/configuration.md).
+incoming traffics. See the full [Configuration guide](doc/configuration.md) for more details.
 
 ## Use-cases
 
