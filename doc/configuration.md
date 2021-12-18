@@ -67,7 +67,9 @@ INFO: 2021/08/12 07:10:12.362372 processor dns parser - running... waiting incom
 
 ### DNS tap
 
-Dnstap stream collector tcp or unix socket with tls support.
+Dnstap stream collector:
+* tcp or unix socket listener
+* tls support
 
 ```yaml
 dnstap:
@@ -90,7 +92,10 @@ dnstap:
 ### DNS sniffer
 
 Raw DNS packets sniffer. Setting `CAP_NET_RAW` capabilities on executables allows you to run these 
-program without having to run-it with the root user.
+program without having to run-it with the root user:
+* IPv4, IPv6 support (fragmented packet ignored)
+* UDP and TCP transport
+* BFP filtering
 
 ```
 sudo setcap cap_net_admin,cap_net_raw=eip go-dnscollector
@@ -115,7 +120,10 @@ dns-sniffer:
 ## Tail
 
 The tail collector enable to read DNS event from text files.
-DNS servers log server can be followed; any type of server is supported.
+DNS servers log server can be followed; any type of server is supported!
+* Read DNS events from the tail of text files
+* Regex support
+
 
 Enable the tail by provided the path of the file to follow
 
@@ -298,7 +306,9 @@ subprocessors:
 
 ### Stdout
 
-Print to your standard output, all DNS logs received in text or json format
+Print to your standard output, all DNS logs received 
+* in text or json format
+* custom text format
 
 ```yaml
 stdout:
@@ -355,6 +365,11 @@ Example:
 Build-in webserver with REST API to retrieve somes statistics like top domains, clients and more...
 Basic authentication supported. Prometheus metrics is also available through this API.
 
+* prometheus metrics format
+* qps, total queries/replies, top domains, clients, rcodes...
+* basic auth
+* tls support
+
 See the [swagger](swagger.yml) documentation.
 
 ```yaml
@@ -392,7 +407,12 @@ The full metrics can be found [here](doc/metrics.txt).
 
 ### Log File
 
-Enable this logger if you want to log to a file. Rotation files is supported.
+Enable this logger if you want to log to a file.
+* with rotation file support
+* supported format: text, json
+* gzip compression
+* execute external command after each rotation
+* custom text format
 
 ```yaml
 logfile:
@@ -427,6 +447,8 @@ logfile:
 ### DNStap
 
 DNStap stream logger to a remote tcp destination or unix socket.
+* to remote tcp destination or unix socket
+* tls support
 
 ```yaml
 dnstap:
@@ -449,6 +471,10 @@ dnstap:
 ### TCP Client
 
 Tcp/unix stream client logger.
+* to remote tcp destination or unix socket
+* supported format: text, json
+* custom text format
+* tls support
 
 ```yaml
 tcpclient:
@@ -508,6 +534,10 @@ Example:
 ### Syslog
 
 Syslog logger to local syslog system or remote one.
+* local or remote server
+* custom text format
+* supported format: text, json
+* tls support
 
 ```yaml
 syslog:
@@ -532,6 +562,9 @@ syslog:
 ### Fluentd Client
 
 Fluentd client to remote server or unix socket.
+* to remote fluentd collector or unix socket
+* [msgpask](https://msgpack.org/)
+* tls support
 
 ```yaml
 fluentd:
@@ -558,6 +591,10 @@ fluentd:
 ### Pcap File
 
 Enable this logger if you want to log into a pcap file.
+* with rotation file support
+* binary format
+* gzip compression
+* execute external command after each rotation
 
 ```yaml
 pcapfile:
