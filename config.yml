@@ -216,7 +216,7 @@ loggers:
     # delete file on script success
     postrotate-delete-success: true
 
-  # resend captured dns traffic to another dnstap collector
+  # resend captured dns traffic to another dnstap collector or to unix socket
   dnstap:
     # to enable, set the enable to true
     enable: false
@@ -233,7 +233,7 @@ loggers:
     # insecure skip verify
     tls-insecure: false
 
-  # resend captured dns traffic to a tcp remote destination
+  # resend captured dns traffic to a tcp remote destination or to unix socket
   tcpclient:
     # to enable, set the enable to true
     enable: false
@@ -280,7 +280,7 @@ loggers:
     # insecure skip verify
     tls-insecure: false
 
-  # resend captured dns traffic to a fluentd server
+  # resend captured dns traffic to a remote fluentd server or to unix socket
   fluentd:
     # to enable, set the enable to true
     enable: false

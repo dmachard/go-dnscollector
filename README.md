@@ -1,4 +1,4 @@
-# go-dnscollector
+# DNS Collector
 
 ##  Overview
 
