@@ -25,7 +25,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 - Supported loggers:
     - [Stdout](doc/configuration.md#stdout)
     - [Text files](doc/configuration.md#log-file)
-    - [Dnstap](doc/configuration.md#dnstap-client]
+    - [Dnstap client](doc/configuration.md#dnstap-client)
     - [TCP client](doc/configuration.md#tcp-client)
     - [Rest API](doc/configuration.md#rest-api)
     - [Syslog](doc/configuration.md#syslog)
@@ -38,7 +38,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 - Other features
     - [GeoIP support](doc/configuration.md#geoip-support)
     - [Filtering](doc/configuration.md#packet-filtering)
-    - [Query IP-Addresses anonymizer](doc/configuration.md#ip-anonymization)
+    - [Query IP anonymizer](doc/configuration.md#ip-anonymization)
     - [Custom text format](doc/configuration.md#custom-text-format)
 
 ## Installation
@@ -67,8 +67,7 @@ Override the default configuration (/etc/dnscollector/config.yml) with a config 
 
 ## Configuration
 
-A typically configuration would have one or more collector to receive DNS traffic or logs, and severals loggers to process the 
-incoming traffics. See the full [Configuration guide](doc/configuration.md) for more details.
+See the full [Configuration guide](doc/configuration.md) for more details.
 
 ## Use-cases
 
@@ -81,18 +80,6 @@ As prerequisites, we assume you have a DNS server which supports DNSTap (unbound
 
 For more informations about **dnstap**, please to read the following page [Dnstap: How to enable it on main dns servers](https://dmachard.github.io/posts/0001-dnstap-testing/)
 
-
-## Metrics
-
-See [Metrics](doc/metrics.txt).
-
-| Metric | Description |
-| ---- | ---- | 
-| dnscollector_qps   | Number of queries per second received | 
-| dnscollector_requesters_total | Number of clients |
-| dnscollector_domains_total | Number of domains observed |
-| dnscollector_received_bytes_total | Total bytes received |
-| dnscollector_sent_bytes_total | Total bytes sent |
 
 ## Benchmark
 

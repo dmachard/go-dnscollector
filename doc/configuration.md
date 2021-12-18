@@ -1,5 +1,10 @@
 # DnsCollector Configuration Guide
 
+A typically configuration would have one or more collector to receive DNS traffic or logs, and severals loggers to process the 
+incoming traffics. 
+
+The configuration is done in one yaml file. For the complete configuration, see [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml).
+
 - [Trace](#Trace)
 - [Collectors](#Collectors)
   - [DNS tap](#Dnstap)
@@ -25,8 +30,6 @@
   - [InfluxDB](#InfluxDB)
   - [Loki](#Loki)
   - [Statsd](#Statsd)
-
-See [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml) file.
 
 ## Trace
 
@@ -401,6 +404,15 @@ Request:
 ```
 $ curl --user admin:changeme http://127.0.0.1:8080/metrics
 ```
+
+| Metric | Description |
+| ---- | ---- | 
+| dnscollector_qps   | Number of queries per second received | 
+| dnscollector_requesters_total | Number of clients |
+| dnscollector_domains_total | Number of domains observed |
+| dnscollector_received_bytes_total | Total bytes received |
+| dnscollector_sent_bytes_total | Total bytes sent |
+
 
 The full metrics can be found [here](doc/metrics.txt).
 
