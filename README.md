@@ -31,9 +31,9 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [Syslog](doc/configuration.md#syslog)
     - [Fluentd](doc/configuration.md#fluentd-client)
     - [Pcap](doc/configuration.md#pcap-file)
-    - [InfluxDB](doc/configuration.md#influxdb-client) (experimental)
-    - [Loki](doc/configuration.md#loki-client) (experimental)
-    - [Statsd](doc/configuration.md#statsd-client) (experimental)
+    - [InfluxDB](doc/configuration.md#influxdb-client)
+    - [Loki](doc/configuration.md#loki-client)
+    - [Statsd](doc/configuration.md#statsd-client)
 
 - Other features
     - [GeoIP support](doc/configuration.md#geoip-support)
