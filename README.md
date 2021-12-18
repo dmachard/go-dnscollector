@@ -2,13 +2,16 @@
 
 ##  Overview
 
-This `dns collector` acts as a **high speed** passive analyser for DNS traffic written in **Golang** which give you the possibility to control dns servers, get statistics and more. It supports several methods as input to collect dns traffic (dnstap, sniffer, logs, etc.) and can redirect them to multiple destinations with transformation to text or json format. This collector can also be used to logs dns answers.
+This `dns collector` acts as a **high speed** passive analyser for DNS traffic written in Golang which give you the possibility to control dns servers, get statistics and more. It supports several methods to collect dns traffic (dnstap, sniffer, logs, etc.) and can redirect them to multiple destinations with protocol and format (json, text) transformation. This collector can also be used to logs dns answers.
 
 ![overview](doc/overview.png)
 
 Some Grafana dashboards are also available:
 
-![overview](doc/dashboard1.png)
+<p align="center">
+  <img src="doc/dashboard1.png" alt="dnscollector"/>
+</p>
+
 
 NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes. 
 
