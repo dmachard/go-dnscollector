@@ -370,7 +370,7 @@ Basic authentication supported. Prometheus metrics is also available through thi
 * basic auth
 * tls support
 
-See the [swagger](swagger.yml) documentation.
+See the [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) documentation.
 
 ```yaml
 webserver:
@@ -444,7 +444,7 @@ logfile:
   postrotate-delete-success: false
 ```
 
-### DNStap
+### DNStap Client
 
 DNStap stream logger to a remote tcp destination or unix socket.
 * to remote tcp destination or unix socket

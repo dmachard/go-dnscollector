@@ -2,11 +2,11 @@
 
 ##  Overview
 
-This `dns collector` acts as a **high speed** passive analyser for DNS traffic written in Golang which give you the possibility to control dns servers, get statistics and more. It supports several methods to collect dns traffic (dnstap, sniffer, logs, etc.) and can redirect them to multiple destinations with protocol and format (json, text) transformation. This collector can also be used to logs dns answers.
+This `dns collector` acts as a **high speed** passive analyser for DNS traffic, written in Golang. Which give you the possibility to control dns servers, get statistics and more. It supports several methods to collect dns traffic (dnstap, sniffer, logs, etc.) and can redirect them to multiple destinations with protocol and format (json, text) transformation. This collector can also be used to logs dns answers.
 
 ![overview](doc/overview.png)
 
-Some Grafana dashboards are also available:
+Some [Grafana dashboards](https://grafana.com/grafana/dashboards/15415) are also available:
 
 <p align="center">
   <img src="doc/dashboard1.png" alt="dnscollector"/>
@@ -19,26 +19,27 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 - Supported collectors:
     - [Dnstap streams](doc/configuration.md#Dnstap) 
-    - DNS packets sniffer
-    - Tail on log file
+    - [DNS packets sniffer](doc/configuration.md#Dns-Sniffer)
+    - [Tail on log file](doc/configuration.md#tail)
 
 - Supported loggers:
-    - Stdout
-    - Text files
-    - [Dnstap](https://dnstap.info/) client
-    - Raw TCP client
-    - [Rest API](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml)
-    - [Syslog](https://en.wikipedia.org/wiki/Syslog)
-    - [Fluentd](https://www.fluentd.org/)
-    - [Pcap](https://en.wikipedia.org/wiki/Pcap)
-    - [InfluxDB](https://www.influxdata.com/) (experimental)
-    - [Loki](https://grafana.com/oss/loki/) (experimental)
-    - [Statsd](https://github.com/statsd/statsd) (experimental)
+    - [Stdout](doc/configuration.md#stdout)
+    - [Text files](doc/configuration.md#log-file)
+    - [Dnstap](doc/configuration.md#dnstap-client]
+    - [TCP client](doc/configuration.md#tcp-client)
+    - [Rest API](doc/configuration.md#rest-api)
+    - [Syslog](doc/configuration.md#syslog)
+    - [Fluentd](doc/configuration.md#fluentd-client)
+    - [Pcap](doc/configuration.md#pcap-file)
+    - [InfluxDB](doc/configuration.md#influxdb-client) (experimental)
+    - [Loki](doc/configuration.md#loki-client) (experimental)
+    - [Statsd](doc/configuration.md#statsd-client) (experimental)
 
 - Other features
-    - GeoIP support (Country code)
-    - Packet filtering (regex support)
-    - Query IP-Addresses anonymizer
+    - [GeoIP support](doc/configuration.md#geoip-support)
+    - [Filtering](doc/configuration.md#packet-filtering)
+    - [Query IP-Addresses anonymizer](doc/configuration.md#ip-anonymization)
+    - [Custom text format](doc/configuration.md#custom-text-format)
 
 ## Installation
 
