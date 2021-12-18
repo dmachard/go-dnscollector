@@ -24,10 +24,10 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 - Supported loggers:
     - [Stdout](doc/configuration.md#stdout)
-    - [Text files](doc/configuration.md#log-file)
-    - [Dnstap client](doc/configuration.md#dnstap-client)
-    - [TCP client](doc/configuration.md#tcp-client)
-    - [Rest API](doc/configuration.md#rest-api)
+    - [File](doc/configuration.md#log-file)
+    - [Dnstap](doc/configuration.md#dnstap-client)
+    - [TCP](doc/configuration.md#tcp-client)
+    - [Prometheus](doc/configuration.md#rest-api)
     - [Syslog](doc/configuration.md#syslog)
     - [Fluentd](doc/configuration.md#fluentd-client)
     - [Pcap](doc/configuration.md#pcap-file)
