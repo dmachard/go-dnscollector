@@ -81,15 +81,15 @@ type Config struct {
 			TextFormat string `yaml:"text-format"`
 		} `yaml:"stdout"`
 		WebServer struct {
-			Enable           bool   `yaml:"enable"`
-			ListenIP         string `yaml:"listen-ip"`
-			ListenPort       int    `yaml:"listen-port"`
-			BasicAuthLogin   string `yaml:"basic-auth-login"`
-			BasicAuthPwd     string `yaml:"basic-auth-pwd"`
-			TlsSupport       bool   `yaml:"tls-support"`
-			CertFile         string `yaml:"cert-file"`
-			KeyFile          string `yaml:"key-file"`
-			PrometheusSuffix string `yaml:"prometheus-suffix"`
+			Enable         bool   `yaml:"enable"`
+			ListenIP       string `yaml:"listen-ip"`
+			ListenPort     int    `yaml:"listen-port"`
+			BasicAuthLogin string `yaml:"basic-auth-login"`
+			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
+			TlsSupport     bool   `yaml:"tls-support"`
+			CertFile       string `yaml:"cert-file"`
+			KeyFile        string `yaml:"key-file"`
+			PromPrefix     string `yaml:"prometheus-prefix"`
 		} `yaml:"webserver"`
 		LogFile struct {
 			Enable            bool   `yaml:"enable"`
@@ -175,6 +175,14 @@ type Config struct {
 			RetryInterval int    `yaml:"retry-interval"`
 			TextFormat    string `yaml:"text-format"`
 		} `yaml:"lokiclient"`
+		Statsd struct {
+			Enable        bool   `yaml:"enable"`
+			Prefix        string `yaml:"prefix"`
+			RemoteAddress string `yaml:"remote-address"`
+			RemotePort    int    `yaml:"remote-port"`
+			Transport     string `yaml:"transport"`
+			FlushInterval int    `yaml:"flush-interval"`
+		} `yaml:"statsd"`
 	} `yaml:"loggers"`
 }
 
@@ -262,7 +270,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.WebServer.TlsSupport = false
 	c.Loggers.WebServer.CertFile = ""
 	c.Loggers.WebServer.KeyFile = ""
-	c.Loggers.WebServer.PrometheusSuffix = "dnscollector"
+	c.Loggers.WebServer.PromPrefix = "dnscollector"
 
 	c.Loggers.TcpClient.Enable = false
 	c.Loggers.TcpClient.RemoteAddress = "127.0.0.1"
@@ -319,6 +327,13 @@ func (c *Config) SetDefault() {
 	c.Loggers.LokiClient.BufferSize = 1024 * 1024
 	c.Loggers.LokiClient.RetryInterval = 10
 	c.Loggers.LokiClient.TextFormat = ""
+
+	c.Loggers.Statsd.Enable = false
+	c.Loggers.Statsd.Prefix = "dnscollector"
+	c.Loggers.Statsd.RemoteAddress = "127.0.0.1"
+	c.Loggers.Statsd.RemotePort = 8125
+	c.Loggers.Statsd.Transport = "udp"
+	c.Loggers.Statsd.FlushInterval = 10
 }
 
 func LoadConfig(configPath string) (*Config, error) {

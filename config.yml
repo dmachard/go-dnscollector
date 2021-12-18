@@ -184,8 +184,8 @@ loggers:
     cert-file: ""
     # private key server file
     key-file: ""
-    # prometheus suffix
-    prometheus-suffix: "dnscollector"
+    # prometheus prefix
+    prometheus-prefix: "dnscollector"
 
   # write captured dns traffic to text files with rotation and compression support
   logfile:
@@ -345,7 +345,7 @@ loggers:
     # Loki server url
     server-url: "http://localhost:3100/loki/api/v1/push"
     # Job name
-    job-name: "dnstap_test"
+    job-name: "dnstapt"
     # flush buffer to log file every X seconds
     flush-interval: 5
     # buffer size for log entries in bytes
@@ -355,3 +355,17 @@ loggers:
     # output text format, please refer to the default text format to see all available directives 
     # use this parameter if you want a specific format
     text-format: "localtime identity qr queryip family protocol qname qtype rcode"
+
+  statsd:
+    # to enable, set the enable to true
+    enable: false
+    # network transport to use: udp
+    transport: udp
+    # remote address
+    remote-address: 127.0.0.1
+    # remote tcp port
+    remote-port: 8125
+    # prefix
+    prefix: "dnscollector"
+    # flush every X seconds
+    flush-interval: 10

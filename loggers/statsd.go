@@ -1,0 +1,167 @@
+package loggers
+
+import (
+	"bytes"
+	"fmt"
+	"net"
+	"strconv"
+	"time"
+
+	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/subprocessors"
+	"github.com/dmachard/go-logger"
+)
+
+type StatsdClient struct {
+	done    chan bool
+	channel chan dnsutils.DnsMessage
+	config  *dnsutils.Config
+	logger  *logger.Logger
+	stats   *subprocessors.StatsStreams
+	exit    chan bool
+}
+
+func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger) *StatsdClient {
+	logger.Info("logger to statsd - enabled")
+
+	s := &StatsdClient{
+		done:    make(chan bool),
+		exit:    make(chan bool),
+		channel: make(chan dnsutils.DnsMessage, 512),
+		logger:  logger,
+		config:  config,
+	}
+
+	// check config
+	s.ReadConfig()
+
+	// init engine to compute statistics
+	s.stats = subprocessors.NewStreamsStats(config)
+
+	return s
+}
+
+func (o *StatsdClient) ReadConfig() {
+	//tbc
+}
+
+func (o *StatsdClient) LogInfo(msg string, v ...interface{}) {
+	o.logger.Info("logger to statsd - "+msg, v...)
+}
+
+func (o *StatsdClient) LogError(msg string, v ...interface{}) {
+	o.logger.Error("logger to statsd - "+msg, v...)
+}
+
+func (o *StatsdClient) Channel() chan dnsutils.DnsMessage {
+	return o.channel
+}
+
+func (o *StatsdClient) Stop() {
+	o.LogInfo("stopping...")
+
+	// close output channel
+	o.LogInfo("closing channel")
+	close(o.channel)
+
+	// read done channel and block until run is terminated
+	<-o.done
+	close(o.done)
+}
+
+func (o *StatsdClient) Run() {
+	o.LogInfo("running in background...")
+
+	// init timer to compute qps
+	t1_interval := 1 * time.Second
+	t1 := time.NewTimer(t1_interval)
+
+	// statd timer to push data
+	t2_interval := time.Duration(o.config.Loggers.Statsd.FlushInterval) * time.Second
+	t2 := time.NewTimer(t2_interval)
+
+LOOP:
+	for {
+		select {
+
+		case dm, opened := <-o.channel:
+			if !opened {
+				o.LogInfo("channel closed")
+				break LOOP
+			}
+			// record the dnstap message
+			o.stats.Record(dm)
+
+		case <-t1.C:
+			// compute qps each second
+			o.stats.Compute()
+
+			// reset the timer
+			t1.Reset(t1_interval)
+
+		case <-t2.C:
+			address := o.config.Loggers.Statsd.RemoteAddress + ":" + strconv.Itoa(o.config.Loggers.Statsd.RemotePort)
+			conn, err := net.Dial(o.config.Loggers.Statsd.Transport, address)
+			if err != nil {
+				o.LogError("Dial err:", err)
+				return
+			}
+
+			var b bytes.Buffer
+			prefix := o.config.Loggers.Statsd.Prefix
+			for _, stream := range o.stats.Streams() {
+				counters := o.stats.GetCounters(stream)
+				totalClients := o.stats.GetTotalClients(stream)
+				totalDomains := o.stats.GetTotalDomains(stream)
+				totalNxdomains := o.stats.GetTotalNxdomains(stream)
+
+				topRcodes := o.stats.GetTopRcodes(stream)
+				topRrtypes := o.stats.GetTopRrtypes(stream)
+				topTransports := o.stats.GetTopTransports(stream)
+				topIpProto := o.stats.GetTopIpProto(stream)
+
+				b.WriteString(fmt.Sprintf("%s_%s_total_bytes_received:%d|c\n", prefix, stream, counters.ReceivedBytesTotal))
+				b.WriteString(fmt.Sprintf("%s_%s_total_bytes_sent:%d|c\n", prefix, stream, counters.SentBytesTotal))
+
+				b.WriteString(fmt.Sprintf("%s_%s_total_requesters:%d|c\n", prefix, stream, totalClients))
+
+				b.WriteString(fmt.Sprintf("%s_%s_total_domains:%d|c\n", prefix, stream, totalDomains))
+				b.WriteString(fmt.Sprintf("%s_%s_total_domains_nx:%d|c\n", prefix, stream, totalNxdomains))
+
+				b.WriteString(fmt.Sprintf("%s_%s_total_packets:%d|c\n", prefix, stream, counters.Packets))
+
+				// transport repartition
+				for _, v := range topTransports {
+					b.WriteString(fmt.Sprintf("%s_%s_total_packets_%s:%d|c\n", prefix, stream, v.Name, v.Hit))
+				}
+
+				// ip proto repartition
+				for _, v := range topIpProto {
+					b.WriteString(fmt.Sprintf("%s_%s_total_packets_%s:%d|c\n", prefix, stream, v.Name, v.Hit))
+				}
+
+				// qtypes repartition
+				for _, v := range topRrtypes {
+					b.WriteString(fmt.Sprintf("%s_%s_total_replies_rrtype_%s:%d|c\n", prefix, stream, v.Name, v.Hit))
+				}
+
+				// top rcodes
+				for _, v := range topRcodes {
+					b.WriteString(fmt.Sprintf("%s_%s_total_replies_rcode_%s:%d|c\n", prefix, stream, v.Name, v.Hit))
+				}
+
+				b.WriteString(fmt.Sprintf("%s_%s_queries_qps:%d|g\n", prefix, stream, counters.Qps))
+			}
+
+			// send data
+			conn.Write(b.Bytes())
+
+			// reset the timer
+			t2.Reset(t2_interval)
+		}
+	}
+
+	o.LogInfo("run terminated")
+	// the job is done
+	o.done <- true
+}

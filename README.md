@@ -61,9 +61,11 @@ It supports several methods as input to collect dns traffic or logs and can redi
         * gzip compression
         * execute external command after each rotation
     - **[InfluxDB](https://www.influxdata.com/)**
-        * beta support
+        * beta support (experimental)
     - **[Loki](https://grafana.com/oss/loki/)**
-        * beta support
+        * beta support (experimental)
+    - **[Statsd](https://github.com/statsd/statsd)**
+        * beta support (experimental)
 
 - Other features
     - GeoIP support (Country code)

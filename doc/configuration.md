@@ -23,6 +23,8 @@
   - [Fluentd](#Fluentd-Client)
   - [Pcap File](#Pcap-File)
   - [InfluxDB](#InfluxDB)
+  - [Loki](#Loki)
+  - [Statsd](#Statsd)
 
 See [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml) file.
 
@@ -598,4 +600,45 @@ InfluxDB client to remote InfluxDB server
     tls-support: false
     # insecure skip verify
     tls-insecure: false
+```
+
+### Loki client
+
+Loki client to remote server
+
+```yaml
+  lokiclient:
+    # to enable, set the enable to true
+    enable: false
+    # Loki server url
+    server-url: "http://localhost:3100/loki/api/v1/push"
+    # Job name
+    job-name: "dnstap"
+    # flush buffer to log file every X seconds
+    flush-interval: 5
+    # buffer size for log entries in bytes
+    buffer-size: 1048576
+    # interval in second between before to retry to send log entries
+    retry-interval: 10
+    # output text format, please refer to the default text format to see all available directives 
+    # use this parameter if you want a specific format
+    text-format: "localtime identity qr queryip family protocol qname qtype rcode"
+```
+
+### Statsd client
+
+Statsd client to statsd proxy
+
+```yaml
+  statsd:
+    # to enable, set the enable to true
+    enable: false
+    # network transport to use: udp
+    transport: udp
+    # remote address
+    remote-address: 127.0.0.1
+    # remote tcp port
+    remote-port: 8125
+    # prefix
+    prefix: "dnscollector"
 ```
