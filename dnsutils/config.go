@@ -176,7 +176,7 @@ type Config struct {
 			ServerURL      string `yaml:"server-url"`
 			JobName        string `yaml:"job-name"`
 			FlushInterval  int    `yaml:"flush-interval"`
-			BufferSize     int    `yaml:"buffer-size"`
+			BatchSize      int    `yaml:"batch-size"`
 			RetryInterval  int    `yaml:"retry-interval"`
 			TextFormat     string `yaml:"text-format"`
 			ProxyURL       string `yaml:"proxy-url"`
@@ -339,7 +339,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.LokiClient.ServerURL = "http://localhost:3100/loki/api/v1/push"
 	c.Loggers.LokiClient.JobName = "dnscollector"
 	c.Loggers.LokiClient.FlushInterval = 5
-	c.Loggers.LokiClient.BufferSize = 1024 * 1024
+	c.Loggers.LokiClient.BatchSize = 1024 * 1024
 	c.Loggers.LokiClient.RetryInterval = 10
 	c.Loggers.LokiClient.TextFormat = ""
 	c.Loggers.LokiClient.ProxyURL = ""

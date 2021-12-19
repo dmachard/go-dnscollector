@@ -124,8 +124,6 @@ func (o *LokiClient) Run() {
 	tflush_interval := time.Duration(o.config.Loggers.LokiClient.FlushInterval) * time.Second
 	tflush := time.NewTimer(tflush_interval)
 
-	size_entries_max := o.config.Loggers.LokiClient.BufferSize
-
 LOOP:
 	for {
 	LOOP_RECONNECT:
@@ -141,7 +139,7 @@ LOOP:
 				// append entry to the stream
 				o.stream.Entries = append(o.stream.Entries, entry)
 
-				if o.sizeentries >= size_entries_max {
+				if o.sizeentries >= o.config.Loggers.LokiClient.BatchSize {
 					// encode log entries
 					buf, err := o.ProtoEncode()
 					if err != nil {
