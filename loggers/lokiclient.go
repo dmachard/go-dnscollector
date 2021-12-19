@@ -56,12 +56,6 @@ func (o *LokiClient) ReadConfig() {
 		o.textFormat = strings.Fields(o.config.Subprocessors.TextFormat)
 	}
 
-	// use proxy
-	proxyURL, err := url.Parse(o.config.Loggers.LokiClient.ProxyURL)
-	if err != nil {
-		o.logger.Fatal("unable to create file: ", err)
-	}
-
 	// tls client config
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: o.config.Loggers.LokiClient.TlsInsecure,
@@ -72,9 +66,18 @@ func (o *LokiClient) ReadConfig() {
 		MaxIdleConns:       10,
 		IdleConnTimeout:    30 * time.Second,
 		DisableCompression: false,
-		Proxy:              http.ProxyURL(proxyURL),
 		TLSClientConfig:    tlsConfig,
 	}
+
+	// use proxy
+	if len(o.config.Loggers.LokiClient.ProxyURL) > 0 {
+		proxyURL, err := url.Parse(o.config.Loggers.LokiClient.ProxyURL)
+		if err != nil {
+			o.logger.Fatal("unable to parse proxy url: ", err)
+		}
+		tr.Proxy = http.ProxyURL(proxyURL)
+	}
+
 	o.httpclient = &http.Client{Transport: tr}
 }
 
@@ -142,7 +145,7 @@ LOOP:
 					// encode log entries
 					buf, err := o.ProtoEncode()
 					if err != nil {
-						o.LogError("error encoding log entries", err)
+						o.LogError("error encoding log entries - %v", err)
 						// reset push request and entries
 						o.ResetEntries()
 						return
@@ -151,7 +154,7 @@ LOOP:
 					// send all entries
 					err = o.SendEntries(buf)
 					if err != nil {
-						o.LogError("error sending log entries", err)
+						o.LogError("error sending log entries - %v", err)
 						break LOOP_RECONNECT
 					}
 
@@ -165,7 +168,7 @@ LOOP:
 					// encode log entries
 					buf, err := o.ProtoEncode()
 					if err != nil {
-						o.LogError("error encoding log entries", err)
+						o.LogError("error encoding log entries - %v", err)
 						// reset push request and entries
 						o.ResetEntries()
 						// restart timer
@@ -176,7 +179,7 @@ LOOP:
 					// send all entries
 					err = o.SendEntries(buf)
 					if err != nil {
-						o.LogError("error sending log entries", err)
+						o.LogError("error sending log entries - %v", err)
 						// restart timer
 						tflush.Reset(tflush_interval)
 
