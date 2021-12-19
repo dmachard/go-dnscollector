@@ -10,8 +10,12 @@ Build-in dashboard are available with multiple data source
   <img src="dashboard1.png" alt="dnscollector"/>
 </p>
 
+<p align="center">
+  <img src="dashboard2.png" alt="dnscollector"/>
+</p>
+
 ## Logs
 
 <p align="center">
-  <img src="dashboard2.png" alt="dnscollector"/>
+  <img src="dashboard3.png" alt="dnscollector"/>
 </p>
