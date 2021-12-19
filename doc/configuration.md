@@ -171,7 +171,7 @@ subprocessors:
 
 ### Qname lowercase
 
-Option to convert all domain to lowercase.
+Option to convert all domain to lowercase. For example: `Wwww.GooGlE.com` will be equal to `www.google.com`
 This feature is enabled by default.
 
 ```yaml
