@@ -670,10 +670,10 @@ Loki client to remote server
     server-url: "http://localhost:3100/loki/api/v1/push"
     # Job name
     job-name: "dnstapt"
-    # flush buffer to log file every X seconds
+    # flush batch every X seconds
     flush-interval: 5
-    # buffer size for log entries in bytes
-    buffer-size: 1048576
+    # batch size for log entries in bytes
+    batch-size: 1048576
     # interval in second between before to retry to send log entries
     retry-interval: 10
     # output text format, please refer to the default text format to see all available directives 
