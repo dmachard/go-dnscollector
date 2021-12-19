@@ -695,4 +695,8 @@ Statsd client to statsd proxy
     remote-port: 8125
     # prefix
     prefix: "dnscollector"
+    # enable tls
+    tls-support: false
+    # insecure skip verify
+    tls-insecure: false
 ```

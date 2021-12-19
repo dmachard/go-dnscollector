@@ -1,7 +1,8 @@
 package loggers
 
 import (
-	"bytes"
+	"bufio"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"strconv"
@@ -101,60 +102,82 @@ LOOP:
 
 		case <-t2.C:
 			address := o.config.Loggers.Statsd.RemoteAddress + ":" + strconv.Itoa(o.config.Loggers.Statsd.RemotePort)
-			conn, err := net.Dial(o.config.Loggers.Statsd.Transport, address)
+
+			// make the connection
+			o.LogInfo("dial to %s", address)
+			var conn net.Conn
+			var err error
+			if o.config.Loggers.Statsd.TlsSupport {
+				conf := &tls.Config{
+					InsecureSkipVerify: o.config.Loggers.Statsd.TlsInsecure,
+				}
+				conn, err = tls.Dial(o.config.Loggers.Statsd.Transport, address, conf)
+			} else {
+				conn, err = net.Dial(o.config.Loggers.Statsd.Transport, address)
+			}
+
+			// something is wrong during connection ?
 			if err != nil {
-				o.LogError("Dial err:", err)
-				return
+				o.LogError("dial error: %s", err)
 			}
 
-			var b bytes.Buffer
-			prefix := o.config.Loggers.Statsd.Prefix
-			for _, stream := range o.stats.Streams() {
-				counters := o.stats.GetCounters(stream)
-				totalClients := o.stats.GetTotalClients(stream)
-				totalDomains := o.stats.GetTotalDomains(stream)
-				totalNxdomains := o.stats.GetTotalNxdomains(stream)
+			if conn != nil {
+				o.LogInfo("dialing with success, continue...")
 
-				topRcodes := o.stats.GetTopRcodes(stream)
-				topRrtypes := o.stats.GetTopRrtypes(stream)
-				topTransports := o.stats.GetTopTransports(stream)
-				topIpProto := o.stats.GetTopIpProto(stream)
+				//var b bytes.Buffer
+				b := bufio.NewWriter(conn)
 
-				b.WriteString(fmt.Sprintf("%s_%s_total_bytes_received:%d|c\n", prefix, stream, counters.ReceivedBytesTotal))
-				b.WriteString(fmt.Sprintf("%s_%s_total_bytes_sent:%d|c\n", prefix, stream, counters.SentBytesTotal))
+				prefix := o.config.Loggers.Statsd.Prefix
+				for _, stream := range o.stats.Streams() {
+					counters := o.stats.GetCounters(stream)
+					totalClients := o.stats.GetTotalClients(stream)
+					totalDomains := o.stats.GetTotalDomains(stream)
+					totalNxdomains := o.stats.GetTotalNxdomains(stream)
 
-				b.WriteString(fmt.Sprintf("%s_%s_total_requesters:%d|c\n", prefix, stream, totalClients))
+					topRcodes := o.stats.GetTopRcodes(stream)
+					topRrtypes := o.stats.GetTopRrtypes(stream)
+					topTransports := o.stats.GetTopTransports(stream)
+					topIpProto := o.stats.GetTopIpProto(stream)
 
-				b.WriteString(fmt.Sprintf("%s_%s_total_domains:%d|c\n", prefix, stream, totalDomains))
-				b.WriteString(fmt.Sprintf("%s_%s_total_domains_nx:%d|c\n", prefix, stream, totalNxdomains))
+					b.WriteString(fmt.Sprintf("%s_%s_total_bytes_received:%d|c\n", prefix, stream, counters.ReceivedBytesTotal))
+					b.WriteString(fmt.Sprintf("%s_%s_total_bytes_sent:%d|c\n", prefix, stream, counters.SentBytesTotal))
 
-				b.WriteString(fmt.Sprintf("%s_%s_total_packets:%d|c\n", prefix, stream, counters.Packets))
+					b.WriteString(fmt.Sprintf("%s_%s_total_requesters:%d|c\n", prefix, stream, totalClients))
 
-				// transport repartition
-				for _, v := range topTransports {
-					b.WriteString(fmt.Sprintf("%s_%s_total_packets_%s:%d|c\n", prefix, stream, v.Name, v.Hit))
+					b.WriteString(fmt.Sprintf("%s_%s_total_domains:%d|c\n", prefix, stream, totalDomains))
+					b.WriteString(fmt.Sprintf("%s_%s_total_domains_nx:%d|c\n", prefix, stream, totalNxdomains))
+
+					b.WriteString(fmt.Sprintf("%s_%s_total_packets:%d|c\n", prefix, stream, counters.Packets))
+
+					// transport repartition
+					for _, v := range topTransports {
+						b.WriteString(fmt.Sprintf("%s_%s_total_packets_%s:%d|c\n", prefix, stream, v.Name, v.Hit))
+					}
+
+					// ip proto repartition
+					for _, v := range topIpProto {
+						b.WriteString(fmt.Sprintf("%s_%s_total_packets_%s:%d|c\n", prefix, stream, v.Name, v.Hit))
+					}
+
+					// qtypes repartition
+					for _, v := range topRrtypes {
+						b.WriteString(fmt.Sprintf("%s_%s_total_replies_rrtype_%s:%d|c\n", prefix, stream, v.Name, v.Hit))
+					}
+
+					// top rcodes
+					for _, v := range topRcodes {
+						b.WriteString(fmt.Sprintf("%s_%s_total_replies_rcode_%s:%d|c\n", prefix, stream, v.Name, v.Hit))
+					}
+
+					b.WriteString(fmt.Sprintf("%s_%s_queries_qps:%d|g\n", prefix, stream, counters.Qps))
 				}
 
-				// ip proto repartition
-				for _, v := range topIpProto {
-					b.WriteString(fmt.Sprintf("%s_%s_total_packets_%s:%d|c\n", prefix, stream, v.Name, v.Hit))
+				// send data
+				err = b.Flush()
+				if err != nil {
+					o.LogError("sent data error:", err.Error())
 				}
-
-				// qtypes repartition
-				for _, v := range topRrtypes {
-					b.WriteString(fmt.Sprintf("%s_%s_total_replies_rrtype_%s:%d|c\n", prefix, stream, v.Name, v.Hit))
-				}
-
-				// top rcodes
-				for _, v := range topRcodes {
-					b.WriteString(fmt.Sprintf("%s_%s_total_replies_rcode_%s:%d|c\n", prefix, stream, v.Name, v.Hit))
-				}
-
-				b.WriteString(fmt.Sprintf("%s_%s_queries_qps:%d|g\n", prefix, stream, counters.Qps))
 			}
-
-			// send data
-			conn.Write(b.Bytes())
 
 			// reset the timer
 			t2.Reset(t2_interval)

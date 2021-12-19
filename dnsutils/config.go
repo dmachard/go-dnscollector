@@ -187,6 +187,8 @@ type Config struct {
 			RemotePort    int    `yaml:"remote-port"`
 			Transport     string `yaml:"transport"`
 			FlushInterval int    `yaml:"flush-interval"`
+			TlsSupport    bool   `yaml:"tls-support"`
+			TlsInsecure   bool   `yaml:"tls-insecure"`
 		} `yaml:"statsd"`
 	} `yaml:"loggers"`
 }
@@ -343,6 +345,8 @@ func (c *Config) SetDefault() {
 	c.Loggers.Statsd.RemotePort = 8125
 	c.Loggers.Statsd.Transport = "udp"
 	c.Loggers.Statsd.FlushInterval = 10
+	c.Loggers.Statsd.TlsSupport = false
+	c.Loggers.Statsd.TlsInsecure = false
 }
 
 func LoadConfig(configPath string) (*Config, error) {
