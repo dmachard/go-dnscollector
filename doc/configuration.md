@@ -702,6 +702,7 @@ The <statsdsuffix> tag can be configured in the `config.yml` file.
 
 Counters:
 
+```
 - <statsdsuffix>_<streamid>_total_bytes_received
 - <statsdsuffix>_<streamid>_total_bytes_sent
 - <statsdsuffix>_<streamid>_total_requesters
@@ -712,10 +713,13 @@ Counters:
 - <statsdsuffix>_<streamid>_total_packets_[inet|inet6]
 - <statsdsuffix>_<streamid>_total_replies_rrtype_[A|AAAA|TXT|...]
 - <statsdsuffix>_<streamid>_total_replies_rcode_[NOERROR|SERVFAIL|...]
+```
 
 Gauges:
-- <statsdsuffix>_<streamid>_queries_qps
 
+```
+- <statsdsuffix>_<streamid>_queries_qps
+```
 
 Configuration example:
 
