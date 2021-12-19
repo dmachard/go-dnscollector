@@ -117,10 +117,12 @@ LOOP:
 
 							if o.config.Loggers.TcpClient.Mode == "text" {
 								w.Write(dm.Bytes(o.textFormat))
+								w.WriteString(o.config.Loggers.TcpClient.Delimiter)
 							}
 
 							if o.config.Loggers.TcpClient.Mode == "json" {
 								json.NewEncoder(w).Encode(dm)
+								w.WriteString(o.config.Loggers.TcpClient.Delimiter)
 							}
 
 							// flusth the buffer
