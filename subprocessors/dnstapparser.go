@@ -201,7 +201,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// decode the dns payload to get id, rcode and the number of question
 		// number of answer, ignore invalid packet
-		dns_id, _, dns_rcode, dns_qdcount, dns_ancount, err := DecodeDns(dm.Payload)
+		dnsHeader, err := DecodeDns(dm.Payload)
 		if err != nil {
 			// parser error
 			dm.MalformedPacket = true
@@ -209,12 +209,12 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			//continue
 		}
 
-		dm.Id = dns_id
-		dm.Rcode = RcodeToString(dns_rcode)
+		dm.Id = dnsHeader.id
+		dm.Rcode = RcodeToString(dnsHeader.rcode)
 
 		// continue to decode the dns payload to extract the qname and rrtype
 		var dns_offsetrr int
-		if dns_qdcount > 0 && !dm.MalformedPacket {
+		if dnsHeader.qdcount > 0 && !dm.MalformedPacket {
 			dns_qname, dns_rrtype, offsetrr, err := DecodeQuestion(dm.Payload)
 			if err != nil {
 				dm.MalformedPacket = true
@@ -230,8 +230,8 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dns_offsetrr = offsetrr
 		}
 
-		if dns_ancount > 0 && !dm.MalformedPacket {
-			dm.Answers, err = DecodeAnswer(dns_ancount, dns_offsetrr, dm.Payload)
+		if dnsHeader.ancount > 0 && !dm.MalformedPacket {
+			dm.Answers, err = DecodeAnswer(dnsHeader.ancount, dns_offsetrr, dm.Payload)
 			if err != nil {
 				dm.MalformedPacket = true
 				d.LogInfo("dns parser malformed answer: %s", err)

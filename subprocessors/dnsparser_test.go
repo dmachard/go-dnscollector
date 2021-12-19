@@ -41,7 +41,7 @@ func TestDecodeDns(t *testing.T) {
 	dm.SetQuestion("dnstapcollector.test.", dns.TypeA)
 
 	payload, _ := dm.Pack()
-	_, _, _, _, _, err := DecodeDns(payload)
+	_, err := DecodeDns(payload)
 	if err != nil {
 		t.Errorf("decode dns error: %s", err)
 	}
@@ -290,7 +290,7 @@ func TestDecodeRdataSOA(t *testing.T) {
 
 func TestDecodeDns_HeaderTooShort(t *testing.T) {
 	decoded := []byte{183, 59}
-	_, _, _, _, _, err := DecodeDns(decoded)
+	_, err := DecodeDns(decoded)
 	if !errors.Is(err, ErrDecodeDnsHeaderTooShort) {
 		t.Errorf("bad error returned: %v", err)
 	}
