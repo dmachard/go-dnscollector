@@ -59,11 +59,14 @@ type Config struct {
 			ThresholdSlow      float64  `yaml:"threshold-slow"`
 			CommonQtypes       []string `yaml:"common-qtypes,flow"`
 		} `yaml:"statistics"`
-		AnonymizeIP    bool   `yaml:"anonymize-ip"`
-		QnameLowerCase bool   `yaml:"qname-lowercase"`
-		CacheTtl       int    `yaml:"cache-ttl"`
-		ServerId       string `yaml:"server-id"`
-		Filtering      struct {
+		AnonymizeIP    bool `yaml:"anonymize-ip"`
+		QnameLowerCase bool `yaml:"qname-lowercase"`
+		Cache          struct {
+			Enable bool `yaml:"enable"`
+			Ttl    int  `yaml:"ttl"`
+		} `yaml:"cache"`
+		ServerId  string `yaml:"server-id"`
+		Filtering struct {
 			DropFqdnFile   string `yaml:"drop-fqdn-file"`
 			DropDomainFile string `yaml:"drop-domain-file"`
 			LogQueries     bool   `yaml:"log-queries"`
@@ -229,7 +232,9 @@ func (c *Config) SetDefault() {
 
 	c.Subprocessors.QnameLowerCase = true
 
-	c.Subprocessors.CacheTtl = 10
+	c.Subprocessors.Cache.Ttl = 10
+	c.Subprocessors.Cache.Enable = true
+
 	c.Subprocessors.ServerId = ""
 
 	c.Subprocessors.Filtering.DropFqdnFile = ""

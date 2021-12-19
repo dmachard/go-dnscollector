@@ -117,7 +117,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	dt := &dnstap.Dnstap{}
 
 	// dns cache to compute latency between response and query
-	cache_ttl := NewCacheDnsProcessor(time.Duration(d.config.Subprocessors.CacheTtl) * time.Second)
+	cache_ttl := NewCacheDnsProcessor(time.Duration(d.config.Subprocessors.Cache.Ttl) * time.Second)
 
 	// geoip
 	geoip := NewDnsGeoIpProcessor(d.config)
@@ -240,19 +240,21 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		// compute latency if possible
-		if len(dm.QueryIp) > 0 && queryport > 0 && !dm.MalformedPacket {
-			// compute the hash of the query
-			hash_data := []string{dm.QueryIp, dm.QueryPort, strconv.Itoa(dm.Id)}
+		if d.config.Subprocessors.Cache.Enable {
+			if len(dm.QueryIp) > 0 && queryport > 0 && !dm.MalformedPacket {
+				// compute the hash of the query
+				hash_data := []string{dm.QueryIp, dm.QueryPort, strconv.Itoa(dm.Id)}
 
-			hashfnv := fnv.New64a()
-			hashfnv.Write([]byte(strings.Join(hash_data[:], "+")))
+				hashfnv := fnv.New64a()
+				hashfnv.Write([]byte(strings.Join(hash_data[:], "+")))
 
-			if dm.Type == "query" {
-				cache_ttl.Set(hashfnv.Sum64(), dm.Timestamp)
-			} else {
-				value, ok := cache_ttl.Get(hashfnv.Sum64())
-				if ok {
-					dm.Latency = dm.Timestamp - value
+				if dm.Type == "query" {
+					cache_ttl.Set(hashfnv.Sum64(), dm.Timestamp)
+				} else {
+					value, ok := cache_ttl.Get(hashfnv.Sum64())
+					if ok {
+						dm.Latency = dm.Timestamp - value
+					}
 				}
 			}
 		}

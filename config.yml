@@ -100,9 +100,14 @@ subprocessors:
   # Wwww.GooGlE.com will be equal to www.google.com
   qname-lowercase: true
 
-  # The cache is used to compute latency between replies and queries
-  # Ttl in second, max time to keep the query record in memory
-  cache-ttl: 10
+  # The cache is used to compute latency between replies and queries 
+  # This cache can be disabled if your dns server already add the latency in the dns packet
+  # Disable this feature to improve performance
+  cache:
+    # enable or disable
+    enable: true
+    # Ttl in second, max time to keep the query record in memory
+    ttl: 10
 
   # Server identity, if empty  the hostname is used
   # This settings is used in dnstap logger as dnstap-identity

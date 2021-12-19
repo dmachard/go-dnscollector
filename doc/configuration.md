@@ -222,9 +222,14 @@ The caching feature is used to compute latency between replies and queries.
 
 ```yaml
 subprocessors:
-  # The cache is used to compute latency between replies and queries
-  # Ttl in second 
-  cache-ttl: 10
+  # The cache is used to compute latency between replies and queries 
+  # This cache can be disabled if your dns server already add the latency in the dns packet
+  # Disable this feature to improve performance
+  cache:
+    # enable or disable
+    enable: true
+    # Ttl in second, max time to keep the query record in memory
+    ttl: 10
 ```
 
 ### Packet Filtering
