@@ -414,11 +414,11 @@ The `<promdsuffix>` tag can be configured in the `config.yml` file.
 
 | Metric | Description |
 | ---- | ---- | 
-| <promdsuffix>_qps   | Number of queries per second received | 
-| <promdsuffix>_requesters_total | Number of clients |
-| <promdsuffix>_domains_total | Number of domains observed |
-| <promdsuffix>_received_bytes_total | Total bytes received |
-| <promdsuffix>_sent_bytes_total | Total bytes sent |
+| `<promdsuffix>_qps`   | Number of queries per second received | 
+| `<promdsuffix>_requesters_total` | Number of clients |
+| `<promdsuffix>_domains_total` | Number of domains observed |
+| `<promdsuffix>_received_bytes_total` | Total bytes received |
+| `<promdsuffix>_sent_bytes_total` | Total bytes sent |
 
 
 The full metrics can be found [here](doc/metrics.txt).
@@ -698,7 +698,7 @@ Statsd client to statsd proxy
 
 **Statsd metrics:**
 
-The <statsdsuffix> tag can be configured in the `config.yml` file.
+The `<statsdsuffix>` tag can be configured in the `config.yml` file.
 
 Counters:
 
