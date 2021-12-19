@@ -364,6 +364,16 @@ loggers:
     # output text format, please refer to the default text format to see all available directives 
     # use this parameter if you want a specific format
     text-format: "localtime identity qr queryip family protocol qname qtype rcode"
+    # Proxy URL
+    proxy-url: ""
+    # enable tls
+    tls-support: false
+    # insecure skip verify
+    tls-insecure: false
+    # basic auth login
+    basic-auth-login: ""
+    # basic auth password
+    basic-auth-pwd: ""
 
   statsd:
     # to enable, set the enable to true

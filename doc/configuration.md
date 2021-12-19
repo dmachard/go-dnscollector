@@ -669,7 +669,7 @@ Loki client to remote server
     # Loki server url
     server-url: "http://localhost:3100/loki/api/v1/push"
     # Job name
-    job-name: "dnstap"
+    job-name: "dnstapt"
     # flush buffer to log file every X seconds
     flush-interval: 5
     # buffer size for log entries in bytes
@@ -679,6 +679,16 @@ Loki client to remote server
     # output text format, please refer to the default text format to see all available directives 
     # use this parameter if you want a specific format
     text-format: "localtime identity qr queryip family protocol qname qtype rcode"
+    # Proxy URL
+    proxy-url: ""
+    # enable tls
+    tls-support: false
+    # insecure skip verify
+    tls-insecure: false
+    # basic auth login
+    basic-auth-login: ""
+    # basic auth password
+    basic-auth-pwd: ""
 ```
 
 ### Statsd client

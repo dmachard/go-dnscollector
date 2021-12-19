@@ -172,13 +172,17 @@ type Config struct {
 			Organization string `yaml:"organization"`
 		} `yaml:"influxdb"`
 		LokiClient struct {
-			Enable        bool   `yaml:"enable"`
-			ServerURL     string `yaml:"server-url"`
-			JobName       string `yaml:"job-name"`
-			FlushInterval int    `yaml:"flush-interval"`
-			BufferSize    int    `yaml:"buffer-size"`
-			RetryInterval int    `yaml:"retry-interval"`
-			TextFormat    string `yaml:"text-format"`
+			Enable         bool   `yaml:"enable"`
+			ServerURL      string `yaml:"server-url"`
+			JobName        string `yaml:"job-name"`
+			FlushInterval  int    `yaml:"flush-interval"`
+			BufferSize     int    `yaml:"buffer-size"`
+			RetryInterval  int    `yaml:"retry-interval"`
+			TextFormat     string `yaml:"text-format"`
+			ProxyURL       string `yaml:"proxy-url"`
+			TlsInsecure    bool   `yaml:"tls-insecure"`
+			BasicAuthLogin string `yaml:"basic-auth-login"`
+			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
 		} `yaml:"lokiclient"`
 		Statsd struct {
 			Enable        bool   `yaml:"enable"`
@@ -338,6 +342,10 @@ func (c *Config) SetDefault() {
 	c.Loggers.LokiClient.BufferSize = 1024 * 1024
 	c.Loggers.LokiClient.RetryInterval = 10
 	c.Loggers.LokiClient.TextFormat = ""
+	c.Loggers.LokiClient.ProxyURL = ""
+	c.Loggers.LokiClient.TlsInsecure = false
+	c.Loggers.LokiClient.BasicAuthLogin = ""
+	c.Loggers.LokiClient.BasicAuthPwd = ""
 
 	c.Loggers.Statsd.Enable = false
 	c.Loggers.Statsd.Prefix = "dnscollector"

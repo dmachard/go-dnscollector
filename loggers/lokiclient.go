@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -54,11 +56,24 @@ func (o *LokiClient) ReadConfig() {
 		o.textFormat = strings.Fields(o.config.Subprocessors.TextFormat)
 	}
 
+	// use proxy
+	proxyURL, err := url.Parse(o.config.Loggers.LokiClient.ProxyURL)
+	if err != nil {
+		o.logger.Fatal("unable to create file: ", err)
+	}
+
+	// tls client config
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: o.config.Loggers.LokiClient.TlsInsecure,
+	}
+
 	// prepare http client
 	tr := &http.Transport{
 		MaxIdleConns:       10,
 		IdleConnTimeout:    30 * time.Second,
 		DisableCompression: false,
+		Proxy:              http.ProxyURL(proxyURL),
+		TLSClientConfig:    tlsConfig,
 	}
 	o.httpclient = &http.Client{Transport: tr}
 }
@@ -220,6 +235,8 @@ func (o *LokiClient) SendEntries(buf []byte) error {
 	post = post.WithContext(ctx)
 	post.Header.Set("Content-Type", "application/x-protobuf")
 	post.Header.Set("User-Agent", "dnscollector")
+
+	post.SetBasicAuth(o.config.Loggers.LokiClient.BasicAuthLogin, o.config.Loggers.LokiClient.BasicAuthPwd)
 
 	// send post and read response
 	resp, err := o.httpclient.Do(post)
