@@ -6,12 +6,9 @@ This `dns collector` acts as a **high speed** passive analyser for DNS traffic, 
 
 ![overview](doc/overview.png)
 
-Some [Grafana dashboards](https://grafana.com/grafana/dashboards/15415) are also available:
-
 <p align="center">
   <img src="doc/dashboard1.png" alt="dnscollector"/>
 </p>
-
 
 NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes. 
 
@@ -36,6 +33,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [Statsd](doc/configuration.md#statsd-client)
 
 - Other features
+    - [Built-in Grafana dashboards]((doc/dashboards.md))
     - [GeoIP support](doc/configuration.md#geoip-support)
     - [Fqdn/Domain list filtering](doc/configuration.md#packet-filtering)
     - [Query IP anonymizer](doc/configuration.md#ip-anonymization)

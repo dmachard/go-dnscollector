@@ -1,4 +1,4 @@
-# DnsCollector Configuration Guide
+# DnsCollector - Configuration Guide
 
 A typically configuration would have one or more collector to receive DNS traffic or logs, and severals loggers to process the 
 incoming traffics. 
