@@ -111,11 +111,13 @@ subprocessors:
   # filtering feature to ignore some specific qname
   # dns logs is not redirected to loggers if the filtering regexp matched
   filtering:
-    # regexp to ignore incoming qname
-    ignore-qname: ""
-    # send queries to configured loggers or or not
+    # fqdn drop list, domains list must be a full qualified domain name
+    drop-fqdn-file: ""
+    # domain drop list, domains list can be a partial domain name with regexp expression
+    drop-domain-file: ""
+    # forward received queries to configured loggers ?
     log-queries: true
-    # send replies to configured loggers or not
+    # forward received replies to configured loggers ?
     log-replies: true
 
   # geoip maxmind support, more information on https://www.maxmind.com/en/geoip-demo
@@ -256,6 +258,8 @@ loggers:
     # output text format, please refer to the default text format to see all available directives 
     # use this parameter if you want a specific format
     text-format: ""
+    # delimiter to use between payload sent
+    delimiter: "\n"
 
   # redirect captured dns traffic to a remote syslog server or local one
   syslog:

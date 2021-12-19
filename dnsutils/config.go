@@ -64,9 +64,10 @@ type Config struct {
 		CacheTtl       int    `yaml:"cache-ttl"`
 		ServerId       string `yaml:"server-id"`
 		Filtering      struct {
-			IgnoreQname string `yaml:"ignore-qname"`
-			LogQueries  bool   `yaml:"log-queries"`
-			LogReplies  bool   `yaml:"log-replies"`
+			DropFqdnFile   string `yaml:"drop-fqdn-file"`
+			DropDomainFile string `yaml:"drop-domain-file"`
+			LogQueries     bool   `yaml:"log-queries"`
+			LogReplies     bool   `yaml:"log-replies"`
 		} `yaml:"filtering"`
 		GeoIP struct {
 			DbFile string `yaml:"db-file"`
@@ -124,6 +125,7 @@ type Config struct {
 			TlsInsecure   bool   `yaml:"tls-insecure"`
 			Mode          string `yaml:"mode"`
 			TextFormat    string `yaml:"text-format"`
+			Delimiter     string `yaml:"delimiter"`
 		} `yaml:"tcpclient"`
 		Syslog struct {
 			Enable        bool   `yaml:"enable"`
@@ -230,7 +232,8 @@ func (c *Config) SetDefault() {
 	c.Subprocessors.CacheTtl = 10
 	c.Subprocessors.ServerId = ""
 
-	c.Subprocessors.Filtering.IgnoreQname = ""
+	c.Subprocessors.Filtering.DropFqdnFile = ""
+	c.Subprocessors.Filtering.DropDomainFile = ""
 	c.Subprocessors.Filtering.LogQueries = true
 	c.Subprocessors.Filtering.LogReplies = true
 
@@ -282,6 +285,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.TcpClient.TlsInsecure = false
 	c.Loggers.TcpClient.Mode = "json"
 	c.Loggers.TcpClient.TextFormat = ""
+	c.Loggers.TcpClient.Delimiter = "\n"
 
 	c.Loggers.Syslog.Enable = false
 	c.Loggers.Syslog.Severity = "INFO"

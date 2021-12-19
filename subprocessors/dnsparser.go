@@ -209,7 +209,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	defer geoip.Close()
 
 	// filtering
-	filtering := NewFilteringProcessor(d.config)
+	filtering := NewFilteringProcessor(d.config, d.logger)
 
 	// ip anonymizer
 	anonIp := NewIpAnonymizerSubprocessor(d.config)
@@ -301,7 +301,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		dm.LatencySec = fmt.Sprintf("%.6f", dm.Latency)
 
 		// filtering
-		if filtering.Ignore(&dm) {
+		if filtering.CheckIfDrop(&dm) {
 			continue
 		}
 

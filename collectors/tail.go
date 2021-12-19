@@ -98,7 +98,7 @@ func (c *Tail) Run() {
 	defer geoip.Close()
 
 	// filtering
-	filtering := subprocessors.NewFilteringProcessor(c.config)
+	filtering := subprocessors.NewFilteringProcessor(c.config, c.logger)
 
 	// ip anonymizer
 	anonIp := subprocessors.NewIpAnonymizerSubprocessor(c.config)
@@ -245,7 +245,7 @@ func (c *Tail) Run() {
 		dm.Length = len(dm.Payload)
 
 		// filtering
-		if filtering.Ignore(&dm) {
+		if filtering.CheckIfDrop(&dm) {
 			continue
 		}
 

@@ -37,7 +37,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 - Other features
     - [GeoIP support](doc/configuration.md#geoip-support)
-    - [Filtering](doc/configuration.md#packet-filtering)
+    - [Domains Filtering](doc/configuration.md#packet-filtering)
     - [Query IP anonymizer](doc/configuration.md#ip-anonymization)
     - [Custom text format](doc/configuration.md#custom-text-format)
 
@@ -56,10 +56,10 @@ Download the binary from release page. If you want to integrate this tool with s
 Use the default config (dnstap -> stdout + rest api):
 
 ```bash
-docker run -d --rm --network host --name=dnscollector01 dmachard/go-dnscollector
+docker run -d --name=dnscollector01 dmachard/go-dnscollector
 ```
 
-Override the default configuration (/etc/dnscollector/config.yml) with a config file on the host and custom ports:
+Override the default configuration (/etc/dnscollector/config.yml) with a config file on the host:
 
 ```bash
 -v $(pwd)/config.yml:/etc/dnscollector/config.yml

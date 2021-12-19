@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-logger"
 )
 
 func TestFilteringQR(t *testing.T) {
@@ -13,29 +14,16 @@ func TestFilteringQR(t *testing.T) {
 	config.Subprocessors.Filtering.LogReplies = false
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config)
+	filtering := NewFilteringProcessor(config, logger.New(false))
 
 	dm := dnsutils.GetFakeDnsMessage()
-	if !filtering.Ignore(&dm) {
+	if !filtering.CheckIfDrop(&dm) {
 		t.Errorf("dns query should be ignored")
 	}
 
 	dm.Type = "reply"
-	if !filtering.Ignore(&dm) {
+	if !filtering.CheckIfDrop(&dm) {
 		t.Errorf("dns reply should be ignored")
 	}
 
-}
-
-func TestFilteringQname(t *testing.T) {
-	// config
-	config := dnsutils.GetFakeConfig()
-	config.Subprocessors.Filtering.IgnoreQname = "^*.collector$"
-	// init subproccesor
-	filtering := NewFilteringProcessor(config)
-
-	dm := dnsutils.GetFakeDnsMessage()
-	if !filtering.Ignore(&dm) {
-		t.Errorf("dns query should be ignored regex failed got: %s", dm.Qname)
-	}
 }
