@@ -219,8 +219,7 @@ When the feature is enable, the `country-isocode` field is populated with the co
 ### DNS Caching
 
 The caching feature is used to compute latency between replies and queries.
-This cache can be disabled if your dns server already add the latency in the dns packet
-Disable this feature to improve performance
+This cache can be disabled if your dns server already add the latency in the dns packet, otherwise disable this feature to improve performance
 
 Options:
 - `Enable`: disable or enable the feature
