@@ -7,7 +7,7 @@ The configuration is done in one yaml file. For the complete configuration, see 
 
 - [Trace](#Trace)
 - [Collectors](#Collectors)
-  - [DNS tap](#Dnstap)
+  - [DNS tap](#dns-tap)
   - [DNS sniffer](#Dns-Sniffer)
   - [Tail](#Tail)
 - [Subprocessors](#Subprocessors)
@@ -231,6 +231,10 @@ When the feature is enable, the `country-isocode` field is populated with the co
 {
   ...
   "country-isocode":"FR",
+  "city":"Caen",
+  "continent": "EU",
+  "ASN": 1234,
+  "ASO": "Orange",
   ...
 }
 ```
