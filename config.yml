@@ -126,10 +126,15 @@ subprocessors:
     log-replies: true
 
   # geoip maxmind support, more information on https://www.maxmind.com/en/geoip-demo
-  # this feature can be used to append the country name according to the query ip
+  # this feature can be used to append additional informations like country, city, asn
+  # according to the query ip
   geoip:
-    # path file to your database
-    db-file: ""
+    # path file to your mmdb country database
+    mmdb-country-file: "/home/denis/Downloads/GeoIP/GeoLite2-Country.mmdb"
+    # path file to your mmdb city database
+    mmdb-city-file: "/home/denis/Downloads/GeoIP/GeoLite2-City.mmdb"
+    # path file to your mmdb ASN database
+    mmdb-asn-file: "/home/denis/Downloads/GeoIP/GeoLite2-ASN.mmdb"
 
   # specific the default text log format used on all loggers supporting this mode
   # all available directives:
@@ -162,7 +167,7 @@ subprocessors:
   # - aa: authoritative answer, integer value 1/0
   # - ra: recursion available, integer value 1/0
   # - ad: authenticated data, integer value 1/0
-  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
+  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency country"
 
 # list of loggers
 loggers:

@@ -73,7 +73,9 @@ type Config struct {
 			LogReplies     bool   `yaml:"log-replies"`
 		} `yaml:"filtering"`
 		GeoIP struct {
-			DbFile string `yaml:"db-file"`
+			DbCountryFile string `yaml:"mmdb-country-file"`
+			DbCityFile    string `yaml:"mmdb-city-file"`
+			DbAsnFile     string `yaml:"mmdb-asn-file"`
 		} `yaml:"geoip"`
 		TextFormat string `yaml:"text-format"`
 	} `yaml:"subprocessors"`
@@ -248,7 +250,9 @@ func (c *Config) SetDefault() {
 	c.Subprocessors.Filtering.LogQueries = true
 	c.Subprocessors.Filtering.LogReplies = true
 
-	c.Subprocessors.GeoIP.DbFile = ""
+	c.Subprocessors.GeoIP.DbCountryFile = ""
+	c.Subprocessors.GeoIP.DbCityFile = ""
+	c.Subprocessors.GeoIP.DbAsnFile = ""
 	c.Subprocessors.TextFormat = "timestamp identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 	// Loggers

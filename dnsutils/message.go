@@ -18,34 +18,38 @@ type DnsAnswer struct {
 }
 
 type DnsMessage struct {
-	Operation           string      `json:"operation" msgpack:"operation"`
-	Identity            string      `json:"identity" msgpack:"identity"`
-	Family              string      `json:"family" msgpack:"family"`
-	Protocol            string      `json:"protocol" msgpack:"protocol"`
-	QueryIp             string      `json:"query-ip" msgpack:"query-ip"`
-	QueryPort           string      `json:"query-port" msgpack:"query-port"`
-	ResponseIp          string      `json:"response-ip" msgpack:"response-ip"`
-	ResponsePort        string      `json:"response-port" msgpack:"response-port"`
-	Type                string      `json:"-" msgpack:"-"`
-	Payload             []byte      `json:"-" msgpack:"-"`
-	Length              int         `json:"length" msgpack:"-"`
-	Id                  int         `json:"-" msgpack:"-"`
-	Rcode               string      `json:"rcode" msgpack:"rcode"`
-	Qname               string      `json:"qname" msgpack:"qname"`
-	Qtype               string      `json:"qtype" msgpack:"qtype"`
-	Latency             float64     `json:"-" msgpack:"-"`
-	LatencySec          string      `json:"latency" msgpack:"latency"`
-	TimestampRFC3339    string      `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
-	Timestamp           float64     `json:"-" msgpack:"-"`
-	TimeSec             int         `json:"-" msgpack:"-"`
-	TimeNsec            int         `json:"-" msgpack:"-"`
-	Answers             []DnsAnswer `json:"answers" msgpack:"answers"`
-	CountryIsoCode      string      `json:"country-isocode" msgpack:"country-isocode"`
-	MalformedPacket     int         `json:"malformed-packet" msgpack:"malformed-packet"`
-	Truncated           int         `json:"flag-tc" msgpack:"flag-tc"`
-	AuthoritativeAnswer int         `json:"flag-aa" msgpack:"flag-aa"`
-	RecursionAvailable  int         `json:"flag-ra" msgpack:"flag-ra"`
-	AuthenticData       int         `json:"flag-ad" msgpack:"flag-ad"`
+	Operation              string      `json:"operation" msgpack:"operation"`
+	Identity               string      `json:"identity" msgpack:"identity"`
+	Family                 string      `json:"family" msgpack:"family"`
+	Protocol               string      `json:"protocol" msgpack:"protocol"`
+	QueryIp                string      `json:"query-ip" msgpack:"query-ip"`
+	QueryPort              string      `json:"query-port" msgpack:"query-port"`
+	ResponseIp             string      `json:"response-ip" msgpack:"response-ip"`
+	ResponsePort           string      `json:"response-port" msgpack:"response-port"`
+	Type                   string      `json:"-" msgpack:"-"`
+	Payload                []byte      `json:"-" msgpack:"-"`
+	Length                 int         `json:"length" msgpack:"-"`
+	Id                     int         `json:"-" msgpack:"-"`
+	Rcode                  string      `json:"rcode" msgpack:"rcode"`
+	Qname                  string      `json:"qname" msgpack:"qname"`
+	Qtype                  string      `json:"qtype" msgpack:"qtype"`
+	Latency                float64     `json:"-" msgpack:"-"`
+	LatencySec             string      `json:"latency" msgpack:"latency"`
+	TimestampRFC3339       string      `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
+	Timestamp              float64     `json:"-" msgpack:"-"`
+	TimeSec                int         `json:"-" msgpack:"-"`
+	TimeNsec               int         `json:"-" msgpack:"-"`
+	Answers                []DnsAnswer `json:"answers" msgpack:"answers"`
+	CountryIsoCode         string      `json:"country-isocode" msgpack:"country-isocode"`
+	AutonomousSystemNumber int         `json:"asn" msgpack:"asn"`
+	AutonomousSystemOrg    string      `json:"asn-org" msgpack:"asn-org"`
+	City                   string      `json:"city" msgpack:"city"`
+	Continent              string      `json:"continent" msgpack:"continent"`
+	MalformedPacket        int         `json:"malformed-packet" msgpack:"malformed-packet"`
+	Truncated              int         `json:"flag-tc" msgpack:"flag-tc"`
+	AuthoritativeAnswer    int         `json:"flag-aa" msgpack:"flag-aa"`
+	RecursionAvailable     int         `json:"flag-ra" msgpack:"flag-ra"`
+	AuthenticData          int         `json:"flag-ad" msgpack:"flag-ad"`
 }
 
 func (dm *DnsMessage) Init() {
@@ -57,12 +61,18 @@ func (dm *DnsMessage) Init() {
 	dm.Rcode, dm.Qtype = "-", "-"
 	dm.Qname, dm.LatencySec = "-", "-"
 	dm.TimestampRFC3339 = "-"
-	dm.CountryIsoCode = "-"
+
 	dm.MalformedPacket = 0
 	dm.Truncated = 0
 	dm.AuthoritativeAnswer = 0
 	dm.RecursionAvailable = 0
 	dm.AuthenticData = 0
+
+	dm.CountryIsoCode = "-"
+	dm.AutonomousSystemNumber = 0
+	dm.AutonomousSystemOrg = "-"
+	dm.City = "-"
+	dm.Continent = "-"
 }
 
 func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
@@ -127,8 +137,16 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 			s.WriteString(dm.Qtype)
 		case "latency":
 			s.WriteString(dm.LatencySec)
+		case "continent":
+			s.WriteString(dm.Continent)
 		case "country":
 			s.WriteString(dm.CountryIsoCode)
+		case "city":
+			s.WriteString(dm.City)
+		case "asn":
+			s.WriteString(strconv.Itoa(dm.AutonomousSystemNumber))
+		case "aso":
+			s.WriteString(dm.AutonomousSystemOrg)
 		case "malformed":
 			s.WriteString(strconv.Itoa(dm.MalformedPacket))
 		case "tc":

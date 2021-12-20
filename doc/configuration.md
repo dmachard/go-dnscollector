@@ -289,10 +289,10 @@ All available directives:
 - `ttl`: answer ttl, only the first one
 - `answer`: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
 - `malformed`: malformed dns packet, integer value 1/0
-- `tc`: truncated flag, integer value 1/0
-- `aa`: authoritative answer, integer value 1/0
-- `ra`: recursion available, integer value 1/0
-- `ad`: authenticated data, integer value 1/0
+- `tc`: flag truncated, integer value 1/0
+- `aa`: flag authoritative answer, integer value 1/0
+- `ra`: flag recursion available, integer value 1/0
+- `ad`: flag authenticated data, integer value 1/0
 
 ```yaml
 subprocessors:

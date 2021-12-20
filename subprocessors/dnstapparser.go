@@ -120,7 +120,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	cache_ttl := NewCacheDnsProcessor(time.Duration(d.config.Subprocessors.Cache.Ttl) * time.Second)
 
 	// geoip
-	geoip := NewDnsGeoIpProcessor(d.config)
+	geoip := NewDnsGeoIpProcessor(d.config, d.logger)
 	if err := geoip.Open(); err != nil {
 		d.LogError("geoip init failed: %v+", err)
 	}
@@ -273,11 +273,15 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// geoip feature
 		if geoip.IsEnabled() {
-			country, err := geoip.Lookup(dm.QueryIp)
+			geoInfo, err := geoip.Lookup(dm.QueryIp)
 			if err != nil {
 				d.LogError("geoip loopkup failed: %v+", err)
 			}
-			dm.CountryIsoCode = country
+			dm.Continent = geoInfo.Continent
+			dm.CountryIsoCode = geoInfo.CountryISOCode
+			dm.City = geoInfo.City
+			dm.AutonomousSystemNumber = geoInfo.ASN
+			dm.AutonomousSystemOrg = geoInfo.ASO
 		}
 
 		// ip anonymisation ?

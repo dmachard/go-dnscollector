@@ -88,7 +88,7 @@ func (c *Tail) Run() {
 	}
 
 	// geoip
-	geoip := subprocessors.NewDnsGeoIpProcessor(c.config)
+	geoip := subprocessors.NewDnsGeoIpProcessor(c.config, c.logger)
 	if err := geoip.Open(); err != nil {
 		c.LogError("geoip init failed: %v+", err)
 	}
@@ -251,11 +251,15 @@ func (c *Tail) Run() {
 
 		// geoip feature
 		if geoip.IsEnabled() {
-			country, err := geoip.Lookup(dm.QueryIp)
+			geoInfo, err := geoip.Lookup(dm.QueryIp)
 			if err != nil {
 				c.LogError("geoip loopkup failed: %v+", err)
 			}
-			dm.CountryIsoCode = country
+			dm.Continent = geoInfo.Continent
+			dm.CountryIsoCode = geoInfo.CountryISOCode
+			dm.City = geoInfo.City
+			dm.AutonomousSystemNumber = geoInfo.ASN
+			dm.AutonomousSystemOrg = geoInfo.ASO
 		}
 
 		// ip anonymisation ?
