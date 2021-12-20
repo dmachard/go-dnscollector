@@ -18,30 +18,34 @@ type DnsAnswer struct {
 }
 
 type DnsMessage struct {
-	Operation        string      `json:"operation" msgpack:"operation"`
-	Identity         string      `json:"identity" msgpack:"identity"`
-	Family           string      `json:"family" msgpack:"family"`
-	Protocol         string      `json:"protocol" msgpack:"protocol"`
-	QueryIp          string      `json:"query-ip" msgpack:"query-ip"`
-	QueryPort        string      `json:"query-port" msgpack:"query-port"`
-	ResponseIp       string      `json:"response-ip" msgpack:"response-ip"`
-	ResponsePort     string      `json:"response-port" msgpack:"response-port"`
-	Type             string      `json:"-" msgpack:"-"`
-	Payload          []byte      `json:"-" msgpack:"-"`
-	Length           int         `json:"length" msgpack:"-"`
-	Id               int         `json:"-" msgpack:"-"`
-	Rcode            string      `json:"rcode" msgpack:"rcode"`
-	Qname            string      `json:"qname" msgpack:"qname"`
-	Qtype            string      `json:"qtype" msgpack:"qtype"`
-	Latency          float64     `json:"-" msgpack:"-"`
-	LatencySec       string      `json:"latency" msgpack:"latency"`
-	TimestampRFC3339 string      `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
-	Timestamp        float64     `json:"-" msgpack:"-"`
-	TimeSec          int         `json:"-" msgpack:"-"`
-	TimeNsec         int         `json:"-" msgpack:"-"`
-	Answers          []DnsAnswer `json:"answers" msgpack:"answers"`
-	CountryIsoCode   string      `json:"country-isocode" msgpack:"country-isocode"`
-	MalformedPacket  bool        `json:"malformed-packet" msgpack:"malformed-packet"`
+	Operation           string      `json:"operation" msgpack:"operation"`
+	Identity            string      `json:"identity" msgpack:"identity"`
+	Family              string      `json:"family" msgpack:"family"`
+	Protocol            string      `json:"protocol" msgpack:"protocol"`
+	QueryIp             string      `json:"query-ip" msgpack:"query-ip"`
+	QueryPort           string      `json:"query-port" msgpack:"query-port"`
+	ResponseIp          string      `json:"response-ip" msgpack:"response-ip"`
+	ResponsePort        string      `json:"response-port" msgpack:"response-port"`
+	Type                string      `json:"-" msgpack:"-"`
+	Payload             []byte      `json:"-" msgpack:"-"`
+	Length              int         `json:"length" msgpack:"-"`
+	Id                  int         `json:"-" msgpack:"-"`
+	Rcode               string      `json:"rcode" msgpack:"rcode"`
+	Qname               string      `json:"qname" msgpack:"qname"`
+	Qtype               string      `json:"qtype" msgpack:"qtype"`
+	Latency             float64     `json:"-" msgpack:"-"`
+	LatencySec          string      `json:"latency" msgpack:"latency"`
+	TimestampRFC3339    string      `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
+	Timestamp           float64     `json:"-" msgpack:"-"`
+	TimeSec             int         `json:"-" msgpack:"-"`
+	TimeNsec            int         `json:"-" msgpack:"-"`
+	Answers             []DnsAnswer `json:"answers" msgpack:"answers"`
+	CountryIsoCode      string      `json:"country-isocode" msgpack:"country-isocode"`
+	MalformedPacket     int         `json:"malformed-packet" msgpack:"malformed-packet"`
+	Truncated           int         `json:"flag-tc" msgpack:"flag-tc"`
+	AuthoritativeAnswer int         `json:"flag-aa" msgpack:"flag-aa"`
+	RecursionAvailable  int         `json:"flag-ra" msgpack:"flag-ra"`
+	AuthenticData       int         `json:"flag-ad" msgpack:"flag-ad"`
 }
 
 func (dm *DnsMessage) Init() {
@@ -54,10 +58,14 @@ func (dm *DnsMessage) Init() {
 	dm.Qname, dm.LatencySec = "-", "-"
 	dm.TimestampRFC3339 = "-"
 	dm.CountryIsoCode = "-"
-	dm.MalformedPacket = false
+	dm.MalformedPacket = 0
+	dm.Truncated = 0
+	dm.AuthoritativeAnswer = 0
+	dm.RecursionAvailable = 0
+	dm.AuthenticData = 0
 }
 
-func (dm *DnsMessage) Bytes(format []string) []byte {
+func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 	var s bytes.Buffer
 
 	for i, word := range format {
@@ -122,7 +130,15 @@ func (dm *DnsMessage) Bytes(format []string) []byte {
 		case "country":
 			s.WriteString(dm.CountryIsoCode)
 		case "malformed":
-			s.WriteString(strconv.FormatBool(dm.MalformedPacket))
+			s.WriteString(strconv.Itoa(dm.MalformedPacket))
+		case "tc":
+			s.WriteString(strconv.Itoa(dm.Truncated))
+		case "aa":
+			s.WriteString(strconv.Itoa(dm.AuthoritativeAnswer))
+		case "ra":
+			s.WriteString(strconv.Itoa(dm.RecursionAvailable))
+		case "ad":
+			s.WriteString(strconv.Itoa(dm.AuthenticData))
 		default:
 			log.Fatalf("unsupport directive for text format: %s", word)
 		}
@@ -132,13 +148,14 @@ func (dm *DnsMessage) Bytes(format []string) []byte {
 		}
 	}
 
-	s.WriteString("\n")
+	s.WriteString(delimiter)
 
 	return s.Bytes()
 }
 
 func (dm *DnsMessage) String(format []string) string {
-	return string(dm.Bytes(format))
+	delimiter := "\n"
+	return string(dm.Bytes(format, delimiter))
 }
 
 func GetFakeDnsMessage() DnsMessage {

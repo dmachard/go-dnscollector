@@ -225,7 +225,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		// decode the dns payload
 		dnsHeader, err := DecodeDns(dm.Payload)
 		if err != nil {
-			dm.MalformedPacket = true
+			dm.MalformedPacket = 1
 			d.LogInfo("dns parser malformed packet: %s - %v+", err, dm)
 			//continue
 		}
@@ -247,13 +247,17 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		dm.Id = dnsHeader.id
 		dm.Rcode = RcodeToString(dnsHeader.rcode)
+		dm.Truncated = dnsHeader.tc
+		dm.AuthoritativeAnswer = dnsHeader.aa
+		dm.RecursionAvailable = dnsHeader.ra
+		dm.AuthenticData = dnsHeader.ad
 
 		// continue to decode the dns payload to extract the qname and rrtype
 		var dns_offsetrr int
-		if dnsHeader.qdcount > 0 && !dm.MalformedPacket {
+		if dnsHeader.qdcount > 0 && dm.MalformedPacket == 0 {
 			dns_qname, dns_rrtype, offsetrr, err := DecodeQuestion(dm.Payload)
 			if err != nil {
-				dm.MalformedPacket = true
+				dm.MalformedPacket = 1
 				d.LogInfo("dns parser malformed question: %s - %v+", err, dm)
 				// discard this packet
 				//continue
@@ -268,10 +272,10 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		// decode dns answers
-		if dnsHeader.ancount > 0 && !dm.MalformedPacket {
+		if dnsHeader.ancount > 0 && dm.MalformedPacket == 0 {
 			dm.Answers, err = DecodeAnswer(dnsHeader.ancount, dns_offsetrr, dm.Payload)
 			if err != nil {
-				dm.MalformedPacket = true
+				dm.MalformedPacket = 1
 				d.LogInfo("dns parser malformed answer: %s - %v+", err, dm)
 				// discard this packet
 				//continue
@@ -281,7 +285,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		// compute latency if possible
 		if d.config.Subprocessors.Cache.Enable {
 			queryport, _ := strconv.Atoi(dm.QueryPort)
-			if len(dm.QueryIp) > 0 && queryport > 0 && !dm.MalformedPacket {
+			if len(dm.QueryIp) > 0 && queryport > 0 && dm.MalformedPacket == 0 {
 				// compute the hash of the query
 				hash_data := []string{dm.QueryIp, dm.QueryPort, strconv.Itoa(dm.Id)}
 
@@ -348,6 +352,14 @@ func RcodeToString(rcode int) string {
 type DnsHeader struct {
 	id      int
 	qr      int
+	opcode  int
+	aa      int
+	tc      int
+	rd      int
+	ra      int
+	z       int
+	ad      int
+	cd      int
 	rcode   int
 	qdcount int
 	ancount int
@@ -383,20 +395,25 @@ func DecodeDns(payload []byte) (DnsHeader, error) {
 	}
 	// decode ID
 	dh.id = int(binary.BigEndian.Uint16(payload[:2]))
-	// decode QR
-	dh.qr = int(binary.BigEndian.Uint16(payload[2:4]) >> 15)
-	// decode RCODE
-	dh.rcode = int(binary.BigEndian.Uint16(payload[2:4]) & 15)
-	// decode QDCOUNT
+
+	// decode flags
+	dh.qr = int(binary.BigEndian.Uint16(payload[2:4]) >> 0xF)
+	dh.opcode = int((binary.BigEndian.Uint16(payload[2:4]) >> (3 + 0x8)) & 0xF)
+	dh.aa = int((binary.BigEndian.Uint16(payload[2:4]) >> (2 + 0x8)) & 1)
+	dh.tc = int((binary.BigEndian.Uint16(payload[2:4]) >> (1 + 0x8)) & 1)
+	dh.rd = int((binary.BigEndian.Uint16(payload[2:4]) >> (0x8)) & 1)
+	dh.cd = int((binary.BigEndian.Uint16(payload[2:4]) >> 4) & 1)
+	dh.ad = int((binary.BigEndian.Uint16(payload[2:4]) >> 5) & 1)
+	dh.z = int((binary.BigEndian.Uint16(payload[2:4]) >> 6) & 1)
+	dh.ra = int((binary.BigEndian.Uint16(payload[2:4]) >> 7) & 1)
+	dh.rcode = int(binary.BigEndian.Uint16(payload[2:4]) & 0xF)
+
+	// decode counters
 	dh.qdcount = int(binary.BigEndian.Uint16(payload[4:6]))
-	// decode ANCOUNT
 	dh.ancount = int(binary.BigEndian.Uint16(payload[6:8]))
-	// decode NSCOUNT
 	dh.nscount = int(binary.BigEndian.Uint16(payload[8:10]))
-	// decode ARCOUNT
 	dh.arcount = int(binary.BigEndian.Uint16(payload[10:12]))
 
-	//return int(id), int(qr), int(rcode), int(qdcount), int(ancount), nil
 	return dh, nil
 }
 

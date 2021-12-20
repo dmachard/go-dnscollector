@@ -145,7 +145,7 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	c.total.Packets++
 
 	// malformed packet ?
-	if dm.MalformedPacket {
+	if dm.MalformedPacket == 1 {
 		c.total.PacketsMalformed++
 
 		if _, ok := c.clientsSuspicious[dm.QueryIp]; !ok {

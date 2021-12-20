@@ -116,8 +116,7 @@ LOOP:
 						case dm := <-o.channel:
 
 							if o.config.Loggers.TcpClient.Mode == "text" {
-								w.Write(dm.Bytes(o.textFormat))
-								w.WriteString(o.config.Loggers.TcpClient.Delimiter)
+								w.Write(dm.Bytes(o.textFormat, o.config.Loggers.TcpClient.Delimiter))
 							}
 
 							if o.config.Loggers.TcpClient.Mode == "json" {

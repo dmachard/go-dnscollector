@@ -249,35 +249,43 @@ subprocessors:
 
 ### Custom text format
 
+Custome text format can be configured
+All available directives:
+- `timestamp-rfc3339ns`: timestamp rfc3339 format, with nano support
+- `timestamp-unixms`: unix timestamp with ms support
+- `timestamp-unixus`: unix timestamp with us support
+- `timestamp-unixns`: unix timestamp with nano support
+- `localtime`: local time
+- `identity`: dnstap identity
+- `qr`: query or reply flag
+- `operation`: dnstap operation
+- `rcode`: dns return code
+- `queryip`: dns query ip
+- `queryport`: dns query port
+- `responseip`: dns response ip
+- `responseport`: dns response port
+- `id`: dns id
+- `family`: ip protocol version INET or INET6
+- `protocol`: protocol UDP, TCP
+- `length`: the length of the query or reply
+- `qtype`: dns qtype
+- `qname`: dns qname
+- `latency`: computed latency between queries and replies
+- `answercount`: the number of answer
+- `country`: country iso code
+- `ttl`: answer ttl, only the first one
+- `answer`: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
+- `malformed`: malformed dns packet, integer value 1/0
+- `tc`: truncated flag, integer value 1/0
+- `aa`: authoritative answer, integer value 1/0
+- `ra`: recursion available, integer value 1/0
+- `ad`: authenticated data, integer value 1/0
+
 ```yaml
 subprocessors:
   # specific the default text log format used on all loggers supporting this mode
   # all available directives:
-  # - timestamp-rfc3339ns: timestamp rfc3339 format, with nano support
-  # - timestamp-unixms: unix timestamp with ms support
-  # - timestamp-unixus: unix timestamp with us support
-  # - timestamp-unixns: unix timestamp with nano support
-  # - localtime: local time
-  # - identity: dnstap identity
-  # - qr: query or reply flag
-  # - operation: dnstap operation
-  # - rcode: dns return code
-  # - queryip: dns query ip
-  # - queryport: dns query port
-  # - responseip: dns response ip
-  # - responseport: dns response port
-  # - id: dns id
-  # - family: ip protocol version INET or INET6
-  # - protocol: protocol UDP, TCP
-  # - length: the length of the query or reply
-  # - qtype: dns qtype
-  # - qname: dns qname
-  # - latency: computed latency between queries and replies
-  # - answercount: the number of answer
-  # - country: country iso code
-  # - ttl: answer ttl, only the first one
-  # - answer: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
-  # - malformed: malformed dns packet boolean
+
   text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"
 ```
 

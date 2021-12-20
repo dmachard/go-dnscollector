@@ -26,7 +26,8 @@ func TestLogfileWrite(t *testing.T) {
 
 	// write fake dns message
 	dm := dnsutils.GetFakeDnsMessage()
-	g.Write(dm.Bytes(g.textFormat))
+	delimiter := "\n"
+	g.Write(dm.Bytes(g.textFormat, delimiter))
 	g.Flush()
 
 	// read temp file and check content

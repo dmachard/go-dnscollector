@@ -157,7 +157,8 @@ func (o *Syslog) Run() {
 	for dm := range o.channel {
 		switch o.config.Loggers.Syslog.Mode {
 		case "text":
-			o.syslogConn.Write(dm.Bytes(o.textFormat))
+			delimiter := "\n"
+			o.syslogConn.Write(dm.Bytes(o.textFormat, delimiter))
 		case "json":
 			json.NewEncoder(buffer).Encode(dm)
 			o.syslogConn.Write(buffer.Bytes())

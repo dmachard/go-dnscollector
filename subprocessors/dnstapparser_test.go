@@ -76,7 +76,7 @@ func TestDnstapProcessor_MalformedDnsHeader(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm := <-chan_to
-	if !dm.MalformedPacket {
+	if dm.MalformedPacket == 0 {
 		t.Errorf("malformed packet not detected")
 	}
 }
@@ -110,7 +110,7 @@ func TestDnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm := <-chan_to
-	if !dm.MalformedPacket {
+	if dm.MalformedPacket == 0 {
 		t.Errorf("malformed packet not detected")
 	}
 }
@@ -145,7 +145,7 @@ func TestDnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm := <-chan_to
-	if !dm.MalformedPacket {
+	if dm.MalformedPacket == 0 {
 		t.Errorf("malformed packet not detected")
 	}
 }
