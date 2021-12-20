@@ -130,11 +130,11 @@ subprocessors:
   # according to the query ip
   geoip:
     # path file to your mmdb country database
-    mmdb-country-file: "/home/denis/Downloads/GeoIP/GeoLite2-Country.mmdb"
+    mmdb-country-file: ""
     # path file to your mmdb city database
-    mmdb-city-file: "/home/denis/Downloads/GeoIP/GeoLite2-City.mmdb"
+    mmdb-city-file: ""
     # path file to your mmdb ASN database
-    mmdb-asn-file: "/home/denis/Downloads/GeoIP/GeoLite2-ASN.mmdb"
+    mmdb-asn-file: ""
 
   # specific the default text log format used on all loggers supporting this mode
   # all available directives:
@@ -159,7 +159,11 @@ subprocessors:
   # - qname: dns qname
   # - latency: computed latency between queries and replies
   # - answercount: the number of answer
+  # - continent: continent code
   # - country: country iso code
+  # - city: city name
+  # - asn: autonomous system number
+  # - aso: autonomous system organization
   # - ttl: answer ttl, only the first one value
   # - answer: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
   # - malformed: malformed dns packet, integer value 1/0
@@ -167,7 +171,7 @@ subprocessors:
   # - aa: authoritative answer, integer value 1/0
   # - ra: recursion available, integer value 1/0
   # - ad: authenticated data, integer value 1/0
-  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency country"
+  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 # list of loggers
 loggers:

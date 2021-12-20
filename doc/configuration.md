@@ -206,12 +206,16 @@ To enable this feature, you need to configure the path to your database.
 See [Downloads](https://www.maxmind.com/en/accounts/current/geoip/downloads) maxmind page to get the database.
 
 Options:
-- `db-file`: (string) path file to your database
+- `mmdb-country-file`: (string) path file to your mmdb country database
+- `mmdb-city-file`: (string) path file to your mmdb city database
+- `mmdb-asn-file`: (string) path file to your mmdb asn database
 
 ```yaml
 subprocessors:
   geoip:
-    db-file: "/GeoLite2-Country.mmdb"
+    mmdb-country-file: "/GeoIP/GeoLite2-Country.mmdb"
+    mmdb-city-file: ""
+    mmdb-asn-file: ""
 ```
 
 When the feature is enable, the `country-isocode` field is populated with the country code.
@@ -285,7 +289,11 @@ All available directives:
 - `qname`: dns qname
 - `latency`: computed latency between queries and replies
 - `answercount`: the number of answer
+- `continent`: continent code
 - `country`: country iso code
+- `city`: city name
+- `asn`: autonomous system number
+- `aso`: autonomous system organization
 - `ttl`: answer ttl, only the first one
 - `answer`: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
 - `malformed`: malformed dns packet, integer value 1/0
