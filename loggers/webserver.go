@@ -224,6 +224,16 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "# HELP %s_qps_max_total Maximum number of queries per second received\n", prefix)
 		fmt.Fprintf(w, "# TYPE %s_qps_max_total counter\n", prefix)
 
+		// dns flags
+		fmt.Fprintf(w, "# HELP %s_truncated_total Total truncated replies\n", prefix)
+		fmt.Fprintf(w, "# TYPE %s_truncated_total counter\n", prefix)
+		fmt.Fprintf(w, "# HELP %s_authoritative_answer_total Total authoritative answer replies\n", prefix)
+		fmt.Fprintf(w, "# TYPE %s_authoritative_answer_total counter\n", prefix)
+		fmt.Fprintf(w, "# HELP %s_recursion_available_total Total recursion available replies\n", prefix)
+		fmt.Fprintf(w, "# TYPE %s_recursion_available_total counter\n", prefix)
+		fmt.Fprintf(w, "# HELP %s_authentic_data_total Total authentic data replies\n", prefix)
+		fmt.Fprintf(w, "# TYPE %s_authentic_data_total counter\n", prefix)
+
 		fmt.Fprintf(w, "%s_build_info{version=\"%s\"} 1\n", prefix, s.ver)
 		for _, stream := range s.stats.Streams() {
 
@@ -368,6 +378,13 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			// qps
 			fmt.Fprintf(w, "%s_qps{stream=\"%s\"} %d\n", prefix, stream, counters.Qps)
 			fmt.Fprintf(w, "%s_qps_max_total{stream=\"%s\"} %d\n", prefix, stream, counters.QpsMax)
+
+			// dns flags
+			fmt.Fprintf(w, "%s_truncated_total{stream=\"%s\"} %d\n", prefix, stream, counters.Truncated)
+			fmt.Fprintf(w, "%s_authoritative_answer_total{stream=\"%s\"} %d\n", prefix, stream, counters.AuthoritativeAnswer)
+			fmt.Fprintf(w, "%s_recursion_available_total{stream=\"%s\"} %d\n", prefix, stream, counters.RecursionAvailable)
+			fmt.Fprintf(w, "%s_authentic_data_total{stream=\"%s\"} %d\n", prefix, stream, counters.AuthenticData)
+
 		}
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

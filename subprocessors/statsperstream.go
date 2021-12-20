@@ -57,6 +57,11 @@ type Counters struct {
 
 	ReceivedBytesTotal int
 	SentBytesTotal     int
+
+	Truncated           int
+	AuthoritativeAnswer int
+	RecursionAvailable  int
+	AuthenticData       int
 }
 
 type StatsPerStream struct {
@@ -395,6 +400,19 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 		c.operations[dm.Operation]++
 	}
 	c.operationstop.Record(dm.Operation, c.operations[dm.Operation])
+
+	if dm.Truncated == 1 {
+		c.total.Truncated++
+	}
+	if dm.AuthoritativeAnswer == 1 {
+		c.total.AuthoritativeAnswer++
+	}
+	if dm.RecursionAvailable == 1 {
+		c.total.RecursionAvailable++
+	}
+	if dm.AuthenticData == 1 {
+		c.total.AuthenticData++
+	}
 }
 
 func (c *StatsPerStream) Compute() {
@@ -423,6 +441,11 @@ func (c *StatsPerStream) Compute() {
 func (c *StatsPerStream) Reset() {
 	c.Lock()
 	defer c.Unlock()
+
+	c.total.AuthenticData = 0
+	c.total.RecursionAvailable = 0
+	c.total.AuthoritativeAnswer = 0
+	c.total.Truncated = 0
 
 	c.total.Qps = 0
 	c.total.QpsMax = 0
