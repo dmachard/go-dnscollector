@@ -152,20 +152,22 @@ tail:
 
 Enable or disable dnstap message quiet text, this option can be useful to reduce the size of your dns logs
 
+The following dnstap message will be replaced with the small form:
+- AUTH_QUERY: `AQ`
+- AUTH_RESPONSE: `AR`
+- RESOLVER_QUERY: `RQ`
+- RESOLVER_RESPONSE: `RR`
+- CLIENT_QUERY: `CQ`
+- CLIENT_RESPONSE: `CR`
+- FORWARDER_QUERY: `FQ`
+- FORWARDER_RESPONSE: `FR`
+- STUB_QUERY: `SQ`
+- STUB_RESPONSE: `SR`
+- TOOL_QUERY: `TQ`
+- TOOL_RESPONSE: `TR`
+
 ```yaml
 subprocessors:
-  #  AQ: AUTH_QUERY
-  #  AR: AUTH_RESPONSE
-  #  RQ: RESOLVER_QUERY
-  #  RR: RESOLVER_RESPONSE
-  #  CQ: CLIENT_QUERY
-  #  CR: CLIENT_RESPONSE
-  #  FQ: FORWARDER_QUERY
-  #  FR: FORWARDER_RESPONSE
-  #  SQ: STUB_QUERY
-  #  SR: STUB_RESPONSE
-  #  TQ: TOOL_QUERY
-  #  TR: TOOL_RESPONSE
   dnstap-quiet-text: false
 ```
 
@@ -176,18 +178,16 @@ This feature is enabled by default.
 
 ```yaml
 subprocessors:
-  # Convert all domain to lowercase
   qname-lowercase: true
 ```
 
 ### IP Anonymization
 
-This feature can be used to anonymize all IP queries.
-For example, QueryIP 8.8.8.8 will be replaced by 8.8.0.0.
+This feature can be used to anonymize all IP queries. For example, QueryIP 8.8.8.8 will be replaced by 8.8.0.0.
+IP-Addresses are anonymities by zeroing the host-part of an address.
 
 ```yaml
 subprocessors:
-  # IP-Addresses are anonymities by zeroing the host-part of an address.
   anonymize-ip: false
 ```
 
@@ -219,17 +219,18 @@ When the feature is enable, the `country-isocode` field is populated with the co
 ### DNS Caching
 
 The caching feature is used to compute latency between replies and queries.
+This cache can be disabled if your dns server already add the latency in the dns packet
+Disable this feature to improve performance
+
+Options:
+- `Enable`: disable or enable the feature
+- `Ttl` in second, max time to keep the query record in memory
 
 ```yaml
 subprocessors:
-  # The cache is used to compute latency between replies and queries 
-  # This cache can be disabled if your dns server already add the latency in the dns packet
-  # Disable this feature to improve performance
   cache:
-    # enable or disable
     enable: true
-    # Ttl in second, max time to keep the query record in memory
-    ttl: 10
+    ttl: 10 
 ```
 
 ### Packet Filtering
@@ -283,9 +284,6 @@ All available directives:
 
 ```yaml
 subprocessors:
-  # specific the default text log format used on all loggers supporting this mode
-  # all available directives:
-
   text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"
 ```
 
