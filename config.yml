@@ -367,7 +367,7 @@ loggers:
     # Loki server url
     server-url: "http://localhost:3100/loki/api/v1/push"
     # Job name
-    job-name: "dnstapt"
+    job-name: "dnstap"
     # flush batch every X seconds
     flush-interval: 5
     # batch size for log entries in bytes
@@ -379,8 +379,6 @@ loggers:
     text-format: "localtime identity qr queryip family protocol qname qtype rcode"
     # Proxy URL
     proxy-url: ""
-    # enable tls
-    tls-support: false
     # insecure skip verify
     tls-insecure: false
     # basic auth login
