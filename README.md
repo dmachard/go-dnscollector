@@ -31,7 +31,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 - Other features
     - [Built-in Grafana dashboards](doc/dashboards.md)
     - [GeoIP support](doc/configuration.md#geoip-support)
-    - [Fqdn/Domain list filtering](doc/configuration.md#packet-filtering)
+    - [Fqdn/Domain list filtering](doc/configuration.md#fqdn-filtering)
     - [Query IP anonymizer](doc/configuration.md#ip-anonymization)
     - [Custom text format](doc/configuration.md#custom-text-format)
     - [DNS caching](doc/configuration.md#DNS-Caching)

@@ -176,6 +176,9 @@ subprocessors:
 Option to convert all domain to lowercase. For example: `Wwww.GooGlE.com` will be equal to `www.google.com`
 This feature is enabled by default.
 
+Options:
+- `qname-lowercase`: (boolean) enable or disable lowercase
+
 ```yaml
 subprocessors:
   qname-lowercase: true
@@ -186,6 +189,9 @@ subprocessors:
 This feature can be used to anonymize all IP queries. For example, QueryIP 8.8.8.8 will be replaced by 8.8.0.0.
 IP-Addresses are anonymities by zeroing the host-part of an address.
 
+Options:
+- `anonymize-ip`: (boolean) enable or disable anomymiser ip
+
 ```yaml
 subprocessors:
   anonymize-ip: false
@@ -193,16 +199,18 @@ subprocessors:
 
 ### GeoIP Support
 
+GeoIP maxmind support feature.
 The country code can be populated regarding the query IP collected.
 To enable this feature, you need to configure the path to your database.
 
 See [Downloads](https://www.maxmind.com/en/accounts/current/geoip/downloads) maxmind page to get the database.
 
+Options:
+- `db-file`: (string) path file to your database
+
 ```yaml
 subprocessors:
-  # geoip maxmind support
   geoip:
-    # path file to your database
     db-file: "/GeoLite2-Country.mmdb"
 ```
 
@@ -210,9 +218,9 @@ When the feature is enable, the `country-isocode` field is populated with the co
 
 ```json
 {
-  "operation": "AUTH_RESPONSE",
-  "query-ip": "127.0.126.114",
-  "country-isocode":"FR"
+  ...
+  "country-isocode":"FR",
+  ...
 }
 ```
 
@@ -222,8 +230,8 @@ The caching feature is used to compute latency between replies and queries.
 This cache can be disabled if your dns server already add the latency in the dns packet, otherwise disable this feature to improve performance
 
 Options:
-- `Enable`: disable or enable the feature
-- `Ttl` in second, max time to keep the query record in memory
+- `enable`: (boolean) disable or enable the feature
+- `ttl`: (integer) in second, max time to keep the query record in memory
 
 ```yaml
 subprocessors:
@@ -232,19 +240,24 @@ subprocessors:
     ttl: 10 
 ```
 
-### Packet Filtering
+### Fqdn Filtering
 
-This feature can be use to ignore somes qnames.
+This feature can be use to ignore queries or replies. You can also use-it to drop 
+specific domains name. This feature can be useful to increase logging performance.
+
+Options:
+- `drop-fqdn-file`: (string) path file to a fqdn drop list, domains list must be a full qualified domain name
+- `drop-domain-file`: (string) path file to domain drop list, domains list can be a partial domain name with regexp expression
+- `log-queries`: (boolean) forward received queries to configured loggers
+- `log-replies`: (boolean)  forward received replies to configured loggers
 
 ```yaml
 subprocessors:
   filtering:
-    # regexp to ignore incoming qname
-    ignore-qname: ""
-    # send queries to configured loggers or or not
+    drop-fqdn-file: ""
+    drop-domain-file: ""
     log-queries: true
-    # send replies to configured loggers or not
-    log-replies: true 
+    log-replies: true
 ```
 
 ### Custom text format
@@ -323,14 +336,15 @@ Print to your standard output, all DNS logs received
 * in text or json format
 * custom text format
 
+Options:
+- `enable`: (boolean) o enable, set the enable to true
+- `mode`: (string) text or json
+- `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
+
 ```yaml
 stdout:
-  # to enable, set the enable to true
   enable: true
-  # text|json
   mode: text
-  # output text format, please refer to the default text format to see all available directives 
-  # use this parameter if you want a specific format
   text-format: ""
 ```
 
