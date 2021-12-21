@@ -254,13 +254,13 @@ Disable this feature to improve performance.
 
 Options:
 - `enable`: (boolean) disable or enable the feature
-- `ttl`: (integer) in second, max time to keep the query record in memory
+- `query-timeout`: (integer) in second, max time to keep the query record in memory
 
 ```yaml
 subprocessors:
   cache:
     enable: true
-    ttl: 10 
+    query-timeout: 10 
 ```
 
 ### Fqdn Filtering

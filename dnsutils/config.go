@@ -62,8 +62,8 @@ type Config struct {
 		AnonymizeIP    bool `yaml:"anonymize-ip"`
 		QnameLowerCase bool `yaml:"qname-lowercase"`
 		Cache          struct {
-			Enable bool `yaml:"enable"`
-			Ttl    int  `yaml:"ttl"`
+			Enable       bool `yaml:"enable"`
+			QueryTimeout int  `yaml:"query-timeout"`
 		} `yaml:"cache"`
 		ServerId  string `yaml:"server-id"`
 		Filtering struct {
@@ -240,7 +240,7 @@ func (c *Config) SetDefault() {
 
 	c.Subprocessors.QnameLowerCase = true
 
-	c.Subprocessors.Cache.Ttl = 10
+	c.Subprocessors.Cache.QueryTimeout = 5
 	c.Subprocessors.Cache.Enable = true
 
 	c.Subprocessors.ServerId = ""

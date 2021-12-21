@@ -401,11 +401,11 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			// asn counters
 			fmt.Fprintf(w, "%s_as_numbers_total{stream=\"%s\"} %d\n", prefix, stream, totalAsNumbers)
 			for _, v := range topAsNumbers {
-				fmt.Fprintf(w, "%s_as_numbers_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_as_numbers_top_total{stream=\"%s\",number=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
 			}
 			fmt.Fprintf(w, "%s_as_owners_total{stream=\"%s\"} %d\n", prefix, stream, totalAsOwners)
 			for _, v := range topAsOwners {
-				fmt.Fprintf(w, "%s_as_owners_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
+				fmt.Fprintf(w, "%s_as_owners_top_total{stream=\"%s\",owner=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
 			}
 		}
 	default:
