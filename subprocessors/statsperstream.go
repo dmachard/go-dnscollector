@@ -262,6 +262,13 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 			c.qnamesSuspicious[dm.Qname]++
 		}
 		c.qnamesSuspicioustop.Record(dm.Qname, c.qnamesSuspicious[dm.Qname])
+
+		if _, ok := c.clientsSuspicious[dm.QueryIp]; !ok {
+			c.clientsSuspicious[dm.QueryIp] = 1
+		} else {
+			c.clientsSuspicious[dm.QueryIp]++
+		}
+		c.clientsSuspicioustop.Record(dm.QueryIp, c.clientsSuspicious[dm.QueryIp])
 	}
 
 	if _, found := c.commonQtypes[dm.Qtype]; !found {
@@ -271,6 +278,13 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 			c.qnamesSuspicious[dm.Qname]++
 		}
 		c.qnamesSuspicioustop.Record(dm.Qname, c.qnamesSuspicious[dm.Qname])
+
+		if _, ok := c.clientsSuspicious[dm.QueryIp]; !ok {
+			c.clientsSuspicious[dm.QueryIp] = 1
+		} else {
+			c.clientsSuspicious[dm.QueryIp]++
+		}
+		c.clientsSuspicioustop.Record(dm.QueryIp, c.clientsSuspicious[dm.QueryIp])
 	}
 
 	if dm.Length >= c.config.Subprocessors.Statistics.ThresholdPacketLen {
@@ -280,6 +294,13 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 			c.qnamesSuspicious[dm.Qname]++
 		}
 		c.qnamesSuspicioustop.Record(dm.Qname, c.qnamesSuspicious[dm.Qname])
+
+		if _, ok := c.clientsSuspicious[dm.QueryIp]; !ok {
+			c.clientsSuspicious[dm.QueryIp] = 1
+		} else {
+			c.clientsSuspicious[dm.QueryIp]++
+		}
+		c.clientsSuspicioustop.Record(dm.QueryIp, c.clientsSuspicious[dm.QueryIp])
 	}
 
 	// latency
