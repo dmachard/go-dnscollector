@@ -41,7 +41,7 @@ type DnsMessage struct {
 	TimeNsec               int         `json:"-" msgpack:"-"`
 	Answers                []DnsAnswer `json:"answers" msgpack:"answers"`
 	CountryIsoCode         string      `json:"country-isocode" msgpack:"country-isocode"`
-	AutonomousSystemNumber int         `json:"as-number" msgpack:"as-number"`
+	AutonomousSystemNumber string      `json:"as-number" msgpack:"as-number"`
 	AutonomousSystemOrg    string      `json:"as-owner" msgpack:"as-owner"`
 	City                   string      `json:"city" msgpack:"city"`
 	Continent              string      `json:"continent" msgpack:"continent"`
@@ -69,7 +69,7 @@ func (dm *DnsMessage) Init() {
 	dm.AuthenticData = "-"
 
 	dm.CountryIsoCode = "-"
-	dm.AutonomousSystemNumber = 0
+	dm.AutonomousSystemNumber = "-"
 	dm.AutonomousSystemOrg = "-"
 	dm.City = "-"
 	dm.Continent = "-"
@@ -144,7 +144,7 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "city":
 			s.WriteString(dm.City)
 		case "as-number":
-			s.WriteString(strconv.Itoa(dm.AutonomousSystemNumber))
+			s.WriteString(dm.AutonomousSystemNumber)
 		case "as-owner":
 			s.WriteString(dm.AutonomousSystemOrg)
 		case "malformed":

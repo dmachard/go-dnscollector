@@ -234,11 +234,24 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "# HELP %s_authentic_data_total Total authentic data replies\n", prefix)
 		fmt.Fprintf(w, "# TYPE %s_authentic_data_total counter\n", prefix)
 
+		// asn
+		fmt.Fprintf(w, "# HELP %s_as_numbers_total Total AS uniq number\n", prefix)
+		fmt.Fprintf(w, "# TYPE %s_as_numbers_total counter\n", prefix)
+		fmt.Fprintf(w, "# HELP %s_as_owners_total Total AS uniq owner\n", prefix)
+		fmt.Fprintf(w, "# TYPE %s_as_owners_total counter\n", prefix)
+
+		// build info
 		fmt.Fprintf(w, "%s_build_info{version=\"%s\"} 1\n", prefix, s.ver)
 		for _, stream := range s.stats.Streams() {
 
 			counters := s.stats.GetCounters(stream)
 			totalClients := s.stats.GetTotalClients(stream)
+
+			totalAsNumbers := s.stats.GetTotalAsNumbers(stream)
+			topAsNumbers := s.stats.GetTopAsNumbers(stream)
+
+			totalAsOwners := s.stats.GetTotalAsOwners(stream)
+			topAsOwners := s.stats.GetTopAsOwners(stream)
 
 			totalFlds := s.stats.GetTotalFirstLevelDomains(stream)
 			topFlds := s.stats.GetTopFirstLevelDomains(stream)
@@ -385,6 +398,15 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "%s_recursion_available_total{stream=\"%s\"} %d\n", prefix, stream, counters.RecursionAvailable)
 			fmt.Fprintf(w, "%s_authentic_data_total{stream=\"%s\"} %d\n", prefix, stream, counters.AuthenticData)
 
+			// asn counters
+			fmt.Fprintf(w, "%s_as_numbers_total{stream=\"%s\"} %d\n", prefix, stream, totalAsNumbers)
+			for _, v := range topAsNumbers {
+				fmt.Fprintf(w, "%s_as_numbers_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
+			}
+			fmt.Fprintf(w, "%s_as_owners_total{stream=\"%s\"} %d\n", prefix, stream, totalAsOwners)
+			for _, v := range topAsOwners {
+				fmt.Fprintf(w, "%s_as_owners_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
+			}
 		}
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -469,6 +491,48 @@ func (s *Webserver) topAllFirstLevelDomainsHandler(w http.ResponseWriter, r *htt
 			stream = []string{"global"}
 		}
 		t := s.stats.GetTopFirstLevelDomains(stream[0])
+		json.NewEncoder(w).Encode(t)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Webserver) topAsOwnersHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case http.MethodGet:
+		stream, ok := r.URL.Query()["stream"]
+		if !ok || len(stream) < 1 {
+			stream = []string{"global"}
+		}
+		t := s.stats.GetTopAsOwners(stream[0])
+		json.NewEncoder(w).Encode(t)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Webserver) topAsNumbersHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case http.MethodGet:
+		stream, ok := r.URL.Query()["stream"]
+		if !ok || len(stream) < 1 {
+			stream = []string{"global"}
+		}
+		t := s.stats.GetTopAsNumbers(stream[0])
 		json.NewEncoder(w).Encode(t)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -594,6 +658,9 @@ func (s *Webserver) ListenAndServe() {
 	mux.HandleFunc("/top/domains/nxd", s.topNxdDomainsHandler)
 	mux.HandleFunc("/top/domains/slow", s.topSlowDomainsHandler)
 	mux.HandleFunc("/top/domains/suspicious", s.topSuspiciousDomainsHandler)
+
+	mux.HandleFunc("/top/as/numbers", s.topAsNumbersHandler)
+	mux.HandleFunc("/top/as/owners", s.topAsOwnersHandler)
 
 	mux.HandleFunc("/dump/requesters", s.dumpRequestersHandler)
 	mux.HandleFunc("/dump/domains", s.dumpDomainsHandler)

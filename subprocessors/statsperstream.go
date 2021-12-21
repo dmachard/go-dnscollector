@@ -71,28 +71,45 @@ type StatsPerStream struct {
 
 	firstleveldomains    map[string]int
 	firstleveldomainstop *topmap.TopMap
-	qnames               map[string]int
-	qnamestop            *topmap.TopMap
-	qnamesNxd            map[string]int
-	qnamesNxdtop         *topmap.TopMap
-	qnamesSlow           map[string]int
-	qnamesSlowtop        *topmap.TopMap
-	qnamesSuspicious     map[string]int
-	qnamesSuspicioustop  *topmap.TopMap
-	clients              map[string]int
-	clientstop           *topmap.TopMap
+
+	qnames    map[string]int
+	qnamestop *topmap.TopMap
+
+	qnamesNxd    map[string]int
+	qnamesNxdtop *topmap.TopMap
+
+	qnamesSlow    map[string]int
+	qnamesSlowtop *topmap.TopMap
+
+	qnamesSuspicious    map[string]int
+	qnamesSuspicioustop *topmap.TopMap
+
+	clients    map[string]int
+	clientstop *topmap.TopMap
+
 	clientsSuspicious    map[string]int
 	clientsSuspicioustop *topmap.TopMap
-	rrtypes              map[string]int
-	rrtypestop           *topmap.TopMap
-	rcodes               map[string]int
-	rcodestop            *topmap.TopMap
-	operations           map[string]int
-	operationstop        *topmap.TopMap
-	transports           map[string]int
-	transportstop        *topmap.TopMap
-	ipproto              map[string]int
-	ipprototop           *topmap.TopMap
+
+	rrtypes    map[string]int
+	rrtypestop *topmap.TopMap
+
+	rcodes    map[string]int
+	rcodestop *topmap.TopMap
+
+	operations    map[string]int
+	operationstop *topmap.TopMap
+
+	transports    map[string]int
+	transportstop *topmap.TopMap
+
+	ipproto    map[string]int
+	ipprototop *topmap.TopMap
+
+	asNumbers    map[string]int
+	asNumbersTop *topmap.TopMap
+
+	asOwners    map[string]int
+	asOwnersTop *topmap.TopMap
 
 	commonQtypes map[string]bool
 	sync.RWMutex
@@ -103,30 +120,47 @@ func NewStatsPerStream(config *dnsutils.Config) *StatsPerStream {
 		config: config,
 		total:  Counters{},
 
+		asNumbers:    make(map[string]int),
+		asNumbersTop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
+		asOwners:    make(map[string]int),
+		asOwnersTop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
 		firstleveldomains:    make(map[string]int),
 		firstleveldomainstop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		qnames:               make(map[string]int),
-		qnamestop:            topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		qnamesNxd:            make(map[string]int),
-		qnamesNxdtop:         topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		qnamesSlow:           make(map[string]int),
-		qnamesSlowtop:        topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		qnamesSuspicious:     make(map[string]int),
-		qnamesSuspicioustop:  topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		clients:              make(map[string]int),
-		clientstop:           topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
+		qnames:    make(map[string]int),
+		qnamestop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
+		qnamesNxd:    make(map[string]int),
+		qnamesNxdtop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
+		qnamesSlow:    make(map[string]int),
+		qnamesSlowtop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
+		qnamesSuspicious:    make(map[string]int),
+		qnamesSuspicioustop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
+		clients:    make(map[string]int),
+		clientstop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
 		clientsSuspicious:    make(map[string]int),
 		clientsSuspicioustop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		rrtypes:              make(map[string]int),
-		rrtypestop:           topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		rcodes:               make(map[string]int),
-		rcodestop:            topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		operations:           make(map[string]int),
-		operationstop:        topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		transports:           make(map[string]int),
-		transportstop:        topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-		ipproto:              make(map[string]int),
-		ipprototop:           topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
+		rrtypes:    make(map[string]int),
+		rrtypestop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
+		rcodes:    make(map[string]int),
+		rcodestop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
+		operations:    make(map[string]int),
+		operationstop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
+		transports:    make(map[string]int),
+		transportstop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
+		ipproto:    make(map[string]int),
+		ipprototop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 
 		commonQtypes: make(map[string]bool),
 	}
@@ -414,7 +448,7 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 	c.rcodestop.Record(dm.Rcode, c.rcodes[dm.Rcode])
 
-	// recodes operations
+	// record operations
 	if _, ok := c.operations[dm.Operation]; !ok {
 		c.operations[dm.Operation] = 1
 	} else {
@@ -422,6 +456,7 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 	c.operationstop.Record(dm.Operation, c.operations[dm.Operation])
 
+	// dns flags
 	if dm.Truncated == "TC" {
 		c.total.Truncated++
 	}
@@ -434,6 +469,22 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	if dm.AuthenticData == "AD" {
 		c.total.AuthenticData++
 	}
+
+	// as number
+	if _, ok := c.asNumbers[dm.AutonomousSystemNumber]; !ok {
+		c.asNumbers[dm.AutonomousSystemNumber] = 1
+	} else {
+		c.asNumbers[dm.AutonomousSystemNumber]++
+	}
+	c.asNumbersTop.Record(dm.AutonomousSystemNumber, c.asNumbers[dm.AutonomousSystemNumber])
+
+	// as owner
+	if _, ok := c.asOwners[dm.AutonomousSystemOrg]; !ok {
+		c.asOwners[dm.AutonomousSystemOrg] = 1
+	} else {
+		c.asOwners[dm.AutonomousSystemOrg]++
+	}
+	c.asOwnersTop.Record(dm.AutonomousSystemOrg, c.asOwners[dm.AutonomousSystemOrg])
 }
 
 func (c *StatsPerStream) Compute() {
@@ -517,28 +568,45 @@ func (c *StatsPerStream) Reset() {
 
 	c.firstleveldomains = make(map[string]int)
 	c.firstleveldomainstop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
+
 	c.qnames = make(map[string]int)
 	c.qnamestop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
+
 	c.qnamesNxd = make(map[string]int)
 	c.qnamesNxdtop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
+
 	c.qnamesSlow = make(map[string]int)
 	c.qnamesSlowtop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
+
 	c.qnamesSuspicious = make(map[string]int)
 	c.qnamesSuspicioustop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
+
 	c.clients = make(map[string]int)
 	c.clientstop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
+
 	c.clientsSuspicious = make(map[string]int)
 	c.clientsSuspicioustop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
+
 	c.rrtypes = make(map[string]int)
 	c.rrtypestop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
+
 	c.rcodes = make(map[string]int)
 	c.rcodestop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
+
 	c.operations = make(map[string]int)
 	c.operationstop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
+
 	c.transports = make(map[string]int)
 	c.transportstop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
+
 	c.ipproto = make(map[string]int)
 	c.ipprototop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
+
+	c.asNumbers = make(map[string]int)
+	c.asNumbersTop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
+
+	c.asOwners = make(map[string]int)
+	c.asOwnersTop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
 }
 
 func (c *StatsPerStream) GetCounters() (ret Counters) {
@@ -553,6 +621,20 @@ func (c *StatsPerStream) GetTotalDomains() (ret int) {
 	defer c.RUnlock()
 
 	return len(c.qnames)
+}
+
+func (c *StatsPerStream) GetTotalAsNumbers() (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return len(c.asNumbers)
+}
+
+func (c *StatsPerStream) GetTotalAsOwners() (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return len(c.asOwners)
 }
 
 func (c *StatsPerStream) GetTotalFirstLevelDomains() (ret int) {
@@ -595,6 +677,20 @@ func (c *StatsPerStream) GetTotalClients() (ret int) {
 	defer c.RUnlock()
 
 	return len(c.clients)
+}
+
+func (c *StatsPerStream) GetTopAsNumbers() (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.asNumbersTop.Get()
+}
+
+func (c *StatsPerStream) GetTopAsOwners() (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.asOwnersTop.Get()
 }
 
 func (c *StatsPerStream) GetTopQnames() (ret []topmap.TopMapItem) {
@@ -699,6 +795,30 @@ func (c *StatsPerStream) GetDomains() (ret map[string]int) {
 
 	retMap := map[string]int{}
 	for k, v := range c.qnames {
+		retMap[k] = v
+	}
+
+	return retMap
+}
+
+func (c *StatsPerStream) GetAsNumbers() (ret map[string]int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	retMap := map[string]int{}
+	for k, v := range c.asNumbers {
+		retMap[k] = v
+	}
+
+	return retMap
+}
+
+func (c *StatsPerStream) GetAsOwners() (ret map[string]int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	retMap := map[string]int{}
+	for k, v := range c.asOwners {
 		retMap[k] = v
 	}
 

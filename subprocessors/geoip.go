@@ -2,6 +2,7 @@ package subprocessors
 
 import (
 	"net"
+	"strconv"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
@@ -26,7 +27,7 @@ type GeoRecord struct {
 	Continent      string
 	CountryISOCode string
 	City           string
-	ASN            int
+	ASN            string
 	ASO            string
 }
 
@@ -110,7 +111,7 @@ func (p *GeoIpProcessor) Lookup(ip string) (GeoRecord, error) {
 	rec := &GeoRecord{Continent: "-",
 		CountryISOCode: "-",
 		City:           "-",
-		ASN:            0,
+		ASN:            "-",
 		ASO:            "-"}
 
 	if len(p.config.Subprocessors.GeoIP.DbAsnFile) > 0 {
@@ -118,7 +119,7 @@ func (p *GeoIpProcessor) Lookup(ip string) (GeoRecord, error) {
 		if err != nil {
 			return *rec, err
 		}
-		rec.ASN = record.AutonomousSystemNumber
+		rec.ASN = strconv.Itoa(record.AutonomousSystemNumber)
 		rec.ASO = record.AutonomousSystemOrganization
 	}
 

@@ -98,6 +98,30 @@ func (c *StatsStreams) GetTotalFirstLevelDomains(identity string) (ret int) {
 	return v.GetTotalFirstLevelDomains()
 }
 
+func (c *StatsStreams) GetTotalAsNumbers(identity string) (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return 0
+	}
+
+	return v.GetTotalAsNumbers()
+}
+
+func (c *StatsStreams) GetTotalAsOwners(identity string) (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return 0
+	}
+
+	return v.GetTotalAsOwners()
+}
+
 func (c *StatsStreams) GetTotalNxdomains(identity string) (ret int) {
 	c.RLock()
 	defer c.RUnlock()
@@ -156,6 +180,30 @@ func (c *StatsStreams) GetTotalClients(identity string) (ret int) {
 	}
 
 	return v.GetTotalClients()
+}
+
+func (c *StatsStreams) GetTopAsNumbers(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return []topmap.TopMapItem{}
+	}
+
+	return v.GetTopAsNumbers()
+}
+
+func (c *StatsStreams) GetTopAsOwners(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return []topmap.TopMapItem{}
+	}
+
+	return v.GetTopAsOwners()
 }
 
 func (c *StatsStreams) GetTopQnames(identity string) (ret []topmap.TopMapItem) {
@@ -323,4 +371,28 @@ func (c *StatsStreams) GetDomains(identity string) (ret map[string]int) {
 	}
 
 	return v.GetDomains()
+}
+
+func (c *StatsStreams) GetAsNumbers(identity string) (ret map[string]int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return map[string]int{}
+	}
+
+	return v.GetAsNumbers()
+}
+
+func (c *StatsStreams) GetAsOwners(identity string) (ret map[string]int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return map[string]int{}
+	}
+
+	return v.GetAsOwners()
 }
