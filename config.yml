@@ -24,9 +24,9 @@ collectors:
     # tls support
     tls-support: false
     # certificate server file
-    cert-file: "/home/denis/Lab/logs-dnstap/stunnel.crt"
+    cert-file: ""
     # private key server file
-    key-file: "/home/denis/Lab/logs-dnstap/stunnel.key"
+    key-file: ""
 
   # dns traffic
   dns-sniffer:
@@ -144,7 +144,6 @@ subprocessors:
   # - timestamp-unixns: unix timestamp with nano support
   # - localtime: local time
   # - identity: dnstap identity
-  # - qr: query or reply flag
   # - operation: dnstap operation
   # - rcode: dns return code
   # - queryip: dns query ip
@@ -162,15 +161,16 @@ subprocessors:
   # - continent: continent code
   # - country: country iso code
   # - city: city name
-  # - asn: autonomous system number
-  # - aso: autonomous system organization
+  # - as-number: autonomous system number
+  # - as-owner: autonomous system organization
   # - ttl: answer ttl, only the first one value
   # - answer: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
   # - malformed: malformed dns packet, integer value 1/0
-  # - tc: truncated flag, integer value 1/0
-  # - aa: authoritative answer, integer value 1/0
-  # - ra: recursion available, integer value 1/0
-  # - ad: authenticated data, integer value 1/0
+  # - qr: query or reply flag, string value Q/R
+  # - tc: truncated flag
+  # - aa: authoritative answer
+  # - ra: recursion available
+  # - ad: authenticated data
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 # list of loggers

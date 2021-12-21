@@ -211,10 +211,18 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		dm.Id = dnsHeader.id
 		dm.Rcode = RcodeToString(dnsHeader.rcode)
-		dm.Truncated = dnsHeader.tc
-		dm.AuthoritativeAnswer = dnsHeader.aa
-		dm.RecursionAvailable = dnsHeader.ra
-		dm.AuthenticData = dnsHeader.ad
+		if dnsHeader.tc == 1 {
+			dm.Truncated = "TC"
+		}
+		if dnsHeader.aa == 1 {
+			dm.AuthoritativeAnswer = "AA"
+		}
+		if dnsHeader.ra == 1 {
+			dm.RecursionAvailable = "RA"
+		}
+		if dnsHeader.ad == 1 {
+			dm.AuthenticData = "AD"
+		}
 
 		// continue to decode the dns payload to extract the qname and rrtype
 		var dns_offsetrr int

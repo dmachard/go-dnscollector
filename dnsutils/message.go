@@ -41,15 +41,15 @@ type DnsMessage struct {
 	TimeNsec               int         `json:"-" msgpack:"-"`
 	Answers                []DnsAnswer `json:"answers" msgpack:"answers"`
 	CountryIsoCode         string      `json:"country-isocode" msgpack:"country-isocode"`
-	AutonomousSystemNumber int         `json:"asn" msgpack:"asn"`
-	AutonomousSystemOrg    string      `json:"asn-org" msgpack:"asn-org"`
+	AutonomousSystemNumber int         `json:"as-number" msgpack:"as-number"`
+	AutonomousSystemOrg    string      `json:"as-owner" msgpack:"as-owner"`
 	City                   string      `json:"city" msgpack:"city"`
 	Continent              string      `json:"continent" msgpack:"continent"`
 	MalformedPacket        int         `json:"malformed-packet" msgpack:"malformed-packet"`
-	Truncated              int         `json:"flag-tc" msgpack:"flag-tc"`
-	AuthoritativeAnswer    int         `json:"flag-aa" msgpack:"flag-aa"`
-	RecursionAvailable     int         `json:"flag-ra" msgpack:"flag-ra"`
-	AuthenticData          int         `json:"flag-ad" msgpack:"flag-ad"`
+	Truncated              string      `json:"flag-tc" msgpack:"flag-tc"`
+	AuthoritativeAnswer    string      `json:"flag-aa" msgpack:"flag-aa"`
+	RecursionAvailable     string      `json:"flag-ra" msgpack:"flag-ra"`
+	AuthenticData          string      `json:"flag-ad" msgpack:"flag-ad"`
 }
 
 func (dm *DnsMessage) Init() {
@@ -63,10 +63,10 @@ func (dm *DnsMessage) Init() {
 	dm.TimestampRFC3339 = "-"
 
 	dm.MalformedPacket = 0
-	dm.Truncated = 0
-	dm.AuthoritativeAnswer = 0
-	dm.RecursionAvailable = 0
-	dm.AuthenticData = 0
+	dm.Truncated = "-"
+	dm.AuthoritativeAnswer = "-"
+	dm.RecursionAvailable = "-"
+	dm.AuthenticData = "-"
 
 	dm.CountryIsoCode = "-"
 	dm.AutonomousSystemNumber = 0
@@ -97,7 +97,7 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "id":
 			s.WriteString(strconv.Itoa(dm.Id))
 		case "qr":
-			s.WriteString(strings.ToUpper(dm.Type))
+			s.WriteString(strings.ToUpper(dm.Type[:1]))
 		case "timestamp": // keep it just for backward compatibility
 			s.WriteString(dm.TimestampRFC3339)
 		case "timestamp-rfc3339ns":
@@ -143,20 +143,20 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 			s.WriteString(dm.CountryIsoCode)
 		case "city":
 			s.WriteString(dm.City)
-		case "asn":
+		case "as-number":
 			s.WriteString(strconv.Itoa(dm.AutonomousSystemNumber))
-		case "aso":
+		case "as-owner":
 			s.WriteString(dm.AutonomousSystemOrg)
 		case "malformed":
 			s.WriteString(strconv.Itoa(dm.MalformedPacket))
 		case "tc":
-			s.WriteString(strconv.Itoa(dm.Truncated))
+			s.WriteString(dm.Truncated)
 		case "aa":
-			s.WriteString(strconv.Itoa(dm.AuthoritativeAnswer))
+			s.WriteString(dm.AuthoritativeAnswer)
 		case "ra":
-			s.WriteString(strconv.Itoa(dm.RecursionAvailable))
+			s.WriteString(dm.RecursionAvailable)
 		case "ad":
-			s.WriteString(strconv.Itoa(dm.AuthenticData))
+			s.WriteString(dm.AuthenticData)
 		default:
 			log.Fatalf("unsupport directive for text format: %s", word)
 		}

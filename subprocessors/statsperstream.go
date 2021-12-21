@@ -401,16 +401,16 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 	c.operationstop.Record(dm.Operation, c.operations[dm.Operation])
 
-	if dm.Truncated == 1 {
+	if dm.Truncated == "TC" {
 		c.total.Truncated++
 	}
-	if dm.AuthoritativeAnswer == 1 {
+	if dm.AuthoritativeAnswer == "AA" {
 		c.total.AuthoritativeAnswer++
 	}
-	if dm.RecursionAvailable == 1 {
+	if dm.RecursionAvailable == "RA" {
 		c.total.RecursionAvailable++
 	}
-	if dm.AuthenticData == 1 {
+	if dm.AuthenticData == "AD" {
 		c.total.AuthenticData++
 	}
 }
