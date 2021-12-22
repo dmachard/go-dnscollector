@@ -60,8 +60,8 @@ type Config struct {
 			CommonQtypes       []string `yaml:"common-qtypes,flow"`
 		} `yaml:"statistics"`
 		UserPrivacy struct {
-			AnonymizeIP bool `yaml:"anonymize-ip"`
-			ReduceQname bool `yaml:"reduce-qname"`
+			AnonymizeIP   bool `yaml:"anonymize-ip"`
+			MinimazeQname bool `yaml:"minimaze-qname"`
 		} `yaml:"user-privacy"`
 		QnameLowerCase bool `yaml:"qname-lowercase"`
 		Cache          struct {
@@ -240,7 +240,7 @@ func (c *Config) SetDefault() {
 	c.Subprocessors.Statistics.CommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS"}
 
 	c.Subprocessors.UserPrivacy.AnonymizeIP = false
-	c.Subprocessors.UserPrivacy.ReduceQname = false
+	c.Subprocessors.UserPrivacy.MinimazeQname = false
 
 	c.Subprocessors.QnameLowerCase = true
 

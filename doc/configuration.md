@@ -200,13 +200,13 @@ For example:
 
 Options:
 - `anonymize-ip`: (boolean) enable or disable anomymiser ip
-- `reduce-qname`: (boolean) keep only the second level domain
+- `minimaze-qname`: (boolean) keep only the second level domain
 
 ```yaml
 subprocessors:
   user-privacy:
     anonymize-ip: false
-    reduce-qname: false
+    minimaze-qname: false
 ```
 
 ### GeoIP Support

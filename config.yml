@@ -97,7 +97,7 @@ subprocessors:
     # IP-Addresses are anonymities by zeroing the host-part of an address.
     anonymize-ip: false
     # Reduce Qname to second level only, for exemple mail.google.com be replaced by google.com
-    reduce-qname: false
+    minimaze-qname: false
 
   # Convert all domain to lowercase
   # Wwww.GooGlE.com will be equal to www.google.com
