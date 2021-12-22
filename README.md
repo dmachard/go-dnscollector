@@ -11,14 +11,14 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 ## Features
 
 - Supported collectors:
-    - [Dnstap streams](doc/configuration.md#dns-tap) 
+    - [DNS tap streams](doc/configuration.md#dns-tap) 
     - [DNS packets sniffer](doc/configuration.md#Dns-Sniffer)
     - [Tail on log file](doc/configuration.md#tail)
 
 - Supported loggers:
     - [Stdout](doc/configuration.md#stdout)
     - [File](doc/configuration.md#log-file)
-    - [Dnstap](doc/configuration.md#dnstap-client)
+    - [DNStap](doc/configuration.md#dnstap-client)
     - [TCP](doc/configuration.md#tcp-client)
     - [Prometheus](doc/configuration.md#rest-api)
     - [Syslog](doc/configuration.md#syslog)
