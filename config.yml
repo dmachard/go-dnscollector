@@ -92,9 +92,12 @@ subprocessors:
     # threshold to set a domain considered as slow, value in second
     threshold-slow: 0.5
 
-  # IP-Addresses are anonymities by zeroing the host-part of an address.
   # Use this option to protect user privacy
-  anonymize-ip: false
+  user-privacy:
+    # IP-Addresses are anonymities by zeroing the host-part of an address.
+    anonymize-ip: false
+    # Reduce Qname to second level only, for exemple mail.google.com be replaced by google.com
+    reduce-qname: true
 
   # Convert all domain to lowercase
   # Wwww.GooGlE.com will be equal to www.google.com

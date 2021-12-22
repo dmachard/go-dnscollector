@@ -32,7 +32,7 @@ func NewIpAnonymizerSubprocessor(config *dnsutils.Config) IpAnonymizerSubproc {
 }
 
 func (s *IpAnonymizerSubproc) ReadConfig() {
-	s.enabled = s.config.Subprocessors.AnonymizeIP
+	s.enabled = s.config.Subprocessors.UserPrivacy.AnonymizeIP
 }
 
 func (s *IpAnonymizerSubproc) IsEnabled() bool {

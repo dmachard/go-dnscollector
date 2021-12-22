@@ -9,7 +9,7 @@ import (
 func TestAnonymizeIPv4(t *testing.T) {
 	// enable feature
 	config := dnsutils.GetFakeConfig()
-	config.Subprocessors.AnonymizeIP = true
+	config.Subprocessors.UserPrivacy.AnonymizeIP = true
 
 	// init the processor
 	anonIp := NewIpAnonymizerSubprocessor(config)
@@ -28,7 +28,7 @@ func TestAnonymizeIPv4(t *testing.T) {
 func TestAnonymizeIPv6(t *testing.T) {
 	// enable feature
 	config := dnsutils.GetFakeConfig()
-	config.Subprocessors.AnonymizeIP = true
+	config.Subprocessors.UserPrivacy.AnonymizeIP = true
 
 	// init the processor
 	anonIp := NewIpAnonymizerSubprocessor(config)

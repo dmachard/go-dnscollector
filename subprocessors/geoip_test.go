@@ -57,6 +57,7 @@ func TestGeoIP_LookupAsn(t *testing.T) {
 	if err != nil {
 		t.Errorf("geoip loopkup failed: %v", err)
 	}
+
 	if geoInfo.ASO != "Orange" {
 		t.Errorf("asn organisation invalid want: XX got: %s", geoInfo.ASO)
 	}

@@ -132,8 +132,9 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	// filtering
 	filtering := NewFilteringProcessor(d.config, d.logger)
 
-	// ip anonymizer
-	anonIp := NewIpAnonymizerSubprocessor(d.config)
+	// user privacy
+	ipPrivacy := NewIpAnonymizerSubprocessor(d.config)
+	qnamePrivacy := NewQnameReducerSubprocessor(d.config)
 
 	// read incoming dns message
 	d.LogInfo("running... waiting incoming dns message")
@@ -274,6 +275,11 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		// convert latency to human
 		dm.LatencySec = fmt.Sprintf("%.6f", dm.Latency)
 
+		// qname privacy
+		if qnamePrivacy.IsEnabled() {
+			dm.Qname = qnamePrivacy.Minimaze(dm.Qname)
+		}
+
 		// filtering
 		if filtering.CheckIfDrop(&dm) {
 			continue
@@ -293,8 +299,8 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		// ip anonymisation ?
-		if anonIp.IsEnabled() {
-			dm.QueryIp = anonIp.Anonymize(dm.QueryIp)
+		if ipPrivacy.IsEnabled() {
+			dm.QueryIp = ipPrivacy.Anonymize(dm.QueryIp)
 		}
 
 		// quiet text for dnstap operation ?

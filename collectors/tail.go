@@ -100,8 +100,9 @@ func (c *Tail) Run() {
 	// filtering
 	filtering := subprocessors.NewFilteringProcessor(c.config, c.logger)
 
-	// ip anonymizer
-	anonIp := subprocessors.NewIpAnonymizerSubprocessor(c.config)
+	// user privacy
+	ipPrivacy := subprocessors.NewIpAnonymizerSubprocessor(c.config)
+	qnamePrivacy := subprocessors.NewQnameReducerSubprocessor(c.config)
 
 	dm := dnsutils.DnsMessage{}
 	dm.Init()
@@ -244,6 +245,11 @@ func (c *Tail) Run() {
 		dm.Payload, _ = dnspkt.Pack()
 		dm.Length = len(dm.Payload)
 
+		// qname privacy
+		if qnamePrivacy.IsEnabled() {
+			dm.Qname = qnamePrivacy.Minimaze(dm.Qname)
+		}
+
 		// filtering
 		if filtering.CheckIfDrop(&dm) {
 			continue
@@ -263,8 +269,8 @@ func (c *Tail) Run() {
 		}
 
 		// ip anonymisation ?
-		if anonIp.IsEnabled() {
-			dm.QueryIp = anonIp.Anonymize(dm.QueryIp)
+		if ipPrivacy.IsEnabled() {
+			dm.QueryIp = ipPrivacy.Anonymize(dm.QueryIp)
 		}
 
 		// send to loggers
