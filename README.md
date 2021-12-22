@@ -71,12 +71,12 @@ As prerequisites, we assume you have a DNS server which supports DNSTap (unbound
 
 For more informations about **dnstap**, please to read the following page [Dnstap: How to enable it on main dns servers](https://dmachard.github.io/posts/0001-dnstap-testing/)
 
-- [x] [Use case 1: collect dnstap stream and backup-it to text log files](https://dmachard.github.io/posts/0034-dnscollector-dnstap-to-log-files/)
-- [x] [Use case 2: collect dnstap stream and get statistics usage with Prometheus + Grafana](https://dmachard.github.io/posts/0035-dnscollector-grafana-prometheus/)
-- [x] [Use case 3: collect dnstap stream and log dns answers in JSON format](https://dmachard.github.io/posts/0042-dnscollector-dnstap-json-answers/)
-- [x] [Use case 4: collect dnstap stream and follow dns logs with Loki + Grafana](https://dmachard.github.io/posts/0044-dnscollector-grafana-loki/)
-- [x] [Use case 5: unix dnstap stream to tcp+tls dnstap stream](example-config/use-case-5.yml)
-- [x] [Use case 6: colllect and enable user privacy](example-config/use-case-6.yml)
+- [x] [Use case 1: capture dnstap stream and backup-it to text log files](https://dmachard.github.io/posts/0034-dnscollector-dnstap-to-log-files/)
+- [x] [Use case 2: capture dnstap stream and get statistics usage with Prometheus + Grafana](https://dmachard.github.io/posts/0035-dnscollector-grafana-prometheus/)
+- [x] [Use case 3: capture dnstap stream and log dns answers in JSON format](https://dmachard.github.io/posts/0042-dnscollector-dnstap-json-answers/)
+- [x] [Use case 4: capture dnstap stream and follow dns logs with Loki + Grafana](https://dmachard.github.io/posts/0044-dnscollector-grafana-loki/)
+- [x] [Use case 5: capture from unix dnstap stream and forward to TLS dnstap stream](example-config/use-case-5.yml)
+- [x] [Use case 6: capture dns traffic with user privacy options enabled](example-config/use-case-6.yml)
 
 ## Benchmark
 
