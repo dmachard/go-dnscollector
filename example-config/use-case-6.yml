@@ -1,0 +1,17 @@
+trace:
+  verbose: true
+
+collectors:
+  dnstap:
+    enable: true
+    listen-ip: 0.0.0.0
+    listen-port: 6000
+
+subprocessors:
+  user-privacy:
+    anonymize-ip: true
+    minimaze-qname: true
+
+loggers:
+  stdout:
+    enable: true

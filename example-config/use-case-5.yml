@@ -1,0 +1,14 @@
+trace:
+  verbose: true
+
+collectors:
+  dnstap:
+    enable: true
+    sock-path: <replace_me_unixsocket_path>
+
+loggers:
+  dnstap:
+    enable: false
+    remote-address: <replace_me_collector_ip>
+    remote-port:  6000
+    tls-support: true

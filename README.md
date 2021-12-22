@@ -75,6 +75,8 @@ For more informations about **dnstap**, please to read the following page [Dnsta
 - [x] [Use case 2: collect dnstap stream and get statistics usage with Prometheus + Grafana](https://dmachard.github.io/posts/0035-dnscollector-grafana-prometheus/)
 - [x] [Use case 3: collect dnstap stream and log dns answers in JSON format](https://dmachard.github.io/posts/0042-dnscollector-dnstap-json-answers/)
 - [x] [Use case 4: collect dnstap stream and follow dns logs with Loki + Grafana](https://dmachard.github.io/posts/0044-dnscollector-grafana-loki/)
+- [x] [Use case 5: unix dnstap stream to tcp+tls dnstap stream](example-config/use-case-5.yml)
+- [x] [Use case 6: colllect and enable user privacy](example-config/use-case-6.yml)
 
 ## Benchmark
 
