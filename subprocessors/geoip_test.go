@@ -13,7 +13,7 @@ func TestGeoIP_LookupCountry(t *testing.T) {
 	config.Subprocessors.GeoIP.DbCountryFile = "../testsdata/GeoLite2-Country.mmdb"
 
 	// init the processor
-	geoip := NewDnsGeoIpProcessor(config, logger.New(false))
+	geoip := NewDnsGeoIpProcessor(config, logger.New(true))
 	if err := geoip.Open(); err != nil {
 		t.Fatalf("geoip init failed: %v+", err)
 	}

@@ -65,7 +65,7 @@ func (p *GeoIpProcessor) Open() (err error) {
 			return
 		}
 		p.enabled = true
-		p.LogInfo("country database loaded")
+		p.LogInfo("country database loaded (%d records)", p.dbCountry.Metadata.NodeCount)
 	}
 
 	if len(p.config.Subprocessors.GeoIP.DbCityFile) > 0 {
@@ -75,7 +75,7 @@ func (p *GeoIpProcessor) Open() (err error) {
 			return
 		}
 		p.enabled = true
-		p.LogInfo("city database loaded")
+		p.LogInfo("city database loaded (%d records)", p.dbCity.Metadata.NodeCount)
 	}
 
 	if len(p.config.Subprocessors.GeoIP.DbAsnFile) > 0 {
@@ -85,7 +85,7 @@ func (p *GeoIpProcessor) Open() (err error) {
 			return
 		}
 		p.enabled = true
-		p.LogInfo("asn database loaded")
+		p.LogInfo("asn database loaded (%d records)", p.dbAsn.Metadata.NodeCount)
 	}
 	return nil
 }
@@ -108,40 +108,40 @@ func (p *GeoIpProcessor) Close() {
 
 func (p *GeoIpProcessor) Lookup(ip string) (GeoRecord, error) {
 	record := &MaxminddbRecord{}
-	rec := &GeoRecord{Continent: "-",
+	rec := GeoRecord{Continent: "-",
 		CountryISOCode: "-",
 		City:           "-",
 		ASN:            "-",
 		ASO:            "-"}
 
-	if len(p.config.Subprocessors.GeoIP.DbAsnFile) > 0 {
+	if p.dbAsn != nil {
 		err := p.dbAsn.Lookup(net.ParseIP(ip), &record)
 		if err != nil {
-			return *rec, err
+			return rec, err
 		}
 		rec.ASN = strconv.Itoa(record.AutonomousSystemNumber)
 		rec.ASO = record.AutonomousSystemOrganization
 	}
 
-	if len(p.config.Subprocessors.GeoIP.DbCityFile) > 0 {
+	if p.dbCity != nil {
 		err := p.dbCity.Lookup(net.ParseIP(ip), &record)
 		if err != nil {
-			return *rec, err
+			return rec, err
 		}
 		rec.City = record.City.Names["en"]
 		rec.CountryISOCode = record.Country.ISOCode
 		rec.Continent = record.Continent.Code
 
 	} else {
-		if len(p.config.Subprocessors.GeoIP.DbCountryFile) > 0 {
+		if p.dbCountry != nil {
 			err := p.dbCountry.Lookup(net.ParseIP(ip), &record)
 			if err != nil {
-				return *rec, err
+				return rec, err
 			}
 			rec.CountryISOCode = record.Country.ISOCode
 			rec.Continent = record.Continent.Code
 		}
 	}
 
-	return *rec, nil
+	return rec, nil
 }
