@@ -26,7 +26,7 @@ type DnsMessage struct {
 	QueryPort              string      `json:"query-port" msgpack:"query-port"`
 	ResponseIp             string      `json:"response-ip" msgpack:"response-ip"`
 	ResponsePort           string      `json:"response-port" msgpack:"response-port"`
-	Type                   string      `json:"-" msgpack:"-"`
+	Type                   string      `json:"flag-qr" msgpack:"flag-qr"`
 	Payload                []byte      `json:"-" msgpack:"-"`
 	Length                 int         `json:"length" msgpack:"-"`
 	Id                     int         `json:"-" msgpack:"-"`

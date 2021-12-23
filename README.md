@@ -29,7 +29,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [Statsd](doc/configuration.md#statsd-client)
 
 - Other features
-    - [DNS parser](doc/dnsparser.md)
+    - [Embedded DNS parser](doc/dnsparser.md)
     - [Built-in Grafana dashboards](doc/dashboards.md)
     - [GeoIP support](doc/configuration.md#geoip-support)
     - [Fqdn/Domain list filtering](doc/configuration.md#fqdn-filtering)
