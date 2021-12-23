@@ -47,36 +47,28 @@ type DnsNetworkInfo struct {
 }
 
 type DnsMessage struct {
-	NetworkInfo DnsNetworkInfo `json:"network" msgpack:"network"`
-	Operation   string         `json:"operation" msgpack:"operation"`
-	Identity    string         `json:"identity" msgpack:"identity"`
-	/*	Family                 string         `json:"family" msgpack:"family"`
-		Protocol               string         `json:"protocol" msgpack:"protocol"`
-		QueryIp                string         `json:"query-ip" msgpack:"query-ip"`
-		QueryPort              string         `json:"query-port" msgpack:"query-port"`
-		ResponseIp             string         `json:"response-ip" msgpack:"response-ip"`
-		ResponsePort           string         `json:"response-port" msgpack:"response-port"`*/
-	Type              string      `json:"-" msgpack:"-"`
-	Payload           []byte      `json:"-" msgpack:"-"`
-	Length            int         `json:"length" msgpack:"-"`
-	Id                int         `json:"-" msgpack:"-"`
-	Rcode             string      `json:"rcode" msgpack:"rcode"`
-	Qname             string      `json:"qname" msgpack:"qname"`
-	Qtype             string      `json:"qtype" msgpack:"qtype"`
-	Latency           float64     `json:"-" msgpack:"-"`
-	LatencySec        string      `json:"latency" msgpack:"latency"`
-	TimestampRFC3339  string      `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
-	Timestamp         float64     `json:"-" msgpack:"-"`
-	TimeSec           int         `json:"-" msgpack:"-"`
-	TimeNsec          int         `json:"-" msgpack:"-"`
-	Answers           []DnsAnswer `json:"answers" msgpack:"answers"`
-	Nameservers       []DnsAnswer `json:"nameservers" msgpack:"nameservers"`
-	AdditionalAnswers []DnsAnswer `json:"answers-more" msgpack:"answers-more"`
-	/*	AutonomousSystemNumber string         `json:"as-number" msgpack:"as-number"`
-		AutonomousSystemOrg    string         `json:"as-owner" msgpack:"as-owner"`*/
-	MalformedPacket int      `json:"malformed-packet" msgpack:"malformed-packet"`
-	Flags           DnsFlags `json:"flags" msgpack:"flags"`
-	Geo             DnsGeo   `json:"geo" msgpack:"geo"`
+	NetworkInfo       DnsNetworkInfo `json:"network" msgpack:"network"`
+	Operation         string         `json:"operation" msgpack:"operation"`
+	Identity          string         `json:"identity" msgpack:"identity"`
+	Type              string         `json:"-" msgpack:"-"`
+	Payload           []byte         `json:"-" msgpack:"-"`
+	Length            int            `json:"length" msgpack:"-"`
+	Id                int            `json:"-" msgpack:"-"`
+	Rcode             string         `json:"rcode" msgpack:"rcode"`
+	Qname             string         `json:"qname" msgpack:"qname"`
+	Qtype             string         `json:"qtype" msgpack:"qtype"`
+	Latency           float64        `json:"-" msgpack:"-"`
+	LatencySec        string         `json:"latency" msgpack:"latency"`
+	TimestampRFC3339  string         `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
+	Timestamp         float64        `json:"-" msgpack:"-"`
+	TimeSec           int            `json:"-" msgpack:"-"`
+	TimeNsec          int            `json:"-" msgpack:"-"`
+	Answers           []DnsAnswer    `json:"answers" msgpack:"answers"`
+	Nameservers       []DnsAnswer    `json:"nameservers" msgpack:"nameservers"`
+	AdditionalAnswers []DnsAnswer    `json:"answers-more" msgpack:"answers-more"`
+	MalformedPacket   int            `json:"malformed-packet" msgpack:"malformed-packet"`
+	Flags             DnsFlags       `json:"flags" msgpack:"flags"`
+	Geo               DnsGeo         `json:"geo" msgpack:"geo"`
 }
 
 func (dm *DnsMessage) Init() {
