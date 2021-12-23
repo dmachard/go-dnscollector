@@ -29,7 +29,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [Statsd](doc/configuration.md#statsd-client)
 
 - Other features
-    - [DNS JSON encoding](doc/dnsjson.md)
+    - [Queries/Replies JSON encoding](doc/dnsjson.md)
     - [Embedded DNS parser](doc/dnsparser.md)
     - [Built-in Grafana dashboards](doc/dashboards.md)
     - [GeoIP support](doc/configuration.md#geoip-support)
