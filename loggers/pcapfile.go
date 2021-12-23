@@ -96,17 +96,17 @@ func (o *PcapWriter) Stop() {
 func (o *PcapWriter) GetIpPort(dm *dnsutils.DnsMessage) (string, int, string, int) {
 	srcIp, srcPort := "0.0.0.0", 53
 	dstIp, dstPort := "0.0.0.0", 53
-	if dm.Family == "INET6" {
+	if dm.NetworkInfo.Family == "INET6" {
 		srcIp, dstIp = "::", "::"
 	}
 
-	if dm.QueryIp != "-" {
-		srcIp = dm.QueryIp
-		srcPort, _ = strconv.Atoi(dm.QueryPort)
+	if dm.NetworkInfo.QueryIp != "-" {
+		srcIp = dm.NetworkInfo.QueryIp
+		srcPort, _ = strconv.Atoi(dm.NetworkInfo.QueryPort)
 	}
-	if dm.ResponseIp != "-" {
-		dstIp = dm.ResponseIp
-		dstPort, _ = strconv.Atoi(dm.ResponsePort)
+	if dm.NetworkInfo.ResponseIp != "-" {
+		dstIp = dm.NetworkInfo.ResponseIp
+		dstPort, _ = strconv.Atoi(dm.NetworkInfo.ResponsePort)
 	}
 
 	// reverse destination and source
@@ -368,7 +368,7 @@ LOOP:
 			pkt := []gopacket.SerializableLayer{}
 
 			// set ip and transport
-			if dm.Family == "INET6" && dm.Protocol == "UDP" {
+			if dm.NetworkInfo.Family == "INET6" && dm.NetworkInfo.Protocol == "UDP" {
 				eth.EthernetType = layers.EthernetTypeIPv6
 				ip6.SrcIP = net.ParseIP(srcIp)
 				ip6.DstIP = net.ParseIP(dstIp)
@@ -379,7 +379,7 @@ LOOP:
 
 				pkt = append(pkt, gopacket.Payload(dm.Payload), udp, ip6, eth)
 
-			} else if dm.Family == "INET6" && dm.Protocol == "TCP" {
+			} else if dm.NetworkInfo.Family == "INET6" && dm.NetworkInfo.Protocol == "TCP" {
 				eth.EthernetType = layers.EthernetTypeIPv6
 				ip6.SrcIP = net.ParseIP(srcIp)
 				ip6.DstIP = net.ParseIP(dstIp)
@@ -394,7 +394,7 @@ LOOP:
 				binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.Length))
 				pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.Payload...)), tcp, ip6, eth)
 
-			} else if dm.Family == "INET" && dm.Protocol == "UDP" {
+			} else if dm.NetworkInfo.Family == "INET" && dm.NetworkInfo.Protocol == "UDP" {
 				eth.EthernetType = layers.EthernetTypeIPv4
 				ip4.SrcIP = net.ParseIP(srcIp)
 				ip4.DstIP = net.ParseIP(dstIp)
@@ -405,7 +405,7 @@ LOOP:
 
 				pkt = append(pkt, gopacket.Payload(dm.Payload), udp, ip4, eth)
 
-			} else if dm.Family == "INET" && dm.Protocol == "TCP" {
+			} else if dm.NetworkInfo.Family == "INET" && dm.NetworkInfo.Protocol == "TCP" {
 				// SYN
 				eth.EthernetType = layers.EthernetTypeIPv4
 				ip4.SrcIP = net.ParseIP(srcIp)

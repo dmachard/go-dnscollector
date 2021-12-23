@@ -94,11 +94,11 @@ func (o *InfluxDBClient) Run() {
 	for dm := range o.channel {
 		p := influxdb2.NewPointWithMeasurement("dns").
 			AddTag("Identity", dm.Identity).
-			AddTag("QueryIP", dm.QueryIp).
+			AddTag("QueryIP", dm.NetworkInfo.QueryIp).
 			AddTag("Qname", dm.Qname).
 			AddField("Operation", dm.Operation).
-			AddField("Family", dm.Family).
-			AddField("Protocol", dm.Protocol).
+			AddField("Family", dm.NetworkInfo.Family).
+			AddField("Protocol", dm.NetworkInfo.Protocol).
 			AddField("Qtype", dm.Qtype).
 			AddField("Rcode", dm.Rcode).
 			SetTime(time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec)))

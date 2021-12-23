@@ -13,8 +13,8 @@ func TestStreamsStatisticsRecord(t *testing.T) {
 	dm := dnsutils.DnsMessage{}
 	dm.Init()
 	dm.Type = "query"
-	dm.Family = "INET"
-	dm.Protocol = "UDP"
+	dm.NetworkInfo.Family = "INET"
+	dm.NetworkInfo.Protocol = "UDP"
 	dm.Qname = "dnscollector.test."
 
 	stats.Record(dm)

@@ -177,7 +177,7 @@ subprocessors:
   # - aa: authoritative answer
   # - ra: recursion available
   # - ad: authenticated data
-  text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length qname qtype latency"
+  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 # list of loggers
 loggers:

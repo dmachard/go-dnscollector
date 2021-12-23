@@ -187,12 +187,12 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	if dm.MalformedPacket == 1 {
 		c.total.PacketsMalformed++
 
-		if _, ok := c.clientsSuspicious[dm.QueryIp]; !ok {
-			c.clientsSuspicious[dm.QueryIp] = 1
+		if _, ok := c.clientsSuspicious[dm.NetworkInfo.QueryIp]; !ok {
+			c.clientsSuspicious[dm.NetworkInfo.QueryIp] = 1
 		} else {
-			c.clientsSuspicious[dm.QueryIp]++
+			c.clientsSuspicious[dm.NetworkInfo.QueryIp]++
 		}
-		c.clientsSuspicioustop.Record(dm.QueryIp, c.clientsSuspicious[dm.QueryIp])
+		c.clientsSuspicioustop.Record(dm.NetworkInfo.QueryIp, c.clientsSuspicious[dm.NetworkInfo.QueryIp])
 
 		return
 	}
@@ -297,12 +297,12 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 		}
 		c.qnamesSuspicioustop.Record(dm.Qname, c.qnamesSuspicious[dm.Qname])
 
-		if _, ok := c.clientsSuspicious[dm.QueryIp]; !ok {
-			c.clientsSuspicious[dm.QueryIp] = 1
+		if _, ok := c.clientsSuspicious[dm.NetworkInfo.QueryIp]; !ok {
+			c.clientsSuspicious[dm.NetworkInfo.QueryIp] = 1
 		} else {
-			c.clientsSuspicious[dm.QueryIp]++
+			c.clientsSuspicious[dm.NetworkInfo.QueryIp]++
 		}
-		c.clientsSuspicioustop.Record(dm.QueryIp, c.clientsSuspicious[dm.QueryIp])
+		c.clientsSuspicioustop.Record(dm.NetworkInfo.QueryIp, c.clientsSuspicious[dm.NetworkInfo.QueryIp])
 	}
 
 	if _, found := c.commonQtypes[dm.Qtype]; !found {
@@ -313,12 +313,12 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 		}
 		c.qnamesSuspicioustop.Record(dm.Qname, c.qnamesSuspicious[dm.Qname])
 
-		if _, ok := c.clientsSuspicious[dm.QueryIp]; !ok {
-			c.clientsSuspicious[dm.QueryIp] = 1
+		if _, ok := c.clientsSuspicious[dm.NetworkInfo.QueryIp]; !ok {
+			c.clientsSuspicious[dm.NetworkInfo.QueryIp] = 1
 		} else {
-			c.clientsSuspicious[dm.QueryIp]++
+			c.clientsSuspicious[dm.NetworkInfo.QueryIp]++
 		}
-		c.clientsSuspicioustop.Record(dm.QueryIp, c.clientsSuspicious[dm.QueryIp])
+		c.clientsSuspicioustop.Record(dm.NetworkInfo.QueryIp, c.clientsSuspicious[dm.NetworkInfo.QueryIp])
 	}
 
 	if dm.Length >= c.config.Subprocessors.Statistics.ThresholdPacketLen {
@@ -329,12 +329,12 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 		}
 		c.qnamesSuspicioustop.Record(dm.Qname, c.qnamesSuspicious[dm.Qname])
 
-		if _, ok := c.clientsSuspicious[dm.QueryIp]; !ok {
-			c.clientsSuspicious[dm.QueryIp] = 1
+		if _, ok := c.clientsSuspicious[dm.NetworkInfo.QueryIp]; !ok {
+			c.clientsSuspicious[dm.NetworkInfo.QueryIp] = 1
 		} else {
-			c.clientsSuspicious[dm.QueryIp]++
+			c.clientsSuspicious[dm.NetworkInfo.QueryIp]++
 		}
-		c.clientsSuspicioustop.Record(dm.QueryIp, c.clientsSuspicious[dm.QueryIp])
+		c.clientsSuspicioustop.Record(dm.NetworkInfo.QueryIp, c.clientsSuspicious[dm.NetworkInfo.QueryIp])
 	}
 
 	// latency
@@ -371,20 +371,20 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 
 	// record ip proto
-	if _, ok := c.ipproto[dm.Family]; !ok {
-		c.ipproto[dm.Family] = 1
+	if _, ok := c.ipproto[dm.NetworkInfo.Family]; !ok {
+		c.ipproto[dm.NetworkInfo.Family] = 1
 	} else {
-		c.ipproto[dm.Family]++
+		c.ipproto[dm.NetworkInfo.Family]++
 	}
-	c.ipprototop.Record(dm.Family, c.ipproto[dm.Family])
+	c.ipprototop.Record(dm.NetworkInfo.Family, c.ipproto[dm.NetworkInfo.Family])
 
 	// record transports
-	if _, ok := c.transports[dm.Protocol]; !ok {
-		c.transports[dm.Protocol] = 1
+	if _, ok := c.transports[dm.NetworkInfo.Protocol]; !ok {
+		c.transports[dm.NetworkInfo.Protocol] = 1
 	} else {
-		c.transports[dm.Protocol]++
+		c.transports[dm.NetworkInfo.Protocol]++
 	}
-	c.transportstop.Record(dm.Protocol, c.transports[dm.Protocol])
+	c.transportstop.Record(dm.NetworkInfo.Protocol, c.transports[dm.NetworkInfo.Protocol])
 
 	// record first level domain
 	i := strings.LastIndex(dm.Qname, ".")
@@ -425,12 +425,12 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 
 	// record all clients
-	if _, ok := c.clients[dm.QueryIp]; !ok {
-		c.clients[dm.QueryIp] = 1
+	if _, ok := c.clients[dm.NetworkInfo.QueryIp]; !ok {
+		c.clients[dm.NetworkInfo.QueryIp] = 1
 	} else {
-		c.clients[dm.QueryIp]++
+		c.clients[dm.NetworkInfo.QueryIp]++
 	}
-	c.clientstop.Record(dm.QueryIp, c.clients[dm.QueryIp])
+	c.clientstop.Record(dm.NetworkInfo.QueryIp, c.clients[dm.NetworkInfo.QueryIp])
 
 	// record rrtypes
 	if _, ok := c.rrtypes[dm.Qtype]; !ok {
@@ -457,34 +457,34 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	c.operationstop.Record(dm.Operation, c.operations[dm.Operation])
 
 	// dns flags
-	if dm.Truncated == "TC" {
+	if dm.Flags.TC {
 		c.total.Truncated++
 	}
-	if dm.AuthoritativeAnswer == "AA" {
+	if dm.Flags.AA {
 		c.total.AuthoritativeAnswer++
 	}
-	if dm.RecursionAvailable == "RA" {
+	if dm.Flags.RA {
 		c.total.RecursionAvailable++
 	}
-	if dm.AuthenticData == "AD" {
+	if dm.Flags.AD {
 		c.total.AuthenticData++
 	}
 
 	// as number
-	if _, ok := c.asNumbers[dm.AutonomousSystemNumber]; !ok {
-		c.asNumbers[dm.AutonomousSystemNumber] = 1
+	if _, ok := c.asNumbers[dm.NetworkInfo.AutonomousSystemNumber]; !ok {
+		c.asNumbers[dm.NetworkInfo.AutonomousSystemNumber] = 1
 	} else {
-		c.asNumbers[dm.AutonomousSystemNumber]++
+		c.asNumbers[dm.NetworkInfo.AutonomousSystemNumber]++
 	}
-	c.asNumbersTop.Record(dm.AutonomousSystemNumber, c.asNumbers[dm.AutonomousSystemNumber])
+	c.asNumbersTop.Record(dm.NetworkInfo.AutonomousSystemNumber, c.asNumbers[dm.NetworkInfo.AutonomousSystemNumber])
 
 	// as owner
-	if _, ok := c.asOwners[dm.AutonomousSystemOrg]; !ok {
-		c.asOwners[dm.AutonomousSystemOrg] = 1
+	if _, ok := c.asOwners[dm.NetworkInfo.AutonomousSystemOrg]; !ok {
+		c.asOwners[dm.NetworkInfo.AutonomousSystemOrg] = 1
 	} else {
-		c.asOwners[dm.AutonomousSystemOrg]++
+		c.asOwners[dm.NetworkInfo.AutonomousSystemOrg]++
 	}
-	c.asOwnersTop.Record(dm.AutonomousSystemOrg, c.asOwners[dm.AutonomousSystemOrg])
+	c.asOwnersTop.Record(dm.NetworkInfo.AutonomousSystemOrg, c.asOwners[dm.NetworkInfo.AutonomousSystemOrg])
 }
 
 func (c *StatsPerStream) Compute() {

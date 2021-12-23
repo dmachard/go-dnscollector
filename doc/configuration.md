@@ -251,11 +251,16 @@ Example:
 ```json
 {
   ...
-  "country-isocode":"FR",
-  "city":"Caen",
-  "continent": "EU",
-  "as-number": 1234,
-  "as-owner": "Orange",
+  "geo": {
+    "city": "-",
+    "continent": "-",
+    "country-isocode": "-"
+  },
+  "network": {
+    ...
+    "as-number": 1234,
+    "as-owner": "Orange",
+  },
   ...
 }
 ```
@@ -402,15 +407,18 @@ Example:
 
 ```json
 {
+  "network": {
+    "family": "INET",
+    "protocol": "UDP",
+    "query-ip": "192.168.1.210",
+    "query-port": "38599",
+    "response-ip": "192.168.1.210",
+    "response-port": "53",
+    "as-number": "-",
+    "as-owner": "-"
+  },
   "operation": "CLIENT_RESPONSE",
   "identity": "dnsdist1",
-  "family": "INET",
-  "protocol": "UDP",
-  "query-ip": "192.168.1.210",
-  "query-port": "41430",
-  "response-ip": "192.168.1.210",
-  "response-port": "53",
-  "flag-qr": "QUERY",
   "length": 82,
   "rcode": "NOERROR",
   "qname": "gmail.google.com",
@@ -433,16 +441,19 @@ Example:
   ],
   "answers-ns": null,
   "answers-more": null,
-  "country-isocode": "-",
-  "as-number": "-",
-  "as-owner": "-",
-  "city": "-",
-  "continent": "-",
   "malformed-packet": 0,
-  "flag-tc": "-",
-  "flag-aa": "-",
-  "flag-ra": "RA",
-  "flag-ad": "-"
+  "flags": {
+    "qr": false,
+    "tc": false,
+    "aa": false,
+    "ra": true,
+    "ad": true
+  },
+  "geo": {
+    "city": "-",
+    "continent": "-",
+    "country-isocode": "-"
+  }
 }
 ```
 

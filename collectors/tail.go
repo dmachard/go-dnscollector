@@ -160,36 +160,36 @@ func (c *Tail) Run() {
 
 		queryipIndex := re.SubexpIndex("queryip")
 		if queryipIndex != -1 {
-			dm.QueryIp = matches[queryipIndex]
+			dm.NetworkInfo.QueryIp = matches[queryipIndex]
 		}
 
 		queryportIndex := re.SubexpIndex("queryport")
 		if queryportIndex != -1 {
-			dm.QueryPort = matches[queryportIndex]
+			dm.NetworkInfo.QueryPort = matches[queryportIndex]
 		}
 
 		responseipIndex := re.SubexpIndex("responseip")
 		if responseipIndex != -1 {
-			dm.ResponseIp = matches[responseipIndex]
+			dm.NetworkInfo.ResponseIp = matches[responseipIndex]
 		}
 
 		responseportIndex := re.SubexpIndex("responseport")
 		if responseportIndex != -1 {
-			dm.ResponsePort = matches[responseportIndex]
+			dm.NetworkInfo.ResponsePort = matches[responseportIndex]
 		}
 
 		familyIndex := re.SubexpIndex("family")
 		if familyIndex != -1 {
-			dm.Family = matches[familyIndex]
+			dm.NetworkInfo.Family = matches[familyIndex]
 		} else {
-			dm.Family = "INET"
+			dm.NetworkInfo.Family = "INET"
 		}
 
 		protocolIndex := re.SubexpIndex("protocol")
 		if protocolIndex != -1 {
-			dm.Protocol = matches[protocolIndex]
+			dm.NetworkInfo.Protocol = matches[protocolIndex]
 		} else {
-			dm.Protocol = "UDP"
+			dm.NetworkInfo.Protocol = "UDP"
 		}
 
 		lengthIndex := re.SubexpIndex("length")
@@ -257,20 +257,20 @@ func (c *Tail) Run() {
 
 		// geoip feature
 		if geoip.IsEnabled() {
-			geoInfo, err := geoip.Lookup(dm.QueryIp)
+			geoInfo, err := geoip.Lookup(dm.NetworkInfo.QueryIp)
 			if err != nil {
 				c.LogError("geoip loopkup failed: %v+", err)
 			}
-			dm.Continent = geoInfo.Continent
-			dm.CountryIsoCode = geoInfo.CountryISOCode
-			dm.City = geoInfo.City
-			dm.AutonomousSystemNumber = geoInfo.ASN
-			dm.AutonomousSystemOrg = geoInfo.ASO
+			dm.Geo.Continent = geoInfo.Continent
+			dm.Geo.CountryIsoCode = geoInfo.CountryISOCode
+			dm.Geo.City = geoInfo.City
+			dm.NetworkInfo.AutonomousSystemNumber = geoInfo.ASN
+			dm.NetworkInfo.AutonomousSystemOrg = geoInfo.ASO
 		}
 
 		// ip anonymisation ?
 		if ipPrivacy.IsEnabled() {
-			dm.QueryIp = ipPrivacy.Anonymize(dm.QueryIp)
+			dm.NetworkInfo.QueryIp = ipPrivacy.Anonymize(dm.NetworkInfo.QueryIp)
 		}
 
 		// send to loggers

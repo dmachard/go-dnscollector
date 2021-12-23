@@ -271,22 +271,22 @@ func (c *DnsSniffer) Run() {
 			for _, layertyp := range decodedLayers {
 				switch layertyp {
 				case layers.LayerTypeIPv4:
-					dm.Family = "INET"
-					dm.QueryIp = ip4.SrcIP.String()
-					dm.ResponseIp = ip4.DstIP.String()
+					dm.NetworkInfo.Family = "INET"
+					dm.NetworkInfo.QueryIp = ip4.SrcIP.String()
+					dm.NetworkInfo.ResponseIp = ip4.DstIP.String()
 
 				case layers.LayerTypeIPv6:
-					dm.QueryIp = ip6.SrcIP.String()
-					dm.ResponseIp = ip6.DstIP.String()
-					dm.Family = "INET6"
+					dm.NetworkInfo.QueryIp = ip6.SrcIP.String()
+					dm.NetworkInfo.ResponseIp = ip6.DstIP.String()
+					dm.NetworkInfo.Family = "INET6"
 					fmt.Println(eth)
 
 				case layers.LayerTypeUDP:
-					dm.QueryPort = fmt.Sprint(int(udp.SrcPort))
-					dm.ResponsePort = fmt.Sprint(int(udp.DstPort))
+					dm.NetworkInfo.QueryPort = fmt.Sprint(int(udp.SrcPort))
+					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(udp.DstPort))
 					dm.Payload = udp.Payload
 					dm.Length = len(udp.Payload)
-					dm.Protocol = "UDP"
+					dm.NetworkInfo.Protocol = "UDP"
 
 				case layers.LayerTypeTCP:
 					// ignore SYN/ACK packet
@@ -301,11 +301,11 @@ func (c *DnsSniffer) Run() {
 						continue
 					}
 
-					dm.QueryPort = fmt.Sprint(int(tcp.SrcPort))
-					dm.ResponsePort = fmt.Sprint(int(tcp.DstPort))
+					dm.NetworkInfo.QueryPort = fmt.Sprint(int(tcp.SrcPort))
+					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(tcp.DstPort))
 					dm.Payload = tcp.Payload[2:]
 					dm.Length = len(tcp.Payload[2:])
-					dm.Protocol = "TCP"
+					dm.NetworkInfo.Protocol = "TCP"
 
 				}
 			}

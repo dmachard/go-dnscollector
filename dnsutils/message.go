@@ -21,64 +21,80 @@ type DnsAnswer struct {
 	Rdata     string `json:"rdata" msgpack:"rdata"`
 }
 
+type DnsFlags struct {
+	QR bool `json:"qr" msgpack:"qr"`
+	TC bool `json:"tc" msgpack:"tc"`
+	AA bool `json:"aa" msgpack:"aa"`
+	RA bool `json:"ra" msgpack:"ra"`
+	AD bool `json:"ad" msgpack:"ad"`
+}
+
+type DnsGeo struct {
+	City           string `json:"city" msgpack:"city"`
+	Continent      string `json:"continent" msgpack:"continent"`
+	CountryIsoCode string `json:"country-isocode" msgpack:"country-isocode"`
+}
+
+type DnsNetworkInfo struct {
+	Family                 string `json:"family" msgpack:"family"`
+	Protocol               string `json:"protocol" msgpack:"protocol"`
+	QueryIp                string `json:"query-ip" msgpack:"query-ip"`
+	QueryPort              string `json:"query-port" msgpack:"query-port"`
+	ResponseIp             string `json:"response-ip" msgpack:"response-ip"`
+	ResponsePort           string `json:"response-port" msgpack:"response-port"`
+	AutonomousSystemNumber string `json:"as-number" msgpack:"as-number"`
+	AutonomousSystemOrg    string `json:"as-owner" msgpack:"as-owner"`
+}
+
 type DnsMessage struct {
-	Operation              string      `json:"operation" msgpack:"operation"`
-	Identity               string      `json:"identity" msgpack:"identity"`
-	Family                 string      `json:"family" msgpack:"family"`
-	Protocol               string      `json:"protocol" msgpack:"protocol"`
-	QueryIp                string      `json:"query-ip" msgpack:"query-ip"`
-	QueryPort              string      `json:"query-port" msgpack:"query-port"`
-	ResponseIp             string      `json:"response-ip" msgpack:"response-ip"`
-	ResponsePort           string      `json:"response-port" msgpack:"response-port"`
-	Type                   string      `json:"flag-qr" msgpack:"flag-qr"`
-	Payload                []byte      `json:"-" msgpack:"-"`
-	Length                 int         `json:"length" msgpack:"-"`
-	Id                     int         `json:"-" msgpack:"-"`
-	Rcode                  string      `json:"rcode" msgpack:"rcode"`
-	Qname                  string      `json:"qname" msgpack:"qname"`
-	Qtype                  string      `json:"qtype" msgpack:"qtype"`
-	Latency                float64     `json:"-" msgpack:"-"`
-	LatencySec             string      `json:"latency" msgpack:"latency"`
-	TimestampRFC3339       string      `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
-	Timestamp              float64     `json:"-" msgpack:"-"`
-	TimeSec                int         `json:"-" msgpack:"-"`
-	TimeNsec               int         `json:"-" msgpack:"-"`
-	Answers                []DnsAnswer `json:"answers" msgpack:"answers"`
-	Nameservers            []DnsAnswer `json:"answers-ns" msgpack:"ns"`
-	AdditionalAnswers      []DnsAnswer `json:"answers-more" msgpack:"answers-more"`
-	CountryIsoCode         string      `json:"country-isocode" msgpack:"country-isocode"`
-	AutonomousSystemNumber string      `json:"as-number" msgpack:"as-number"`
-	AutonomousSystemOrg    string      `json:"as-owner" msgpack:"as-owner"`
-	City                   string      `json:"city" msgpack:"city"`
-	Continent              string      `json:"continent" msgpack:"continent"`
-	MalformedPacket        int         `json:"malformed-packet" msgpack:"malformed-packet"`
-	Truncated              string      `json:"flag-tc" msgpack:"flag-tc"`
-	AuthoritativeAnswer    string      `json:"flag-aa" msgpack:"flag-aa"`
-	RecursionAvailable     string      `json:"flag-ra" msgpack:"flag-ra"`
-	AuthenticData          string      `json:"flag-ad" msgpack:"flag-ad"`
+	NetworkInfo DnsNetworkInfo `json:"network" msgpack:"network"`
+	Operation   string         `json:"operation" msgpack:"operation"`
+	Identity    string         `json:"identity" msgpack:"identity"`
+	/*	Family                 string         `json:"family" msgpack:"family"`
+		Protocol               string         `json:"protocol" msgpack:"protocol"`
+		QueryIp                string         `json:"query-ip" msgpack:"query-ip"`
+		QueryPort              string         `json:"query-port" msgpack:"query-port"`
+		ResponseIp             string         `json:"response-ip" msgpack:"response-ip"`
+		ResponsePort           string         `json:"response-port" msgpack:"response-port"`*/
+	Type              string      `json:"-" msgpack:"-"`
+	Payload           []byte      `json:"-" msgpack:"-"`
+	Length            int         `json:"length" msgpack:"-"`
+	Id                int         `json:"-" msgpack:"-"`
+	Rcode             string      `json:"rcode" msgpack:"rcode"`
+	Qname             string      `json:"qname" msgpack:"qname"`
+	Qtype             string      `json:"qtype" msgpack:"qtype"`
+	Latency           float64     `json:"-" msgpack:"-"`
+	LatencySec        string      `json:"latency" msgpack:"latency"`
+	TimestampRFC3339  string      `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
+	Timestamp         float64     `json:"-" msgpack:"-"`
+	TimeSec           int         `json:"-" msgpack:"-"`
+	TimeNsec          int         `json:"-" msgpack:"-"`
+	Answers           []DnsAnswer `json:"answers" msgpack:"answers"`
+	Nameservers       []DnsAnswer `json:"nameservers" msgpack:"nameservers"`
+	AdditionalAnswers []DnsAnswer `json:"answers-more" msgpack:"answers-more"`
+	/*	AutonomousSystemNumber string         `json:"as-number" msgpack:"as-number"`
+		AutonomousSystemOrg    string         `json:"as-owner" msgpack:"as-owner"`*/
+	MalformedPacket int      `json:"malformed-packet" msgpack:"malformed-packet"`
+	Flags           DnsFlags `json:"flags" msgpack:"flags"`
+	Geo             DnsGeo   `json:"geo" msgpack:"geo"`
 }
 
 func (dm *DnsMessage) Init() {
 	dm.Operation, dm.Type = "-", "-"
 	dm.Identity = "-"
-	dm.Family, dm.Protocol = "-", "-"
-	dm.QueryIp, dm.QueryPort = "-", "-"
-	dm.ResponseIp, dm.ResponsePort = "-", "-"
+
+	dm.NetworkInfo = DnsNetworkInfo{Family: "-", Protocol: "-",
+		QueryIp: "-", QueryPort: "-",
+		ResponseIp: "-", ResponsePort: "-",
+		AutonomousSystemNumber: "-", AutonomousSystemOrg: "-"}
+
 	dm.Rcode, dm.Qtype = "-", "-"
 	dm.Qname, dm.LatencySec = "-", "-"
 	dm.TimestampRFC3339 = "-"
 
 	dm.MalformedPacket = 0
-	dm.Truncated = "-"
-	dm.AuthoritativeAnswer = "-"
-	dm.RecursionAvailable = "-"
-	dm.AuthenticData = "-"
 
-	dm.CountryIsoCode = "-"
-	dm.AutonomousSystemNumber = "-"
-	dm.AutonomousSystemOrg = "-"
-	dm.City = "-"
-	dm.Continent = "-"
+	dm.Geo = DnsGeo{CountryIsoCode: "-", City: "-", Continent: "-"}
 }
 
 func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
@@ -102,8 +118,6 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 			s.WriteString(strconv.Itoa(len(dm.Answers)))
 		case "id":
 			s.WriteString(strconv.Itoa(dm.Id))
-		case "qr":
-			s.WriteString(dm.Type)
 		case "timestamp": // keep it just for backward compatibility
 			s.WriteString(dm.TimestampRFC3339)
 		case "timestamp-rfc3339ns":
@@ -124,17 +138,17 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "rcode":
 			s.WriteString(dm.Rcode)
 		case "queryip":
-			s.WriteString(dm.QueryIp)
+			s.WriteString(dm.NetworkInfo.QueryIp)
 		case "queryport":
-			s.WriteString(dm.QueryPort)
+			s.WriteString(dm.NetworkInfo.QueryPort)
 		case "responseip":
-			s.WriteString(dm.ResponseIp)
+			s.WriteString(dm.NetworkInfo.ResponseIp)
 		case "responseport":
-			s.WriteString(dm.ResponsePort)
+			s.WriteString(dm.NetworkInfo.ResponsePort)
 		case "family":
-			s.WriteString(dm.Family)
+			s.WriteString(dm.NetworkInfo.Family)
 		case "protocol":
-			s.WriteString(dm.Protocol)
+			s.WriteString(dm.NetworkInfo.Protocol)
 		case "length":
 			s.WriteString(strconv.Itoa(dm.Length) + "b")
 		case "qname":
@@ -144,25 +158,43 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "latency":
 			s.WriteString(dm.LatencySec)
 		case "continent":
-			s.WriteString(dm.Continent)
+			s.WriteString(dm.Geo.Continent)
 		case "country":
-			s.WriteString(dm.CountryIsoCode)
+			s.WriteString(dm.Geo.CountryIsoCode)
 		case "city":
-			s.WriteString(dm.City)
+			s.WriteString(dm.Geo.City)
 		case "as-number":
-			s.WriteString(dm.AutonomousSystemNumber)
+			s.WriteString(dm.NetworkInfo.AutonomousSystemNumber)
 		case "as-owner":
-			s.WriteString(dm.AutonomousSystemOrg)
+			s.WriteString(dm.NetworkInfo.AutonomousSystemOrg)
 		case "malformed":
 			s.WriteString(strconv.Itoa(dm.MalformedPacket))
+		case "qr":
+			s.WriteString(dm.Type)
 		case "tc":
-			s.WriteString(dm.Truncated)
+			if dm.Flags.TC {
+				s.WriteString("TC")
+			} else {
+				s.WriteString("-")
+			}
 		case "aa":
-			s.WriteString(dm.AuthoritativeAnswer)
+			if dm.Flags.AA {
+				s.WriteString("AA")
+			} else {
+				s.WriteString("-")
+			}
 		case "ra":
-			s.WriteString(dm.RecursionAvailable)
+			if dm.Flags.RA {
+				s.WriteString("RA")
+			} else {
+				s.WriteString("-")
+			}
 		case "ad":
-			s.WriteString(dm.AuthenticData)
+			if dm.Flags.AD {
+				s.WriteString("AD")
+			} else {
+				s.WriteString("-")
+			}
 		default:
 			log.Fatalf("unsupport directive for text format: %s", word)
 		}
@@ -189,10 +221,10 @@ func GetFakeDnsMessage() DnsMessage {
 	dm.Operation = "CLIENT_QUERY"
 	dm.Type = DnsQuery
 	dm.Qname = "dns.collector"
-	dm.QueryIp = "1.2.3.4"
-	dm.QueryPort = "1234"
-	dm.ResponseIp = "4.3.2.1"
-	dm.ResponsePort = "4321"
+	dm.NetworkInfo.QueryIp = "1.2.3.4"
+	dm.NetworkInfo.QueryPort = "1234"
+	dm.NetworkInfo.ResponseIp = "4.3.2.1"
+	dm.NetworkInfo.ResponsePort = "4321"
 	dm.Rcode = "NOERROR"
 	dm.Qtype = "A"
 	return dm

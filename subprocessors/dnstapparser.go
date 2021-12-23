@@ -158,27 +158,27 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		dm.Operation = dt.GetMessage().GetType().String()
-		dm.Family = dt.GetMessage().GetSocketFamily().String()
-		dm.Protocol = dt.GetMessage().GetSocketProtocol().String()
+		dm.NetworkInfo.Family = dt.GetMessage().GetSocketFamily().String()
+		dm.NetworkInfo.Protocol = dt.GetMessage().GetSocketProtocol().String()
 
 		// decode query address and port
 		queryip := dt.GetMessage().GetQueryAddress()
 		if len(queryip) > 0 {
-			dm.QueryIp = net.IP(queryip).String()
+			dm.NetworkInfo.QueryIp = net.IP(queryip).String()
 		}
 		queryport := dt.GetMessage().GetQueryPort()
 		if queryport > 0 {
-			dm.QueryPort = strconv.FormatUint(uint64(queryport), 10)
+			dm.NetworkInfo.QueryPort = strconv.FormatUint(uint64(queryport), 10)
 		}
 
 		// decode response address and port
 		responseip := dt.GetMessage().GetResponseAddress()
 		if len(responseip) > 0 {
-			dm.ResponseIp = net.IP(responseip).String()
+			dm.NetworkInfo.ResponseIp = net.IP(responseip).String()
 		}
 		responseport := dt.GetMessage().GetResponsePort()
 		if responseport > 0 {
-			dm.ResponsePort = strconv.FormatUint(uint64(responseport), 10)
+			dm.NetworkInfo.ResponsePort = strconv.FormatUint(uint64(responseport), 10)
 		}
 
 		// get dns payload and timestamp according to the type (query or response)
@@ -216,17 +216,21 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		dm.Id = dnsHeader.id
 		dm.Rcode = RcodeToString(dnsHeader.rcode)
+
+		if dnsHeader.qr == 1 {
+			dm.Flags.QR = true
+		}
 		if dnsHeader.tc == 1 {
-			dm.Truncated = "TC"
+			dm.Flags.TC = true
 		}
 		if dnsHeader.aa == 1 {
-			dm.AuthoritativeAnswer = "AA"
+			dm.Flags.AA = true
 		}
 		if dnsHeader.ra == 1 {
-			dm.RecursionAvailable = "RA"
+			dm.Flags.RA = true
 		}
 		if dnsHeader.ad == 1 {
-			dm.AuthenticData = "AD"
+			dm.Flags.AD = true
 		}
 
 		// continue to decode the dns payload to extract the qname and rrtype
@@ -281,9 +285,9 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// compute latency if possible
 		if d.config.Subprocessors.Cache.Enable {
-			if len(dm.QueryIp) > 0 && queryport > 0 && dm.MalformedPacket == 0 {
+			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && dm.MalformedPacket == 0 {
 				// compute the hash of the query
-				hash_data := []string{dm.QueryIp, dm.QueryPort, strconv.Itoa(dm.Id)}
+				hash_data := []string{dm.NetworkInfo.QueryIp, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.Id)}
 
 				hashfnv := fnv.New64a()
 				hashfnv.Write([]byte(strings.Join(hash_data[:], "+")))
@@ -314,20 +318,20 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// geoip feature
 		if geoip.IsEnabled() {
-			geoInfo, err := geoip.Lookup(dm.QueryIp)
+			geoInfo, err := geoip.Lookup(dm.NetworkInfo.QueryIp)
 			if err != nil {
 				d.LogError("geoip loopkup failed: %v+", err)
 			}
-			dm.Continent = geoInfo.Continent
-			dm.CountryIsoCode = geoInfo.CountryISOCode
-			dm.City = geoInfo.City
-			dm.AutonomousSystemNumber = geoInfo.ASN
-			dm.AutonomousSystemOrg = geoInfo.ASO
+			dm.Geo.Continent = geoInfo.Continent
+			dm.Geo.CountryIsoCode = geoInfo.CountryISOCode
+			dm.Geo.City = geoInfo.City
+			dm.NetworkInfo.AutonomousSystemNumber = geoInfo.ASN
+			dm.NetworkInfo.AutonomousSystemOrg = geoInfo.ASO
 		}
 
 		// ip anonymisation ?
 		if ipPrivacy.IsEnabled() {
-			dm.QueryIp = ipPrivacy.Anonymize(dm.QueryIp)
+			dm.NetworkInfo.QueryIp = ipPrivacy.Anonymize(dm.NetworkInfo.QueryIp)
 		}
 
 		// quiet text for dnstap operation ?

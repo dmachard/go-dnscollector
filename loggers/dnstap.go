@@ -136,17 +136,17 @@ LOOP:
 							dt.Type = &t
 
 							mt := dnstap.Message_Type(dnstap.Message_Type_value[dm.Operation])
-							sf := dnstap.SocketFamily(dnstap.SocketFamily_value[dm.Family])
-							sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.Protocol])
+							sf := dnstap.SocketFamily(dnstap.SocketFamily_value[dm.NetworkInfo.Family])
+							sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.NetworkInfo.Protocol])
 							tsec := uint64(dm.TimeSec)
 							tnsec := uint32(dm.TimeNsec)
-							rportint, err := strconv.Atoi(dm.ResponsePort)
+							rportint, err := strconv.Atoi(dm.NetworkInfo.ResponsePort)
 							if err != nil {
 								o.LogError("error to encode dnstap response port %s", err)
 								continue
 							}
 							rport := uint32(rportint)
-							qportint, err := strconv.Atoi(dm.QueryPort)
+							qportint, err := strconv.Atoi(dm.NetworkInfo.QueryPort)
 							if err != nil {
 								o.LogError("error to encode dnstap query port %s", err)
 								continue
@@ -157,9 +157,9 @@ LOOP:
 
 							msg.SocketFamily = &sf
 							msg.SocketProtocol = &sp
-							msg.QueryAddress = net.ParseIP(dm.QueryIp)
+							msg.QueryAddress = net.ParseIP(dm.NetworkInfo.QueryIp)
 							msg.QueryPort = &qport
-							msg.ResponseAddress = net.ParseIP(dm.ResponseIp)
+							msg.ResponseAddress = net.ParseIP(dm.NetworkInfo.ResponseIp)
 							msg.ResponsePort = &rport
 
 							if dm.Type == dnsutils.DnsQuery {

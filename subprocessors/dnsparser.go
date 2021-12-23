@@ -235,12 +235,12 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		if dnsHeader.qr == 1 {
 			dm.Operation = "CLIENT_RESPONSE"
 			dm.Type = dnsutils.DnsReply
-			qip := dm.QueryIp
-			qport := dm.QueryPort
-			dm.QueryIp = dm.ResponseIp
-			dm.QueryPort = dm.ResponsePort
-			dm.ResponseIp = qip
-			dm.ResponsePort = qport
+			qip := dm.NetworkInfo.QueryIp
+			qport := dm.NetworkInfo.QueryPort
+			dm.NetworkInfo.QueryIp = dm.NetworkInfo.ResponseIp
+			dm.NetworkInfo.QueryPort = dm.NetworkInfo.ResponsePort
+			dm.NetworkInfo.ResponseIp = qip
+			dm.NetworkInfo.ResponsePort = qport
 		} else {
 			dm.Type = dnsutils.DnsQuery
 			dm.Operation = "CLIENT_QUERY"
@@ -248,17 +248,21 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		dm.Id = dnsHeader.id
 		dm.Rcode = RcodeToString(dnsHeader.rcode)
+
+		if dnsHeader.qr == 1 {
+			dm.Flags.QR = true
+		}
 		if dnsHeader.tc == 1 {
-			dm.Truncated = "TC"
+			dm.Flags.TC = true
 		}
 		if dnsHeader.aa == 1 {
-			dm.AuthoritativeAnswer = "AA"
+			dm.Flags.AA = true
 		}
 		if dnsHeader.ra == 1 {
-			dm.RecursionAvailable = "RA"
+			dm.Flags.RA = true
 		}
 		if dnsHeader.ad == 1 {
-			dm.AuthenticData = "AD"
+			dm.Flags.AD = true
 		}
 
 		// continue to decode the dns payload to extract the qname and rrtype
@@ -314,10 +318,10 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// compute latency if possible
 		if d.config.Subprocessors.Cache.Enable {
-			queryport, _ := strconv.Atoi(dm.QueryPort)
-			if len(dm.QueryIp) > 0 && queryport > 0 && dm.MalformedPacket == 0 {
+			queryport, _ := strconv.Atoi(dm.NetworkInfo.QueryPort)
+			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && dm.MalformedPacket == 0 {
 				// compute the hash of the query
-				hash_data := []string{dm.QueryIp, dm.QueryPort, strconv.Itoa(dm.Id)}
+				hash_data := []string{dm.NetworkInfo.QueryIp, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.Id)}
 
 				hashfnv := fnv.New64a()
 				hashfnv.Write([]byte(strings.Join(hash_data[:], "+")))
@@ -348,20 +352,20 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// geoip feature ?
 		if geoip.IsEnabled() {
-			geoInfo, err := geoip.Lookup(dm.QueryIp)
+			geoInfo, err := geoip.Lookup(dm.NetworkInfo.QueryIp)
 			if err != nil {
 				d.LogError("geoip loopkup failed: %v+", err)
 			}
-			dm.Continent = geoInfo.Continent
-			dm.CountryIsoCode = geoInfo.CountryISOCode
-			dm.City = geoInfo.City
-			dm.AutonomousSystemNumber = geoInfo.ASN
-			dm.AutonomousSystemOrg = geoInfo.ASO
+			dm.Geo.Continent = geoInfo.Continent
+			dm.Geo.CountryIsoCode = geoInfo.CountryISOCode
+			dm.Geo.City = geoInfo.City
+			dm.NetworkInfo.AutonomousSystemNumber = geoInfo.ASN
+			dm.NetworkInfo.AutonomousSystemOrg = geoInfo.ASO
 		}
 
 		// ip anonymisation ?
 		if ipPrivacy.IsEnabled() {
-			dm.QueryIp = ipPrivacy.Anonymize(dm.QueryIp)
+			dm.NetworkInfo.QueryIp = ipPrivacy.Anonymize(dm.NetworkInfo.QueryIp)
 		}
 
 		// dispatch dns message to all generators
