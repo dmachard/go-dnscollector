@@ -51,8 +51,12 @@ type Config struct {
 	} `yaml:"collectors"`
 
 	Subprocessors struct {
-		DnstapQuietText bool `yaml:"dnstap-quiet-text"`
-		Statistics      struct {
+		QuietText struct {
+			Dnstap bool `yaml:"dnstap"`
+			Dns    bool `yaml:"dns"`
+		} `yaml:"quiet-text"`
+
+		Statistics struct {
 			TopMaxItems        int      `yaml:"top-max-items"`
 			ThresholdQnameLen  int      `yaml:"threshold-qname-len"`
 			ThresholdPacketLen int      `yaml:"threshold-packet-len"`
@@ -231,7 +235,8 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnsSniffer.CaptureDnsReplies = true
 
 	// Subprocessors
-	c.Subprocessors.DnstapQuietText = false
+	c.Subprocessors.QuietText.Dnstap = false
+	c.Subprocessors.QuietText.Dns = false
 
 	c.Subprocessors.Statistics.TopMaxItems = 100
 	c.Subprocessors.Statistics.ThresholdQnameLen = 80

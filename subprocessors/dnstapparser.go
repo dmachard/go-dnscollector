@@ -31,6 +31,10 @@ var (
 		"UPDATE_QUERY":       "UQ",
 		"UPDATE_RESPONSE":    "UR",
 	}
+	DnsQr = map[string]string{
+		"QUERY": "Q",
+		"REPLY": "R",
+	}
 )
 
 func GetFakeDnstap(dnsquery []byte) *dnstap.Dnstap {
@@ -183,14 +187,14 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dns_payload := dt.GetMessage().GetQueryMessage()
 			dm.Payload = dns_payload
 			dm.Length = len(dns_payload)
-			dm.Type = "query"
+			dm.Type = dnsutils.DnsQuery
 			dm.TimeSec = int(dt.GetMessage().GetQueryTimeSec())
 			dm.TimeNsec = int(dt.GetMessage().GetQueryTimeNsec())
 		} else {
 			dns_payload := dt.GetMessage().GetResponseMessage()
 			dm.Payload = dns_payload
 			dm.Length = len(dns_payload)
-			dm.Type = "reply"
+			dm.Type = dnsutils.DnsReply
 			dm.TimeSec = int(dt.GetMessage().GetResponseTimeSec())
 			dm.TimeNsec = int(dt.GetMessage().GetResponseTimeNsec())
 		}
@@ -276,7 +280,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 				hashfnv := fnv.New64a()
 				hashfnv.Write([]byte(strings.Join(hash_data[:], "+")))
 
-				if dm.Type == "query" {
+				if dm.Type == dnsutils.DnsQuery {
 					cache_ttl.Set(hashfnv.Sum64(), dm.Timestamp)
 				} else {
 					value, ok := cache_ttl.Get(hashfnv.Sum64())
@@ -319,9 +323,14 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		// quiet text for dnstap operation ?
-		if d.config.Subprocessors.DnstapQuietText {
+		if d.config.Subprocessors.QuietText.Dnstap {
 			if v, found := DnstapMessage[dm.Operation]; found {
 				dm.Operation = v
+			}
+		}
+		if d.config.Subprocessors.QuietText.Dns {
+			if v, found := DnsQr[dm.Type]; found {
+				dm.Type = v
 			}
 		}
 

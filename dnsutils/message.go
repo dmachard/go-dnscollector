@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 	"time"
+)
+
+var (
+	DnsQuery = "QUERY"
+	DnsReply = "REPLY"
 )
 
 type DnsAnswer struct {
@@ -98,7 +102,7 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "id":
 			s.WriteString(strconv.Itoa(dm.Id))
 		case "qr":
-			s.WriteString(strings.ToUpper(dm.Type[:1]))
+			s.WriteString(dm.Type)
 		case "timestamp": // keep it just for backward compatibility
 			s.WriteString(dm.TimestampRFC3339)
 		case "timestamp-rfc3339ns":

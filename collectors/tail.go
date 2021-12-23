@@ -115,14 +115,14 @@ func (c *Tail) Run() {
 		if len(c.config.Collectors.Tail.PatternQuery) > 0 {
 			re = regexp.MustCompile(c.config.Collectors.Tail.PatternQuery)
 			matches = re.FindStringSubmatch(line.Text)
-			dm.Type = "query"
+			dm.Type = dnsutils.DnsQuery
 			dm.Operation = "QUERY"
 		}
 
 		if len(c.config.Collectors.Tail.PatternReply) > 0 && len(matches) == 0 {
 			re = regexp.MustCompile(c.config.Collectors.Tail.PatternReply)
 			matches = re.FindStringSubmatch(line.Text)
-			dm.Type = "reply"
+			dm.Type = dnsutils.DnsReply
 			dm.Operation = "REPLY"
 		}
 
@@ -229,7 +229,7 @@ func (c *Tail) Run() {
 		}
 		dnspkt.SetQuestion(dm.Qname, dnstype)
 
-		if dm.Type == "reply" {
+		if dm.Type == dnsutils.DnsReply {
 			rr, _ := dns.NewRR(fmt.Sprintf("%s %s 0.0.0.0", dm.Qname, dm.Qtype))
 			if err == nil {
 				dnspkt.Answer = append(dnspkt.Answer, rr)

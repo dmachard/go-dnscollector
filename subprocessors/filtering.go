@@ -78,12 +78,12 @@ func (p *FilteringProcessor) LogError(msg string, v ...interface{}) {
 
 func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DnsMessage) bool {
 	// ignore queries ?
-	if !p.config.Subprocessors.Filtering.LogQueries && dm.Type == "query" {
+	if !p.config.Subprocessors.Filtering.LogQueries && dm.Type == dnsutils.DnsQuery {
 		return true
 	}
 
 	// ignore replies ?
-	if !p.config.Subprocessors.Filtering.LogReplies && dm.Type == "reply" {
+	if !p.config.Subprocessors.Filtering.LogReplies && dm.Type == dnsutils.DnsReply {
 		return true
 	}
 

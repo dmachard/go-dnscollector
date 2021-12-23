@@ -152,11 +152,11 @@ tail:
 
 ## Subprocessors
 
-### Dnstap quiet text 
+### Quiet text 
 
-Enable or disable dnstap message quiet text, this option can be useful to reduce the size of your dns logs
+Enable or disable quiet text mode for some flags, this option can be useful to reduce the size of your dns logs
 
-The following dnstap message will be replaced with the small form:
+The following dnstap flag message will be replaced with the small form:
 - AUTH_QUERY: `AQ`
 - AUTH_RESPONSE: `AR`
 - RESOLVER_QUERY: `RQ`
@@ -170,12 +170,21 @@ The following dnstap message will be replaced with the small form:
 - TOOL_QUERY: `TQ`
 - TOOL_RESPONSE: `TR`
 
+The following dns flag message will be replaced with the small form:
+- QUERY: `Q`
+- REPLY: `R`
+
 Options:
-- `dnstap-quiet-text`: (boolean) enable or disable
+- `dnstap`: (boolean) enable or disable
+- `dns`: (boolean) enable or disable
 
 ```yaml
 subprocessors:
-  dnstap-quiet-text: false
+  # this option can be useful to reduce the size of your dns logs
+  quiet-text:
+    dnstap: false
+    
+    dns: false
 ```
 
 ### Qname lowercase

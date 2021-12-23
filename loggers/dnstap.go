@@ -162,7 +162,7 @@ LOOP:
 							msg.ResponseAddress = net.ParseIP(dm.ResponseIp)
 							msg.ResponsePort = &rport
 
-							if dm.Type == "query" {
+							if dm.Type == dnsutils.DnsQuery {
 								msg.QueryMessage = dm.Payload
 								msg.QueryTimeSec = &tsec
 								msg.QueryTimeNsec = &tnsec

@@ -234,7 +234,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		// dns reply ?
 		if dnsHeader.qr == 1 {
 			dm.Operation = "CLIENT_RESPONSE"
-			dm.Type = "reply"
+			dm.Type = dnsutils.DnsReply
 			qip := dm.QueryIp
 			qport := dm.QueryPort
 			dm.QueryIp = dm.ResponseIp
@@ -242,7 +242,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.ResponseIp = qip
 			dm.ResponsePort = qport
 		} else {
-			dm.Type = "query"
+			dm.Type = dnsutils.DnsQuery
 			dm.Operation = "CLIENT_QUERY"
 		}
 
@@ -311,7 +311,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 				hashfnv := fnv.New64a()
 				hashfnv.Write([]byte(strings.Join(hash_data[:], "+")))
 
-				if dm.Type == "query" {
+				if dm.Type == dnsutils.DnsQuery {
 					cache_ttl.Set(hashfnv.Sum64(), dm.Timestamp)
 				} else {
 					value, ok := cache_ttl.Get(hashfnv.Sum64())

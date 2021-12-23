@@ -198,7 +198,7 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 
 	// packet size repartition
-	if dm.Type == "query" {
+	if dm.Type == dnsutils.DnsQuery {
 		c.total.Queries++
 		c.total.ReceivedBytesTotal += dm.Length
 
