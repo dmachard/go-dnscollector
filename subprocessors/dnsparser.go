@@ -280,14 +280,24 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dns_offsetrr = offsetrr
 		}
 
-		// decode dns answers
+		// decode dns answers except if the packet is malformed
 		if dnsHeader.ancount > 0 && dm.MalformedPacket == 0 {
-			dm.Answers, err = DecodeAnswer(dnsHeader.ancount, dns_offsetrr, dm.Payload)
+			var offsetrr int
+			dm.Answers, offsetrr, err = DecodeAnswer(dnsHeader.ancount, dns_offsetrr, dm.Payload)
 			if err != nil {
 				dm.MalformedPacket = 1
 				d.LogInfo("dns parser malformed answer: %s - %v+", err, dm)
-				// discard this packet
-				//continue
+			}
+			dns_offsetrr = offsetrr
+		}
+
+		//  decode authoritative answers except if the packet is malformed
+		if dnsHeader.nscount > 0 && dm.MalformedPacket == 0 {
+			// decode answers
+			dm.Nameservers, _, err = DecodeAnswer(dnsHeader.nscount, dns_offsetrr, dm.Payload)
+			if err != nil {
+				dm.MalformedPacket = 1
+				d.LogInfo("dns parser malformed nameservers answers: %s", err)
 			}
 		}
 
@@ -497,7 +507,8 @@ func DecodeQuestion(payload []byte) (string, int, int, error) {
 	| 1  1|                OFFSET                   |
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.DnsAnswer, error) {
+
+func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.DnsAnswer, int, error) {
 	offset := start_offset
 	answers := []dnsutils.DnsAnswer{}
 
@@ -505,12 +516,12 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.Dns
 		// Decode NAME
 		name, offset_next, err := ParseLabels(offset, payload)
 		if err != nil {
-			return answers, err
+			return answers, offset, err
 		}
 
 		// before to continue, check we have enough data
 		if len(payload[offset_next:]) < 10 {
-			return answers, ErrDecodeDnsAnswerTooShort
+			return answers, offset, ErrDecodeDnsAnswerTooShort
 		}
 		// decode TYPE
 		t := binary.BigEndian.Uint16(payload[offset_next : offset_next+2])
@@ -524,7 +535,7 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.Dns
 		// decode RDATA
 		// but before to continue, check we have enough data to decode the rdata
 		if len(payload[offset_next+10:]) < int(rdlength) {
-			return answers, ErrDecodeDnsAnswerRdataTooShort
+			return answers, offset, ErrDecodeDnsAnswerRdataTooShort
 		}
 		rdata := payload[offset_next+10 : offset_next+10+int(rdlength)]
 
@@ -532,7 +543,7 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.Dns
 		rdatatype := RdatatypeToString(int(t))
 		parsed, err := ParseRdata(rdatatype, rdata, payload, offset_next+10)
 		if err != nil {
-			return answers, err
+			return answers, offset, err
 		}
 
 		// finnally append answer to the list
@@ -548,7 +559,12 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.Dns
 		// compute the next offset
 		offset = offset_next + 10 + int(rdlength)
 	}
-	return answers, nil
+	return answers, offset, nil
+}
+
+func DecodeAdditional(arcount int) {
+	for i := 0; i < arcount; i++ {
+	}
 }
 
 func ParseLabels(offset int, payload []byte) (string, int, error) {

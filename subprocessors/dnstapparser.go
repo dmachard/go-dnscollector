@@ -243,14 +243,29 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dns_offsetrr = offsetrr
 		}
 
+		//  decode answers except if the packet is malformed
 		if dnsHeader.ancount > 0 && dm.MalformedPacket == 0 {
-			dm.Answers, err = DecodeAnswer(dnsHeader.ancount, dns_offsetrr, dm.Payload)
+			var offsetrr int
+			dm.Answers, offsetrr, err = DecodeAnswer(dnsHeader.ancount, dns_offsetrr, dm.Payload)
 			if err != nil {
 				dm.MalformedPacket = 1
-				d.LogInfo("dns parser malformed answer: %s", err)
-				//continue
+				d.LogInfo("dns parser malformed answers: %s", err)
 			}
+			dns_offsetrr = offsetrr
 		}
+
+		//  decode authoritative answers except if the packet is malformed
+		if dnsHeader.nscount > 0 && dm.MalformedPacket == 0 {
+			// decode answers
+			dm.Nameservers, _, err = DecodeAnswer(dnsHeader.nscount, dns_offsetrr, dm.Payload)
+			if err != nil {
+				dm.MalformedPacket = 1
+				d.LogInfo("dns parser malformed nameservers answers: %s", err)
+			}
+
+		}
+
+		//  decode additional answer ?
 
 		// compute latency if possible
 		if d.config.Subprocessors.Cache.Enable {

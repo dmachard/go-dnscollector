@@ -394,28 +394,44 @@ Example:
 ```json
 {
   "operation": "CLIENT_RESPONSE",
-  "identiy": "dnscollector",
+  "identity": "dnsdist1",
   "family": "INET",
   "protocol": "UDP",
-  "query-ip": "10.0.0.51",
-  "query-port": "47789",
-  "response-ip": "10.0.0.2",
+  "query-ip": "192.168.1.210",
+  "query-port": "41430",
+  "response-ip": "192.168.1.210",
   "response-port": "53",
-  "length": 60,
+  "length": 82,
   "rcode": "NOERROR",
-  "qname": "play.google.com",
+  "qname": "gmail.google.com",
   "qtype": "A",
-  "latency": "0.004502",
-  "timestamp-rfc3339": "2021-08-07T15:31:56.572064655Z",
+  "latency": "0.014125",
+  "timestamp-rfc3339ns": "2021-12-23T16:49:29.329980063Z",
   "answers": [
     {
-      "name": "play.google.com",
+      "name": "gmail.google.com",
+      "rdatatype": "CNAME",
+      "ttl": 19437,
+      "rdata": "www3.l.google.com"
+    },
+    {
+      "name": "www3.l.google.com",
       "rdatatype": "A",
-      "ttl": 0,
-      "rdata": "142.250.185.110"
+      "ttl": 300,
+      "rdata": "142.250.74.238"
     }
   ],
-  "country-isocode":"-"
+  "nameservers": null,
+  "country-isocode": "-",
+  "as-number": "-",
+  "as-owner": "-",
+  "city": "-",
+  "continent": "-",
+  "malformed-packet": 0,
+  "flag-tc": "-",
+  "flag-aa": "-",
+  "flag-ra": "RA",
+  "flag-ad": "-"
 }
 ```
 

@@ -40,6 +40,7 @@ type DnsMessage struct {
 	TimeSec                int         `json:"-" msgpack:"-"`
 	TimeNsec               int         `json:"-" msgpack:"-"`
 	Answers                []DnsAnswer `json:"answers" msgpack:"answers"`
+	Nameservers            []DnsAnswer `json:"nameservers" msgpack:"nameservers"`
 	CountryIsoCode         string      `json:"country-isocode" msgpack:"country-isocode"`
 	AutonomousSystemNumber string      `json:"as-number" msgpack:"as-number"`
 	AutonomousSystemOrg    string      `json:"as-owner" msgpack:"as-owner"`

@@ -67,6 +67,31 @@ func TestDecodeQuestion(t *testing.T) {
 	}
 }
 
+func TestDecodeAnswer_Ns(t *testing.T) {
+	fqdn := "dnstapcollector.test."
+
+	dm := new(dns.Msg)
+	dm.SetQuestion(fqdn, dns.TypeA)
+
+	rrNs, _ := dns.NewRR("root-servers.net NS c.root-servers.net")
+	rrA, _ := dns.NewRR(fmt.Sprintf("%s A 127.0.0.1", fqdn))
+
+	m := new(dns.Msg)
+	m.SetReply(dm)
+	m.Authoritative = true
+	m.Answer = append(m.Answer, rrA)
+	m.Ns = append(m.Ns, rrNs)
+
+	payload, _ := m.Pack()
+	_, _, offset_rr, _ := DecodeQuestion(payload)
+	_, offset_rrns, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+
+	nsAnswers, _, _ := DecodeAnswer(len(m.Ns), offset_rrns, payload)
+	if len(nsAnswers) != len(m.Ns) {
+		t.Errorf("invalid decode answer, want %d, got: %d", len(m.Ns), len(nsAnswers))
+	}
+}
+
 func TestDecodeAnswer(t *testing.T) {
 	fqdn := "dnstapcollector.test."
 
@@ -80,7 +105,7 @@ func TestDecodeAnswer(t *testing.T) {
 	payload, _ := dm.Pack()
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+	answer, _, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
 
 	if len(answer) != len(dm.Answer) {
 		t.Errorf("invalid decode answer, want %d, got: %d", len(dm.Answer), len(answer))
@@ -102,7 +127,7 @@ func TestDecodeAnswer_QnameMinimized(t *testing.T) {
 		0x84, 0x00, 0x00, 0x29, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	_, err := DecodeAnswer(4, offset_rr, payload)
+	_, _, err := DecodeAnswer(4, offset_rr, payload)
 	if err != nil {
 		t.Errorf("failed to decode valid dns packet with minimization")
 	}
@@ -121,7 +146,7 @@ func TestDecodeRdataA(t *testing.T) {
 	payload, _ := dm.Pack()
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+	answer, _, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
 
 	if answer[0].Rdata != rdata {
 		t.Errorf("invalid decode for rdata A, want %s, got: %s", rdata, answer[0].Rdata)
@@ -141,7 +166,7 @@ func TestDecodeRdataAAAA(t *testing.T) {
 	payload, _ := dm.Pack()
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+	answer, _, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
 
 	if answer[0].Rdata != rdata {
 		t.Errorf("invalid decode for rdata AAAA, want %s, got: %s", rdata, answer[0].Rdata)
@@ -161,7 +186,7 @@ func TestDecodeRdataCNAME(t *testing.T) {
 	payload, _ := dm.Pack()
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+	answer, _, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
 
 	if answer[0].Rdata != rdata {
 		t.Errorf("invalid decode for rdata CNAME, want %s, got: %s", rdata, answer[0].Rdata)
@@ -181,7 +206,7 @@ func TestDecodeRdataMX(t *testing.T) {
 	payload, _ := dm.Pack()
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+	answer, _, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
 
 	if answer[0].Rdata != rdata {
 		t.Errorf("invalid decode for rdata MX, want %s, got: %s", rdata, answer[0].Rdata)
@@ -201,7 +226,7 @@ func TestDecodeRdataSRV(t *testing.T) {
 	payload, _ := dm.Pack()
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+	answer, _, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
 
 	if answer[0].Rdata != rdata {
 		t.Errorf("invalid decode for rdata SRV, want %s, got: %s", rdata, answer[0].Rdata)
@@ -221,7 +246,7 @@ func TestDecodeRdataNS(t *testing.T) {
 	payload, _ := dm.Pack()
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+	answer, _, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
 
 	if answer[0].Rdata != rdata {
 		t.Errorf("invalid decode for rdata NS, want %s, got: %s", rdata, answer[0].Rdata)
@@ -241,7 +266,7 @@ func TestDecodeRdataTXT(t *testing.T) {
 	payload, _ := dm.Pack()
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+	answer, _, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
 
 	if answer[0].Rdata != rdata {
 		t.Errorf("invalid decode for rdata TXT, want %s, got: %s", rdata, answer[0].Rdata)
@@ -261,7 +286,7 @@ func TestDecodeRdataPTR(t *testing.T) {
 	payload, _ := dm.Pack()
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+	answer, _, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
 
 	if answer[0].Rdata != rdata {
 		t.Errorf("invalid decode for rdata PTR, want %s, got: %s", rdata, answer[0].Rdata)
@@ -281,7 +306,7 @@ func TestDecodeRdataSOA(t *testing.T) {
 	payload, _ := dm.Pack()
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	answer, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+	answer, _, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
 
 	if answer[0].Rdata != rdata {
 		t.Errorf("invalid decode for rdata SOA, want %s, got: %s", rdata, answer[0].Rdata)
@@ -327,7 +352,7 @@ func TestDecodeDnsAnswer_PacketTooShort(t *testing.T) {
 		111, 114, 4, 116, 101, 115, 116, 0, 0, 1, 0, 1, 0, 0, 14, 16, 0}
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	_, err := DecodeAnswer(1, offset_rr, payload)
+	_, _, err := DecodeAnswer(1, offset_rr, payload)
 	if !errors.Is(err, ErrDecodeDnsAnswerTooShort) {
 		t.Errorf("bad error returned: %v", err)
 	}
@@ -339,7 +364,7 @@ func TestDecodeDnsAnswer_RdataTooShort(t *testing.T) {
 		111, 114, 4, 116, 101, 115, 116, 0, 0, 1, 0, 1, 0, 0, 14, 16, 0, 4, 127, 0}
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	_, err := DecodeAnswer(1, offset_rr, payload)
+	_, _, err := DecodeAnswer(1, offset_rr, payload)
 	if !errors.Is(err, ErrDecodeDnsAnswerRdataTooShort) {
 		t.Errorf("bad error returned: %v", err)
 	}
@@ -351,7 +376,7 @@ func TestDecodeDnsAnswer_InvalidPtr(t *testing.T) {
 		14, 16, 0, 4, 83, 112, 146, 176}
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	_, err := DecodeAnswer(1, offset_rr, payload)
+	_, _, err := DecodeAnswer(1, offset_rr, payload)
 	if !errors.Is(err, ErrDecodeDnsLabelInvalidOffset) {
 		t.Errorf("bad error returned: %v", err)
 	}
@@ -364,7 +389,7 @@ func TestDecodeDnsAnswer_InvalidPtr_Loop1(t *testing.T) {
 		14, 16, 0, 4, 83, 112, 146, 176}
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	_, err := DecodeAnswer(1, offset_rr, payload)
+	_, _, err := DecodeAnswer(1, offset_rr, payload)
 	if !errors.Is(err, ErrDecodeDnsLabelInvalidOffsetInfiniteLoop) {
 		t.Errorf("bad error returned: %v", err)
 	}
@@ -378,7 +403,7 @@ func TestDecodeDnsAnswer_InvalidPtr_Loop2(t *testing.T) {
 		14, 16, 0, 4, 83, 112, 146, 176}
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
-	_, err := DecodeAnswer(1, offset_rr, payload)
+	_, _, err := DecodeAnswer(1, offset_rr, payload)
 	if !errors.Is(err, ErrDecodeDnsLabelInvalidOffsetInfiniteLoop) {
 		t.Errorf("bad error returned: %v", err)
 	}
