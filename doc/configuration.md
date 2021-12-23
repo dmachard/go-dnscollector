@@ -410,6 +410,7 @@ Example:
   "query-port": "41430",
   "response-ip": "192.168.1.210",
   "response-port": "53",
+  "flag-qr": "QUERY",
   "length": 82,
   "rcode": "NOERROR",
   "qname": "gmail.google.com",
@@ -430,7 +431,8 @@ Example:
       "rdata": "142.250.74.238"
     }
   ],
-  "nameservers": null,
+  "answers-ns": null,
+  "answers-more": null,
   "country-isocode": "-",
   "as-number": "-",
   "as-owner": "-",
