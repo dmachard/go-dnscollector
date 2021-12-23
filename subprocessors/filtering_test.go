@@ -21,7 +21,7 @@ func TestFilteringQR(t *testing.T) {
 		t.Errorf("dns query should be ignored")
 	}
 
-	dm.Type = "reply"
+	dm.Type = dnsutils.DnsReply
 	if !filtering.CheckIfDrop(&dm) {
 		t.Errorf("dns reply should be ignored")
 	}

@@ -186,7 +186,7 @@ func GetFakeDnsMessage() DnsMessage {
 	dm.Init()
 	dm.Identity = "collector"
 	dm.Operation = "CLIENT_QUERY"
-	dm.Type = "query"
+	dm.Type = DnsQuery
 	dm.Qname = "dns.collector"
 	dm.QueryIp = "1.2.3.4"
 	dm.QueryPort = "1234"
