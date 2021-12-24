@@ -526,6 +526,8 @@ func (s *StatsStreams) GetMetrics(w http.ResponseWriter, r *http.Request) {
 
 	// build info
 	fmt.Fprintf(w, "%s_build_info{version=\"%s\"} 1\n", prefix, s.version)
+
+	// iter over streams
 	for _, stream := range s.Streams() {
 		counters := s.GetCounters(stream)
 

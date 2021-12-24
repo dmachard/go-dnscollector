@@ -41,7 +41,7 @@ func TestTcpClientJsonRun(t *testing.T) {
 	if err := json.NewDecoder(reader).Decode(&dmRcv); err != nil {
 		t.Errorf("error to decode json: %s", err)
 	}
-	if dm.Qname != dmRcv.Qname {
-		t.Errorf("qname error want %s, got %s", dm.Qname, dmRcv.Qname)
+	if dm.DnsPayload.Qname != dmRcv.DnsPayload.Qname {
+		t.Errorf("qname error want %s, got %s", dm.DnsPayload.Qname, dmRcv.DnsPayload.Qname)
 	}
 }

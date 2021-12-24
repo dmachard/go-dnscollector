@@ -47,7 +47,7 @@ func TestPcapfileWrite(t *testing.T) {
 	udp.DstPort = layers.UDPPort(53)
 	udp.SetNetworkLayerForChecksum(ip4)
 
-	pkt = append(pkt, gopacket.Payload(dm.Payload), udp, ip4, eth)
+	pkt = append(pkt, gopacket.Payload(dm.DnsPayload.Payload), udp, ip4, eth)
 
 	// write fake dns message and network packet
 	g.Write(dm, pkt)

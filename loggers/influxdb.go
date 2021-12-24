@@ -95,12 +95,12 @@ func (o *InfluxDBClient) Run() {
 		p := influxdb2.NewPointWithMeasurement("dns").
 			AddTag("Identity", dm.Identity).
 			AddTag("QueryIP", dm.NetworkInfo.QueryIp).
-			AddTag("Qname", dm.Qname).
-			AddField("Operation", dm.Operation).
+			AddTag("Qname", dm.DnsPayload.Qname).
+			AddField("Operation", dm.DnsPayload.Operation).
 			AddField("Family", dm.NetworkInfo.Family).
 			AddField("Protocol", dm.NetworkInfo.Protocol).
-			AddField("Qtype", dm.Qtype).
-			AddField("Rcode", dm.Rcode).
+			AddField("Qtype", dm.DnsPayload.Qtype).
+			AddField("Rcode", dm.DnsPayload.Rcode).
 			SetTime(time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec)))
 
 		// write asynchronously

@@ -24,7 +24,7 @@ func TestDnsSnifferRun(t *testing.T) {
 	// waiting message in channel
 	for {
 		msg := <-g.Channel()
-		if msg.Operation == "CLIENT_QUERY" && msg.Qname == "dns.collector" {
+		if msg.DnsPayload.Operation == "CLIENT_QUERY" && msg.DnsPayload.Qname == "dns.collector" {
 			break
 		}
 	}

@@ -284,8 +284,8 @@ func (c *DnsSniffer) Run() {
 				case layers.LayerTypeUDP:
 					dm.NetworkInfo.QueryPort = fmt.Sprint(int(udp.SrcPort))
 					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(udp.DstPort))
-					dm.Payload = udp.Payload
-					dm.Length = len(udp.Payload)
+					dm.DnsPayload.Payload = udp.Payload
+					dm.DnsPayload.Length = len(udp.Payload)
 					dm.NetworkInfo.Protocol = "UDP"
 
 				case layers.LayerTypeTCP:
@@ -303,8 +303,8 @@ func (c *DnsSniffer) Run() {
 
 					dm.NetworkInfo.QueryPort = fmt.Sprint(int(tcp.SrcPort))
 					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(tcp.DstPort))
-					dm.Payload = tcp.Payload[2:]
-					dm.Length = len(tcp.Payload[2:])
+					dm.DnsPayload.Payload = tcp.Payload[2:]
+					dm.DnsPayload.Length = len(tcp.Payload[2:])
 					dm.NetworkInfo.Protocol = "TCP"
 
 				}
@@ -318,10 +318,10 @@ func (c *DnsSniffer) Run() {
 				dm.TimeNsec = int(nsec)
 
 				// just decode QR
-				if len(dm.Payload) < 4 {
+				if len(dm.DnsPayload.Payload) < 4 {
 					continue
 				}
-				qr := binary.BigEndian.Uint16(dm.Payload[2:4]) >> 15
+				qr := binary.BigEndian.Uint16(dm.DnsPayload.Payload[2:4]) >> 15
 
 				if int(qr) == 0 && c.capturequeries {
 					dns_subprocessor.GetChannel() <- dm

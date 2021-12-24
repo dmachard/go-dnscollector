@@ -115,15 +115,15 @@ func (c *Tail) Run() {
 		if len(c.config.Collectors.Tail.PatternQuery) > 0 {
 			re = regexp.MustCompile(c.config.Collectors.Tail.PatternQuery)
 			matches = re.FindStringSubmatch(line.Text)
-			dm.Type = dnsutils.DnsQuery
-			dm.Operation = "QUERY"
+			dm.DnsPayload.Type = dnsutils.DnsQuery
+			dm.DnsPayload.Operation = "QUERY"
 		}
 
 		if len(c.config.Collectors.Tail.PatternReply) > 0 && len(matches) == 0 {
 			re = regexp.MustCompile(c.config.Collectors.Tail.PatternReply)
 			matches = re.FindStringSubmatch(line.Text)
-			dm.Type = dnsutils.DnsReply
-			dm.Operation = "REPLY"
+			dm.DnsPayload.Type = dnsutils.DnsReply
+			dm.DnsPayload.Operation = "REPLY"
 		}
 
 		if len(matches) == 0 {
@@ -132,7 +132,7 @@ func (c *Tail) Run() {
 
 		qrIndex := re.SubexpIndex("qr")
 		if qrIndex != -1 {
-			dm.Operation = matches[qrIndex]
+			dm.DnsPayload.Operation = matches[qrIndex]
 		}
 
 		var t time.Time
@@ -155,7 +155,7 @@ func (c *Tail) Run() {
 
 		rcodeIndex := re.SubexpIndex("rcode")
 		if rcodeIndex != -1 {
-			dm.Rcode = matches[rcodeIndex]
+			dm.DnsPayload.Rcode = matches[rcodeIndex]
 		}
 
 		queryipIndex := re.SubexpIndex("queryip")
@@ -196,23 +196,23 @@ func (c *Tail) Run() {
 		if lengthIndex != -1 {
 			length, err := strconv.Atoi(matches[lengthIndex])
 			if err == nil {
-				dm.Length = length
+				dm.DnsPayload.Length = length
 			}
 		}
 
 		domainIndex := re.SubexpIndex("domain")
 		if domainIndex != -1 {
-			dm.Qname = matches[domainIndex]
+			dm.DnsPayload.Qname = matches[domainIndex]
 		}
 
 		qtypeIndex := re.SubexpIndex("qtype")
 		if qtypeIndex != -1 {
-			dm.Qtype = matches[qtypeIndex]
+			dm.DnsPayload.Qtype = matches[qtypeIndex]
 		}
 
 		latencyIndex := re.SubexpIndex("latency")
 		if latencyIndex != -1 {
-			dm.LatencySec = matches[latencyIndex]
+			dm.DnsPayload.LatencySec = matches[latencyIndex]
 		}
 
 		// compute timestamp
@@ -224,30 +224,30 @@ func (c *Tail) Run() {
 		dnspkt := new(dns.Msg)
 		var dnstype uint16
 		dnstype = dns.TypeA
-		if dm.Qtype == "AAAA" {
+		if dm.DnsPayload.Qtype == "AAAA" {
 			dnstype = dns.TypeAAAA
 		}
-		dnspkt.SetQuestion(dm.Qname, dnstype)
+		dnspkt.SetQuestion(dm.DnsPayload.Qname, dnstype)
 
-		if dm.Type == dnsutils.DnsReply {
-			rr, _ := dns.NewRR(fmt.Sprintf("%s %s 0.0.0.0", dm.Qname, dm.Qtype))
+		if dm.DnsPayload.Type == dnsutils.DnsReply {
+			rr, _ := dns.NewRR(fmt.Sprintf("%s %s 0.0.0.0", dm.DnsPayload.Qname, dm.DnsPayload.Qtype))
 			if err == nil {
 				dnspkt.Answer = append(dnspkt.Answer, rr)
 			}
 			var rcode int
 			rcode = 0
-			if dm.Rcode == "NXDOMAIN" {
+			if dm.DnsPayload.Rcode == "NXDOMAIN" {
 				rcode = 3
 			}
 			dnspkt.Rcode = rcode
 		}
 
-		dm.Payload, _ = dnspkt.Pack()
-		dm.Length = len(dm.Payload)
+		dm.DnsPayload.Payload, _ = dnspkt.Pack()
+		dm.DnsPayload.Length = len(dm.DnsPayload.Payload)
 
 		// qname privacy
 		if qnamePrivacy.IsEnabled() {
-			dm.Qname = qnamePrivacy.Minimaze(dm.Qname)
+			dm.DnsPayload.Qname = qnamePrivacy.Minimaze(dm.DnsPayload.Qname)
 		}
 
 		// filtering

@@ -110,7 +110,7 @@ func (o *PcapWriter) GetIpPort(dm *dnsutils.DnsMessage) (string, int, string, in
 	}
 
 	// reverse destination and source
-	if dm.Type == "reply" {
+	if dm.DnsPayload.Type == dnsutils.DnsReply {
 		srcIp_tmp, srcPort_tmp := srcIp, srcPort
 		srcIp, srcPort = dstIp, dstPort
 		dstIp, dstPort = srcIp_tmp, srcPort_tmp
@@ -377,7 +377,7 @@ LOOP:
 				udp.DstPort = layers.UDPPort(dstPort)
 				udp.SetNetworkLayerForChecksum(ip6)
 
-				pkt = append(pkt, gopacket.Payload(dm.Payload), udp, ip6, eth)
+				pkt = append(pkt, gopacket.Payload(dm.DnsPayload.Payload), udp, ip6, eth)
 
 			} else if dm.NetworkInfo.Family == "INET6" && dm.NetworkInfo.Protocol == "TCP" {
 				eth.EthernetType = layers.EthernetTypeIPv6
@@ -391,8 +391,8 @@ LOOP:
 				tcp.SetNetworkLayerForChecksum(ip6)
 
 				dnsLengthField := make([]byte, 2)
-				binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.Length))
-				pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.Payload...)), tcp, ip6, eth)
+				binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.DnsPayload.Length))
+				pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.DnsPayload.Payload...)), tcp, ip6, eth)
 
 			} else if dm.NetworkInfo.Family == "INET" && dm.NetworkInfo.Protocol == "UDP" {
 				eth.EthernetType = layers.EthernetTypeIPv4
@@ -403,7 +403,7 @@ LOOP:
 				udp.DstPort = layers.UDPPort(dstPort)
 				udp.SetNetworkLayerForChecksum(ip4)
 
-				pkt = append(pkt, gopacket.Payload(dm.Payload), udp, ip4, eth)
+				pkt = append(pkt, gopacket.Payload(dm.DnsPayload.Payload), udp, ip4, eth)
 
 			} else if dm.NetworkInfo.Family == "INET" && dm.NetworkInfo.Protocol == "TCP" {
 				// SYN
@@ -418,8 +418,8 @@ LOOP:
 				tcp.SetNetworkLayerForChecksum(ip4)
 
 				dnsLengthField := make([]byte, 2)
-				binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.Length))
-				pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.Payload...)), tcp, ip4, eth)
+				binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.DnsPayload.Length))
+				pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.DnsPayload.Payload...)), tcp, ip4, eth)
 
 			} else {
 				// ignore other packet

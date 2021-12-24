@@ -52,49 +52,51 @@ type DnsRRs struct {
 	Records     []DnsAnswer `json:"ar" msgpack:"ar"`
 }
 
+type DnsPayload struct {
+	Operation       string   `json:"operation" msgpack:"operation"`
+	Type            string   `json:"-" msgpack:"-"`
+	Payload         []byte   `json:"-" msgpack:"-"`
+	Length          int      `json:"length" msgpack:"-"`
+	Id              int      `json:"-" msgpack:"-"`
+	Rcode           string   `json:"rcode" msgpack:"rcode"`
+	Qname           string   `json:"qname" msgpack:"qname"`
+	Qtype           string   `json:"qtype" msgpack:"qtype"`
+	Flags           DnsFlags `json:"flags" msgpack:"flags"`
+	DnsRRs          DnsRRs   `json:"resource-records" msgpack:"resource-records"`
+	MalformedPacket int      `json:"malformed-packet" msgpack:"malformed-packet"`
+	Latency         float64  `json:"-" msgpack:"-"`
+	LatencySec      string   `json:"latency" msgpack:"latency"`
+}
+
 type DnsExtended struct {
 }
 
 type DnsMessage struct {
 	NetworkInfo      DnsNetworkInfo `json:"network" msgpack:"network"`
-	Operation        string         `json:"operation" msgpack:"operation"`
+	DnsPayload       DnsPayload     `json:"dns" msgpack:"dns"`
 	Identity         string         `json:"identity" msgpack:"identity"`
-	Type             string         `json:"-" msgpack:"-"`
-	Payload          []byte         `json:"-" msgpack:"-"`
-	Length           int            `json:"length" msgpack:"-"`
-	Id               int            `json:"-" msgpack:"-"`
-	Rcode            string         `json:"rcode" msgpack:"rcode"`
-	Qname            string         `json:"qname" msgpack:"qname"`
-	Qtype            string         `json:"qtype" msgpack:"qtype"`
-	Latency          float64        `json:"-" msgpack:"-"`
-	LatencySec       string         `json:"latency" msgpack:"latency"`
 	TimestampRFC3339 string         `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
 	Timestamp        float64        `json:"-" msgpack:"-"`
 	TimeSec          int            `json:"-" msgpack:"-"`
 	TimeNsec         int            `json:"-" msgpack:"-"`
-	DnsRRs           DnsRRs         `json:"resource-records" msgpack:"resource-records"`
-	MalformedPacket  int            `json:"malformed-packet" msgpack:"malformed-packet"`
-	Flags            DnsFlags       `json:"flags" msgpack:"flags"`
-	Geo              DnsGeo         `json:"geo" msgpack:"geo"`
+
+	Geo DnsGeo `json:"geo" msgpack:"geo"`
 }
 
 func (dm *DnsMessage) Init() {
-	dm.Operation, dm.Type = "-", "-"
+
 	dm.Identity = "-"
+	dm.TimestampRFC3339 = "-"
 
 	dm.NetworkInfo = DnsNetworkInfo{Family: "-", Protocol: "-",
 		QueryIp: "-", QueryPort: "-",
 		ResponseIp: "-", ResponsePort: "-",
 		AutonomousSystemNumber: "-", AutonomousSystemOrg: "-"}
 
-	dm.Rcode, dm.Qtype = "-", "-"
-	dm.Qname, dm.LatencySec = "-", "-"
-	dm.TimestampRFC3339 = "-"
-
-	dm.MalformedPacket = 0
-
-	dm.DnsRRs = DnsRRs{Answers: []DnsAnswer{}, Nameservers: []DnsAnswer{}, Records: []DnsAnswer{}}
-
+	dm.DnsPayload = DnsPayload{Operation: "-", Type: "-",
+		MalformedPacket: 0, Rcode: "-",
+		Qtype: "-", Qname: "-", LatencySec: "-",
+		DnsRRs: DnsRRs{Answers: []DnsAnswer{}, Nameservers: []DnsAnswer{}, Records: []DnsAnswer{}}}
 	dm.Geo = DnsGeo{CountryIsoCode: "-", City: "-", Continent: "-"}
 }
 
@@ -104,21 +106,21 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 	for i, word := range format {
 		switch word {
 		case "ttl":
-			if len(dm.DnsRRs.Answers) > 0 {
-				s.WriteString(strconv.Itoa(dm.DnsRRs.Answers[0].Ttl))
+			if len(dm.DnsPayload.DnsRRs.Answers) > 0 {
+				s.WriteString(strconv.Itoa(dm.DnsPayload.DnsRRs.Answers[0].Ttl))
 			} else {
 				s.WriteString("-")
 			}
 		case "answer":
-			if len(dm.DnsRRs.Answers) > 0 {
-				s.WriteString(dm.DnsRRs.Answers[0].Rdata)
+			if len(dm.DnsPayload.DnsRRs.Answers) > 0 {
+				s.WriteString(dm.DnsPayload.DnsRRs.Answers[0].Rdata)
 			} else {
 				s.WriteString("-")
 			}
 		case "answercount":
-			s.WriteString(strconv.Itoa(len(dm.DnsRRs.Answers)))
+			s.WriteString(strconv.Itoa(len(dm.DnsPayload.DnsRRs.Answers)))
 		case "id":
-			s.WriteString(strconv.Itoa(dm.Id))
+			s.WriteString(strconv.Itoa(dm.DnsPayload.Id))
 		case "timestamp": // keep it just for backward compatibility
 			s.WriteString(dm.TimestampRFC3339)
 		case "timestamp-rfc3339ns":
@@ -135,9 +137,9 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "identity":
 			s.WriteString(dm.Identity)
 		case "operation":
-			s.WriteString(dm.Operation)
+			s.WriteString(dm.DnsPayload.Operation)
 		case "rcode":
-			s.WriteString(dm.Rcode)
+			s.WriteString(dm.DnsPayload.Rcode)
 		case "queryip":
 			s.WriteString(dm.NetworkInfo.QueryIp)
 		case "queryport":
@@ -151,13 +153,13 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "protocol":
 			s.WriteString(dm.NetworkInfo.Protocol)
 		case "length":
-			s.WriteString(strconv.Itoa(dm.Length) + "b")
+			s.WriteString(strconv.Itoa(dm.DnsPayload.Length) + "b")
 		case "qname":
-			s.WriteString(dm.Qname)
+			s.WriteString(dm.DnsPayload.Qname)
 		case "qtype":
-			s.WriteString(dm.Qtype)
+			s.WriteString(dm.DnsPayload.Qtype)
 		case "latency":
-			s.WriteString(dm.LatencySec)
+			s.WriteString(dm.DnsPayload.LatencySec)
 		case "continent":
 			s.WriteString(dm.Geo.Continent)
 		case "country":
@@ -169,29 +171,29 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "as-owner":
 			s.WriteString(dm.NetworkInfo.AutonomousSystemOrg)
 		case "malformed":
-			s.WriteString(strconv.Itoa(dm.MalformedPacket))
+			s.WriteString(strconv.Itoa(dm.DnsPayload.MalformedPacket))
 		case "qr":
-			s.WriteString(dm.Type)
+			s.WriteString(dm.DnsPayload.Type)
 		case "tc":
-			if dm.Flags.TC {
+			if dm.DnsPayload.Flags.TC {
 				s.WriteString("TC")
 			} else {
 				s.WriteString("-")
 			}
 		case "aa":
-			if dm.Flags.AA {
+			if dm.DnsPayload.Flags.AA {
 				s.WriteString("AA")
 			} else {
 				s.WriteString("-")
 			}
 		case "ra":
-			if dm.Flags.RA {
+			if dm.DnsPayload.Flags.RA {
 				s.WriteString("RA")
 			} else {
 				s.WriteString("-")
 			}
 		case "ad":
-			if dm.Flags.AD {
+			if dm.DnsPayload.Flags.AD {
 				s.WriteString("AD")
 			} else {
 				s.WriteString("-")
@@ -219,14 +221,14 @@ func GetFakeDnsMessage() DnsMessage {
 	dm := DnsMessage{}
 	dm.Init()
 	dm.Identity = "collector"
-	dm.Operation = "CLIENT_QUERY"
-	dm.Type = DnsQuery
-	dm.Qname = "dns.collector"
+	dm.DnsPayload.Operation = "CLIENT_QUERY"
+	dm.DnsPayload.Type = DnsQuery
+	dm.DnsPayload.Qname = "dns.collector"
 	dm.NetworkInfo.QueryIp = "1.2.3.4"
 	dm.NetworkInfo.QueryPort = "1234"
 	dm.NetworkInfo.ResponseIp = "4.3.2.1"
 	dm.NetworkInfo.ResponsePort = "4321"
-	dm.Rcode = "NOERROR"
-	dm.Qtype = "A"
+	dm.DnsPayload.Rcode = "NOERROR"
+	dm.DnsPayload.Qtype = "A"
 	return dm
 }

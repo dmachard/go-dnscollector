@@ -78,12 +78,12 @@ func (p *FilteringProcessor) LogError(msg string, v ...interface{}) {
 
 func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DnsMessage) bool {
 	// ignore queries ?
-	if !p.config.Subprocessors.Filtering.LogQueries && dm.Type == dnsutils.DnsQuery {
+	if !p.config.Subprocessors.Filtering.LogQueries && dm.DnsPayload.Type == dnsutils.DnsQuery {
 		return true
 	}
 
 	// ignore replies ?
-	if !p.config.Subprocessors.Filtering.LogReplies && dm.Type == dnsutils.DnsReply {
+	if !p.config.Subprocessors.Filtering.LogReplies && dm.DnsPayload.Type == dnsutils.DnsReply {
 		return true
 	}
 
@@ -91,13 +91,13 @@ func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DnsMessage) bool {
 	if p.dropDomains {
 		// fqdn
 		for k := range p.listFqdns {
-			if dm.Qname == k {
+			if dm.DnsPayload.Qname == k {
 				return true
 			}
 		}
 		// partiel fqdn with regexp
 		for _, p := range p.listDomainsRegex {
-			if p.MatchString(dm.Qname) {
+			if p.MatchString(dm.DnsPayload.Qname) {
 				return true
 			}
 		}

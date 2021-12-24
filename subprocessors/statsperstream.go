@@ -184,7 +184,7 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	c.total.Packets++
 
 	// malformed packet ?
-	if dm.MalformedPacket == 1 {
+	if dm.DnsPayload.MalformedPacket == 1 {
 		c.total.PacketsMalformed++
 
 		if _, ok := c.clientsSuspicious[dm.NetworkInfo.QueryIp]; !ok {
@@ -198,59 +198,59 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 
 	// packet size repartition
-	if dm.Type == dnsutils.DnsQuery {
+	if dm.DnsPayload.Type == dnsutils.DnsQuery {
 		c.total.Queries++
-		c.total.ReceivedBytesTotal += dm.Length
+		c.total.ReceivedBytesTotal += dm.DnsPayload.Length
 
 		if c.total.QueryLengthMin == 0 {
-			c.total.QueryLengthMin = dm.Length
+			c.total.QueryLengthMin = dm.DnsPayload.Length
 		}
 
 		// max value
-		if dm.Length > c.total.QueryLengthMax {
-			c.total.QueryLengthMax = dm.Length
+		if dm.DnsPayload.Length > c.total.QueryLengthMax {
+			c.total.QueryLengthMax = dm.DnsPayload.Length
 		}
 		// min value
-		if dm.Length < c.total.QueryLengthMin {
-			c.total.QueryLengthMin = dm.Length
+		if dm.DnsPayload.Length < c.total.QueryLengthMin {
+			c.total.QueryLengthMin = dm.DnsPayload.Length
 		}
 
 		switch {
-		case dm.Length <= 50:
+		case dm.DnsPayload.Length <= 50:
 			c.total.QueryLength0_50++
-		case 50 < dm.Length && dm.Length <= 100:
+		case 50 < dm.DnsPayload.Length && dm.DnsPayload.Length <= 100:
 			c.total.QueryLength50_100++
-		case 100 < dm.Length && dm.Length <= 250:
+		case 100 < dm.DnsPayload.Length && dm.DnsPayload.Length <= 250:
 			c.total.QueryLength100_250++
-		case 250 < dm.Length && dm.Length <= 500:
+		case 250 < dm.DnsPayload.Length && dm.DnsPayload.Length <= 500:
 			c.total.QueryLength250_500++
 		default:
 			c.total.QueryLength500_Inf++
 		}
 	} else {
-		c.total.SentBytesTotal += dm.Length
+		c.total.SentBytesTotal += dm.DnsPayload.Length
 
 		if c.total.ReplyLengthMin == 0 {
-			c.total.ReplyLengthMin = dm.Length
+			c.total.ReplyLengthMin = dm.DnsPayload.Length
 		}
 
 		// max value
-		if dm.Length > c.total.ReplyLengthMax {
-			c.total.ReplyLengthMax = dm.Length
+		if dm.DnsPayload.Length > c.total.ReplyLengthMax {
+			c.total.ReplyLengthMax = dm.DnsPayload.Length
 		}
 		// min value
-		if dm.Length < c.total.ReplyLengthMin {
-			c.total.ReplyLengthMin = dm.Length
+		if dm.DnsPayload.Length < c.total.ReplyLengthMin {
+			c.total.ReplyLengthMin = dm.DnsPayload.Length
 		}
 
 		switch {
-		case dm.Length <= 50:
+		case dm.DnsPayload.Length <= 50:
 			c.total.ReplyLength0_50++
-		case 50 < dm.Length && dm.Length <= 100:
+		case 50 < dm.DnsPayload.Length && dm.DnsPayload.Length <= 100:
 			c.total.ReplyLength50_100++
-		case 100 < dm.Length && dm.Length <= 250:
+		case 100 < dm.DnsPayload.Length && dm.DnsPayload.Length <= 250:
 			c.total.ReplyLength100_250++
-		case 250 < dm.Length && dm.Length <= 500:
+		case 250 < dm.DnsPayload.Length && dm.DnsPayload.Length <= 500:
 			c.total.ReplyLength250_500++
 		default:
 			c.total.ReplyLength500_Inf++
@@ -258,7 +258,7 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 
 	// qname length
-	qnameLen := len(dm.Qname)
+	qnameLen := len(dm.DnsPayload.Qname)
 	if c.total.QnameLengthMin == 0 {
 		c.total.QnameLengthMin = qnameLen
 	}
@@ -290,12 +290,12 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	// search some suspicious domains regarding the length and
 	// the qtype requested
 	if qnameLen >= c.config.Subprocessors.Statistics.ThresholdQnameLen {
-		if _, ok := c.qnamesSuspicious[dm.Qname]; !ok {
-			c.qnamesSuspicious[dm.Qname] = 1
+		if _, ok := c.qnamesSuspicious[dm.DnsPayload.Qname]; !ok {
+			c.qnamesSuspicious[dm.DnsPayload.Qname] = 1
 		} else {
-			c.qnamesSuspicious[dm.Qname]++
+			c.qnamesSuspicious[dm.DnsPayload.Qname]++
 		}
-		c.qnamesSuspicioustop.Record(dm.Qname, c.qnamesSuspicious[dm.Qname])
+		c.qnamesSuspicioustop.Record(dm.DnsPayload.Qname, c.qnamesSuspicious[dm.DnsPayload.Qname])
 
 		if _, ok := c.clientsSuspicious[dm.NetworkInfo.QueryIp]; !ok {
 			c.clientsSuspicious[dm.NetworkInfo.QueryIp] = 1
@@ -305,13 +305,13 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 		c.clientsSuspicioustop.Record(dm.NetworkInfo.QueryIp, c.clientsSuspicious[dm.NetworkInfo.QueryIp])
 	}
 
-	if _, found := c.commonQtypes[dm.Qtype]; !found {
-		if _, ok := c.qnamesSuspicious[dm.Qname]; !ok {
-			c.qnamesSuspicious[dm.Qname] = 1
+	if _, found := c.commonQtypes[dm.DnsPayload.Qtype]; !found {
+		if _, ok := c.qnamesSuspicious[dm.DnsPayload.Qname]; !ok {
+			c.qnamesSuspicious[dm.DnsPayload.Qname] = 1
 		} else {
-			c.qnamesSuspicious[dm.Qname]++
+			c.qnamesSuspicious[dm.DnsPayload.Qname]++
 		}
-		c.qnamesSuspicioustop.Record(dm.Qname, c.qnamesSuspicious[dm.Qname])
+		c.qnamesSuspicioustop.Record(dm.DnsPayload.Qname, c.qnamesSuspicious[dm.DnsPayload.Qname])
 
 		if _, ok := c.clientsSuspicious[dm.NetworkInfo.QueryIp]; !ok {
 			c.clientsSuspicious[dm.NetworkInfo.QueryIp] = 1
@@ -321,13 +321,13 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 		c.clientsSuspicioustop.Record(dm.NetworkInfo.QueryIp, c.clientsSuspicious[dm.NetworkInfo.QueryIp])
 	}
 
-	if dm.Length >= c.config.Subprocessors.Statistics.ThresholdPacketLen {
-		if _, ok := c.qnamesSuspicious[dm.Qname]; !ok {
-			c.qnamesSuspicious[dm.Qname] = 1
+	if dm.DnsPayload.Length >= c.config.Subprocessors.Statistics.ThresholdPacketLen {
+		if _, ok := c.qnamesSuspicious[dm.DnsPayload.Qname]; !ok {
+			c.qnamesSuspicious[dm.DnsPayload.Qname] = 1
 		} else {
-			c.qnamesSuspicious[dm.Qname]++
+			c.qnamesSuspicious[dm.DnsPayload.Qname]++
 		}
-		c.qnamesSuspicioustop.Record(dm.Qname, c.qnamesSuspicious[dm.Qname])
+		c.qnamesSuspicioustop.Record(dm.DnsPayload.Qname, c.qnamesSuspicious[dm.DnsPayload.Qname])
 
 		if _, ok := c.clientsSuspicious[dm.NetworkInfo.QueryIp]; !ok {
 			c.clientsSuspicious[dm.NetworkInfo.QueryIp] = 1
@@ -338,33 +338,33 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 
 	// latency
-	if dm.Latency > c.total.LatencyMax {
-		c.total.LatencyMax = dm.Latency
+	if dm.DnsPayload.Latency > c.total.LatencyMax {
+		c.total.LatencyMax = dm.DnsPayload.Latency
 	}
 
-	if dm.Latency > 0.0 {
+	if dm.DnsPayload.Latency > 0.0 {
 		if c.total.LatencyMin == 0.0 {
-			c.total.LatencyMin = dm.Latency
+			c.total.LatencyMin = dm.DnsPayload.Latency
 		}
-		if dm.Latency < c.total.LatencyMin {
-			c.total.LatencyMin = dm.Latency
+		if dm.DnsPayload.Latency < c.total.LatencyMin {
+			c.total.LatencyMin = dm.DnsPayload.Latency
 		}
 	}
 
 	switch {
-	case dm.Latency == 0.0:
+	case dm.DnsPayload.Latency == 0.0:
 		break
-	case dm.Latency > 0.0 && dm.Latency <= 0.001:
+	case dm.DnsPayload.Latency > 0.0 && dm.DnsPayload.Latency <= 0.001:
 		c.total.Latency0_1++
-	case 0.001 < dm.Latency && dm.Latency <= 0.010:
+	case 0.001 < dm.DnsPayload.Latency && dm.DnsPayload.Latency <= 0.010:
 		c.total.Latency1_10++
-	case 0.010 < dm.Latency && dm.Latency <= 0.050:
+	case 0.010 < dm.DnsPayload.Latency && dm.DnsPayload.Latency <= 0.050:
 		c.total.Latency10_50++
-	case 0.050 < dm.Latency && dm.Latency <= 0.100:
+	case 0.050 < dm.DnsPayload.Latency && dm.DnsPayload.Latency <= 0.100:
 		c.total.Latency50_100++
-	case 0.100 < dm.Latency && dm.Latency <= 0.500:
+	case 0.100 < dm.DnsPayload.Latency && dm.DnsPayload.Latency <= 0.500:
 		c.total.Latency100_500++
-	case 0.500 < dm.Latency && dm.Latency <= 1.000:
+	case 0.500 < dm.DnsPayload.Latency && dm.DnsPayload.Latency <= 1.000:
 		c.total.Latency500_1000++
 	default:
 		c.total.Latency1000_inf++
@@ -387,9 +387,9 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	c.transportstop.Record(dm.NetworkInfo.Protocol, c.transports[dm.NetworkInfo.Protocol])
 
 	// record first level domain
-	i := strings.LastIndex(dm.Qname, ".")
+	i := strings.LastIndex(dm.DnsPayload.Qname, ".")
 	if i > -1 {
-		fld := dm.Qname[i+1:]
+		fld := dm.DnsPayload.Qname[i+1:]
 		if _, ok := c.firstleveldomains[fld]; !ok {
 			c.firstleveldomains[fld] = 1
 		} else {
@@ -399,29 +399,29 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 
 	// record all qnames
-	if _, ok := c.qnames[dm.Qname]; !ok {
-		c.qnames[dm.Qname] = 1
+	if _, ok := c.qnames[dm.DnsPayload.Qname]; !ok {
+		c.qnames[dm.DnsPayload.Qname] = 1
 	} else {
-		c.qnames[dm.Qname]++
+		c.qnames[dm.DnsPayload.Qname]++
 	}
-	c.qnamestop.Record(dm.Qname, c.qnames[dm.Qname])
+	c.qnamestop.Record(dm.DnsPayload.Qname, c.qnames[dm.DnsPayload.Qname])
 
-	if dm.Rcode == "NXDOMAIN" {
-		if _, ok := c.qnamesNxd[dm.Qname]; !ok {
-			c.qnamesNxd[dm.Qname] = 1
+	if dm.DnsPayload.Rcode == "NXDOMAIN" {
+		if _, ok := c.qnamesNxd[dm.DnsPayload.Qname]; !ok {
+			c.qnamesNxd[dm.DnsPayload.Qname] = 1
 		} else {
-			c.qnamesNxd[dm.Qname]++
+			c.qnamesNxd[dm.DnsPayload.Qname]++
 		}
-		c.qnamesNxdtop.Record(dm.Qname, c.qnamesNxd[dm.Qname])
+		c.qnamesNxdtop.Record(dm.DnsPayload.Qname, c.qnamesNxd[dm.DnsPayload.Qname])
 	}
 
-	if dm.Latency > c.config.Subprocessors.Statistics.ThresholdSlow {
-		if _, ok := c.qnamesSlow[dm.Qname]; !ok {
-			c.qnamesSlow[dm.Qname] = 1
+	if dm.DnsPayload.Latency > c.config.Subprocessors.Statistics.ThresholdSlow {
+		if _, ok := c.qnamesSlow[dm.DnsPayload.Qname]; !ok {
+			c.qnamesSlow[dm.DnsPayload.Qname] = 1
 		} else {
-			c.qnamesSlow[dm.Qname]++
+			c.qnamesSlow[dm.DnsPayload.Qname]++
 		}
-		c.qnamesSlowtop.Record(dm.Qname, c.qnamesSlow[dm.Qname])
+		c.qnamesSlowtop.Record(dm.DnsPayload.Qname, c.qnamesSlow[dm.DnsPayload.Qname])
 	}
 
 	// record all clients
@@ -433,40 +433,40 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	c.clientstop.Record(dm.NetworkInfo.QueryIp, c.clients[dm.NetworkInfo.QueryIp])
 
 	// record rrtypes
-	if _, ok := c.rrtypes[dm.Qtype]; !ok {
-		c.rrtypes[dm.Qtype] = 1
+	if _, ok := c.rrtypes[dm.DnsPayload.Qtype]; !ok {
+		c.rrtypes[dm.DnsPayload.Qtype] = 1
 	} else {
-		c.rrtypes[dm.Qtype]++
+		c.rrtypes[dm.DnsPayload.Qtype]++
 	}
-	c.rrtypestop.Record(dm.Qtype, c.rrtypes[dm.Qtype])
+	c.rrtypestop.Record(dm.DnsPayload.Qtype, c.rrtypes[dm.DnsPayload.Qtype])
 
 	// record rcodes
-	if _, ok := c.rcodes[dm.Rcode]; !ok {
-		c.rcodes[dm.Rcode] = 1
+	if _, ok := c.rcodes[dm.DnsPayload.Rcode]; !ok {
+		c.rcodes[dm.DnsPayload.Rcode] = 1
 	} else {
-		c.rcodes[dm.Rcode]++
+		c.rcodes[dm.DnsPayload.Rcode]++
 	}
-	c.rcodestop.Record(dm.Rcode, c.rcodes[dm.Rcode])
+	c.rcodestop.Record(dm.DnsPayload.Rcode, c.rcodes[dm.DnsPayload.Rcode])
 
 	// record operations
-	if _, ok := c.operations[dm.Operation]; !ok {
-		c.operations[dm.Operation] = 1
+	if _, ok := c.operations[dm.DnsPayload.Operation]; !ok {
+		c.operations[dm.DnsPayload.Operation] = 1
 	} else {
-		c.operations[dm.Operation]++
+		c.operations[dm.DnsPayload.Operation]++
 	}
-	c.operationstop.Record(dm.Operation, c.operations[dm.Operation])
+	c.operationstop.Record(dm.DnsPayload.Operation, c.operations[dm.DnsPayload.Operation])
 
 	// dns flags
-	if dm.Flags.TC {
+	if dm.DnsPayload.Flags.TC {
 		c.total.Truncated++
 	}
-	if dm.Flags.AA {
+	if dm.DnsPayload.Flags.AA {
 		c.total.AuthoritativeAnswer++
 	}
-	if dm.Flags.RA {
+	if dm.DnsPayload.Flags.RA {
 		c.total.RecursionAvailable++
 	}
-	if dm.Flags.AD {
+	if dm.DnsPayload.Flags.AD {
 		c.total.AuthenticData++
 	}
 

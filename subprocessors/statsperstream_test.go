@@ -12,10 +12,10 @@ func TestDnsStatisticsRecord(t *testing.T) {
 
 	dm := dnsutils.DnsMessage{}
 	dm.Init()
-	dm.Type = "query"
+	dm.DnsPayload.Type = dnsutils.DnsQuery
 	dm.NetworkInfo.Family = "INET"
 	dm.NetworkInfo.Protocol = "UDP"
-	dm.Qname = "dnscollector.test."
+	dm.DnsPayload.Qname = "dnscollector.test."
 
 	stats.Record(dm)
 
