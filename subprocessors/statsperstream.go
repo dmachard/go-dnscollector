@@ -105,11 +105,9 @@ type StatsPerStream struct {
 	ipproto    map[string]int
 	ipprototop *topmap.TopMap
 
-	asNumbers    map[string]int
-	asNumbersTop *topmap.TopMap
-
-	asOwners    map[string]int
-	asOwnersTop *topmap.TopMap
+	MapHitAS  map[string]int
+	MapAS     map[string]string
+	ListTopAS *topmap.TopMap
 
 	commonQtypes map[string]bool
 	sync.RWMutex
@@ -120,11 +118,9 @@ func NewStatsPerStream(config *dnsutils.Config) *StatsPerStream {
 		config: config,
 		total:  Counters{},
 
-		asNumbers:    make(map[string]int),
-		asNumbersTop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
-
-		asOwners:    make(map[string]int),
-		asOwnersTop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+		MapHitAS:  make(map[string]int),
+		MapAS:     make(map[string]string),
+		ListTopAS: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 
 		firstleveldomains:    make(map[string]int),
 		firstleveldomainstop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
@@ -470,21 +466,17 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 		c.total.AuthenticData++
 	}
 
-	// as number
-	if _, ok := c.asNumbers[dm.NetworkInfo.AutonomousSystemNumber]; !ok {
-		c.asNumbers[dm.NetworkInfo.AutonomousSystemNumber] = 1
+	// as stats
+	if _, ok := c.MapHitAS[dm.NetworkInfo.AutonomousSystemNumber]; !ok {
+		c.MapHitAS[dm.NetworkInfo.AutonomousSystemNumber] = 1
 	} else {
-		c.asNumbers[dm.NetworkInfo.AutonomousSystemNumber]++
+		c.MapHitAS[dm.NetworkInfo.AutonomousSystemNumber]++
 	}
-	c.asNumbersTop.Record(dm.NetworkInfo.AutonomousSystemNumber, c.asNumbers[dm.NetworkInfo.AutonomousSystemNumber])
-
-	// as owner
-	if _, ok := c.asOwners[dm.NetworkInfo.AutonomousSystemOrg]; !ok {
-		c.asOwners[dm.NetworkInfo.AutonomousSystemOrg] = 1
-	} else {
-		c.asOwners[dm.NetworkInfo.AutonomousSystemOrg]++
+	// record as number with owner
+	if _, ok := c.MapAS[dm.NetworkInfo.AutonomousSystemNumber]; !ok {
+		c.MapAS[dm.NetworkInfo.AutonomousSystemNumber] = dm.NetworkInfo.AutonomousSystemNumber
 	}
-	c.asOwnersTop.Record(dm.NetworkInfo.AutonomousSystemOrg, c.asOwners[dm.NetworkInfo.AutonomousSystemOrg])
+	c.ListTopAS.Record(dm.NetworkInfo.AutonomousSystemNumber, c.MapHitAS[dm.NetworkInfo.AutonomousSystemNumber])
 }
 
 func (c *StatsPerStream) Compute() {
@@ -602,11 +594,9 @@ func (c *StatsPerStream) Reset() {
 	c.ipproto = make(map[string]int)
 	c.ipprototop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
 
-	c.asNumbers = make(map[string]int)
-	c.asNumbersTop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
-
-	c.asOwners = make(map[string]int)
-	c.asOwnersTop = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
+	c.MapHitAS = make(map[string]int)
+	c.MapAS = make(map[string]string)
+	c.ListTopAS = topmap.NewTopMap(c.config.Subprocessors.Statistics.TopMaxItems)
 }
 
 func (c *StatsPerStream) GetCounters() (ret Counters) {
@@ -623,18 +613,11 @@ func (c *StatsPerStream) GetTotalDomains() (ret int) {
 	return len(c.qnames)
 }
 
-func (c *StatsPerStream) GetTotalAsNumbers() (ret int) {
+func (c *StatsPerStream) GetTotalAS() (ret int) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return len(c.asNumbers)
-}
-
-func (c *StatsPerStream) GetTotalAsOwners() (ret int) {
-	c.RLock()
-	defer c.RUnlock()
-
-	return len(c.asOwners)
+	return len(c.MapHitAS)
 }
 
 func (c *StatsPerStream) GetTotalFirstLevelDomains() (ret int) {
@@ -679,18 +662,11 @@ func (c *StatsPerStream) GetTotalClients() (ret int) {
 	return len(c.clients)
 }
 
-func (c *StatsPerStream) GetTopAsNumbers() (ret []topmap.TopMapItem) {
+func (c *StatsPerStream) GetTopAS() (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return c.asNumbersTop.Get()
-}
-
-func (c *StatsPerStream) GetTopAsOwners() (ret []topmap.TopMapItem) {
-	c.RLock()
-	defer c.RUnlock()
-
-	return c.asOwnersTop.Get()
+	return c.ListTopAS.Get()
 }
 
 func (c *StatsPerStream) GetTopQnames() (ret []topmap.TopMapItem) {
@@ -801,24 +777,24 @@ func (c *StatsPerStream) GetDomains() (ret map[string]int) {
 	return retMap
 }
 
-func (c *StatsPerStream) GetAsNumbers() (ret map[string]int) {
+func (c *StatsPerStream) GetHitAS() (ret map[string]int) {
 	c.RLock()
 	defer c.RUnlock()
 
 	retMap := map[string]int{}
-	for k, v := range c.asNumbers {
+	for k, v := range c.MapHitAS {
 		retMap[k] = v
 	}
 
 	return retMap
 }
 
-func (c *StatsPerStream) GetAsOwners() (ret map[string]int) {
+func (c *StatsPerStream) GetAS() (ret map[string]string) {
 	c.RLock()
 	defer c.RUnlock()
 
-	retMap := map[string]int{}
-	for k, v := range c.asOwners {
+	retMap := map[string]string{}
+	for k, v := range c.MapAS {
 		retMap[k] = v
 	}
 

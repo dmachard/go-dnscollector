@@ -151,6 +151,22 @@ paths:
               schema:
                 type: string
       summary: Top suspicious domains list         
+  /top/as:
+    get:
+      parameters:
+        - in: query
+          name: stream
+          schema:
+            type: string
+          description: stream name
+      responses:
+        '200':
+          description: Top Autonomous System list
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Top Autonomous System list
   /dump/requesters:
     get:
       parameters:
@@ -183,6 +199,22 @@ paths:
               schema:
                 type: string
       summary: Return full list of domains
+  /dump/as:
+    get:
+      parameters:
+        - in: query
+          name: stream
+          schema:
+            type: string
+          description: stream name
+      responses:
+        '200':
+          description: Return full list of Autonomous System
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Return full list of Autonomous System
 security: []
 externalDocs:
   url: 'https://github.com/dmachard/go-dnscollector'

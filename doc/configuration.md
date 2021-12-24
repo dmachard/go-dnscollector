@@ -436,7 +436,6 @@ webserver:
   tls-support: true
   cert-file: "./testsdata/server.crt"
   key-file: "./testsdata/server.key"
-  prometheus-suffix: "dnscollector"
 ```
 
 **Prometheus metrics example:**

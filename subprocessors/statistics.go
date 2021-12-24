@@ -102,7 +102,7 @@ func (c *StatsStreams) GetTotalFirstLevelDomains(identity string) (ret int) {
 	return v.GetTotalFirstLevelDomains()
 }
 
-func (c *StatsStreams) GetTotalAsNumbers(identity string) (ret int) {
+func (c *StatsStreams) GetTotalAS(identity string) (ret int) {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -111,19 +111,7 @@ func (c *StatsStreams) GetTotalAsNumbers(identity string) (ret int) {
 		return 0
 	}
 
-	return v.GetTotalAsNumbers()
-}
-
-func (c *StatsStreams) GetTotalAsOwners(identity string) (ret int) {
-	c.RLock()
-	defer c.RUnlock()
-
-	v, found := c.streams[identity]
-	if !found {
-		return 0
-	}
-
-	return v.GetTotalAsOwners()
+	return v.GetTotalAS()
 }
 
 func (c *StatsStreams) GetTotalNxdomains(identity string) (ret int) {
@@ -186,7 +174,7 @@ func (c *StatsStreams) GetTotalClients(identity string) (ret int) {
 	return v.GetTotalClients()
 }
 
-func (c *StatsStreams) GetTopAsNumbers(identity string) (ret []topmap.TopMapItem) {
+func (c *StatsStreams) GetTopAS(identity string) (ret []topmap.TopMapItem) {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -195,19 +183,7 @@ func (c *StatsStreams) GetTopAsNumbers(identity string) (ret []topmap.TopMapItem
 		return []topmap.TopMapItem{}
 	}
 
-	return v.GetTopAsNumbers()
-}
-
-func (c *StatsStreams) GetTopAsOwners(identity string) (ret []topmap.TopMapItem) {
-	c.RLock()
-	defer c.RUnlock()
-
-	v, found := c.streams[identity]
-	if !found {
-		return []topmap.TopMapItem{}
-	}
-
-	return v.GetTopAsOwners()
+	return v.GetTopAS()
 }
 
 func (c *StatsStreams) GetTopQnames(identity string) (ret []topmap.TopMapItem) {
@@ -377,7 +353,7 @@ func (c *StatsStreams) GetDomains(identity string) (ret map[string]int) {
 	return v.GetDomains()
 }
 
-func (c *StatsStreams) GetAsNumbers(identity string) (ret map[string]int) {
+func (c *StatsStreams) GetHitAS(identity string) (ret map[string]int) {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -386,21 +362,19 @@ func (c *StatsStreams) GetAsNumbers(identity string) (ret map[string]int) {
 		return map[string]int{}
 	}
 
-	return v.GetAsNumbers()
+	return v.GetHitAS()
 }
-
-func (c *StatsStreams) GetAsOwners(identity string) (ret map[string]int) {
+func (c *StatsStreams) GetAS(identity string) (ret map[string]string) {
 	c.RLock()
 	defer c.RUnlock()
 
 	v, found := c.streams[identity]
 	if !found {
-		return map[string]int{}
+		return map[string]string{}
 	}
 
-	return v.GetAsOwners()
+	return v.GetAS()
 }
-
 func (s *StatsStreams) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	prefix := s.config.Subprocessors.Statistics.PromPrefix
 
@@ -519,10 +493,10 @@ func (s *StatsStreams) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "# TYPE %s_authentic_data_total counter\n", prefix)
 
 	// asn
-	fmt.Fprintf(w, "# HELP %s_as_numbers_total Total AS uniq number\n", prefix)
-	fmt.Fprintf(w, "# TYPE %s_as_numbers_total counter\n", prefix)
-	fmt.Fprintf(w, "# HELP %s_as_owners_total Total AS uniq owner\n", prefix)
-	fmt.Fprintf(w, "# TYPE %s_as_owners_total counter\n", prefix)
+	fmt.Fprintf(w, "# HELP %s_as_stats_total Total autonomous system observed\n", prefix)
+	fmt.Fprintf(w, "# TYPE %s_as_stats_total counter\n", prefix)
+	fmt.Fprintf(w, "# HELP %s_as_stats_top_total Top number of hit per autonomous system\n", prefix)
+	fmt.Fprintf(w, "# TYPE %s_as_stats_top_total counter\n", prefix)
 
 	// build info
 	fmt.Fprintf(w, "%s_build_info{version=\"%s\"} 1\n", prefix, s.version)
@@ -652,13 +626,14 @@ func (s *StatsStreams) GetMetrics(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%s_authentic_data_total{stream=\"%s\"} %d\n", prefix, stream, counters.AuthenticData)
 
 		// asn counters
-		fmt.Fprintf(w, "%s_as_numbers_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalAsNumbers(stream))
-		for _, v := range s.GetTopAsNumbers(stream) {
-			fmt.Fprintf(w, "%s_as_numbers_top_total{stream=\"%s\",number=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
-		}
-		fmt.Fprintf(w, "%s_as_owners_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalAsOwners(stream))
-		for _, v := range s.GetTopAsOwners(stream) {
-			fmt.Fprintf(w, "%s_as_owners_top_total{stream=\"%s\",owner=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
+		fmt.Fprintf(w, "%s_as_stats_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalAS(stream))
+		mapAs := s.GetAS(stream)
+		for _, v := range s.GetTopAS(stream) {
+			owner := "-"
+			if val, ok := mapAs[v.Name]; ok {
+				owner = val
+			}
+			fmt.Fprintf(w, "%s_as_stats_top_total{stream=\"%s\",number=\"%s\",owner=\"%s\"} %d\n", prefix, stream, v.Name, owner, v.Hit)
 		}
 	}
 }

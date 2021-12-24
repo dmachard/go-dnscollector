@@ -159,6 +159,27 @@ func (s *Webserver) dumpDomainsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Webserver) dumpAsHandler(w http.ResponseWriter, r *http.Request) {
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case http.MethodGet:
+		stream, ok := r.URL.Query()["stream"]
+		if !ok || len(stream) < 1 {
+			stream = []string{"global"}
+		}
+		t := s.stats.GetHitAS(stream[0])
+		json.NewEncoder(w).Encode(t)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
 func (s *Webserver) topRequestersHandler(w http.ResponseWriter, r *http.Request) {
 	if !s.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
@@ -201,7 +222,7 @@ func (s *Webserver) topAllFirstLevelDomainsHandler(w http.ResponseWriter, r *htt
 	}
 }
 
-func (s *Webserver) topAsOwnersHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Webserver) topAsHandler(w http.ResponseWriter, r *http.Request) {
 	if !s.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
@@ -215,28 +236,7 @@ func (s *Webserver) topAsOwnersHandler(w http.ResponseWriter, r *http.Request) {
 		if !ok || len(stream) < 1 {
 			stream = []string{"global"}
 		}
-		t := s.stats.GetTopAsOwners(stream[0])
-		json.NewEncoder(w).Encode(t)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
-func (s *Webserver) topAsNumbersHandler(w http.ResponseWriter, r *http.Request) {
-	if !s.BasicAuth(w, r) {
-		http.Error(w, "Not authorized", http.StatusUnauthorized)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-
-	switch r.Method {
-	case http.MethodGet:
-		stream, ok := r.URL.Query()["stream"]
-		if !ok || len(stream) < 1 {
-			stream = []string{"global"}
-		}
-		t := s.stats.GetTopAsNumbers(stream[0])
+		t := s.stats.GetTopAS(stream[0])
 		json.NewEncoder(w).Encode(t)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -363,11 +363,11 @@ func (s *Webserver) ListenAndServe() {
 	mux.HandleFunc("/top/domains/slow", s.topSlowDomainsHandler)
 	mux.HandleFunc("/top/domains/suspicious", s.topSuspiciousDomainsHandler)
 
-	mux.HandleFunc("/top/as/numbers", s.topAsNumbersHandler)
-	mux.HandleFunc("/top/as/owners", s.topAsOwnersHandler)
+	mux.HandleFunc("/top/as", s.topAsHandler)
 
 	mux.HandleFunc("/dump/requesters", s.dumpRequestersHandler)
 	mux.HandleFunc("/dump/domains", s.dumpDomainsHandler)
+	mux.HandleFunc("/dump/ad", s.dumpAsHandler)
 
 	var err error
 	var listener net.Listener
