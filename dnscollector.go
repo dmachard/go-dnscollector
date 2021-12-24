@@ -105,7 +105,7 @@ func main() {
 		logwrks = append(logwrks, loggers.NewLokiClient(config, logger))
 	}
 	if config.Loggers.Statsd.Enable {
-		logwrks = append(logwrks, loggers.NewStatsdClient(config, logger))
+		logwrks = append(logwrks, loggers.NewStatsdClient(config, logger, Version))
 	}
 
 	// load collectors

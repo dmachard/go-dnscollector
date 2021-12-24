@@ -8,11 +8,11 @@ import (
 
 func TestStreamsStatisticsRecord(t *testing.T) {
 	config := dnsutils.GetFakeConfig()
-	stats := NewStreamsStats(config)
+	stats := NewStreamsStats(config, "1.2.3")
 
 	dm := dnsutils.DnsMessage{}
 	dm.Init()
-	dm.Type = "query"
+	dm.Type = dnsutils.DnsQuery
 	dm.NetworkInfo.Family = "INET"
 	dm.NetworkInfo.Protocol = "UDP"
 	dm.Qname = "dnscollector.test."

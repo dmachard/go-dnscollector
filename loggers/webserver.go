@@ -23,7 +23,6 @@ type Webserver struct {
 	config     *dnsutils.Config
 	logger     *logger.Logger
 	stats      *subprocessors.StatsStreams
-	prom       *subprocessors.Prometheus
 	ver        string
 }
 
@@ -39,8 +38,7 @@ func NewWebserver(config *dnsutils.Config, logger *logger.Logger, version string
 	}
 
 	// init engine to compute statistics and prometheus
-	o.stats = subprocessors.NewStreamsStats(config)
-	o.prom = subprocessors.NewPrometheusSubprocessor(config, logger, o.ver)
+	o.stats = subprocessors.NewStreamsStats(config, o.ver)
 	return o
 }
 
@@ -113,7 +111,7 @@ func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		s.prom.GetMetrics(s.stats, w, r)
+		s.stats.GetMetrics(w, r)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}

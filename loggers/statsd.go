@@ -20,9 +20,10 @@ type StatsdClient struct {
 	logger  *logger.Logger
 	stats   *subprocessors.StatsStreams
 	exit    chan bool
+	version string
 }
 
-func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger) *StatsdClient {
+func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, version string) *StatsdClient {
 	logger.Info("logger to statsd - enabled")
 
 	s := &StatsdClient{
@@ -31,13 +32,14 @@ func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger) *StatsdClie
 		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  logger,
 		config:  config,
+		version: version,
 	}
 
 	// check config
 	s.ReadConfig()
 
 	// init engine to compute statistics
-	s.stats = subprocessors.NewStreamsStats(config)
+	s.stats = subprocessors.NewStreamsStats(config, version)
 
 	return s
 }

@@ -62,13 +62,13 @@ type Config struct {
 			ThresholdPacketLen int      `yaml:"threshold-packet-len"`
 			ThresholdSlow      float64  `yaml:"threshold-slow"`
 			CommonQtypes       []string `yaml:"common-qtypes,flow"`
+			PromPrefix         string   `yaml:"prometheus-prefix"`
 		} `yaml:"statistics"`
 		UserPrivacy struct {
 			AnonymizeIP   bool `yaml:"anonymize-ip"`
 			MinimazeQname bool `yaml:"minimaze-qname"`
 		} `yaml:"user-privacy"`
-		QnameLowerCase bool   `yaml:"qname-lowercase"`
-		PromPrefix     string `yaml:"prometheus-prefix"`
+		QnameLowerCase bool `yaml:"qname-lowercase"`
 		Cache          struct {
 			Enable       bool `yaml:"enable"`
 			QueryTimeout int  `yaml:"query-timeout"`
@@ -243,11 +243,10 @@ func (c *Config) SetDefault() {
 	c.Subprocessors.Statistics.ThresholdPacketLen = 1000
 	c.Subprocessors.Statistics.ThresholdSlow = 0.5
 	c.Subprocessors.Statistics.CommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS"}
+	c.Subprocessors.Statistics.PromPrefix = "dnscollector"
 
 	c.Subprocessors.UserPrivacy.AnonymizeIP = false
 	c.Subprocessors.UserPrivacy.MinimazeQname = false
-
-	c.Subprocessors.PromPrefix = "dnscollector"
 
 	c.Subprocessors.QnameLowerCase = true
 

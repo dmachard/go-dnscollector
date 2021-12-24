@@ -47,9 +47,9 @@ type DnsNetworkInfo struct {
 }
 
 type DnsRRs struct {
-	Answers     []DnsAnswer `json:"answers" msgpack:"answers"`
-	Nameservers []DnsAnswer `json:"nameservers" msgpack:"nameservers"`
-	Records     []DnsAnswer `json:"records" msgpack:"records"`
+	Answers     []DnsAnswer `json:"an" msgpack:"an"`
+	Nameservers []DnsAnswer `json:"ns" msgpack:"ns"`
+	Records     []DnsAnswer `json:"ar" msgpack:"ar"`
 }
 
 type DnsExtended struct {

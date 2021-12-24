@@ -26,7 +26,7 @@ Format:
   "latency": "0.014125",
   "timestamp-rfc3339ns": "2021-12-23T16:49:29.329980063Z",
   "resource-records": {
-    "answers": [
+    "an": [
       {
         "name": "eu.org",
         "rdatatype": "A",
@@ -34,8 +34,8 @@ Format:
         "rdata": "78.194.169.74"
       }
     ],
-    "nameservers": [],
-    "records": []
+    "ns": [],
+    "ar": []
   },
   "malformed-packet": 0,
   "flags": {

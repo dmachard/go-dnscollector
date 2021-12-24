@@ -65,7 +65,7 @@ func (p *GeoIpProcessor) Open() (err error) {
 			return
 		}
 		p.enabled = true
-		p.LogInfo("country database (%s) loaded (%d records)", p.dbCountry.Metadata.BuildEpoch, p.dbCountry.Metadata.NodeCount)
+		p.LogInfo("country database loaded (%d records)", p.dbCountry.Metadata.NodeCount)
 	}
 
 	if len(p.config.Subprocessors.GeoIP.DbCityFile) > 0 {
@@ -75,7 +75,7 @@ func (p *GeoIpProcessor) Open() (err error) {
 			return
 		}
 		p.enabled = true
-		p.LogInfo("city database (%s) loaded (%d records)", p.dbCity.Metadata.BuildEpoch, p.dbCity.Metadata.NodeCount)
+		p.LogInfo("city database loaded (%d records)", p.dbCity.Metadata.NodeCount)
 	}
 
 	if len(p.config.Subprocessors.GeoIP.DbAsnFile) > 0 {
@@ -85,7 +85,7 @@ func (p *GeoIpProcessor) Open() (err error) {
 			return
 		}
 		p.enabled = true
-		p.LogInfo("asn database (%s) loaded (%d records)", p.dbAsn.Metadata.BuildEpoch, p.dbAsn.Metadata.NodeCount)
+		p.LogInfo("asn database loaded (%d records)", p.dbAsn.Metadata.NodeCount)
 	}
 	return nil
 }

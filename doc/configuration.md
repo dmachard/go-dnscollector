@@ -345,6 +345,7 @@ subprocessors:
   text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"
 ```
 
+
 ### Statistics
 
 Some options to customize the statitics subprocessor.
@@ -355,6 +356,7 @@ Options:
 - `threshold-qname-len`: (string) a length greater than this value will be considered as suspicious
 - `threshold-packet-len`: (string) a size greater than this value will be considered as suspicious value in bytes
 - `threshold-slow`: (string) threshold to set a domain considered as slow, value in second
+- `prometheus-suffix`: (string) prometheus suffix
 
 ```yaml
 subprocessors:
@@ -372,6 +374,7 @@ subprocessors:
     threshold-qname-len: 80
     threshold-packet-len: 1000
     threshold-slow: 0.5
+    prometheus-suffix: "dnscollector"
 ```
 
 ## Loggers
@@ -422,7 +425,6 @@ Options:
 - `tls-support`: (boolean) tls support
 - `cert-file`: (string) certificate server file
 - `key-file`: (string) private key server file
-- `prometheus-suffix`: (string) prometheus suffix
 
 ```yaml
 webserver:

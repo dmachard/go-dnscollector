@@ -81,9 +81,6 @@ subprocessors:
     #  R: REPLY
     dns: false
 
-  # prometheus prefix
-  prometheus-prefix: "dnscollector"
-  
   # Statistics engine to compute some metrics on dns usage observed
   statistics:
     # default number of items on top 
@@ -97,7 +94,9 @@ subprocessors:
     threshold-packet-len: 1000
     # threshold to set a domain considered as slow, value in second
     threshold-slow: 0.5
-
+    # prometheus prefix
+    prometheus-prefix: "dnscollector"
+    
   # Use this option to protect user privacy
   user-privacy:
     # IP-Addresses are anonymities by zeroing the host-part of an address.
