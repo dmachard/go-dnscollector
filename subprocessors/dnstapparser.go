@@ -254,7 +254,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		//  decode answers except if the packet is malformed
 		if dnsHeader.ancount > 0 && dm.MalformedPacket == 0 {
 			var offsetrr int
-			dm.Answers, offsetrr, err = DecodeAnswer(dnsHeader.ancount, dns_offsetrr, dm.Payload)
+			dm.DnsRRs.Answers, offsetrr, err = DecodeAnswer(dnsHeader.ancount, dns_offsetrr, dm.Payload)
 			if err != nil {
 				dm.MalformedPacket = 1
 				d.LogInfo("dns parser malformed answers: %s", err)
@@ -265,7 +265,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		//  decode authoritative answers except if the packet is malformed
 		if dnsHeader.nscount > 0 && dm.MalformedPacket == 0 {
 			var offsetrr int
-			dm.Nameservers, offsetrr, err = DecodeAnswer(dnsHeader.nscount, dns_offsetrr, dm.Payload)
+			dm.DnsRRs.Nameservers, offsetrr, err = DecodeAnswer(dnsHeader.nscount, dns_offsetrr, dm.Payload)
 			if err != nil {
 				dm.MalformedPacket = 1
 				d.LogInfo("dns parser malformed nameservers answers: %s", err)
@@ -276,7 +276,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		//  decode additional answers ?
 		if dnsHeader.arcount > 0 && dm.MalformedPacket == 0 {
 			// decode answers
-			dm.AdditionalAnswers, _, err = DecodeAnswer(dnsHeader.arcount, dns_offsetrr, dm.Payload)
+			dm.DnsRRs.Records, _, err = DecodeAnswer(dnsHeader.arcount, dns_offsetrr, dm.Payload)
 			if err != nil {
 				dm.MalformedPacket = 1
 				d.LogInfo("dns parser malformed additional answers: %s", err)

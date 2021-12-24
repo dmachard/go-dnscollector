@@ -67,7 +67,8 @@ type Config struct {
 			AnonymizeIP   bool `yaml:"anonymize-ip"`
 			MinimazeQname bool `yaml:"minimaze-qname"`
 		} `yaml:"user-privacy"`
-		QnameLowerCase bool `yaml:"qname-lowercase"`
+		QnameLowerCase bool   `yaml:"qname-lowercase"`
+		PromPrefix     string `yaml:"prometheus-prefix"`
 		Cache          struct {
 			Enable       bool `yaml:"enable"`
 			QueryTimeout int  `yaml:"query-timeout"`
@@ -102,7 +103,6 @@ type Config struct {
 			TlsSupport     bool   `yaml:"tls-support"`
 			CertFile       string `yaml:"cert-file"`
 			KeyFile        string `yaml:"key-file"`
-			PromPrefix     string `yaml:"prometheus-prefix"`
 		} `yaml:"webserver"`
 		LogFile struct {
 			Enable            bool   `yaml:"enable"`
@@ -247,6 +247,8 @@ func (c *Config) SetDefault() {
 	c.Subprocessors.UserPrivacy.AnonymizeIP = false
 	c.Subprocessors.UserPrivacy.MinimazeQname = false
 
+	c.Subprocessors.PromPrefix = "dnscollector"
+
 	c.Subprocessors.QnameLowerCase = true
 
 	c.Subprocessors.Cache.QueryTimeout = 5
@@ -297,7 +299,6 @@ func (c *Config) SetDefault() {
 	c.Loggers.WebServer.TlsSupport = false
 	c.Loggers.WebServer.CertFile = ""
 	c.Loggers.WebServer.KeyFile = ""
-	c.Loggers.WebServer.PromPrefix = "dnscollector"
 
 	c.Loggers.TcpClient.Enable = false
 	c.Loggers.TcpClient.RemoteAddress = "127.0.0.1"

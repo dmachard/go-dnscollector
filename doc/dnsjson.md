@@ -25,22 +25,18 @@ Format:
   "qtype": "A",
   "latency": "0.014125",
   "timestamp-rfc3339ns": "2021-12-23T16:49:29.329980063Z",
-  "answers": [
-    {
-      "name": "gmail.google.com",
-      "rdatatype": "CNAME",
-      "ttl": 19437,
-      "rdata": "www3.l.google.com"
-    },
-    {
-      "name": "www3.l.google.com",
-      "rdatatype": "A",
-      "ttl": 300,
-      "rdata": "142.250.74.238"
-    }
-  ],
-  "answers-ns": null,
-  "answers-more": null,
+  "resource-records": {
+    "answers": [
+      {
+        "name": "eu.org",
+        "rdatatype": "A",
+        "ttl": 2725,
+        "rdata": "78.194.169.74"
+      }
+    ],
+    "nameservers": [],
+    "records": []
+  },
   "malformed-packet": 0,
   "flags": {
     "qr": false,

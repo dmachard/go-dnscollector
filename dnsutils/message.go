@@ -46,29 +46,36 @@ type DnsNetworkInfo struct {
 	AutonomousSystemOrg    string `json:"as-owner" msgpack:"as-owner"`
 }
 
+type DnsRRs struct {
+	Answers     []DnsAnswer `json:"answers" msgpack:"answers"`
+	Nameservers []DnsAnswer `json:"nameservers" msgpack:"nameservers"`
+	Records     []DnsAnswer `json:"records" msgpack:"records"`
+}
+
+type DnsExtended struct {
+}
+
 type DnsMessage struct {
-	NetworkInfo       DnsNetworkInfo `json:"network" msgpack:"network"`
-	Operation         string         `json:"operation" msgpack:"operation"`
-	Identity          string         `json:"identity" msgpack:"identity"`
-	Type              string         `json:"-" msgpack:"-"`
-	Payload           []byte         `json:"-" msgpack:"-"`
-	Length            int            `json:"length" msgpack:"-"`
-	Id                int            `json:"-" msgpack:"-"`
-	Rcode             string         `json:"rcode" msgpack:"rcode"`
-	Qname             string         `json:"qname" msgpack:"qname"`
-	Qtype             string         `json:"qtype" msgpack:"qtype"`
-	Latency           float64        `json:"-" msgpack:"-"`
-	LatencySec        string         `json:"latency" msgpack:"latency"`
-	TimestampRFC3339  string         `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
-	Timestamp         float64        `json:"-" msgpack:"-"`
-	TimeSec           int            `json:"-" msgpack:"-"`
-	TimeNsec          int            `json:"-" msgpack:"-"`
-	Answers           []DnsAnswer    `json:"answers" msgpack:"answers"`
-	Nameservers       []DnsAnswer    `json:"nameservers" msgpack:"nameservers"`
-	AdditionalAnswers []DnsAnswer    `json:"answers-more" msgpack:"answers-more"`
-	MalformedPacket   int            `json:"malformed-packet" msgpack:"malformed-packet"`
-	Flags             DnsFlags       `json:"flags" msgpack:"flags"`
-	Geo               DnsGeo         `json:"geo" msgpack:"geo"`
+	NetworkInfo      DnsNetworkInfo `json:"network" msgpack:"network"`
+	Operation        string         `json:"operation" msgpack:"operation"`
+	Identity         string         `json:"identity" msgpack:"identity"`
+	Type             string         `json:"-" msgpack:"-"`
+	Payload          []byte         `json:"-" msgpack:"-"`
+	Length           int            `json:"length" msgpack:"-"`
+	Id               int            `json:"-" msgpack:"-"`
+	Rcode            string         `json:"rcode" msgpack:"rcode"`
+	Qname            string         `json:"qname" msgpack:"qname"`
+	Qtype            string         `json:"qtype" msgpack:"qtype"`
+	Latency          float64        `json:"-" msgpack:"-"`
+	LatencySec       string         `json:"latency" msgpack:"latency"`
+	TimestampRFC3339 string         `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
+	Timestamp        float64        `json:"-" msgpack:"-"`
+	TimeSec          int            `json:"-" msgpack:"-"`
+	TimeNsec         int            `json:"-" msgpack:"-"`
+	DnsRRs           DnsRRs         `json:"resource-records" msgpack:"resource-records"`
+	MalformedPacket  int            `json:"malformed-packet" msgpack:"malformed-packet"`
+	Flags            DnsFlags       `json:"flags" msgpack:"flags"`
+	Geo              DnsGeo         `json:"geo" msgpack:"geo"`
 }
 
 func (dm *DnsMessage) Init() {
@@ -86,6 +93,8 @@ func (dm *DnsMessage) Init() {
 
 	dm.MalformedPacket = 0
 
+	dm.DnsRRs = DnsRRs{Answers: []DnsAnswer{}, Nameservers: []DnsAnswer{}, Records: []DnsAnswer{}}
+
 	dm.Geo = DnsGeo{CountryIsoCode: "-", City: "-", Continent: "-"}
 }
 
@@ -95,19 +104,19 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 	for i, word := range format {
 		switch word {
 		case "ttl":
-			if len(dm.Answers) > 0 {
-				s.WriteString(strconv.Itoa(dm.Answers[0].Ttl))
+			if len(dm.DnsRRs.Answers) > 0 {
+				s.WriteString(strconv.Itoa(dm.DnsRRs.Answers[0].Ttl))
 			} else {
 				s.WriteString("-")
 			}
 		case "answer":
-			if len(dm.Answers) > 0 {
-				s.WriteString(dm.Answers[0].Rdata)
+			if len(dm.DnsRRs.Answers) > 0 {
+				s.WriteString(dm.DnsRRs.Answers[0].Rdata)
 			} else {
 				s.WriteString("-")
 			}
 		case "answercount":
-			s.WriteString(strconv.Itoa(len(dm.Answers)))
+			s.WriteString(strconv.Itoa(len(dm.DnsRRs.Answers)))
 		case "id":
 			s.WriteString(strconv.Itoa(dm.Id))
 		case "timestamp": // keep it just for backward compatibility

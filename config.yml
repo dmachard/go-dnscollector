@@ -81,6 +81,9 @@ subprocessors:
     #  R: REPLY
     dns: false
 
+  # prometheus prefix
+  prometheus-prefix: "dnscollector"
+  
   # Statistics engine to compute some metrics on dns usage observed
   statistics:
     # default number of items on top 
@@ -210,8 +213,6 @@ loggers:
     cert-file: ""
     # private key server file
     key-file: ""
-    # prometheus prefix
-    prometheus-prefix: "dnscollector"
 
   # write captured dns traffic to text files with rotation and compression support
   logfile:

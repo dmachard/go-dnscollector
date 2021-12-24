@@ -78,7 +78,7 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/metrics",
 			handler:    g.metricsHandler,
 			method:     http.MethodGet,
-			want:       config.Loggers.WebServer.PromPrefix + `_domains_total{stream="global"} 1`,
+			want:       config.Subprocessors.PromPrefix + `_domains_total{stream="global"} 1`,
 			statusCode: http.StatusOK,
 		},
 		{
@@ -86,7 +86,7 @@ func TestWebServerGet(t *testing.T) {
 			uri:        "/metrics",
 			handler:    g.metricsHandler,
 			method:     http.MethodGet,
-			want:       config.Loggers.WebServer.PromPrefix + `_requesters_total{stream="global"} 1`,
+			want:       config.Subprocessors.PromPrefix + `_requesters_total{stream="global"} 1`,
 			statusCode: http.StatusOK,
 		},
 	}
