@@ -474,7 +474,7 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 	// record as number with owner
 	if _, ok := c.MapAS[dm.NetworkInfo.AutonomousSystemNumber]; !ok {
-		c.MapAS[dm.NetworkInfo.AutonomousSystemNumber] = dm.NetworkInfo.AutonomousSystemNumber
+		c.MapAS[dm.NetworkInfo.AutonomousSystemNumber] = dm.NetworkInfo.AutonomousSystemOrg
 	}
 	c.ListTopAS.Record(dm.NetworkInfo.AutonomousSystemNumber, c.MapHitAS[dm.NetworkInfo.AutonomousSystemNumber])
 }

@@ -275,11 +275,19 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		//  decode additional answers ?
 		if dnsHeader.arcount > 0 && dm.DnsPayload.MalformedPacket == 0 {
-			// decode answers
 			dm.DnsPayload.DnsRRs.Records, _, err = DecodeAnswer(dnsHeader.arcount, dns_offsetrr, dm.DnsPayload.Payload)
 			if err != nil {
 				dm.DnsPayload.MalformedPacket = 1
 				d.LogInfo("dns parser malformed additional answers: %s", err)
+			}
+		}
+
+		// decode edns options ?
+		if dnsHeader.arcount > 0 && dm.DnsPayload.MalformedPacket == 0 {
+			dm.DnsExtended, _, err = DecodeEDNS(dnsHeader.arcount, dns_offsetrr, dm.DnsPayload.Payload)
+			if err != nil {
+				dm.DnsPayload.MalformedPacket = 1
+				d.LogInfo("dns parser malformed edns: %s", err)
 			}
 		}
 

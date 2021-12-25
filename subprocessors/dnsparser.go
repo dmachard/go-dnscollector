@@ -135,6 +135,8 @@ var ErrDecodeDnsLabelTooShort = errors.New("malformed pkt, dns payload too short
 var ErrDecodeQuestionQtypeTooShort = errors.New("malformed pkt, not enough data to decode qtype")
 var ErrDecodeDnsAnswerTooShort = errors.New("malformed pkt, not enough data to decode answer")
 var ErrDecodeDnsAnswerRdataTooShort = errors.New("malformed pkt, not enough data to decode rdata answer")
+var ErrDecodeEDNSBadRootDomain = errors.New("edns, name MUST be 0 (root domain)")
+var ErrDecodeEdnsDataTooShort = errors.New("edns, not enough data to decode rdata answer")
 
 func GetFakeDns() ([]byte, error) {
 	dnsmsg := new(dns.Msg)
@@ -313,6 +315,15 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			if err != nil {
 				dm.DnsPayload.MalformedPacket = 1
 				d.LogInfo("dns parser malformed additional answers: %s", err)
+			}
+		}
+
+		// decode edns options ?
+		if dnsHeader.arcount > 0 && dm.DnsPayload.MalformedPacket == 0 {
+			dm.DnsExtended, _, err = DecodeEDNS(dnsHeader.arcount, dns_offsetrr, dm.DnsPayload.Payload)
+			if err != nil {
+				dm.DnsPayload.MalformedPacket = 1
+				d.LogInfo("dns parser malformed edns: %s", err)
 			}
 		}
 
@@ -581,9 +592,65 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.Dns
 	return answers, offset, nil
 }
 
-func DecodeAdditional(arcount int) {
+func DecodeEDNS(arcount int, start_offset int, payload []byte) (dnsutils.DnsExtended, int, error) {
+	offset := start_offset
+	edns := dnsutils.DnsExtended{}
+
 	for i := 0; i < arcount; i++ {
+		// Decode NAME
+		name, offset_next, err := ParseLabels(offset, payload)
+		if err != nil {
+			return edns, offset, err
+		}
+		// before to continue, check we have enough data
+		if len(payload[offset_next:]) < 10 {
+			return edns, offset, ErrDecodeDnsAnswerTooShort
+		}
+		// decode TYPE, take in account only OPT option
+		t := binary.BigEndian.Uint16(payload[offset_next : offset_next+2])
+		if t == 41 {
+			// checking domain name, MUST be 0 (root domain)
+			if len(name) > 0 {
+				return edns, offset, ErrDecodeEDNSBadRootDomain
+			}
+
+			// decode udp payload size
+			edns.UdpSize = int(binary.BigEndian.Uint16(payload[offset_next+2 : offset_next+4]))
+
+			/* decode extended rcode and flags
+			    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+			0:  |         EXTENDED-RCODE        |            VERSION            |
+			    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+			2:  | DO|                           Z                               |
+			    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+ */
+			// Extended rcode is equal to the upper 8 bits
+			edns.ExtendedRcode = int(binary.BigEndian.Uint32(payload[offset_next+4:offset_next+8])&0xFF000000>>24) << 4
+			edns.Version = int(binary.BigEndian.Uint32(payload[offset_next+4:offset_next+8]) & 0x00FF0000 >> 16)
+			edns.Do = int(binary.BigEndian.Uint32(payload[offset_next+4:offset_next+8]) & 0x00008000 >> 0xF)
+			edns.Z = int(binary.BigEndian.Uint32(payload[offset_next+4:offset_next+8]) & 0x7FFF)
+
+			// decode RDLENGTH
+			rdlength := binary.BigEndian.Uint16(payload[offset_next+8 : offset_next+10])
+			if len(payload[offset_next+10:]) < int(rdlength) {
+				return edns, offset, ErrDecodeEdnsDataTooShort
+			}
+
+			/* now we can decode all options, pairs of attribute/values
+			                +0 (MSB)                            +1 (LSB)
+			   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+			0: |                          OPTION-CODE                          |
+			   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+			2: |                         OPTION-LENGTH                         |
+			   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+			4: |                                                               |
+			   /                          OPTION-DATA                          /
+			   /                                                               /
+			   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+ */
+
+		}
+		fmt.Println(edns)
 	}
+	return edns, offset, nil
 }
 
 func ParseLabels(offset int, payload []byte) (string, int, error) {

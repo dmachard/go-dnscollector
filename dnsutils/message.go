@@ -69,11 +69,17 @@ type DnsPayload struct {
 }
 
 type DnsExtended struct {
+	UdpSize       int `json:"-" msgpack:"-"`
+	ExtendedRcode int `json:"-" msgpack:"-"`
+	Version       int `json:"-" msgpack:"-"`
+	Do            int `json:"-" msgpack:"-"`
+	Z             int `json:"-" msgpack:"-"`
 }
 
 type DnsMessage struct {
 	NetworkInfo      DnsNetworkInfo `json:"network" msgpack:"network"`
 	DnsPayload       DnsPayload     `json:"dns" msgpack:"dns"`
+	DnsExtended      DnsExtended    `json:"edns" msgpack:"edns"`
 	Identity         string         `json:"identity" msgpack:"identity"`
 	TimestampRFC3339 string         `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
 	Timestamp        float64        `json:"-" msgpack:"-"`
