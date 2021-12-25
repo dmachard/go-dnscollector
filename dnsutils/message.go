@@ -103,6 +103,9 @@ func (dm *DnsMessage) Init() {
 		MalformedPacket: 0, Rcode: "-",
 		Qtype: "-", Qname: "-", LatencySec: "-",
 		DnsRRs: DnsRRs{Answers: []DnsAnswer{}, Nameservers: []DnsAnswer{}, Records: []DnsAnswer{}}}
+
+	dm.DnsExtended = DnsExtended{UdpSize: 0, ExtendedRcode: 0, Version: 0, Do: 0, Z: 0}
+
 	dm.Geo = DnsGeo{CountryIsoCode: "-", City: "-", Continent: "-"}
 }
 
