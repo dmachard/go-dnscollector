@@ -216,6 +216,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		dm.DNS.Id = dnsHeader.Id
 		dm.DNS.Rcode = dnsutils.RcodeToString(dnsHeader.Rcode)
+		dm.DNS.Opcode = dnsHeader.Opcode
 
 		if dnsHeader.Qr == 1 {
 			dm.DNS.Flags.QR = true

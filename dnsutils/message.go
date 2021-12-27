@@ -57,6 +57,7 @@ type Dns struct {
 	Payload         []byte   `json:"-" msgpack:"-"`
 	Length          int      `json:"length" msgpack:"-"`
 	Id              int      `json:"-" msgpack:"-"`
+	Opcode          int      `json:"opcode" msgpack:"opcode"`
 	Rcode           string   `json:"rcode" msgpack:"rcode"`
 	Qname           string   `json:"qname" msgpack:"qname"`
 	Qtype           string   `json:"qtype" msgpack:"qtype"`
