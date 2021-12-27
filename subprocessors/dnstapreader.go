@@ -240,7 +240,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dns_qname, dns_rrtype, offsetrr, err := dnsutils.DecodeQuestion(dm.DNS.Payload)
 			if err != nil {
 				dm.DNS.MalformedPacket = 1
-				d.LogInfo("dns parser malformed question: %s", err)
+				d.LogError("dns parser malformed question: %s", err)
 				//continue
 			}
 			if d.config.Subprocessors.QnameLowerCase {
@@ -258,7 +258,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.DNS.DnsRRs.Answers, offsetrr, err = dnsutils.DecodeAnswer(dnsHeader.Ancount, dns_offsetrr, dm.DNS.Payload)
 			if err != nil {
 				dm.DNS.MalformedPacket = 1
-				d.LogInfo("dns parser malformed answers: %s", err)
+				d.LogError("dns parser malformed answers: %s", err)
 			}
 			dns_offsetrr = offsetrr
 		}
@@ -269,7 +269,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.DNS.DnsRRs.Nameservers, offsetrr, err = dnsutils.DecodeAnswer(dnsHeader.Nscount, dns_offsetrr, dm.DNS.Payload)
 			if err != nil {
 				dm.DNS.MalformedPacket = 1
-				d.LogInfo("dns parser malformed nameservers answers: %s", err)
+				d.LogError("dns parser malformed nameservers answers: %s", err)
 			}
 			dns_offsetrr = offsetrr
 		}
@@ -279,7 +279,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.DNS.DnsRRs.Records, _, err = dnsutils.DecodeAnswer(dnsHeader.Arcount, dns_offsetrr, dm.DNS.Payload)
 			if err != nil {
 				dm.DNS.MalformedPacket = 1
-				d.LogInfo("dns parser malformed additional answers: %s", err)
+				d.LogError("dns parser malformed additional answers: %s", err)
 			}
 		}
 
@@ -288,7 +288,13 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.EDNS, _, err = dnsutils.DecodeEDNS(dnsHeader.Arcount, dns_offsetrr, dm.DNS.Payload)
 			if err != nil {
 				dm.DNS.MalformedPacket = 1
-				d.LogInfo("dns parser malformed edns: %s", err)
+				d.LogError("dns parser malformed edns: %s", err)
+			}
+		}
+
+		if dm.DNS.MalformedPacket == 1 {
+			if d.config.Trace.LogMalformed {
+				d.LogInfo("payload: %v", dm.DNS.Payload)
 			}
 		}
 

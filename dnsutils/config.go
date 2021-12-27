@@ -18,10 +18,11 @@ func IsValidMode(mode string) bool {
 
 type Config struct {
 	Trace struct {
-		Verbose    bool   `yaml:"verbose"`
-		Filename   string `yaml:"filename"`
-		MaxSize    int    `yaml:"max-size"`
-		MaxBackups int    `yaml:"max-backups"`
+		Verbose      bool   `yaml:"verbose"`
+		LogMalformed bool   `yaml:"log-malformed"`
+		Filename     string `yaml:"filename"`
+		MaxSize      int    `yaml:"max-size"`
+		MaxBackups   int    `yaml:"max-backups"`
 	} `yaml:"trace"`
 
 	Collectors struct {
@@ -209,6 +210,7 @@ type Config struct {
 func (c *Config) SetDefault() {
 
 	c.Trace.Verbose = false
+	c.Trace.LogMalformed = false
 	c.Trace.Filename = ""
 	c.Trace.MaxSize = 10
 	c.Trace.MaxBackups = 10

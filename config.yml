@@ -2,6 +2,8 @@
 trace:
   # debug informations
   verbose: true
+  # log malformed packet
+  log-malformed: true
   # filename is the file to write logs to.
   filename: ""
   # maximum size in megabytes of the log file it gets rotated
