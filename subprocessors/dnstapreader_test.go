@@ -41,8 +41,8 @@ func TestDnstapProcessor(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm := <-chan_to
-	if dm.DnsPayload.Qname != "www.google.fr" {
-		t.Errorf("invalid qname in dns message: %s", dm.DnsPayload.Qname)
+	if dm.DNS.Qname != "www.google.fr" {
+		t.Errorf("invalid qname in dns message: %s", dm.DNS.Qname)
 	}
 }
 
@@ -76,7 +76,7 @@ func TestDnstapProcessor_MalformedDnsHeader(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm := <-chan_to
-	if dm.DnsPayload.MalformedPacket == 0 {
+	if dm.DNS.MalformedPacket == 0 {
 		t.Errorf("malformed packet not detected")
 	}
 }
@@ -110,7 +110,7 @@ func TestDnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm := <-chan_to
-	if dm.DnsPayload.MalformedPacket == 0 {
+	if dm.DNS.MalformedPacket == 0 {
 		t.Errorf("malformed packet not detected")
 	}
 }
@@ -145,7 +145,7 @@ func TestDnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm := <-chan_to
-	if dm.DnsPayload.MalformedPacket == 0 {
+	if dm.DNS.MalformedPacket == 0 {
 		t.Errorf("malformed packet not detected")
 	}
 }

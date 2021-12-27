@@ -68,18 +68,25 @@ type DnsPayload struct {
 	LatencySec      string   `json:"latency" msgpack:"latency"`
 }
 
+type DnsOption struct {
+	Code int    `json:"code" msgpack:"code"`
+	Name string `json:"name" msgpack:"name"`
+	Data string `json:"data" msgpack:"data"`
+}
+
 type DnsExtended struct {
-	UdpSize       int `json:"-" msgpack:"-"`
-	ExtendedRcode int `json:"-" msgpack:"-"`
-	Version       int `json:"-" msgpack:"-"`
-	Do            int `json:"-" msgpack:"-"`
-	Z             int `json:"-" msgpack:"-"`
+	UdpSize       int         `json:"udp-size" msgpack:"udp-size"`
+	ExtendedRcode int         `json:"rcode" msgpack:"rcode"`
+	Version       int         `json:"version" msgpack:"version"`
+	Do            int         `json:"dnssec-ok" msgpack:"dnssec-ok"`
+	Z             int         `json:"-" msgpack:"-"`
+	Options       []DnsOption `json:"options" msgpack:"options"`
 }
 
 type DnsMessage struct {
 	NetworkInfo      DnsNetworkInfo `json:"network" msgpack:"network"`
-	DnsPayload       DnsPayload     `json:"dns" msgpack:"dns"`
-	DnsExtended      DnsExtended    `json:"edns" msgpack:"edns"`
+	DNS              DnsPayload     `json:"dns" msgpack:"dns"`
+	EDNS             DnsExtended    `json:"edns" msgpack:"edns"`
 	Identity         string         `json:"identity" msgpack:"identity"`
 	TimestampRFC3339 string         `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
 	Timestamp        float64        `json:"-" msgpack:"-"`
@@ -99,12 +106,13 @@ func (dm *DnsMessage) Init() {
 		ResponseIp: "-", ResponsePort: "-",
 		AutonomousSystemNumber: "-", AutonomousSystemOrg: "-"}
 
-	dm.DnsPayload = DnsPayload{Operation: "-", Type: "-",
+	dm.DNS = DnsPayload{Operation: "-", Type: "-",
 		MalformedPacket: 0, Rcode: "-",
 		Qtype: "-", Qname: "-", LatencySec: "-",
 		DnsRRs: DnsRRs{Answers: []DnsAnswer{}, Nameservers: []DnsAnswer{}, Records: []DnsAnswer{}}}
 
-	dm.DnsExtended = DnsExtended{UdpSize: 0, ExtendedRcode: 0, Version: 0, Do: 0, Z: 0}
+	dm.EDNS = DnsExtended{UdpSize: 0, ExtendedRcode: 0, Version: 0,
+		Do: 0, Z: 0, Options: []DnsOption{}}
 
 	dm.Geo = DnsGeo{CountryIsoCode: "-", City: "-", Continent: "-"}
 }
@@ -115,21 +123,21 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 	for i, word := range format {
 		switch word {
 		case "ttl":
-			if len(dm.DnsPayload.DnsRRs.Answers) > 0 {
-				s.WriteString(strconv.Itoa(dm.DnsPayload.DnsRRs.Answers[0].Ttl))
+			if len(dm.DNS.DnsRRs.Answers) > 0 {
+				s.WriteString(strconv.Itoa(dm.DNS.DnsRRs.Answers[0].Ttl))
 			} else {
 				s.WriteString("-")
 			}
 		case "answer":
-			if len(dm.DnsPayload.DnsRRs.Answers) > 0 {
-				s.WriteString(dm.DnsPayload.DnsRRs.Answers[0].Rdata)
+			if len(dm.DNS.DnsRRs.Answers) > 0 {
+				s.WriteString(dm.DNS.DnsRRs.Answers[0].Rdata)
 			} else {
 				s.WriteString("-")
 			}
 		case "answercount":
-			s.WriteString(strconv.Itoa(len(dm.DnsPayload.DnsRRs.Answers)))
+			s.WriteString(strconv.Itoa(len(dm.DNS.DnsRRs.Answers)))
 		case "id":
-			s.WriteString(strconv.Itoa(dm.DnsPayload.Id))
+			s.WriteString(strconv.Itoa(dm.DNS.Id))
 		case "timestamp": // keep it just for backward compatibility
 			s.WriteString(dm.TimestampRFC3339)
 		case "timestamp-rfc3339ns":
@@ -146,9 +154,9 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "identity":
 			s.WriteString(dm.Identity)
 		case "operation":
-			s.WriteString(dm.DnsPayload.Operation)
+			s.WriteString(dm.DNS.Operation)
 		case "rcode":
-			s.WriteString(dm.DnsPayload.Rcode)
+			s.WriteString(dm.DNS.Rcode)
 		case "queryip":
 			s.WriteString(dm.NetworkInfo.QueryIp)
 		case "queryport":
@@ -162,13 +170,13 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "protocol":
 			s.WriteString(dm.NetworkInfo.Protocol)
 		case "length":
-			s.WriteString(strconv.Itoa(dm.DnsPayload.Length) + "b")
+			s.WriteString(strconv.Itoa(dm.DNS.Length) + "b")
 		case "qname":
-			s.WriteString(dm.DnsPayload.Qname)
+			s.WriteString(dm.DNS.Qname)
 		case "qtype":
-			s.WriteString(dm.DnsPayload.Qtype)
+			s.WriteString(dm.DNS.Qtype)
 		case "latency":
-			s.WriteString(dm.DnsPayload.LatencySec)
+			s.WriteString(dm.DNS.LatencySec)
 		case "continent":
 			s.WriteString(dm.Geo.Continent)
 		case "country":
@@ -180,29 +188,29 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "as-owner":
 			s.WriteString(dm.NetworkInfo.AutonomousSystemOrg)
 		case "malformed":
-			s.WriteString(strconv.Itoa(dm.DnsPayload.MalformedPacket))
+			s.WriteString(strconv.Itoa(dm.DNS.MalformedPacket))
 		case "qr":
-			s.WriteString(dm.DnsPayload.Type)
+			s.WriteString(dm.DNS.Type)
 		case "tc":
-			if dm.DnsPayload.Flags.TC {
+			if dm.DNS.Flags.TC {
 				s.WriteString("TC")
 			} else {
 				s.WriteString("-")
 			}
 		case "aa":
-			if dm.DnsPayload.Flags.AA {
+			if dm.DNS.Flags.AA {
 				s.WriteString("AA")
 			} else {
 				s.WriteString("-")
 			}
 		case "ra":
-			if dm.DnsPayload.Flags.RA {
+			if dm.DNS.Flags.RA {
 				s.WriteString("RA")
 			} else {
 				s.WriteString("-")
 			}
 		case "ad":
-			if dm.DnsPayload.Flags.AD {
+			if dm.DNS.Flags.AD {
 				s.WriteString("AD")
 			} else {
 				s.WriteString("-")
@@ -230,14 +238,14 @@ func GetFakeDnsMessage() DnsMessage {
 	dm := DnsMessage{}
 	dm.Init()
 	dm.Identity = "collector"
-	dm.DnsPayload.Operation = "CLIENT_QUERY"
-	dm.DnsPayload.Type = DnsQuery
-	dm.DnsPayload.Qname = "dns.collector"
+	dm.DNS.Operation = "CLIENT_QUERY"
+	dm.DNS.Type = DnsQuery
+	dm.DNS.Qname = "dns.collector"
 	dm.NetworkInfo.QueryIp = "1.2.3.4"
 	dm.NetworkInfo.QueryPort = "1234"
 	dm.NetworkInfo.ResponseIp = "4.3.2.1"
 	dm.NetworkInfo.ResponsePort = "4321"
-	dm.DnsPayload.Rcode = "NOERROR"
-	dm.DnsPayload.Qtype = "A"
+	dm.DNS.Rcode = "NOERROR"
+	dm.DNS.Qtype = "A"
 	return dm
 }

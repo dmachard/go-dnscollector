@@ -1,7 +1,7 @@
 # If turned on, log some applications messages
 trace:
   # debug informations
-  verbose: true
+  verbose: false
   # filename is the file to write logs to.
   filename: ""
   # maximum size in megabytes of the log file it gets rotated
@@ -189,7 +189,7 @@ loggers:
     # to enable, set the enable to true
     enable: true
     # output format: text|json
-    mode: text
+    mode: json
     # output text format, please refer to the default text format to see all available directives 
     # use this parameter if you want a specific format
     text-format: ""

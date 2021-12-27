@@ -135,7 +135,7 @@ LOOP:
 							dt.Version = []byte("-")
 							dt.Type = &t
 
-							mt := dnstap.Message_Type(dnstap.Message_Type_value[dm.DnsPayload.Operation])
+							mt := dnstap.Message_Type(dnstap.Message_Type_value[dm.DNS.Operation])
 							sf := dnstap.SocketFamily(dnstap.SocketFamily_value[dm.NetworkInfo.Family])
 							sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.NetworkInfo.Protocol])
 							tsec := uint64(dm.TimeSec)
@@ -162,14 +162,14 @@ LOOP:
 							msg.ResponseAddress = net.ParseIP(dm.NetworkInfo.ResponseIp)
 							msg.ResponsePort = &rport
 
-							if dm.DnsPayload.Type == dnsutils.DnsQuery {
-								msg.QueryMessage = dm.DnsPayload.Payload
+							if dm.DNS.Type == dnsutils.DnsQuery {
+								msg.QueryMessage = dm.DNS.Payload
 								msg.QueryTimeSec = &tsec
 								msg.QueryTimeNsec = &tnsec
 							} else {
 								msg.ResponseTimeSec = &tsec
 								msg.ResponseTimeNsec = &tnsec
-								msg.ResponseMessage = dm.DnsPayload.Payload
+								msg.ResponseMessage = dm.DNS.Payload
 							}
 
 							dt.Message = msg

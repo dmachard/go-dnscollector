@@ -45,7 +45,7 @@ func TestTailRun(t *testing.T) {
 
 	// waiting message in channel
 	msg := <-g.Channel()
-	if msg.DnsPayload.Qname != "www.google.org" {
-		t.Errorf("want www.google.org, got %s", msg.DnsPayload.Qname)
+	if msg.DNS.Qname != "www.google.org" {
+		t.Errorf("want www.google.org, got %s", msg.DNS.Qname)
 	}
 }

@@ -1,32 +1,16 @@
-package subprocessors
+package dnsutils
 
 import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"hash/fnv"
 	"strconv"
 	"strings"
-	"time"
-
-	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-logger"
-	"github.com/miekg/dns"
 )
 
 const DnsLen = 12
 
 var (
-	DnsFlags = map[string]string{
-		"Query Response":       "QR",
-		"Authoritative Answer": "AA",
-		"Truncated Response":   "TT",
-		"Recursion Desired":    "RD",
-		"Recursion Avaible":    "RA",
-		"Authentic Data":       "AD",
-		"Checking Disabled":    "CD",
-	}
-
 	Rdatatypes = map[int]string{
 		0:     "NONE",
 		1:     "A",
@@ -135,259 +119,6 @@ var ErrDecodeDnsLabelTooShort = errors.New("malformed pkt, dns payload too short
 var ErrDecodeQuestionQtypeTooShort = errors.New("malformed pkt, not enough data to decode qtype")
 var ErrDecodeDnsAnswerTooShort = errors.New("malformed pkt, not enough data to decode answer")
 var ErrDecodeDnsAnswerRdataTooShort = errors.New("malformed pkt, not enough data to decode rdata answer")
-var ErrDecodeEDNSBadRootDomain = errors.New("edns, name MUST be 0 (root domain)")
-var ErrDecodeEdnsDataTooShort = errors.New("edns, not enough data to decode rdata answer")
-
-func GetFakeDns() ([]byte, error) {
-	dnsmsg := new(dns.Msg)
-	dnsmsg.SetQuestion("dns.collector.", dns.TypeA)
-	return dnsmsg.Pack()
-}
-
-type DnsProcessor struct {
-	done     chan bool
-	recvFrom chan dnsutils.DnsMessage
-	logger   *logger.Logger
-	config   *dnsutils.Config
-}
-
-func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger) DnsProcessor {
-	logger.Info("processor dns - initialization...")
-	d := DnsProcessor{
-		done:     make(chan bool),
-		recvFrom: make(chan dnsutils.DnsMessage, 512),
-		logger:   logger,
-		config:   config,
-	}
-
-	d.ReadConfig()
-
-	return d
-}
-
-func (d *DnsProcessor) ReadConfig() {
-	// todo - checking settings
-}
-
-func (c *DnsProcessor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("processor dns - "+msg, v...)
-}
-
-func (c *DnsProcessor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("procesor dns - "+msg, v...)
-}
-
-func (d *DnsProcessor) GetChannel() chan dnsutils.DnsMessage {
-	return d.recvFrom
-}
-
-func (d *DnsProcessor) GetChannelList() []chan dnsutils.DnsMessage {
-	channel := []chan dnsutils.DnsMessage{}
-	channel = append(channel, d.recvFrom)
-	return channel
-}
-
-func (d *DnsProcessor) Stop() {
-	close(d.recvFrom)
-
-	// read done channel and block until run is terminated
-	<-d.done
-	close(d.done)
-}
-
-func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
-
-	// dns cache to compute latency between response and query
-	cache_ttl := NewCacheDnsProcessor(time.Duration(d.config.Subprocessors.Cache.QueryTimeout) * time.Second)
-
-	// geoip
-	geoip := NewDnsGeoIpProcessor(d.config, d.logger)
-	if err := geoip.Open(); err != nil {
-		d.LogError("geoip init failed: %v+", err)
-	}
-	if geoip.IsEnabled() {
-		d.LogInfo("geoip is enabled")
-	}
-	defer geoip.Close()
-
-	// filtering
-	filtering := NewFilteringProcessor(d.config, d.logger)
-
-	// user privacy
-	ipPrivacy := NewIpAnonymizerSubprocessor(d.config)
-	qnamePrivacy := NewQnameReducerSubprocessor(d.config)
-
-	// read incoming dns message
-	d.LogInfo("running... waiting incoming dns message")
-	for dm := range d.recvFrom {
-		// compute timestamp
-		dm.Timestamp = float64(dm.TimeSec) + float64(dm.TimeNsec)/1e9
-		ts := time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec))
-		dm.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
-
-		// decode the dns payload
-		dnsHeader, err := DecodeDns(dm.DnsPayload.Payload)
-		if err != nil {
-			dm.DnsPayload.MalformedPacket = 1
-			d.LogInfo("dns parser malformed packet: %s - %v+", err, dm)
-			//continue
-		}
-
-		// dns reply ?
-		if dnsHeader.qr == 1 {
-			dm.DnsPayload.Operation = "CLIENT_RESPONSE"
-			dm.DnsPayload.Type = dnsutils.DnsReply
-			qip := dm.NetworkInfo.QueryIp
-			qport := dm.NetworkInfo.QueryPort
-			dm.NetworkInfo.QueryIp = dm.NetworkInfo.ResponseIp
-			dm.NetworkInfo.QueryPort = dm.NetworkInfo.ResponsePort
-			dm.NetworkInfo.ResponseIp = qip
-			dm.NetworkInfo.ResponsePort = qport
-		} else {
-			dm.DnsPayload.Type = dnsutils.DnsQuery
-			dm.DnsPayload.Operation = "CLIENT_QUERY"
-		}
-
-		dm.DnsPayload.Id = dnsHeader.id
-		dm.DnsPayload.Rcode = RcodeToString(dnsHeader.rcode)
-
-		if dnsHeader.qr == 1 {
-			dm.DnsPayload.Flags.QR = true
-		}
-		if dnsHeader.tc == 1 {
-			dm.DnsPayload.Flags.TC = true
-		}
-		if dnsHeader.aa == 1 {
-			dm.DnsPayload.Flags.AA = true
-		}
-		if dnsHeader.ra == 1 {
-			dm.DnsPayload.Flags.RA = true
-		}
-		if dnsHeader.ad == 1 {
-			dm.DnsPayload.Flags.AD = true
-		}
-
-		// continue to decode the dns payload to extract the qname and rrtype
-		var dns_offsetrr int
-		if dnsHeader.qdcount > 0 && dm.DnsPayload.MalformedPacket == 0 {
-			dns_qname, dns_rrtype, offsetrr, err := DecodeQuestion(dm.DnsPayload.Payload)
-			if err != nil {
-				dm.DnsPayload.MalformedPacket = 1
-				d.LogInfo("dns parser malformed question: %s - %v+", err, dm)
-				// discard this packet
-				//continue
-			}
-			if d.config.Subprocessors.QnameLowerCase {
-				dm.DnsPayload.Qname = strings.ToLower(dns_qname)
-			} else {
-				dm.DnsPayload.Qname = dns_qname
-			}
-			dm.DnsPayload.Qtype = RdatatypeToString(dns_rrtype)
-			dns_offsetrr = offsetrr
-		}
-
-		// decode dns answers except if the packet is malformed
-		if dnsHeader.ancount > 0 && dm.DnsPayload.MalformedPacket == 0 {
-			var offsetrr int
-			dm.DnsPayload.DnsRRs.Answers, offsetrr, err = DecodeAnswer(dnsHeader.ancount, dns_offsetrr, dm.DnsPayload.Payload)
-			if err != nil {
-				dm.DnsPayload.MalformedPacket = 1
-				d.LogInfo("dns parser malformed answer: %s - %v+", err, dm)
-			}
-			dns_offsetrr = offsetrr
-		}
-
-		//  decode authoritative answers except if the packet is malformed
-		if dnsHeader.nscount > 0 && dm.DnsPayload.MalformedPacket == 0 {
-			var offsetrr int
-			dm.DnsPayload.DnsRRs.Nameservers, offsetrr, err = DecodeAnswer(dnsHeader.nscount, dns_offsetrr, dm.DnsPayload.Payload)
-			if err != nil {
-				dm.DnsPayload.MalformedPacket = 1
-				d.LogInfo("dns parser malformed nameservers answers: %s", err)
-			}
-			dns_offsetrr = offsetrr
-		}
-
-		//  decode additional answer except if the packet is malformed
-		if dnsHeader.arcount > 0 && dm.DnsPayload.MalformedPacket == 0 {
-			// decode answers
-			dm.DnsPayload.DnsRRs.Records, _, err = DecodeAnswer(dnsHeader.arcount, dns_offsetrr, dm.DnsPayload.Payload)
-			if err != nil {
-				dm.DnsPayload.MalformedPacket = 1
-				d.LogInfo("dns parser malformed additional answers: %s", err)
-			}
-		}
-
-		// decode edns options ?
-		if dnsHeader.arcount > 0 && dm.DnsPayload.MalformedPacket == 0 {
-			dm.DnsExtended, _, err = DecodeEDNS(dnsHeader.arcount, dns_offsetrr, dm.DnsPayload.Payload)
-			if err != nil {
-				dm.DnsPayload.MalformedPacket = 1
-				d.LogInfo("dns parser malformed edns: %s", err)
-			}
-		}
-
-		// compute latency if possible
-		if d.config.Subprocessors.Cache.Enable {
-			queryport, _ := strconv.Atoi(dm.NetworkInfo.QueryPort)
-			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && dm.DnsPayload.MalformedPacket == 0 {
-				// compute the hash of the query
-				hash_data := []string{dm.NetworkInfo.QueryIp, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.DnsPayload.Id)}
-
-				hashfnv := fnv.New64a()
-				hashfnv.Write([]byte(strings.Join(hash_data[:], "+")))
-
-				if dm.DnsPayload.Type == dnsutils.DnsQuery {
-					cache_ttl.Set(hashfnv.Sum64(), dm.Timestamp)
-				} else {
-					value, ok := cache_ttl.Get(hashfnv.Sum64())
-					if ok {
-						dm.DnsPayload.Latency = dm.Timestamp - value
-					}
-				}
-			}
-		}
-
-		// convert latency to human
-		dm.DnsPayload.LatencySec = fmt.Sprintf("%.6f", dm.DnsPayload.Latency)
-
-		// qname privacy
-		if qnamePrivacy.IsEnabled() {
-			dm.DnsPayload.Qname = qnamePrivacy.Minimaze(dm.DnsPayload.Qname)
-		}
-
-		// filtering
-		if filtering.CheckIfDrop(&dm) {
-			continue
-		}
-
-		// geoip feature ?
-		if geoip.IsEnabled() {
-			geoInfo, err := geoip.Lookup(dm.NetworkInfo.QueryIp)
-			if err != nil {
-				d.LogError("geoip loopkup failed: %v+", err)
-			}
-			dm.Geo.Continent = geoInfo.Continent
-			dm.Geo.CountryIsoCode = geoInfo.CountryISOCode
-			dm.Geo.City = geoInfo.City
-			dm.NetworkInfo.AutonomousSystemNumber = geoInfo.ASN
-			dm.NetworkInfo.AutonomousSystemOrg = geoInfo.ASO
-		}
-
-		// ip anonymisation ?
-		if ipPrivacy.IsEnabled() {
-			dm.NetworkInfo.QueryIp = ipPrivacy.Anonymize(dm.NetworkInfo.QueryIp)
-		}
-
-		// dispatch dns message to all generators
-		for i := range sendTo {
-			sendTo[i] <- dm
-		}
-	}
-
-	// dnstap channel consumer closed
-	d.done <- true
-}
 
 func RdatatypeToString(rrtype int) string {
 	if value, ok := Rdatatypes[rrtype]; ok {
@@ -404,21 +135,21 @@ func RcodeToString(rcode int) string {
 }
 
 type DnsHeader struct {
-	id      int
-	qr      int
-	opcode  int
-	aa      int
-	tc      int
-	rd      int
-	ra      int
-	z       int
-	ad      int
-	cd      int
-	rcode   int
-	qdcount int
-	ancount int
-	nscount int
-	arcount int
+	Id      int
+	Qr      int
+	Opcode  int
+	Aa      int
+	Tc      int
+	Rd      int
+	Ra      int
+	Z       int
+	Ad      int
+	Cd      int
+	Rcode   int
+	Qdcount int
+	Ancount int
+	Nscount int
+	Arcount int
 }
 
 /*
@@ -448,25 +179,25 @@ func DecodeDns(payload []byte) (DnsHeader, error) {
 		return dh, ErrDecodeDnsHeaderTooShort
 	}
 	// decode ID
-	dh.id = int(binary.BigEndian.Uint16(payload[:2]))
+	dh.Id = int(binary.BigEndian.Uint16(payload[:2]))
 
 	// decode flags
-	dh.qr = int(binary.BigEndian.Uint16(payload[2:4]) >> 0xF)
-	dh.opcode = int((binary.BigEndian.Uint16(payload[2:4]) >> (3 + 0x8)) & 0xF)
-	dh.aa = int((binary.BigEndian.Uint16(payload[2:4]) >> (2 + 0x8)) & 1)
-	dh.tc = int((binary.BigEndian.Uint16(payload[2:4]) >> (1 + 0x8)) & 1)
-	dh.rd = int((binary.BigEndian.Uint16(payload[2:4]) >> (0x8)) & 1)
-	dh.cd = int((binary.BigEndian.Uint16(payload[2:4]) >> 4) & 1)
-	dh.ad = int((binary.BigEndian.Uint16(payload[2:4]) >> 5) & 1)
-	dh.z = int((binary.BigEndian.Uint16(payload[2:4]) >> 6) & 1)
-	dh.ra = int((binary.BigEndian.Uint16(payload[2:4]) >> 7) & 1)
-	dh.rcode = int(binary.BigEndian.Uint16(payload[2:4]) & 0xF)
+	dh.Qr = int(binary.BigEndian.Uint16(payload[2:4]) >> 0xF)
+	dh.Opcode = int((binary.BigEndian.Uint16(payload[2:4]) >> (3 + 0x8)) & 0xF)
+	dh.Aa = int((binary.BigEndian.Uint16(payload[2:4]) >> (2 + 0x8)) & 1)
+	dh.Tc = int((binary.BigEndian.Uint16(payload[2:4]) >> (1 + 0x8)) & 1)
+	dh.Rd = int((binary.BigEndian.Uint16(payload[2:4]) >> (0x8)) & 1)
+	dh.Cd = int((binary.BigEndian.Uint16(payload[2:4]) >> 4) & 1)
+	dh.Ad = int((binary.BigEndian.Uint16(payload[2:4]) >> 5) & 1)
+	dh.Z = int((binary.BigEndian.Uint16(payload[2:4]) >> 6) & 1)
+	dh.Ra = int((binary.BigEndian.Uint16(payload[2:4]) >> 7) & 1)
+	dh.Rcode = int(binary.BigEndian.Uint16(payload[2:4]) & 0xF)
 
 	// decode counters
-	dh.qdcount = int(binary.BigEndian.Uint16(payload[4:6]))
-	dh.ancount = int(binary.BigEndian.Uint16(payload[6:8]))
-	dh.nscount = int(binary.BigEndian.Uint16(payload[8:10]))
-	dh.arcount = int(binary.BigEndian.Uint16(payload[10:12]))
+	dh.Qdcount = int(binary.BigEndian.Uint16(payload[4:6]))
+	dh.Ancount = int(binary.BigEndian.Uint16(payload[6:8]))
+	dh.Nscount = int(binary.BigEndian.Uint16(payload[8:10]))
+	dh.Arcount = int(binary.BigEndian.Uint16(payload[10:12]))
 
 	return dh, nil
 }
@@ -534,9 +265,9 @@ func DecodeQuestion(payload []byte) (string, int, int, error) {
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 
-func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.DnsAnswer, int, error) {
+func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]DnsAnswer, int, error) {
 	offset := start_offset
-	answers := []dnsutils.DnsAnswer{}
+	answers := []DnsAnswer{}
 
 	for i := 0; i < ancount; i++ {
 		// Decode NAME
@@ -577,7 +308,7 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.Dns
 		}
 
 		// finnally append answer to the list
-		a := dnsutils.DnsAnswer{
+		a := DnsAnswer{
 			Name:      name,
 			Rdatatype: rdatatype,
 			Class:     int(class),
@@ -590,67 +321,6 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]dnsutils.Dns
 		offset = offset_next + 10 + int(rdlength)
 	}
 	return answers, offset, nil
-}
-
-func DecodeEDNS(arcount int, start_offset int, payload []byte) (dnsutils.DnsExtended, int, error) {
-	offset := start_offset
-	edns := dnsutils.DnsExtended{}
-
-	for i := 0; i < arcount; i++ {
-		// Decode NAME
-		name, offset_next, err := ParseLabels(offset, payload)
-		if err != nil {
-			return edns, offset, err
-		}
-		// before to continue, check we have enough data
-		if len(payload[offset_next:]) < 10 {
-			return edns, offset, ErrDecodeDnsAnswerTooShort
-		}
-		// decode TYPE, take in account only OPT option
-		t := binary.BigEndian.Uint16(payload[offset_next : offset_next+2])
-		if t == 41 {
-			// checking domain name, MUST be 0 (root domain)
-			if len(name) > 0 {
-				return edns, offset, ErrDecodeEDNSBadRootDomain
-			}
-
-			// decode udp payload size
-			edns.UdpSize = int(binary.BigEndian.Uint16(payload[offset_next+2 : offset_next+4]))
-
-			/* decode extended rcode and flags
-			    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-			0:  |         EXTENDED-RCODE        |            VERSION            |
-			    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-			2:  | DO|                           Z                               |
-			    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+ */
-			// Extended rcode is equal to the upper 8 bits
-			edns.ExtendedRcode = int(binary.BigEndian.Uint32(payload[offset_next+4:offset_next+8])&0xFF000000>>24) << 4
-			edns.Version = int(binary.BigEndian.Uint32(payload[offset_next+4:offset_next+8]) & 0x00FF0000 >> 16)
-			edns.Do = int(binary.BigEndian.Uint32(payload[offset_next+4:offset_next+8]) & 0x00008000 >> 0xF)
-			edns.Z = int(binary.BigEndian.Uint32(payload[offset_next+4:offset_next+8]) & 0x7FFF)
-
-			// decode RDLENGTH
-			rdlength := binary.BigEndian.Uint16(payload[offset_next+8 : offset_next+10])
-			if len(payload[offset_next+10:]) < int(rdlength) {
-				return edns, offset, ErrDecodeEdnsDataTooShort
-			}
-
-			/* now we can decode all options, pairs of attribute/values
-			                +0 (MSB)                            +1 (LSB)
-			   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-			0: |                          OPTION-CODE                          |
-			   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-			2: |                         OPTION-LENGTH                         |
-			   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-			4: |                                                               |
-			   /                          OPTION-DATA                          /
-			   /                                                               /
-			   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+ */
-
-		}
-		fmt.Println(edns)
-	}
-	return edns, offset, nil
 }
 
 func ParseLabels(offset int, payload []byte) (string, int, error) {

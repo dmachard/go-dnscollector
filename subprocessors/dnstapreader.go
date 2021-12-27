@@ -157,7 +157,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.Identity = string(identity)
 		}
 
-		dm.DnsPayload.Operation = dt.GetMessage().GetType().String()
+		dm.DNS.Operation = dt.GetMessage().GetType().String()
 		dm.NetworkInfo.Family = dt.GetMessage().GetSocketFamily().String()
 		dm.NetworkInfo.Protocol = dt.GetMessage().GetSocketProtocol().String()
 
@@ -182,19 +182,19 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		// get dns payload and timestamp according to the type (query or response)
-		op := dnstap.Message_Type_value[dm.DnsPayload.Operation]
+		op := dnstap.Message_Type_value[dm.DNS.Operation]
 		if op%2 == 1 {
 			dns_payload := dt.GetMessage().GetQueryMessage()
-			dm.DnsPayload.Payload = dns_payload
-			dm.DnsPayload.Length = len(dns_payload)
-			dm.DnsPayload.Type = dnsutils.DnsQuery
+			dm.DNS.Payload = dns_payload
+			dm.DNS.Length = len(dns_payload)
+			dm.DNS.Type = dnsutils.DnsQuery
 			dm.TimeSec = int(dt.GetMessage().GetQueryTimeSec())
 			dm.TimeNsec = int(dt.GetMessage().GetQueryTimeNsec())
 		} else {
 			dns_payload := dt.GetMessage().GetResponseMessage()
-			dm.DnsPayload.Payload = dns_payload
-			dm.DnsPayload.Length = len(dns_payload)
-			dm.DnsPayload.Type = dnsutils.DnsReply
+			dm.DNS.Payload = dns_payload
+			dm.DNS.Length = len(dns_payload)
+			dm.DNS.Type = dnsutils.DnsReply
 			dm.TimeSec = int(dt.GetMessage().GetResponseTimeSec())
 			dm.TimeNsec = int(dt.GetMessage().GetResponseTimeNsec())
 		}
@@ -206,117 +206,117 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// decode the dns payload to get id, rcode and the number of question
 		// number of answer, ignore invalid packet
-		dnsHeader, err := DecodeDns(dm.DnsPayload.Payload)
+		dnsHeader, err := dnsutils.DecodeDns(dm.DNS.Payload)
 		if err != nil {
 			// parser error
-			dm.DnsPayload.MalformedPacket = 1
+			dm.DNS.MalformedPacket = 1
 			d.LogInfo("dns parser malformed packet: %s", err)
 			//continue
 		}
 
-		dm.DnsPayload.Id = dnsHeader.id
-		dm.DnsPayload.Rcode = RcodeToString(dnsHeader.rcode)
+		dm.DNS.Id = dnsHeader.Id
+		dm.DNS.Rcode = dnsutils.RcodeToString(dnsHeader.Rcode)
 
-		if dnsHeader.qr == 1 {
-			dm.DnsPayload.Flags.QR = true
+		if dnsHeader.Qr == 1 {
+			dm.DNS.Flags.QR = true
 		}
-		if dnsHeader.tc == 1 {
-			dm.DnsPayload.Flags.TC = true
+		if dnsHeader.Tc == 1 {
+			dm.DNS.Flags.TC = true
 		}
-		if dnsHeader.aa == 1 {
-			dm.DnsPayload.Flags.AA = true
+		if dnsHeader.Aa == 1 {
+			dm.DNS.Flags.AA = true
 		}
-		if dnsHeader.ra == 1 {
-			dm.DnsPayload.Flags.RA = true
+		if dnsHeader.Ra == 1 {
+			dm.DNS.Flags.RA = true
 		}
-		if dnsHeader.ad == 1 {
-			dm.DnsPayload.Flags.AD = true
+		if dnsHeader.Ad == 1 {
+			dm.DNS.Flags.AD = true
 		}
 
 		// continue to decode the dns payload to extract the qname and rrtype
 		var dns_offsetrr int
-		if dnsHeader.qdcount > 0 && dm.DnsPayload.MalformedPacket == 0 {
-			dns_qname, dns_rrtype, offsetrr, err := DecodeQuestion(dm.DnsPayload.Payload)
+		if dnsHeader.Qdcount > 0 && dm.DNS.MalformedPacket == 0 {
+			dns_qname, dns_rrtype, offsetrr, err := dnsutils.DecodeQuestion(dm.DNS.Payload)
 			if err != nil {
-				dm.DnsPayload.MalformedPacket = 1
+				dm.DNS.MalformedPacket = 1
 				d.LogInfo("dns parser malformed question: %s", err)
 				//continue
 			}
 			if d.config.Subprocessors.QnameLowerCase {
-				dm.DnsPayload.Qname = strings.ToLower(dns_qname)
+				dm.DNS.Qname = strings.ToLower(dns_qname)
 			} else {
-				dm.DnsPayload.Qname = dns_qname
+				dm.DNS.Qname = dns_qname
 			}
-			dm.DnsPayload.Qtype = RdatatypeToString(dns_rrtype)
+			dm.DNS.Qtype = dnsutils.RdatatypeToString(dns_rrtype)
 			dns_offsetrr = offsetrr
 		}
 
 		//  decode answers except if the packet is malformed
-		if dnsHeader.ancount > 0 && dm.DnsPayload.MalformedPacket == 0 {
+		if dnsHeader.Ancount > 0 && dm.DNS.MalformedPacket == 0 {
 			var offsetrr int
-			dm.DnsPayload.DnsRRs.Answers, offsetrr, err = DecodeAnswer(dnsHeader.ancount, dns_offsetrr, dm.DnsPayload.Payload)
+			dm.DNS.DnsRRs.Answers, offsetrr, err = dnsutils.DecodeAnswer(dnsHeader.Ancount, dns_offsetrr, dm.DNS.Payload)
 			if err != nil {
-				dm.DnsPayload.MalformedPacket = 1
+				dm.DNS.MalformedPacket = 1
 				d.LogInfo("dns parser malformed answers: %s", err)
 			}
 			dns_offsetrr = offsetrr
 		}
 
 		//  decode authoritative answers except if the packet is malformed
-		if dnsHeader.nscount > 0 && dm.DnsPayload.MalformedPacket == 0 {
+		if dnsHeader.Nscount > 0 && dm.DNS.MalformedPacket == 0 {
 			var offsetrr int
-			dm.DnsPayload.DnsRRs.Nameservers, offsetrr, err = DecodeAnswer(dnsHeader.nscount, dns_offsetrr, dm.DnsPayload.Payload)
+			dm.DNS.DnsRRs.Nameservers, offsetrr, err = dnsutils.DecodeAnswer(dnsHeader.Nscount, dns_offsetrr, dm.DNS.Payload)
 			if err != nil {
-				dm.DnsPayload.MalformedPacket = 1
+				dm.DNS.MalformedPacket = 1
 				d.LogInfo("dns parser malformed nameservers answers: %s", err)
 			}
 			dns_offsetrr = offsetrr
 		}
 
 		//  decode additional answers ?
-		if dnsHeader.arcount > 0 && dm.DnsPayload.MalformedPacket == 0 {
-			dm.DnsPayload.DnsRRs.Records, _, err = DecodeAnswer(dnsHeader.arcount, dns_offsetrr, dm.DnsPayload.Payload)
+		if dnsHeader.Arcount > 0 && dm.DNS.MalformedPacket == 0 {
+			dm.DNS.DnsRRs.Records, _, err = dnsutils.DecodeAnswer(dnsHeader.Arcount, dns_offsetrr, dm.DNS.Payload)
 			if err != nil {
-				dm.DnsPayload.MalformedPacket = 1
+				dm.DNS.MalformedPacket = 1
 				d.LogInfo("dns parser malformed additional answers: %s", err)
 			}
 		}
 
 		// decode edns options ?
-		if dnsHeader.arcount > 0 && dm.DnsPayload.MalformedPacket == 0 {
-			dm.DnsExtended, _, err = DecodeEDNS(dnsHeader.arcount, dns_offsetrr, dm.DnsPayload.Payload)
+		if dnsHeader.Arcount > 0 && dm.DNS.MalformedPacket == 0 {
+			dm.EDNS, _, err = dnsutils.DecodeEDNS(dnsHeader.Arcount, dns_offsetrr, dm.DNS.Payload)
 			if err != nil {
-				dm.DnsPayload.MalformedPacket = 1
+				dm.DNS.MalformedPacket = 1
 				d.LogInfo("dns parser malformed edns: %s", err)
 			}
 		}
 
 		// compute latency if possible
 		if d.config.Subprocessors.Cache.Enable {
-			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && dm.DnsPayload.MalformedPacket == 0 {
+			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && dm.DNS.MalformedPacket == 0 {
 				// compute the hash of the query
-				hash_data := []string{dm.NetworkInfo.QueryIp, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.DnsPayload.Id)}
+				hash_data := []string{dm.NetworkInfo.QueryIp, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.DNS.Id)}
 
 				hashfnv := fnv.New64a()
 				hashfnv.Write([]byte(strings.Join(hash_data[:], "+")))
 
-				if dm.DnsPayload.Type == dnsutils.DnsQuery {
+				if dm.DNS.Type == dnsutils.DnsQuery {
 					cache_ttl.Set(hashfnv.Sum64(), dm.Timestamp)
 				} else {
 					value, ok := cache_ttl.Get(hashfnv.Sum64())
 					if ok {
-						dm.DnsPayload.Latency = dm.Timestamp - value
+						dm.DNS.Latency = dm.Timestamp - value
 					}
 				}
 			}
 		}
 
 		// convert latency to human
-		dm.DnsPayload.LatencySec = fmt.Sprintf("%.6f", dm.DnsPayload.Latency)
+		dm.DNS.LatencySec = fmt.Sprintf("%.6f", dm.DNS.Latency)
 
 		// qname privacy
 		if qnamePrivacy.IsEnabled() {
-			dm.DnsPayload.Qname = qnamePrivacy.Minimaze(dm.DnsPayload.Qname)
+			dm.DNS.Qname = qnamePrivacy.Minimaze(dm.DNS.Qname)
 		}
 
 		// filtering
@@ -344,13 +344,13 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// quiet text for dnstap operation ?
 		if d.config.Subprocessors.QuietText.Dnstap {
-			if v, found := DnstapMessage[dm.DnsPayload.Operation]; found {
-				dm.DnsPayload.Operation = v
+			if v, found := DnstapMessage[dm.DNS.Operation]; found {
+				dm.DNS.Operation = v
 			}
 		}
 		if d.config.Subprocessors.QuietText.Dns {
-			if v, found := DnsQr[dm.DnsPayload.Type]; found {
-				dm.DnsPayload.Type = v
+			if v, found := DnsQr[dm.DNS.Type]; found {
+				dm.DNS.Type = v
 			}
 		}
 

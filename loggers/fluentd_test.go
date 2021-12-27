@@ -47,7 +47,7 @@ func TestFluentClientdRun(t *testing.T) {
 	if err != nil {
 		t.Errorf("error to unpack msgpack: %s", err)
 	}
-	if dm.DnsPayload.Qname != dmRcv.DnsPayload.Qname {
-		t.Errorf("qname error want %s, got %s", dm.DnsPayload.Qname, dmRcv.DnsPayload.Qname)
+	if dm.DNS.Qname != dmRcv.DNS.Qname {
+		t.Errorf("qname error want %s, got %s", dm.DNS.Qname, dmRcv.DNS.Qname)
 	}
 }
