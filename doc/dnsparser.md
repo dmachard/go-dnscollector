@@ -16,5 +16,5 @@ The following Rdatatypes will be decoded, otherwise the `-` value will be used:
 - SOA
 
 Extended DNS is also supported. The following option is decoded:
-- EDNS0 ERRORS
+- EDNS ERRORS
 - EDNS CSUBNET
