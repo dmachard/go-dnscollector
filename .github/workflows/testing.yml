@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.16', '1.17']
+        go-version: ['1.17']
         package: ['dnsutils', 'collectors', 'loggers', 'subprocessors']
 
     steps:
@@ -36,7 +36,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.16', '1.17']
+        go-version: ['1.17']
         package: ['config', 'clientquery_dnstaptcp', 'clientquery_dnstapunix' ]
 
     steps:
@@ -60,7 +60,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.16', '1.17']
+        go-version: ['1.17']
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
@@ -87,7 +87,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.16', '1.17']
+        go-version: [ '1.17']
         coredns: [ '1.8.5', '1.8.6' ]
         mode: [ 'tcp', 'unix' ]
 
@@ -120,7 +120,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.16', '1.17']
+        go-version: ['1.17']
         dnsdist: [ '16', '17' ]
         mode: [ 'tcp', 'unix' ]
 

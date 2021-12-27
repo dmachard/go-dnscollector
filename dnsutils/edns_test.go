@@ -20,7 +20,6 @@ func TestDecodeQuery_EDNS(t *testing.T) {
 	e.SetDo()
 	e.SetVersion(2)
 	e.SetZ(23)
-	fmt.Println(e)
 
 	dm.Extra = append(dm.Extra, e)
 
