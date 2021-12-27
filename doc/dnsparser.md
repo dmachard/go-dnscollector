@@ -14,3 +14,7 @@ The following Rdatatypes will be decoded, otherwise the `-` value will be used:
 - TXT
 - PTR
 - SOA
+
+Extended DNS is also supported. The following option is decoded:
+- EDNS0 ERRORS
+- EDNS CSUBNET
