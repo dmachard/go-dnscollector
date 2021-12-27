@@ -1,7 +1,7 @@
 # If turned on, log some applications messages
 trace:
   # debug informations
-  verbose: false
+  verbose: true
   # filename is the file to write logs to.
   filename: ""
   # maximum size in megabytes of the log file it gets rotated
@@ -179,6 +179,7 @@ subprocessors:
   # - aa: authoritative answer
   # - ra: recursion available
   # - ad: authenticated data
+  # - edns-csubnet: client subnet
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 # list of loggers
@@ -189,7 +190,7 @@ loggers:
     # to enable, set the enable to true
     enable: true
     # output format: text|json
-    mode: json
+    mode: text
     # output text format, please refer to the default text format to see all available directives 
     # use this parameter if you want a specific format
     text-format: ""

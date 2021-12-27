@@ -339,6 +339,7 @@ All available directives:
 - `aa`: flag authoritative answer
 - `ra`: flag recursion available
 - `ad`: flag authenticated data
+- `edns-csubnet`: display client subnet info
 
 ```yaml
 subprocessors:

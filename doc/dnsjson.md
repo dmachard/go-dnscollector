@@ -45,6 +45,24 @@ Format:
     "malformed-packet": 0,
     "latency": "0.013856"
   },
+  "edns": {
+    "udp-size": 512,
+    "rcode": 0,
+    "version": 0,
+    "dnssec-ok": 0,
+    "options": [
+      {
+        "code": 15,
+        "name": "ERRORS",
+        "data": "49152 - Provided ECS includes 32 bits, but no more than 24 are allowed."
+      },
+      {
+        "code": 8,
+        "name": "CSUBNET",
+        "data": "192.168.0.0/32"
+      }
+    ]
+  },
   "identity": "dnsdist1",
   "timestamp-rfc3339ns": "2021-12-24T12:23:45.221327147Z",
   "geo": {

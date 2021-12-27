@@ -134,6 +134,17 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 			} else {
 				s.WriteString("-")
 			}
+		case "edns-csubnet":
+			if len(dm.EDNS.Options) > 0 {
+				for _, opt := range dm.EDNS.Options {
+					if opt.Name == "CSUBNET" {
+						s.WriteString(opt.Data)
+						break
+					}
+				}
+			} else {
+				s.WriteString("-")
+			}
 		case "answercount":
 			s.WriteString(strconv.Itoa(len(dm.DNS.DnsRRs.Answers)))
 		case "id":
