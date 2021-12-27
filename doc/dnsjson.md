@@ -18,7 +18,6 @@ Format:
     "as-owner": "-"
   },
   "dns": {
-    "operation": "CLIENT_RESPONSE",
     "length": 51,
     "rcode": "NOERROR",
     "qname": "eu.org",
@@ -43,7 +42,6 @@ Format:
       "ar": []
     },
     "malformed-packet": 0,
-    "latency": "0.013856"
   },
   "edns": {
     "udp-size": 512,
@@ -63,8 +61,12 @@ Format:
       }
     ]
   },
-  "identity": "dnsdist1",
-  "timestamp-rfc3339ns": "2021-12-24T12:23:45.221327147Z",
+  "dnstap": {
+    "operation": "CLIENT_RESPONSE",
+    "identity": "dnsdist1",
+    "timestamp-rfc3339ns": "2021-12-27T14:33:44.559002118Z",
+    "latency": "0.014617"
+  },
   "geo": {
     "city": "-",
     "continent": "-",

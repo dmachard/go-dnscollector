@@ -135,11 +135,11 @@ LOOP:
 							dt.Version = []byte("-")
 							dt.Type = &t
 
-							mt := dnstap.Message_Type(dnstap.Message_Type_value[dm.DNS.Operation])
+							mt := dnstap.Message_Type(dnstap.Message_Type_value[dm.DnsTap.Operation])
 							sf := dnstap.SocketFamily(dnstap.SocketFamily_value[dm.NetworkInfo.Family])
 							sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.NetworkInfo.Protocol])
-							tsec := uint64(dm.TimeSec)
-							tnsec := uint32(dm.TimeNsec)
+							tsec := uint64(dm.DnsTap.TimeSec)
+							tnsec := uint32(dm.DnsTap.TimeNsec)
 							rportint, err := strconv.Atoi(dm.NetworkInfo.ResponsePort)
 							if err != nil {
 								o.LogError("error to encode dnstap response port %s", err)

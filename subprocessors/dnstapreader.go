@@ -154,10 +154,10 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		identity := dt.GetIdentity()
 		if len(identity) > 0 {
-			dm.Identity = string(identity)
+			dm.DnsTap.Identity = string(identity)
 		}
 
-		dm.DNS.Operation = dt.GetMessage().GetType().String()
+		dm.DnsTap.Operation = dt.GetMessage().GetType().String()
 		dm.NetworkInfo.Family = dt.GetMessage().GetSocketFamily().String()
 		dm.NetworkInfo.Protocol = dt.GetMessage().GetSocketProtocol().String()
 
@@ -182,27 +182,27 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		// get dns payload and timestamp according to the type (query or response)
-		op := dnstap.Message_Type_value[dm.DNS.Operation]
+		op := dnstap.Message_Type_value[dm.DnsTap.Operation]
 		if op%2 == 1 {
 			dns_payload := dt.GetMessage().GetQueryMessage()
 			dm.DNS.Payload = dns_payload
 			dm.DNS.Length = len(dns_payload)
 			dm.DNS.Type = dnsutils.DnsQuery
-			dm.TimeSec = int(dt.GetMessage().GetQueryTimeSec())
-			dm.TimeNsec = int(dt.GetMessage().GetQueryTimeNsec())
+			dm.DnsTap.TimeSec = int(dt.GetMessage().GetQueryTimeSec())
+			dm.DnsTap.TimeNsec = int(dt.GetMessage().GetQueryTimeNsec())
 		} else {
 			dns_payload := dt.GetMessage().GetResponseMessage()
 			dm.DNS.Payload = dns_payload
 			dm.DNS.Length = len(dns_payload)
 			dm.DNS.Type = dnsutils.DnsReply
-			dm.TimeSec = int(dt.GetMessage().GetResponseTimeSec())
-			dm.TimeNsec = int(dt.GetMessage().GetResponseTimeNsec())
+			dm.DnsTap.TimeSec = int(dt.GetMessage().GetResponseTimeSec())
+			dm.DnsTap.TimeNsec = int(dt.GetMessage().GetResponseTimeNsec())
 		}
 
 		// compute timestamp
-		dm.Timestamp = float64(dm.TimeSec) + float64(dm.TimeNsec)/1e9
-		ts := time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec))
-		dm.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
+		dm.DnsTap.Timestamp = float64(dm.DnsTap.TimeSec) + float64(dm.DnsTap.TimeNsec)/1e9
+		ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
+		dm.DnsTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
 		// decode the dns payload to get id, rcode and the number of question
 		// number of answer, ignore invalid packet
@@ -301,18 +301,18 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 				hashfnv.Write([]byte(strings.Join(hash_data[:], "+")))
 
 				if dm.DNS.Type == dnsutils.DnsQuery {
-					cache_ttl.Set(hashfnv.Sum64(), dm.Timestamp)
+					cache_ttl.Set(hashfnv.Sum64(), dm.DnsTap.Timestamp)
 				} else {
 					value, ok := cache_ttl.Get(hashfnv.Sum64())
 					if ok {
-						dm.DNS.Latency = dm.Timestamp - value
+						dm.DnsTap.Latency = dm.DnsTap.Timestamp - value
 					}
 				}
 			}
 		}
 
 		// convert latency to human
-		dm.DNS.LatencySec = fmt.Sprintf("%.6f", dm.DNS.Latency)
+		dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
 
 		// qname privacy
 		if qnamePrivacy.IsEnabled() {
@@ -344,8 +344,8 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// quiet text for dnstap operation ?
 		if d.config.Subprocessors.QuietText.Dnstap {
-			if v, found := DnstapMessage[dm.DNS.Operation]; found {
-				dm.DNS.Operation = v
+			if v, found := DnstapMessage[dm.DnsTap.Operation]; found {
+				dm.DnsTap.Operation = v
 			}
 		}
 		if d.config.Subprocessors.QuietText.Dns {

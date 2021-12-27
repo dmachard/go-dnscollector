@@ -95,9 +95,9 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	d.LogInfo("running... waiting incoming dns message")
 	for dm := range d.recvFrom {
 		// compute timestamp
-		dm.Timestamp = float64(dm.TimeSec) + float64(dm.TimeNsec)/1e9
-		ts := time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec))
-		dm.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
+		dm.DnsTap.Timestamp = float64(dm.DnsTap.TimeSec) + float64(dm.DnsTap.TimeNsec)/1e9
+		ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
+		dm.DnsTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
 		// decode the dns payload
 		dnsHeader, err := dnsutils.DecodeDns(dm.DNS.Payload)
@@ -109,7 +109,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// dns reply ?
 		if dnsHeader.Qr == 1 {
-			dm.DNS.Operation = "CLIENT_RESPONSE"
+			dm.DnsTap.Operation = "CLIENT_RESPONSE"
 			dm.DNS.Type = dnsutils.DnsReply
 			qip := dm.NetworkInfo.QueryIp
 			qport := dm.NetworkInfo.QueryPort
@@ -119,7 +119,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.NetworkInfo.ResponsePort = qport
 		} else {
 			dm.DNS.Type = dnsutils.DnsQuery
-			dm.DNS.Operation = "CLIENT_QUERY"
+			dm.DnsTap.Operation = "CLIENT_QUERY"
 		}
 
 		dm.DNS.Id = dnsHeader.Id
@@ -212,18 +212,18 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 				hashfnv.Write([]byte(strings.Join(hash_data[:], "+")))
 
 				if dm.DNS.Type == dnsutils.DnsQuery {
-					cache_ttl.Set(hashfnv.Sum64(), dm.Timestamp)
+					cache_ttl.Set(hashfnv.Sum64(), dm.DnsTap.Timestamp)
 				} else {
 					value, ok := cache_ttl.Get(hashfnv.Sum64())
 					if ok {
-						dm.DNS.Latency = dm.Timestamp - value
+						dm.DnsTap.Latency = dm.DnsTap.Timestamp - value
 					}
 				}
 			}
 		}
 
 		// convert latency to human
-		dm.DNS.LatencySec = fmt.Sprintf("%.6f", dm.DNS.Latency)
+		dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
 
 		// qname privacy
 		if qnamePrivacy.IsEnabled() {

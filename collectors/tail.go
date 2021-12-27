@@ -106,7 +106,7 @@ func (c *Tail) Run() {
 
 	dm := dnsutils.DnsMessage{}
 	dm.Init()
-	dm.Identity = c.config.Subprocessors.ServerId
+	dm.DnsTap.Identity = c.config.Subprocessors.ServerId
 
 	for line := range c.tailf.Lines {
 		var matches []string
@@ -116,14 +116,14 @@ func (c *Tail) Run() {
 			re = regexp.MustCompile(c.config.Collectors.Tail.PatternQuery)
 			matches = re.FindStringSubmatch(line.Text)
 			dm.DNS.Type = dnsutils.DnsQuery
-			dm.DNS.Operation = "QUERY"
+			dm.DnsTap.Operation = "QUERY"
 		}
 
 		if len(c.config.Collectors.Tail.PatternReply) > 0 && len(matches) == 0 {
 			re = regexp.MustCompile(c.config.Collectors.Tail.PatternReply)
 			matches = re.FindStringSubmatch(line.Text)
 			dm.DNS.Type = dnsutils.DnsReply
-			dm.DNS.Operation = "REPLY"
+			dm.DnsTap.Operation = "REPLY"
 		}
 
 		if len(matches) == 0 {
@@ -132,7 +132,7 @@ func (c *Tail) Run() {
 
 		qrIndex := re.SubexpIndex("qr")
 		if qrIndex != -1 {
-			dm.DNS.Operation = matches[qrIndex]
+			dm.DnsTap.Operation = matches[qrIndex]
 		}
 
 		var t time.Time
@@ -145,12 +145,12 @@ func (c *Tail) Run() {
 		} else {
 			t = time.Now()
 		}
-		dm.TimeSec = int(t.Unix())
-		dm.TimeNsec = int(t.UnixNano() - t.Unix()*1e9)
+		dm.DnsTap.TimeSec = int(t.Unix())
+		dm.DnsTap.TimeNsec = int(t.UnixNano() - t.Unix()*1e9)
 
 		identityIndex := re.SubexpIndex("identity")
 		if identityIndex != -1 {
-			dm.Identity = matches[identityIndex]
+			dm.DnsTap.Identity = matches[identityIndex]
 		}
 
 		rcodeIndex := re.SubexpIndex("rcode")
@@ -212,13 +212,13 @@ func (c *Tail) Run() {
 
 		latencyIndex := re.SubexpIndex("latency")
 		if latencyIndex != -1 {
-			dm.DNS.LatencySec = matches[latencyIndex]
+			dm.DnsTap.LatencySec = matches[latencyIndex]
 		}
 
 		// compute timestamp
-		dm.Timestamp = float64(dm.TimeSec) + float64(dm.TimeNsec)/1e9
-		ts := time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec))
-		dm.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
+		dm.DnsTap.Timestamp = float64(dm.DnsTap.TimeSec) + float64(dm.DnsTap.TimeNsec)/1e9
+		ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
+		dm.DnsTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
 		// fake dns packet
 		dnspkt := new(dns.Msg)

@@ -330,7 +330,7 @@ func (o *PcapWriter) Write(dm dnsutils.DnsMessage, pkt []gopacket.SerializableLa
 	}
 
 	ci := gopacket.CaptureInfo{
-		Timestamp:     time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec)),
+		Timestamp:     time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec)),
 		CaptureLength: write_len,
 		Length:        write_len,
 	}

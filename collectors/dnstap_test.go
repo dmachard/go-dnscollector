@@ -61,8 +61,8 @@ func TestDnstapTcpRun(t *testing.T) {
 
 	// waiting message in channel
 	msg := <-g.Channel()
-	if msg.DNS.Operation != "CLIENT_QUERY" {
-		t.Errorf("want CLIENT_QUERY, got %s", msg.DNS.Operation)
+	if msg.DnsTap.Operation != "CLIENT_QUERY" {
+		t.Errorf("want CLIENT_QUERY, got %s", msg.DnsTap.Operation)
 	}
 }
 
@@ -114,7 +114,7 @@ func TestDnstapUnixRun(t *testing.T) {
 
 	// waiting message in channel
 	msg := <-g.Channel()
-	if msg.DNS.Operation != "CLIENT_QUERY" {
-		t.Errorf("want CLIENT_QUERY, got %s", msg.DNS.Operation)
+	if msg.DnsTap.Operation != "CLIENT_QUERY" {
+		t.Errorf("want CLIENT_QUERY, got %s", msg.DnsTap.Operation)
 	}
 }

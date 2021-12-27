@@ -311,11 +311,11 @@ func (c *DnsSniffer) Run() {
 			}
 
 			if !ignore_packet {
-				dm.Identity = c.identity
+				dm.DnsTap.Identity = c.identity
 
 				// set timestamp
-				dm.TimeSec = int(tsec)
-				dm.TimeNsec = int(nsec)
+				dm.DnsTap.TimeSec = int(tsec)
+				dm.DnsTap.TimeNsec = int(nsec)
 
 				// just decode QR
 				if len(dm.DNS.Payload) < 4 {

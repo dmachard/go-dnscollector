@@ -35,7 +35,7 @@ type DnsGeo struct {
 	CountryIsoCode string `json:"country-isocode" msgpack:"country-isocode"`
 }
 
-type DnsNetworkInfo struct {
+type DnsNetInfo struct {
 	Family                 string `json:"family" msgpack:"family"`
 	Protocol               string `json:"protocol" msgpack:"protocol"`
 	QueryIp                string `json:"query-ip" msgpack:"query-ip"`
@@ -52,8 +52,7 @@ type DnsRRs struct {
 	Records     []DnsAnswer `json:"ar" msgpack:"ar"`
 }
 
-type DnsPayload struct {
-	Operation       string   `json:"operation" msgpack:"operation"`
+type Dns struct {
 	Type            string   `json:"-" msgpack:"-"`
 	Payload         []byte   `json:"-" msgpack:"-"`
 	Length          int      `json:"length" msgpack:"-"`
@@ -64,8 +63,6 @@ type DnsPayload struct {
 	Flags           DnsFlags `json:"flags" msgpack:"flags"`
 	DnsRRs          DnsRRs   `json:"resource-records" msgpack:"resource-records"`
 	MalformedPacket int      `json:"malformed-packet" msgpack:"malformed-packet"`
-	Latency         float64  `json:"-" msgpack:"-"`
-	LatencySec      string   `json:"latency" msgpack:"latency"`
 }
 
 type DnsOption struct {
@@ -83,38 +80,67 @@ type DnsExtended struct {
 	Options       []DnsOption `json:"options" msgpack:"options"`
 }
 
-type DnsMessage struct {
-	NetworkInfo      DnsNetworkInfo `json:"network" msgpack:"network"`
-	DNS              DnsPayload     `json:"dns" msgpack:"dns"`
-	EDNS             DnsExtended    `json:"edns" msgpack:"edns"`
-	Identity         string         `json:"identity" msgpack:"identity"`
-	TimestampRFC3339 string         `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
-	Timestamp        float64        `json:"-" msgpack:"-"`
-	TimeSec          int            `json:"-" msgpack:"-"`
-	TimeNsec         int            `json:"-" msgpack:"-"`
+type DnsTap struct {
+	Operation        string  `json:"operation" msgpack:"operation"`
+	Identity         string  `json:"identity" msgpack:"identity"`
+	TimestampRFC3339 string  `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
+	Timestamp        float64 `json:"-" msgpack:"-"`
+	TimeSec          int     `json:"-" msgpack:"-"`
+	TimeNsec         int     `json:"-" msgpack:"-"`
+	Latency          float64 `json:"-" msgpack:"-"`
+	LatencySec       string  `json:"latency" msgpack:"latency"`
+}
 
-	Geo DnsGeo `json:"geo" msgpack:"geo"`
+type DnsMessage struct {
+	NetworkInfo DnsNetInfo  `json:"network" msgpack:"network"`
+	DNS         Dns         `json:"dns" msgpack:"dns"`
+	EDNS        DnsExtended `json:"edns" msgpack:"edns"`
+	DnsTap      DnsTap      `json:"dnstap" msgpack:"dnstap"`
+	Geo         DnsGeo      `json:"geo" msgpack:"geo"`
 }
 
 func (dm *DnsMessage) Init() {
 
-	dm.Identity = "-"
-	dm.TimestampRFC3339 = "-"
+	dm.NetworkInfo = DnsNetInfo{
+		Family:                 "-",
+		Protocol:               "-",
+		QueryIp:                "-",
+		QueryPort:              "-",
+		ResponseIp:             "-",
+		ResponsePort:           "-",
+		AutonomousSystemNumber: "-",
+		AutonomousSystemOrg:    "-",
+	}
 
-	dm.NetworkInfo = DnsNetworkInfo{Family: "-", Protocol: "-",
-		QueryIp: "-", QueryPort: "-",
-		ResponseIp: "-", ResponsePort: "-",
-		AutonomousSystemNumber: "-", AutonomousSystemOrg: "-"}
+	dm.DnsTap = DnsTap{
+		Operation:        "-",
+		Identity:         "-",
+		TimestampRFC3339: "-",
+		LatencySec:       "-",
+	}
 
-	dm.DNS = DnsPayload{Operation: "-", Type: "-",
-		MalformedPacket: 0, Rcode: "-",
-		Qtype: "-", Qname: "-", LatencySec: "-",
-		DnsRRs: DnsRRs{Answers: []DnsAnswer{}, Nameservers: []DnsAnswer{}, Records: []DnsAnswer{}}}
+	dm.DNS = Dns{
+		Type:            "-",
+		MalformedPacket: 0,
+		Rcode:           "-",
+		Qtype:           "-",
+		Qname:           "-",
+		DnsRRs:          DnsRRs{Answers: []DnsAnswer{}, Nameservers: []DnsAnswer{}, Records: []DnsAnswer{}},
+	}
 
-	dm.EDNS = DnsExtended{UdpSize: 0, ExtendedRcode: 0, Version: 0,
-		Do: 0, Z: 0, Options: []DnsOption{}}
+	dm.EDNS = DnsExtended{UdpSize: 0,
+		ExtendedRcode: 0,
+		Version:       0,
+		Do:            0,
+		Z:             0,
+		Options:       []DnsOption{},
+	}
 
-	dm.Geo = DnsGeo{CountryIsoCode: "-", City: "-", Continent: "-"}
+	dm.Geo = DnsGeo{
+		CountryIsoCode: "-",
+		City:           "-",
+		Continent:      "-",
+	}
 }
 
 func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
@@ -150,22 +176,22 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "id":
 			s.WriteString(strconv.Itoa(dm.DNS.Id))
 		case "timestamp": // keep it just for backward compatibility
-			s.WriteString(dm.TimestampRFC3339)
+			s.WriteString(dm.DnsTap.TimestampRFC3339)
 		case "timestamp-rfc3339ns":
-			s.WriteString(dm.TimestampRFC3339)
+			s.WriteString(dm.DnsTap.TimestampRFC3339)
 		case "timestamp-unixms":
-			s.WriteString(fmt.Sprintf("%.3f", dm.Timestamp))
+			s.WriteString(fmt.Sprintf("%.3f", dm.DnsTap.Timestamp))
 		case "timestamp-unixus":
-			s.WriteString(fmt.Sprintf("%.6f", dm.Timestamp))
+			s.WriteString(fmt.Sprintf("%.6f", dm.DnsTap.Timestamp))
 		case "timestamp-unixns":
-			s.WriteString(fmt.Sprintf("%.9f", dm.Timestamp))
+			s.WriteString(fmt.Sprintf("%.9f", dm.DnsTap.Timestamp))
 		case "localtime":
-			ts := time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec))
+			ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
 			s.WriteString(ts.Format("2006-01-02 15:04:05.999999999"))
 		case "identity":
-			s.WriteString(dm.Identity)
+			s.WriteString(dm.DnsTap.Identity)
 		case "operation":
-			s.WriteString(dm.DNS.Operation)
+			s.WriteString(dm.DnsTap.Operation)
 		case "rcode":
 			s.WriteString(dm.DNS.Rcode)
 		case "queryip":
@@ -187,7 +213,7 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "qtype":
 			s.WriteString(dm.DNS.Qtype)
 		case "latency":
-			s.WriteString(dm.DNS.LatencySec)
+			s.WriteString(dm.DnsTap.LatencySec)
 		case "continent":
 			s.WriteString(dm.Geo.Continent)
 		case "country":
@@ -248,8 +274,8 @@ func (dm *DnsMessage) String(format []string) string {
 func GetFakeDnsMessage() DnsMessage {
 	dm := DnsMessage{}
 	dm.Init()
-	dm.Identity = "collector"
-	dm.DNS.Operation = "CLIENT_QUERY"
+	dm.DnsTap.Identity = "collector"
+	dm.DnsTap.Operation = "CLIENT_QUERY"
 	dm.DNS.Type = DnsQuery
 	dm.DNS.Qname = "dns.collector"
 	dm.NetworkInfo.QueryIp = "1.2.3.4"

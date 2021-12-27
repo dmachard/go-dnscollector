@@ -93,15 +93,15 @@ func (o *InfluxDBClient) Run() {
 	o.writeAPI = writeAPI
 	for dm := range o.channel {
 		p := influxdb2.NewPointWithMeasurement("dns").
-			AddTag("Identity", dm.Identity).
+			AddTag("Identity", dm.DnsTap.Identity).
 			AddTag("QueryIP", dm.NetworkInfo.QueryIp).
 			AddTag("Qname", dm.DNS.Qname).
-			AddField("Operation", dm.DNS.Operation).
+			AddField("Operation", dm.DnsTap.Operation).
 			AddField("Family", dm.NetworkInfo.Family).
 			AddField("Protocol", dm.NetworkInfo.Protocol).
 			AddField("Qtype", dm.DNS.Qtype).
 			AddField("Rcode", dm.DNS.Rcode).
-			SetTime(time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec)))
+			SetTime(time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec)))
 
 		// write asynchronously
 		o.writeAPI.WritePoint(p)

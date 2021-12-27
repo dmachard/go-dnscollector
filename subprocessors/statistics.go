@@ -34,10 +34,10 @@ func (c *StatsStreams) Record(dm dnsutils.DnsMessage) {
 	c.streams["global"].Record(dm)
 
 	// record for each ident
-	if _, ok := c.streams[dm.Identity]; !ok {
-		c.streams[dm.Identity] = NewStatsPerStream(c.config)
+	if _, ok := c.streams[dm.DnsTap.Identity]; !ok {
+		c.streams[dm.DnsTap.Identity] = NewStatsPerStream(c.config)
 	}
-	c.streams[dm.Identity].Record(dm)
+	c.streams[dm.DnsTap.Identity].Record(dm)
 }
 
 func (c *StatsStreams) Streams() []string {

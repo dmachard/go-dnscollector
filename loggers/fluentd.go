@@ -107,7 +107,7 @@ LOOP:
 						select {
 						case dm := <-o.channel:
 							// prepare event
-							tm, _ := msgpack.Marshal(dm.TimeSec)
+							tm, _ := msgpack.Marshal(dm.DnsTap.TimeSec)
 							record, err := msgpack.Marshal(dm)
 							if err != nil {
 								o.LogError("msgpack error:", err.Error())

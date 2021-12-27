@@ -132,7 +132,7 @@ LOOP:
 			case dm := <-o.channel:
 				// prepare entry
 				entry := logproto.Entry{}
-				entry.Timestamp = time.Unix(int64(dm.TimeSec), int64(dm.TimeNsec))
+				entry.Timestamp = time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
 				entry.Line = dm.String(o.textFormat)
 				o.sizeentries += len(entry.Line)
 

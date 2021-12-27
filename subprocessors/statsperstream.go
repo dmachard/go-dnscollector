@@ -334,33 +334,33 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 
 	// latency
-	if dm.DNS.Latency > c.total.LatencyMax {
-		c.total.LatencyMax = dm.DNS.Latency
+	if dm.DnsTap.Latency > c.total.LatencyMax {
+		c.total.LatencyMax = dm.DnsTap.Latency
 	}
 
-	if dm.DNS.Latency > 0.0 {
+	if dm.DnsTap.Latency > 0.0 {
 		if c.total.LatencyMin == 0.0 {
-			c.total.LatencyMin = dm.DNS.Latency
+			c.total.LatencyMin = dm.DnsTap.Latency
 		}
-		if dm.DNS.Latency < c.total.LatencyMin {
-			c.total.LatencyMin = dm.DNS.Latency
+		if dm.DnsTap.Latency < c.total.LatencyMin {
+			c.total.LatencyMin = dm.DnsTap.Latency
 		}
 	}
 
 	switch {
-	case dm.DNS.Latency == 0.0:
+	case dm.DnsTap.Latency == 0.0:
 		break
-	case dm.DNS.Latency > 0.0 && dm.DNS.Latency <= 0.001:
+	case dm.DnsTap.Latency > 0.0 && dm.DnsTap.Latency <= 0.001:
 		c.total.Latency0_1++
-	case 0.001 < dm.DNS.Latency && dm.DNS.Latency <= 0.010:
+	case 0.001 < dm.DnsTap.Latency && dm.DnsTap.Latency <= 0.010:
 		c.total.Latency1_10++
-	case 0.010 < dm.DNS.Latency && dm.DNS.Latency <= 0.050:
+	case 0.010 < dm.DnsTap.Latency && dm.DnsTap.Latency <= 0.050:
 		c.total.Latency10_50++
-	case 0.050 < dm.DNS.Latency && dm.DNS.Latency <= 0.100:
+	case 0.050 < dm.DnsTap.Latency && dm.DnsTap.Latency <= 0.100:
 		c.total.Latency50_100++
-	case 0.100 < dm.DNS.Latency && dm.DNS.Latency <= 0.500:
+	case 0.100 < dm.DnsTap.Latency && dm.DnsTap.Latency <= 0.500:
 		c.total.Latency100_500++
-	case 0.500 < dm.DNS.Latency && dm.DNS.Latency <= 1.000:
+	case 0.500 < dm.DnsTap.Latency && dm.DnsTap.Latency <= 1.000:
 		c.total.Latency500_1000++
 	default:
 		c.total.Latency1000_inf++
@@ -411,7 +411,7 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 		c.qnamesNxdtop.Record(dm.DNS.Qname, c.qnamesNxd[dm.DNS.Qname])
 	}
 
-	if dm.DNS.Latency > c.config.Subprocessors.Statistics.ThresholdSlow {
+	if dm.DnsTap.Latency > c.config.Subprocessors.Statistics.ThresholdSlow {
 		if _, ok := c.qnamesSlow[dm.DNS.Qname]; !ok {
 			c.qnamesSlow[dm.DNS.Qname] = 1
 		} else {
@@ -445,12 +445,12 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	c.rcodestop.Record(dm.DNS.Rcode, c.rcodes[dm.DNS.Rcode])
 
 	// record operations
-	if _, ok := c.operations[dm.DNS.Operation]; !ok {
-		c.operations[dm.DNS.Operation] = 1
+	if _, ok := c.operations[dm.DnsTap.Operation]; !ok {
+		c.operations[dm.DnsTap.Operation] = 1
 	} else {
-		c.operations[dm.DNS.Operation]++
+		c.operations[dm.DnsTap.Operation]++
 	}
-	c.operationstop.Record(dm.DNS.Operation, c.operations[dm.DNS.Operation])
+	c.operationstop.Record(dm.DnsTap.Operation, c.operations[dm.DnsTap.Operation])
 
 	// dns flags
 	if dm.DNS.Flags.TC {
