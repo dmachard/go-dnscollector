@@ -217,6 +217,15 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		dm.DNS.Rcode = dnsutils.RcodeToString(dnsHeader.Rcode)
 		dm.DNS.Opcode = dnsHeader.Opcode
 
+		// update dnstap operation if the opcode is equal to 5 (dns update)
+		if dm.DNS.Opcode == 5 && op%2 == 1 {
+			dm.DnsTap.Operation = "UPDATE_QUERY"
+		}
+		if dm.DNS.Opcode == 5 && op%2 == 1 {
+			dm.DnsTap.Operation = "UPDATE_RESPONSE"
+		}
+
+		// set dns flags
 		if dnsHeader.Qr == 1 {
 			dm.DNS.Flags.QR = true
 		}
