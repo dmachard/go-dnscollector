@@ -560,36 +560,6 @@ tcpclient:
     text-format: ""
 ```
 
-Example:
-
-```json
-{
-  "operation": "AUTH_RESPONSE",
-  "identiy": "dnstap-logger",
-  "family": "INET",
-  "protocol": "DOH",
-  "query-ip": "127.0.126.114",
-  "query-port": "42978",
-  "response-ip": "127.0.240.58",
-  "response-port": "53",
-  "length": 160,
-  "rcode": "NOERROR",
-  "qname": "mondomaine.fr",
-  "qtype": "A",
-  "latency": "0.000011",
-  "timestamp-rfc3339": "2021-07-31T18:16:46.068840539Z",
-  "resource-records": [
-    {
-      "name": "mondomaine.fr",
-      "rdatatype": "A",
-      "ttl": 3600,
-      "rdata": "127.0.0.1"
-    }
-  ],
-  "country-isocode":"-"
-}
-```
-
 ### Syslog
 
 Syslog logger to local syslog system or remote one.
