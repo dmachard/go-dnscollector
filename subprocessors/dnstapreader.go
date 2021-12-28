@@ -211,7 +211,6 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			// parser error
 			dm.DNS.MalformedPacket = 1
 			d.LogInfo("dns parser malformed packet: %s", err)
-			//continue
 		}
 
 		dm.DNS.Id = dnsHeader.Id

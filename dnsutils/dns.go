@@ -391,7 +391,7 @@ func ParseRdata(rdatatype string, rdata []byte, payload []byte, rdata_offset int
 	case "PTR":
 		ret, err = ParsePTR(rdata_offset, payload)
 	case "SOA":
-		ret, err = ParseSOA(rdata)
+		ret, err = ParseSOA(rdata_offset, payload)
 	default:
 		ret = "-"
 		err = nil
@@ -425,20 +425,19 @@ SOA
 |                                               |
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseSOA(rdata []byte) (string, error) {
+func ParseSOA(rdata_offset int, payload []byte) (string, error) {
 	var offset int
 
-	primaryNS, offset, err := ParseLabels(0, rdata)
+	primaryNS, offset, err := ParseLabels(rdata_offset, payload)
 	if err != nil {
 		return "", err
 	}
-	rdata = rdata[offset:]
 
-	respMailbox, offset, err := ParseLabels(0, rdata)
+	respMailbox, offset, err := ParseLabels(offset, payload)
 	if err != nil {
 		return "", err
 	}
-	rdata = rdata[offset:]
+	rdata := payload[offset:]
 
 	serial := binary.BigEndian.Uint32(rdata[0:4])
 	refresh := int32(binary.BigEndian.Uint32(rdata[4:8]))

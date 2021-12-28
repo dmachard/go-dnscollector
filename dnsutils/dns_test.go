@@ -313,6 +313,20 @@ func TestDecodeRdataSOA(t *testing.T) {
 	}
 }
 
+func TestDecodeRdataSOA_Minimization(t *testing.T) {
+	// loop between qnames
+	payload := []byte{164, 66, 129, 128, 0, 1, 0, 0, 0, 1, 0, 0, 8, 102, 114, 101, 115, 104, 114, 115, 115, 4, 109,
+		99, 104, 100, 2, 109, 101, 0, 0, 28, 0, 1, 192, 21, 0, 6, 0, 1, 0, 0, 0, 60, 0, 43, 6, 100, 110, 115, 49, 48,
+		51, 3, 111, 118, 104, 3, 110, 101, 116, 0, 4, 116, 101, 99, 104, 192, 53,
+		120, 119, 219, 34, 0, 1, 81, 128, 0, 0, 14, 16, 0, 54, 238, 128, 0, 0, 0, 60}
+
+	_, _, offset_rr, _ := DecodeQuestion(payload)
+	_, _, err := DecodeAnswer(1, offset_rr, payload)
+	if err != nil {
+		t.Errorf(" error returned: %v", err)
+	}
+}
+
 func TestDecodeDns_HeaderTooShort(t *testing.T) {
 	decoded := []byte{183, 59}
 	_, err := DecodeDns(decoded)
