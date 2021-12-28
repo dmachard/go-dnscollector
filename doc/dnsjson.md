@@ -3,7 +3,14 @@
 
 The dns collector enable to transform dns queries or replies in JSON format.
 
-Format:
+Main part of a JSON message:
+- `network`: contains query/response ip and port, the protocol and family used
+- `dnstap`
+- `dns`
+- `edns`
+- `geo`
+
+Example:
 
 ```json
 {
