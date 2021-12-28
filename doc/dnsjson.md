@@ -2,13 +2,14 @@
 
 
 The dns collector enable to transform dns queries or replies in JSON format.
+A JSON format contains dns message with additionnal metadata.
 
 Main part of a JSON message:
-- `network`: contains query/response ip and port, the protocol and family used
-- `dnstap`
-- `dns`
-- `edns`
-- `geo`
+- `network`:  query/response ip and port, the protocol and family used
+- `dnstap`: message type, arrival packet time, latency.
+- `dns`: dns fields
+- `edns`: extended dns options
+- `geo`: contains country, continent and city informations
 
 Example:
 

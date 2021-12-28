@@ -40,11 +40,13 @@ Options:
 - `filename`: (string) filename is the file to write logs to.
 - `max-size`: (integer) maximum size in megabytes of the log file it gets rotated
 - `max-backups`: (integer) maximum number of old log files to retain
+- `log-malformed`: (boolean) log malformed packet
 
 ```yaml
 # 
 trace:
   verbose: true
+  log-malformed: false
   filename: ""
   max-size: 10
   max-backups: 10
