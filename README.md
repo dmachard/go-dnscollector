@@ -30,7 +30,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 - Other features
     - [Queries/Replies JSON encoding](doc/dnsjson.md)
-    - [DNS decoder with EDNS support](doc/dnsparser.md)
+    - [DNS decoder with extended options support](doc/dnsparser.md)
     - [Built-in Grafana dashboards](doc/dashboards.md)
     - [GeoIP support](doc/configuration.md#geoip-support)
     - [Fqdn/Domain list filtering](doc/configuration.md#fqdn-filtering)
