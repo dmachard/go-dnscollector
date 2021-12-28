@@ -229,6 +229,8 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 			s.WriteString(strconv.Itoa(dm.DNS.MalformedPacket))
 		case "qr":
 			s.WriteString(dm.DNS.Type)
+		case "opcode":
+			s.WriteString(strconv.Itoa(dm.DNS.Opcode))
 		case "tc":
 			if dm.DNS.Flags.TC {
 				s.WriteString("TC")

@@ -315,6 +315,7 @@ All available directives:
 - `localtime`: local time
 - `identity`: dnstap identity
 - `operation`: dnstap operation
+- `opcode`: dns opcode (integer)
 - `rcode`: dns return code
 - `queryip`: dns query ip
 - `queryport`: dns query port
