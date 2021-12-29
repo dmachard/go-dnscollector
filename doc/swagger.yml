@@ -39,7 +39,7 @@ paths:
               schema:
                 type: string
       summary: Reset metrics
-  /top/requesters:
+  /top/requester:
     get:
       parameters:
         - in: query
@@ -55,7 +55,7 @@ paths:
               schema:
                 type: string
       summary: Top source ip requesters
-  /top/requesters/suspicious:
+  /top/requester/suspicious:
     get:
       parameters:
         - in: query
@@ -71,7 +71,7 @@ paths:
               schema:
                 type: string
       summary: Top suspicious requesters ip list  
-  /top/firstleveldomains:
+  /top/tld:
     get:
       parameters:
         - in: query
@@ -87,7 +87,7 @@ paths:
               schema:
                 type: string
       summary: Top first level domains list
-  /top/domains:
+  /top/fqdn:
     get:
       parameters:
         - in: query
@@ -103,7 +103,7 @@ paths:
               schema:
                 type: string
       summary: Top domains list
-  /top/domains/nxd:
+  /top/fqdn/nxd:
     get:
       parameters:
         - in: query
@@ -119,7 +119,7 @@ paths:
               schema:
                 type: string
       summary: Top NX domains list
-  /top/domains/slow:
+  /top/fqdn/slow:
     get:
       parameters:
         - in: query
@@ -135,7 +135,7 @@ paths:
               schema:
                 type: string
       summary: Top Slow domains list
-  /top/domains/suspicious:
+  /top/fqdn/suspicious:
     get:
       parameters:
         - in: query
@@ -167,7 +167,7 @@ paths:
               schema:
                 type: string
       summary: Top Autonomous System list
-  /dump/requesters:
+  /dump/requester:
     get:
       parameters:
         - in: query
@@ -183,7 +183,7 @@ paths:
               schema:
                 type: string
       summary: Return full list of requesters 
-  /dump/domains:
+  /dump/fqdn:
     get:
       parameters:
         - in: query
@@ -199,6 +199,22 @@ paths:
               schema:
                 type: string
       summary: Return full list of domains
+  /dump/tld:
+    get:
+      parameters:
+        - in: query
+          name: stream
+          schema:
+            type: string
+          description: stream name
+      responses:
+        '200':
+          description: Return full list of top level domains
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Return full list of top level domains
   /dump/as:
     get:
       parameters:
