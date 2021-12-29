@@ -15,6 +15,7 @@ The following Rdatatypes will be decoded, otherwise the `-` value will be used:
 - PTR
 - SOA
 
-Extended DNS is also supported. The following option is decoded:
-- EDNS ERRORS
-- EDNS CSUBNET
+Extended DNS is also supported. 
+The following options are decoded:
+- [Extented DNS Errors](https://www.rfc-editor.org/rfc/rfc8914.html)
+- [Client Subnet](https://www.rfc-editor.org/rfc/rfc7871.html)
