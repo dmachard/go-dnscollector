@@ -306,7 +306,7 @@ subprocessors:
 
 ### Custom text format
 
-Custome text format can be configured
+Custom text format can be configured
 All available directives:
 - `timestamp-rfc3339ns`: timestamp rfc3339 format, with nano support
 - `timestamp-unixms`: unix timestamp with ms support
