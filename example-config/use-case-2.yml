@@ -10,6 +10,10 @@ collectors:
     cert-file: "/etc/dnscollector/dnscollector.crt"
     key-file: "/etc/dnscollector/dnscollector.key"
 
+subprocessors:
+  statistics:
+    prometheus-prefix: "dnscollector"
+    
 loggers:
   webserver:
     enable: true

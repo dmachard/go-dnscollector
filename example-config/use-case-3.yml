@@ -1,5 +1,5 @@
 trace:
-  verbose: true
+  verbose: false
 
 collectors:
   dnstap:
@@ -7,6 +7,10 @@ collectors:
     listen-ip: 0.0.0.0
     listen-port: 6000
 
+subprocessors:
+  filtering:
+    log-replies: true
+    
 loggers:
   stdout:
     enable: true
