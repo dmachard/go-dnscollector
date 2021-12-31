@@ -217,6 +217,27 @@ loggers:
     # private key server file
     key-file: ""
 
+  # prometheus metrics server
+  prometheus:
+    # to enable, set the enable to true
+    enable: true
+    # listening IP
+    listen-ip: 0.0.0.0
+    # listening port
+    listen-port: 8081
+    # default login
+    basic-auth-login: admin
+    # default password
+    basic-auth-pwd: changeme
+    # tls support
+    tls-support: false
+    # certificate server file
+    cert-file: ""
+    # private key server file
+    key-file: ""
+    # prometheus prefix
+    prometheus-prefix: "dnscollectorv2"
+
   # write captured dns traffic to text files with rotation and compression support
   logfile:
     # to enable, set the enable to true

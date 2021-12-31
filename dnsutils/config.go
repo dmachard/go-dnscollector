@@ -56,7 +56,6 @@ type Config struct {
 			Dnstap bool `yaml:"dnstap"`
 			Dns    bool `yaml:"dns"`
 		} `yaml:"quiet-text"`
-
 		Statistics struct {
 			TopMaxItems        int      `yaml:"top-max-items"`
 			ThresholdQnameLen  int      `yaml:"threshold-qname-len"`
@@ -95,6 +94,17 @@ type Config struct {
 			Mode       string `yaml:"mode"`
 			TextFormat string `yaml:"text-format"`
 		} `yaml:"stdout"`
+		Prometheus struct {
+			Enable         bool   `yaml:"enable"`
+			ListenIP       string `yaml:"listen-ip"`
+			ListenPort     int    `yaml:"listen-port"`
+			BasicAuthLogin string `yaml:"basic-auth-login"`
+			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
+			TlsSupport     bool   `yaml:"tls-support"`
+			CertFile       string `yaml:"cert-file"`
+			KeyFile        string `yaml:"key-file"`
+			PromPrefix     string `yaml:"prometheus-prefix"`
+		} `yaml:"prometheus"`
 		WebServer struct {
 			Enable         bool   `yaml:"enable"`
 			ListenIP       string `yaml:"listen-ip"`
@@ -291,6 +301,16 @@ func (c *Config) SetDefault() {
 	c.Loggers.LogFile.PostRotateCommand = ""
 	c.Loggers.LogFile.PostRotateDelete = false
 	c.Loggers.LogFile.TextFormat = ""
+
+	c.Loggers.Prometheus.Enable = false
+	c.Loggers.Prometheus.ListenIP = "127.0.0.1"
+	c.Loggers.Prometheus.ListenPort = 8081
+	c.Loggers.Prometheus.BasicAuthLogin = "admin"
+	c.Loggers.Prometheus.BasicAuthPwd = "changeme"
+	c.Loggers.Prometheus.TlsSupport = false
+	c.Loggers.Prometheus.CertFile = ""
+	c.Loggers.Prometheus.KeyFile = ""
+	c.Loggers.Prometheus.PromPrefix = "dnscollectorv2"
 
 	c.Loggers.WebServer.Enable = false
 	c.Loggers.WebServer.ListenIP = "127.0.0.1"

@@ -8,7 +8,7 @@ import (
 
 func TestDnsStatisticsRecord(t *testing.T) {
 	config := dnsutils.GetFakeConfig()
-	stats := NewStatsPerStream(config)
+	stats := NewStatsPerStream(config, "test")
 
 	dm := dnsutils.DnsMessage{}
 	dm.Init()

@@ -22,7 +22,7 @@ func NewStreamsStats(config *dnsutils.Config, version string) *StatsStreams {
 		streams: make(map[string]*StatsPerStream),
 		version: version,
 	}
-	c.streams["global"] = NewStatsPerStream(config)
+	c.streams["global"] = NewStatsPerStream(config, "global")
 	return c
 }
 
@@ -35,7 +35,7 @@ func (c *StatsStreams) Record(dm dnsutils.DnsMessage) {
 
 	// record for each ident
 	if _, ok := c.streams[dm.DnsTap.Identity]; !ok {
-		c.streams[dm.DnsTap.Identity] = NewStatsPerStream(c.config)
+		c.streams[dm.DnsTap.Identity] = NewStatsPerStream(c.config, dm.DnsTap.Identity)
 	}
 	c.streams[dm.DnsTap.Identity].Record(dm)
 }

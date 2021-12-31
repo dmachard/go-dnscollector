@@ -77,6 +77,9 @@ func main() {
 	if config.Loggers.WebServer.Enable {
 		logwrks = append(logwrks, loggers.NewWebserver(config, logger, Version))
 	}
+	if config.Loggers.Prometheus.Enable {
+		logwrks = append(logwrks, loggers.NewPrometheus(config, logger, Version))
+	}
 	if config.Loggers.Stdout.Enable {
 		logwrks = append(logwrks, loggers.NewStdOut(config, logger))
 	}

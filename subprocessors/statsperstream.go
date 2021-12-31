@@ -65,6 +65,7 @@ type Counters struct {
 }
 
 type StatsPerStream struct {
+	name   string
 	config *dnsutils.Config
 
 	total Counters
@@ -113,10 +114,12 @@ type StatsPerStream struct {
 	sync.RWMutex
 }
 
-func NewStatsPerStream(config *dnsutils.Config) *StatsPerStream {
+func NewStatsPerStream(config *dnsutils.Config, name string) *StatsPerStream {
 	c := &StatsPerStream{
+		name:   name,
 		config: config,
-		total:  Counters{},
+
+		total: Counters{},
 
 		MapHitAS:  make(map[string]int),
 		MapAS:     make(map[string]string),
