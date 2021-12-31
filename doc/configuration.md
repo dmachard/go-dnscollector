@@ -576,6 +576,8 @@ Options:
 - `remote-address`: (string) Remote address host:port
 - `mode`: (string) text or json
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
+- `tls-support`: (boolean) enable tls
+- `tls-insecure`: (boolean) insecure skip verify
 
 ```yaml
 syslog:
@@ -586,6 +588,8 @@ syslog:
   remote-address: ""
   text-format: ""
   mode: text
+  tls-support: false
+  tls-insecure: false
 ```
 
 ### Fluentd Client
