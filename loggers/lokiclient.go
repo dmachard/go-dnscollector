@@ -236,6 +236,9 @@ func (o *LokiClient) SendEntries(buf []byte) error {
 	post = post.WithContext(ctx)
 	post.Header.Set("Content-Type", "application/x-protobuf")
 	post.Header.Set("User-Agent", "dnscollector")
+	if len(o.config.Loggers.LokiClient.TenantId) > 0 {
+		post.Header.Set("X-Scope-OrgID", o.config.Loggers.LokiClient.TenantId)
+	}
 
 	post.SetBasicAuth(o.config.Loggers.LokiClient.BasicAuthLogin, o.config.Loggers.LokiClient.BasicAuthPwd)
 

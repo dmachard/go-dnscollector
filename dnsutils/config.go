@@ -203,6 +203,7 @@ type Config struct {
 			TlsInsecure    bool   `yaml:"tls-insecure"`
 			BasicAuthLogin string `yaml:"basic-auth-login"`
 			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
+			TenantId       string `yaml:"tenant-id"`
 		} `yaml:"lokiclient"`
 		Statsd struct {
 			Enable        bool   `yaml:"enable"`
@@ -340,8 +341,8 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.RemoteAddress = "127.0.0.1:514"
 	c.Loggers.Syslog.TextFormat = ""
 	c.Loggers.Syslog.Mode = "text"
-	c.Loggers.TcpClient.TlsSupport = false
-	c.Loggers.TcpClient.TlsInsecure = false
+	c.Loggers.Syslog.TlsSupport = false
+	c.Loggers.Syslog.TlsInsecure = false
 
 	c.Loggers.Fluentd.Enable = false
 	c.Loggers.Fluentd.RemoteAddress = "127.0.0.1"
@@ -381,6 +382,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.LokiClient.TlsInsecure = false
 	c.Loggers.LokiClient.BasicAuthLogin = ""
 	c.Loggers.LokiClient.BasicAuthPwd = ""
+	c.Loggers.LokiClient.TenantId = ""
 
 	c.Loggers.Statsd.Enable = false
 	c.Loggers.Statsd.Prefix = "dnscollector"
