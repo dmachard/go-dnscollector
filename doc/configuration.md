@@ -694,6 +694,7 @@ Options:
 - `tls-insecure`: (boolean) insecure skip verify
 - `basic-auth-login`: (string) basic auth login
 - `basic-auth-pwd`: (string) basic auth password
+- `tenant-id`: (string) tenant/organisation id. If omitted or empty, no X-Scope-OrgID header is sent.
 
 ```yaml
   lokiclient:
@@ -708,6 +709,7 @@ Options:
     tls-insecure: false
     basic-auth-login: ""
     basic-auth-pwd: ""
+    tenant-id: "" 
 ```
 
 ### Statsd client
