@@ -394,9 +394,9 @@ loggers:
   # resend captured dns traffic to a Loki Server
   lokiclient:
     # to enable, set the enable to true
-    enable: true
+    enable: false
     # Loki server url
-    server-url: "http://lokiwriter.home.lab/loki/api/v1/push"
+    server-url: "http://lokiwriter:3100/loki/api/v1/push"
     # Job name
     job-name: "dnstap"
     # flush batch every X seconds
