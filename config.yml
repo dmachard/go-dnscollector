@@ -130,6 +130,8 @@ subprocessors:
     drop-fqdn-file: ""
     # domain drop list, domains list can be a partial domain name with regexp expression
     drop-domain-file: ""
+    # drop response according to the return code (NOERROR, ...). This list is empty by default
+    drop-rcodes: []
     # forward received queries to configured loggers ?
     log-queries: true
     # forward received replies to configured loggers ?

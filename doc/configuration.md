@@ -11,11 +11,12 @@ The configuration is done in one yaml file. For the complete configuration, see 
   - [DNS sniffer](#Dns-Sniffer)
   - [Tail](#Tail)
 - [Subprocessors](#Subprocessors)
+  - [Quiet text](#quiet-text)
   - [Qname lowercase](#Qname-lowercase)
-  - [IP anonymization](#Ip-Anonymization)
+  - [User privacy](#user-privacy)
   - [GeoIP Support](#GeoIP-Support)
   - [DNS Caching](#DNS-Caching)
-  - [Packet Filtering](#Packet-Filtering)
+  - [Filtering](#Filtering)
   - [Custom text format](#Custom-Text-Format)
   - [Statistics](#Statistics)
 - [Loggers](#Loggers)
@@ -126,7 +127,7 @@ dns-sniffer:
   capture-dns-replies: true
 ```
 
-## Tail
+### Tail
 
 The tail collector enable to read DNS event from text files.
 DNS servers log server can be followed; any type of server is supported!
@@ -284,14 +285,15 @@ subprocessors:
     query-timeout: 10 
 ```
 
-### Fqdn Filtering
+### Log filtering per domain or rcode
 
-This feature can be use to ignore queries or replies. You can also use-it to drop 
-specific domains name. This feature can be useful to increase logging performance.
+The filtering feature can be used to ignore some queries or replies according to the qname or return code. 
+This feature can be useful to increase logging performance..
 
 Options:
 - `drop-fqdn-file`: (string) path file to a fqdn drop list, domains list must be a full qualified domain name
 - `drop-domain-file`: (string) path file to domain drop list, domains list can be a partial domain name with regexp expression
+- `drop-rcodes`: (list of string) rcode list, empty by default
 - `log-queries`: (boolean) forward received queries to configured loggers
 - `log-replies`: (boolean)  forward received replies to configured loggers
 
@@ -300,6 +302,7 @@ subprocessors:
   filtering:
     drop-fqdn-file: ""
     drop-domain-file: ""
+    drop-rcodes: []
     log-queries: true
     log-replies: true
 ```
@@ -356,7 +359,7 @@ Some options to customize the statitics subprocessor.
 
 Options:
 - `top-max-items`: (string) default number of items on top
-- `common-qtypes`: (string)  expected common qtype list, other will be considered as suspicious
+- `common-qtypes`: (list of string)  expected common qtype list, other will be considered as suspicious
 - `threshold-qname-len`: (string) a length greater than this value will be considered as suspicious
 - `threshold-packet-len`: (string) a size greater than this value will be considered as suspicious value in bytes
 - `threshold-slow`: (string) threshold to set a domain considered as slow, value in second

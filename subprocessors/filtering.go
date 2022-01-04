@@ -87,6 +87,13 @@ func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DnsMessage) bool {
 		return true
 	}
 
+	// drop according to the rcode ?
+	for _, v := range p.config.Subprocessors.Filtering.DropRcodes {
+		if v == dm.DNS.Rcode {
+			return true
+		}
+	}
+
 	// drop domains ?
 	if p.dropDomains {
 		// fqdn
