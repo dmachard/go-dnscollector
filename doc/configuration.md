@@ -28,9 +28,9 @@ The configuration is done in one yaml file. For the complete configuration, see 
   - [Syslog](#Syslog)
   - [Fluentd](#Fluentd-Client)
   - [Pcap File](#Pcap-File)
-  - [InfluxDB](#InfluxDB)
-  - [Loki](#Loki)
-  - [Statsd](#Statsd)
+  - [InfluxDB](#influxdb-client)
+  - [Loki](#loki-client)
+  - [Statsd](#statsd-client)
 
 ## Trace
 
