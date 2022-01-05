@@ -126,11 +126,13 @@ subprocessors:
   # filtering feature to ignore some specific qname
   # dns logs is not redirected to loggers if the filtering regexp matched
   filtering:
-    # fqdn drop list, domains list must be a full qualified domain name
+    # path file of the fqdn drop list, domains list must be a full qualified domain name
     drop-fqdn-file: ""
-    # domain drop list, domains list can be a partial domain name with regexp expression
+    # path file of the domain drop list, domains list can be a partial domain name with regexp expression
     drop-domain-file: ""
-    # drop response according to the return code (NOERROR, ...). This list is empty by default
+    # path file of the query IP drop list
+    drop-queryip-file: ""
+    # drop specific responses according to the return code (NOERROR, ...). This list is empty by default
     drop-rcodes: []
     # forward received queries to configured loggers ?
     log-queries: true

@@ -75,11 +75,12 @@ type Config struct {
 		} `yaml:"cache"`
 		ServerId  string `yaml:"server-id"`
 		Filtering struct {
-			DropFqdnFile   string   `yaml:"drop-fqdn-file"`
-			DropDomainFile string   `yaml:"drop-domain-file"`
-			DropRcodes     []string `yaml:drop-rcodes,flow`
-			LogQueries     bool     `yaml:"log-queries"`
-			LogReplies     bool     `yaml:"log-replies"`
+			DropFqdnFile    string   `yaml:"drop-fqdn-file"`
+			DropDomainFile  string   `yaml:"drop-domain-file"`
+			DropQueryIpFile string   `yaml:"drop-queryip-file"`
+			DropRcodes      []string `yaml:"drop-rcodes,flow"`
+			LogQueries      bool     `yaml:"log-queries"`
+			LogReplies      bool     `yaml:"log-replies"!`
 		} `yaml:"filtering"`
 		GeoIP struct {
 			DbCountryFile string `yaml:"mmdb-country-file"`
@@ -271,6 +272,7 @@ func (c *Config) SetDefault() {
 
 	c.Subprocessors.Filtering.DropFqdnFile = ""
 	c.Subprocessors.Filtering.DropDomainFile = ""
+	c.Subprocessors.Filtering.DropQueryIpFile = ""
 	c.Subprocessors.Filtering.DropRcodes = []string{}
 	c.Subprocessors.Filtering.LogQueries = true
 	c.Subprocessors.Filtering.LogReplies = true

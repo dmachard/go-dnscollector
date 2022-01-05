@@ -14,6 +14,7 @@ type FilteringProcessor struct {
 	config           *dnsutils.Config
 	logger           *logger.Logger
 	dropDomains      bool
+	listQueryIp      map[string]bool
 	listFqdns        map[string]bool
 	listDomainsRegex map[string]*regexp.Regexp
 }
@@ -26,12 +27,29 @@ func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger) Filte
 		listDomainsRegex: make(map[string]*regexp.Regexp),
 	}
 
-	d.LoadDomains()
+	d.LoadDomainsList()
+	d.LoadQueryIpList()
 
 	return d
 }
 
-func (p *FilteringProcessor) LoadDomains() {
+func (p *FilteringProcessor) LoadQueryIpList() {
+	if len(p.config.Subprocessors.Filtering.DropQueryIpFile) > 0 {
+		file, err := os.Open(p.config.Subprocessors.Filtering.DropQueryIpFile)
+		if err != nil {
+			p.LogError("unable to open query ip file: ", err)
+		} else {
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				queryip := strings.ToLower(scanner.Text())
+				p.listQueryIp[queryip] = true
+			}
+			p.LogInfo("loaded with %d query ip to the drop list", len(p.listQueryIp))
+		}
+
+	}
+}
+func (p *FilteringProcessor) LoadDomainsList() {
 
 	if len(p.config.Subprocessors.Filtering.DropFqdnFile) > 0 {
 		file, err := os.Open(p.config.Subprocessors.Filtering.DropFqdnFile)
@@ -44,7 +62,7 @@ func (p *FilteringProcessor) LoadDomains() {
 				fqdn := strings.ToLower(scanner.Text())
 				p.listFqdns[fqdn] = true
 			}
-			p.LogInfo("loaded with %d fqdn to drop", len(p.listFqdns))
+			p.LogInfo("loaded with %d fqdn to the drop list", len(p.listFqdns))
 			p.dropDomains = true
 		}
 
@@ -61,7 +79,7 @@ func (p *FilteringProcessor) LoadDomains() {
 				domain := strings.ToLower(scanner.Text())
 				p.listDomainsRegex[domain] = regexp.MustCompile(domain)
 			}
-			p.LogInfo("loaded with %d domains to drop", len(p.listDomainsRegex))
+			p.LogInfo("loaded with %d domains to the drop list", len(p.listDomainsRegex))
 			p.dropDomains = true
 		}
 
@@ -91,6 +109,15 @@ func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DnsMessage) bool {
 	for _, v := range p.config.Subprocessors.Filtering.DropRcodes {
 		if v == dm.DNS.Rcode {
 			return true
+		}
+	}
+
+	// drop according to the query ip ?
+	if len(p.listQueryIp) > 0 {
+		for k := range p.listQueryIp {
+			if dm.NetworkInfo.QueryIp == k {
+				return true
+			}
 		}
 	}
 

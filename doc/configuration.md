@@ -16,7 +16,7 @@ The configuration is done in one yaml file. For the complete configuration, see 
   - [User privacy](#user-privacy)
   - [GeoIP Support](#GeoIP-Support)
   - [DNS Caching](#DNS-Caching)
-  - [Filtering](#Filtering)
+  - [Log filtering](#log-filtering)
   - [Custom text format](#Custom-Text-Format)
   - [Statistics](#Statistics)
 - [Loggers](#Loggers)
@@ -285,14 +285,19 @@ subprocessors:
     query-timeout: 10 
 ```
 
-### Log filtering per domain or rcode
+### Log filtering
 
-The filtering feature can be used to ignore some queries or replies according to the qname or return code. 
+The filtering feature can be used to ignore some queries or replies according to:
+- qname
+- return code
+- query ip
+
 This feature can be useful to increase logging performance..
 
 Options:
 - `drop-fqdn-file`: (string) path file to a fqdn drop list, domains list must be a full qualified domain name
 - `drop-domain-file`: (string) path file to domain drop list, domains list can be a partial domain name with regexp expression
+- `drop-queryip-file`: (string) path file to the query ip drop list
 - `drop-rcodes`: (list of string) rcode list, empty by default
 - `log-queries`: (boolean) forward received queries to configured loggers
 - `log-replies`: (boolean)  forward received replies to configured loggers
@@ -302,6 +307,7 @@ subprocessors:
   filtering:
     drop-fqdn-file: ""
     drop-domain-file: ""
+    drop-queryip-file: ""
     drop-rcodes: []
     log-queries: true
     log-replies: true
