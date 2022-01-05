@@ -33,7 +33,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [DNS decoder with extended options support](doc/dnsparser.md)
     - [Built-in Grafana dashboards](doc/dashboards.md)
     - [GeoIP support](doc/configuration.md#geoip-support)
-    - [Log filtering](doc/configuration.md#filtering)
+    - [Log filtering](doc/configuration.md#log-filtering)
     - [User Privacy](doc/configuration.md#user-privacy)
     - [Custom text format](doc/configuration.md#custom-text-format)
     - [DNS caching](doc/configuration.md#DNS-Caching)
