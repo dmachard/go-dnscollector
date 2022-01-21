@@ -57,7 +57,9 @@ class TestDnstap(unittest.TestCase):
             # make some dns queries to force the dns server to connect to the collector
             # in some products (dnsdist), connection is after  incoming dns traffic
             for i in range(20):
-                my_resolver.resolve('www.github.com', 'a')
+                try:
+                    my_resolver.resolve('www.github.com', 'a')
+                except: pass
 
             # waiting for connection between collector and dns server is ok
             try:
@@ -69,8 +71,10 @@ class TestDnstap(unittest.TestCase):
 
             # make some dns queries again
             for i in range(20):
-                my_resolver.resolve('www.github.com', 'a')
-
+                try:
+                    my_resolver.resolve('www.github.com', 'a')
+                except: pass
+                
             # wait client response on collector
             try:
                 await asyncio.wait_for(is_clientresponse, timeout=30.0)
