@@ -9,9 +9,14 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
+	"github.com/dmachard/go-topmap"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+type TopMaps struct {
+	rcodes *topmap.TopMap
+}
 
 type Prometheus struct {
 	done         chan bool
@@ -26,6 +31,9 @@ type Prometheus struct {
 
 	metricTotalQueries *prometheus.CounterVec
 	metricTotalReplies *prometheus.CounterVec
+	metricTotalRcodes  *prometheus.CounterVec
+
+	metricsTop map[string]*TopMaps
 }
 
 func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version string) *Prometheus {
@@ -38,6 +46,8 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 		logger:       logger,
 		ver:          version,
 		promRegistry: prometheus.NewRegistry(),
+
+		metricsTop: make(map[string]*TopMaps),
 	}
 	o.InitProm()
 	return o
@@ -51,6 +61,8 @@ func (o *Prometheus) InitProm() {
 		},
 		[]string{"stream"},
 	)
+	o.promRegistry.MustRegister(o.metricTotalQueries)
+
 	o.metricTotalReplies = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: fmt.Sprintf("%s_replies_total", o.config.Loggers.Prometheus.PromPrefix),
@@ -58,8 +70,16 @@ func (o *Prometheus) InitProm() {
 		},
 		[]string{"stream"},
 	)
-	o.promRegistry.MustRegister(o.metricTotalQueries)
 	o.promRegistry.MustRegister(o.metricTotalReplies)
+
+	o.metricTotalRcodes = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: fmt.Sprintf("%s_rcodes_total", o.config.Loggers.Prometheus.PromPrefix),
+			Help: "The total number of hit per return codes",
+		},
+		[]string{"stream", "rcode"},
+	)
+	o.promRegistry.MustRegister(o.metricTotalRcodes)
 }
 
 func (o *Prometheus) LogInfo(msg string, v ...interface{}) {
@@ -105,11 +125,25 @@ func (o *Prometheus) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
+	if _, ok := o.metricsTop[dm.DnsTap.Identity]; !ok {
+		o.metricsTop[dm.DnsTap.Identity] = &TopMaps{rcodes: topmap.NewTopMap(10)}
+	}
+
+	o.metricsTop[dm.DnsTap.Identity].rcodes.Inc(dm.DNS.Rcode)
+
 	if dm.DNS.Type == dnsutils.DnsQuery {
 		o.metricTotalQueries.WithLabelValues(dm.DnsTap.Identity).Inc()
 	} else {
 		o.metricTotalReplies.WithLabelValues(dm.DnsTap.Identity).Inc()
 	}
+
+	/*	for _, r := range o.metricsTop[dm.DnsTap.Identity].rcodes.Get() {
+		if dm.DNS.Rcode == r.Name {
+			o.metricTotalRcodes.WithLabelValues(dm.DnsTap.Identity, r.Name).Inc()
+		}
+	}*/
+
+	o.metricTotalRcodes.WithLabelValues(dm.DnsTap.Identity, dm.DNS.Rcode).Inc()
 }
 
 func (s *Prometheus) ListenAndServe() {

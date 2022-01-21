@@ -45,7 +45,7 @@ func (c *StatsStreams) Streams() []string {
 	defer c.RUnlock()
 
 	ret := []string{}
-	for k, _ := range c.streams {
+	for k := range c.streams {
 		ret = append(ret, k)
 	}
 	return ret

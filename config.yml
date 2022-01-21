@@ -224,7 +224,7 @@ loggers:
   # prometheus metrics server
   prometheus:
     # to enable, set the enable to true
-    enable: true
+    enable: false
     # listening IP
     listen-ip: 0.0.0.0
     # listening port
@@ -240,7 +240,7 @@ loggers:
     # private key server file
     key-file: ""
     # prometheus prefix
-    prometheus-prefix: "dnscollectorv2"
+    prometheus-prefix: "dnscollector"
 
   # write captured dns traffic to text files with rotation and compression support
   logfile:
