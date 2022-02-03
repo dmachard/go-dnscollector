@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -110,6 +111,7 @@ func (o *LokiClient) Stop() {
 
 func (o *LokiClient) Run() {
 	o.LogInfo("running in background...")
+	buffer := new(bytes.Buffer)
 
 	// prepare stream with label name
 
@@ -133,7 +135,16 @@ LOOP:
 				// prepare entry
 				entry := logproto.Entry{}
 				entry.Timestamp = time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
-				entry.Line = dm.String(o.textFormat)
+
+				switch o.config.Loggers.LokiClient.Mode {
+				case "text":
+					delimiter := ""
+					entry.Line = string(dm.Bytes(o.textFormat, delimiter))
+				case "json":
+					json.NewEncoder(buffer).Encode(dm)
+					entry.Line = buffer.String()
+					buffer.Reset()
+				}
 				o.sizeentries += len(entry.Line)
 
 				// append entry to the stream
