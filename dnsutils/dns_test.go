@@ -360,6 +360,14 @@ func TestDecodeDnsQuestion_QtypeMissing(t *testing.T) {
 	}
 }
 
+func TestDecodeQuestion_InvalidPointer(t *testing.T) {
+	decoded := []byte{88, 27, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 202}
+	_, _, _, err := DecodeQuestion(decoded)
+	if !errors.Is(err, ErrDecodeDnsLabelTooShort) {
+		t.Errorf("bad error returned: %v", err)
+	}
+}
+
 func TestDecodeDnsAnswer_PacketTooShort(t *testing.T) {
 	payload := []byte{46, 172, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 15, 100, 110, 115, 116, 97, 112, 99, 111, 108, 108, 101, 99, 116,
 		111, 114, 4, 116, 101, 115, 116, 0, 0, 1, 0, 1, 15, 100, 110, 115, 116, 97, 112, 99, 111, 108, 108, 101, 99, 116,
