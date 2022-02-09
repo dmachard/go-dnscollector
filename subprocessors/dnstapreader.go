@@ -11,6 +11,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-logger"
+	"golang.org/x/net/publicsuffix"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -256,6 +257,17 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			} else {
 				dm.DNS.Qname = dns_qname
 			}
+
+			// Public suffix
+			ps, _ := publicsuffix.PublicSuffix(dm.DNS.Qname)
+			dm.DNS.QnamePublicSuffix = ps
+
+			if !qnamePrivacy.IsEnabled() {
+				if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
+					dm.DNS.QnameEffectiveTLDPlusOne = etpo
+				}
+			}
+
 			dm.DNS.Qtype = dnsutils.RdatatypeToString(dns_rrtype)
 			dns_offsetrr = offsetrr
 		}
