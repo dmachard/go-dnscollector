@@ -342,6 +342,9 @@ func _ParseLabels(offset int, payload []byte, pointers map[uint16]int) (string, 
 		}
 		// label pointer support ?
 		if length>>6 == 3 {
+			if offset+1 >= len(payload) {
+				return "", 0, ErrDecodeDnsLabelTooShort
+			}
 			ptr := binary.BigEndian.Uint16(payload[offset:offset+2]) & 16383
 			_, exist := pointers[ptr]
 			if exist {
