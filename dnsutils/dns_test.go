@@ -380,6 +380,76 @@ func TestDecodeDnsAnswer_PacketTooShort(t *testing.T) {
 	}
 }
 
+func TestDecodeDnsAnswer_PathologicalPacket(t *testing.T) {
+	// Create a message with one question and `n` answers (`n` determined later).
+	decoded := make([]byte, 65500)
+	copy(decoded, []byte{88, 27, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0})
+
+	// Create a rather suboptimal name for the question.
+	// The answers point to this a bajillion times later.
+	// This name breaks several rules:v
+	//  * Label length is > 63
+	//  * Name length is > 255 bytes
+	//  * Pointers jump all over the place, not just backwards
+	i := 12
+	for {
+		// Create a bunch of interleaved labels of length 191,
+		// each label immediately followed by a pointer to the
+		// label next to it. The last label of the interleaved chunk
+		// is followed with a pointer to forwards to the next chunk
+		// of interleaved labels:
+		//
+		// [191 ... 191 ... 191 ... ... ptr1 ptr2 ... ptrN 191 ... 191 ...]
+		//           ^      ^            │    │        │    ^
+		//           │      └────────────┼────┘        └────┘
+		//           └───────────────────┘
+		//
+		// We then repeat this pattern as many times as we can within the
+		// first 16383 bytes (so that we can point to it later).
+		// Then cleanly closing the name with a null byte in the end allows us to
+		// create a name of around 700 kilobytes (I checked once, don't quote me on this).
+		if 16384-i < 384 {
+			decoded[i] = 0
+			break
+		}
+		for j := 0; j < 192; j += 2 {
+			decoded[i] = 191
+			i += 2
+		}
+		for j := 0; j < 190; j += 2 {
+			offset := i - 192 + 2
+			decoded[i] = 0xc0 | byte(offset>>8)
+			decoded[i+1] = byte(offset & 0xff)
+			i += 2
+		}
+		offset := i + 2
+		decoded[i] = 0xc0 | byte(offset>>8)
+		decoded[i+1] = byte(offset & 0xff)
+		i += 2
+	}
+
+	// Fill in the rest of the question
+	copy(decoded[i:], []byte{0, 5, 0, 1})
+	i += 4
+
+	// Fit as many answers as we can that contain CNAME RDATA pointing to
+	// the bloated name created above.
+	ancount := 0
+	for j := i; j+13 <= len(decoded); j += 13 {
+		copy(decoded[j:], []byte{0, 0, 5, 0, 0, 0, 0, 0, 1, 0, 2, 192, 12})
+		ancount += 1
+	}
+
+	// Update the message with the answer count
+	decoded[6] = byte(ancount >> 8)
+	decoded[7] = byte(ancount & 0xff)
+
+	answer, _, _ := DecodeAnswer(ancount, i, decoded)
+	if len(answer) != ancount {
+		t.Errorf("invalid decode answer, want %d, got: %d", ancount, len(answer))
+	}
+}
+
 func TestDecodeDnsAnswer_RdataTooShort(t *testing.T) {
 	payload := []byte{46, 172, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 15, 100, 110, 115, 116, 97, 112, 99, 111, 108, 108, 101, 99, 116,
 		111, 114, 4, 116, 101, 115, 116, 0, 0, 1, 0, 1, 15, 100, 110, 115, 116, 97, 112, 99, 111, 108, 108, 101, 99, 116,
