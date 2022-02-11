@@ -482,7 +482,7 @@ func TestDecodeDnsAnswer_InvalidPtr_Loop1(t *testing.T) {
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
 	_, _, err := DecodeAnswer(1, offset_rr, payload)
-	if !errors.Is(err, ErrDecodeDnsLabelInvalidOffsetInfiniteLoop) {
+	if !errors.Is(err, ErrDecodeDnsLabelInvalidPointer) {
 		t.Errorf("bad error returned: %v", err)
 	}
 }
@@ -496,7 +496,7 @@ func TestDecodeDnsAnswer_InvalidPtr_Loop2(t *testing.T) {
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
 	_, _, err := DecodeAnswer(1, offset_rr, payload)
-	if !errors.Is(err, ErrDecodeDnsLabelInvalidOffsetInfiniteLoop) {
+	if !errors.Is(err, ErrDecodeDnsLabelInvalidPointer) {
 		t.Errorf("bad error returned: %v", err)
 	}
 }

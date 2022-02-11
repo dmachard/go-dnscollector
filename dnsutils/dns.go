@@ -113,8 +113,10 @@ var (
 )
 
 var ErrDecodeDnsHeaderTooShort = errors.New("malformed pkt, dns payload too short to decode header")
+var ErrDecodeDnsLabelTooLong = errors.New("malformed pkt, label too long")
+var ErrDecodeDnsLabelInvalidData = errors.New("malformed pkt, invalid label length byte")
 var ErrDecodeDnsLabelInvalidOffset = errors.New("malformed pkt, invalid offset to decode label")
-var ErrDecodeDnsLabelInvalidOffsetInfiniteLoop = errors.New("malformed pkt, invalid offset to decode label, infinite loop")
+var ErrDecodeDnsLabelInvalidPointer = errors.New("malformed pkt, label pointer not pointing to prior data")
 var ErrDecodeDnsLabelTooShort = errors.New("malformed pkt, dns payload too short to get label")
 var ErrDecodeQuestionQtypeTooShort = errors.New("malformed pkt, not enough data to decode qtype")
 var ErrDecodeDnsAnswerTooShort = errors.New("malformed pkt, not enough data to decode answer")
@@ -348,7 +350,7 @@ func _ParseLabels(offset int, payload []byte, pointers map[uint16]int) (string, 
 			ptr := binary.BigEndian.Uint16(payload[offset:offset+2]) & 16383
 			_, exist := pointers[ptr]
 			if exist {
-				return "", 0, ErrDecodeDnsLabelInvalidOffsetInfiniteLoop
+				return "", 0, ErrDecodeDnsLabelInvalidPointer
 			} else {
 				pointers[ptr] = 1
 			}
