@@ -338,7 +338,7 @@ func TestDecodeDns_HeaderTooShort(t *testing.T) {
 func TestDecodeDnsQuestion_InvalidOffset(t *testing.T) {
 	decoded := []byte{183, 59, 130, 217, 128, 16, 0, 51, 165, 67, 0, 0}
 	_, _, _, err := DecodeQuestion(decoded)
-	if !errors.Is(err, ErrDecodeDnsLabelInvalidOffset) {
+	if !errors.Is(err, ErrDecodeDnsLabelTooShort) {
 		t.Errorf("bad error returned: %v", err)
 	}
 }
@@ -469,7 +469,7 @@ func TestDecodeDnsAnswer_InvalidPtr(t *testing.T) {
 
 	_, _, offset_rr, _ := DecodeQuestion(payload)
 	_, _, err := DecodeAnswer(1, offset_rr, payload)
-	if !errors.Is(err, ErrDecodeDnsLabelInvalidOffset) {
+	if !errors.Is(err, ErrDecodeDnsLabelInvalidPointer) {
 		t.Errorf("bad error returned: %v", err)
 	}
 }
@@ -514,7 +514,7 @@ func TestDecodeDnsLabel_InvalidOffset_StartOutOfBounds(t *testing.T) {
 	payload := []byte{0x01, 0x61, 0x00}
 
 	_, _, err := ParseLabels(4, payload)
-	if !errors.Is(err, ErrDecodeDnsLabelInvalidOffset) {
+	if !errors.Is(err, ErrDecodeDnsLabelTooShort) {
 		t.Errorf("bad error returned: %v", err)
 	}
 }
@@ -523,7 +523,7 @@ func TestDecodeDnsLabel_InvalidOffset_RunOutOfBounds(t *testing.T) {
 	payload := []byte{0x01, 0x61}
 
 	_, _, err := ParseLabels(0, payload)
-	if !errors.Is(err, ErrDecodeDnsLabelInvalidOffset) {
+	if !errors.Is(err, ErrDecodeDnsLabelTooShort) {
 		t.Errorf("bad error returned: %v", err)
 	}
 }
@@ -532,7 +532,7 @@ func TestDecodeDnsLabel_InvalidOffset_PointerByteOutOfBounds(t *testing.T) {
 	payload := []byte{0x01, 0x61, 0xc0}
 
 	_, _, err := ParseLabels(0, payload)
-	if !errors.Is(err, ErrDecodeDnsLabelInvalidOffset) {
+	if !errors.Is(err, ErrDecodeDnsLabelTooShort) {
 		t.Errorf("bad error returned: %v", err)
 	}
 }
