@@ -756,3 +756,21 @@ func TestDecodeDnsLabel_InvalidPtr_BackwardsOverlappingPtr(t *testing.T) {
 		t.Errorf("bad error returned: %v", err)
 	}
 }
+
+func TestDecodeDnsLabel_EndOffset_WithoutPtr(t *testing.T) {
+	payload := []byte{0x02, 0x61, 0x61, 0x00}
+
+	_, offset, _ := ParseLabels(0, payload)
+	if offset != 4 {
+		t.Errorf("invalid end offset: %v", offset)
+	}
+}
+
+func TestDecodeDnsLabel_EndOffset_WithPtr(t *testing.T) {
+	payload := []byte{0x01, 0x61, 0x00, 0x02, 0x61, 0x61, 0xc0, 0x00}
+
+	_, offset, _ := ParseLabels(3, payload)
+	if offset != 8 {
+		t.Errorf("invalid end offset: %v", offset)
+	}
+}
