@@ -501,6 +501,15 @@ func TestDecodeDnsAnswer_InvalidPtr_Loop2(t *testing.T) {
 	}
 }
 
+func TestDecodeDnsLabel_InvalidOffset_NegativeOffset(t *testing.T) {
+	payload := []byte{0x01, 0x61, 0x00}
+
+	_, _, err := ParseLabels(-1, payload)
+	if !errors.Is(err, ErrDecodeDnsLabelInvalidOffset) {
+		t.Errorf("bad error returned: %v", err)
+	}
+}
+
 func TestDecodeDnsLabel_InvalidOffset_StartOutOfBounds(t *testing.T) {
 	payload := []byte{0x01, 0x61, 0x00}
 
