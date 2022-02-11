@@ -143,6 +143,9 @@ func main() {
 					panic(fmt.Sprintf("main - reload config error:  %v", err))
 				}
 
+				// enable the verbose mode ?
+				logger.SetVerbose(config.Trace.Verbose)
+
 				// reload config for all collectors and loggers
 				for _, p := range collwrks {
 					p.ReadConfig()
