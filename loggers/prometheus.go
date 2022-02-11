@@ -82,6 +82,9 @@ func (o *Prometheus) InitProm() {
 	o.promRegistry.MustRegister(o.metricTotalRcodes)
 }
 
+func (o *Prometheus) ReadConfig() {
+}
+
 func (o *Prometheus) LogInfo(msg string, v ...interface{}) {
 	o.logger.Info("prometheus - "+msg, v...)
 }

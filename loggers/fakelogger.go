@@ -13,6 +13,8 @@ func NewFakeLogger() *FakeLogger {
 	return o
 }
 
+func (o *FakeLogger) ReadConfig() {}
+
 func (o *FakeLogger) Stop() {}
 
 func (o *FakeLogger) Channel() chan dnsutils.DnsMessage {

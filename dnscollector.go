@@ -125,25 +125,49 @@ func main() {
 	}
 
 	// Handle Ctrl-C
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	sigTerm := make(chan os.Signal, 1)
+	signal.Notify(sigTerm, os.Interrupt, syscall.SIGTERM)
+
+	sigHUP := make(chan os.Signal, 1)
+	signal.Notify(sigHUP, syscall.SIGHUP)
+
 	go func() {
-		for range c {
-			logger.Info("main - system interrupt, exiting...")
+		for {
+			select {
+			case <-sigHUP:
+				logger.Info("main - reloading config...")
 
-			// stop all workers
-			logger.Info("main - stopping all collectors and loggers...")
-			for _, p := range collwrks {
-				p.Stop()
+				// read config
+				err := dnsutils.ReloadConfig(configPath, config)
+				if err != nil {
+					panic(fmt.Sprintf("main - reload config error:  %v", err))
+				}
+
+				// reload config for all collectors and loggers
+				for _, p := range collwrks {
+					p.ReadConfig()
+				}
+				for _, p := range logwrks {
+					p.ReadConfig()
+				}
+
+			case <-sigTerm:
+				logger.Info("main - system interrupt, exiting...")
+
+				// stop all workers
+				logger.Info("main - stopping all collectors and loggers...")
+				for _, p := range collwrks {
+					p.Stop()
+				}
+				for _, p := range logwrks {
+					p.Stop()
+				}
+
+				// unblock main function
+				done <- true
+
+				os.Exit(0)
 			}
-			for _, p := range logwrks {
-				p.Stop()
-			}
-
-			// unblock main function
-			done <- true
-
-			os.Exit(0)
 		}
 	}()
 

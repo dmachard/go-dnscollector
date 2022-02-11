@@ -42,6 +42,9 @@ func NewWebserver(config *dnsutils.Config, logger *logger.Logger, version string
 	return o
 }
 
+func (o *Webserver) ReadConfig() {
+}
+
 func (o *Webserver) LogInfo(msg string, v ...interface{}) {
 	o.logger.Info("webserver - "+msg, v...)
 }
