@@ -16,7 +16,7 @@ The configuration is done in one yaml file. For the complete configuration, see 
   - [User privacy](#user-privacy)
   - [GeoIP Support](#GeoIP-Support)
   - [DNS Caching](#DNS-Caching)
-  - [Log filtering](#log-filtering)
+  - [DNS filtering](#dns-filtering)
   - [Custom text format](#Custom-Text-Format)
   - [Statistics](#Statistics)
 - [Loggers](#Loggers)
@@ -285,7 +285,7 @@ subprocessors:
     query-timeout: 10 
 ```
 
-### Log filtering
+### DNS filtering
 
 The filtering feature can be used to ignore some queries or replies according to:
 - qname
@@ -311,6 +311,13 @@ subprocessors:
     drop-rcodes: []
     log-queries: true
     log-replies: true
+```
+
+Domain list with regex example:
+
+```
+(mail|wwww).google.com
+github.com
 ```
 
 ### Custom text format

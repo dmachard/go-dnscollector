@@ -133,6 +133,9 @@ subprocessors:
     # path file of the query IP drop list
     drop-queryip-file: ""
     # drop specific responses according to the return code (NOERROR, ...). This list is empty by default
+    # Example to ignore NOERROR dns packets
+    # drop-rcodes:
+    #  - NOERROR
     drop-rcodes: []
     # forward received queries to configured loggers ?
     log-queries: true

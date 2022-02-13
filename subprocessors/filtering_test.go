@@ -40,6 +40,7 @@ func TestFilteringByRcodeNOERROR(t *testing.T) {
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped")
 	}
+
 }
 
 func TestFilteringByRcodeEmpty(t *testing.T) {
@@ -51,6 +52,71 @@ func TestFilteringByRcodeEmpty(t *testing.T) {
 	filtering := NewFilteringProcessor(config, logger.New(false))
 
 	dm := dnsutils.GetFakeDnsMessage()
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
+}
+
+func TestFilteringByQueryIp(t *testing.T) {
+	// config
+	config := dnsutils.GetFakeConfig()
+	config.Subprocessors.Filtering.DropQueryIpFile = "../testsdata/filtering_queryip.txt"
+
+	// init subproccesor
+	filtering := NewFilteringProcessor(config, logger.New(false))
+
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.NetworkInfo.QueryIp = "192.168.0.1"
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
+
+	dm.NetworkInfo.QueryIp = "192.168.1.15"
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped!")
+	}
+}
+
+func TestFilteringByFqdn(t *testing.T) {
+	// config
+	config := dnsutils.GetFakeConfig()
+	config.Subprocessors.Filtering.DropFqdnFile = "../testsdata/filtering_fqdn.txt"
+
+	// init subproccesor
+	filtering := NewFilteringProcessor(config, logger.New(false))
+
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.Qname = "www.microsoft.com"
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
+
+	dm.DNS.Qname = "mail.google.com"
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped!")
+	}
+}
+
+func TestFilteringByDomainRegex(t *testing.T) {
+	// config
+	config := dnsutils.GetFakeConfig()
+	config.Subprocessors.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
+
+	// init subproccesor
+	filtering := NewFilteringProcessor(config, logger.New(false))
+
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.Qname = "mail.google.com"
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped!")
+	}
+
+	dm.DNS.Qname = "test.github.com"
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped!")
+	}
+
+	dm.DNS.Qname = "github.fr"
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}

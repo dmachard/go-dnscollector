@@ -1,0 +1,2 @@
+(mail|wwww).google.com
+github.com
