@@ -82,6 +82,37 @@ jobs:
       env:
         PROM_VERSION: "2.31.1"
 
+  e2e-unbound:
+    runs-on: ubuntu-20.04
+
+    strategy:
+      matrix:
+        go-version: [ '1.17']
+        coredns: [ '0.15.0' ]
+        mode: [ 'tcp', 'unix' ]
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+    - uses: actions/setup-python@v2
+
+    - name: build binary
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+
+    - name: Deploy coredns docker image
+      run: |
+        sudo docker run -d --network="host" --name=unbound --volume=$PWD/testsdata/unbound_${{ matrix.mode }}.conf:/opt/unbound/etc/unbound/unbound.conf:z -v /tmp/:/tmp/ mvance/unbound:${{ matrix.coredns }}
+        sudo docker logs unbound > /tmp/unbound.out
+        sudo cat /tmp/unbound.out
+
+    - name: Test ${{ matrix.mode }}
+      run: |
+        sudo python3 -m pip install dnstap_pb fstrm dnspython
+        sudo python3 -m pip install --upgrade protobuf
+        sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
+
   e2e-coredns:
     runs-on: ubuntu-20.04
 
