@@ -106,8 +106,8 @@ jobs:
     - name: Deploy coredns docker image
       run: |
         sudo docker run -d --network="host" --name=unbound --volume=$PWD/testsdata/unbound_${{ matrix.mode }}.conf:/opt/unbound/etc/unbound/unbound.conf:z -v /tmp/dnstap.sock:/opt/unbound/etc/unbound/dnstap.sock:z mvance/unbound:${{ matrix.coredns }}
-        sudo docker logs unbound > /tmp/unbound.out
-        sudo cat /tmp/unbound.out
+        sudo docker logs unbound
+        dig -p 5553 www.github.com @127.0.0.1 +timeout=10 +tries=3 +retry=3 | grep NOERROR
 
     - name: Test ${{ matrix.mode }}
       run: |
