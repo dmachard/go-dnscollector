@@ -2,6 +2,7 @@ import unittest
 import asyncio
 import dns.resolver
 import os
+import time
 
 COLLECTOR_USER = os.getenv('COLLECTOR_USER')
 if COLLECTOR_USER is None:
@@ -54,6 +55,7 @@ class TestDnstap(unittest.TestCase):
             transport_collector, protocol_collector =  await self.loop.subprocess_exec(lambda: ProcessProtocol(is_ready, is_clientresponse),
                                                                                        *args, stdout=asyncio.subprocess.PIPE)
 
+            time.sleep(5)
             # make some dns queries to force the dns server to connect to the collector
             # in some products (dnsdist), connection is after  incoming dns traffic
             for i in range(20):

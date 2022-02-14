@@ -103,7 +103,7 @@ jobs:
     - name: build binary
       run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 
-    - name: Deploy coredns docker image
+    - name: Deploy docker image
       run: |
         sudo docker run -d --network="host" --name=unbound --volume=$PWD/testsdata/unbound_${{ matrix.mode }}.conf:/opt/unbound/etc/unbound/unbound.conf:z -v /tmp/:/opt/unbound/etc/unbound/tmp/:z mvance/unbound:${{ matrix.coredns }}
         dig -p 5553 www.github.com @127.0.0.1 +timeout=10 +tries=3 +retry=3 | grep NOERROR
