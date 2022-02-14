@@ -304,7 +304,7 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]DnsAnswer, i
 		}
 		// parse rdata
 		rdatatype := RdatatypeToString(int(t))
-		parsed, err := ParseRdata(rdatatype, rdata, payload, offset_next+10)
+		parsed, err := ParseRdata(rdatatype, rdata, payload[:offset_next+10+int(rdlength)], offset_next+10)
 		if err != nil {
 			return answers, offset, err
 		}
