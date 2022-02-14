@@ -84,6 +84,8 @@ jobs:
 
   e2e-unbound:
     runs-on: ubuntu-20.04
+    env:
+      COLLECTOR_USER: _unbound
 
     strategy:
       matrix:
@@ -100,6 +102,11 @@ jobs:
 
     - name: build binary
       run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+
+    - name: add _unbound user
+      run: |
+        sudo addgroup --system --gid 1000 _unbound
+        sudo adduser --system --disabled-password --no-create-home -uid 1000 --gid 1000 _unbound
 
     - name: Deploy coredns docker image
       run: |
