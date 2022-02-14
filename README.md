@@ -39,6 +39,18 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [DNS caching](doc/configuration.md#DNS-Caching)
     - [Normalize Qname](doc/configuration.md#Qname-lowercase)
 
+## End to end testing
+
+Tested with success with the following dns servers
+
+![unbound 1.15.x](https://img.shields.io/badge/unbound%201.15.x-tested-green)
+
+![powerdns dnsdist 1.6.x](https://img.shields.io/badge/dnsdist%201.6.x-tested-green)
+![powerdns dnsdist 1.7.x](https://img.shields.io/badge/dnsdist%201.7.x-tested-green)
+
+![coredns 1.8.7](https://img.shields.io/badge/coredns%201.8.7-tested-green)
+![coredns 1.9.0](https://img.shields.io/badge/coredns%201.9.0-tested-green)
+
 ## Installation
 
 **Run-it from binary**
