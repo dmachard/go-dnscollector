@@ -22,7 +22,7 @@ collectors:
     # listening on port
     listen-port: 6000
     # unix socket path
-    sock-path: null
+    sock-path: /tmp/dnstap.sock
     # tls support
     tls-support: false
     # certificate server file
