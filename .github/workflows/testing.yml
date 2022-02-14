@@ -91,7 +91,7 @@ jobs:
       matrix:
         go-version: [ '1.17']
         coredns: [ '1.15.0' ]
-        mode: [ 'tcp', 'unix' ]
+        mode: [ 'tcp' ]
 
     steps:
     - uses: actions/checkout@v2
