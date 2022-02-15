@@ -463,7 +463,12 @@ func ParseSOA(rdata_offset int, payload []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	rdata := payload[offset:]
+
+	// ensure there is enough data to parse rest of the fields
+	if offset+20 > len(payload) {
+		return "", ErrDecodeDnsAnswerRdataTooShort
+	}
+	rdata := payload[offset : offset+20]
 
 	serial := binary.BigEndian.Uint32(rdata[0:4])
 	refresh := int32(binary.BigEndian.Uint32(rdata[4:8]))
