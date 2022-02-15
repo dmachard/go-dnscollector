@@ -552,11 +552,17 @@ MX
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func ParseMX(rdata_offset int, payload []byte) (string, error) {
+	// ensure there is enough data for pereference and at least
+	// one byte for label
+	if len(payload) < rdata_offset+3 {
+		return "", ErrDecodeDnsAnswerRdataTooShort
+	}
 	pref := binary.BigEndian.Uint16(payload[rdata_offset : rdata_offset+2])
 	host, _, err := ParseLabels(rdata_offset+2, payload)
 	if err != nil {
 		return "", err
 	}
+
 	mx := fmt.Sprintf("%d %s", pref, host)
 	return mx, err
 }
