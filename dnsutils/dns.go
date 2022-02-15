@@ -113,8 +113,10 @@ var (
 )
 
 var ErrDecodeDnsHeaderTooShort = errors.New("malformed pkt, dns payload too short to decode header")
+var ErrDecodeDnsLabelTooLong = errors.New("malformed pkt, label too long")
+var ErrDecodeDnsLabelInvalidData = errors.New("malformed pkt, invalid label length byte")
 var ErrDecodeDnsLabelInvalidOffset = errors.New("malformed pkt, invalid offset to decode label")
-var ErrDecodeDnsLabelInvalidOffsetInfiniteLoop = errors.New("malformed pkt, invalid offset to decode label, infinite loop")
+var ErrDecodeDnsLabelInvalidPointer = errors.New("malformed pkt, label pointer not pointing to prior data")
 var ErrDecodeDnsLabelTooShort = errors.New("malformed pkt, dns payload too short to get label")
 var ErrDecodeQuestionQtypeTooShort = errors.New("malformed pkt, not enough data to decode qtype")
 var ErrDecodeDnsAnswerTooShort = errors.New("malformed pkt, not enough data to decode answer")
@@ -324,53 +326,74 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]DnsAnswer, i
 }
 
 func ParseLabels(offset int, payload []byte) (string, int, error) {
-	ptrs := make(map[uint16]int)
-	return _ParseLabels(offset, payload, ptrs)
-}
+	if offset < 0 {
+		return "", 0, ErrDecodeDnsLabelInvalidOffset
+	}
 
-func _ParseLabels(offset int, payload []byte, pointers map[uint16]int) (string, int, error) {
 	labels := []string{}
+	// Where the current decoding run has started. Set after on every pointer jump.
+	startOffset := offset
+	// Track where the current decoding run is allowed to advance. Set after every pointer jump.
+	maxOffset := len(payload)
+	// Where the decoded label ends (-1 == uninitialized). Set either on first pointer jump or when the label ends.
+	endOffset := -1
+	// Keep tabs of the current total length. Ensure that the maximum total name length is 254 (counting
+	// separator dots plus one dangling dot).
+	totalLength := 0
+
 	for {
 		if offset >= len(payload) {
-			return "", 0, ErrDecodeDnsLabelInvalidOffset
+			return "", 0, ErrDecodeDnsLabelTooShort
+		} else if offset >= maxOffset {
+			return "", 0, ErrDecodeDnsLabelInvalidPointer
 		}
 
 		length := int(payload[offset])
 		if length == 0 {
-			offset++
+			if endOffset == -1 {
+				endOffset = offset + 1
+			}
 			break
-		}
-		// label pointer support ?
-		if length>>6 == 3 {
-			if offset+1 >= len(payload) {
+		} else if length&0xc0 == 0xc0 {
+			if offset+2 > len(payload) {
 				return "", 0, ErrDecodeDnsLabelTooShort
+			} else if offset+2 > maxOffset {
+				return "", 0, ErrDecodeDnsLabelInvalidPointer
 			}
-			ptr := binary.BigEndian.Uint16(payload[offset:offset+2]) & 16383
-			_, exist := pointers[ptr]
-			if exist {
-				return "", 0, ErrDecodeDnsLabelInvalidOffsetInfiniteLoop
-			} else {
-				pointers[ptr] = 1
-			}
-			label, _, err := _ParseLabels(int(ptr), payload, pointers)
-			if err != nil {
-				return "", 0, err
-			}
-			labels = append(labels, label)
-			offset += 2
-			break
 
-		} else {
-			if offset+length+1 >= len(payload) {
-				return "", 0, ErrDecodeDnsLabelTooShort
+			ptr := int(binary.BigEndian.Uint16(payload[offset:offset+2]) & 16383)
+			if ptr >= startOffset {
+				// Require pointers to always point to prior data (based on a reading of RFC 1035, section 4.1.4).
+				return "", 0, ErrDecodeDnsLabelInvalidPointer
 			}
+
+			if endOffset == -1 {
+				endOffset = offset + 2
+			}
+			maxOffset = startOffset
+			startOffset = ptr
+			offset = ptr
+		} else if length&0xc0 == 0x00 {
+			if offset+length+1 > len(payload) {
+				return "", 0, ErrDecodeDnsLabelTooShort
+			} else if offset+length+1 > maxOffset {
+				return "", 0, ErrDecodeDnsLabelInvalidPointer
+			}
+
+			totalLength += length + 1
+			if totalLength > 254 {
+				return "", 0, ErrDecodeDnsLabelTooLong
+			}
+
 			label := payload[offset+1 : offset+length+1]
 			labels = append(labels, string(label))
-
 			offset += length + 1
+		} else {
+			return "", 0, ErrDecodeDnsLabelInvalidData
 		}
 	}
-	return strings.Join(labels[:], "."), offset, nil
+
+	return strings.Join(labels[:], "."), endOffset, nil
 }
 
 func ParseRdata(rdatatype string, rdata []byte, payload []byte, rdata_offset int) (string, error) {
