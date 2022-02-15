@@ -63,9 +63,9 @@ func (p *FilteringProcessor) LoadQueryIpList() {
 		} else {
 
 			// register the file to watch
-			if err := p.fileWatcher.Add(p.config.Subprocessors.Filtering.DropQueryIpFile); err != nil {
+			/*if err := p.fileWatcher.Add(p.config.Subprocessors.Filtering.DropQueryIpFile); err != nil {
 				p.LogError("unable to watch ip file: ", err)
-			}
+			}*/
 
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
@@ -88,9 +88,9 @@ func (p *FilteringProcessor) LoadDomainsList() {
 		} else {
 
 			// register the file to watch
-			if err := p.fileWatcher.Add(p.config.Subprocessors.Filtering.DropFqdnFile); err != nil {
+			/*if err := p.fileWatcher.Add(p.config.Subprocessors.Filtering.DropFqdnFile); err != nil {
 				p.LogError("unable to watch fqdn file: ", err)
-			}
+			}*/
 
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
@@ -110,9 +110,9 @@ func (p *FilteringProcessor) LoadDomainsList() {
 			p.dropDomains = true
 		} else {
 			// register the file to watch
-			if err := p.fileWatcher.Add(p.config.Subprocessors.Filtering.DropDomainFile); err != nil {
+			/*if err := p.fileWatcher.Add(p.config.Subprocessors.Filtering.DropDomainFile); err != nil {
 				p.LogError("unable to watch domain file: ", err)
-			}
+			}*/
 
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
