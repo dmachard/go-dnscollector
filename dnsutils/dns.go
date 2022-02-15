@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"strconv"
+	"net"
 	"strings"
 )
 
@@ -490,12 +490,13 @@ IPv4
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func ParseA(r []byte) (string, error) {
-	var ip []string
-	for i := 0; i < len(r); i++ {
-		ip = append(ip, strconv.Itoa(int(r[i])))
+
+	if len(r) < net.IPv4len {
+		return "", ErrDecodeDnsAnswerRdataTooShort
 	}
-	a := strings.Join(ip, ".")
-	return a, nil
+	addr := make(net.IP, net.IPv4len)
+	copy(addr, r[:net.IPv4len])
+	return addr.String(), nil
 }
 
 /*
@@ -514,12 +515,12 @@ IPv6
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func ParseAAAA(rdata []byte) (string, error) {
-	var ip []string
-	for i := 0; i < len(rdata); i += 2 {
-		ip = append(ip, fmt.Sprintf("%x", binary.BigEndian.Uint16(rdata[i:i+2])))
+	if len(rdata) < net.IPv6len {
+		return "", ErrDecodeDnsAnswerRdataTooShort
 	}
-	aaaa := strings.Join(ip, ":")
-	return aaaa, nil
+	addr := make(net.IP, net.IPv6len)
+	copy(addr, rdata[:net.IPv6len])
+	return addr.String(), nil
 }
 
 /*

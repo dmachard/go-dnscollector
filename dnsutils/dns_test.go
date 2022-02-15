@@ -159,7 +159,7 @@ func TestDecodeRdataAAAA(t *testing.T) {
 	dm := new(dns.Msg)
 	dm.SetQuestion(fqdn, dns.TypeA)
 
-	rdata := "fe80:0:0:0:0:0:0:2"
+	rdata := "fe8::2"
 	rr1, _ := dns.NewRR(fmt.Sprintf("%s AAAA %s", fqdn, rdata))
 	dm.Answer = append(dm.Answer, rr1)
 
