@@ -23,6 +23,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ github.event.release.tag_name }}
           files: go-dnscollector_${{ github.event.release.tag_name }}_linux_amd64.tar.gz
 
   dockerhub:
