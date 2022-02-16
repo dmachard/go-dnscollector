@@ -1,7 +1,7 @@
 # DnsCollector - Configuration Guide
 
-A typically configuration would have one or more collector to receive DNS traffic or logs, and severals loggers to process the 
-incoming traffics. 
+A typically configuration would have one or more collector to receive DNS traffic or logs, and severals loggers to process the
+incoming traffics.
 
 The configuration is done in one yaml file. For the complete configuration, see [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml).
 
@@ -44,7 +44,7 @@ Options:
 - `log-malformed`: (boolean) log malformed packet
 
 ```yaml
-# 
+#
 trace:
   verbose: true
   log-malformed: false
@@ -101,7 +101,7 @@ dnstap:
 
 ### DNS sniffer
 
-Raw DNS packets sniffer. Setting `CAP_NET_RAW` capabilities on executables allows you to run these 
+Raw DNS packets sniffer. Setting `CAP_NET_RAW` capabilities on executables allows you to run these
 program without having to run-it with the root user:
 * IPv4, IPv6 support (fragmented packet ignored)
 * UDP and TCP transport
@@ -155,7 +155,7 @@ tail:
 
 ## Subprocessors
 
-### Quiet text 
+### Quiet text
 
 Enable or disable quiet text mode for some flags, this option can be useful to reduce the size of your dns logs
 
@@ -186,7 +186,7 @@ subprocessors:
   # this option can be useful to reduce the size of your dns logs
   quiet-text:
     dnstap: false
-    
+
     dns: false
 ```
 
@@ -205,7 +205,7 @@ subprocessors:
 
 ### User Privacy
 
-Use this feature to protect user privacy. This feature can be used to anonymize all IP queries and reduce all qnames to second level. 
+Use this feature to protect user privacy. This feature can be used to anonymize all IP queries and reduce all qnames to second level.
 For example:
 - QueryIP 8.8.8.8 will be replaced by 8.8.0.0. IP-Addresses are anonymities by zeroing the host-part of an address.
 - Qname mail.google.com be replaced by google.com
@@ -271,7 +271,7 @@ Example:
 ### DNS Caching
 
 The caching feature is used to compute latency between replies and queries.
-This cache can be disabled if your dns server already added the latency in the dnstap packet, 
+This cache can be disabled if your dns server already added the latency in the dnstap packet,
 Disable this feature to improve performance.
 
 Options:
@@ -282,7 +282,7 @@ Options:
 subprocessors:
   cache:
     enable: true
-    query-timeout: 10 
+    query-timeout: 10
 ```
 
 ### Log filtering
@@ -394,7 +394,7 @@ subprocessors:
 
 ### Stdout
 
-Print to your standard output, all DNS logs received 
+Print to your standard output, all DNS logs received
 * in text or json format
 * custom text format
 
@@ -579,8 +579,7 @@ Syslog logger to local syslog system or remote one.
 
 Options:
 - `enable`: (boolean) enable, set the enable to true
-- `severity`: (string) Set the syslog logging severity 
-- `facility`: (string) Set the syslog logging facility 
+- `facility`: (string) Set the syslog logging facility
 - `transport`: (string) Transport to use to a remote log daemon or local one. local|tcp|udp|unix
 - `remote-address`: (string) Remote address host:port
 - `mode`: (string) text or json
@@ -718,7 +717,7 @@ Options:
     tls-insecure: false
     basic-auth-login: ""
     basic-auth-pwd: ""
-    tenant-id: "" 
+    tenant-id: ""
 ```
 
 ### Statsd client
