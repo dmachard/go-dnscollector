@@ -336,6 +336,8 @@ All available directives:
 - `length`: the length of the query or reply
 - `qtype`: dns qtype
 - `qname`: dns qname
+- `qnamepublicsuffix`: [Public Suffix](https://publicsuffix.org/) of the DNS QNAME
+- `qnameeffectivetldplusone`: [Public Suffix](https://publicsuffix.org/) plus one label of the DNS QNAME
 - `latency`: computed latency between queries and replies
 - `answercount`: the number of answer
 - `continent`: continent code
