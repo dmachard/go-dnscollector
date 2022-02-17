@@ -73,6 +73,12 @@ type StatsPerStream struct {
 	firstleveldomains    map[string]int
 	firstleveldomainstop *topmap.TopMap
 
+	publicsuffix    map[string]int
+	publicsuffixtop *topmap.TopMap
+
+	effectivetldplusone    map[string]int
+	effectivetldplusonetop *topmap.TopMap
+
 	qnames    map[string]int
 	qnamestop *topmap.TopMap
 
@@ -127,6 +133,12 @@ func NewStatsPerStream(config *dnsutils.Config, name string) *StatsPerStream {
 
 		firstleveldomains:    make(map[string]int),
 		firstleveldomainstop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
+		publicsuffix:    make(map[string]int),
+		publicsuffixtop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
+
+		effectivetldplusone:    make(map[string]int),
+		effectivetldplusonetop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
 
 		qnames:    make(map[string]int),
 		qnamestop: topmap.NewTopMap(config.Subprocessors.Statistics.TopMaxItems),
@@ -397,6 +409,26 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 		c.firstleveldomainstop.Record(fld, c.firstleveldomains[fld])
 	}
 
+	// record public suffix
+	if dm.DNS.QnameEffectiveTLDPlusOne != "-" && dm.DNS.QnameEffectiveTLDPlusOne != "" {
+		if _, ok := c.publicsuffix[dm.DNS.QnamePublicSuffix]; !ok {
+			c.publicsuffix[dm.DNS.QnamePublicSuffix] = 1
+		} else {
+			c.publicsuffix[dm.DNS.QnamePublicSuffix]++
+		}
+		c.publicsuffixtop.Record(dm.DNS.QnamePublicSuffix, c.publicsuffix[dm.DNS.QnamePublicSuffix])
+	}
+
+	// record effective TLD plus one label
+	if dm.DNS.QnameEffectiveTLDPlusOne != "-" {
+		if _, ok := c.effectivetldplusone[dm.DNS.QnameEffectiveTLDPlusOne]; !ok {
+			c.effectivetldplusone[dm.DNS.QnameEffectiveTLDPlusOne] = 1
+		} else {
+			c.effectivetldplusone[dm.DNS.QnameEffectiveTLDPlusOne]++
+		}
+		c.effectivetldplusonetop.Record(dm.DNS.QnameEffectiveTLDPlusOne, c.effectivetldplusone[dm.DNS.QnameEffectiveTLDPlusOne])
+	}
+
 	// record all qnames
 	if _, ok := c.qnames[dm.DNS.Qname]; !ok {
 		c.qnames[dm.DNS.Qname] = 1
@@ -630,6 +662,20 @@ func (c *StatsPerStream) GetTotalFirstLevelDomains() (ret int) {
 	return len(c.firstleveldomains)
 }
 
+func (c *StatsPerStream) GetTotalPublicSuffix() (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return len(c.publicsuffix)
+}
+
+func (c *StatsPerStream) GetTotalEffectiveTLDPlusOne() (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return len(c.effectivetldplusone)
+}
+
 func (c *StatsPerStream) GetTotalNxdomains() (ret int) {
 	c.RLock()
 	defer c.RUnlock()
@@ -684,6 +730,20 @@ func (c *StatsPerStream) GetTopFirstLevelDomains() (ret []topmap.TopMapItem) {
 	defer c.RUnlock()
 
 	return c.firstleveldomainstop.Get()
+}
+
+func (c *StatsPerStream) GetTopPublicSuffix() (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.publicsuffixtop.Get()
+}
+
+func (c *StatsPerStream) GetTopEffectiveTLDPlusOne() (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.effectivetldplusonetop.Get()
 }
 
 func (c *StatsPerStream) GetTopNxdomains() (ret []topmap.TopMapItem) {

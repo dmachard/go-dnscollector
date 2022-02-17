@@ -53,17 +53,19 @@ type DnsRRs struct {
 }
 
 type Dns struct {
-	Type            string   `json:"-" msgpack:"-"`
-	Payload         []byte   `json:"-" msgpack:"-"`
-	Length          int      `json:"length" msgpack:"-"`
-	Id              int      `json:"-" msgpack:"-"`
-	Opcode          int      `json:"opcode" msgpack:"opcode"`
-	Rcode           string   `json:"rcode" msgpack:"rcode"`
-	Qname           string   `json:"qname" msgpack:"qname"`
-	Qtype           string   `json:"qtype" msgpack:"qtype"`
-	Flags           DnsFlags `json:"flags" msgpack:"flags"`
-	DnsRRs          DnsRRs   `json:"resource-records" msgpack:"resource-records"`
-	MalformedPacket int      `json:"malformed-packet" msgpack:"malformed-packet"`
+	Type                     string   `json:"-" msgpack:"-"`
+	Payload                  []byte   `json:"-" msgpack:"-"`
+	Length                   int      `json:"length" msgpack:"-"`
+	Id                       int      `json:"-" msgpack:"-"`
+	Opcode                   int      `json:"opcode" msgpack:"opcode"`
+	Rcode                    string   `json:"rcode" msgpack:"rcode"`
+	Qname                    string   `json:"qname" msgpack:"qname"`
+	QnamePublicSuffix        string   `json:"qname-public-suffix" msgpack:"qname-public-suffix"`
+	QnameEffectiveTLDPlusOne string   `json:"qname-effective-tld-plus-one" msgpack:"qname-effective-tld-plus-one"`
+	Qtype                    string   `json:"qtype" msgpack:"qtype"`
+	Flags                    DnsFlags `json:"flags" msgpack:"flags"`
+	DnsRRs                   DnsRRs   `json:"resource-records" msgpack:"resource-records"`
+	MalformedPacket          int      `json:"malformed-packet" msgpack:"malformed-packet"`
 }
 
 type DnsOption struct {
@@ -121,12 +123,14 @@ func (dm *DnsMessage) Init() {
 	}
 
 	dm.DNS = Dns{
-		Type:            "-",
-		MalformedPacket: 0,
-		Rcode:           "-",
-		Qtype:           "-",
-		Qname:           "-",
-		DnsRRs:          DnsRRs{Answers: []DnsAnswer{}, Nameservers: []DnsAnswer{}, Records: []DnsAnswer{}},
+		Type:                     "-",
+		MalformedPacket:          0,
+		Rcode:                    "-",
+		Qtype:                    "-",
+		Qname:                    "-",
+		QnamePublicSuffix:        "-",
+		QnameEffectiveTLDPlusOne: "-",
+		DnsRRs:                   DnsRRs{Answers: []DnsAnswer{}, Nameservers: []DnsAnswer{}, Records: []DnsAnswer{}},
 	}
 
 	dm.EDNS = DnsExtended{UdpSize: 0,
@@ -211,6 +215,10 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 			s.WriteString(strconv.Itoa(dm.DNS.Length) + "b")
 		case "qname":
 			s.WriteString(dm.DNS.Qname)
+		case "qnamepublicsuffix":
+			s.WriteString(dm.DNS.QnamePublicSuffix)
+		case "qnameeffectivetldplusone":
+			s.WriteString(dm.DNS.QnameEffectiveTLDPlusOne)
 		case "qtype":
 			s.WriteString(dm.DNS.Qtype)
 		case "latency":

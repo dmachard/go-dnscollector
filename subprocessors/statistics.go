@@ -102,6 +102,30 @@ func (c *StatsStreams) GetTotalFirstLevelDomains(identity string) (ret int) {
 	return v.GetTotalFirstLevelDomains()
 }
 
+func (c *StatsStreams) GetTotalPublicSuffix(identity string) (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return 0
+	}
+
+	return v.GetTotalPublicSuffix()
+}
+
+func (c *StatsStreams) GetTotalEffectiveTLDPlusOne(identity string) (ret int) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return 0
+	}
+
+	return v.GetTotalEffectiveTLDPlusOne()
+}
+
 func (c *StatsStreams) GetTotalAS(identity string) (ret int) {
 	c.RLock()
 	defer c.RUnlock()
@@ -208,6 +232,30 @@ func (c *StatsStreams) GetTopFirstLevelDomains(identity string) (ret []topmap.To
 	}
 
 	return v.GetTopFirstLevelDomains()
+}
+
+func (c *StatsStreams) GetTopPublicSuffix(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return []topmap.TopMapItem{}
+	}
+
+	return v.GetTopPublicSuffix()
+}
+
+func (c *StatsStreams) GetTopEffectiveTLDPlusOne(identity string) (ret []topmap.TopMapItem) {
+	c.RLock()
+	defer c.RUnlock()
+
+	v, found := c.streams[identity]
+	if !found {
+		return []topmap.TopMapItem{}
+	}
+
+	return v.GetTopEffectiveTLDPlusOne()
 }
 
 func (c *StatsStreams) GetTopNxdomains(identity string) (ret []topmap.TopMapItem) {
@@ -476,6 +524,19 @@ func (s *StatsStreams) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "# HELP %s_firstleveldomains_top_total Number of hit per first level domains\n", prefix)
 	fmt.Fprintf(w, "# TYPE %s_firstleveldomains_top_total counter\n", prefix)
 
+	// public suffixes
+
+	fmt.Fprintf(w, "# HELP %s_publicsuffix_total Number of first level domains\n", prefix)
+	fmt.Fprintf(w, "# TYPE %s_publicsuffix_total counter\n", prefix)
+	fmt.Fprintf(w, "# HELP %s_publicsuffix_top_total Number of hit per first level domains\n", prefix)
+	fmt.Fprintf(w, "# TYPE %s_publicsuffix_top_total counter\n", prefix)
+
+	// effective TLD plus one label
+	fmt.Fprintf(w, "# HELP %s_effectivetldplusone_total Number of first level domains\n", prefix)
+	fmt.Fprintf(w, "# TYPE %s_effectivetldplusone_total counter\n", prefix)
+	fmt.Fprintf(w, "# HELP %s_effectivetldplusone_top_total Number of hit per first level domains\n", prefix)
+	fmt.Fprintf(w, "# TYPE %s_effectivetldplusone_top_total counter\n", prefix)
+
 	// qps
 	fmt.Fprintf(w, "# HELP %s_qps Number of queries per second received\n", prefix)
 	fmt.Fprintf(w, "# TYPE %s_qps gauge\n", prefix)
@@ -515,6 +576,14 @@ func (s *StatsStreams) GetMetrics(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%s_domains_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalDomains(stream))
 		for _, v := range s.GetTopQnames(stream) {
 			fmt.Fprintf(w, "%s_domains_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
+		}
+		fmt.Fprintf(w, "%s_publicsuffix_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalPublicSuffix(stream))
+		for _, v := range s.GetTopPublicSuffix(stream) {
+			fmt.Fprintf(w, "%s_publicsuffix_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
+		}
+		fmt.Fprintf(w, "%s_effectivetldplusone_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalEffectiveTLDPlusOne(stream))
+		for _, v := range s.GetTopEffectiveTLDPlusOne(stream) {
+			fmt.Fprintf(w, "%s_effectivetldplusone_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
 		}
 		fmt.Fprintf(w, "%s_domains_nx_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalNxdomains(stream))
 		for _, v := range s.GetTopNxdomains(stream) {
@@ -613,6 +682,18 @@ func (s *StatsStreams) GetMetrics(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%s_firstleveldomains_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalFirstLevelDomains(stream))
 		for _, v := range s.GetTopFirstLevelDomains(stream) {
 			fmt.Fprintf(w, "%s_firstleveldomains_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
+		}
+
+		// public suffix
+		fmt.Fprintf(w, "%s_publicsuffix_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalPublicSuffix(stream))
+		for _, v := range s.GetTopPublicSuffix(stream) {
+			fmt.Fprintf(w, "%s_publicsuffix_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
+		}
+
+		// effective TLD plus one
+		fmt.Fprintf(w, "%s_effectivetldplusone_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalEffectiveTLDPlusOne(stream))
+		for _, v := range s.GetTopEffectiveTLDPlusOne(stream) {
+			fmt.Fprintf(w, "%s_effectivetldplusone_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
 		}
 
 		// qps
