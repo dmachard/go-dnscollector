@@ -300,6 +300,7 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]DnsAnswer, i
 
 		// ignore OPT, this type is decoded in the EDNS extension
 		if t == 41 {
+			offset = offset_next + 10 + int(rdlength)
 			continue
 		}
 		// parse rdata
