@@ -624,7 +624,14 @@ TXT
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func ParseTXT(rdata []byte) (string, error) {
+	// ensure there is enough data to read the length
+	if len(rdata) < 1 {
+		return "", ErrDecodeDnsAnswerRdataTooShort
+	}
 	length := int(rdata[0])
+	if len(rdata)-1 < length {
+		return "", ErrDecodeDnsAnswerRdataTooShort
+	}
 	txt := string(rdata[1 : length+1])
 	return txt, nil
 }
