@@ -29,6 +29,8 @@ Example:
     "length": 51,
     "rcode": "NOERROR",
     "qname": "eu.org",
+    "qname-effective-tld-plus-one": "eu.org",
+    "qname-public-suffix": "org",
     "qtype": "A",
     "flags": {
       "qr": true,
