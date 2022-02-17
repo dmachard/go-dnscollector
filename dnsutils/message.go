@@ -60,12 +60,12 @@ type Dns struct {
 	Opcode                   int      `json:"opcode" msgpack:"opcode"`
 	Rcode                    string   `json:"rcode" msgpack:"rcode"`
 	Qname                    string   `json:"qname" msgpack:"qname"`
+	QnamePublicSuffix        string   `json:"qname-public-suffix" msgpack:"qname-public-suffix"`
+	QnameEffectiveTLDPlusOne string   `json:"qname-effective-tld-plus-one" msgpack:"qname-effective-tld-plus-one"`
 	Qtype                    string   `json:"qtype" msgpack:"qtype"`
 	Flags                    DnsFlags `json:"flags" msgpack:"flags"`
 	DnsRRs                   DnsRRs   `json:"resource-records" msgpack:"resource-records"`
 	MalformedPacket          int      `json:"malformed-packet" msgpack:"malformed-packet"`
-	QnamePublicSuffix        string   `json:"qname-public-suffix" msgpack:"qname-public-suffix"`
-	QnameEffectiveTLDPlusOne string   `json:"qname-effective-tld-plus-one" msgpack:"qname-effective-tld-plus-one"`
 }
 
 type DnsOption struct {
