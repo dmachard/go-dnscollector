@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"strconv"
+	"net"
 	"strings"
 )
 
@@ -300,11 +300,12 @@ func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]DnsAnswer, i
 
 		// ignore OPT, this type is decoded in the EDNS extension
 		if t == 41 {
+			offset = offset_next + 10 + int(rdlength)
 			continue
 		}
 		// parse rdata
 		rdatatype := RdatatypeToString(int(t))
-		parsed, err := ParseRdata(rdatatype, rdata, payload, offset_next+10)
+		parsed, err := ParseRdata(rdatatype, rdata, payload[:offset_next+10+int(rdlength)], offset_next+10)
 		if err != nil {
 			return answers, offset, err
 		}
@@ -463,7 +464,12 @@ func ParseSOA(rdata_offset int, payload []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	rdata := payload[offset:]
+
+	// ensure there is enough data to parse rest of the fields
+	if offset+20 > len(payload) {
+		return "", ErrDecodeDnsAnswerRdataTooShort
+	}
+	rdata := payload[offset : offset+20]
 
 	serial := binary.BigEndian.Uint32(rdata[0:4])
 	refresh := int32(binary.BigEndian.Uint32(rdata[4:8]))
@@ -485,12 +491,13 @@ IPv4
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func ParseA(r []byte) (string, error) {
-	var ip []string
-	for i := 0; i < len(r); i++ {
-		ip = append(ip, strconv.Itoa(int(r[i])))
+
+	if len(r) < net.IPv4len {
+		return "", ErrDecodeDnsAnswerRdataTooShort
 	}
-	a := strings.Join(ip, ".")
-	return a, nil
+	addr := make(net.IP, net.IPv4len)
+	copy(addr, r[:net.IPv4len])
+	return addr.String(), nil
 }
 
 /*
@@ -509,12 +516,12 @@ IPv6
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func ParseAAAA(rdata []byte) (string, error) {
-	var ip []string
-	for i := 0; i < len(rdata); i += 2 {
-		ip = append(ip, fmt.Sprintf("%x", binary.BigEndian.Uint16(rdata[i:i+2])))
+	if len(rdata) < net.IPv6len {
+		return "", ErrDecodeDnsAnswerRdataTooShort
 	}
-	aaaa := strings.Join(ip, ":")
-	return aaaa, nil
+	addr := make(net.IP, net.IPv6len)
+	copy(addr, rdata[:net.IPv6len])
+	return addr.String(), nil
 }
 
 /*
@@ -546,11 +553,17 @@ MX
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func ParseMX(rdata_offset int, payload []byte) (string, error) {
+	// ensure there is enough data for pereference and at least
+	// one byte for label
+	if len(payload) < rdata_offset+3 {
+		return "", ErrDecodeDnsAnswerRdataTooShort
+	}
 	pref := binary.BigEndian.Uint16(payload[rdata_offset : rdata_offset+2])
 	host, _, err := ParseLabels(rdata_offset+2, payload)
 	if err != nil {
 		return "", err
 	}
+
 	mx := fmt.Sprintf("%d %s", pref, host)
 	return mx, err
 }
@@ -570,6 +583,9 @@ SRV
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func ParseSRV(rdata_offset int, payload []byte) (string, error) {
+	if len(payload) < rdata_offset+7 {
+		return "", ErrDecodeDnsAnswerRdataTooShort
+	}
 	priority := binary.BigEndian.Uint16(payload[rdata_offset : rdata_offset+2])
 	weight := binary.BigEndian.Uint16(payload[rdata_offset+2 : rdata_offset+4])
 	port := binary.BigEndian.Uint16(payload[rdata_offset+4 : rdata_offset+6])
@@ -609,7 +625,14 @@ TXT
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func ParseTXT(rdata []byte) (string, error) {
+	// ensure there is enough data to read the length
+	if len(rdata) < 1 {
+		return "", ErrDecodeDnsAnswerRdataTooShort
+	}
 	length := int(rdata[0])
+	if len(rdata)-1 < length {
+		return "", ErrDecodeDnsAnswerRdataTooShort
+	}
 	txt := string(rdata[1 : length+1])
 	return txt, nil
 }
