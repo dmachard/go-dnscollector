@@ -582,6 +582,9 @@ SRV
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func ParseSRV(rdata_offset int, payload []byte) (string, error) {
+	if len(payload) < rdata_offset+7 {
+		return "", ErrDecodeDnsAnswerRdataTooShort
+	}
 	priority := binary.BigEndian.Uint16(payload[rdata_offset : rdata_offset+2])
 	weight := binary.BigEndian.Uint16(payload[rdata_offset+2 : rdata_offset+4])
 	port := binary.BigEndian.Uint16(payload[rdata_offset+4 : rdata_offset+6])
