@@ -216,6 +216,9 @@ func ParseErrors(d []byte) (string, error) {
    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 */
 func ParseCsubnet(d []byte) (string, error) {
+	if len(d) < 4 {
+		return "", ErrDecodeEdnsOptionTooShort
+	}
 	family := int(binary.BigEndian.Uint16(d[:2]))
 	srcMask := d[2]
 	switch family {
