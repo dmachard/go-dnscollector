@@ -129,8 +129,9 @@ func DecodeEDNS(arcount int, start_offset int, payload []byte) (DnsExtended, int
 
 				optCode := int(binary.BigEndian.Uint16(payload[offset_next : offset_next+2]))
 				optLength := int(binary.BigEndian.Uint16(payload[offset_next+2 : offset_next+4]))
-				if len(payload[offset_next+4:]) < int(optLength) {
-					return edns, offset, ErrDecodeEdnsOptionTooShort
+				// ensure there is enough data on RDATA for this option
+				if offset_next+4+optLength > end_offset {
+					return edns, offset, ErrDecodeEdnsDataTooShort
 				}
 
 				optName := OptCodeToString(optCode)
