@@ -118,7 +118,7 @@ func DecodeEDNS(arcount int, start_offset int, payload []byte) (DnsExtended, int
 
 			for {
 				// no more options to read ?
-				if offset_next == end_offset {
+				if offset_next >= end_offset {
 					break
 				}
 
