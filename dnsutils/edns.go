@@ -184,6 +184,9 @@ func ParseOption(optName string, optData []byte) (string, error) {
    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 */
 func ParseErrors(d []byte) (string, error) {
+	if len(d) < 2 {
+		return "", ErrDecodeEdnsOptionTooShort
+	}
 	code := int(binary.BigEndian.Uint16(d[:2]))
 	infoCode := ""
 	if s, ok := ErrorCodeToString[code]; ok {
