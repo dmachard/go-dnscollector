@@ -11,6 +11,7 @@ var ErrDecodeEdnsBadRootDomain = errors.New("edns, name MUST be 0 (root domain)"
 var ErrDecodeEdnsDataTooShort = errors.New("edns, not enough data to decode rdata answer")
 var ErrDecodeEdnsOptionTooShort = errors.New("edns, not enough data to decode option answer")
 var ErrDecodeEdnsOptionCsubnetBadFamily = errors.New("edns, csubnet option bad family")
+var ErrDecodeEdnsTooManyOpts = errors.New("edns, packet contained too many OPT RRs")
 
 var (
 	OptCodes = map[int]string{
@@ -62,6 +63,7 @@ func DecodeEDNS(arcount int, start_offset int, payload []byte) (DnsExtended, int
 	offset := start_offset
 	edns := DnsExtended{}
 	options := []DnsOption{}
+	ednsFound := false
 
 	for i := 0; i < arcount; i++ {
 		// Decode NAME
@@ -76,6 +78,11 @@ func DecodeEDNS(arcount int, start_offset int, payload []byte) (DnsExtended, int
 		// decode TYPE, take in account only OPT option
 		t := binary.BigEndian.Uint16(payload[offset_next : offset_next+2])
 		if t == 41 {
+			// RFC 6891 says "When an OPT RR is included within any DNS message, it MUST be the
+			// only OPT RR in that message."
+			if ednsFound {
+				return edns, offset, ErrDecodeEdnsTooManyOpts
+			}
 			// checking domain name, MUST be 0 (root domain)
 			if len(name) > 0 {
 				return edns, offset, ErrDecodeEdnsBadRootDomain
@@ -118,18 +125,20 @@ func DecodeEDNS(arcount int, start_offset int, payload []byte) (DnsExtended, int
 
 			for {
 				// no more options to read ?
-				if offset_next == end_offset {
+				if offset_next >= end_offset {
 					break
 				}
 
-				if len(payload) < 4 {
+				// check that we can read code and length
+				if end_offset-offset_next < 4 {
 					return edns, offset, ErrDecodeEdnsOptionTooShort
 				}
 
 				optCode := int(binary.BigEndian.Uint16(payload[offset_next : offset_next+2]))
 				optLength := int(binary.BigEndian.Uint16(payload[offset_next+2 : offset_next+4]))
-				if len(payload[offset_next+4:]) < int(optLength) {
-					return edns, offset, ErrDecodeEdnsOptionTooShort
+				// ensure there is enough data on RDATA for this option
+				if offset_next+4+optLength > end_offset {
+					return edns, offset, ErrDecodeEdnsDataTooShort
 				}
 
 				optName := OptCodeToString(optCode)
@@ -150,6 +159,7 @@ func DecodeEDNS(arcount int, start_offset int, payload []byte) (DnsExtended, int
 			}
 
 			edns.Options = options
+			ednsFound = true
 
 		}
 	}
@@ -184,6 +194,9 @@ func ParseOption(optName string, optData []byte) (string, error) {
    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 */
 func ParseErrors(d []byte) (string, error) {
+	if len(d) < 2 {
+		return "", ErrDecodeEdnsOptionTooShort
+	}
 	code := int(binary.BigEndian.Uint16(d[:2]))
 	infoCode := ""
 	if s, ok := ErrorCodeToString[code]; ok {
@@ -216,6 +229,9 @@ func ParseErrors(d []byte) (string, error) {
    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 */
 func ParseCsubnet(d []byte) (string, error) {
+	if len(d) < 4 {
+		return "", ErrDecodeEdnsOptionTooShort
+	}
 	family := int(binary.BigEndian.Uint16(d[:2]))
 	srcMask := d[2]
 	switch family {
