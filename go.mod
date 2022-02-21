@@ -21,7 +21,7 @@ require (
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
-	google.golang.org/protobuf v1.26.0-rc.1
+	google.golang.org/protobuf v1.27.1
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
@@ -31,7 +31,7 @@ require (
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/deepmap/oapi-codegen v1.3.6 // indirect
-	github.com/golang/protobuf v1.4.3 // indirect
+	github.com/golang/protobuf v1.5.0 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
 	github.com/labstack/echo/v4 v4.1.11 // indirect
 	github.com/labstack/gommon v0.3.0 // indirect
