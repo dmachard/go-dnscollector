@@ -13,7 +13,7 @@ require (
 	github.com/grafana/loki v1.6.1
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb-client-go v1.4.0
-	github.com/klauspost/compress v1.13.6
+	github.com/klauspost/compress v1.14.3
 	github.com/miekg/dns v1.1.46
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/oschwald/maxminddb-golang v1.8.0
