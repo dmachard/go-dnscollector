@@ -11,7 +11,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-logger"
-	"golang.org/x/net/publicsuffix"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -214,102 +213,8 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			d.LogInfo("dns parser malformed packet: %s", err)
 		}
 
-		dm.DNS.Id = dnsHeader.Id
-		dm.DNS.Rcode = dnsutils.RcodeToString(dnsHeader.Rcode)
-		dm.DNS.Opcode = dnsHeader.Opcode
-
-		// update dnstap operation if the opcode is equal to 5 (dns update)
-		if dm.DNS.Opcode == 5 && op%2 == 1 {
-			dm.DnsTap.Operation = "UPDATE_QUERY"
-		}
-		if dm.DNS.Opcode == 5 && op%2 == 1 {
-			dm.DnsTap.Operation = "UPDATE_RESPONSE"
-		}
-
-		// set dns flags
-		if dnsHeader.Qr == 1 {
-			dm.DNS.Flags.QR = true
-		}
-		if dnsHeader.Tc == 1 {
-			dm.DNS.Flags.TC = true
-		}
-		if dnsHeader.Aa == 1 {
-			dm.DNS.Flags.AA = true
-		}
-		if dnsHeader.Ra == 1 {
-			dm.DNS.Flags.RA = true
-		}
-		if dnsHeader.Ad == 1 {
-			dm.DNS.Flags.AD = true
-		}
-
-		// continue to decode the dns payload to extract the qname and rrtype
-		var dns_offsetrr int
-		if dnsHeader.Qdcount > 0 && dm.DNS.MalformedPacket == 0 {
-			dns_qname, dns_rrtype, offsetrr, err := dnsutils.DecodeQuestion(dm.DNS.Payload)
-			if err != nil {
-				dm.DNS.MalformedPacket = 1
-				d.LogError("dns parser malformed question: %s", err)
-				//continue
-			}
-			if d.config.Subprocessors.QnameLowerCase {
-				dm.DNS.Qname = strings.ToLower(dns_qname)
-			} else {
-				dm.DNS.Qname = dns_qname
-			}
-
-			// Public suffix
-			ps, _ := publicsuffix.PublicSuffix(dm.DNS.Qname)
-			dm.DNS.QnamePublicSuffix = ps
-
-			if !qnamePrivacy.IsEnabled() {
-				if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
-					dm.DNS.QnameEffectiveTLDPlusOne = etpo
-				}
-			}
-
-			dm.DNS.Qtype = dnsutils.RdatatypeToString(dns_rrtype)
-			dns_offsetrr = offsetrr
-		}
-
-		//  decode answers except if the packet is malformed
-		if dnsHeader.Ancount > 0 && dm.DNS.MalformedPacket == 0 {
-			var offsetrr int
-			dm.DNS.DnsRRs.Answers, offsetrr, err = dnsutils.DecodeAnswer(dnsHeader.Ancount, dns_offsetrr, dm.DNS.Payload)
-			if err != nil {
-				dm.DNS.MalformedPacket = 1
-				d.LogError("dns parser malformed answers: %s", err)
-			}
-			dns_offsetrr = offsetrr
-		}
-
-		//  decode authoritative answers except if the packet is malformed
-		if dnsHeader.Nscount > 0 && dm.DNS.MalformedPacket == 0 {
-			var offsetrr int
-			dm.DNS.DnsRRs.Nameservers, offsetrr, err = dnsutils.DecodeAnswer(dnsHeader.Nscount, dns_offsetrr, dm.DNS.Payload)
-			if err != nil {
-				dm.DNS.MalformedPacket = 1
-				d.LogError("dns parser malformed nameservers answers: %s", err)
-			}
-			dns_offsetrr = offsetrr
-		}
-
-		//  decode additional answers ?
-		if dnsHeader.Arcount > 0 && dm.DNS.MalformedPacket == 0 {
-			dm.DNS.DnsRRs.Records, _, err = dnsutils.DecodeAnswer(dnsHeader.Arcount, dns_offsetrr, dm.DNS.Payload)
-			if err != nil {
-				dm.DNS.MalformedPacket = 1
-				d.LogError("dns parser malformed additional answers: %s", err)
-			}
-		}
-
-		// decode edns options ?
-		if dnsHeader.Arcount > 0 && dm.DNS.MalformedPacket == 0 {
-			dm.EDNS, _, err = dnsutils.DecodeEDNS(dnsHeader.Arcount, dns_offsetrr, dm.DNS.Payload)
-			if err != nil {
-				dm.DNS.MalformedPacket = 1
-				d.LogError("dns parser malformed edns: %s", err)
-			}
+		if err = decodePayload(&dm, &dnsHeader, qnamePrivacy.IsEnabled(), d.config); err != nil {
+			d.LogError("%v - %v", err, dm)
 		}
 
 		if dm.DNS.MalformedPacket == 1 {
