@@ -67,6 +67,60 @@ func TestDecodeQuestion(t *testing.T) {
 	}
 }
 
+func TestDecodeQuestion_Multiple(t *testing.T) {
+	paylaod := []byte{
+		0x9e, 0x84, 0x01, 0x20, 0x00, 0x03, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00,
+		// query 1
+		0x01, 0x61, 0x00,
+		// type A, class IN
+		0x00, 0x01, 0x00, 0x01,
+		// query 2
+		0x01, 0x62, 0x00,
+		// type A, class IN
+		0x00, 0x01, 0x00, 0x01,
+		// query 3
+		0x01, 0x63, 0x00,
+		// type AAAA, class IN
+		0x00, 0x1c, 0x00, 0x01,
+	}
+
+	qname, qtype, offset, err := DecodeQuestion(3, paylaod)
+	if err != nil {
+		t.Errorf("unexpected error %v", err)
+	}
+	if qname != "c" || RdatatypeToString(qtype) != "AAAA" {
+		t.Errorf("expected qname=C, type=AAAA, got qname=%s, type=%s", qname, RdatatypeToString(qtype))
+	}
+	if offset != 33 {
+		t.Errorf("expected resulting offset to be 33, got %d", offset)
+	}
+}
+
+func TestDecodeQuestion_Multiple_InvalidCount(t *testing.T) {
+	paylaod := []byte{
+		0x9e, 0x84, 0x01, 0x20, 0x00, 0x04, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00,
+		// query 1
+		0x01, 0x61, 0x00,
+		// type A, class IN
+		0x00, 0x01, 0x00, 0x01,
+		// query 2
+		0x01, 0x62, 0x00,
+		// type A, class IN
+		0x00, 0x01, 0x00, 0x01,
+		// query 3
+		0x01, 0x63, 0x00,
+		// type AAAA, class IN
+		0x00, 0x1c, 0x00, 0x01,
+	}
+
+	_, _, _, err := DecodeQuestion(4, paylaod)
+	if !errors.Is(err, ErrDecodeDnsLabelTooShort) {
+		t.Errorf("bad error received: %v", err)
+	}
+}
+
 func TestDecodeAnswer_Ns(t *testing.T) {
 	fqdn := "dnstapcollector.test."
 

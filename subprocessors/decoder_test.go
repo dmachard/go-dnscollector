@@ -225,6 +225,128 @@ func TestDecodePayload_AnswerHappy(t *testing.T) {
 	}
 
 }
+
+func TestDecodePayload_AnswerMultipleQueries(t *testing.T) {
+	payload := []byte{
+		0x9e, 0x84, 0x81, 0x80, 0x00, 0x02, 0x00, 0x04,
+		0x00, 0x00, 0x00, 0x01,
+		// Query section
+		// query 1
+		0x0b, 0x73, 0x65, 0x6e,
+		0x73, 0x6f, 0x72, 0x66, 0x6c, 0x65, 0x65, 0x74,
+		0x03, 0x63, 0x6f, 0x6d, 0x00,
+		// type A, class IN
+		0x00, 0x01, 0x00, 0x01,
+		// query 2
+		0x0a, 0x65, 0x6e,
+		0x73, 0x6f, 0x72, 0x66, 0x6c, 0x65, 0x65, 0x74,
+		0x03, 0x63, 0x6f, 0x6d, 0x00,
+		// type A, class IN
+		0x00, 0x01, 0x00, 0x01,
+
+		// Answer 1
+		0xc0, 0x0c, // pointer to name
+		// type A, class IN
+		0x00, 0x01, 0x00, 0x01,
+		// TTL
+		0x00, 0x00, 0x01, 0x2c,
+		// 10.10.1.1
+		0x00, 0x04, 0x0a, 0x0a, 0x01, 0x01,
+		// Answer 2
+		0xc0, 0x0c,
+		// type A, class IN
+		0x00, 0x01, 0x00, 0x01,
+		// TTL
+		0x00, 0x00, 0x01, 0x2c,
+		// 10.10.1.2
+		0x00, 0x04, 0x0a, 0x0a, 0x01, 0x02,
+		// Answer 3
+		0xc0, 0x0c,
+		// type A, class IN
+		0x00, 0x01, 0x00, 0x01,
+		// TTL
+		0x00, 0x00, 0x01, 0x2c,
+		// 10.10.1.3
+		0x00, 0x04, 0x0a, 0x0a, 0x01, 0x03,
+		// Answer 4
+		0xc0, 0x0c,
+		// type A, class IN
+		0x00, 0x01, 0x00, 0x01,
+		// TTL
+		0x00, 0x00, 0x01, 0x2c,
+		// 10.10.1.4
+		0x00, 0x04, 0x0a, 0x0a, 0x01, 0x04,
+		// Additianl records, EDNS Option, 0 bytes DO=0, Z = 0
+		0x00, 0x00, 0x29, 0x04, 0xd0, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00,
+	}
+
+	dm := dnsutils.DnsMessage{}
+	dm.DNS.Payload = payload
+	dm.DNS.Length = len(payload)
+
+	header, err := dnsutils.DecodeDns(payload)
+	if err != nil {
+		t.Errorf("unexpected error when decoding header: %v", err)
+	}
+
+	if err = decodePayload(&dm, &header, false, dnsutils.GetFakeConfig()); err != nil {
+		t.Errorf("Unexpected error while decoding payload: %v", err)
+	}
+	if dm.DNS.MalformedPacket != 0 {
+		t.Errorf("did not expect packet to be malformed")
+	}
+
+	if dm.DNS.Id != 0x9e84 ||
+		dm.DNS.Opcode != 0 ||
+		dm.DNS.Rcode != dnsutils.RcodeToString(0) ||
+		!dm.DNS.Flags.QR ||
+		dm.DNS.Flags.TC ||
+		dm.DNS.Flags.AA ||
+		dm.DNS.Flags.AD ||
+		!dm.DNS.Flags.RA {
+		t.Error("Invalid DNS header data in message")
+	}
+
+	if dm.DNS.Qname != "ensorfleet.com" {
+		t.Errorf("Unexpected query name: %s", dm.DNS.Qname)
+	}
+	if dm.DNS.Qtype != "A" {
+		t.Errorf("Unexpected query type: %s", dm.DNS.Qtype)
+	}
+
+	if len(dm.DNS.DnsRRs.Answers) != 4 {
+		t.Errorf("expected 4 answers, got %d", len(dm.DNS.DnsRRs.Answers))
+	}
+
+	for i, ans := range dm.DNS.DnsRRs.Answers {
+		expected := dnsutils.DnsAnswer{
+			Name:      "s" + dm.DNS.Qname, // answers have qname from 1st query data, 2nd data is missing 's'
+			Rdatatype: dnsutils.RdatatypeToString(0x0001),
+			Class:     0x0001,
+			Ttl:       300,
+			Rdata:     fmt.Sprintf("10.10.1.%d", i+1),
+		}
+		if expected != ans {
+			t.Errorf("unexpected answer (%d). expected %v, got %v", i, expected, ans)
+		}
+	}
+
+	if dm.EDNS.Do != 0 ||
+		dm.EDNS.UdpSize != 1232 ||
+		dm.EDNS.Z != 0 ||
+		dm.EDNS.Version != 0 ||
+		len(dm.EDNS.Options) != 0 {
+		t.Errorf("Unexpected EDNS data")
+	}
+
+	if len(dm.DNS.DnsRRs.Nameservers) != 0 ||
+		len(dm.DNS.DnsRRs.Records) != 0 {
+		t.Errorf("Unexpected sections parsed")
+	}
+
+}
+
 func TestDecodePayload_AnswerInvalid(t *testing.T) {
 	payload := []byte{
 		0x9e, 0x84, 0x81, 0x80, 0x00, 0x01, 0x00, 0x04,
