@@ -70,7 +70,7 @@ func decodePayload(dm *dnsutils.DnsMessage, header *dnsutils.DnsHeader, qNamePri
 	var payload_offset int
 	// decode DNS question
 	if header.Qdcount > 0 {
-		dns_qname, dns_rrtype, offsetrr, err := dnsutils.DecodeQuestion(dm.DNS.Payload)
+		dns_qname, dns_rrtype, offsetrr, err := dnsutils.DecodeQuestion(header.Qdcount, dm.DNS.Payload)
 		if err != nil {
 			dm.DNS.MalformedPacket = 1
 			return &decodingError{part: "query", err: err}
