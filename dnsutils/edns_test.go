@@ -26,7 +26,7 @@ func TestDecodeQuery_EDNS(t *testing.T) {
 
 	payload, _ := dm.Pack()
 
-	_, _, offset_rr, _ := DecodeQuestion(payload)
+	_, _, offset_rr, _ := DecodeQuestion(1, payload)
 	_, _, err := DecodeEDNS(len(dm.Extra), offset_rr, payload)
 
 	if err != nil {
@@ -62,7 +62,7 @@ func TestDecodeReply_EDNS(t *testing.T) {
 	m.SetRcode(dm, 42) // 32(extended rcode) + 10(rcode)
 
 	payload, _ := m.Pack()
-	_, _, offset_rr, _ := DecodeQuestion(payload)
+	_, _, offset_rr, _ := DecodeQuestion(1, payload)
 	_, offset_rr, _ = DecodeAnswer(len(m.Answer), offset_rr, payload)
 
 	_, _, err := DecodeEDNS(len(m.Extra), offset_rr, payload)
@@ -108,7 +108,7 @@ func TestDecodeQuery_EdnsSubnet(t *testing.T) {
 		0xc0, 0xa8, 0x01,
 	}
 
-	_, _, offset, err := DecodeQuestion(payload)
+	_, _, offset, err := DecodeQuestion(1, payload)
 	if err != nil {
 		t.Errorf("unexpected error while decoding question: %v", err)
 	}
@@ -178,7 +178,7 @@ func TestDecodeQuery_EdnsSubnetV6(t *testing.T) {
 		0xfe, 0x80, 0x01,
 	}
 
-	_, _, offset, err := DecodeQuestion(payload)
+	_, _, offset, err := DecodeQuestion(1, payload)
 	if err != nil {
 		t.Errorf("unexpected error while decoding question: %v", err)
 	}
@@ -249,7 +249,7 @@ func TestDecodeQuery_EdnsSubnet_invalidFam(t *testing.T) {
 		0xfe, 0x80, 0x01,
 	}
 
-	_, _, offset, err := DecodeQuestion(payload)
+	_, _, offset, err := DecodeQuestion(1, payload)
 	if err != nil {
 		t.Errorf("unexpected error while decoding question: %v", err)
 	}
@@ -307,7 +307,7 @@ func TestDecodeQuery_EdnsSubnet_Short(t *testing.T) {
 		// 0xfe, 0x80, 0x01,
 	}
 
-	_, _, offset, err := DecodeQuestion(payload)
+	_, _, offset, err := DecodeQuestion(1, payload)
 	if err != nil {
 		t.Errorf("unexpected error while decoding question: %v", err)
 	}
@@ -365,7 +365,7 @@ func TestDecodeQuery_EdnsSubnet_NoAddr(t *testing.T) {
 		// 0xfe, 0x80, 0x01,
 	}
 
-	_, _, offset, err := DecodeQuestion(payload)
+	_, _, offset, err := DecodeQuestion(1, payload)
 	if err != nil {
 		t.Errorf("unexpected error while decoding question: %v", err)
 	}
@@ -428,7 +428,7 @@ func TestDecodeAnswer_EdnsError(t *testing.T) {
 		0x00, 0x17,
 	}
 
-	_, _, offset, err := DecodeQuestion(payload)
+	_, _, offset, err := DecodeQuestion(1, payload)
 	if err != nil {
 		t.Errorf("unexpected error while decoding question: %v", err)
 	}
@@ -484,7 +484,7 @@ func TestDecodeAnswer_EdnsErrorText(t *testing.T) {
 		0x62, 0x30, 0x72, 0x6b, 0x65, 0x6e,
 	}
 
-	_, _, offset, err := DecodeQuestion(payload)
+	_, _, offset, err := DecodeQuestion(1, payload)
 	if err != nil {
 		t.Errorf("unexpected error while decoding question: %v", err)
 	}
@@ -539,7 +539,7 @@ func TestDecodeAnswer_EdnsErrorShort(t *testing.T) {
 		0x00,
 	}
 
-	_, _, offset, err := DecodeQuestion(payload)
+	_, _, offset, err := DecodeQuestion(1, payload)
 	if err != nil {
 		t.Errorf("unexpected error while decoding question: %v", err)
 	}

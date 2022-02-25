@@ -218,22 +218,34 @@ func DecodeDns(payload []byte) (DnsHeader, error) {
 	|                     QCLASS                    |
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func DecodeQuestion(payload []byte) (string, int, int, error) {
-	// Decode QNAME
-	qname, offset, err := ParseLabels(DnsLen, payload)
-	if err != nil {
-		return "", 0, 0, err
-	}
+func DecodeQuestion(qdcount int, payload []byte) (string, int, int, error) {
 
-	// decode QTYPE and support invalid packet, some abuser sends it...
-	var qtype uint16
-	if len(payload[offset:]) < 4 {
-		return "", 0, 0, ErrDecodeQuestionQtypeTooShort
-	} else {
-		qtype = binary.BigEndian.Uint16(payload[offset : offset+2])
-		offset += 4
+	offset := DnsLen
+	var qname string
+	var qtype int
+
+	for i := 0; i < qdcount; i++ {
+		// the specification allows more than one query in DNS packet,
+		// however resolvers rarely support that.
+		// If there are more than one query, we will return only the last
+		// qname, qtype for now. We will parse them all to allow further
+		// processing the packet from right offset.
+		var err error
+		// Decode QNAME
+		qname, offset, err = ParseLabels(offset, payload)
+		if err != nil {
+			return "", 0, 0, err
+		}
+
+		// decode QTYPE and support invalid packet, some abuser sends it...
+		if len(payload[offset:]) < 4 {
+			return "", 0, 0, ErrDecodeQuestionQtypeTooShort
+		} else {
+			qtype = int(binary.BigEndian.Uint16(payload[offset : offset+2]))
+			offset += 4
+		}
 	}
-	return qname, int(qtype), offset, err
+	return qname, qtype, offset, nil
 }
 
 /*
