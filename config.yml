@@ -130,8 +130,10 @@ subprocessors:
     drop-fqdn-file: ""
     # path file of the domain drop list, domains list can be a partial domain name with regexp expression
     drop-domain-file: ""
-    # path file of the query IP drop list
+    # path file of the query IP drop list, one IP address or subnet per line
     drop-queryip-file: ""
+    # path file of the query IP keep list, one IP address or subnet per line
+    keep-queryip-file: ""
     # drop specific responses according to the return code (NOERROR, ...). This list is empty by default
     # Example to ignore NOERROR dns packets
     # drop-rcodes:
