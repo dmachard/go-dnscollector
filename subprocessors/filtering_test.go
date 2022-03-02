@@ -61,6 +61,7 @@ func TestFilteringByQueryIp(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfig()
 	config.Subprocessors.Filtering.DropQueryIpFile = "../testsdata/filtering_queryip.txt"
+	config.Subprocessors.Filtering.KeepQueryIpFile = "../testsdata/filtering_queryip_keep.txt"
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false))
@@ -75,6 +76,22 @@ func TestFilteringByQueryIp(t *testing.T) {
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}
+
+	dm.NetworkInfo.QueryIp = "192.168.1.10" // Both in drop and keep, so keep
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
+
+	dm.NetworkInfo.QueryIp = "192.0.2.3" // dropped by subnet
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped!")
+	}
+
+	dm.NetworkInfo.QueryIp = "192.0.2.1" // dropped by subnet, but explicitly in keep
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
+
 }
 
 func TestFilteringByFqdn(t *testing.T) {

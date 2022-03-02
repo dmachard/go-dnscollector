@@ -78,6 +78,7 @@ type Config struct {
 			DropFqdnFile    string   `yaml:"drop-fqdn-file"`
 			DropDomainFile  string   `yaml:"drop-domain-file"`
 			DropQueryIpFile string   `yaml:"drop-queryip-file"`
+			KeepQueryIpFile string   `yaml:"keep-queryip-file"`
 			DropRcodes      []string `yaml:"drop-rcodes,flow"`
 			LogQueries      bool     `yaml:"log-queries"`
 			LogReplies      bool     `yaml:"log-replies"!`

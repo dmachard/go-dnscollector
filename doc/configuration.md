@@ -297,7 +297,8 @@ This feature can be useful to increase logging performance..
 Options:
 - `drop-fqdn-file`: (string) path file to a fqdn drop list, domains list must be a full qualified domain name
 - `drop-domain-file`: (string) path file to domain drop list, domains list can be a partial domain name with regexp expression
-- `drop-queryip-file`: (string) path file to the query ip drop list
+- `drop-queryip-file`: (string) path file to the query ip or ip prefix drop list
+- `keep-queryip-file`: (string) path file to the query ip or ip prefix keep list, addresses in both drop and keep are always kept
 - `drop-rcodes`: (list of string) rcode list, empty by default
 - `log-queries`: (boolean) forward received queries to configured loggers
 - `log-replies`: (boolean)  forward received replies to configured loggers
@@ -308,6 +309,7 @@ subprocessors:
     drop-fqdn-file: ""
     drop-domain-file: ""
     drop-queryip-file: ""
+    keep-queryip-file: ""
     drop-rcodes: []
     log-queries: true
     log-replies: true
