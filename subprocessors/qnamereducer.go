@@ -33,5 +33,5 @@ func (s *QnameReducer) Minimaze(qname string) string {
 		return etpo
 	}
 
-	return "-"
+	return qname
 }
