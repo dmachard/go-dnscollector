@@ -10,6 +10,7 @@ The configuration is done in one yaml file. For the complete configuration, see 
   - [DNS tap](#dns-tap)
   - [DNS sniffer](#Dns-Sniffer)
   - [Tail](#Tail)
+  - [Protobuf PowerDNS](#Protobuf-PowerDNS)
 - [Subprocessors](#Subprocessors)
   - [Quiet text](#quiet-text)
   - [Qname lowercase](#Qname-lowercase)
@@ -151,6 +152,31 @@ tail:
   time-layout: "2006-01-02T15:04:05.999999999Z07:00"
   pattern-query: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_QUERY) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
   pattern-reply: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_RESPONSE) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
+```
+
+### Protobuf PowerDNS
+
+[Protobuf Logging](https://dnsdist.org/reference/protobuf.html) for PowerDNS
+
+Options:
+- `enable`: (boolean) to enable, set the enable to true
+- `listen-ip`: (string) listen on ip
+- `listen-port`: (integer) listening on port
+
+```yaml
+powerdns:
+  enable: false
+  listen-ip: 0.0.0.0
+  listen-port: 6001
+```
+
+Example to enable logging in your dnsdist
+
+```lua
+rl = newRemoteLogger("<dnscollectorip>:6001")
+addAction(AllRule(),RemoteLogAction(rl, nil, {serverID="dnsdist"}))
+addResponseAction(AllRule(),RemoteLogResponseAction(rl, nil, true, {serverID="dnsdist"}))
+addCacheHitResponseAction(AllRule(), RemoteLogResponseAction(rl, nil, true, {serverID="dnsdist"}))
 ```
 
 ## Subprocessors

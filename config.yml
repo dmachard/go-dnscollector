@@ -65,7 +65,7 @@ collectors:
   # protobuf powerdns
   powerdns:
     # to enable, set the enable to true
-    enable: false
+    enable: true
     # listen on ip
     listen-ip: 0.0.0.0
     # listening on port

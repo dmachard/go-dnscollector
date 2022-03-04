@@ -1,6 +1,7 @@
 package subprocessors
 
 import (
+	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -72,6 +73,7 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		dm := dnsutils.DnsMessage{}
 		dm.Init()
 
+		dm.DnsTap.Identity = string(pbdm.GetServerIdentity())
 		dm.DnsTap.Operation = pbdm.GetType().String()
 
 		dm.NetworkInfo.Family = pbdm.GetSocketFamily().String()
@@ -91,9 +93,16 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.DNS.Type = dnsutils.DnsQuery
 		} else {
 			dm.DNS.Type = dnsutils.DnsReply
-		}
 
-		dm.DNS.Rcode = dnsutils.RcodeToString(int(pbdm.Response.GetRcode()))
+			tsQuery := float64(pbdm.Response.GetQueryTimeSec()) + float64(pbdm.Response.GetQueryTimeUsec())/1e6
+			tsReply := float64(pbdm.GetTimeSec()) + float64(pbdm.GetTimeUsec())/1e6
+
+			// convert latency to human
+			dm.DnsTap.Latency = tsReply - tsQuery
+			dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
+			dm.DNS.Rcode = dnsutils.RcodeToString(int(pbdm.Response.GetRcode()))
+
+		}
 
 		// compute timestamp
 		dm.DnsTap.Timestamp = float64(dm.DnsTap.TimeSec) + float64(dm.DnsTap.TimeNsec)/1e9
