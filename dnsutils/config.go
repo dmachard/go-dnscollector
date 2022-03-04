@@ -258,7 +258,7 @@ func (c *Config) SetDefault() {
 
 	c.Collectors.PowerDNS.Enable = true
 	c.Collectors.PowerDNS.ListenIP = "0.0.0.0"
-	c.Collectors.PowerDNS.ListenPort = 6000
+	c.Collectors.PowerDNS.ListenPort = 6001
 
 	// Subprocessors
 	c.Subprocessors.QuietText.Dnstap = false
