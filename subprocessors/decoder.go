@@ -25,13 +25,11 @@ func (e *decodingError) Unwrap() error {
 // decodePayload can be used to decode raw payload data in dm.DNS.Payload
 // into relevant parts of dm.DNS struct. The payload is decoded according to
 // given DNS header.
-// qNamePrivacyEnabled should be set to true if query name privacy is enabled
-// in configuration.
 // If packet is marked as malformed already, this function returs with no
 // error, but does not process the packet.
 // Error is returned if packet can not be parsed. Returned error wraps the
 // original error returned by relevant decoding operation.
-func decodePayload(dm *dnsutils.DnsMessage, header *dnsutils.DnsHeader, qNamePrivacyEnabled bool, config *dnsutils.Config) error {
+func decodePayload(dm *dnsutils.DnsMessage, header *dnsutils.DnsHeader, config *dnsutils.Config) error {
 
 	if dm.DNS.MalformedPacket == 1 {
 		// do not continue if packet is malformed, the header can not be
@@ -84,11 +82,8 @@ func decodePayload(dm *dnsutils.DnsMessage, header *dnsutils.DnsHeader, qNamePri
 		// Public suffix
 		ps, _ := publicsuffix.PublicSuffix(dm.DNS.Qname)
 		dm.DNS.QnamePublicSuffix = ps
-
-		if !qNamePrivacyEnabled {
-			if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
-				dm.DNS.QnameEffectiveTLDPlusOne = etpo
-			}
+		if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
+			dm.DNS.QnameEffectiveTLDPlusOne = etpo
 		}
 
 		dm.DNS.Qtype = dnsutils.RdatatypeToString(dns_rrtype)

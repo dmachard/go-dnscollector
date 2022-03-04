@@ -16,13 +16,13 @@ collectors:
   # dnstap standard
   dnstap:
     # to enable, set the enable to true
-    enable: false
+    enable: true
     # listen on ip
     listen-ip: 0.0.0.0
     # listening on port
     listen-port: 6000
     # unix socket path
-    sock-path: /tmp/dnstap.sock
+    sock-path: null
     # tls support
     tls-support: false
     # certificate server file
@@ -65,7 +65,7 @@ collectors:
   # protobuf powerdns
   powerdns:
     # to enable, set the enable to true
-    enable: true
+    enable: false
     # listen on ip
     listen-ip: 0.0.0.0
     # listening on port

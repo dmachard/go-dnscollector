@@ -1,9 +1,8 @@
 package subprocessors
 
 import (
-	"strings"
-
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"golang.org/x/net/publicsuffix"
 )
 
 type QnameReducer struct {
@@ -30,14 +29,9 @@ func (s *QnameReducer) IsEnabled() bool {
 }
 
 func (s *QnameReducer) Minimaze(qname string) string {
-	i := strings.LastIndex(qname, ".")
-	if i == -1 {
-		return qname
+	if etpo, err := publicsuffix.EffectiveTLDPlusOne(qname); err == nil {
+		return etpo
 	}
 
-	j := strings.LastIndex(qname[:i], ".")
-	if j == -1 {
-		return qname
-	}
-	return qname[j+1:]
+	return "-"
 }

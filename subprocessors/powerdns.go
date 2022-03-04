@@ -171,7 +171,7 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// qname privacy ? filtering ? or ip anonymisation ?
 		if qnamePrivacy.IsEnabled() {
-			dm.DNS.Qname = qnamePrivacy.Minimaze(dm.DNS.Qname)
+			dm.DNS.Qname = qnamePrivacy.Minimaze(qname)
 		}
 		if filtering.CheckIfDrop(&dm) {
 			continue

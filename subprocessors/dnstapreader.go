@@ -213,7 +213,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			d.LogInfo("dns parser malformed packet: %s", err)
 		}
 
-		if err = decodePayload(&dm, &dnsHeader, qnamePrivacy.IsEnabled(), d.config); err != nil {
+		if err = decodePayload(&dm, &dnsHeader, d.config); err != nil {
 			d.LogError("%v - %v", err, dm)
 		}
 

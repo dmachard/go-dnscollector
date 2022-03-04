@@ -34,7 +34,7 @@ func TestDecodePayload_QueryHappy(t *testing.T) {
 		t.Errorf("unexpected error when decoding header: %v", err)
 	}
 
-	if err = decodePayload(&dm, &header, false, dnsutils.GetFakeConfig()); err != nil {
+	if err = decodePayload(&dm, &header, dnsutils.GetFakeConfig()); err != nil {
 		t.Errorf("Unexpected error while decoding payload: %v", err)
 	}
 	if dm.DNS.MalformedPacket != 0 {
@@ -100,7 +100,7 @@ func TestDecodePayload_QueryInvalid(t *testing.T) {
 		t.Errorf("unexpected error when decoding header: %v", err)
 	}
 
-	if err = decodePayload(&dm, &header, false, dnsutils.GetFakeConfig()); err == nil {
+	if err = decodePayload(&dm, &header, dnsutils.GetFakeConfig()); err == nil {
 		t.Errorf("Expected error when parsing payload")
 	}
 	if dm.DNS.MalformedPacket != 1 {
@@ -169,7 +169,7 @@ func TestDecodePayload_AnswerHappy(t *testing.T) {
 		t.Errorf("unexpected error when decoding header: %v", err)
 	}
 
-	if err = decodePayload(&dm, &header, false, dnsutils.GetFakeConfig()); err != nil {
+	if err = decodePayload(&dm, &header, dnsutils.GetFakeConfig()); err != nil {
 		t.Errorf("Unexpected error while decoding payload: %v", err)
 	}
 	if dm.DNS.MalformedPacket != 0 {
@@ -290,7 +290,7 @@ func TestDecodePayload_AnswerMultipleQueries(t *testing.T) {
 		t.Errorf("unexpected error when decoding header: %v", err)
 	}
 
-	if err = decodePayload(&dm, &header, false, dnsutils.GetFakeConfig()); err != nil {
+	if err = decodePayload(&dm, &header, dnsutils.GetFakeConfig()); err != nil {
 		t.Errorf("Unexpected error while decoding payload: %v", err)
 	}
 	if dm.DNS.MalformedPacket != 0 {
@@ -403,7 +403,7 @@ func TestDecodePayload_AnswerInvalid(t *testing.T) {
 		t.Errorf("unexpected error when decoding header: %v", err)
 	}
 
-	if err = decodePayload(&dm, &header, false, dnsutils.GetFakeConfig()); err == nil {
+	if err = decodePayload(&dm, &header, dnsutils.GetFakeConfig()); err == nil {
 		t.Error("expected decoding to fail")
 	}
 	// returned error should wrap the original error
@@ -471,7 +471,7 @@ func TestDecodePayload_AnswerInvalidQuery(t *testing.T) {
 		t.Errorf("unexpected error when decoding header: %v", err)
 	}
 
-	if err = decodePayload(&dm, &header, false, dnsutils.GetFakeConfig()); err == nil {
+	if err = decodePayload(&dm, &header, dnsutils.GetFakeConfig()); err == nil {
 		t.Error("expected decoding to fail")
 	}
 	// returned error should wrap the original error
@@ -545,7 +545,7 @@ func TestDecodePayload_AnswerInvalidEdns(t *testing.T) {
 		t.Errorf("unexpected error when decoding header: %v", err)
 	}
 
-	if err = decodePayload(&dm, &header, false, dnsutils.GetFakeConfig()); err == nil {
+	if err = decodePayload(&dm, &header, dnsutils.GetFakeConfig()); err == nil {
 		t.Error("expected decoding to fail")
 	}
 	// returned error should wrap the original error
@@ -613,7 +613,7 @@ func TestDecodePayload_AnswerInvaliAdditional(t *testing.T) {
 		t.Errorf("unexpected error when decoding header: %v", err)
 	}
 
-	if err = decodePayload(&dm, &header, false, dnsutils.GetFakeConfig()); err == nil {
+	if err = decodePayload(&dm, &header, dnsutils.GetFakeConfig()); err == nil {
 		t.Error("expected decoding to fail")
 	}
 	// returned error should wrap the original error
@@ -675,7 +675,7 @@ func TestDecodePayload_AnswerError(t *testing.T) {
 		t.Errorf("unexpected error when decoding header: %v", err)
 	}
 
-	if err = decodePayload(&dm, &header, false, dnsutils.GetFakeConfig()); err != nil {
+	if err = decodePayload(&dm, &header, dnsutils.GetFakeConfig()); err != nil {
 		t.Errorf("Unexpected error while decoding payload: %v", err)
 	}
 	if dm.DNS.MalformedPacket != 0 {
@@ -779,7 +779,7 @@ func TestDecodePayload_AnswerError_Invalid(t *testing.T) {
 		t.Errorf("unexpected error when decoding header: %v", err)
 	}
 
-	if err = decodePayload(&dm, &header, false, dnsutils.GetFakeConfig()); err == nil {
+	if err = decodePayload(&dm, &header, dnsutils.GetFakeConfig()); err == nil {
 		t.Error("expected decoding to fail")
 	}
 	// returned error should wrap the original error
