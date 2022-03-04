@@ -10,6 +10,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
+	"golang.org/x/net/publicsuffix"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -61,6 +62,21 @@ func (d *PdnsProcessor) Stop() {
 func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
+
+	// filtering and user privacy
+	filtering := NewFilteringProcessor(d.config, d.logger)
+	ipPrivacy := NewIpAnonymizerSubprocessor(d.config)
+	qnamePrivacy := NewQnameReducerSubprocessor(d.config)
+
+	// geoip
+	geoip := NewDnsGeoIpProcessor(d.config, d.logger)
+	if err := geoip.Open(); err != nil {
+		d.LogError("geoip init failed: %v+", err)
+	}
+	if geoip.IsEnabled() {
+		d.LogInfo("geoip is enabled")
+	}
+	defer geoip.Close()
 
 	// read incoming dns message
 	d.LogInfo("running... waiting incoming dns message")
@@ -115,7 +131,67 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.DNS.Qname = pbdm.Question.GetQName()
 		}
 
+		// Public suffix
+		qname := strings.TrimSuffix(dm.DNS.Qname, ".")
+		ps, _ := publicsuffix.PublicSuffix(qname)
+		dm.DNS.QnamePublicSuffix = ps
+		if etpo, err := publicsuffix.EffectiveTLDPlusOne(qname); err == nil {
+			dm.DNS.QnameEffectiveTLDPlusOne = etpo
+		}
+
+		// get query type
 		dm.DNS.Qtype = dnsutils.RdatatypeToString(int(pbdm.Question.GetQType()))
+
+		// decode answers
+		answers := []dnsutils.DnsAnswer{}
+		RRs := pbdm.GetResponse().GetRrs()
+		for j := range RRs {
+			rdata := string(RRs[j].GetRdata())
+			if RRs[j].GetType() == 1 {
+				addr := make(net.IP, net.IPv4len)
+				copy(addr, rdata[:net.IPv4len])
+				rdata = addr.String()
+			}
+			if RRs[j].GetType() == 28 {
+				addr := make(net.IP, net.IPv6len)
+				copy(addr, rdata[:net.IPv6len])
+				rdata = addr.String()
+			}
+
+			rr := dnsutils.DnsAnswer{
+				Name:      RRs[j].GetName(),
+				Rdatatype: dnsutils.RdatatypeToString(int(RRs[j].GetType())),
+				Class:     int(RRs[j].GetClass()),
+				Ttl:       int(RRs[j].GetTtl()),
+				Rdata:     rdata,
+			}
+			answers = append(answers, rr)
+		}
+		dm.DNS.DnsRRs.Answers = answers
+
+		// qname privacy ? filtering ? or ip anonymisation ?
+		if qnamePrivacy.IsEnabled() {
+			dm.DNS.Qname = qnamePrivacy.Minimaze(dm.DNS.Qname)
+		}
+		if filtering.CheckIfDrop(&dm) {
+			continue
+		}
+		if ipPrivacy.IsEnabled() {
+			dm.NetworkInfo.QueryIp = ipPrivacy.Anonymize(dm.NetworkInfo.QueryIp)
+		}
+
+		// geoip feature
+		if geoip.IsEnabled() {
+			geoInfo, err := geoip.Lookup(dm.NetworkInfo.QueryIp)
+			if err != nil {
+				d.LogError("geoip loopkup failed: %v+", err)
+			}
+			dm.Geo.Continent = geoInfo.Continent
+			dm.Geo.CountryIsoCode = geoInfo.CountryISOCode
+			dm.Geo.City = geoInfo.City
+			dm.NetworkInfo.AutonomousSystemNumber = geoInfo.ASN
+			dm.NetworkInfo.AutonomousSystemOrg = geoInfo.ASO
+		}
 
 		// dispatch dns message to all generators
 		for i := range sendTo {
