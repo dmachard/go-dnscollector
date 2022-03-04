@@ -49,6 +49,11 @@ type Config struct {
 			CaptureDnsQueries bool   `yaml:"capture-dns-queries"`
 			CaptureDnsReplies bool   `yaml:"capture-dns-replies"`
 		} `yaml:"dns-sniffer"`
+		PowerDNS struct {
+			Enable     bool   `yaml:"enable"`
+			ListenIP   string `yaml:"listen-ip"`
+			ListenPort int    `yaml:"listen-port"`
+		} `yaml:"powerdns"`
 	} `yaml:"collectors"`
 
 	Subprocessors struct {
@@ -250,6 +255,10 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnsSniffer.Device = ""
 	c.Collectors.DnsSniffer.CaptureDnsQueries = true
 	c.Collectors.DnsSniffer.CaptureDnsReplies = true
+
+	c.Collectors.PowerDNS.Enable = true
+	c.Collectors.PowerDNS.ListenIP = "0.0.0.0"
+	c.Collectors.PowerDNS.ListenPort = 6000
 
 	// Subprocessors
 	c.Subprocessors.QuietText.Dnstap = false

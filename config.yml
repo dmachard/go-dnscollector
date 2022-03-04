@@ -16,7 +16,7 @@ collectors:
   # dnstap standard
   dnstap:
     # to enable, set the enable to true
-    enable: true
+    enable: false
     # listen on ip
     listen-ip: 0.0.0.0
     # listening on port
@@ -61,6 +61,15 @@ collectors:
     pattern-reply: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_RESPONSE) (?P<rcode>[^ ]*)
       (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b
       (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
+
+  # protobuf powerdns
+  powerdns:
+    # to enable, set the enable to true
+    enable: true
+    # listen on ip
+    listen-ip: 0.0.0.0
+    # listening on port
+    listen-port: 6001
 
 # settings for subprocessors
 subprocessors:

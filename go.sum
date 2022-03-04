@@ -234,6 +234,8 @@ github.com/dmachard/go-framestream v0.1.0 h1:SwBZSamv1S3T4zHeUZFMNSo3u09WKyyOOwZ
 github.com/dmachard/go-framestream v0.1.0/go.mod h1:NTkjiWoRSjLVyx/PxDjZoTCb6bE40DHJ8fe29xOHBcg=
 github.com/dmachard/go-logger v0.1.0 h1:E4kmxIZx+/hrx6Iusa7ygbcSbP+jQnYoeLKhqsjUOxY=
 github.com/dmachard/go-logger v0.1.0/go.mod h1:vg6cMQBmx+SgH45XsqEyqScXp9eJhS6yuvvJZOgBbvU=
+github.com/dmachard/go-powerdns-protobuf v0.0.2 h1:POJPDn5gWG0nFjCsKo4RYIHFTrCVK3+UH+y0B6hL3XM=
+github.com/dmachard/go-powerdns-protobuf v0.0.2/go.mod h1:ARzDrAPrRJO0RRKQAJpmrUtCChorBnioluLrJRExjzc=
 github.com/dmachard/go-topmap v0.4.0 h1:u8MJuaLwlMmuVu3UvJcid+sS3vuxgj3y728BQFLiYXA=
 github.com/dmachard/go-topmap v0.4.0/go.mod h1:EpVNlcJO8kJjXzTgstKBXOQumsmSUz5bTxSxTE4DRrk=
 github.com/docker/distribution v2.7.0+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=

@@ -123,6 +123,9 @@ func main() {
 	if config.Collectors.Tail.Enable {
 		collwrks = append(collwrks, collectors.NewTail(logwrks, config, logger))
 	}
+	if config.Collectors.PowerDNS.Enable {
+		collwrks = append(collwrks, collectors.NewProtobufPowerDNS(logwrks, config, logger))
+	}
 
 	// Handle Ctrl-C
 	sigTerm := make(chan os.Signal, 1)
