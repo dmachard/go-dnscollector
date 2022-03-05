@@ -156,7 +156,7 @@ tail:
 
 ### Protobuf PowerDNS
 
-[Protobuf Logging](https://dnsdist.org/reference/protobuf.html) for PowerDNS
+[Protobuf Logging](https://dnsdist.org/reference/protobuf.html) support for PowerDNS's products.
 
 Options:
 - `enable`: (boolean) to enable, set the enable to true

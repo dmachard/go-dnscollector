@@ -25,17 +25,52 @@ import (
 	"github.com/grafana/loki/pkg/logproto"
 )
 
-type LokiClient struct {
-	done        chan bool
-	channel     chan dnsutils.DnsMessage
+type LokiStream struct {
+	name        string
 	config      *dnsutils.Config
 	logger      *logger.Logger
-	exit        chan bool
 	stream      *logproto.Stream
 	pushrequest *logproto.PushRequest
-	httpclient  *http.Client
-	textFormat  []string
 	sizeentries int
+}
+
+func (o *LokiStream) Init() {
+	// prepare stream with label name
+	o.stream = &logproto.Stream{}
+	o.stream.Labels = "{job=\"" + o.config.Loggers.LokiClient.JobName + "\", identity=\"" + o.name + "\"}"
+
+	// creates push request
+	o.pushrequest = &logproto.PushRequest{
+		Streams: make([]logproto.Stream, 0, 1),
+	}
+}
+
+func (o *LokiStream) ResetEntries() {
+	o.stream.Entries = nil
+	o.sizeentries = 0
+	o.pushrequest.Reset()
+}
+
+func (o *LokiStream) Encode2Proto() ([]byte, error) {
+	o.pushrequest.Streams = append(o.pushrequest.Streams, *o.stream)
+
+	buf, err := proto.Marshal(o.pushrequest)
+	if err != nil {
+		fmt.Println(err)
+	}
+	buf = snappy.Encode(nil, buf)
+	return buf, nil
+}
+
+type LokiClient struct {
+	done       chan bool
+	channel    chan dnsutils.DnsMessage
+	config     *dnsutils.Config
+	logger     *logger.Logger
+	exit       chan bool
+	httpclient *http.Client
+	textFormat []string
+	streams    map[string]*LokiStream
 }
 
 func NewLokiClient(config *dnsutils.Config, logger *logger.Logger) *LokiClient {
@@ -47,6 +82,7 @@ func NewLokiClient(config *dnsutils.Config, logger *logger.Logger) *LokiClient {
 		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  logger,
 		config:  config,
+		streams: make(map[string]*LokiStream),
 	}
 
 	s.ReadConfig()
@@ -117,16 +153,6 @@ func (o *LokiClient) Run() {
 	o.LogInfo("running in background...")
 	buffer := new(bytes.Buffer)
 
-	// prepare stream with label name
-
-	o.stream = &logproto.Stream{}
-	o.stream.Labels = "{job=\"" + o.config.Loggers.LokiClient.JobName + "\"}"
-
-	// creates push request
-	o.pushrequest = &logproto.PushRequest{
-		Streams: make([]logproto.Stream, 0, 1),
-	}
-
 	tflush_interval := time.Duration(o.config.Loggers.LokiClient.FlushInterval) * time.Second
 	tflush := time.NewTimer(tflush_interval)
 
@@ -136,6 +162,11 @@ LOOP:
 		for {
 			select {
 			case dm := <-o.channel:
+				if _, ok := o.streams[dm.DnsTap.Identity]; !ok {
+					o.streams[dm.DnsTap.Identity] = &LokiStream{config: o.config, logger: o.logger, name: dm.DnsTap.Identity}
+					o.streams[dm.DnsTap.Identity].Init()
+				}
+
 				// prepare entry
 				entry := logproto.Entry{}
 				entry.Timestamp = time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
@@ -149,18 +180,19 @@ LOOP:
 					entry.Line = buffer.String()
 					buffer.Reset()
 				}
-				o.sizeentries += len(entry.Line)
+				o.streams[dm.DnsTap.Identity].sizeentries += len(entry.Line)
 
 				// append entry to the stream
-				o.stream.Entries = append(o.stream.Entries, entry)
+				o.streams[dm.DnsTap.Identity].stream.Entries = append(o.streams[dm.DnsTap.Identity].stream.Entries, entry)
 
-				if o.sizeentries >= o.config.Loggers.LokiClient.BatchSize {
+				// flush ?
+				if o.streams[dm.DnsTap.Identity].sizeentries >= o.config.Loggers.LokiClient.BatchSize {
 					// encode log entries
-					buf, err := o.ProtoEncode()
+					buf, err := o.streams[dm.DnsTap.Identity].Encode2Proto()
 					if err != nil {
 						o.LogError("error encoding log entries - %v", err)
 						// reset push request and entries
-						o.ResetEntries()
+						o.streams[dm.DnsTap.Identity].ResetEntries()
 						return
 					}
 
@@ -172,39 +204,40 @@ LOOP:
 					}
 
 					// reset entries and push request
-					o.ResetEntries()
+					o.streams[dm.DnsTap.Identity].ResetEntries()
 				}
 
 			case <-tflush.C:
-				if len(o.stream.Entries) > 0 {
-					// timeout
-					// encode log entries
-					buf, err := o.ProtoEncode()
-					if err != nil {
-						o.LogError("error encoding log entries - %v", err)
-						// reset push request and entries
-						o.ResetEntries()
-						// restart timer
-						tflush.Reset(tflush_interval)
-						return
+				for _, s := range o.streams {
+					if len(s.stream.Entries) > 0 {
+						// timeout
+						// encode log entries
+						buf, err := s.Encode2Proto()
+						if err != nil {
+							o.LogError("error encoding log entries - %v", err)
+							// reset push request and entries
+							s.ResetEntries()
+							// restart timer
+							tflush.Reset(tflush_interval)
+							return
+						}
+
+						// send all entries
+						err = o.SendEntries(buf)
+						if err != nil {
+							o.LogError("error sending log entries - %v", err)
+							// restart timer
+							tflush.Reset(tflush_interval)
+							break LOOP_RECONNECT
+						}
+
+						// reset entries and push request
+						s.ResetEntries()
 					}
-
-					// send all entries
-					err = o.SendEntries(buf)
-					if err != nil {
-						o.LogError("error sending log entries - %v", err)
-						// restart timer
-						tflush.Reset(tflush_interval)
-
-						break LOOP_RECONNECT
-					}
-
-					// reset entries and push request
-					o.ResetEntries()
 				}
+
 				// restart timer
 				tflush.Reset(tflush_interval)
-
 			case <-o.exit:
 				o.logger.Info("closing loop...")
 				break LOOP
@@ -219,23 +252,6 @@ LOOP:
 	o.LogInfo("run terminated")
 	// the job is done
 	o.done <- true
-}
-
-func (o *LokiClient) ProtoEncode() ([]byte, error) {
-	o.pushrequest.Streams = append(o.pushrequest.Streams, *o.stream)
-
-	buf, err := proto.Marshal(o.pushrequest)
-	if err != nil {
-		fmt.Println(err)
-	}
-	buf = snappy.Encode(nil, buf)
-	return buf, nil
-}
-
-func (o *LokiClient) ResetEntries() {
-	o.stream.Entries = nil
-	o.sizeentries = 0
-	o.pushrequest.Reset()
 }
 
 func (o *LokiClient) SendEntries(buf []byte) error {
