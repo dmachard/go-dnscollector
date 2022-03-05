@@ -154,7 +154,7 @@ jobs:
       matrix:
         go-version: ['1.17']
         dnsdist: [ '16', '17' ]
-        mode: [ 'tcp', 'unix' ]
+        mode: [ 'dnstaptcp', 'dnstapunix', 'powerdns']
 
     steps:
     - uses: actions/checkout@v2
@@ -180,6 +180,6 @@ jobs:
       run: |
         sudo python3 -m pip install dnstap_pb fstrm dnspython
         sudo python3 -m pip install --upgrade protobuf
-        sudo -E python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
+        sudo -E python3 -m unittest tests.dnsquery_${{ matrix.mode }} -v
 
 
