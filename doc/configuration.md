@@ -170,13 +170,28 @@ powerdns:
   listen-port: 6001
 ```
 
-Example to enable logging in your dnsdist
+Example to enable logging in your **dnsdist**
 
 ```lua
 rl = newRemoteLogger("<dnscollectorip>:6001")
 addAction(AllRule(),RemoteLogAction(rl, nil, {serverID="dnsdist"}))
 addResponseAction(AllRule(),RemoteLogResponseAction(rl, nil, true, {serverID="dnsdist"}))
 addCacheHitResponseAction(AllRule(), RemoteLogResponseAction(rl, nil, true, {serverID="dnsdist"}))
+```
+
+Example to enable logging in your **pdns-recursor**
+
+*/etc/pdns-recursor/recursor.conf*
+
+```lua
+lua-config-file=/etc/pdns-recursor/recursor.lua
+```
+
+*/etc/pdns-recursor/recursor.lua*
+
+```lua
+protobufServer("<dnscollectorip>:6001")
+outgoingProtobufServer("<dnscollectorip>:6001")
 ```
 
 ## Subprocessors

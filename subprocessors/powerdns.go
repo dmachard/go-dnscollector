@@ -95,7 +95,9 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		dm.NetworkInfo.Family = pbdm.GetSocketFamily().String()
 		dm.NetworkInfo.Protocol = pbdm.GetSocketProtocol().String()
 
-		dm.NetworkInfo.QueryIp = net.IP(pbdm.From).String()
+		if pbdm.From != nil {
+			dm.NetworkInfo.QueryIp = net.IP(pbdm.From).String()
+		}
 		dm.NetworkInfo.QueryPort = strconv.FormatUint(uint64(pbdm.GetFromPort()), 10)
 		dm.NetworkInfo.ResponseIp = net.IP(pbdm.To).String()
 		dm.NetworkInfo.ResponsePort = strconv.FormatUint(uint64(pbdm.GetToPort()), 10)
