@@ -519,23 +519,23 @@ func (s *StatsStreams) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "# TYPE %s_sent_bytes_total counter\n", prefix)
 
 	// first level domains
-	fmt.Fprintf(w, "# HELP %s_firstleveldomains_total Number of first level domains\n", prefix)
-	fmt.Fprintf(w, "# TYPE %s_firstleveldomains_total counter\n", prefix)
-	fmt.Fprintf(w, "# HELP %s_firstleveldomains_top_total Number of hit per first level domains\n", prefix)
-	fmt.Fprintf(w, "# TYPE %s_firstleveldomains_top_total counter\n", prefix)
+	fmt.Fprintf(w, "# HELP %s_tld_total Number of first level domains\n", prefix)
+	fmt.Fprintf(w, "# TYPE %s_tld_total counter\n", prefix)
+	fmt.Fprintf(w, "# HELP %s_tld_top_total Number of hit per first level domains\n", prefix)
+	fmt.Fprintf(w, "# TYPE %s_tld_top_total counter\n", prefix)
 
 	// public suffixes
 
-	fmt.Fprintf(w, "# HELP %s_publicsuffix_total Number of first level domains\n", prefix)
-	fmt.Fprintf(w, "# TYPE %s_publicsuffix_total counter\n", prefix)
-	fmt.Fprintf(w, "# HELP %s_publicsuffix_top_total Number of hit per first level domains\n", prefix)
-	fmt.Fprintf(w, "# TYPE %s_publicsuffix_top_total counter\n", prefix)
+	fmt.Fprintf(w, "# HELP %s_etld_total Number of first level domains\n", prefix)
+	fmt.Fprintf(w, "# TYPE %s_etld_total counter\n", prefix)
+	fmt.Fprintf(w, "# HELP %s_etld_top_total Number of hit per first level domains\n", prefix)
+	fmt.Fprintf(w, "# TYPE %s_etld_top_total counter\n", prefix)
 
 	// effective TLD plus one label
-	fmt.Fprintf(w, "# HELP %s_effectivetldplusone_total Number of first level domains\n", prefix)
-	fmt.Fprintf(w, "# TYPE %s_effectivetldplusone_total counter\n", prefix)
-	fmt.Fprintf(w, "# HELP %s_effectivetldplusone_top_total Number of hit per first level domains\n", prefix)
-	fmt.Fprintf(w, "# TYPE %s_effectivetldplusone_top_total counter\n", prefix)
+	fmt.Fprintf(w, "# HELP %s_etldplusone_total Number of first level domains\n", prefix)
+	fmt.Fprintf(w, "# TYPE %s_etldplusone_total counter\n", prefix)
+	fmt.Fprintf(w, "# HELP %s_etldplusone_top_total Number of hit per first level domains\n", prefix)
+	fmt.Fprintf(w, "# TYPE %s_etldplusone_top_total counter\n", prefix)
 
 	// qps
 	fmt.Fprintf(w, "# HELP %s_qps Number of queries per second received\n", prefix)
@@ -679,21 +679,21 @@ func (s *StatsStreams) GetMetrics(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%s_sent_bytes_total{stream=\"%s\"} %d\n", prefix, stream, counters.SentBytesTotal)
 
 		// first level domains
-		fmt.Fprintf(w, "%s_firstleveldomains_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalFirstLevelDomains(stream))
+		fmt.Fprintf(w, "%s_tld_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalFirstLevelDomains(stream))
 		for _, v := range s.GetTopFirstLevelDomains(stream) {
-			fmt.Fprintf(w, "%s_firstleveldomains_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
+			fmt.Fprintf(w, "%s_tld_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
 		}
 
 		// public suffix
-		fmt.Fprintf(w, "%s_publicsuffix_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalPublicSuffix(stream))
+		fmt.Fprintf(w, "%s_etld_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalPublicSuffix(stream))
 		for _, v := range s.GetTopPublicSuffix(stream) {
-			fmt.Fprintf(w, "%s_publicsuffix_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
+			fmt.Fprintf(w, "%s_etld_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
 		}
 
 		// effective TLD plus one
-		fmt.Fprintf(w, "%s_effectivetldplusone_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalEffectiveTLDPlusOne(stream))
+		fmt.Fprintf(w, "%s_etldplusone_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalEffectiveTLDPlusOne(stream))
 		for _, v := range s.GetTopEffectiveTLDPlusOne(stream) {
-			fmt.Fprintf(w, "%s_effectivetldplusone_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
+			fmt.Fprintf(w, "%s_etldplusone_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
 		}
 
 		// qps

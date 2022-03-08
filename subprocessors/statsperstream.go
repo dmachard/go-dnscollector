@@ -397,20 +397,8 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 	c.transportstop.Record(dm.NetworkInfo.Protocol, c.transports[dm.NetworkInfo.Protocol])
 
-	// record first level domain
-	i := strings.LastIndex(dm.DNS.Qname, ".")
-	if i > -1 {
-		fld := dm.DNS.Qname[i+1:]
-		if _, ok := c.firstleveldomains[fld]; !ok {
-			c.firstleveldomains[fld] = 1
-		} else {
-			c.firstleveldomains[fld]++
-		}
-		c.firstleveldomainstop.Record(fld, c.firstleveldomains[fld])
-	}
-
 	// record public suffix
-	if dm.DNS.QnameEffectiveTLDPlusOne != "-" && dm.DNS.QnameEffectiveTLDPlusOne != "" {
+	if dm.DNS.QnamePublicSuffix != "-" {
 		if _, ok := c.publicsuffix[dm.DNS.QnamePublicSuffix]; !ok {
 			c.publicsuffix[dm.DNS.QnamePublicSuffix] = 1
 		} else {
@@ -427,6 +415,18 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 			c.effectivetldplusone[dm.DNS.QnameEffectiveTLDPlusOne]++
 		}
 		c.effectivetldplusonetop.Record(dm.DNS.QnameEffectiveTLDPlusOne, c.effectivetldplusone[dm.DNS.QnameEffectiveTLDPlusOne])
+	}
+
+	// record first level domain
+	i := strings.LastIndex(dm.DNS.QnamePublicSuffix, ".")
+	if i > -1 {
+		tld := dm.DNS.QnamePublicSuffix[i+1:]
+		if _, ok := c.firstleveldomains[tld]; !ok {
+			c.firstleveldomains[tld] = 1
+		} else {
+			c.firstleveldomains[tld]++
+		}
+		c.firstleveldomainstop.Record(tld, c.firstleveldomains[tld])
 	}
 
 	// record all qnames

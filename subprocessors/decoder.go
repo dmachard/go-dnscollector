@@ -85,7 +85,6 @@ func decodePayload(dm *dnsutils.DnsMessage, header *dnsutils.DnsHeader, config *
 		if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
 			dm.DNS.QnameEffectiveTLDPlusOne = etpo
 		}
-
 		dm.DNS.Qtype = dnsutils.RdatatypeToString(dns_rrtype)
 		payload_offset = offsetrr
 	}
