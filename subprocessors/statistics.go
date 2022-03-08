@@ -525,7 +525,6 @@ func (s *StatsStreams) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "# TYPE %s_tld_top_total counter\n", prefix)
 
 	// public suffixes
-
 	fmt.Fprintf(w, "# HELP %s_etld_total Number of first level domains\n", prefix)
 	fmt.Fprintf(w, "# TYPE %s_etld_total counter\n", prefix)
 	fmt.Fprintf(w, "# HELP %s_etld_top_total Number of hit per first level domains\n", prefix)
@@ -576,14 +575,6 @@ func (s *StatsStreams) GetMetrics(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%s_domains_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalDomains(stream))
 		for _, v := range s.GetTopQnames(stream) {
 			fmt.Fprintf(w, "%s_domains_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
-		}
-		fmt.Fprintf(w, "%s_publicsuffix_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalPublicSuffix(stream))
-		for _, v := range s.GetTopPublicSuffix(stream) {
-			fmt.Fprintf(w, "%s_publicsuffix_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
-		}
-		fmt.Fprintf(w, "%s_effectivetldplusone_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalEffectiveTLDPlusOne(stream))
-		for _, v := range s.GetTopEffectiveTLDPlusOne(stream) {
-			fmt.Fprintf(w, "%s_effectivetldplusone_top_total{stream=\"%s\",domain=\"%s\"} %d\n", prefix, stream, v.Name, v.Hit)
 		}
 		fmt.Fprintf(w, "%s_domains_nx_total{stream=\"%s\"} %d\n", prefix, stream, s.GetTotalNxdomains(stream))
 		for _, v := range s.GetTopNxdomains(stream) {
