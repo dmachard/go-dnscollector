@@ -418,9 +418,9 @@ func (c *StatsPerStream) Record(dm dnsutils.DnsMessage) {
 	}
 
 	// record first level domain
-	i := strings.LastIndex(dm.DNS.QnamePublicSuffix, ".")
+	i := strings.LastIndex(dm.DNS.Qname, ".")
 	if i > -1 {
-		tld := dm.DNS.QnamePublicSuffix[i+1:]
+		tld := dm.DNS.Qname[i+1:]
 		if _, ok := c.firstleveldomains[tld]; !ok {
 			c.firstleveldomains[tld] = 1
 		} else {
