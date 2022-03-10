@@ -135,6 +135,7 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// Public suffix
 		qname := strings.TrimSuffix(dm.DNS.Qname, ".")
+		dm.DNS.Qname = qname
 		ps, _ := publicsuffix.PublicSuffix(qname)
 		dm.DNS.QnamePublicSuffix = ps
 		if etpo, err := publicsuffix.EffectiveTLDPlusOne(qname); err == nil {
