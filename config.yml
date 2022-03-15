@@ -261,7 +261,7 @@ loggers:
     # to enable, set the enable to true
     enable: false
     # output logfile name
-    file-path:  null
+    file-path:  /tmp/test.log
     # maximum size in megabytes of the file before rotation
     # A minimum of max-size*max-files megabytes of space disk must be available
     max-size: 100
@@ -414,7 +414,7 @@ loggers:
     # to enable, set the enable to true
     enable: false
     # Loki server url
-    server-url: "http://lokiwriter:3100/loki/api/v1/push"
+    server-url: "http://lokiwriter.home.lab/loki/api/v1/push"
     # Job name
     job-name: "dnstap"
     # flush batch every X seconds

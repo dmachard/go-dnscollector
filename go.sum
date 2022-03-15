@@ -1018,6 +1018,8 @@ github.com/gorilla/websocket v0.0.0-20170926233335-4201258b820c/go.mod h1:E7qHFY
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/dskit v0.0.0-20211021180445-3bd016e9d7f1/go.mod h1:uPG2nyK4CtgNDmWv7qyzYcdI+S90kHHRWvHnBtEMBXM=
+github.com/grafana/dskit v0.0.0-20220314144907-ec94f1a0a3a8 h1:20XWK+OoZT6en38dN117lQsAWWmM2//YgSV/75HMLeY=
+github.com/grafana/dskit v0.0.0-20220314144907-ec94f1a0a3a8/go.mod h1:q51XdMLLHNZJSG6KOGujC20ed2OoLFdx0hBmOEVfRs0=
 github.com/grafana/loki v1.6.2-0.20211108122114-f61a4d2612d8 h1:31NHRYPPU6MzWY6DJnWPLKsXupwMFml9BOA0AzHFeCQ=
 github.com/grafana/loki v1.6.2-0.20211108122114-f61a4d2612d8/go.mod h1:9dAaw+bJR/qZiHZYO9ZvFhuqphGblcUEwuvGPbgZldA=
 github.com/gregjones/httpcache v0.0.0-20170728041850-787624de3eb7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
