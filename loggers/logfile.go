@@ -124,7 +124,6 @@ func (o *LogFile) Write(d []byte) {
 
 	// increase size file
 	o.size += int64(n)
-
 }
 
 func (o *LogFile) Flush() {
@@ -267,6 +266,8 @@ func (o *LogFile) Compress() {
 				continue
 			}
 
+			// post rotate command?
+			o.CompressPostRotateCommand(dst)
 		}
 	}
 
@@ -283,6 +284,16 @@ func (o *LogFile) PostRotateCommand(filename string) {
 			if o.config.Loggers.LogFile.PostRotateDelete {
 				os.Remove(filename)
 			}
+		}
+	}
+}
+
+func (o *LogFile) CompressPostRotateCommand(filename string) {
+	if len(o.config.Loggers.LogFile.CompressPostCommand) > 0 {
+		out, err := exec.Command(o.config.Loggers.LogFile.CompressPostCommand, filename).Output()
+		if err != nil {
+			o.LogError("compress - postcommand error: %s", err)
+			o.LogError("compress - postcommand output: %s", out)
 		}
 	}
 }

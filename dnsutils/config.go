@@ -124,17 +124,18 @@ type Config struct {
 			KeyFile        string `yaml:"key-file"`
 		} `yaml:"webserver"`
 		LogFile struct {
-			Enable            bool   `yaml:"enable"`
-			FilePath          string `yaml:"file-path"`
-			MaxSize           int    `yaml:"max-size"`
-			MaxFiles          int    `yaml:"max-files"`
-			FlushInterval     int    `yaml:"flush-interval"`
-			Compress          bool   `yaml:"compress"`
-			CompressInterval  int    `yaml:"compress-interval"`
-			Mode              string `yaml:"mode"`
-			PostRotateCommand string `yaml:"postrotate-command"`
-			PostRotateDelete  bool   `yaml:"postrotate-delete-success"`
-			TextFormat        string `yaml:"text-format"`
+			Enable              bool   `yaml:"enable"`
+			FilePath            string `yaml:"file-path"`
+			MaxSize             int    `yaml:"max-size"`
+			MaxFiles            int    `yaml:"max-files"`
+			FlushInterval       int    `yaml:"flush-interval"`
+			Compress            bool   `yaml:"compress"`
+			CompressInterval    int    `yaml:"compress-interval"`
+			CompressPostCommand string `yaml:"compress-postcommand"`
+			Mode                string `yaml:"mode"`
+			PostRotateCommand   string `yaml:"postrotate-command"`
+			PostRotateDelete    bool   `yaml:"postrotate-delete-success"`
+			TextFormat          string `yaml:"text-format"`
 		} `yaml:"logfile"`
 		Dnstap struct {
 			Enable        bool   `yaml:"enable"`
@@ -313,6 +314,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.LogFile.MaxFiles = 10
 	c.Loggers.LogFile.Compress = false
 	c.Loggers.LogFile.CompressInterval = 60
+	c.Loggers.LogFile.CompressPostCommand = ""
 	c.Loggers.LogFile.Mode = "text"
 	c.Loggers.LogFile.PostRotateCommand = ""
 	c.Loggers.LogFile.PostRotateDelete = false

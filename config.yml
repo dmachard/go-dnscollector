@@ -275,6 +275,8 @@ loggers:
     # compress interval
     # checking every X seconds if new log files must be compressed
     compress-interval: 5
+    # run external script after each file compress step 
+    compress-postcommand: null
     # output format: text|json
     mode: text
     # output text format, please refer to the default text format to see all available directives 

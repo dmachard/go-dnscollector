@@ -541,6 +541,7 @@ Options:
 - `flush-interval`: (integer) flush buffer to log file every X seconds
 - `compress`: (boolean) compress log file
 - `compress-interval`: (integer) checking every X seconds if new log files must be compressed
+- `compress-command`: (string) run external script after file compress step
 - `mode`: (string)  output format: text|json
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 - `postrotate-command`: (string) run external script after file rotation
@@ -555,6 +556,7 @@ logfile:
   flush-interval: 10
   compress: false
   compress-interval: 5
+  compress-command: null
   mode: text
   text-format: ""
   postrotate-command: null
