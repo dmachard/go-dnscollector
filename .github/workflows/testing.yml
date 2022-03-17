@@ -89,7 +89,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.17']
+        go-version: [ '1.17', '1.18' ]
         coredns: [ '1.15.0' ]
         mode: [ 'tcp' ]
 
@@ -152,7 +152,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.17']
+        go-version: [ '1.17', '1.18' ]
         dnsdist: [ '16', '17' ]
         mode: [ 'dnstaptcp', 'dnstapunix', 'powerdns']
 

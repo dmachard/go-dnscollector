@@ -86,7 +86,7 @@ type Config struct {
 			KeepQueryIpFile string   `yaml:"keep-queryip-file"`
 			DropRcodes      []string `yaml:"drop-rcodes,flow"`
 			LogQueries      bool     `yaml:"log-queries"`
-			LogReplies      bool     `yaml:"log-replies"!`
+			LogReplies      bool     `yaml:"log-replies"`
 		} `yaml:"filtering"`
 		GeoIP struct {
 			DbCountryFile string `yaml:"mmdb-country-file"`
