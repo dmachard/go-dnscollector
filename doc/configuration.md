@@ -561,6 +561,27 @@ logfile:
   postrotate-delete-success: false
 ```
 
+Basic example to use the postrotate command:
+
+Configure the script to execute after each file rotation, for each call the file is passed as argument.
+
+```
+logfile:
+  postrotate-command: "/home/dnscollector/postrotate.sh"
+```
+
+Script to move the log file to a specific folder
+
+```bash
+#!/bin/bash
+
+DNSCOLLECTOR=/var/dnscollector/
+BACKUP_FOLDER=$DNSCOLLECTOR/$(date +%Y-%m-%d)
+
+mkdir -p $BACKUP_FOLDER
+mv $1 $BACKUP_FOLDER
+```
+
 ### DNStap Client
 
 DNStap stream logger to a remote tcp destination or unix socket.
