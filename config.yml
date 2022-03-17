@@ -416,7 +416,9 @@ loggers:
     # Loki server url
     server-url: "http://lokiwriter.home.lab/loki/api/v1/push"
     # Job name
-    job-name: "dnstap"
+    job-name: "dnscollector"
+    # output format: text|json
+    mode: text
     # flush batch every X seconds
     flush-interval: 5
     # batch size for log entries in bytes

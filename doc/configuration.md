@@ -745,6 +745,7 @@ Options:
 - `enable`: (boolean) enable, set the enable to true
 - `server-url`: (string) Loki server url
 - `job-name`: (string) Job name
+- `mode`: (string) text or json
 - `flush-interval`: (integer) flush batch every X seconds
 - `batch-size`: (integer) batch size for log entries in bytes
 - `retry-interval`: (integer) interval in second between before to retry to send batch
@@ -760,7 +761,8 @@ Options:
   lokiclient:
     enable: false
     server-url: "http://localhost:3100/loki/api/v1/push"
-    job-name: "dnstap"
+    job-name: "dnscollector"
+    mode: "text"
     flush-interval: 5
     batch-size: 1048576
     retry-interval: 10
