@@ -577,8 +577,8 @@ Script to move the log file to a specific folder
 
 DNSCOLLECTOR=/var/dnscollector/
 BACKUP_FOLDER=$DNSCOLLECTOR/$(date +%Y-%m-%d)
-
 mkdir -p $BACKUP_FOLDER
+
 mv $1 $BACKUP_FOLDER
 ```
 
