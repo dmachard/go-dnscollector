@@ -257,7 +257,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnsSniffer.CaptureDnsQueries = true
 	c.Collectors.DnsSniffer.CaptureDnsReplies = true
 
-	c.Collectors.PowerDNS.Enable = true
+	c.Collectors.PowerDNS.Enable = false
 	c.Collectors.PowerDNS.ListenIP = "0.0.0.0"
 	c.Collectors.PowerDNS.ListenPort = 6001
 
