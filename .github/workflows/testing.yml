@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.17']
+        go-version: ['1.17', '1.18']
         package: ['dnsutils', 'collectors', 'loggers', 'subprocessors']
 
     steps:
@@ -36,7 +36,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.17']
+        go-version: ['1.17', '1.18']
         package: ['config', 'clientquery_dnstaptcp', 'clientquery_dnstapunix' ]
 
     steps:
@@ -60,7 +60,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.17']
+        go-version: ['1.17', '1.18']
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
@@ -182,4 +182,32 @@ jobs:
         sudo python3 -m pip install --upgrade protobuf
         sudo -E python3 -m unittest tests.dnsquery_${{ matrix.mode }} -v
 
+  e2e-knotresolver:
+    runs-on: ubuntu-20.04
+
+    strategy:
+      matrix:
+        go-version: [ '1.18' ]
+        coredns: [ 'v5.2.1' ]
+        mode: [ 'unix' ]
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+    - uses: actions/setup-python@v2
+
+    - name: build binary
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+
+    - name: Deploy knot resolver docker image
+      run: |
+        sudo docker run -d --network="host" --name=knot -v $PWD/testsdata/knotresolver_unix.conf:/etc/knot-resolver/kresd.conf -v /tmp/dnstap.sock:/tmp/dnstap.sock cznic/knot-resolver:${{ matrix.coredns }} -n -c /etc/knot-resolver/kresd.conf
+
+    - name: Test ${{ matrix.mode }}
+      run: |
+        sudo python3 -m pip install dnstap_pb fstrm dnspython
+        sudo python3 -m pip install --upgrade protobuf
+        sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
 

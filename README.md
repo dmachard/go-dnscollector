@@ -11,7 +11,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 ## Features
 
 - Supported collectors:
-    - [DNS tap streams](doc/configuration.md#dns-tap) 
+    - [DNStap streams](doc/configuration.md#dns-tap) 
     - [DNS packets sniffer](doc/configuration.md#Dns-Sniffer)
     - [Tail on log file](doc/configuration.md#tail)
     - [Protobuf PowerDNS](doc/configuration.md#protobuf-powerdns)
