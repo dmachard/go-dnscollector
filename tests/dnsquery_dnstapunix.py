@@ -63,7 +63,7 @@ class TestDnstap(unittest.TestCase):
 
             # waiting for connection between collector and dns server is ok
             try:
-                await asyncio.wait_for(is_ready, timeout=5.0)
+                await asyncio.wait_for(is_ready, timeout=30.0)
             except asyncio.TimeoutError:
                 protocol_collector.kill()
                 transport_collector.close()

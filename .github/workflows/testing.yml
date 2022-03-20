@@ -201,13 +201,14 @@ jobs:
     - name: build binary
       run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 
-    - name: Deploy knot resolver docker image
-      run: |
-        sudo docker run -d --network="host" --name=knot -v $PWD/testsdata/knotresolver_${{ matrix.mode }}.conf:/etc/knot-resolver/kresd.conf -v /tmp/dnstap.sock:/tmp/dnstap.sock cznic/knot-resolver:${{ matrix.coredns }} -n -c /etc/knot-resolver/kresd.conf
-
     - name: Test ${{ matrix.mode }}
       run: |
         sudo python3 -m pip install dnstap_pb fstrm dnspython
         sudo python3 -m pip install --upgrade protobuf
-        sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
+        sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v &
+
+    - name: Deploy knot resolver docker image
+      run: |
+        sudo docker run -d --network="host" --name=knot -v $PWD/testsdata/knotresolver_${{ matrix.mode }}.conf:/etc/knot-resolver/kresd.conf -v /tmp/dnstap.sock:/tmp/dnstap.sock cznic/knot-resolver:${{ matrix.coredns }} -n -c /etc/knot-resolver/kresd.conf
+
 
