@@ -209,4 +209,4 @@ jobs:
       run: |
         sudo python3 -m pip install dnstap_pb fstrm dnspython
         sudo python3 -m pip install --upgrade protobuf
-        sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v &
+        sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
