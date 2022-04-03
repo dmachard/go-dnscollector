@@ -23,7 +23,7 @@ require (
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/net v0.0.0-20211101193420-4a448f8816b3
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
