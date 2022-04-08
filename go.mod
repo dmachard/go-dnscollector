@@ -18,11 +18,11 @@ require (
 	github.com/klauspost/compress v1.15.1
 	github.com/miekg/dns v1.1.48
 	github.com/natefinch/lumberjack v2.0.0+incompatible
-	github.com/oschwald/maxminddb-golang v1.8.0
+	github.com/oschwald/maxminddb-golang v1.9.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/net v0.0.0-20211101193420-4a448f8816b3
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
+	golang.org/x/sys v0.0.0-20220325203850-36772127a21f
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
