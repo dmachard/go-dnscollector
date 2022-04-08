@@ -94,12 +94,17 @@ type DnsTap struct {
 	LatencySec       string  `json:"latency" msgpack:"latency"`
 }
 
+type PowerDns struct {
+	Tags []string `json:"tags" msgpack:"tags"`
+}
+
 type DnsMessage struct {
 	NetworkInfo DnsNetInfo  `json:"network" msgpack:"network"`
 	DNS         Dns         `json:"dns" msgpack:"dns"`
 	EDNS        DnsExtended `json:"edns" msgpack:"edns"`
 	DnsTap      DnsTap      `json:"dnstap" msgpack:"dnstap"`
 	Geo         DnsGeo      `json:"geo" msgpack:"geo"`
+	PowerDns    PowerDns    `json:"pdns" msgpack:"pdns"`
 }
 
 func (dm *DnsMessage) Init() {
@@ -145,6 +150,10 @@ func (dm *DnsMessage) Init() {
 		CountryIsoCode: "-",
 		City:           "-",
 		Continent:      "-",
+	}
+
+	dm.PowerDns = PowerDns{
+		Tags: []string{},
 	}
 }
 
@@ -260,6 +269,14 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "ad":
 			if dm.DNS.Flags.AD {
 				s.WriteString("AD")
+			} else {
+				s.WriteString("-")
+			}
+		case "tags":
+			if len(dm.PowerDns.Tags) > 0 {
+				for _, tag := range dm.PowerDns.Tags {
+					s.WriteString(tag)
+				}
 			} else {
 				s.WriteString("-")
 			}
