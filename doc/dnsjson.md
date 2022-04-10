@@ -10,6 +10,7 @@ Main part of a JSON message:
 - `dns`: dns fields
 - `edns`: extended dns options
 - `geo`: contains country, continent and city informations
+- `pdns`: contains powerdns protobuf tags
 
 Example:
 
@@ -81,6 +82,9 @@ Example:
     "city": "-",
     "continent": "-",
     "country-isocode": "-"
+  },
+  "pdns": {
+    "tags": []
   }
 }
 ```
