@@ -146,8 +146,12 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		dm.DNS.Qtype = dnsutils.RdatatypeToString(int(pbdm.Question.GetQType()))
 
 		// get PowerDNS tags
+		tags := pbdm.GetResponse().GetTags()
+		if tags == nil {
+			tags = []string{}
+		}
 		pdns := dnsutils.PowerDns{
-			Tags: pbdm.Response.GetTags(),
+			Tags: tags,
 		}
 		dm.PowerDns = pdns
 
