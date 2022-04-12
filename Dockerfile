@@ -4,6 +4,7 @@ ARG VERSION
 
 WORKDIR /build
 COPY . .
+RUN apk add git
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-X 'main.Version=$VERSION'"
 
 
