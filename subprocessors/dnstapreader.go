@@ -102,7 +102,7 @@ func (c *DnstapProcessor) LogInfo(msg string, v ...interface{}) {
 }
 
 func (c *DnstapProcessor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("procesor dnstap parser - "+msg, v...)
+	c.logger.Error("processor dnstap parser - "+msg, v...)
 }
 
 func (d *DnstapProcessor) GetChannel() chan []byte {
@@ -214,12 +214,10 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		if err = decodePayload(&dm, &dnsHeader, d.config); err != nil {
-			d.LogError("%v - %v", err, dm)
-		}
-
-		if dm.DNS.MalformedPacket == 1 {
+			// decoding error
 			if d.config.Trace.LogMalformed {
-				d.LogInfo("payload: %v", dm.DNS.Payload)
+				d.LogError("%v - %v", err, dm)
+				d.LogError("dump invalid dns payload: %v", dm.DNS.Payload)
 			}
 		}
 
