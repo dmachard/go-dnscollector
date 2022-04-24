@@ -160,7 +160,15 @@ func DecodeEDNS(arcount int, start_offset int, payload []byte) (DnsExtended, int
 
 			edns.Options = options
 			ednsFound = true
+			offset = offset_next
 
+		} else {
+			// advance to next RR
+			rdlength := binary.BigEndian.Uint16(payload[offset_next+8 : offset_next+10])
+			if len(payload[offset_next+10:]) < int(rdlength) {
+				return edns, offset, ErrDecodeEdnsDataTooShort
+			}
+			offset = offset_next + 10 + int(rdlength)
 		}
 	}
 	return edns, offset, nil
