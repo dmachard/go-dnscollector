@@ -751,3 +751,115 @@ func TestDecodeEdns_MultipleOpts(t *testing.T) {
 		t.Errorf("bad error received: %v", err)
 	}
 }
+
+func TestDecodeEdns_NonEDNSFollows(t *testing.T) {
+	payload := []byte{
+		// empty name
+		0x00,
+		// type OPT
+		0x00, 0x29,
+		// class / UDP Payload size
+		0x04, 0xd0,
+		// TTL /  EXT-RCODE=0, VERSION=0, DO=1, Z=0
+		0x00, 0x00, 0x80, 0x00,
+		// RDLENGTH
+		0x00, 0x00,
+		// no RDATA
+		// next RR,
+		// Name
+		0x03, 0x46, 0x4f, 0x4f, 0x03, 0x4e, 0x45, 0x54, 0x00,
+		// type A, class IN
+		0x00, 0x01, 0x00, 0x01,
+		// TTL
+		0x00, 0x00, 0x0e, 0x10,
+		// RDLENGTH
+		0x00, 0x04,
+		// RDATA 127.0.0.1
+		0x7f, 0x00, 0x00, 0x01,
+	}
+
+	edns, offset, err := DecodeEDNS(2, 0x00, payload)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if offset != len(payload) {
+		t.Errorf("expected offset %d, got %d", len(payload), offset)
+	}
+	if len(edns.Options) != 0 {
+		t.Errorf("Did not expect any Options on EDNS")
+	}
+	if edns.UdpSize != 1232 {
+		t.Errorf("expected UDP Size of 1232, got %d", edns.UdpSize)
+	}
+}
+
+func TestDecodeEdns_EDNSFollows(t *testing.T) {
+	payload := []byte{
+		0x03, 0x46, 0x4f, 0x4f, 0x03, 0x4e, 0x45, 0x54, 0x00,
+		// type A, class IN
+		0x00, 0x01, 0x00, 0x01,
+		// TTL
+		0x00, 0x00, 0x0e, 0x10,
+		// RDLENGTH
+		0x00, 0x04,
+		// RDATA 127.0.0.1
+		0x7f, 0x00, 0x00, 0x01,
+		// EDNS DATA
+		// empty name
+		0x00,
+		// type OPT
+		0x00, 0x29,
+		// class / UDP Payload size
+		0x04, 0xd0,
+		// TTL /  EXT-RCODE=0, VERSION=0, DO=1, Z=0
+		0x00, 0x00, 0x80, 0x00,
+		// RDLENGTH
+		0x00, 0x00,
+	}
+
+	edns, offset, err := DecodeEDNS(2, 0x00, payload)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if offset != len(payload) {
+		t.Errorf("expected offset %d, got %d", len(payload), offset)
+	}
+	if len(edns.Options) != 0 {
+		t.Errorf("Did not expect any Options on EDNS")
+	}
+	if edns.UdpSize != 1232 {
+		t.Errorf("expected UDP Size of 1232, got %d", edns.UdpSize)
+	}
+}
+
+func TestDecodeEdns_invalidRRFollows(t *testing.T) {
+	payload := []byte{
+		// empty name
+		0x00,
+		// type OPT
+		0x00, 0x29,
+		// class / UDP Payload size
+		0x04, 0xd0,
+		// TTL /  EXT-RCODE=0, VERSION=0, DO=1, Z=0
+		0x00, 0x00, 0x80, 0x00,
+		// RDLENGTH
+		0x00, 0x00,
+		// no RDATA
+		// next RR,
+		// Name
+		0x03, 0x46, 0x4f, 0x4f, 0x03, 0x4e, 0x45, 0x54, 0x00,
+		// type A, class IN
+		0x00, 0x01, 0x00, 0x01,
+		// TTL
+		0x00, 0x00, 0x0e, 0x10,
+		// RDLENGTH
+		0x00, 0x04,
+		// not enough RDATA
+		0x7f, 0x00,
+	}
+
+	_, _, err := DecodeEDNS(2, 0x00, payload)
+	if !errors.Is(err, ErrDecodeEdnsDataTooShort) {
+		t.Errorf("bad error received: %v", err)
+	}
+}
