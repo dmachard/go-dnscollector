@@ -117,7 +117,7 @@ func main() {
 	if config.Collectors.Dnstap.Enable {
 		collwrks = append(collwrks, collectors.NewDnstap(logwrks, config, logger))
 	}
-	if config.Collectors.DnsSniffer.Enable {
+	if config.Collectors.DnsSniffer.Enable && runtime.GOOS == "linux" {
 		collwrks = append(collwrks, collectors.NewDnsSniffer(logwrks, config, logger))
 	}
 	if config.Collectors.Tail.Enable {
