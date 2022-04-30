@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"runtime"
 
 	"github.com/dmachard/go-dnscollector/collectors"
 	"github.com/dmachard/go-dnscollector/dnsutils"
