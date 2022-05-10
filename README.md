@@ -117,6 +117,7 @@ Execute testunits
 go test -timeout 10s ./collectors/ -cover -v
 go test -timeout 10s ./loggers/ -cover -v
 go test -timeout 10s ./subprocessors/ -cover -v
+go test -timeout 10s ./dnsutils/ -cover -v
 ```
 
 Execute a test for one specific testcase in a package
