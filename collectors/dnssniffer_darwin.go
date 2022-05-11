@@ -9,6 +9,6 @@ import (
 )
 
 // workaround for macos, not yet supported
-func NewDnsSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) {
+func NewDnsSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) error {
 	return nil
 }
