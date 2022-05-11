@@ -1,4 +1,5 @@
-// +build linux
+//go:build !macos
+// +build !macos
 
 package collectors
 
