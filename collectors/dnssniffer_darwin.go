@@ -1,5 +1,5 @@
-//go:build macos
-// +build macos
+//go:build darwin
+// +build darwin
 
 package collectors
 
