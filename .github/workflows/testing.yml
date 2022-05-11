@@ -12,11 +12,11 @@ jobs:
   dev:
     strategy:
       matrix:
-        ubuntu-version: ['20.04', '22.04']
+        os-version: ['ubuntu-20.04', 'ubuntu-22.04', 'macos-11']
         go-version: ['1.17', '1.18']
         package: ['dnsutils', 'collectors', 'loggers', 'subprocessors']
     
-    runs-on: ubuntu-${{ matrix.ubuntu-version }}
+    runs-on: ${{ matrix.os-version }}
 
     steps:
     - uses: actions/checkout@v2
