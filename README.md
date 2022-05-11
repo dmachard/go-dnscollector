@@ -42,6 +42,11 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 ## End to end testing
 
+Tested with success with the following operating system
+
+![ubuntu 20.04](https://img.shields.io/badge/ubuntu%2020.04-tested-green)
+![ubuntu 22.04](https://img.shields.io/badge/ubuntu%2022.04-tested-green)
+
 Tested with success with the following dns servers
 
 ![unbound 1.15.x](https://img.shields.io/badge/unbound%201.15.x-tested-green)

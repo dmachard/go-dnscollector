@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"syscall"
 	"runtime"
+	"syscall"
 
 	"github.com/dmachard/go-dnscollector/collectors"
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -114,12 +114,13 @@ func main() {
 
 	// load collectors
 	var collwrks []dnsutils.Worker
-
 	if config.Collectors.Dnstap.Enable {
 		collwrks = append(collwrks, collectors.NewDnstap(logwrks, config, logger))
 	}
-	if config.Collectors.DnsSniffer.Enable && runtime.GOOS == "linux" {
-		collwrks = append(collwrks, collectors.NewDnsSniffer(logwrks, config, logger))
+	if runtime.GOOS == "linux" {
+		if config.Collectors.DnsSniffer.Enable {
+			collwrks = append(collwrks, collectors.NewDnsSniffer(logwrks, config, logger))
+		}
 	}
 	if config.Collectors.Tail.Enable {
 		collwrks = append(collwrks, collectors.NewTail(logwrks, config, logger))
