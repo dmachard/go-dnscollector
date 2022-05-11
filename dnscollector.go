@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 
 	"github.com/dmachard/go-dnscollector/collectors"
@@ -117,9 +116,10 @@ func main() {
 	if config.Collectors.Dnstap.Enable {
 		collwrks = append(collwrks, collectors.NewDnstap(logwrks, config, logger))
 	}
-	if runtime.GOOS == "linux" {
-		if config.Collectors.DnsSniffer.Enable {
-			collwrks = append(collwrks, collectors.NewDnsSniffer(logwrks, config, logger))
+	if config.Collectors.DnsSniffer.Enable {
+		sniffer := collectors.NewDnsSniffer(logwrks, config, logger)
+		if sniffer != nil {
+			collwrks = append(collwrks, sniffer)
 		}
 	}
 	if config.Collectors.Tail.Enable {
