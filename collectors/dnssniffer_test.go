@@ -1,3 +1,6 @@
+//go:build !macos
+// +build !macos
+
 package collectors
 
 import (

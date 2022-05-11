@@ -8,5 +8,6 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
+// workaround for macos, not yet supported
 func NewDnsSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) *DnsSniffer {
 }
