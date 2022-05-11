@@ -117,10 +117,7 @@ func main() {
 		collwrks = append(collwrks, collectors.NewDnstap(logwrks, config, logger))
 	}
 	if config.Collectors.DnsSniffer.Enable {
-		sniffer := collectors.NewDnsSniffer(logwrks, config, logger)
-		if sniffer != nil {
-			collwrks = append(collwrks, sniffer)
-		}
+		collwrks = append(collwrks, collectors.NewDnsSniffer(logwrks, config, logger))
 	}
 	if config.Collectors.Tail.Enable {
 		collwrks = append(collwrks, collectors.NewTail(logwrks, config, logger))
