@@ -56,7 +56,9 @@ jobs:
         go-version: ${{ matrix.go-version }}
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o go-dnscollector *.go
+      run: 
+        set CGO_ENABLED=0
+        go build -o go-dnscollector *.go
       
   docker:
     runs-on: ubuntu-latest
