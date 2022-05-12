@@ -41,6 +41,22 @@ jobs:
 
     - name: build binary
       run: CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o go-dnscollector *.go
+
+  go-win:
+    runs-on: windows-latest
+    
+    strategy:
+      matrix:
+        go-version: [ '1.18' ]
+        
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: build binary
+      run: CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o go-dnscollector *.go
       
   docker:
     runs-on: ubuntu-latest
