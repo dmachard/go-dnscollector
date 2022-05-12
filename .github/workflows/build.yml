@@ -56,7 +56,7 @@ jobs:
         go-version: ${{ matrix.go-version }}
 
     - name: build binary
-      run: 
+      run: |
         set CGO_ENABLED=0
         go build -o go-dnscollector *.go
       
