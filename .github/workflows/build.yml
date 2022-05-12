@@ -58,7 +58,7 @@ jobs:
     - name: build binary
       run: |
         set CGO_ENABLED=0
-        go build -o go-dnscollector *.go
+        go build -o go-dnscollector.exe .
       
   docker:
     runs-on: ubuntu-latest
