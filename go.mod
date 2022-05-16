@@ -16,7 +16,7 @@ require (
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb-client-go v1.4.0
 	github.com/klauspost/compress v1.15.4
-	github.com/miekg/dns v1.1.48
+	github.com/miekg/dns v1.1.49
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/oschwald/maxminddb-golang v1.9.0
 	github.com/prometheus/client_golang v1.12.1
