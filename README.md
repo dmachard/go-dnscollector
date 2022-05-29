@@ -142,4 +142,6 @@ Update package dependencies
 
 ```
 go get github.com/dmachard/go-powerdns-protobuf@v0.0.3
+go get github.com/dmachard/go-dnstap-protobuf@v0.2.0
+go mod tidy
 ```
