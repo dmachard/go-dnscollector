@@ -7,7 +7,7 @@ require (
 	github.com/dmachard/go-dnstap-protobuf v0.1.0
 	github.com/dmachard/go-framestream v0.1.0
 	github.com/dmachard/go-logger v0.1.0
-	github.com/dmachard/go-powerdns-protobuf v0.0.2
+	github.com/dmachard/go-powerdns-protobuf v0.0.3
 	github.com/dmachard/go-topmap v0.4.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/gopacket v1.1.19

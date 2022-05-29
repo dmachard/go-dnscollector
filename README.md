@@ -133,6 +133,13 @@ go test -timeout 10s -cover -v ./loggers -run TestSyslogRunJsonMode
 ```
 
 Building from source. Use the latest golang available on your target system 
+
 ```
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+```
+
+Update package dependencies
+
+```
+go get github.com/dmachard/go-powerdns-protobuf@v0.0.3
 ```
