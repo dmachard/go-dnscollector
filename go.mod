@@ -15,7 +15,7 @@ require (
 	github.com/grafana/loki v1.6.2-0.20211108122114-f61a4d2612d8
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb-client-go v1.4.0
-	github.com/klauspost/compress v1.15.4
+	github.com/klauspost/compress v1.15.5
 	github.com/miekg/dns v1.1.49
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/oschwald/maxminddb-golang v1.9.0
