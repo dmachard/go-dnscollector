@@ -15,6 +15,6 @@ multiplexer:
 
   routes:
     - src:
-        - tap
+        - pdns
       dst:
         - out
