@@ -11,7 +11,7 @@ import (
 
 func TestFluentClientdRun(t *testing.T) {
 	// init logger
-	g := NewFluentdClient(dnsutils.GetFakeConfig(), logger.New(false))
+	g := NewFluentdClient(dnsutils.GetFakeConfig(), logger.New(false), "test")
 
 	// fake msgpack receiver
 	fakeRcvr, err := net.Listen("tcp", ":24224")

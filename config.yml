@@ -11,65 +11,316 @@ trace:
   # maximum number of old log files to retain
   max-backups: 10
 
+# create your dns collector
+# please refer bellow to see the list 
+# of supported collectors and loggers
+multiplexer:
+  collectors:
+    - name: in
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+
+  loggers:
+    - name: out
+      stdout:
+        mode: text
+
+  routes:
+    - src:
+        - in
+      dst:
+        - out
+
+################################################
 # list of supported collectors
-collectors:
-  # dnstap standard
-  dnstap:
-    # to enable, set the enable to true
-    enable: true
-    # listen on ip
-    listen-ip: 0.0.0.0
-    # listening on port
-    listen-port: 6000
-    # unix socket path
-    sock-path: null
-    # tls support
-    tls-support: false
-    # certificate server file
-    cert-file: ""
-    # private key server file
-    key-file: ""
+################################################
 
-  # dns traffic
-  dns-sniffer:
-    # to enable, set the enable to true
-    enable: false
-    # filter on source and destination port
-    port: 53
-    # if "" bind on all interfaces
-    device: wlp2s0
-    # capture dns queries
-    capture-dns-queries: true
-    # capture dns replies
-    capture-dns-replies: true
+# # dnstap standard
+# dnstap:
+#   # listen on ip
+#   listen-ip: 0.0.0.0
+#   # listening on port
+#   listen-port: 6000
+#   # unix socket path
+#   sock-path: null
+#   # tls support
+#   tls-support: false
+#   # certificate server file
+#   cert-file: ""
+#   # private key server file
+#   key-file: ""
 
-  # read text file
-  tail:
-    # to enable, set the enable to true
-    enable: false
-    # file to follow
-    file-path: null
-    # Use the exact layout numbers described https://golang.org/src/time/format.go
-    time-layout: "2006-01-02T15:04:05.999999999Z07:00"
-    # regexp pattern for queries
-    # example for unbound: "query: (?P<queryip>[^ ]*) (?P<domain>[^ ]*) (?P<qtype>[^ ]*)"
-    pattern-query: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_QUERY) (?P<rcode>[^ ]*)
-      (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*)
-      (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
-    # regexp pattern for replies
-    # example for unbound: "reply: (?P<queryip>[^ ]*) (?P<domain>[^ ]*) (?P<qtype>[^ ]*) IN (?P<rcode>[^ ]*) (?P<latency>[^ ]*)"
-    pattern-reply: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_RESPONSE) (?P<rcode>[^ ]*)
-      (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b
-      (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
+# # dns traffic
+# dns-sniffer:
+#   # filter on source and destination port
+#   port: 53
+#   # if "" bind on all interfaces
+#   device: wlp2s0
+#   # capture dns queries
+#   capture-dns-queries: true
+#   # capture dns replies
+#   capture-dns-replies: true
 
-  # protobuf powerdns
-  powerdns:
-    # to enable, set the enable to true
-    enable: false
-    # listen on ip
-    listen-ip: 0.0.0.0
-    # listening on port
-    listen-port: 6001
+# # read text file
+# tail:
+#   # file to follow
+#   file-path: null
+#   # Use the exact layout numbers described https://golang.org/src/time/format.go
+#   time-layout: "2006-01-02T15:04:05.999999999Z07:00"
+#   # regexp pattern for queries
+#   # example for unbound: "query: (?P<queryip>[^ ]*) (?P<domain>[^ ]*) (?P<qtype>[^ ]*)"
+#   pattern-query: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_QUERY) (?P<rcode>[^ ]*)
+#     (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*)
+#     (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
+#   # regexp pattern for replies
+#   # example for unbound: "reply: (?P<queryip>[^ ]*) (?P<domain>[^ ]*) (?P<qtype>[^ ]*) IN (?P<rcode>[^ ]*) (?P<latency>[^ ]*)"
+#   pattern-reply: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_RESPONSE) (?P<rcode>[^ ]*)
+#     (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b
+#     (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
+
+# # protobuf powerdns
+# powerdns:
+#   # listen on ip
+#   listen-ip: 0.0.0.0
+#   # listening on port
+#   listen-port: 6001
+
+
+################################################
+# list of supported loggers
+################################################
+
+# # print received dns traffic to sdtout
+# stdout:
+#   # output format: text|json
+#   mode: text
+#   # output text format, please refer to the default text format to see all available directives 
+#   # use this parameter if you want a specific format
+#   text-format: ""
+
+# # rest api server
+# webserver:
+#   # listening IP
+#   listen-ip: 0.0.0.0
+#   # listening port
+#   listen-port: 8080
+#   # default login
+#   basic-auth-login: admin
+#   # default password
+#   basic-auth-pwd: changeme
+#   # tls support
+#   tls-support: false
+#   # certificate server file
+#   cert-file: ""
+#   # private key server file
+#   key-file: ""
+
+# # prometheus metrics server
+# prometheus:
+#   # listening IP
+#   listen-ip: 0.0.0.0
+#   # listening port
+#   listen-port: 8081
+#   # default login
+#   basic-auth-login: admin
+#   # default password
+#   basic-auth-pwd: changeme
+#   # tls support
+#   tls-support: false
+#   # certificate server file
+#   cert-file: ""
+#   # private key server file
+#   key-file: ""
+#   # prometheus prefix
+#   prometheus-prefix: "dnscollector"
+
+# # write captured dns traffic to text files with rotation and compression support
+# logfile:
+#   # output logfile name
+#   file-path:  /tmp/test.log
+#   # maximum size in megabytes of the file before rotation
+#   # A minimum of max-size*max-files megabytes of space disk must be available
+#   max-size: 100
+#   # maximum number of files to retain.
+#   # Set to zero if you want to disable this feature
+#   max-files: 10
+#   # flush buffer to log file every X seconds
+#   flush-interval: 10
+#   # compress log file
+#   compress: false
+#   # compress interval
+#   # checking every X seconds if new log files must be compressed
+#   compress-interval: 5
+#   # run external script after each file compress step 
+#   compress-postcommand: null
+#   # output format: text|json
+#   mode: text
+#   # output text format, please refer to the default text format to see all available directives 
+#   # use this parameter if you want a specific format
+#   text-format: ""
+#   # run external script after each file rotation
+#   postrotate-command: null
+#   # delete file on script success
+#   postrotate-delete-success: true
+
+# # resend captured dns traffic to another dnstap collector or to unix socket
+# dnstap:
+#     # remote address
+#   remote-address: 10.0.0.1
+#   # remote tcp port
+#   remote-port: 6000
+#   # unix socket path
+#   sock-path: null
+#   # interval in second between retry reconnect
+#   retry-interval: 5
+#   # enable tls
+#   tls-support: false
+#   # insecure skip verify
+#   tls-insecure: false
+
+# # resend captured dns traffic to a tcp remote destination or to unix socket
+# tcpclient:
+#   # network transport to use: tcp|unix
+#   transport: tcp
+#   # remote address
+#   remote-address: 127.0.0.1
+#   # remote tcp port
+#   remote-port: 9999
+#   # unix socket path
+#   sock-path: null
+#   # interval in second between retry reconnect
+#   retry-interval: 5
+#   # enable tls
+#   tls-support: false
+#   # insecure skip verify
+#   tls-insecure: false
+#   # output format: text|json
+#   mode: json
+#   # output text format, please refer to the default text format to see all available directives 
+#   # use this parameter if you want a specific format
+#   text-format: ""
+#   # delimiter to use between payload sent
+#   delimiter: "\n"
+
+# # redirect captured dns traffic to a remote syslog server or local one
+# syslog:
+#   # Set the syslog logging severity 
+#   severity: INFO
+#   # Set the syslog logging facility 
+#   facility: DAEMON
+#   # Transport to use to a remote log daemon or local one
+#   # local|tcp|udp|unix or tcp+tls
+#   transport: local
+#   # Remote address host:port
+#   remote-address: ""
+#   # output text format, please refer to the default text format to see all available directives 
+#   # use this parameter if you want a specific format
+#   text-format: ""
+#   # output format: text|json
+#   mode: text
+#   # enable tls
+#   tls-support: false
+#   # insecure skip verify
+#   tls-insecure: false
+
+# # resend captured dns traffic to a remote fluentd server or to unix socket
+# fluentd:
+#   # network transport to use: tcp|unix
+#   transport: tcp
+#   # remote address
+#   remote-address: 127.0.0.1
+#   # remote tcp port
+#   remote-port: 24224
+#   # unix socket path
+#   sock-path: null
+#   # interval in second between retry reconnect
+#   retry-interval: 5
+#   # tag name
+#   tag: "dns.collector"
+#   # enable tls
+#   tls-support: false
+#   # insecure skip verify
+#   tls-insecure: false
+
+# # write captured dns traffic to network pcap file
+# pcapfile:
+#   # output logfile name
+#   file-path: null
+#   # maximum size in megabytes of the file before rotation
+#   max-size: 100
+#   # maximum number of files to retain.
+#   max-files: 10
+#   # compress pcap file
+#   compress: false
+#   # compress interval
+#   # checking every X seconds if new log files must be compressed
+#   compress-interval: 5
+#   # run external script after each file rotation
+#   postrotate-command: null
+#   # delete file on script success
+#   postrotate-delete-success: true
+
+# # resend captured dns traffic to a InfluxDB database
+# influxdb:
+#   # InfluxDB server url
+#   server-url: "http://localhost:8086"
+#   # authentication token
+#   auth-token: ""
+#   # enable tls
+#   tls-support: false
+#   # insecure skip verify
+#   tls-insecure: false
+#   # bucket
+#   bucket: "db_dns"
+#   # Organization
+#   organization: "dnscollector"
+
+# # resend captured dns traffic to a Loki Server
+# lokiclient:
+#   # Loki server url
+#   server-url: "http://lokiwriter.home.lab/loki/api/v1/push"
+#   # Job name
+#   job-name: "dnscollector"
+#   # output format: text|json
+#   mode: text
+#   # flush batch every X seconds
+#   flush-interval: 5
+#   # batch size for log entries in bytes
+#   batch-size: 1048576
+#   # interval in second between before to retry to send log entries
+#   retry-interval: 10
+#   # output text format, please refer to the default text format to see all available directives 
+#   # use this parameter if you want a specific format
+#   text-format: "localtime identity qr queryip family protocol qname qtype rcode"
+#   # Proxy URL
+#   proxy-url: ""
+#   # insecure skip verify
+#   tls-insecure: false
+#   # basic auth login
+#   basic-auth-login: ""
+#   # basic auth password
+#   basic-auth-pwd: ""
+#   # tenant/organisation id. If omitted or empty, no X-Scope-OrgID header is sent.
+#   tenant-id: "" 
+
+# # forward to statsd proxy
+# statsd:
+#   # network transport to use: udp|tcp
+#   transport: udp
+#   # remote address
+#   remote-address: 127.0.0.1
+#   # remote tcp port
+#   remote-port: 8125
+#   # enable tls
+#   tls-support: false
+#   # insecure skip verify
+#   tls-insecure: false
+#   # prefix
+#   prefix: "dnscollector"
+#   # flush every X seconds
+#   flush-interval: 10
+
 
 # settings for subprocessors
 subprocessors:
@@ -202,260 +453,3 @@ subprocessors:
   # - ad: authenticated data
   # - edns-csubnet: client subnet
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
-
-# list of loggers
-loggers:
-
-  # print received dns traffic to sdtout
-  stdout:
-    # to enable, set the enable to true
-    enable: true
-    # output format: text|json
-    mode: text
-    # output text format, please refer to the default text format to see all available directives 
-    # use this parameter if you want a specific format
-    text-format: ""
-
-  # rest api server
-  webserver:
-    # to enable, set the enable to true
-    enable: true
-    # listening IP
-    listen-ip: 0.0.0.0
-    # listening port
-    listen-port: 8080
-    # default login
-    basic-auth-login: admin
-    # default password
-    basic-auth-pwd: changeme
-    # tls support
-    tls-support: false
-    # certificate server file
-    cert-file: ""
-    # private key server file
-    key-file: ""
-
-  # prometheus metrics server
-  prometheus:
-    # to enable, set the enable to true
-    enable: false
-    # listening IP
-    listen-ip: 0.0.0.0
-    # listening port
-    listen-port: 8081
-    # default login
-    basic-auth-login: admin
-    # default password
-    basic-auth-pwd: changeme
-    # tls support
-    tls-support: false
-    # certificate server file
-    cert-file: ""
-    # private key server file
-    key-file: ""
-    # prometheus prefix
-    prometheus-prefix: "dnscollector"
-
-  # write captured dns traffic to text files with rotation and compression support
-  logfile:
-    # to enable, set the enable to true
-    enable: false
-    # output logfile name
-    file-path:  /tmp/test.log
-    # maximum size in megabytes of the file before rotation
-    # A minimum of max-size*max-files megabytes of space disk must be available
-    max-size: 100
-    # maximum number of files to retain.
-    # Set to zero if you want to disable this feature
-    max-files: 10
-    # flush buffer to log file every X seconds
-    flush-interval: 10
-    # compress log file
-    compress: false
-    # compress interval
-    # checking every X seconds if new log files must be compressed
-    compress-interval: 5
-    # run external script after each file compress step 
-    compress-postcommand: null
-    # output format: text|json
-    mode: text
-    # output text format, please refer to the default text format to see all available directives 
-    # use this parameter if you want a specific format
-    text-format: ""
-    # run external script after each file rotation
-    postrotate-command: null
-    # delete file on script success
-    postrotate-delete-success: true
-
-  # resend captured dns traffic to another dnstap collector or to unix socket
-  dnstap:
-    # to enable, set the enable to true
-    enable: false
-     # remote address
-    remote-address: 10.0.0.1
-    # remote tcp port
-    remote-port: 6000
-    # unix socket path
-    sock-path: null
-    # interval in second between retry reconnect
-    retry-interval: 5
-    # enable tls
-    tls-support: false
-    # insecure skip verify
-    tls-insecure: false
-
-  # resend captured dns traffic to a tcp remote destination or to unix socket
-  tcpclient:
-    # to enable, set the enable to true
-    enable: false
-    # network transport to use: tcp|unix
-    transport: tcp
-    # remote address
-    remote-address: 127.0.0.1
-    # remote tcp port
-    remote-port: 9999
-    # unix socket path
-    sock-path: null
-    # interval in second between retry reconnect
-    retry-interval: 5
-    # enable tls
-    tls-support: false
-    # insecure skip verify
-    tls-insecure: false
-    # output format: text|json
-    mode: json
-    # output text format, please refer to the default text format to see all available directives 
-    # use this parameter if you want a specific format
-    text-format: ""
-    # delimiter to use between payload sent
-    delimiter: "\n"
-
-  # redirect captured dns traffic to a remote syslog server or local one
-  syslog:
-    # to enable, set the enable to true
-    enable: false
-    # Set the syslog logging severity 
-    severity: INFO
-    # Set the syslog logging facility 
-    facility: DAEMON
-    # Transport to use to a remote log daemon or local one
-    # local|tcp|udp|unix or tcp+tls
-    transport: local
-    # Remote address host:port
-    remote-address: ""
-    # output text format, please refer to the default text format to see all available directives 
-    # use this parameter if you want a specific format
-    text-format: ""
-    # output format: text|json
-    mode: text
-    # enable tls
-    tls-support: false
-    # insecure skip verify
-    tls-insecure: false
-
-  # resend captured dns traffic to a remote fluentd server or to unix socket
-  fluentd:
-    # to enable, set the enable to true
-    enable: false
-    # network transport to use: tcp|unix
-    transport: tcp
-    # remote address
-    remote-address: 127.0.0.1
-    # remote tcp port
-    remote-port: 24224
-    # unix socket path
-    sock-path: null
-    # interval in second between retry reconnect
-    retry-interval: 5
-    # tag name
-    tag: "dns.collector"
-    # enable tls
-    tls-support: false
-    # insecure skip verify
-    tls-insecure: false
-
-  # write captured dns traffic to network pcap file
-  pcapfile:
-    # to enable, set the enable to true
-    enable: false
-    # output logfile name
-    file-path: null
-    # maximum size in megabytes of the file before rotation
-    max-size: 100
-    # maximum number of files to retain.
-    max-files: 10
-    # compress pcap file
-    compress: false
-    # compress interval
-    # checking every X seconds if new log files must be compressed
-    compress-interval: 5
-    # run external script after each file rotation
-    postrotate-command: null
-    # delete file on script success
-    postrotate-delete-success: true
-
-  # resend captured dns traffic to a InfluxDB database
-  influxdb:
-    # to enable, set the enable to true
-    enable: false
-    # InfluxDB server url
-    server-url: "http://localhost:8086"
-    # authentication token
-    auth-token: ""
-    # enable tls
-    tls-support: false
-    # insecure skip verify
-    tls-insecure: false
-    # bucket
-    bucket: "db_dns"
-    # Organization
-    organization: "dnscollector"
-
-  # resend captured dns traffic to a Loki Server
-  lokiclient:
-    # to enable, set the enable to true
-    enable: false
-    # Loki server url
-    server-url: "http://lokiwriter.home.lab/loki/api/v1/push"
-    # Job name
-    job-name: "dnscollector"
-    # output format: text|json
-    mode: text
-    # flush batch every X seconds
-    flush-interval: 5
-    # batch size for log entries in bytes
-    batch-size: 1048576
-    # interval in second between before to retry to send log entries
-    retry-interval: 10
-    # output text format, please refer to the default text format to see all available directives 
-    # use this parameter if you want a specific format
-    text-format: "localtime identity qr queryip family protocol qname qtype rcode"
-    # Proxy URL
-    proxy-url: ""
-    # insecure skip verify
-    tls-insecure: false
-    # basic auth login
-    basic-auth-login: ""
-    # basic auth password
-    basic-auth-pwd: ""
-    # tenant/organisation id. If omitted or empty, no X-Scope-OrgID header is sent.
-    tenant-id: "" 
-
-  # forward to statsd proxy
-  statsd:
-    # to enable, set the enable to true
-    enable: false
-    # network transport to use: udp|tcp
-    transport: udp
-    # remote address
-    remote-address: 127.0.0.1
-    # remote tcp port
-    remote-port: 8125
-    # enable tls
-    tls-support: false
-    # insecure skip verify
-    tls-insecure: false
-    # prefix
-    prefix: "dnscollector"
-    # flush every X seconds
-    flush-interval: 10

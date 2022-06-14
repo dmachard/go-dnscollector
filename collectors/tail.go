@@ -20,14 +20,17 @@ type Tail struct {
 	loggers []dnsutils.Worker
 	config  *dnsutils.Config
 	logger  *logger.Logger
+	name    string
 }
 
-func NewTail(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) *Tail {
+func NewTail(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *Tail {
+	logger.Info("[%s] collector tail - enabled", name)
 	s := &Tail{
 		done:    make(chan bool),
 		config:  config,
 		loggers: loggers,
 		logger:  logger,
+		name:    name,
 	}
 	s.ReadConfig()
 	return s
@@ -45,12 +48,12 @@ func (c *Tail) ReadConfig() {
 	//tbc
 }
 
-func (o *Tail) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("collector tail - "+msg, v...)
+func (c *Tail) LogInfo(msg string, v ...interface{}) {
+	c.logger.Info("["+c.name+"] collector tail - "+msg, v...)
 }
 
-func (o *Tail) LogError(msg string, v ...interface{}) {
-	o.logger.Error("collector tail - "+msg, v...)
+func (c *Tail) LogError(msg string, v ...interface{}) {
+	c.logger.Error("["+c.name+"] collector tail - "+msg, v...)
 }
 
 func (c *Tail) Channel() chan dnsutils.DnsMessage {
@@ -98,7 +101,7 @@ func (c *Tail) Run() {
 	defer geoip.Close()
 
 	// filtering
-	filtering := subprocessors.NewFilteringProcessor(c.config, c.logger)
+	filtering := subprocessors.NewFilteringProcessor(c.config, c.logger, c.name)
 
 	// user privacy
 	ipPrivacy := subprocessors.NewIpAnonymizerSubprocessor(c.config)

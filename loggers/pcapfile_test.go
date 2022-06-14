@@ -25,7 +25,7 @@ func TestPcapfileWrite(t *testing.T) {
 	config.Loggers.PcapFile.FilePath = f.Name()
 
 	// init generator in testing mode
-	g := NewPcapFile(config, logger.New(false))
+	g := NewPcapFile(config, logger.New(false), "test")
 
 	// init fake dm
 	dm := dnsutils.GetFakeDnsMessage()

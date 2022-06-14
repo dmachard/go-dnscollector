@@ -19,15 +19,17 @@ type ProtobufPowerDNS struct {
 	loggers []dnsutils.Worker
 	config  *dnsutils.Config
 	logger  *logger.Logger
+	name    string
 }
 
-func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) *ProtobufPowerDNS {
-	logger.Info("collector PowerDNS protobuf - enabled")
+func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *ProtobufPowerDNS {
+	logger.Info("[%s] collector PowerDNS protobuf - enabled", name)
 	s := &ProtobufPowerDNS{
 		done:    make(chan bool),
 		config:  config,
 		loggers: loggers,
 		logger:  logger,
+		name:    name,
 	}
 	s.ReadConfig()
 	return s
@@ -44,12 +46,12 @@ func (c *ProtobufPowerDNS) Loggers() []chan dnsutils.DnsMessage {
 func (c *ProtobufPowerDNS) ReadConfig() {
 }
 
-func (o *ProtobufPowerDNS) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("collector powerdns protobuf - "+msg, v...)
+func (c *ProtobufPowerDNS) LogInfo(msg string, v ...interface{}) {
+	c.logger.Info("["+c.name+"] collector powerdns protobuf - "+msg, v...)
 }
 
-func (o *ProtobufPowerDNS) LogError(msg string, v ...interface{}) {
-	o.logger.Error("collector powerdns protobuf - "+msg, v...)
+func (c *ProtobufPowerDNS) LogError(msg string, v ...interface{}) {
+	c.logger.Error("["+c.name+"] collector powerdns protobuf - "+msg, v...)
 }
 
 func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
@@ -61,7 +63,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	c.LogInfo("%s - new connection\n", peer)
 
 	// start protobuf subprocessor
-	pdns_subprocessor := subprocessors.NewPdnsProcessor(c.config, c.logger)
+	pdns_subprocessor := subprocessors.NewPdnsProcessor(c.config, c.logger, c.name)
 	go pdns_subprocessor.Run(c.Loggers())
 
 	r := bufio.NewReader(conn)

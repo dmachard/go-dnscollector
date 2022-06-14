@@ -14,7 +14,7 @@ import (
 func TestWebServerBadBasicAuth(t *testing.T) {
 	// init the logger
 	config := dnsutils.GetFakeConfig()
-	g := NewWebserver(config, logger.New(false), "dev")
+	g := NewWebserver(config, logger.New(false), "dev", "test")
 
 	tt := []struct {
 		name       string
@@ -60,7 +60,7 @@ func TestWebServerBadBasicAuth(t *testing.T) {
 func TestWebServerGet(t *testing.T) {
 	// init the logger
 	config := dnsutils.GetFakeConfig()
-	g := NewWebserver(config, logger.New(false), "dev")
+	g := NewWebserver(config, logger.New(false), "dev", "test")
 
 	// record one dns message to simulate some incoming data
 	g.stats.Record(dnsutils.GetFakeDnsMessage())
@@ -118,7 +118,7 @@ func TestWebServerGet(t *testing.T) {
 func TestWebServerBadMethod(t *testing.T) {
 	// init the logger
 	config := dnsutils.GetFakeConfig()
-	g := NewWebserver(config, logger.New(false), "dev")
+	g := NewWebserver(config, logger.New(false), "dev", "test")
 
 	// record one dns message to simulate some incoming data
 	g.stats.Record(dnsutils.GetFakeDnsMessage())

@@ -10,7 +10,7 @@ import (
 
 func TestLokiClientRun(t *testing.T) {
 	// init logger
-	g := NewLokiClient(dnsutils.GetFakeConfig(), logger.New(false))
+	g := NewLokiClient(dnsutils.GetFakeConfig(), logger.New(false), "test")
 
 	// fake msgpack receiver
 	fakeRcvr, err := net.Listen("tcp", "127.0.0.1:3100")

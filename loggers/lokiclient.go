@@ -72,10 +72,11 @@ type LokiClient struct {
 	httpclient *http.Client
 	textFormat []string
 	streams    map[string]*LokiStream
+	name       string
 }
 
-func NewLokiClient(config *dnsutils.Config, logger *logger.Logger) *LokiClient {
-	logger.Info("logger loki - enabled")
+func NewLokiClient(config *dnsutils.Config, logger *logger.Logger, name string) *LokiClient {
+	logger.Info("[%s] logger loki - enabled", name)
 
 	s := &LokiClient{
 		done:    make(chan bool),
@@ -84,6 +85,7 @@ func NewLokiClient(config *dnsutils.Config, logger *logger.Logger) *LokiClient {
 		logger:  logger,
 		config:  config,
 		streams: make(map[string]*LokiStream),
+		name:    name,
 	}
 
 	s.ReadConfig()
@@ -124,11 +126,11 @@ func (o *LokiClient) ReadConfig() {
 }
 
 func (o *LokiClient) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("logger loki - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger loki - "+msg, v...)
 }
 
 func (o *LokiClient) LogError(msg string, v ...interface{}) {
-	o.logger.Error("logger loki - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger loki - "+msg, v...)
 }
 
 func (o *LokiClient) Channel() chan dnsutils.DnsMessage {

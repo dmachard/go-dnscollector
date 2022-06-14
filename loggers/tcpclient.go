@@ -21,16 +21,18 @@ type TcpClient struct {
 	exit       chan bool
 	conn       net.Conn
 	textFormat []string
+	name       string
 }
 
-func NewTcpClient(config *dnsutils.Config, logger *logger.Logger) *TcpClient {
-	logger.Info("logger to tcp client - enabled")
+func NewTcpClient(config *dnsutils.Config, logger *logger.Logger, name string) *TcpClient {
+	logger.Info("[%s] logger to tcp client - enabled", name)
 	s := &TcpClient{
 		done:    make(chan bool),
 		exit:    make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  logger,
 		config:  config,
+		name:    name,
 	}
 
 	s.ReadConfig()
@@ -47,11 +49,11 @@ func (o *TcpClient) ReadConfig() {
 }
 
 func (o *TcpClient) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("logger to tcp client - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger to tcp client - "+msg, v...)
 }
 
 func (o *TcpClient) LogError(msg string, v ...interface{}) {
-	o.logger.Error("logger to tcp client - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger to tcp client - "+msg, v...)
 }
 
 func (o *TcpClient) Channel() chan dnsutils.DnsMessage {

@@ -34,10 +34,12 @@ type Prometheus struct {
 	metricTotalRcodes  *prometheus.CounterVec
 
 	metricsTop map[string]*TopMaps
+
+	name string
 }
 
-func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version string) *Prometheus {
-	logger.Info("prometheus - enabled")
+func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version string, name string) *Prometheus {
+	logger.Info("[%s] logger to prometheus - enabled", name)
 	o := &Prometheus{
 		done:         make(chan bool),
 		done_api:     make(chan bool),
@@ -48,6 +50,7 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 		promRegistry: prometheus.NewRegistry(),
 
 		metricsTop: make(map[string]*TopMaps),
+		name:       name,
 	}
 	o.InitProm()
 	return o
@@ -86,11 +89,11 @@ func (o *Prometheus) ReadConfig() {
 }
 
 func (o *Prometheus) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("prometheus - "+msg, v...)
+	o.logger.Info("["+o.name+"] prometheus - "+msg, v...)
 }
 
 func (o *Prometheus) LogError(msg string, v ...interface{}) {
-	o.logger.Error("prometheus - "+msg, v...)
+	o.logger.Error("["+o.name+"] prometheus - "+msg, v...)
 }
 
 func (o *Prometheus) Channel() chan dnsutils.DnsMessage {

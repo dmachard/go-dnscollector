@@ -17,7 +17,7 @@ import (
 
 func TestDnstapTcpRun(t *testing.T) {
 	g := loggers.NewFakeLogger()
-	c := NewDnstap([]dnsutils.Worker{g}, dnsutils.GetFakeConfig(), logger.New(false))
+	c := NewDnstap([]dnsutils.Worker{g}, dnsutils.GetFakeConfig(), logger.New(false), "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector dnstap tcp listening error: ", err)
 	}
@@ -70,7 +70,7 @@ func TestDnstapUnixRun(t *testing.T) {
 	g := loggers.NewFakeLogger()
 	config := dnsutils.GetFakeConfig()
 	config.Collectors.Dnstap.SockPath = "/tmp/dnscollector.sock"
-	c := NewDnstap([]dnsutils.Worker{g}, config, logger.New(false))
+	c := NewDnstap([]dnsutils.Worker{g}, config, logger.New(false), "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector dnstap unix listening  error: ", err)
 	}

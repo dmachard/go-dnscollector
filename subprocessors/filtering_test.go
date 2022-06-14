@@ -14,7 +14,7 @@ func TestFilteringQR(t *testing.T) {
 	config.Subprocessors.Filtering.LogReplies = false
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false))
+	filtering := NewFilteringProcessor(config, logger.New(false), "test")
 
 	dm := dnsutils.GetFakeDnsMessage()
 	if !filtering.CheckIfDrop(&dm) {
@@ -34,7 +34,7 @@ func TestFilteringByRcodeNOERROR(t *testing.T) {
 	config.Subprocessors.Filtering.DropRcodes = []string{"NOERROR"}
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false))
+	filtering := NewFilteringProcessor(config, logger.New(false), "test")
 
 	dm := dnsutils.GetFakeDnsMessage()
 	if filtering.CheckIfDrop(&dm) == false {
@@ -49,7 +49,7 @@ func TestFilteringByRcodeEmpty(t *testing.T) {
 	config.Subprocessors.Filtering.DropRcodes = []string{}
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false))
+	filtering := NewFilteringProcessor(config, logger.New(false), "test")
 
 	dm := dnsutils.GetFakeDnsMessage()
 	if filtering.CheckIfDrop(&dm) == true {
@@ -64,7 +64,7 @@ func TestFilteringByQueryIp(t *testing.T) {
 	config.Subprocessors.Filtering.KeepQueryIpFile = "../testsdata/filtering_queryip_keep.txt"
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false))
+	filtering := NewFilteringProcessor(config, logger.New(false), "test")
 
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.NetworkInfo.QueryIp = "192.168.0.1"
@@ -100,7 +100,7 @@ func TestFilteringByFqdn(t *testing.T) {
 	config.Subprocessors.Filtering.DropFqdnFile = "../testsdata/filtering_fqdn.txt"
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false))
+	filtering := NewFilteringProcessor(config, logger.New(false), "test")
 
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.DNS.Qname = "www.microsoft.com"
@@ -120,7 +120,7 @@ func TestFilteringByDomainRegex(t *testing.T) {
 	config.Subprocessors.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false))
+	filtering := NewFilteringProcessor(config, logger.New(false), "test")
 
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.DNS.Qname = "mail.google.com"

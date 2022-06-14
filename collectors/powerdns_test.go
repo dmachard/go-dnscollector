@@ -12,7 +12,7 @@ import (
 
 func TestProbufPdnsRun(t *testing.T) {
 	g := loggers.NewFakeLogger()
-	c := NewProtobufPowerDNS([]dnsutils.Worker{g}, dnsutils.GetFakeConfig(), logger.New(false))
+	c := NewProtobufPowerDNS([]dnsutils.Worker{g}, dnsutils.GetFakeConfig(), logger.New(false), "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector powerdns  listening error: ", err)
 	}

@@ -23,15 +23,17 @@ type DnsProcessor struct {
 	recvFrom chan dnsutils.DnsMessage
 	logger   *logger.Logger
 	config   *dnsutils.Config
+	name     string
 }
 
-func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger) DnsProcessor {
-	logger.Info("processor dns - initialization...")
+func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string) DnsProcessor {
+	logger.Info("[%s] processor dns - initialization...", name)
 	d := DnsProcessor{
 		done:     make(chan bool),
 		recvFrom: make(chan dnsutils.DnsMessage, 512),
 		logger:   logger,
 		config:   config,
+		name:     name,
 	}
 
 	d.ReadConfig()
@@ -44,11 +46,11 @@ func (d *DnsProcessor) ReadConfig() {
 }
 
 func (c *DnsProcessor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("processor dns - "+msg, v...)
+	c.logger.Info("["+c.name+"] processor dns - "+msg, v...)
 }
 
 func (c *DnsProcessor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("procesor dns - "+msg, v...)
+	c.logger.Error("["+c.name+"] procesor dns - "+msg, v...)
 }
 
 func (d *DnsProcessor) GetChannel() chan dnsutils.DnsMessage {
@@ -85,7 +87,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	defer geoip.Close()
 
 	// filtering
-	filtering := NewFilteringProcessor(d.config, d.logger)
+	filtering := NewFilteringProcessor(d.config, d.logger, d.name)
 
 	// user privacy
 	ipPrivacy := NewIpAnonymizerSubprocessor(d.config)

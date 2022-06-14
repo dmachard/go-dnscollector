@@ -19,10 +19,11 @@ type InfluxDBClient struct {
 	influxdbConn influxdb2.Client
 	writeAPI     api.WriteAPI
 	exit         chan bool
+	name         string
 }
 
-func NewInfluxDBClient(config *dnsutils.Config, logger *logger.Logger) *InfluxDBClient {
-	logger.Info("logger to influxdb - enabled")
+func NewInfluxDBClient(config *dnsutils.Config, logger *logger.Logger, name string) *InfluxDBClient {
+	logger.Info("[%s] logger to influxdb - enabled", name)
 
 	s := &InfluxDBClient{
 		done:    make(chan bool),
@@ -30,6 +31,7 @@ func NewInfluxDBClient(config *dnsutils.Config, logger *logger.Logger) *InfluxDB
 		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  logger,
 		config:  config,
+		name:    name,
 	}
 
 	s.ReadConfig()
@@ -42,11 +44,11 @@ func (o *InfluxDBClient) ReadConfig() {
 }
 
 func (o *InfluxDBClient) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("logger to influxdb - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger to influxdb - "+msg, v...)
 }
 
 func (o *InfluxDBClient) LogError(msg string, v ...interface{}) {
-	o.logger.Error("logger to influxdb - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger to influxdb - "+msg, v...)
 }
 
 func (o *InfluxDBClient) Channel() chan dnsutils.DnsMessage {

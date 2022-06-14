@@ -18,16 +18,18 @@ type FluentdClient struct {
 	logger  *logger.Logger
 	exit    chan bool
 	conn    net.Conn
+	name    string
 }
 
-func NewFluentdClient(config *dnsutils.Config, logger *logger.Logger) *FluentdClient {
-	logger.Info("logger to fluentd - enabled")
+func NewFluentdClient(config *dnsutils.Config, logger *logger.Logger, name string) *FluentdClient {
+	logger.Info("[%s] logger to fluentd - enabled", name)
 	s := &FluentdClient{
 		done:    make(chan bool),
 		exit:    make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  logger,
 		config:  config,
+		name:    name,
 	}
 
 	s.ReadConfig()
@@ -40,11 +42,11 @@ func (o *FluentdClient) ReadConfig() {
 }
 
 func (o *FluentdClient) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("logger to fluentd - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger to fluentd - "+msg, v...)
 }
 
 func (o *FluentdClient) LogError(msg string, v ...interface{}) {
-	o.logger.Error("logger to fluentd - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger to fluentd - "+msg, v...)
 }
 
 func (o *FluentdClient) Channel() chan dnsutils.DnsMessage {

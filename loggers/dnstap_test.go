@@ -17,7 +17,7 @@ import (
 
 func TestDnstapTcpRun(t *testing.T) {
 	// init logger
-	g := NewDnstapSender(dnsutils.GetFakeConfig(), logger.New(false))
+	g := NewDnstapSender(dnsutils.GetFakeConfig(), logger.New(false), "test")
 
 	// fake dnstap receiver
 	fakeRcvr, err := net.Listen("tcp", ":6000")
@@ -66,7 +66,7 @@ func TestDnstapUnixRun(t *testing.T) {
 	// init logger
 	config := dnsutils.GetFakeConfig()
 	config.Loggers.Dnstap.SockPath = sockAddr
-	g := NewDnstapSender(config, logger.New(false))
+	g := NewDnstapSender(config, logger.New(false), "test")
 
 	// fake dnstap receiver
 	if err := os.RemoveAll(sockAddr); err != nil {

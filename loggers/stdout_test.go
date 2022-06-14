@@ -11,7 +11,7 @@ import (
 func TestStdoutPrint(t *testing.T) {
 	// init logger and redirect stdout output to bytes buffer
 	var stdout bytes.Buffer
-	g := NewStdOut(dnsutils.GetFakeConfig(), logger.New(false))
+	g := NewStdOut(dnsutils.GetFakeConfig(), logger.New(false), "test")
 	g.SetBuffer(&stdout)
 
 	// print dns message to stdout buffer

@@ -10,7 +10,7 @@ import (
 
 func TestInfluxDBRun(t *testing.T) {
 	// init logger
-	g := NewInfluxDBClient(dnsutils.GetFakeConfig(), logger.New(false))
+	g := NewInfluxDBClient(dnsutils.GetFakeConfig(), logger.New(false), "test")
 
 	// fake msgpack receiver
 	fakeRcvr, err := net.Listen("tcp", "127.0.0.1:8086")

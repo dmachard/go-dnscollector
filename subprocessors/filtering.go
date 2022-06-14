@@ -23,9 +23,10 @@ type FilteringProcessor struct {
 	listFqdns        map[string]bool
 	listDomainsRegex map[string]*regexp.Regexp
 	fileWatcher      *fsnotify.Watcher
+	name             string
 }
 
-func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger) FilteringProcessor {
+func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger, name string) FilteringProcessor {
 	// creates a new file watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -42,6 +43,7 @@ func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger) Filte
 		listFqdns:        make(map[string]bool),
 		listDomainsRegex: make(map[string]*regexp.Regexp),
 		fileWatcher:      watcher,
+		name:             name,
 	}
 
 	d.LoadRcodes()

@@ -59,15 +59,17 @@ type Syslog struct {
 	facility   syslog.Priority
 	syslogConn *syslog.Writer
 	textFormat []string
+	name       string
 }
 
-func NewSyslog(config *dnsutils.Config, console *logger.Logger) *Syslog {
-	console.Info("logger syslog - enabled")
+func NewSyslog(config *dnsutils.Config, console *logger.Logger, name string) *Syslog {
+	console.Info("[%s] logger syslog - enabled", name)
 	o := &Syslog{
 		done:    make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  console,
 		config:  config,
+		name:    name,
 	}
 	o.ReadConfig()
 	return o
@@ -100,12 +102,12 @@ func (o *Syslog) Channel() chan dnsutils.DnsMessage {
 	return o.channel
 }
 
-func (c *Syslog) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("logger to syslog - "+msg, v...)
+func (o *Syslog) LogInfo(msg string, v ...interface{}) {
+	o.logger.Info("["+o.name+"] logger to syslog - "+msg, v...)
 }
 
-func (c *Syslog) LogError(msg string, v ...interface{}) {
-	c.logger.Error("logger to syslog - "+msg, v...)
+func (o *Syslog) LogError(msg string, v ...interface{}) {
+	o.logger.Error("["+o.name+"] logger to syslog - "+msg, v...)
 }
 
 func (o *Syslog) Stop() {

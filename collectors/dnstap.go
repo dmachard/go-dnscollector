@@ -22,15 +22,17 @@ type Dnstap struct {
 	loggers  []dnsutils.Worker
 	config   *dnsutils.Config
 	logger   *logger.Logger
+	name     string
 }
 
-func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) *Dnstap {
-	logger.Info("collector dnstap - enabled")
+func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *Dnstap {
+	logger.Info("[%s] collector dnstap - enabled", name)
 	s := &Dnstap{
 		done:    make(chan bool),
 		config:  config,
 		loggers: loggers,
 		logger:  logger,
+		name:    name,
 	}
 	s.ReadConfig()
 	return s
@@ -48,12 +50,12 @@ func (c *Dnstap) ReadConfig() {
 	c.sockPath = c.config.Collectors.Dnstap.SockPath
 }
 
-func (o *Dnstap) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("collector dnstap - "+msg, v...)
+func (c *Dnstap) LogInfo(msg string, v ...interface{}) {
+	c.logger.Info("["+c.name+"] collector dnstap - "+msg, v...)
 }
 
-func (o *Dnstap) LogError(msg string, v ...interface{}) {
-	o.logger.Error("collector dnstap - "+msg, v...)
+func (c *Dnstap) LogError(msg string, v ...interface{}) {
+	c.logger.Error("["+c.name+"] collector dnstap - "+msg, v...)
 }
 
 func (c *Dnstap) HandleConn(conn net.Conn) {
@@ -65,7 +67,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	c.LogInfo("%s - new connection\n", peer)
 
 	// start dnstap subprocessor
-	dnstap_subprocessor := subprocessors.NewDnstapProcessor(c.config, c.logger)
+	dnstap_subprocessor := subprocessors.NewDnstapProcessor(c.config, c.logger, c.name)
 	go dnstap_subprocessor.Run(c.Loggers())
 
 	// frame stream library

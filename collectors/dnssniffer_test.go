@@ -15,7 +15,7 @@ import (
 
 func TestDnsSnifferRun(t *testing.T) {
 	g := loggers.NewFakeLogger()
-	c := NewDnsSniffer([]dnsutils.Worker{g}, dnsutils.GetFakeConfig(), logger.New(false))
+	c := NewDnsSniffer([]dnsutils.Worker{g}, dnsutils.GetFakeConfig(), logger.New(false), "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector sniffer listening error: ", err)
 	}

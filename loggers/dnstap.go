@@ -21,16 +21,18 @@ type DnstapSender struct {
 	logger  *logger.Logger
 	exit    chan bool
 	conn    net.Conn
+	name    string
 }
 
-func NewDnstapSender(config *dnsutils.Config, logger *logger.Logger) *DnstapSender {
-	logger.Info("logger dnstap sender - enabled")
+func NewDnstapSender(config *dnsutils.Config, logger *logger.Logger, name string) *DnstapSender {
+	logger.Info("logger dnstap [%s] sender - enabled", name)
 	s := &DnstapSender{
 		done:    make(chan bool),
 		exit:    make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  logger,
 		config:  config,
+		name:    name,
 	}
 
 	s.ReadConfig()

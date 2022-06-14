@@ -40,20 +40,22 @@ type PcapWriter struct {
 	fileext        string
 	fileprefix     string
 	commpressTimer *time.Timer
+	name           string
 }
 
-func NewPcapFile(config *dnsutils.Config, console *logger.Logger) *PcapWriter {
-	console.Info("logger to pcap file - enabled")
+func NewPcapFile(config *dnsutils.Config, console *logger.Logger, name string) *PcapWriter {
+	console.Info("[%s] logger to pcap file - enabled", name)
 	o := &PcapWriter{
 		done:    make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  console,
 		config:  config,
+		name:    name,
 	}
 	o.ReadConfig()
 
 	if err := o.OpenFile(); err != nil {
-		o.logger.Fatal("unable to create file: ", err)
+		o.logger.Fatal("[%s] unable to create file: ", name, err)
 	}
 
 	return o
@@ -66,12 +68,12 @@ func (c *PcapWriter) ReadConfig() {
 	c.fileprefix = strings.TrimSuffix(c.filename, c.fileext)
 }
 
-func (c *PcapWriter) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("logger to pcap file - "+msg, v...)
+func (o *PcapWriter) LogInfo(msg string, v ...interface{}) {
+	o.logger.Info("["+o.name+"] logger to pcap file - "+msg, v...)
 }
 
-func (c *PcapWriter) LogError(msg string, v ...interface{}) {
-	c.logger.Error("logger to pcap file - "+msg, v...)
+func (o *PcapWriter) LogError(msg string, v ...interface{}) {
+	o.logger.Error("["+o.name+"] logger to pcap file - "+msg, v...)
 }
 
 func (o *PcapWriter) Channel() chan dnsutils.DnsMessage {

@@ -22,7 +22,7 @@ func TestLogfileWrite(t *testing.T) {
 	config.Loggers.LogFile.FilePath = f.Name()
 
 	// init generator in testing mode
-	g := NewLogFile(config, logger.New(false))
+	g := NewLogFile(config, logger.New(false), "test")
 
 	// write fake dns message
 	dm := dnsutils.GetFakeDnsMessage()

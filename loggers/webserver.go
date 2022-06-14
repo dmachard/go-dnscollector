@@ -24,10 +24,11 @@ type Webserver struct {
 	logger     *logger.Logger
 	stats      *subprocessors.StatsStreams
 	ver        string
+	name       string
 }
 
-func NewWebserver(config *dnsutils.Config, logger *logger.Logger, version string) *Webserver {
-	logger.Info("webserver - enabled")
+func NewWebserver(config *dnsutils.Config, logger *logger.Logger, version string, name string) *Webserver {
+	logger.Info("[%s] webserver - enabled", name)
 	o := &Webserver{
 		done:     make(chan bool),
 		done_api: make(chan bool),
@@ -35,6 +36,7 @@ func NewWebserver(config *dnsutils.Config, logger *logger.Logger, version string
 		channel:  make(chan dnsutils.DnsMessage, 512),
 		logger:   logger,
 		ver:      version,
+		name:     name,
 	}
 
 	// init engine to compute statistics and prometheus
@@ -46,11 +48,11 @@ func (o *Webserver) ReadConfig() {
 }
 
 func (o *Webserver) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("webserver - "+msg, v...)
+	o.logger.Info("["+o.name+"] webserver - "+msg, v...)
 }
 
 func (o *Webserver) LogError(msg string, v ...interface{}) {
-	o.logger.Error("webserver - "+msg, v...)
+	o.logger.Error("["+o.name+"] webserver - "+msg, v...)
 }
 
 func (o *Webserver) Channel() chan dnsutils.DnsMessage {

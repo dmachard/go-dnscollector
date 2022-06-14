@@ -28,7 +28,7 @@ func TestTailRun(t *testing.T) {
 
 	// init collector
 	g := loggers.NewFakeLogger()
-	c := NewTail([]dnsutils.Worker{g}, config, logger.New(false))
+	c := NewTail([]dnsutils.Worker{g}, config, logger.New(false), "test")
 	if err := c.Follow(); err != nil {
 		log.Fatal("collector tail following error: ", err)
 	}

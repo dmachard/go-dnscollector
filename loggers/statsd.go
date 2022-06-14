@@ -21,10 +21,11 @@ type StatsdClient struct {
 	stats   *subprocessors.StatsStreams
 	exit    chan bool
 	version string
+	name    string
 }
 
-func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, version string) *StatsdClient {
-	logger.Info("logger to statsd - enabled")
+func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, version string, name string) *StatsdClient {
+	logger.Info("[%s] logger to statsd - enabled", name)
 
 	s := &StatsdClient{
 		done:    make(chan bool),
@@ -33,6 +34,7 @@ func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, version str
 		logger:  logger,
 		config:  config,
 		version: version,
+		name:    name,
 	}
 
 	// check config
@@ -49,11 +51,11 @@ func (o *StatsdClient) ReadConfig() {
 }
 
 func (o *StatsdClient) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("logger to statsd - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger to statsd - "+msg, v...)
 }
 
 func (o *StatsdClient) LogError(msg string, v ...interface{}) {
-	o.logger.Error("logger to statsd - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger to statsd - "+msg, v...)
 }
 
 func (o *StatsdClient) Channel() chan dnsutils.DnsMessage {

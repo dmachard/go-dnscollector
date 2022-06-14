@@ -16,6 +16,16 @@ func IsValidMode(mode string) bool {
 	return false
 }
 
+type MultiplexInOut struct {
+	Name   string
+	Params map[string]interface{} `yaml:",inline"`
+}
+
+type MultiplexRoutes struct {
+	Src []string `yaml:"src,flow"`
+	Dst []string `yaml:"dst,flow"`
+}
+
 type Config struct {
 	Trace struct {
 		Verbose      bool   `yaml:"verbose"`
@@ -226,6 +236,12 @@ type Config struct {
 			TlsInsecure   bool   `yaml:"tls-insecure"`
 		} `yaml:"statsd"`
 	} `yaml:"loggers"`
+
+	Multiplexer struct {
+		Collectors []MultiplexInOut  `yaml:"collectors"`
+		Loggers    []MultiplexInOut  `yaml:"loggers"`
+		Routes     []MultiplexRoutes `yaml:"routes"`
+	} `yaml:"multiplexer"`
 }
 
 func (c *Config) SetDefault() {
@@ -236,6 +252,11 @@ func (c *Config) SetDefault() {
 	c.Trace.MaxSize = 10
 	c.Trace.MaxBackups = 10
 
+	// multiplexer
+	c.Multiplexer.Collectors = []MultiplexInOut{}
+	c.Multiplexer.Loggers = []MultiplexInOut{}
+	c.Multiplexer.Routes = []MultiplexRoutes{}
+
 	// Collectors
 	c.Collectors.Tail.Enable = false
 	c.Collectors.Tail.TimeLayout = ""
@@ -243,7 +264,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.Tail.PatternReply = ""
 	c.Collectors.Tail.FilePath = ""
 
-	c.Collectors.Dnstap.Enable = true
+	c.Collectors.Dnstap.Enable = false
 	c.Collectors.Dnstap.ListenIP = "0.0.0.0"
 	c.Collectors.Dnstap.ListenPort = 6000
 	c.Collectors.Dnstap.SockPath = ""

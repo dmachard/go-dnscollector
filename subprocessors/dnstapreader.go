@@ -77,15 +77,17 @@ type DnstapProcessor struct {
 	recvFrom chan []byte
 	logger   *logger.Logger
 	config   *dnsutils.Config
+	name     string
 }
 
-func NewDnstapProcessor(config *dnsutils.Config, logger *logger.Logger) DnstapProcessor {
+func NewDnstapProcessor(config *dnsutils.Config, logger *logger.Logger, name string) DnstapProcessor {
 	logger.Info("dnstap processor - initialization...")
 	d := DnstapProcessor{
 		done:     make(chan bool),
 		recvFrom: make(chan []byte, 512),
 		logger:   logger,
 		config:   config,
+		name:     name,
 	}
 
 	d.ReadConfig()
@@ -98,11 +100,11 @@ func (d *DnstapProcessor) ReadConfig() {
 }
 
 func (c *DnstapProcessor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("processor dnstap parser - "+msg, v...)
+	c.logger.Info("["+c.name+"] processor dnstap parser - "+msg, v...)
 }
 
 func (c *DnstapProcessor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("processor dnstap parser - "+msg, v...)
+	c.logger.Error("["+c.name+"] processor dnstap parser - "+msg, v...)
 }
 
 func (d *DnstapProcessor) GetChannel() chan []byte {
@@ -134,7 +136,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	defer geoip.Close()
 
 	// filtering
-	filtering := NewFilteringProcessor(d.config, d.logger)
+	filtering := NewFilteringProcessor(d.config, d.logger, d.name)
 
 	// user privacy
 	ipPrivacy := NewIpAnonymizerSubprocessor(d.config)

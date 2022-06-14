@@ -19,15 +19,17 @@ type PdnsProcessor struct {
 	recvFrom chan []byte
 	logger   *logger.Logger
 	config   *dnsutils.Config
+	name     string
 }
 
-func NewPdnsProcessor(config *dnsutils.Config, logger *logger.Logger) PdnsProcessor {
-	logger.Info("powerdns processor - initialization...")
+func NewPdnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string) PdnsProcessor {
+	logger.Info("[%s] powerdns processor - initialization...", name)
 	d := PdnsProcessor{
 		done:     make(chan bool),
 		recvFrom: make(chan []byte, 512),
 		logger:   logger,
 		config:   config,
+		name:     name,
 	}
 
 	d.ReadConfig()
@@ -36,15 +38,15 @@ func NewPdnsProcessor(config *dnsutils.Config, logger *logger.Logger) PdnsProces
 }
 
 func (c *PdnsProcessor) ReadConfig() {
-	c.logger.Info("processor powerdns parser - config")
+	c.logger.Info("[" + c.name + "] processor powerdns parser - config")
 }
 
 func (c *PdnsProcessor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("processor powerdns parser - "+msg, v...)
+	c.logger.Info("["+c.name+"] processor powerdns parser - "+msg, v...)
 }
 
 func (c *PdnsProcessor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("procesor powerdns parser - "+msg, v...)
+	c.logger.Error("["+c.name+"] procesor powerdns parser - "+msg, v...)
 }
 
 func (d *PdnsProcessor) GetChannel() chan []byte {
@@ -64,7 +66,7 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
 
 	// filtering and user privacy
-	filtering := NewFilteringProcessor(d.config, d.logger)
+	filtering := NewFilteringProcessor(d.config, d.logger, d.name)
 	ipPrivacy := NewIpAnonymizerSubprocessor(d.config)
 	qnamePrivacy := NewQnameReducerSubprocessor(d.config)
 

@@ -16,7 +16,7 @@ func TestSyslogRunTextMode(t *testing.T) {
 	config.Loggers.Syslog.Transport = "tcp"
 	config.Loggers.Syslog.RemoteAddress = ":4000"
 	config.Loggers.Syslog.Mode = "text"
-	g := NewSyslog(config, logger.New(false))
+	g := NewSyslog(config, logger.New(false), "test")
 
 	// fake json receiver
 	fakeRcvr, err := net.Listen("tcp", ":4000")
@@ -58,7 +58,7 @@ func TestSyslogRunJsonMode(t *testing.T) {
 	config.Loggers.Syslog.Transport = "tcp"
 	config.Loggers.Syslog.RemoteAddress = ":4000"
 	config.Loggers.Syslog.Mode = "json"
-	g := NewSyslog(config, logger.New(false))
+	g := NewSyslog(config, logger.New(false), "test")
 
 	// fake json receiver
 	fakeRcvr, err := net.Listen("tcp", ":4000")

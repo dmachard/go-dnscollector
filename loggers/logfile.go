@@ -39,21 +39,23 @@ type LogFile struct {
 	fileprefix     string
 	commpressTimer *time.Timer
 	textFormat     []string
+	name           string
 }
 
-func NewLogFile(config *dnsutils.Config, logger *logger.Logger) *LogFile {
-	logger.Info("logger logfile - enabled")
+func NewLogFile(config *dnsutils.Config, logger *logger.Logger, name string) *LogFile {
+	logger.Info("[%s] logger logfile - enabled", name)
 	o := &LogFile{
 		done:    make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
 		config:  config,
 		logger:  logger,
+		name:    name,
 	}
 
 	o.ReadConfig()
 
 	if err := o.OpenFile(); err != nil {
-		o.logger.Fatal("logger logfile - unable to open output file:", err)
+		o.logger.Fatal("[%s] logger logfile - unable to open output file:", name, err)
 	}
 
 	return o
@@ -72,12 +74,12 @@ func (c *LogFile) ReadConfig() {
 	}
 }
 
-func (c *LogFile) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("logger to file - "+msg, v...)
+func (o *LogFile) LogInfo(msg string, v ...interface{}) {
+	o.logger.Info("["+o.name+"] logger to file - "+msg, v...)
 }
 
-func (c *LogFile) LogError(msg string, v ...interface{}) {
-	c.logger.Error("logger to file - "+msg, v...)
+func (o *LogFile) LogError(msg string, v ...interface{}) {
+	o.logger.Error("["+o.name+"] logger to file - "+msg, v...)
 }
 
 func (o *LogFile) OpenFile() error {
