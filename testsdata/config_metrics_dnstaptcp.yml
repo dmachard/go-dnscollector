@@ -21,8 +21,5 @@ multiplexer:
         basic-auth-pwd: changeme
 
   routes:
-    - src:
-        - tap
-      dst:
-        - out
-        - web
+    - from: [tap]
+      to: [out, web]

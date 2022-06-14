@@ -1,17 +1,23 @@
 trace:
   verbose: true
 
-collectors:
-  dnstap:
-    enable: true
-    listen-ip: 0.0.0.0
-    listen-port: 6000
+multiplexer:
+  collectors:
+    - name: tap_in
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
 
+  loggers:
+    - name: std_out
+      stdout:
+        mode: text
+
+  routes:
+    - from: [tap_in]
+      to: [std_out]
+  
 subprocessors:
   user-privacy:
     anonymize-ip: true
     minimaze-qname: true
-
-loggers:
-  stdout:
-    enable: true

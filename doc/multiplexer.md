@@ -1,6 +1,14 @@
-trace:
-  verbose: true
+# DnsCollector - Multiplexer
 
+The dns collector can be configured with multiple loggers and collectors at the same time.
+And also with the multiple identical loggers for example.
+
+
+You must defined the list of 
+- loggers
+- collectors 
+
+```
 multiplexer:
   collectors:
     - name: tap_in
@@ -18,7 +26,13 @@ multiplexer:
         max-size: 100
         max-files: 10
         mode: text
+```
 
+And then the routing to use between all of them.
+
+```
   routes:
     - from: [ tap_in ]
       to: [ file ]
+```
+

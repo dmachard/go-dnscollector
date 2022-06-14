@@ -11,26 +11,23 @@ trace:
   # maximum number of old log files to retain
   max-backups: 10
 
-# create your dns collector
-# please refer bellow to see the list 
+# create your dns collector, please refer bellow to see the list 
 # of supported collectors and loggers
 multiplexer:
   collectors:
-    - name: in
+    - name: tap_in
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
 
   loggers:
-    - name: out
+    - name: std_out
       stdout:
         mode: text
 
   routes:
-    - src:
-        - in
-      dst:
-        - out
+    - from: [ tap_in ]
+      to: [ std_out ]
 
 ################################################
 # list of supported collectors
@@ -322,134 +319,137 @@ multiplexer:
 #   flush-interval: 10
 
 
-# settings for subprocessors
-subprocessors:
-  # this option can be useful to reduce the size of your dns logs
-  quiet-text:
-    #  AQ: AUTH_QUERY
-    #  AR: AUTH_RESPONSE
-    #  RQ: RESOLVER_QUERY
-    #  RR: RESOLVER_RESPONSE
-    #  CQ: CLIENT_QUERY
-    #  CR: CLIENT_RESPONSE
-    #  FQ: FORWARDER_QUERY
-    #  FR: FORWARDER_RESPONSE
-    #  SQ: STUB_QUERY
-    #  SR: STUB_RESPONSE
-    #  TQ: TOOL_QUERY
-    #  TR: TOOL_RESPONSE
-    dnstap: false
-    #  Q: QUERY
-    #  R: REPLY
-    dns: false
+################################################
+# list of subprocessors shared between loggers and collectors
+################################################
 
-  # Statistics engine to compute some metrics on dns usage observed
-  statistics:
-    # default number of items on top 
-    top-max-items: 100
-    # expected common qtype list, other will be considered as suspicious
-    common-qtypes: [ "A", "AAAA", "CNAME", "TXT", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS" ]
-    # a length greater than this value will be considered as suspicious
-    threshold-qname-len: 80
-    # a size greater than this value will be considered as suspicious
-    # value in bytes
-    threshold-packet-len: 1000
-    # threshold to set a domain considered as slow, value in second
-    threshold-slow: 0.5
-    # prometheus prefix
-    prometheus-prefix: "dnscollector"
+# subprocessors:
+#   # this option can be useful to reduce the size of your dns logs
+#   quiet-text:
+#     #  AQ: AUTH_QUERY
+#     #  AR: AUTH_RESPONSE
+#     #  RQ: RESOLVER_QUERY
+#     #  RR: RESOLVER_RESPONSE
+#     #  CQ: CLIENT_QUERY
+#     #  CR: CLIENT_RESPONSE
+#     #  FQ: FORWARDER_QUERY
+#     #  FR: FORWARDER_RESPONSE
+#     #  SQ: STUB_QUERY
+#     #  SR: STUB_RESPONSE
+#     #  TQ: TOOL_QUERY
+#     #  TR: TOOL_RESPONSE
+#     dnstap: false
+#     #  Q: QUERY
+#     #  R: REPLY
+#     dns: false
+
+#   # Statistics engine to compute some metrics on dns usage observed
+#   statistics:
+#     # default number of items on top 
+#     top-max-items: 100
+#     # expected common qtype list, other will be considered as suspicious
+#     common-qtypes: [ "A", "AAAA", "CNAME", "TXT", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS" ]
+#     # a length greater than this value will be considered as suspicious
+#     threshold-qname-len: 80
+#     # a size greater than this value will be considered as suspicious
+#     # value in bytes
+#     threshold-packet-len: 1000
+#     # threshold to set a domain considered as slow, value in second
+#     threshold-slow: 0.5
+#     # prometheus prefix
+#     prometheus-prefix: "dnscollector"
     
-  # Use this option to protect user privacy
-  user-privacy:
-    # IP-Addresses are anonymities by zeroing the host-part of an address.
-    anonymize-ip: false
-    # Reduce Qname to second level only, for exemple mail.google.com be replaced by google.com
-    minimaze-qname: false
+#   # Use this option to protect user privacy
+#   user-privacy:
+#     # IP-Addresses are anonymities by zeroing the host-part of an address.
+#     anonymize-ip: false
+#     # Reduce Qname to second level only, for exemple mail.google.com be replaced by google.com
+#     minimaze-qname: false
 
-  # Convert all domain to lowercase
-  # Wwww.GooGlE.com will be equal to www.google.com
-  qname-lowercase: true
+#   # Convert all domain to lowercase
+#   # Wwww.GooGlE.com will be equal to www.google.com
+#   qname-lowercase: true
 
-  # The cache is used to compute latency between replies and queries 
-  # This cache can be disabled if your dns server already add the latency in the dns packet
-  # Disable this feature to improve performance
-  cache:
-    # enable or disable
-    enable: true
-    # Ttl in second, max time to keep the query record in memory
-    query-timeout: 5
+#   # The cache is used to compute latency between replies and queries 
+#   # This cache can be disabled if your dns server already add the latency in the dns packet
+#   # Disable this feature to improve performance
+#   cache:
+#     # enable or disable
+#     enable: true
+#     # Ttl in second, max time to keep the query record in memory
+#     query-timeout: 5
 
-  # Server identity, if empty  the hostname is used
-  # This settings is used in dnstap logger as dnstap-identity
-  server-id: ""
+#   # Server identity, if empty  the hostname is used
+#   # This settings is used in dnstap logger as dnstap-identity
+#   server-id: ""
 
-  # filtering feature to ignore some specific qname
-  # dns logs is not redirected to loggers if the filtering regexp matched
-  filtering:
-    # path file of the fqdn drop list, domains list must be a full qualified domain name
-    drop-fqdn-file: ""
-    # path file of the domain drop list, domains list can be a partial domain name with regexp expression
-    drop-domain-file: ""
-    # path file of the query IP drop list, one IP address or subnet per line
-    drop-queryip-file: ""
-    # path file of the query IP keep list, one IP address or subnet per line
-    keep-queryip-file: ""
-    # drop specific responses according to the return code (NOERROR, ...). This list is empty by default
-    # Example to ignore NOERROR dns packets
-    # drop-rcodes:
-    #  - NOERROR
-    drop-rcodes: []
-    # forward received queries to configured loggers ?
-    log-queries: true
-    # forward received replies to configured loggers ?
-    log-replies: true
+#   # filtering feature to ignore some specific qname
+#   # dns logs is not redirected to loggers if the filtering regexp matched
+#   filtering:
+#     # path file of the fqdn drop list, domains list must be a full qualified domain name
+#     drop-fqdn-file: ""
+#     # path file of the domain drop list, domains list can be a partial domain name with regexp expression
+#     drop-domain-file: ""
+#     # path file of the query IP drop list, one IP address or subnet per line
+#     drop-queryip-file: ""
+#     # path file of the query IP keep list, one IP address or subnet per line
+#     keep-queryip-file: ""
+#     # drop specific responses according to the return code (NOERROR, ...). This list is empty by default
+#     # Example to ignore NOERROR dns packets
+#     # drop-rcodes:
+#     #  - NOERROR
+#     drop-rcodes: []
+#     # forward received queries to configured loggers ?
+#     log-queries: true
+#     # forward received replies to configured loggers ?
+#     log-replies: true
 
-  # geoip maxmind support, more information on https://www.maxmind.com/en/geoip-demo
-  # this feature can be used to append additional informations like country, city, asn
-  # according to the query ip
-  geoip:
-    # path file to your mmdb country database
-    mmdb-country-file: ""
-    # path file to your mmdb city database
-    mmdb-city-file: ""
-    # path file to your mmdb ASN database
-    mmdb-asn-file: ""
+#   # geoip maxmind support, more information on https://www.maxmind.com/en/geoip-demo
+#   # this feature can be used to append additional informations like country, city, asn
+#   # according to the query ip
+#   geoip:
+#     # path file to your mmdb country database
+#     mmdb-country-file: ""
+#     # path file to your mmdb city database
+#     mmdb-city-file: ""
+#     # path file to your mmdb ASN database
+#     mmdb-asn-file: ""
 
-  # specific the default text log format used on all loggers supporting this mode
-  # all available directives:
-  # - timestamp-rfc3339ns: timestamp rfc3339 format, with nano support
-  # - timestamp-unixms: unix timestamp with ms support
-  # - timestamp-unixus: unix timestamp with us support
-  # - timestamp-unixns: unix timestamp with nano support
-  # - localtime: local time
-  # - identity: dnstap identity
-  # - operation: dnstap operation
-  # - opcode: dns opcode (integer)
-  # - rcode: dns return code
-  # - queryip: dns query ip
-  # - queryport: dns query port
-  # - responseip: dns response ip
-  # - responseport: dns response port
-  # - id: dns id
-  # - family: ip protocol version INET or INET6
-  # - protocol: protocol UDP, TCP
-  # - length: the length of the query or reply
-  # - qtype: dns qtype
-  # - qname: dns qname
-  # - latency: computed latency between queries and replies
-  # - answercount: the number of answer
-  # - continent: continent code
-  # - country: country iso code
-  # - city: city name
-  # - as-number: autonomous system number
-  # - as-owner: autonomous system organization
-  # - ttl: answer ttl, only the first one value
-  # - answer: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
-  # - malformed: malformed dns packet, integer value 1/0
-  # - qr: query or reply flag, string value Q/R
-  # - tc: truncated flag
-  # - aa: authoritative answer
-  # - ra: recursion available
-  # - ad: authenticated data
-  # - edns-csubnet: client subnet
-  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
+#   # specific the default text log format used on all loggers supporting this mode
+#   # all available directives:
+#   # - timestamp-rfc3339ns: timestamp rfc3339 format, with nano support
+#   # - timestamp-unixms: unix timestamp with ms support
+#   # - timestamp-unixus: unix timestamp with us support
+#   # - timestamp-unixns: unix timestamp with nano support
+#   # - localtime: local time
+#   # - identity: dnstap identity
+#   # - operation: dnstap operation
+#   # - opcode: dns opcode (integer)
+#   # - rcode: dns return code
+#   # - queryip: dns query ip
+#   # - queryport: dns query port
+#   # - responseip: dns response ip
+#   # - responseport: dns response port
+#   # - id: dns id
+#   # - family: ip protocol version INET or INET6
+#   # - protocol: protocol UDP, TCP
+#   # - length: the length of the query or reply
+#   # - qtype: dns qtype
+#   # - qname: dns qname
+#   # - latency: computed latency between queries and replies
+#   # - answercount: the number of answer
+#   # - continent: continent code
+#   # - country: country iso code
+#   # - city: city name
+#   # - as-number: autonomous system number
+#   # - as-owner: autonomous system organization
+#   # - ttl: answer ttl, only the first one value
+#   # - answer: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
+#   # - malformed: malformed dns packet, integer value 1/0
+#   # - qr: query or reply flag, string value Q/R
+#   # - tc: truncated flag
+#   # - aa: authoritative answer
+#   # - ra: recursion available
+#   # - ad: authenticated data
+#   # - edns-csubnet: client subnet
+#   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"

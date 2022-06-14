@@ -14,7 +14,5 @@ multiplexer:
         mode: text
 
   routes:
-    - src:
-        - pdns
-      dst:
-        - out
+    - from: [pdns]
+      to: [out]

@@ -73,62 +73,6 @@ func main() {
 	logger.Info("main - starting dns-collector...")
 
 	// load loggers
-	/*	var logwrks []dnsutils.Worker
-
-		if config.Loggers.WebServer.Enable {
-			logwrks = append(logwrks, loggers.NewWebserver(config, logger, Version))
-		}
-		if config.Loggers.Prometheus.Enable {
-			logwrks = append(logwrks, loggers.NewPrometheus(config, logger, Version))
-		}
-		if config.Loggers.Stdout.Enable {
-			logwrks = append(logwrks, loggers.NewStdOut(config, logger))
-		}
-		if config.Loggers.LogFile.Enable {
-			logwrks = append(logwrks, loggers.NewLogFile(config, logger))
-		}
-		if config.Loggers.Dnstap.Enable {
-			logwrks = append(logwrks, loggers.NewDnstapSender(config, logger))
-		}
-		if config.Loggers.TcpClient.Enable {
-			logwrks = append(logwrks, loggers.NewTcpClient(config, logger))
-		}
-		if config.Loggers.Syslog.Enable {
-			logwrks = append(logwrks, loggers.NewSyslog(config, logger))
-		}
-		if config.Loggers.Fluentd.Enable {
-			logwrks = append(logwrks, loggers.NewFluentdClient(config, logger))
-		}
-		if config.Loggers.PcapFile.Enable {
-			logwrks = append(logwrks, loggers.NewPcapFile(config, logger))
-		}
-		if config.Loggers.InfluxDB.Enable {
-			logwrks = append(logwrks, loggers.NewInfluxDBClient(config, logger))
-		}
-		if config.Loggers.LokiClient.Enable {
-			logwrks = append(logwrks, loggers.NewLokiClient(config, logger))
-		}
-		if config.Loggers.Statsd.Enable {
-			logwrks = append(logwrks, loggers.NewStatsdClient(config, logger, Version))
-		}
-
-		// load collectors
-		var collwrks []dnsutils.Worker
-		if config.Collectors.Dnstap.Enable {
-			collwrks = append(collwrks, collectors.NewDnstap(logwrks, config, logger))
-		}
-		if config.Collectors.DnsSniffer.Enable {
-			collwrks = append(collwrks, collectors.NewDnsSniffer(logwrks, config, logger))
-		}
-		if config.Collectors.Tail.Enable {
-			collwrks = append(collwrks, collectors.NewTail(logwrks, config, logger))
-		}
-		if config.Collectors.PowerDNS.Enable {
-			collwrks = append(collwrks, collectors.NewProtobufPowerDNS(logwrks, config, logger))
-		}
-	*/
-
-	// load loggers
 	var allLoggers [][]dnsutils.Worker
 	var allCollectors [][]dnsutils.Worker
 
@@ -148,8 +92,14 @@ func main() {
 					for _, p := range ml.Params {
 						p.(map[string]interface{})["enable"] = true
 					}
+
+					// get config with default values
 					subcfg := &dnsutils.Config{}
 					subcfg.SetDefault()
+
+					// copy global config
+					subcfg.Trace = config.Trace
+					subcfg.Subprocessors = config.Subprocessors
 
 					yamlcfg, _ := yaml.Marshal(cfg)
 					if err := yaml.Unmarshal(yamlcfg, subcfg); err != nil {
@@ -209,8 +159,14 @@ func main() {
 					for _, p := range mc.Params {
 						p.(map[string]interface{})["enable"] = true
 					}
+
+					// get config with default values
 					subcfg := &dnsutils.Config{}
 					subcfg.SetDefault()
+
+					// copy global config
+					subcfg.Trace = config.Trace
+					subcfg.Subprocessors = config.Subprocessors
 
 					yamlcfg, _ := yaml.Marshal(cfg)
 					if err := yaml.Unmarshal(yamlcfg, subcfg); err != nil {
@@ -260,37 +216,11 @@ func main() {
 				// enable the verbose mode ?
 				logger.SetVerbose(config.Trace.Verbose)
 
-				// reload config for all collectors and loggers
-				/*for _, p := range collwrks {
-					p.ReadConfig()
-				}
-				for _, p := range logwrks {
-					p.ReadConfig()
-				}*/
-
-				for _, c := range allCollectors {
-					for _, w := range c {
-						w.ReadConfig()
-					}
-				}
-
-				for _, l := range allLoggers {
-					for _, w := range l {
-						w.ReadConfig()
-					}
-				}
-
 			case <-sigTerm:
 				logger.Info("main - system interrupt, exiting...")
 
 				// stop all workers
 				logger.Info("main - stopping all collectors and loggers...")
-				/*	for _, p := range collwrks {
-						p.Stop()
-					}
-					for _, p := range logwrks {
-						p.Stop()
-					}*/
 
 				for _, c := range allCollectors {
 					for _, w := range c {
@@ -314,12 +244,6 @@ func main() {
 
 	// run all workers in background
 	logger.Info("main - running all collectors and loggers...")
-	/*	for _, p := range logwrks {
-			go p.Run()
-		}
-		for _, p := range collwrks {
-			go p.Run()
-		}*/
 
 	for _, l := range allLoggers {
 		for _, p := range l {

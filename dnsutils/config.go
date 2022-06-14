@@ -22,8 +22,8 @@ type MultiplexInOut struct {
 }
 
 type MultiplexRoutes struct {
-	Src []string `yaml:"src,flow"`
-	Dst []string `yaml:"dst,flow"`
+	Src []string `yaml:"from,flow"`
+	Dst []string `yaml:"to,flow"`
 }
 
 type Config struct {

@@ -13,7 +13,5 @@ multiplexer:
         mode: text
 
   routes:
-    - src:
-        - tap
-      dst:
-        - out
+    - from: [tap]
+      to: [out]

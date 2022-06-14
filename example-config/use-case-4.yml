@@ -1,18 +1,24 @@
 trace:
   verbose: true
 
-collectors:
-  dnstap:
-    enable: true
-    listen-ip: 0.0.0.0
-    listen-port: 6000
+multiplexer:
+  collectors:
+    - name: tap_in
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
 
-loggers:
-  stdout:
-    enable: false
+  loggers:
+    - name: std_out
+      stdout:
+        mode: text
 
-  lokiclient:
-    enable: true
-    server-url: "http://loki:3100/loki/api/v1/push"
-    job-name: "dnscollector"
-    text-format: "localtime identity qr queryip family protocol qname qtype rcode"
+    - name: loki_out
+      lokiclient:
+        server-url: "http://loki:3100/loki/api/v1/push"
+        job-name: "dnscollector"
+        text-format: "localtime identity qr queryip family protocol qname qtype rcode"
+
+  routes:
+    - from: [tap_in]
+      to: [std_out, loki_out]

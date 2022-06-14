@@ -1,26 +1,31 @@
 trace:
   verbose: true
 
-collectors:
-  dnstap:
-    enable: true
-    listen-ip: 0.0.0.0
-    listen-port: 6000
-    tls-support: true
-    cert-file: "/etc/dnscollector/dnscollector.crt"
-    key-file: "/etc/dnscollector/dnscollector.key"
+multiplexer:
+  collectors:
+    - name: tap_in
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+        tls-support: true
+        cert-file: "/etc/dnscollector/dnscollector.crt"
+        key-file: "/etc/dnscollector/dnscollector.key"
+
+  loggers:
+    - name: web
+      webserver:
+        listen-ip: 0.0.0.0
+        listen-port: 8080
+        basic-auth-login: admin
+        basic-auth-pwd: changeme
+        tls-support: true
+        cert-file: "/etc/dnscollector/dnscollector.crt"
+        key-file: "/etc/dnscollector/dnscollector.key"
+
+  routes:
+    - from: [tap_in]
+      to: [web]
 
 subprocessors:
   statistics:
     prometheus-prefix: "dnscollector"
-    
-loggers:
-  webserver:
-    enable: true
-    listen-ip: 0.0.0.0
-    listen-port: 8080
-    basic-auth-login: admin
-    basic-auth-pwd: changeme
-    tls-support: true
-    cert-file: "/etc/dnscollector/dnscollector.crt"
-    key-file: "/etc/dnscollector/dnscollector.key"
