@@ -91,7 +91,7 @@ jobs:
     strategy:
       matrix:
         go-version: [ '1.17', '1.18' ]
-        coredns: [ '1.15.0' ]
+        unbound: [ '1.15.0', '1.16.0' ]
         mode: [ 'tcp' ]
 
     steps:
@@ -106,7 +106,7 @@ jobs:
 
     - name: Deploy docker image
       run: |
-        sudo docker run -d --network="host" --name=unbound --volume=$PWD/testsdata/unbound_${{ matrix.mode }}.conf:/opt/unbound/etc/unbound/unbound.conf:z -v /tmp/:/opt/unbound/etc/unbound/tmp/:z mvance/unbound:${{ matrix.coredns }}
+        sudo docker run -d --network="host" --name=unbound --volume=$PWD/testsdata/unbound_${{ matrix.mode }}.conf:/opt/unbound/etc/unbound/unbound.conf:z -v /tmp/:/opt/unbound/etc/unbound/tmp/:z mvance/unbound:${{ matrix.unbound }}
         dig -p 5553 www.github.com @127.0.0.1 +timeout=10 +tries=3 +retry=3 | grep NOERROR
 
     - name: Test ${{ matrix.mode }}

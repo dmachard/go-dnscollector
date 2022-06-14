@@ -1,8 +1,6 @@
 # DnsCollector - Multiplexer
 
 The dns collector can be configured with multiple loggers and collectors at the same time.
-And also with the multiple identical loggers for example.
-
 
 You must defined the list of 
 - loggers
