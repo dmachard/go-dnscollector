@@ -50,13 +50,7 @@ Tested with success with the following operating system
 
 Tested with success with the following dns servers
 
-![unbound 1.15.x](https://img.shields.io/badge/unbound%201.15.x-tested-green)
-
-![powerdns dnsdist 1.6.x](https://img.shields.io/badge/dnsdist%201.6.x-tested-green)
-![powerdns dnsdist 1.7.x](https://img.shields.io/badge/dnsdist%201.7.x-tested-green)
-
-![coredns 1.8.7](https://img.shields.io/badge/coredns%201.8.7-tested-green)
-![coredns 1.9.3](https://img.shields.io/badge/coredns%201.9.3-tested-green)
+![unbound 1.15.x](https://img.shields.io/badge/unbound%201.15.x-tested-green) ![unbound 1.16.x](https://img.shields.io/badge/unbound%201.16.x-tested-green) ![powerdns dnsdist 1.6.x](https://img.shields.io/badge/dnsdist%201.6.x-tested-green) ![powerdns dnsdist 1.7.x](https://img.shields.io/badge/dnsdist%201.7.x-tested-green) ![coredns 1.8.7](https://img.shields.io/badge/coredns%201.8.7-tested-green) ![coredns 1.9.3](https://img.shields.io/badge/coredns%201.9.3-tested-green)
 
 ## Installation
 
