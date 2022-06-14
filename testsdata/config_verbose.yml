@@ -1,12 +1,20 @@
 trace:
   verbose: true
 
-collectors:
-  dnstap:
-    enable: true
-    listen-ip: 0.0.0.0
-    listen-port: 6000
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
 
-loggers:
-  stdout:
-    enable: true
+  loggers:
+    - name: out
+      stdout:
+        mode: text
+
+  routes:
+    - src:
+        - tap
+      dst:
+        - out

@@ -1,14 +1,21 @@
 trace:
   verbose: true
 
-collectors:
-  dnstap:
-    enable: true
-    listen-ip: 0.0.0.0
-    listen-port: 6000
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
 
-loggers:
-  webserver:
-    enable: true
-    listen-ip: 0.0.0.0
-    listen-port: 8080
+  loggers:
+    - name: web
+      webserver:
+        listen-ip: 0.0.0.0
+        listen-port: 8080
+
+  routes:
+    - src:
+        - tap
+      dst:
+        - web

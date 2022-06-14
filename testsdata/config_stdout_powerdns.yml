@@ -1,12 +1,20 @@
 trace:
   verbose: true
 
-collectors:
-  powerdns:
-    enable: true
-    listen-ip: 0.0.0.0
-    listen-port: 6001
+multiplexer:
+  collectors:
+    - name: pdns
+      powerdns:
+        listen-ip: 0.0.0.0
+        listen-port: 6001
 
-loggers:
-  stdout:
-    enable: true
+  loggers:
+    - name: out
+      stdout:
+        mode: text
+
+  routes:
+    - src:
+        - tap
+      dst:
+        - out

@@ -55,7 +55,7 @@ func NewLogFile(config *dnsutils.Config, logger *logger.Logger, name string) *Lo
 	o.ReadConfig()
 
 	if err := o.OpenFile(); err != nil {
-		o.logger.Fatal("[%s] logger logfile - unable to open output file:", name, err)
+		o.logger.Fatal("["+name+"] logger logfile - unable to open output file:", err)
 	}
 
 	return o

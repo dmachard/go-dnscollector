@@ -1,11 +1,19 @@
 trace:
   verbose: true
 
-collectors:
-  dnstap:
-    enable: true
-    sock-path: /tmp/dnstap.sock
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        sock-path: /tmp/dnstap.sock
 
-loggers:
-  stdout:
-    enable: true
+  loggers:
+    - name: out
+      stdout:
+        mode: text
+
+  routes:
+    - src:
+        - tap
+      dst:
+        - out

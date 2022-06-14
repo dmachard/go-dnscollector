@@ -55,7 +55,7 @@ func NewPcapFile(config *dnsutils.Config, console *logger.Logger, name string) *
 	o.ReadConfig()
 
 	if err := o.OpenFile(); err != nil {
-		o.logger.Fatal("[%s] unable to create file: ", name, err)
+		o.logger.Fatal("["+name+"] unable to create file: ", err)
 	}
 
 	return o
