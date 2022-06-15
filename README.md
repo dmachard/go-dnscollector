@@ -45,8 +45,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 Tested with success with the following operating system
 
-![ubuntu 20.04](https://img.shields.io/badge/ubuntu%2020.04-tested-green)
-![ubuntu 22.04](https://img.shields.io/badge/ubuntu%2022.04-tested-green)
+![ubuntu 22.04](https://img.shields.io/badge/ubuntu%2022.04-tested-green) ![ubuntu 20.04](https://img.shields.io/badge/ubuntu%2020.04-tested-green) ![macos 11](https://img.shields.io/badge/macos%11-tested-green)
 
 Tested with success with the following dns servers
 
@@ -92,6 +91,7 @@ For more informations about **dnstap**, please to read the following page [Dnsta
 - [x] [Use case 4: Capture dns traffic (dnstap) and follow dns logs with Loki + Grafana](https://dmachard.github.io/posts/0044-dnscollector-grafana-loki/)
 - [x] [Use case 5: Forward unix dnstap socket traffic to TLS dnstap stream](example-config/use-case-5.yml)
 - [x] [Use case 6: Capture dns traffic with user privacy options enabled](example-config/use-case-6.yml)
+- [x] [Use case 6: Capture dns traffic with multiple dnstap collectors](example-config/use-case-7.yml)
 
 ## Benchmark
 
