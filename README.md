@@ -41,12 +41,6 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [DNS caching](doc/configuration.md#DNS-Caching)
     - [Normalize Qname](doc/configuration.md#Qname-lowercase)
 
-## End to end testing
-
-Tested with success with the following operating system and dns servers
-
-![ubuntu 22.04](https://img.shields.io/badge/ubuntu%2022.04-tested-blue) ![ubuntu 20.04](https://img.shields.io/badge/ubuntu%2020.04-tested-blue) ![macos 11](https://img.shields.io/badge/macos%2011-tested-blue) ![unbound 1.15.x](https://img.shields.io/badge/unbound%201.15.x-tested-green) ![unbound 1.16.x](https://img.shields.io/badge/unbound%201.16.x-tested-green) ![powerdns dnsdist 1.6.x](https://img.shields.io/badge/dnsdist%201.6.x-tested-green) ![powerdns dnsdist 1.7.x](https://img.shields.io/badge/dnsdist%201.7.x-tested-green) ![coredns 1.8.7](https://img.shields.io/badge/coredns%201.8.7-tested-green) ![coredns 1.9.3](https://img.shields.io/badge/coredns%201.9.3-tested-green)
-
 ## Installation
 
 **Run-it from binary**
@@ -88,6 +82,12 @@ For more informations about **dnstap**, please to read the following page [Dnsta
 - [x] [Use case 5: Forward unix dnstap socket traffic to TLS dnstap stream](example-config/use-case-5.yml)
 - [x] [Use case 6: Capture dns traffic with user privacy options enabled](example-config/use-case-6.yml)
 - [x] [Use case 6: Capture dns traffic with multiple dnstap collectors](example-config/use-case-7.yml)
+
+## End to end testing
+
+Tested with success with the following operating system and dns servers
+
+![ubuntu 22.04](https://img.shields.io/badge/ubuntu%2022.04-tested-blue) ![ubuntu 20.04](https://img.shields.io/badge/ubuntu%2020.04-tested-blue) ![macos 11](https://img.shields.io/badge/macos%2011-tested-blue) ![unbound 1.15.x](https://img.shields.io/badge/unbound%201.15.x-tested-green) ![unbound 1.16.x](https://img.shields.io/badge/unbound%201.16.x-tested-green) ![powerdns dnsdist 1.6.x](https://img.shields.io/badge/dnsdist%201.6.x-tested-green) ![powerdns dnsdist 1.7.x](https://img.shields.io/badge/dnsdist%201.7.x-tested-green) ![coredns 1.8.7](https://img.shields.io/badge/coredns%201.8.7-tested-green) ![coredns 1.9.3](https://img.shields.io/badge/coredns%201.9.3-tested-green)
 
 ## Benchmark
 
