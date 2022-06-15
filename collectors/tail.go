@@ -169,6 +169,8 @@ func (c *Tail) Run() {
 		queryportIndex := re.SubexpIndex("queryport")
 		if queryportIndex != -1 {
 			dm.NetworkInfo.QueryPort = matches[queryportIndex]
+		} else {
+			dm.NetworkInfo.ResponsePort = "0"
 		}
 
 		responseipIndex := re.SubexpIndex("responseip")
@@ -179,6 +181,8 @@ func (c *Tail) Run() {
 		responseportIndex := re.SubexpIndex("responseport")
 		if responseportIndex != -1 {
 			dm.NetworkInfo.ResponsePort = matches[responseportIndex]
+		} else {
+			dm.NetworkInfo.ResponsePort = "0"
 		}
 
 		familyIndex := re.SubexpIndex("family")
