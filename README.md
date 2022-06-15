@@ -45,7 +45,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 Tested with success with the following operating system
 
-![ubuntu 22.04](https://img.shields.io/badge/ubuntu%2022.04-tested-green) ![ubuntu 20.04](https://img.shields.io/badge/ubuntu%2020.04-tested-green) ![macos 11](https://img.shields.io/badge/macos%11-tested-green)
+![ubuntu 22.04](https://img.shields.io/badge/ubuntu%2022.04-tested-green) ![ubuntu 20.04](https://img.shields.io/badge/ubuntu%2020.04-tested-green) ![macos 11](https://img.shields.io/badge/macos%2011-tested-green)
 
 Tested with success with the following dns servers
 
