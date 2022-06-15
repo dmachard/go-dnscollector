@@ -43,13 +43,9 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 ## End to end testing
 
-Tested with success with the following operating system
+Tested with success with the following operating system and dns servers
 
-![ubuntu 22.04](https://img.shields.io/badge/ubuntu%2022.04-tested-green) ![ubuntu 20.04](https://img.shields.io/badge/ubuntu%2020.04-tested-green) ![macos 11](https://img.shields.io/badge/macos%2011-tested-green)
-
-Tested with success with the following dns servers
-
-![unbound 1.15.x](https://img.shields.io/badge/unbound%201.15.x-tested-green) ![unbound 1.16.x](https://img.shields.io/badge/unbound%201.16.x-tested-green) ![powerdns dnsdist 1.6.x](https://img.shields.io/badge/dnsdist%201.6.x-tested-green) ![powerdns dnsdist 1.7.x](https://img.shields.io/badge/dnsdist%201.7.x-tested-green) ![coredns 1.8.7](https://img.shields.io/badge/coredns%201.8.7-tested-green) ![coredns 1.9.3](https://img.shields.io/badge/coredns%201.9.3-tested-green)
+![ubuntu 22.04](https://img.shields.io/badge/ubuntu%2022.04-tested-blue) ![ubuntu 20.04](https://img.shields.io/badge/ubuntu%2020.04-tested-blue) ![macos 11](https://img.shields.io/badge/macos%2011-tested-blue) ![unbound 1.15.x](https://img.shields.io/badge/unbound%201.15.x-tested-green) ![unbound 1.16.x](https://img.shields.io/badge/unbound%201.16.x-tested-green) ![powerdns dnsdist 1.6.x](https://img.shields.io/badge/dnsdist%201.6.x-tested-green) ![powerdns dnsdist 1.7.x](https://img.shields.io/badge/dnsdist%201.7.x-tested-green) ![coredns 1.8.7](https://img.shields.io/badge/coredns%201.8.7-tested-green) ![coredns 1.9.3](https://img.shields.io/badge/coredns%201.9.3-tested-green)
 
 ## Installation
 
