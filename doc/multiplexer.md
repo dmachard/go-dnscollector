@@ -1,4 +1,4 @@
-# DnsCollector - Multiplexer
+# DnsCollector - Logs routing
 
 The dns collector can be configured with multiple loggers and collectors at the same time.
 
@@ -26,7 +26,9 @@ multiplexer:
         mode: text
 ```
 
-And then the routing to use between all of them.
+And then defines the routing to use between all of them according to the name.
+You can connect one collector to multiple loggers and you can also
+connect multiple collectors to the same logger.
 
 ```
   routes:

@@ -159,8 +159,8 @@ Enable the tail by provided the path of the file to follow
 Options:
 - `file-path`: (string) file to follow
 - `time-layout`: (string)  Use the exact layout numbers described https://golang.org/src/time/format.go
-- `pattern-query`: (string) regexp pattern for queries, example for unbound: "query: (?P<queryip>[^ ]*) (?P<domain>[^ ]*) (?P<qtype>[^ ]*)"
-- `pattern-reply`: (string) regexp pattern for replies, example for unbound: "reply: (?P<queryip>[^ ]*) (?P<domain>[^ ]*) (?P<qtype>[^ ]*) IN (?P<rcode>[^ ]*) (?P<latency>[^ ]*)"
+- `pattern-query`: (string) regexp pattern for queries
+- `pattern-reply`: (string) regexp pattern for replies
 
 ```yaml
 tail:
@@ -169,6 +169,7 @@ tail:
   pattern-query: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_QUERY) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
   pattern-reply: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_RESPONSE) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
 ```
+
 
 #### Protobuf PowerDNS
 

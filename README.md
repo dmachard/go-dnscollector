@@ -12,7 +12,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 - Supported collectors:
     - [DNStap streams](doc/configuration.md#dns-tap) 
-    - [DNS packets sniffer](doc/configuration.md#Dns-Sniffer)
+    - [DNS packets sniffer](doc/configuration.md#Dns-Sniffer) (experimental)
     - [Tail on log file](doc/configuration.md#tail)
     - [Protobuf PowerDNS](doc/configuration.md#protobuf-powerdns)
 
@@ -30,7 +30,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [Statsd](doc/configuration.md#statsd-client)
 
 - Other features
-    - [Multiplexer](doc/multiplexer.md)
+    - [Logs routing](doc/multiplexer.md)
     - [Queries/Replies JSON encoding](doc/dnsjson.md)
     - [DNS decoder with extended options support](doc/dnsparser.md)
     - [Built-in Grafana dashboards](doc/dashboards.md)
@@ -81,7 +81,7 @@ For more informations about **dnstap**, please to read the following page [Dnsta
 - [x] [Use case 4: Capture dns traffic (dnstap) and follow dns logs with Loki + Grafana](https://dmachard.github.io/posts/0044-dnscollector-grafana-loki/)
 - [x] [Use case 5: Forward unix dnstap socket traffic to TLS dnstap stream](example-config/use-case-5.yml)
 - [x] [Use case 6: Capture dns traffic with user privacy options enabled](example-config/use-case-6.yml)
-- [x] [Use case 7: Capture dns traffic with multiple dnstap collectors](example-config/use-case-7.yml)
+- [x] [Use case 7: Running multiple dnstap collectors in parallel](example-config/use-case-7.yml)
 
 ## End to end testing
 
