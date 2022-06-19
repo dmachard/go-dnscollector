@@ -2,7 +2,9 @@
 
 ##  Overview
 
-This `dns collector` acts as a **high speed** passive analyser for DNS traffic, written in Golang. Which give you the possibility to control dns servers, get statistics and more. It supports several methods to collect dns traffic (dnstap, sniffer, logs, etc.) and can redirect them to multiple destinations with protocol and format (json, text) transformation. This collector can also be used to logs dns answers.
+This `dns collector` acts as a **high speed** aggregator and analyser for your DNS traffic, written in **Golang**. 
+
+Aggregate and route all your dns logs (queries and replies) from different sources (dnstap, sniffer, logs, etc.) to multiple destinations.
 
 ![overview](doc/overview.png)
 
@@ -10,13 +12,21 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 ## Features
 
-- Supported collectors:
+- Collectors:
     - [DNStap streams](doc/configuration.md#dns-tap) 
     - [DNS packets sniffer](doc/configuration.md#Dns-Sniffer) (experimental)
     - [Tail on log file](doc/configuration.md#tail)
     - [Protobuf PowerDNS](doc/configuration.md#protobuf-powerdns)
 
-- Supported loggers:
+- Transformers:
+    - [Logs routing](doc/multiplexer.md)
+    - [Queries/Replies JSON encoding](doc/dnsjson.md)
+    - [Text format](doc/configuration.md#custom-text-format)
+    - [DNS filtering](doc/configuration.md#dns-filtering)
+    - [User Privacy](doc/configuration.md#user-privacy)
+    - [Normalize Qname](doc/configuration.md#Qname-lowercase)
+
+- Loggers:
     - [Stdout](doc/configuration.md#stdout)
     - [File](doc/configuration.md#log-file)
     - [DNStap](doc/configuration.md#dnstap-client)
@@ -30,16 +40,10 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [Statsd](doc/configuration.md#statsd-client)
 
 - Other features
-    - [Logs routing](doc/multiplexer.md)
-    - [Queries/Replies JSON encoding](doc/dnsjson.md)
     - [DNS decoder with extended options support](doc/dnsparser.md)
     - [Built-in Grafana dashboards](doc/dashboards.md)
     - [GeoIP support](doc/configuration.md#geoip-support)
-    - [DNS filtering](doc/configuration.md#dns-filtering)
-    - [User Privacy](doc/configuration.md#user-privacy)
-    - [Custom text format](doc/configuration.md#custom-text-format)
     - [DNS caching](doc/configuration.md#DNS-Caching)
-    - [Normalize Qname](doc/configuration.md#Qname-lowercase)
 
 ## Installation
 
