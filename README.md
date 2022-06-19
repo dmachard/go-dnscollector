@@ -1,8 +1,8 @@
-# DNS Logs Aggregator and Analyser 
+# DNS log aggregator and analyzer 
 
 ##  Overview
 
-This `dns collector` acts as a **high speed** aggregator and analyser for your DNS logs, written in **Golang**. 
+This `dns collector` acts as a **high speed** aggregator and analyzer for your DNS logs, written in **Golang**. 
 
 Aggregate and route all your dns logs (queries and replies) from different sources (dnstap, sniffer, logs, etc.) to multiple destinations.
 
