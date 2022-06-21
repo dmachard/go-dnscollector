@@ -1,4 +1,4 @@
-# DNS log aggregator and analyzer 
+# DNS logs aggregator and analyzer 
 
 ##  Overview
 
