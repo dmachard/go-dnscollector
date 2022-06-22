@@ -123,7 +123,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.DnsTap.Operation = "CLIENT_QUERY"
 		}
 
-		if err = decodePayload(&dm, &dnsHeader, d.config); err != nil {
+		if err = dnsutils.DecodePayload(&dm, &dnsHeader, d.config); err != nil {
 			d.LogError("%v - %v", err, dm)
 		}
 

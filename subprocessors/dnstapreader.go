@@ -215,7 +215,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			d.LogInfo("dns parser malformed packet: %s", err)
 		}
 
-		if err = decodePayload(&dm, &dnsHeader, d.config); err != nil {
+		if err = dnsutils.DecodePayload(&dm, &dnsHeader, d.config); err != nil {
 			// decoding error
 			if d.config.Trace.LogMalformed {
 				d.LogError("%v - %v", err, dm)
