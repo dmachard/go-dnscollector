@@ -1,4 +1,4 @@
-package subprocessors
+package collectors
 
 import (
 	"bytes"

@@ -12,7 +12,6 @@ import (
 	"unsafe"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/subprocessors"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -218,7 +217,7 @@ func (c *DnsSniffer) Run() {
 		}
 	}
 
-	dns_subprocessor := subprocessors.NewDnsProcessor(c.config, c.logger, c.name)
+	dns_subprocessor := NewDnsProcessor(c.config, c.logger, c.name)
 	go dns_subprocessor.Run(c.Loggers())
 
 	go func() {

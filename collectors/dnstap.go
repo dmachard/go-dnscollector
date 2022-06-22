@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/subprocessors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 )
@@ -67,7 +66,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	c.LogInfo("%s - new connection\n", peer)
 
 	// start dnstap subprocessor
-	dnstap_subprocessor := subprocessors.NewDnstapProcessor(c.config, c.logger, c.name)
+	dnstap_subprocessor := NewDnstapProcessor(c.config, c.logger, c.name)
 	go dnstap_subprocessor.Run(c.Loggers())
 
 	// frame stream library

@@ -1,4 +1,4 @@
-package subprocessors
+package collectors
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/subprocessors"
 	"github.com/dmachard/go-logger"
 	"github.com/miekg/dns"
 )
@@ -74,10 +75,10 @@ func (d *DnsProcessor) Stop() {
 func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 	// dns cache to compute latency between response and query
-	cache_ttl := NewCacheDnsProcessor(time.Duration(d.config.Subprocessors.Cache.QueryTimeout) * time.Second)
+	cache_ttl := subprocessors.NewCacheDnsProcessor(time.Duration(d.config.Subprocessors.Cache.QueryTimeout) * time.Second)
 
 	// geoip
-	geoip := NewDnsGeoIpProcessor(d.config, d.logger)
+	geoip := subprocessors.NewDnsGeoIpProcessor(d.config, d.logger)
 	if err := geoip.Open(); err != nil {
 		d.LogError("geoip init failed: %v+", err)
 	}
@@ -87,11 +88,11 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	defer geoip.Close()
 
 	// filtering
-	filtering := NewFilteringProcessor(d.config, d.logger, d.name)
+	filtering := subprocessors.NewFilteringProcessor(d.config, d.logger, d.name)
 
 	// user privacy
-	ipPrivacy := NewIpAnonymizerSubprocessor(d.config)
-	qnamePrivacy := NewQnameReducerSubprocessor(d.config)
+	ipPrivacy := subprocessors.NewIpAnonymizerSubprocessor(d.config)
+	qnamePrivacy := subprocessors.NewQnameReducerSubprocessor(d.config)
 
 	// read incoming dns message
 	d.LogInfo("running... waiting incoming dns message")

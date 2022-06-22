@@ -9,7 +9,6 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/loggers"
-	"github.com/dmachard/go-dnscollector/subprocessors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 	"google.golang.org/protobuf/proto"
@@ -38,13 +37,13 @@ func TestDnstapTcpRun(t *testing.T) {
 		frame := &framestream.Frame{}
 
 		// get fake dns question
-		dnsquery, err := subprocessors.GetFakeDns()
+		dnsquery, err := GetFakeDns()
 		if err != nil {
 			t.Fatalf("dns question pack error")
 		}
 
 		// get fake dnstap message
-		dt_query := subprocessors.GetFakeDnstap(dnsquery)
+		dt_query := GetFakeDnstap(dnsquery)
 
 		// serialize to bytes
 		data, err := proto.Marshal(dt_query)
@@ -91,13 +90,13 @@ func TestDnstapUnixRun(t *testing.T) {
 		frame := &framestream.Frame{}
 
 		// get fake dns question
-		dnsquery, err := subprocessors.GetFakeDns()
+		dnsquery, err := GetFakeDns()
 		if err != nil {
 			t.Fatalf("dns question pack error")
 		}
 
 		// get fake dnstap message
-		dt_query := subprocessors.GetFakeDnstap(dnsquery)
+		dt_query := GetFakeDnstap(dnsquery)
 
 		// serialize to bytes
 		data, err := proto.Marshal(dt_query)
