@@ -60,7 +60,7 @@ class ProcessProtocol(asyncio.SubprocessProtocol):
     def pipe_data_received(self, fd, data):
         print(data.decode(), end="")
 
-        if b"collector dnstap - is listening on" in data:
+        if b"dnstap collector - is listening on" in data:
             self.is_listening.set_result(True)
         
         if b"CLIENT_QUERY NOERROR" in data:
