@@ -47,11 +47,11 @@ func (d *DnsProcessor) ReadConfig() {
 }
 
 func (c *DnsProcessor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] processor dns - "+msg, v...)
+	c.logger.Info("["+c.name+"] dns processor - "+msg, v...)
 }
 
 func (c *DnsProcessor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] procesor dns - "+msg, v...)
+	c.logger.Error("["+c.name+"] dns processor - "+msg, v...)
 }
 
 func (d *DnsProcessor) GetChannel() chan dnsutils.DnsMessage {
@@ -75,7 +75,8 @@ func (d *DnsProcessor) Stop() {
 func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 	// dns cache to compute latency between response and query
-	cache_ttl := dnsutils.NewDnsCache(time.Duration(d.config.Subprocessors.Cache.QueryTimeout) * time.Second)
+	cache_ttl := dnsutils.NewDnsCache(time.Duration(d.config.Collectors.DnsSniffer.QueryTimeout) * time.Second)
+	d.LogInfo("dns cached enabled: %t", d.config.Collectors.DnsSniffer.CacheSupport)
 
 	// geoip
 	geoip := subprocessors.NewDnsGeoIpProcessor(d.config, d.logger)
@@ -135,7 +136,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		// compute latency if possible
-		if d.config.Subprocessors.Cache.Enable {
+		if d.config.Collectors.DnsSniffer.CacheSupport {
 			queryport, _ := strconv.Atoi(dm.NetworkInfo.QueryPort)
 			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && dm.DNS.MalformedPacket == 0 {
 				// compute the hash of the query

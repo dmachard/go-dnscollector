@@ -44,13 +44,15 @@ type Config struct {
 			FilePath     string `yaml:"file-path"`
 		} `yaml:"tail"`
 		Dnstap struct {
-			Enable     bool   `yaml:"enable"`
-			ListenIP   string `yaml:"listen-ip"`
-			ListenPort int    `yaml:"listen-port"`
-			SockPath   string `yaml:"sock-path"`
-			TlsSupport bool   `yaml:"tls-support"`
-			CertFile   string `yaml:"cert-file"`
-			KeyFile    string `yaml:"key-file"`
+			Enable       bool   `yaml:"enable"`
+			ListenIP     string `yaml:"listen-ip"`
+			ListenPort   int    `yaml:"listen-port"`
+			SockPath     string `yaml:"sock-path"`
+			TlsSupport   bool   `yaml:"tls-support"`
+			CertFile     string `yaml:"cert-file"`
+			KeyFile      string `yaml:"key-file"`
+			CacheSupport bool   `yaml:"cache-support"`
+			QueryTimeout int    `yaml:"query-timeout"`
 		} `yaml:"dnstap"`
 		DnsSniffer struct {
 			Enable            bool   `yaml:"enable"`
@@ -58,6 +60,8 @@ type Config struct {
 			Device            string `yaml:"device"`
 			CaptureDnsQueries bool   `yaml:"capture-dns-queries"`
 			CaptureDnsReplies bool   `yaml:"capture-dns-replies"`
+			CacheSupport      bool   `yaml:"cache-support"`
+			QueryTimeout      int    `yaml:"query-timeout"`
 		} `yaml:"dns-sniffer"`
 		PowerDNS struct {
 			Enable     bool   `yaml:"enable"`
@@ -83,13 +87,9 @@ type Config struct {
 			AnonymizeIP   bool `yaml:"anonymize-ip"`
 			MinimazeQname bool `yaml:"minimaze-qname"`
 		} `yaml:"user-privacy"`
-		QnameLowerCase bool `yaml:"qname-lowercase"`
-		Cache          struct {
-			Enable       bool `yaml:"enable"`
-			QueryTimeout int  `yaml:"query-timeout"`
-		} `yaml:"cache"`
-		ServerId  string `yaml:"server-id"`
-		Filtering struct {
+		QnameLowerCase bool   `yaml:"qname-lowercase"`
+		ServerId       string `yaml:"server-id"`
+		Filtering      struct {
 			DropFqdnFile    string   `yaml:"drop-fqdn-file"`
 			DropDomainFile  string   `yaml:"drop-domain-file"`
 			DropQueryIpFile string   `yaml:"drop-queryip-file"`
@@ -271,12 +271,16 @@ func (c *Config) SetDefault() {
 	c.Collectors.Dnstap.TlsSupport = false
 	c.Collectors.Dnstap.CertFile = ""
 	c.Collectors.Dnstap.KeyFile = ""
+	c.Collectors.Dnstap.QueryTimeout = 5
+	c.Collectors.Dnstap.CacheSupport = false
 
 	c.Collectors.DnsSniffer.Enable = false
 	c.Collectors.DnsSniffer.Port = 53
 	c.Collectors.DnsSniffer.Device = ""
 	c.Collectors.DnsSniffer.CaptureDnsQueries = true
 	c.Collectors.DnsSniffer.CaptureDnsReplies = true
+	c.Collectors.DnsSniffer.QueryTimeout = 5
+	c.Collectors.DnsSniffer.CacheSupport = true
 
 	c.Collectors.PowerDNS.Enable = false
 	c.Collectors.PowerDNS.ListenIP = "0.0.0.0"
@@ -297,9 +301,6 @@ func (c *Config) SetDefault() {
 	c.Subprocessors.UserPrivacy.MinimazeQname = false
 
 	c.Subprocessors.QnameLowerCase = true
-
-	c.Subprocessors.Cache.QueryTimeout = 5
-	c.Subprocessors.Cache.Enable = true
 
 	c.Subprocessors.ServerId = ""
 

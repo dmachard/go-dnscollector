@@ -47,6 +47,11 @@ multiplexer:
 #   cert-file: ""
 #   # private key server file
 #   key-file: ""
+#   # The cache is used to compute latency between replies and queries 
+#   # This cache can be enabled if your dns server doesn't add the latency information
+#   cache-support: false
+#   # Ttl in second, max time to keep the query record in memory cache
+#   query-timeout: 5
 
 # # dns traffic
 # dns-sniffer:
@@ -58,6 +63,10 @@ multiplexer:
 #   capture-dns-queries: true
 #   # capture dns replies
 #   capture-dns-replies: true
+#   # The cache is used to compute latency between replies and queries
+#   cache-support: true
+#   # Ttl in second, max time to keep the query record in memory cache
+#   query-timeout: 5
 
 # # read text file
 # tail:
@@ -369,15 +378,6 @@ multiplexer:
 #   # Convert all domain to lowercase
 #   # Wwww.GooGlE.com will be equal to www.google.com
 #   qname-lowercase: true
-
-#   # The cache is used to compute latency between replies and queries 
-#   # This cache can be disabled if your dns server already add the latency in the dns packet
-#   # Disable this feature to improve performance
-#   cache:
-#     # enable or disable
-#     enable: true
-#     # Ttl in second, max time to keep the query record in memory
-#     query-timeout: 5
 
 #   # Server identity, if empty  the hostname is used
 #   # This settings is used in dnstap logger as dnstap-identity

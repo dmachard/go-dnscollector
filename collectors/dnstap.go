@@ -25,7 +25,7 @@ type Dnstap struct {
 }
 
 func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *Dnstap {
-	logger.Info("[%s] collector dnstap - enabled", name)
+	logger.Info("[%s] dnstap collector - enabled", name)
 	s := &Dnstap{
 		done:    make(chan bool),
 		config:  config,
@@ -50,11 +50,11 @@ func (c *Dnstap) ReadConfig() {
 }
 
 func (c *Dnstap) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector dnstap - "+msg, v...)
+	c.logger.Info("["+c.name+"] dnstap collector - "+msg, v...)
 }
 
 func (c *Dnstap) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector dnstap - "+msg, v...)
+	c.logger.Error("["+c.name+"] dnstap collector - "+msg, v...)
 }
 
 func (c *Dnstap) HandleConn(conn net.Conn) {

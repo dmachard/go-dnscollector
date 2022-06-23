@@ -113,7 +113,7 @@ type DnsSniffer struct {
 }
 
 func NewDnsSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *DnsSniffer {
-	logger.Info("[%s] collector dns sniffer - enabled", name)
+	logger.Info("[%s] sniffer collector - enabled", name)
 	s := &DnsSniffer{
 		done:    make(chan bool),
 		exit:    make(chan bool),
@@ -127,11 +127,11 @@ func NewDnsSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *l
 }
 
 func (c *DnsSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector dns sniffer - "+msg, v...)
+	c.logger.Info("["+c.name+"] sniffer collector - "+msg, v...)
 }
 
 func (c *DnsSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector dns sniffer - "+msg, v...)
+	c.logger.Error("["+c.name+"] sniffer collector - "+msg, v...)
 }
 
 func (c *DnsSniffer) Loggers() []chan dnsutils.DnsMessage {

@@ -29,7 +29,6 @@ The configuration is done in one yaml file. For the complete configuration, see 
   - [Qname lowercase](#Qname-lowercase)
   - [User privacy](#user-privacy)
   - [GeoIP Support](#GeoIP-Support)
-  - [DNS Caching](#DNS-Caching)
   - [DNS filtering](#dns-filtering)
   - [Custom text format](#Custom-Text-Format)
   - [Statistics](#Statistics)
@@ -92,7 +91,8 @@ multiplexer:
       ...
   routes: ...
 ```
-  
+
+More details [here](/doc/multiplexer.md).
 
 ### Collectors
 
@@ -109,6 +109,8 @@ Options:
 - `tls-support:`: (boolean) to enable, set to true
 - `cert-file`: (string) certificate server file
 - `key-file`: (string) private key server file
+- `cache-support`: (boolean) disable or enable the cache dns, this feature can be enabled if your dns server doesn't add the latency
+- `query-timeout`: (integer) in second, max time to keep the query record in memory
 
 ```yaml
 dnstap:
@@ -118,6 +120,8 @@ dnstap:
   tls-support: false
   cert-file: ""
   key-file: ""
+  cache-support: false
+  query-timeout: 5.0
 ```
 
 #### DNS sniffer
@@ -137,6 +141,8 @@ Options:
 - `device`: (string) if "" bind on all interfaces
 - `capture-dns-queries`: (boolean) capture dns queries
 - `capture-dns-replies`: (boolean) capture dns replies
+- `cache-support`: (boolean) disable or enable the cache dns to compute latency between queries and replies
+- `query-timeout`: (integer) in second, max time to keep the query record in memory
 
 ```yaml
 dns-sniffer:
@@ -144,6 +150,8 @@ dns-sniffer:
   device: wlp2s0
   capture-dns-queries: true
   capture-dns-replies: true
+  cache-support: true
+  query-timeout: 5.0
 ```
 
 #### Tail
@@ -722,23 +730,6 @@ Example:
   },
   ...
 }
-```
-
-### DNS Caching
-
-The caching feature is used to compute latency between replies and queries.
-This cache can be disabled if your dns server already added the latency in the dnstap packet,
-Disable this feature to improve performance.
-
-Options:
-- `enable`: (boolean) disable or enable the feature
-- `query-timeout`: (integer) in second, max time to keep the query record in memory
-
-```yaml
-subprocessors:
-  cache:
-    enable: true
-    query-timeout: 10
 ```
 
 ### DNS filtering

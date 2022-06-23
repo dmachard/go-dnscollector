@@ -82,7 +82,7 @@ type DnstapProcessor struct {
 }
 
 func NewDnstapProcessor(config *dnsutils.Config, logger *logger.Logger, name string) DnstapProcessor {
-	logger.Info("dnstap processor - initialization...")
+	logger.Info("[%s] dnstap processor - initialization...", name)
 	d := DnstapProcessor{
 		done:     make(chan bool),
 		recvFrom: make(chan []byte, 512),
@@ -101,11 +101,11 @@ func (d *DnstapProcessor) ReadConfig() {
 }
 
 func (c *DnstapProcessor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] processor dnstap parser - "+msg, v...)
+	c.logger.Info("["+c.name+"] dnstap processor - "+msg, v...)
 }
 
 func (c *DnstapProcessor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] processor dnstap parser - "+msg, v...)
+	c.logger.Error("["+c.name+"] dnstap processor - "+msg, v...)
 }
 
 func (d *DnstapProcessor) GetChannel() chan []byte {
@@ -124,7 +124,8 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	dt := &dnstap.Dnstap{}
 
 	// dns cache to compute latency between response and query
-	cache_ttl := dnsutils.NewDnsCache(time.Duration(d.config.Subprocessors.Cache.QueryTimeout) * time.Second)
+	cache_ttl := dnsutils.NewDnsCache(time.Duration(d.config.Collectors.Dnstap.QueryTimeout) * time.Second)
+	d.LogInfo("dns cached enabled: %t", d.config.Collectors.Dnstap.CacheSupport)
 
 	// geoip
 	geoip := subprocessors.NewDnsGeoIpProcessor(d.config, d.logger)
@@ -225,7 +226,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		// compute latency if possible
-		if d.config.Subprocessors.Cache.Enable {
+		if d.config.Collectors.Dnstap.CacheSupport {
 			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && dm.DNS.MalformedPacket == 0 {
 				// compute the hash of the query
 				hash_data := []string{dm.NetworkInfo.QueryIp, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.DNS.Id)}

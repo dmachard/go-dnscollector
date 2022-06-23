@@ -43,7 +43,6 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [DNS decoder with extended options support](doc/dnsparser.md)
     - [Built-in Grafana dashboards](doc/dashboards.md)
     - [GeoIP support](doc/configuration.md#geoip-support)
-    - [DNS caching](doc/configuration.md#DNS-Caching)
 
 ## Installation
 

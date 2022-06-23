@@ -22,7 +22,7 @@ type ProtobufPowerDNS struct {
 }
 
 func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *ProtobufPowerDNS {
-	logger.Info("[%s] collector PowerDNS protobuf - enabled", name)
+	logger.Info("[%s] pdns collector - enabled", name)
 	s := &ProtobufPowerDNS{
 		done:    make(chan bool),
 		config:  config,
@@ -46,11 +46,11 @@ func (c *ProtobufPowerDNS) ReadConfig() {
 }
 
 func (c *ProtobufPowerDNS) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector powerdns protobuf - "+msg, v...)
+	c.logger.Info("["+c.name+"] pdns collector - "+msg, v...)
 }
 
 func (c *ProtobufPowerDNS) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector powerdns protobuf - "+msg, v...)
+	c.logger.Error("["+c.name+"] pdns collector - "+msg, v...)
 }
 
 func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
