@@ -1,4 +1,4 @@
-package subprocessors
+package collectors
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/subprocessors"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
 	"golang.org/x/net/publicsuffix"
@@ -66,12 +67,12 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
 
 	// filtering and user privacy
-	filtering := NewFilteringProcessor(d.config, d.logger, d.name)
-	ipPrivacy := NewIpAnonymizerSubprocessor(d.config)
-	qnamePrivacy := NewQnameReducerSubprocessor(d.config)
+	filtering := subprocessors.NewFilteringProcessor(d.config, d.logger, d.name)
+	ipPrivacy := subprocessors.NewIpAnonymizerSubprocessor(d.config)
+	qnamePrivacy := subprocessors.NewQnameReducerSubprocessor(d.config)
 
 	// geoip
-	geoip := NewDnsGeoIpProcessor(d.config, d.logger)
+	geoip := subprocessors.NewDnsGeoIpProcessor(d.config, d.logger)
 	if err := geoip.Open(); err != nil {
 		d.LogError("geoip init failed: %v+", err)
 	}

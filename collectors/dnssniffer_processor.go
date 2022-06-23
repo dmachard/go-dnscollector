@@ -75,7 +75,7 @@ func (d *DnsProcessor) Stop() {
 func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 	// dns cache to compute latency between response and query
-	cache_ttl := subprocessors.NewCacheDnsProcessor(time.Duration(d.config.Subprocessors.Cache.QueryTimeout) * time.Second)
+	cache_ttl := dnsutils.NewDnsCache(time.Duration(d.config.Subprocessors.Cache.QueryTimeout) * time.Second)
 
 	// geoip
 	geoip := subprocessors.NewDnsGeoIpProcessor(d.config, d.logger)

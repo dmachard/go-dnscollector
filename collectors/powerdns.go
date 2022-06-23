@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/subprocessors"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
 )
@@ -63,7 +62,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	c.LogInfo("%s - new connection\n", peer)
 
 	// start protobuf subprocessor
-	pdns_subprocessor := subprocessors.NewPdnsProcessor(c.config, c.logger, c.name)
+	pdns_subprocessor := NewPdnsProcessor(c.config, c.logger, c.name)
 	go pdns_subprocessor.Run(c.Loggers())
 
 	r := bufio.NewReader(conn)

@@ -1,4 +1,4 @@
-package subprocessors
+package dnsutils
 
 import (
 	"runtime"
@@ -9,7 +9,7 @@ import (
 
 func TestMapttl(t *testing.T) {
 	// init map
-	mapttl := NewCacheDnsProcessor(2 * time.Second)
+	mapttl := NewDnsCache(2 * time.Second)
 
 	// Set a new key/value
 	mapttl.Set(uint64(1), float64(0))
@@ -23,7 +23,7 @@ func TestMapttl(t *testing.T) {
 
 func TestMapttlExpire(t *testing.T) {
 	// ini map
-	mapttl := NewCacheDnsProcessor(1 * time.Second)
+	mapttl := NewDnsCache(1 * time.Second)
 
 	// Set a new key/value
 	mapttl.Set(uint64(1), float64(0))
@@ -39,7 +39,7 @@ func TestMapttlExpire(t *testing.T) {
 }
 
 func BenchmarkMapSet(b *testing.B) {
-	mapexpire := NewCacheDnsProcessor(10 * time.Second)
+	mapexpire := NewDnsCache(10 * time.Second)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -49,7 +49,7 @@ func BenchmarkMapSet(b *testing.B) {
 
 func BenchmarkMapDelete(b *testing.B) {
 
-	mapexpire := NewCacheDnsProcessor(60 * time.Second)
+	mapexpire := NewDnsCache(60 * time.Second)
 
 	for i := 0; i < b.N; i++ {
 		mapexpire.Set(uint64(i), float64(i))
@@ -63,7 +63,7 @@ func BenchmarkMapDelete(b *testing.B) {
 }
 
 func BenchmarkMapGet(b *testing.B) {
-	mapexpire := NewCacheDnsProcessor(60 * time.Second)
+	mapexpire := NewDnsCache(60 * time.Second)
 
 	for i := 0; i < b.N; i++ {
 		mapexpire.Set(uint64(i), float64(i))
@@ -81,7 +81,7 @@ func BenchmarkMapGet(b *testing.B) {
 }
 
 func BenchmarkMapConcurrentGet(b *testing.B) {
-	mapexpire := NewCacheDnsProcessor(60 * time.Second)
+	mapexpire := NewDnsCache(60 * time.Second)
 	for i := 0; i < b.N; i++ {
 		mapexpire.Set(uint64(i), float64(i))
 	}

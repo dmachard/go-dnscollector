@@ -124,7 +124,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	dt := &dnstap.Dnstap{}
 
 	// dns cache to compute latency between response and query
-	cache_ttl := subprocessors.NewCacheDnsProcessor(time.Duration(d.config.Subprocessors.Cache.QueryTimeout) * time.Second)
+	cache_ttl := dnsutils.NewDnsCache(time.Duration(d.config.Subprocessors.Cache.QueryTimeout) * time.Second)
 
 	// geoip
 	geoip := subprocessors.NewDnsGeoIpProcessor(d.config, d.logger)
