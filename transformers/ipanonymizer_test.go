@@ -1,4 +1,4 @@
-package subprocessors
+package transformers
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 func TestAnonymizeIPv4(t *testing.T) {
 	// enable feature
 	config := dnsutils.GetFakeConfig()
-	config.Subprocessors.UserPrivacy.AnonymizeIP = true
+	config.Transformers.UserPrivacy.AnonymizeIP = true
 
 	// init the processor
 	anonIp := NewIpAnonymizerSubprocessor(config)
@@ -28,7 +28,7 @@ func TestAnonymizeIPv4(t *testing.T) {
 func TestAnonymizeIPv6(t *testing.T) {
 	// enable feature
 	config := dnsutils.GetFakeConfig()
-	config.Subprocessors.UserPrivacy.AnonymizeIP = true
+	config.Transformers.UserPrivacy.AnonymizeIP = true
 
 	// init the processor
 	anonIp := NewIpAnonymizerSubprocessor(config)

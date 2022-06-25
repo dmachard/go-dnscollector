@@ -47,26 +47,16 @@ func main() {
 	}
 
 	// redirect app logs to file ?
-	if len(config.Trace.Filename) > 0 {
+	if len(config.Global.Trace.Filename) > 0 {
 		logger.SetOutput(&lumberjack.Logger{
-			Filename:   config.Trace.Filename,
-			MaxSize:    config.Trace.MaxSize,
-			MaxBackups: config.Trace.MaxBackups,
+			Filename:   config.Global.Trace.Filename,
+			MaxSize:    config.Global.Trace.MaxSize,
+			MaxBackups: config.Global.Trace.MaxBackups,
 		})
 	}
 
 	// enable the verbose mode ?
-	logger.SetVerbose(config.Trace.Verbose)
-
-	// get hostname
-	if config.Subprocessors.ServerId == "" {
-		hostname, err := os.Hostname()
-		if err != nil {
-			logger.Error("failed to get hostname: %v\n", err)
-		} else {
-			config.Subprocessors.ServerId = hostname
-		}
-	}
+	logger.SetVerbose(config.Global.Trace.Verbose)
 
 	logger.Info("main - version %s", Version)
 	logger.Info("main - config loaded...")
@@ -98,8 +88,7 @@ func main() {
 					subcfg.SetDefault()
 
 					// copy global config
-					subcfg.Trace = config.Trace
-					subcfg.Subprocessors = config.Subprocessors
+					subcfg.Global = config.Global
 
 					yamlcfg, _ := yaml.Marshal(cfg)
 					if err := yaml.Unmarshal(yamlcfg, subcfg); err != nil {
@@ -156,6 +145,7 @@ func main() {
 					// load config
 					cfg := make(map[string]interface{})
 					cfg["collectors"] = mc.Params
+					cfg["subprocessors"] = make(map[string]interface{})
 					for _, p := range mc.Params {
 						p.(map[string]interface{})["enable"] = true
 					}
@@ -164,14 +154,23 @@ func main() {
 					subcfg := &dnsutils.Config{}
 					subcfg.SetDefault()
 
+					// add transformer
+					for _, transform := range routes.Transforms {
+						for _, tfs := range config.Multiplexer.Transformers {
+							if tfs.Name == transform {
+								for k, v := range tfs.Params {
+									cfg["subprocessors"].(map[string]interface{})[k] = v
+								}
+							}
+						}
+					}
+
 					// copy global config
-					subcfg.Trace = config.Trace
-					subcfg.Subprocessors = config.Subprocessors
+					subcfg.Global = config.Global
 
 					yamlcfg, _ := yaml.Marshal(cfg)
 					if err := yaml.Unmarshal(yamlcfg, subcfg); err != nil {
-						fmt.Println(err)
-						break
+						panic(fmt.Sprintf("main - invalid subconfig error:  %v", err))
 					}
 
 					if subcfg.Collectors.Dnstap.Enable {
@@ -214,7 +213,7 @@ func main() {
 				}
 
 				// enable the verbose mode ?
-				logger.SetVerbose(config.Trace.Verbose)
+				logger.SetVerbose(config.Global.Trace.Verbose)
 
 			case <-sigTerm:
 				logger.Info("main - system interrupt, exiting...")

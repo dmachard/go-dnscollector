@@ -9,9 +9,10 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/subprocessors"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-logger"
+	"golang.org/x/net/publicsuffix"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -128,7 +129,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	d.LogInfo("dns cached enabled: %t", d.config.Collectors.Dnstap.CacheSupport)
 
 	// geoip
-	geoip := subprocessors.NewDnsGeoIpProcessor(d.config, d.logger)
+	geoip := transformers.NewDnsGeoIpProcessor(d.config, d.logger)
 	if err := geoip.Open(); err != nil {
 		d.LogError("geoip init failed: %v+", err)
 	}
@@ -138,11 +139,11 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	defer geoip.Close()
 
 	// filtering
-	filtering := subprocessors.NewFilteringProcessor(d.config, d.logger, d.name)
+	filtering := transformers.NewFilteringProcessor(d.config, d.logger, d.name)
 
 	// user privacy
-	ipPrivacy := subprocessors.NewIpAnonymizerSubprocessor(d.config)
-	qnamePrivacy := subprocessors.NewQnameReducerSubprocessor(d.config)
+	ipPrivacy := transformers.NewIpAnonymizerSubprocessor(d.config)
+	qnamePrivacy := transformers.NewQnameReducerSubprocessor(d.config)
 
 	// read incoming dns message
 	d.LogInfo("running... waiting incoming dns message")
@@ -219,7 +220,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		if err = dnsutils.DecodePayload(&dm, &dnsHeader, d.config); err != nil {
 			// decoding error
-			if d.config.Trace.LogMalformed {
+			if d.config.Global.Trace.LogMalformed {
 				d.LogError("%v - %v", err, dm)
 				d.LogError("dump invalid dns payload: %v", dm.DNS.Payload)
 			}
@@ -247,6 +248,18 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// convert latency to human
 		dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
+
+		// normalize qname ?
+		if d.config.Transformers.Normalize.QnameLowerCase {
+			dm.DNS.Qname = strings.ToLower(dm.DNS.Qname)
+		}
+
+		// Public suffix
+		ps, _ := publicsuffix.PublicSuffix(dm.DNS.Qname)
+		dm.DNS.QnamePublicSuffix = ps
+		if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
+			dm.DNS.QnameEffectiveTLDPlusOne = etpo
+		}
 
 		// qname privacy
 		if qnamePrivacy.IsEnabled() {
@@ -277,12 +290,10 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		// quiet text for dnstap operation ?
-		if d.config.Subprocessors.QuietText.Dnstap {
+		if d.config.Collectors.Dnstap.QuietText {
 			if v, found := DnstapMessage[dm.DnsTap.Operation]; found {
 				dm.DnsTap.Operation = v
 			}
-		}
-		if d.config.Subprocessors.QuietText.Dns {
 			if v, found := DnsQr[dm.DNS.Type]; found {
 				dm.DNS.Type = v
 			}

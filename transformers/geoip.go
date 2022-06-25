@@ -1,4 +1,4 @@
-package subprocessors
+package transformers
 
 import (
 	"net"
@@ -58,8 +58,8 @@ func (p *GeoIpProcessor) LogError(msg string, v ...interface{}) {
 }
 
 func (p *GeoIpProcessor) Open() (err error) {
-	if len(p.config.Subprocessors.GeoIP.DbCountryFile) > 0 {
-		p.dbCountry, err = maxminddb.Open(p.config.Subprocessors.GeoIP.DbCountryFile)
+	if len(p.config.Transformers.GeoIP.DbCountryFile) > 0 {
+		p.dbCountry, err = maxminddb.Open(p.config.Transformers.GeoIP.DbCountryFile)
 		if err != nil {
 			p.enabled = false
 			return
@@ -68,8 +68,8 @@ func (p *GeoIpProcessor) Open() (err error) {
 		p.LogInfo("country database loaded (%d records)", p.dbCountry.Metadata.NodeCount)
 	}
 
-	if len(p.config.Subprocessors.GeoIP.DbCityFile) > 0 {
-		p.dbCity, err = maxminddb.Open(p.config.Subprocessors.GeoIP.DbCityFile)
+	if len(p.config.Transformers.GeoIP.DbCityFile) > 0 {
+		p.dbCity, err = maxminddb.Open(p.config.Transformers.GeoIP.DbCityFile)
 		if err != nil {
 			p.enabled = false
 			return
@@ -78,8 +78,8 @@ func (p *GeoIpProcessor) Open() (err error) {
 		p.LogInfo("city database loaded (%d records)", p.dbCity.Metadata.NodeCount)
 	}
 
-	if len(p.config.Subprocessors.GeoIP.DbAsnFile) > 0 {
-		p.dbAsn, err = maxminddb.Open(p.config.Subprocessors.GeoIP.DbAsnFile)
+	if len(p.config.Transformers.GeoIP.DbAsnFile) > 0 {
+		p.dbAsn, err = maxminddb.Open(p.config.Transformers.GeoIP.DbAsnFile)
 		if err != nil {
 			p.enabled = false
 			return

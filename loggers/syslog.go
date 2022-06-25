@@ -94,7 +94,7 @@ func (c *Syslog) ReadConfig() {
 	if len(c.config.Loggers.Syslog.TextFormat) > 0 {
 		c.textFormat = strings.Fields(c.config.Loggers.Syslog.TextFormat)
 	} else {
-		c.textFormat = strings.Fields(c.config.Subprocessors.TextFormat)
+		c.textFormat = strings.Fields(c.config.Global.TextFormat)
 	}
 }
 

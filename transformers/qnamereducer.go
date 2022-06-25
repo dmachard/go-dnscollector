@@ -1,4 +1,4 @@
-package subprocessors
+package transformers
 
 import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -21,7 +21,7 @@ func NewQnameReducerSubprocessor(config *dnsutils.Config) QnameReducer {
 }
 
 func (s *QnameReducer) ReadConfig() {
-	s.enabled = s.config.Subprocessors.UserPrivacy.MinimazeQname
+	s.enabled = s.config.Transformers.UserPrivacy.MinimazeQname
 }
 
 func (s *QnameReducer) IsEnabled() bool {

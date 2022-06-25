@@ -144,7 +144,14 @@ func (c *DnsSniffer) Loggers() []chan dnsutils.DnsMessage {
 
 func (c *DnsSniffer) ReadConfig() {
 	c.port = c.config.Collectors.DnsSniffer.Port
-	c.identity = c.config.Subprocessors.ServerId
+
+	hostname, err := os.Hostname()
+	if err == nil {
+		c.identity = hostname
+	} else {
+		c.identity = "undefined"
+	}
+
 	c.capturequeries = c.config.Collectors.DnsSniffer.CaptureDnsQueries
 	c.capturereplies = c.config.Collectors.DnsSniffer.CaptureDnsReplies
 	c.device = c.config.Collectors.DnsSniffer.Device

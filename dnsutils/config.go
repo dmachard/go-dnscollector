@@ -16,24 +16,33 @@ func IsValidMode(mode string) bool {
 	return false
 }
 
+type MultiplexTransformers struct {
+	Name   string
+	Params map[string]interface{} `yaml:",inline"`
+}
+
 type MultiplexInOut struct {
 	Name   string
 	Params map[string]interface{} `yaml:",inline"`
 }
 
 type MultiplexRoutes struct {
-	Src []string `yaml:"from,flow"`
-	Dst []string `yaml:"to,flow"`
+	Src        []string `yaml:"from,flow"`
+	Transforms []string `yaml:"transforms,flow"`
+	Dst        []string `yaml:"to,flow"`
 }
 
 type Config struct {
-	Trace struct {
-		Verbose      bool   `yaml:"verbose"`
-		LogMalformed bool   `yaml:"log-malformed"`
-		Filename     string `yaml:"filename"`
-		MaxSize      int    `yaml:"max-size"`
-		MaxBackups   int    `yaml:"max-backups"`
-	} `yaml:"trace"`
+	Global struct {
+		TextFormat string `yaml:"text-format"`
+		Trace      struct {
+			Verbose      bool   `yaml:"verbose"`
+			LogMalformed bool   `yaml:"log-malformed"`
+			Filename     string `yaml:"filename"`
+			MaxSize      int    `yaml:"max-size"`
+			MaxBackups   int    `yaml:"max-backups"`
+		} `yaml:"trace"`
+	} `yaml:"global"`
 
 	Collectors struct {
 		Tail struct {
@@ -53,6 +62,7 @@ type Config struct {
 			KeyFile      string `yaml:"key-file"`
 			CacheSupport bool   `yaml:"cache-support"`
 			QueryTimeout int    `yaml:"query-timeout"`
+			QuietText    bool   `yaml:"quiet-text"`
 		} `yaml:"dnstap"`
 		DnsSniffer struct {
 			Enable            bool   `yaml:"enable"`
@@ -70,26 +80,15 @@ type Config struct {
 		} `yaml:"powerdns"`
 	} `yaml:"collectors"`
 
-	Subprocessors struct {
-		QuietText struct {
-			Dnstap bool `yaml:"dnstap"`
-			Dns    bool `yaml:"dns"`
-		} `yaml:"quiet-text"`
-		Statistics struct {
-			TopMaxItems        int      `yaml:"top-max-items"`
-			ThresholdQnameLen  int      `yaml:"threshold-qname-len"`
-			ThresholdPacketLen int      `yaml:"threshold-packet-len"`
-			ThresholdSlow      float64  `yaml:"threshold-slow"`
-			CommonQtypes       []string `yaml:"common-qtypes,flow"`
-			PromPrefix         string   `yaml:"prometheus-prefix"`
-		} `yaml:"statistics"`
+	Transformers struct {
 		UserPrivacy struct {
 			AnonymizeIP   bool `yaml:"anonymize-ip"`
 			MinimazeQname bool `yaml:"minimaze-qname"`
 		} `yaml:"user-privacy"`
-		QnameLowerCase bool   `yaml:"qname-lowercase"`
-		ServerId       string `yaml:"server-id"`
-		Filtering      struct {
+		Normalize struct {
+			QnameLowerCase bool `yaml:"lowercase-qname"`
+		} `yaml:"normalize"`
+		Filtering struct {
 			DropFqdnFile    string   `yaml:"drop-fqdn-file"`
 			DropDomainFile  string   `yaml:"drop-domain-file"`
 			DropQueryIpFile string   `yaml:"drop-queryip-file"`
@@ -103,8 +102,7 @@ type Config struct {
 			DbCityFile    string `yaml:"mmdb-city-file"`
 			DbAsnFile     string `yaml:"mmdb-asn-file"`
 		} `yaml:"geoip"`
-		TextFormat string `yaml:"text-format"`
-	} `yaml:"subprocessors"`
+	} `yaml:"transformers"`
 
 	Loggers struct {
 		Stdout struct {
@@ -124,14 +122,20 @@ type Config struct {
 			PromPrefix     string `yaml:"prometheus-prefix"`
 		} `yaml:"prometheus"`
 		WebServer struct {
-			Enable         bool   `yaml:"enable"`
-			ListenIP       string `yaml:"listen-ip"`
-			ListenPort     int    `yaml:"listen-port"`
-			BasicAuthLogin string `yaml:"basic-auth-login"`
-			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
-			TlsSupport     bool   `yaml:"tls-support"`
-			CertFile       string `yaml:"cert-file"`
-			KeyFile        string `yaml:"key-file"`
+			Enable                  bool     `yaml:"enable"`
+			ListenIP                string   `yaml:"listen-ip"`
+			ListenPort              int      `yaml:"listen-port"`
+			BasicAuthLogin          string   `yaml:"basic-auth-login"`
+			BasicAuthPwd            string   `yaml:"basic-auth-pwd"`
+			TlsSupport              bool     `yaml:"tls-support"`
+			CertFile                string   `yaml:"cert-file"`
+			KeyFile                 string   `yaml:"key-file"`
+			PromPrefix              string   `yaml:"prometheus-prefix"`
+			StatsTopMaxItems        int      `yaml:"top-max-items"`
+			StatsThresholdQnameLen  int      `yaml:"threshold-qname-len"`
+			StatsThresholdPacketLen int      `yaml:"threshold-packet-len"`
+			StatsThresholdSlow      float64  `yaml:"threshold-slow"`
+			StatsCommonQtypes       []string `yaml:"common-qtypes,flow"`
 		} `yaml:"webserver"`
 		LogFile struct {
 			Enable              bool   `yaml:"enable"`
@@ -155,6 +159,7 @@ type Config struct {
 			RetryInterval int    `yaml:"retry-interval"`
 			TlsSupport    bool   `yaml:"tls-support"`
 			TlsInsecure   bool   `yaml:"tls-insecure"`
+			ServerId      string `yaml:"server-id"`
 		} `yaml:"dnstap"`
 		TcpClient struct {
 			Enable        bool   `yaml:"enable"`
@@ -238,19 +243,23 @@ type Config struct {
 	} `yaml:"loggers"`
 
 	Multiplexer struct {
-		Collectors []MultiplexInOut  `yaml:"collectors"`
-		Loggers    []MultiplexInOut  `yaml:"loggers"`
-		Routes     []MultiplexRoutes `yaml:"routes"`
+		Collectors   []MultiplexInOut        `yaml:"collectors"`
+		Transformers []MultiplexTransformers `yaml:"transformers"`
+		Loggers      []MultiplexInOut        `yaml:"loggers"`
+		Routes       []MultiplexRoutes       `yaml:"routes"`
 	} `yaml:"multiplexer"`
 }
 
 func (c *Config) SetDefault() {
 
-	c.Trace.Verbose = false
-	c.Trace.LogMalformed = false
-	c.Trace.Filename = ""
-	c.Trace.MaxSize = 10
-	c.Trace.MaxBackups = 10
+	// global config
+	c.Global.TextFormat = "timestamp identity operation rcode queryip queryport family protocol length qname qtype latency"
+
+	c.Global.Trace.Verbose = false
+	c.Global.Trace.LogMalformed = false
+	c.Global.Trace.Filename = ""
+	c.Global.Trace.MaxSize = 10
+	c.Global.Trace.MaxBackups = 10
 
 	// multiplexer
 	c.Multiplexer.Collectors = []MultiplexInOut{}
@@ -273,6 +282,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.Dnstap.KeyFile = ""
 	c.Collectors.Dnstap.QueryTimeout = 5
 	c.Collectors.Dnstap.CacheSupport = false
+	c.Collectors.Dnstap.QuietText = false
 
 	c.Collectors.DnsSniffer.Enable = false
 	c.Collectors.DnsSniffer.Port = 53
@@ -286,35 +296,22 @@ func (c *Config) SetDefault() {
 	c.Collectors.PowerDNS.ListenIP = "0.0.0.0"
 	c.Collectors.PowerDNS.ListenPort = 6001
 
-	// Subprocessors
-	c.Subprocessors.QuietText.Dnstap = false
-	c.Subprocessors.QuietText.Dns = false
+	// Transformers
+	c.Transformers.UserPrivacy.AnonymizeIP = false
+	c.Transformers.UserPrivacy.MinimazeQname = false
 
-	c.Subprocessors.Statistics.TopMaxItems = 100
-	c.Subprocessors.Statistics.ThresholdQnameLen = 80
-	c.Subprocessors.Statistics.ThresholdPacketLen = 1000
-	c.Subprocessors.Statistics.ThresholdSlow = 0.5
-	c.Subprocessors.Statistics.CommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS"}
-	c.Subprocessors.Statistics.PromPrefix = "dnscollector"
+	c.Transformers.Normalize.QnameLowerCase = false
 
-	c.Subprocessors.UserPrivacy.AnonymizeIP = false
-	c.Subprocessors.UserPrivacy.MinimazeQname = false
+	c.Transformers.Filtering.DropFqdnFile = ""
+	c.Transformers.Filtering.DropDomainFile = ""
+	c.Transformers.Filtering.DropQueryIpFile = ""
+	c.Transformers.Filtering.DropRcodes = []string{}
+	c.Transformers.Filtering.LogQueries = true
+	c.Transformers.Filtering.LogReplies = true
 
-	c.Subprocessors.QnameLowerCase = true
-
-	c.Subprocessors.ServerId = ""
-
-	c.Subprocessors.Filtering.DropFqdnFile = ""
-	c.Subprocessors.Filtering.DropDomainFile = ""
-	c.Subprocessors.Filtering.DropQueryIpFile = ""
-	c.Subprocessors.Filtering.DropRcodes = []string{}
-	c.Subprocessors.Filtering.LogQueries = true
-	c.Subprocessors.Filtering.LogReplies = true
-
-	c.Subprocessors.GeoIP.DbCountryFile = ""
-	c.Subprocessors.GeoIP.DbCityFile = ""
-	c.Subprocessors.GeoIP.DbAsnFile = ""
-	c.Subprocessors.TextFormat = "timestamp identity operation rcode queryip queryport family protocol length qname qtype latency"
+	c.Transformers.GeoIP.DbCountryFile = ""
+	c.Transformers.GeoIP.DbCityFile = ""
+	c.Transformers.GeoIP.DbAsnFile = ""
 
 	// Loggers
 	c.Loggers.Stdout.Enable = false
@@ -328,6 +325,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Dnstap.SockPath = ""
 	c.Loggers.Dnstap.TlsSupport = false
 	c.Loggers.Dnstap.TlsInsecure = false
+	c.Loggers.Dnstap.ServerId = ""
 
 	c.Loggers.LogFile.Enable = false
 	c.Loggers.LogFile.FilePath = ""
@@ -360,6 +358,12 @@ func (c *Config) SetDefault() {
 	c.Loggers.WebServer.TlsSupport = false
 	c.Loggers.WebServer.CertFile = ""
 	c.Loggers.WebServer.KeyFile = ""
+	c.Loggers.WebServer.PromPrefix = "dnscollector"
+	c.Loggers.WebServer.StatsTopMaxItems = 100
+	c.Loggers.WebServer.StatsThresholdQnameLen = 80
+	c.Loggers.WebServer.StatsThresholdPacketLen = 1000
+	c.Loggers.WebServer.StatsThresholdSlow = 0.5
+	c.Loggers.WebServer.StatsCommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS"}
 
 	c.Loggers.TcpClient.Enable = false
 	c.Loggers.TcpClient.RemoteAddress = "127.0.0.1"

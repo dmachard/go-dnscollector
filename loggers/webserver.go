@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/subprocessors"
 	"github.com/dmachard/go-logger"
 )
 
@@ -22,7 +21,7 @@ type Webserver struct {
 	channel    chan dnsutils.DnsMessage
 	config     *dnsutils.Config
 	logger     *logger.Logger
-	stats      *subprocessors.StatsStreams
+	stats      *StatsStreams
 	ver        string
 	name       string
 }
@@ -40,7 +39,10 @@ func NewWebserver(config *dnsutils.Config, logger *logger.Logger, version string
 	}
 
 	// init engine to compute statistics and prometheus
-	o.stats = subprocessors.NewStreamsStats(config, o.ver)
+	o.stats = NewStreamsStats(config, o.ver, config.Loggers.WebServer.PromPrefix,
+		config.Loggers.WebServer.StatsTopMaxItems, config.Loggers.WebServer.StatsThresholdQnameLen,
+		config.Loggers.WebServer.StatsThresholdPacketLen, config.Loggers.WebServer.StatsThresholdSlow,
+		config.Loggers.WebServer.StatsCommonQtypes)
 	return o
 }
 

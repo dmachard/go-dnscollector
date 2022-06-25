@@ -1,4 +1,4 @@
-package subprocessors
+package transformers
 
 import (
 	"testing"
@@ -10,7 +10,7 @@ import (
 func TestGeoIP_LookupCountry(t *testing.T) {
 	// enable geoip
 	config := dnsutils.GetFakeConfig()
-	config.Subprocessors.GeoIP.DbCountryFile = "../testsdata/GeoLite2-Country.mmdb"
+	config.Transformers.GeoIP.DbCountryFile = "../testsdata/GeoLite2-Country.mmdb"
 
 	// init the processor
 	geoip := NewDnsGeoIpProcessor(config, logger.New(true))
@@ -38,7 +38,7 @@ func TestGeoIP_LookupCountry(t *testing.T) {
 func TestGeoIP_LookupAsn(t *testing.T) {
 	// enable geoip
 	config := dnsutils.GetFakeConfig()
-	config.Subprocessors.GeoIP.DbAsnFile = "../testsdata/GeoLite2-ASN.mmdb"
+	config.Transformers.GeoIP.DbAsnFile = "../testsdata/GeoLite2-ASN.mmdb"
 
 	// init the processor
 	geoip := NewDnsGeoIpProcessor(config, logger.New(false))

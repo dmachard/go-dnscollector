@@ -97,7 +97,7 @@ func (o *LokiClient) ReadConfig() {
 	if len(o.config.Loggers.LokiClient.TextFormat) > 0 {
 		o.textFormat = strings.Fields(o.config.Loggers.LokiClient.TextFormat)
 	} else {
-		o.textFormat = strings.Fields(o.config.Subprocessors.TextFormat)
+		o.textFormat = strings.Fields(o.config.Global.TextFormat)
 	}
 
 	// tls client config

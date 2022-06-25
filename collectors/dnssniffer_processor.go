@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/subprocessors"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/miekg/dns"
+	"golang.org/x/net/publicsuffix"
 )
 
 func GetFakeDns() ([]byte, error) {
@@ -79,7 +80,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	d.LogInfo("dns cached enabled: %t", d.config.Collectors.DnsSniffer.CacheSupport)
 
 	// geoip
-	geoip := subprocessors.NewDnsGeoIpProcessor(d.config, d.logger)
+	geoip := transformers.NewDnsGeoIpProcessor(d.config, d.logger)
 	if err := geoip.Open(); err != nil {
 		d.LogError("geoip init failed: %v+", err)
 	}
@@ -89,11 +90,11 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	defer geoip.Close()
 
 	// filtering
-	filtering := subprocessors.NewFilteringProcessor(d.config, d.logger, d.name)
+	filtering := transformers.NewFilteringProcessor(d.config, d.logger, d.name)
 
 	// user privacy
-	ipPrivacy := subprocessors.NewIpAnonymizerSubprocessor(d.config)
-	qnamePrivacy := subprocessors.NewQnameReducerSubprocessor(d.config)
+	ipPrivacy := transformers.NewIpAnonymizerSubprocessor(d.config)
+	qnamePrivacy := transformers.NewQnameReducerSubprocessor(d.config)
 
 	// read incoming dns message
 	d.LogInfo("running... waiting incoming dns message")
@@ -130,7 +131,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		if dm.DNS.MalformedPacket == 1 {
-			if d.config.Trace.LogMalformed {
+			if d.config.Global.Trace.LogMalformed {
 				d.LogInfo("payload: %v", dm.DNS.Payload)
 			}
 		}
@@ -158,6 +159,18 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// convert latency to human
 		dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
+
+		// normalize qname ?
+		if d.config.Transformers.Normalize.QnameLowerCase {
+			dm.DNS.Qname = strings.ToLower(dm.DNS.Qname)
+		}
+
+		// Public suffix
+		ps, _ := publicsuffix.PublicSuffix(dm.DNS.Qname)
+		dm.DNS.QnamePublicSuffix = ps
+		if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
+			dm.DNS.QnameEffectiveTLDPlusOne = etpo
+		}
 
 		// qname privacy
 		if qnamePrivacy.IsEnabled() {

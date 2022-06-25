@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/subprocessors"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
 	"golang.org/x/net/publicsuffix"
@@ -67,12 +67,12 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
 
 	// filtering and user privacy
-	filtering := subprocessors.NewFilteringProcessor(d.config, d.logger, d.name)
-	ipPrivacy := subprocessors.NewIpAnonymizerSubprocessor(d.config)
-	qnamePrivacy := subprocessors.NewQnameReducerSubprocessor(d.config)
+	filtering := transformers.NewFilteringProcessor(d.config, d.logger, d.name)
+	ipPrivacy := transformers.NewIpAnonymizerSubprocessor(d.config)
+	qnamePrivacy := transformers.NewQnameReducerSubprocessor(d.config)
 
 	// geoip
-	geoip := subprocessors.NewDnsGeoIpProcessor(d.config, d.logger)
+	geoip := transformers.NewDnsGeoIpProcessor(d.config, d.logger)
 	if err := geoip.Open(); err != nil {
 		d.LogError("geoip init failed: %v+", err)
 	}
@@ -130,15 +130,17 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
 		dm.DnsTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
-		if d.config.Subprocessors.QnameLowerCase {
+		// normalize qname ?
+		if d.config.Transformers.Normalize.QnameLowerCase {
 			dm.DNS.Qname = strings.ToLower(pbdm.Question.GetQName())
 		} else {
 			dm.DNS.Qname = pbdm.Question.GetQName()
 		}
 
-		// Public suffix
+		// remove ending dot ?
 		qname := strings.TrimSuffix(dm.DNS.Qname, ".")
 		dm.DNS.Qname = qname
+
 		ps, _ := publicsuffix.PublicSuffix(qname)
 		dm.DNS.QnamePublicSuffix = ps
 		if etpo, err := publicsuffix.EffectiveTLDPlusOne(qname); err == nil {

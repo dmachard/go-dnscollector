@@ -1,4 +1,4 @@
-package subprocessors
+package transformers
 
 import (
 	"testing"
@@ -10,8 +10,8 @@ import (
 func TestFilteringQR(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfig()
-	config.Subprocessors.Filtering.LogQueries = false
-	config.Subprocessors.Filtering.LogReplies = false
+	config.Transformers.Filtering.LogQueries = false
+	config.Transformers.Filtering.LogReplies = false
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -31,7 +31,7 @@ func TestFilteringQR(t *testing.T) {
 func TestFilteringByRcodeNOERROR(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfig()
-	config.Subprocessors.Filtering.DropRcodes = []string{"NOERROR"}
+	config.Transformers.Filtering.DropRcodes = []string{"NOERROR"}
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -46,7 +46,7 @@ func TestFilteringByRcodeNOERROR(t *testing.T) {
 func TestFilteringByRcodeEmpty(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfig()
-	config.Subprocessors.Filtering.DropRcodes = []string{}
+	config.Transformers.Filtering.DropRcodes = []string{}
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -60,8 +60,8 @@ func TestFilteringByRcodeEmpty(t *testing.T) {
 func TestFilteringByQueryIp(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfig()
-	config.Subprocessors.Filtering.DropQueryIpFile = "../testsdata/filtering_queryip.txt"
-	config.Subprocessors.Filtering.KeepQueryIpFile = "../testsdata/filtering_queryip_keep.txt"
+	config.Transformers.Filtering.DropQueryIpFile = "../testsdata/filtering_queryip.txt"
+	config.Transformers.Filtering.KeepQueryIpFile = "../testsdata/filtering_queryip_keep.txt"
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -97,7 +97,7 @@ func TestFilteringByQueryIp(t *testing.T) {
 func TestFilteringByFqdn(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfig()
-	config.Subprocessors.Filtering.DropFqdnFile = "../testsdata/filtering_fqdn.txt"
+	config.Transformers.Filtering.DropFqdnFile = "../testsdata/filtering_fqdn.txt"
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -117,7 +117,7 @@ func TestFilteringByFqdn(t *testing.T) {
 func TestFilteringByDomainRegex(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfig()
-	config.Subprocessors.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
+	config.Transformers.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")

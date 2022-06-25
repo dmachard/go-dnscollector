@@ -19,7 +19,6 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [Protobuf PowerDNS](doc/configuration.md#protobuf-powerdns)
 
 - Transformers:
-    - [Logs routing](doc/multiplexer.md)
     - [Queries/Replies JSON encoding](doc/dnsjson.md)
     - [Text format](doc/configuration.md#custom-text-format)
     - [DNS filtering](doc/configuration.md#dns-filtering)
@@ -38,6 +37,8 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [InfluxDB](doc/configuration.md#influxdb-client)
     - [Loki](doc/configuration.md#loki-client)
     - [Statsd](doc/configuration.md#statsd-client)
+
+- [Logs routing](doc/multiplexer.md)
 
 - Other features
     - [DNS decoder with extended options support](doc/dnsparser.md)
@@ -115,7 +116,7 @@ Execute testunits
 ```
 go test -timeout 10s ./collectors/ -cover -v
 go test -timeout 10s ./loggers/ -cover -v
-go test -timeout 10s ./subprocessors/ -cover -v
+go test -timeout 10s ./transformers/ -cover -v
 go test -timeout 10s ./dnsutils/ -cover -v
 ```
 

@@ -1,4 +1,4 @@
-package subprocessors
+package transformers
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 func TestReduceQname(t *testing.T) {
 	// enable feature
 	config := dnsutils.GetFakeConfig()
-	config.Subprocessors.UserPrivacy.MinimazeQname = true
+	config.Transformers.UserPrivacy.MinimazeQname = true
 
 	// init the processor
 	privQname := NewQnameReducerSubprocessor(config)

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"net"
+	"os"
 	"strconv"
 	"time"
 
@@ -41,7 +42,16 @@ func NewDnstapSender(config *dnsutils.Config, logger *logger.Logger, name string
 }
 
 func (o *DnstapSender) ReadConfig() {
-	//tbc
+	// get hostname
+	if o.config.Loggers.Dnstap.ServerId == "" {
+		hostname, err := os.Hostname()
+		if err != nil {
+			o.LogError("failed to get hostname: %v\n", err)
+		} else {
+			o.config.Loggers.Dnstap.ServerId = hostname
+		}
+	}
+
 }
 
 func (o *DnstapSender) LogInfo(msg string, v ...interface{}) {
@@ -133,7 +143,7 @@ LOOP:
 							dt.Reset()
 
 							t := dnstap.Dnstap_MESSAGE
-							dt.Identity = []byte(o.config.Subprocessors.ServerId)
+							dt.Identity = []byte(o.config.Loggers.Dnstap.ServerId)
 							dt.Version = []byte("-")
 							dt.Type = &t
 

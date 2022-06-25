@@ -1,4 +1,4 @@
-package subprocessors
+package transformers
 
 import (
 	"net"
@@ -32,7 +32,7 @@ func NewIpAnonymizerSubprocessor(config *dnsutils.Config) IpAnonymizerSubproc {
 }
 
 func (s *IpAnonymizerSubproc) ReadConfig() {
-	s.enabled = s.config.Subprocessors.UserPrivacy.AnonymizeIP
+	s.enabled = s.config.Transformers.UserPrivacy.AnonymizeIP
 }
 
 func (s *IpAnonymizerSubproc) IsEnabled() bool {

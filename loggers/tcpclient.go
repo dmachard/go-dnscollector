@@ -44,7 +44,7 @@ func (o *TcpClient) ReadConfig() {
 	if len(o.config.Loggers.TcpClient.TextFormat) > 0 {
 		o.textFormat = strings.Fields(o.config.Loggers.TcpClient.TextFormat)
 	} else {
-		o.textFormat = strings.Fields(o.config.Subprocessors.TextFormat)
+		o.textFormat = strings.Fields(o.config.Global.TextFormat)
 	}
 }
 

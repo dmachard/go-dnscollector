@@ -70,7 +70,7 @@ func (c *LogFile) ReadConfig() {
 	if len(c.config.Loggers.LogFile.TextFormat) > 0 {
 		c.textFormat = strings.Fields(c.config.Loggers.LogFile.TextFormat)
 	} else {
-		c.textFormat = strings.Fields(c.config.Subprocessors.TextFormat)
+		c.textFormat = strings.Fields(c.config.Global.TextFormat)
 	}
 }
 

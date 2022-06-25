@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net"
 	"strings"
-
-	"golang.org/x/net/publicsuffix"
 )
 
 const DnsLen = 12
@@ -271,18 +269,21 @@ func DecodePayload(dm *DnsMessage, header *DnsHeader, config *Config) error {
 			dm.DNS.MalformedPacket = 1
 			return &decodingError{part: "query", err: err}
 		}
-		if config.Subprocessors.QnameLowerCase {
-			dm.DNS.Qname = strings.ToLower(dns_qname)
-		} else {
-			dm.DNS.Qname = dns_qname
-		}
 
-		// Public suffix
-		ps, _ := publicsuffix.PublicSuffix(dm.DNS.Qname)
-		dm.DNS.QnamePublicSuffix = ps
-		if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
-			dm.DNS.QnameEffectiveTLDPlusOne = etpo
-		}
+		dm.DNS.Qname = dns_qname
+
+		/*	if config.Subprocessors.Normalize.QnameLowerCase {
+					dm.DNS.Qname = strings.ToLower(dns_qname)
+				} else {
+					dm.DNS.Qname = dns_qname
+				}
+
+			// Public suffix
+			ps, _ := publicsuffix.PublicSuffix(dm.DNS.Qname)
+			dm.DNS.QnamePublicSuffix = ps
+			if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
+				dm.DNS.QnameEffectiveTLDPlusOne = etpo
+			}*/
 		dm.DNS.Qtype = RdatatypeToString(dns_rrtype)
 		payload_offset = offsetrr
 	}

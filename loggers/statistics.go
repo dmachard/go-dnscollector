@@ -1,4 +1,4 @@
-package subprocessors
+package loggers
 
 import (
 	"fmt"
@@ -13,16 +13,29 @@ type StatsStreams struct {
 	streams map[string]*StatsPerStream
 	config  *dnsutils.Config
 	sync.RWMutex
-	version string
+	version       string
+	prom          string
+	topmaxitems   int
+	maxqnamelen   int
+	maxpacketlen  int
+	thresholdslow float64
+	commonqtypes  []string
 }
 
-func NewStreamsStats(config *dnsutils.Config, version string) *StatsStreams {
+func NewStreamsStats(config *dnsutils.Config, version string, prom string, topmaxitems int,
+	maxqnamelen int, maxpacketlen int, thresholdslow float64, commonqtypes []string) *StatsStreams {
 	c := &StatsStreams{
-		config:  config,
-		streams: make(map[string]*StatsPerStream),
-		version: version,
+		config:        config,
+		streams:       make(map[string]*StatsPerStream),
+		version:       version,
+		prom:          prom,
+		topmaxitems:   topmaxitems,
+		maxqnamelen:   maxqnamelen,
+		maxpacketlen:  maxpacketlen,
+		thresholdslow: thresholdslow,
+		commonqtypes:  commonqtypes,
 	}
-	c.streams["global"] = NewStatsPerStream(config, "global")
+	c.streams["global"] = NewStatsPerStream(config, "global", topmaxitems, maxqnamelen, maxpacketlen, thresholdslow, commonqtypes)
 	return c
 }
 
@@ -35,7 +48,8 @@ func (c *StatsStreams) Record(dm dnsutils.DnsMessage) {
 
 	// record for each ident
 	if _, ok := c.streams[dm.DnsTap.Identity]; !ok {
-		c.streams[dm.DnsTap.Identity] = NewStatsPerStream(c.config, dm.DnsTap.Identity)
+		c.streams[dm.DnsTap.Identity] = NewStatsPerStream(c.config, dm.DnsTap.Identity, c.topmaxitems,
+			c.maxqnamelen, c.maxpacketlen, c.thresholdslow, c.commonqtypes)
 	}
 	c.streams[dm.DnsTap.Identity].Record(dm)
 }
@@ -424,7 +438,7 @@ func (c *StatsStreams) GetAS(identity string) (ret map[string]string) {
 	return v.GetAS()
 }
 func (s *StatsStreams) GetMetrics(w http.ResponseWriter, r *http.Request) {
-	prefix := s.config.Subprocessors.Statistics.PromPrefix
+	prefix := s.prom
 
 	// add build version info
 	fmt.Fprintf(w, "# HELP %s_build_info Build version\n", prefix)

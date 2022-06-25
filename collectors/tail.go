@@ -5,13 +5,15 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/subprocessors"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/hpcloud/tail"
 	"github.com/miekg/dns"
+	"golang.org/x/net/publicsuffix"
 )
 
 type Tail struct {
@@ -91,7 +93,7 @@ func (c *Tail) Run() {
 	}
 
 	// geoip
-	geoip := subprocessors.NewDnsGeoIpProcessor(c.config, c.logger)
+	geoip := transformers.NewDnsGeoIpProcessor(c.config, c.logger)
 	if err := geoip.Open(); err != nil {
 		c.LogError("geoip init failed: %v+", err)
 	}
@@ -101,15 +103,21 @@ func (c *Tail) Run() {
 	defer geoip.Close()
 
 	// filtering
-	filtering := subprocessors.NewFilteringProcessor(c.config, c.logger, c.name)
+	filtering := transformers.NewFilteringProcessor(c.config, c.logger, c.name)
 
 	// user privacy
-	ipPrivacy := subprocessors.NewIpAnonymizerSubprocessor(c.config)
-	qnamePrivacy := subprocessors.NewQnameReducerSubprocessor(c.config)
+	ipPrivacy := transformers.NewIpAnonymizerSubprocessor(c.config)
+	qnamePrivacy := transformers.NewQnameReducerSubprocessor(c.config)
 
 	dm := dnsutils.DnsMessage{}
 	dm.Init()
-	dm.DnsTap.Identity = c.config.Subprocessors.ServerId
+
+	hostname, err := os.Hostname()
+	if err == nil {
+		dm.DnsTap.Identity = hostname
+	} else {
+		dm.DnsTap.Identity = "undefined"
+	}
 
 	for line := range c.tailf.Lines {
 		var matches []string
@@ -251,6 +259,18 @@ func (c *Tail) Run() {
 
 		dm.DNS.Payload, _ = dnspkt.Pack()
 		dm.DNS.Length = len(dm.DNS.Payload)
+
+		// normalize qname ?
+		if c.config.Transformers.Normalize.QnameLowerCase {
+			dm.DNS.Qname = strings.ToLower(dm.DNS.Qname)
+		}
+
+		// Public suffix
+		ps, _ := publicsuffix.PublicSuffix(dm.DNS.Qname)
+		dm.DNS.QnamePublicSuffix = ps
+		if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
+			dm.DNS.QnameEffectiveTLDPlusOne = etpo
+		}
 
 		// qname privacy
 		if qnamePrivacy.IsEnabled() {

@@ -1,4 +1,4 @@
-package subprocessors
+package transformers
 
 import (
 	"bufio"
@@ -55,7 +55,7 @@ func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger, name 
 }
 
 func (p *FilteringProcessor) LoadRcodes() {
-	for _, v := range p.config.Subprocessors.Filtering.DropRcodes {
+	for _, v := range p.config.Transformers.Filtering.DropRcodes {
 		p.mapRcodes[v] = true
 	}
 }
@@ -99,16 +99,16 @@ func (p *FilteringProcessor) loadQueryIpList(fname string, drop bool) (uint64, e
 }
 
 func (p *FilteringProcessor) LoadQueryIpList() {
-	if len(p.config.Subprocessors.Filtering.DropQueryIpFile) > 0 {
-		read, err := p.loadQueryIpList(p.config.Subprocessors.Filtering.DropQueryIpFile, true)
+	if len(p.config.Transformers.Filtering.DropQueryIpFile) > 0 {
+		read, err := p.loadQueryIpList(p.config.Transformers.Filtering.DropQueryIpFile, true)
 		if err != nil {
 			p.LogError("unable to open query ip file: ", err)
 		}
 		p.LogInfo("loaded with %d query ip to the drop list", read)
 	}
 
-	if len(p.config.Subprocessors.Filtering.KeepQueryIpFile) > 0 {
-		read, err := p.loadQueryIpList(p.config.Subprocessors.Filtering.KeepQueryIpFile, false)
+	if len(p.config.Transformers.Filtering.KeepQueryIpFile) > 0 {
+		read, err := p.loadQueryIpList(p.config.Transformers.Filtering.KeepQueryIpFile, false)
 		if err != nil {
 			p.LogError("unable to open query ip file: ", err)
 		}
@@ -118,8 +118,8 @@ func (p *FilteringProcessor) LoadQueryIpList() {
 
 func (p *FilteringProcessor) LoadDomainsList() {
 
-	if len(p.config.Subprocessors.Filtering.DropFqdnFile) > 0 {
-		file, err := os.Open(p.config.Subprocessors.Filtering.DropFqdnFile)
+	if len(p.config.Transformers.Filtering.DropFqdnFile) > 0 {
+		file, err := os.Open(p.config.Transformers.Filtering.DropFqdnFile)
 		if err != nil {
 			p.LogError("unable to open fqdn file: ", err)
 			p.dropDomains = true
@@ -141,8 +141,8 @@ func (p *FilteringProcessor) LoadDomainsList() {
 
 	}
 
-	if len(p.config.Subprocessors.Filtering.DropDomainFile) > 0 {
-		file, err := os.Open(p.config.Subprocessors.Filtering.DropDomainFile)
+	if len(p.config.Transformers.Filtering.DropDomainFile) > 0 {
+		file, err := os.Open(p.config.Transformers.Filtering.DropDomainFile)
 		if err != nil {
 			p.LogError("unable to open regex list file: ", err)
 			p.dropDomains = true
@@ -188,12 +188,12 @@ func (p *FilteringProcessor) Run() {
 
 func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DnsMessage) bool {
 	// ignore queries ?
-	if !p.config.Subprocessors.Filtering.LogQueries && dm.DNS.Type == dnsutils.DnsQuery {
+	if !p.config.Transformers.Filtering.LogQueries && dm.DNS.Type == dnsutils.DnsQuery {
 		return true
 	}
 
 	// ignore replies ?
-	if !p.config.Subprocessors.Filtering.LogReplies && dm.DNS.Type == dnsutils.DnsReply {
+	if !p.config.Transformers.Filtering.LogReplies && dm.DNS.Type == dnsutils.DnsReply {
 		return true
 	}
 

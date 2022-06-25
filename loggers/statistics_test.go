@@ -1,4 +1,4 @@
-package subprocessors
+package loggers
 
 import (
 	"testing"
@@ -6,9 +6,9 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 )
 
-func TestDnsStatisticsRecord(t *testing.T) {
+func TestStreamsStatisticsRecord(t *testing.T) {
 	config := dnsutils.GetFakeConfig()
-	stats := NewStatsPerStream(config, "test")
+	stats := NewStreamsStats(config, "1.2.3", "prom_prefix", 0, 0, 0, 0, []string{})
 
 	dm := dnsutils.DnsMessage{}
 	dm.Init()
@@ -19,7 +19,7 @@ func TestDnsStatisticsRecord(t *testing.T) {
 
 	stats.Record(dm)
 
-	nb := stats.GetTotalDomains()
+	nb := stats.GetTotalDomains("global")
 	if nb != 1 {
 		t.Errorf("invalid number of domains, expected 1, got %d", nb)
 	}

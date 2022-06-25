@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/subprocessors"
 	"github.com/dmachard/go-logger"
 )
 
@@ -18,7 +17,7 @@ type StatsdClient struct {
 	channel chan dnsutils.DnsMessage
 	config  *dnsutils.Config
 	logger  *logger.Logger
-	stats   *subprocessors.StatsStreams
+	stats   *StatsStreams
 	exit    chan bool
 	version string
 	name    string
@@ -41,7 +40,7 @@ func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, version str
 	s.ReadConfig()
 
 	// init engine to compute statistics
-	s.stats = subprocessors.NewStreamsStats(config, version)
+	s.stats = NewStreamsStats(config, version, "undefined", 0, 0, 0, 0, []string{})
 
 	return s
 }

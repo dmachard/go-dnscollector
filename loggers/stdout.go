@@ -40,7 +40,7 @@ func (c *StdOut) ReadConfig() {
 	if len(c.config.Loggers.Stdout.TextFormat) > 0 {
 		c.textFormat = strings.Fields(c.config.Loggers.Stdout.TextFormat)
 	} else {
-		c.textFormat = strings.Fields(c.config.Subprocessors.TextFormat)
+		c.textFormat = strings.Fields(c.config.Global.TextFormat)
 	}
 }
 
