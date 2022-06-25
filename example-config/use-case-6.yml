@@ -1,5 +1,6 @@
-trace:
-  verbose: true
+global:
+  trace:
+    verbose: true
 
 multiplexer:
   collectors:
