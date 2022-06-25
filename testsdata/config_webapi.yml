@@ -1,5 +1,6 @@
-trace:
-  verbose: true
+global:
+  trace:
+    verbose: true
 
 multiplexer:
   collectors:
@@ -15,7 +16,5 @@ multiplexer:
         listen-port: 8080
 
   routes:
-    - src:
-        - tap
-      dst:
-        - web
+    - src: [tap]
+      dst: [web]

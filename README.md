@@ -12,6 +12,8 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 ## Features
 
+- [Logs routing](doc/multiplexer.md)
+
 - Collectors:
     - [DNStap streams](doc/configuration.md#dns-tap) 
     - [DNS packets sniffer](doc/configuration.md#Dns-Sniffer)
@@ -20,7 +22,6 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 - Transformers:
     - [Queries/Replies JSON encoding](doc/dnsjson.md)
-    - [Text format](doc/configuration.md#custom-text-format)
     - [DNS filtering](doc/configuration.md#dns-filtering)
     - [User Privacy](doc/configuration.md#user-privacy)
     - [Normalize Qname](doc/configuration.md#Qname-lowercase)
@@ -38,12 +39,11 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [Loki](doc/configuration.md#loki-client)
     - [Statsd](doc/configuration.md#statsd-client)
 
-- [Logs routing](doc/multiplexer.md)
-
 - Other features
     - [DNS decoder with extended options support](doc/dnsparser.md)
     - [Built-in Grafana dashboards](doc/dashboards.md)
     - [GeoIP support](doc/configuration.md#geoip-support)
+    - [Text format](doc/configuration.md#custom-text-format)
 
 ## Installation
 

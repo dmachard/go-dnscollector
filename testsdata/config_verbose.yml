@@ -1,5 +1,6 @@
-trace:
-  verbose: true
+global:
+  trace:
+    verbose: true
 
 multiplexer:
   collectors:
@@ -14,7 +15,5 @@ multiplexer:
         mode: text
 
   routes:
-    - src:
-        - tap
-      dst:
-        - out
+    - src: [tap]
+      dst: [out]
