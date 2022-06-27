@@ -262,12 +262,18 @@ Options:
 - `listen-ip`: (string) listen on ip
 - `listen-port`: (integer) listening on port
 - `quiet-text`: (boolean) Quiet text mode to reduce the size of the logs
+- `tls-support:`: (boolean) to enable, set to true
+- `cert-file`: (string) certificate server file
+- `key-file`: (string) private key server file
 
 ```yaml
 powerdns:
   listen-ip: 0.0.0.0
   listen-port: 6001
   quiet-text: false
+  tls-support: false
+  cert-file: ""
+  key-file: ""
 ```
 
 Example to enable logging in your **dnsdist**

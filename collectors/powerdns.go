@@ -2,6 +2,7 @@ package collectors
 
 import (
 	"bufio"
+	"crypto/tls"
 	"net"
 	"strconv"
 	"time"
@@ -105,8 +106,19 @@ func (c *ProtobufPowerDNS) Listen() error {
 	var listener net.Listener
 	addrlisten := c.config.Collectors.PowerDNS.ListenIP + ":" + strconv.Itoa(c.config.Collectors.PowerDNS.ListenPort)
 
-	listener, err = net.Listen("tcp", addrlisten)
-
+	// listening with tls enabled ?
+	if c.config.Collectors.PowerDNS.TlsSupport {
+		c.LogInfo("tls support enabled")
+		var cer tls.Certificate
+		cer, err = tls.LoadX509KeyPair(c.config.Collectors.PowerDNS.CertFile, c.config.Collectors.PowerDNS.KeyFile)
+		if err != nil {
+			c.logger.Fatal("loading certificate failed:", err)
+		}
+		config := &tls.Config{Certificates: []tls.Certificate{cer}}
+		listener, err = tls.Listen("tcp", addrlisten, config)
+	} else {
+		listener, err = net.Listen("tcp", addrlisten)
+	}
 	// something is wrong ?
 	if err != nil {
 		return err
