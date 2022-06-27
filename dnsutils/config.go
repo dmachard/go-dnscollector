@@ -77,6 +77,7 @@ type Config struct {
 			Enable     bool   `yaml:"enable"`
 			ListenIP   string `yaml:"listen-ip"`
 			ListenPort int    `yaml:"listen-port"`
+			QuietText  bool   `yaml:"quiet-text"`
 		} `yaml:"powerdns"`
 	} `yaml:"collectors"`
 
@@ -295,6 +296,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.PowerDNS.Enable = false
 	c.Collectors.PowerDNS.ListenIP = "0.0.0.0"
 	c.Collectors.PowerDNS.ListenPort = 6001
+	c.Collectors.PowerDNS.QuietText = false
 
 	// Transformers
 	c.Transformers.UserPrivacy.AnonymizeIP = false

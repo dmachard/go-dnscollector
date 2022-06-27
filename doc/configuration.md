@@ -261,11 +261,13 @@ tail:
 Options:
 - `listen-ip`: (string) listen on ip
 - `listen-port`: (integer) listening on port
+- `quiet-text`: (boolean) Quiet text mode to reduce the size of the logs
 
 ```yaml
 powerdns:
   listen-ip: 0.0.0.0
   listen-port: 6001
+  quiet-text: false
 ```
 
 Example to enable logging in your **dnsdist**

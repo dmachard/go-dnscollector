@@ -15,6 +15,13 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var (
+	PdnsQr = map[string]string{
+		"DNSQueryType":    "Q",
+		"DNSResponseType": "R",
+	}
+)
+
 type PdnsProcessor struct {
 	done     chan bool
 	recvFrom chan []byte
@@ -209,6 +216,16 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.Geo.City = geoInfo.City
 			dm.NetworkInfo.AutonomousSystemNumber = geoInfo.ASN
 			dm.NetworkInfo.AutonomousSystemOrg = geoInfo.ASO
+		}
+
+		// quiet text for dnstap operation ?
+		if d.config.Collectors.PowerDNS.QuietText {
+			if v, found := PdnsQr[dm.DnsTap.Operation]; found {
+				dm.DnsTap.Operation = v
+			}
+			if v, found := DnsQr[dm.DNS.Type]; found {
+				dm.DNS.Type = v
+			}
 		}
 
 		// dispatch dns message to all generators
