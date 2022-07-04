@@ -16,11 +16,18 @@ multiplexer:
     - name: std_out
       stdout:
         mode: text
+    - name: prom
+      prometheus:
+        listen-ip: 0.0.0.0
+        listen-port: 8081
+        basic-auth-login: admin
+        basic-auth-pwd: changeme
+        prometheus-prefix: "dnscollector"
 
   routes:
     - from: [ dtap ]
       transforms: [ qnamelower ]
-      to: [ std_out ]
+      to: [ std_out, prom ]
       
 ################################################
 # list of supported collectors

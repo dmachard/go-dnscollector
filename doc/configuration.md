@@ -733,8 +733,7 @@ Options:
 - `qname-lowercase`: (boolean) enable or disable lowercase
 
 ```yaml
-subprocessors:
-  qname-lowercase: true
+qname-lowercase: true
 ```
 
 ### User Privacy
@@ -749,10 +748,9 @@ Options:
 - `minimaze-qname`: (boolean) keep only the second level domain
 
 ```yaml
-subprocessors:
-  user-privacy:
-    anonymize-ip: false
-    minimaze-qname: false
+user-privacy:
+  anonymize-ip: false
+  minimaze-qname: false
 ```
 
 ### GeoIP Support
@@ -769,11 +767,10 @@ Options:
 - `mmdb-asn-file`: (string) path file to your mmdb asn database
 
 ```yaml
-subprocessors:
-  geoip:
-    mmdb-country-file: "/GeoIP/GeoLite2-Country.mmdb"
-    mmdb-city-file: ""
-    mmdb-asn-file: ""
+geoip:
+  mmdb-country-file: "/GeoIP/GeoLite2-Country.mmdb"
+  mmdb-city-file: ""
+  mmdb-asn-file: ""
 ```
 
 When the feature is enabled, the following json field are populated:
@@ -821,15 +818,14 @@ Options:
 - `log-replies`: (boolean)  forward received replies to configured loggers
 
 ```yaml
-subprocessors:
-  filtering:
-    drop-fqdn-file: ""
-    drop-domain-file: ""
-    drop-queryip-file: ""
-    keep-queryip-file: ""
-    drop-rcodes: []
-    log-queries: true
-    log-replies: true
+filtering:
+  drop-fqdn-file: ""
+  drop-domain-file: ""
+  drop-queryip-file: ""
+  keep-queryip-file: ""
+  drop-rcodes: []
+  log-queries: true
+  log-replies: true
 ```
 
 Domain list with regex example:

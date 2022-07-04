@@ -9,6 +9,12 @@ multiplexer:
         listen-ip: 0.0.0.0
         listen-port: 6000
 
+  transformers: 
+    - name: privacy
+      user-privacy:
+          anonymize-ip: true
+          minimaze-qname: true
+
   loggers:
     - name: std_out
       stdout:
@@ -16,9 +22,5 @@ multiplexer:
 
   routes:
     - from: [tap_in]
+      transforms: [privacy]
       to: [std_out]
-  
-subprocessors:
-  user-privacy:
-    anonymize-ip: true
-    minimaze-qname: true
