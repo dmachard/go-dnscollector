@@ -16,9 +16,9 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 
 - Collectors:
     - [DNStap streams](doc/configuration.md#dns-tap) 
-    - [DNS packets sniffer](doc/configuration.md#Dns-Sniffer)
+    - [DNS packets sniffer](doc/configuration.md#dns-sniffer)
     - [Tail on log file](doc/configuration.md#tail)
-    - [Protobuf PowerDNS](doc/configuration.md#protobuf-powerdns)
+    - [Protobuf PowerDNS](doc/configuration.md#Protobuf-PowerDNS)
 
 - Transformers:
     - [Queries/Replies JSON encoding](doc/dnsjson.md)
@@ -31,7 +31,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [File](doc/configuration.md#log-file)
     - [DNStap](doc/configuration.md#dnstap-client)
     - [TCP](doc/configuration.md#tcp-client)
-    - [Prometheus](doc/configuration.md#rest-api)
+    - [REST API](doc/configuration.md#REST-API)
     - [Syslog](doc/configuration.md#syslog)
     - [Fluentd](doc/configuration.md#fluentd-client)
     - [Pcap](doc/configuration.md#pcap-file)
