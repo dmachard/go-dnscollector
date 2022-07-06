@@ -18,7 +18,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [DNStap streams](doc/configuration.md#dns-tap) 
     - [DNS packets sniffer](doc/configuration.md#dns-sniffer)
     - [Tail on log file](doc/configuration.md#tail)
-    - [Protobuf PowerDNS](doc/configuration.md#Protobuf-PowerDNS)
+    - [Protobuf PowerDNS](doc/configuration.md#protobuf-powerdns)
 
 - Transformers:
     - [Queries/Replies JSON encoding](doc/dnsjson.md)
