@@ -278,25 +278,28 @@ func (o *LogFile) Compress() {
 
 func (o *LogFile) PostRotateCommand(filename string) {
 	if len(o.config.Loggers.LogFile.PostRotateCommand) > 0 {
+		o.LogInfo("execute postrotate command: %s", filename)
 		out, err := exec.Command(o.config.Loggers.LogFile.PostRotateCommand, filename).Output()
 		if err != nil {
 			o.LogError("postrotate command error: %s", err)
-			o.LogError("postrotate output: %s", out)
 		} else {
 			if o.config.Loggers.LogFile.PostRotateDelete {
 				os.Remove(filename)
 			}
 		}
+		o.LogInfo("compress - postcommand output: %s", out)
 	}
 }
 
 func (o *LogFile) CompressPostRotateCommand(filename string) {
 	if len(o.config.Loggers.LogFile.CompressPostCommand) > 0 {
+
+		o.LogInfo("execute compress postrotate command: %s", filename)
 		out, err := exec.Command(o.config.Loggers.LogFile.CompressPostCommand, filename).Output()
 		if err != nil {
 			o.LogError("compress - postcommand error: %s", err)
-			o.LogError("compress - postcommand output: %s", out)
 		}
+		o.LogInfo("compress - postcommand output: %s", out)
 	}
 }
 
