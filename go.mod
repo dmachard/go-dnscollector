@@ -6,7 +6,7 @@ require (
 	github.com/RackSec/srslog v0.0.0-20180709174129-a4725f04ec91
 	github.com/dmachard/go-dnstap-protobuf v0.2.0
 	github.com/dmachard/go-framestream v0.1.0
-	github.com/dmachard/go-logger v0.1.0
+	github.com/dmachard/go-logger v0.2.0
 	github.com/dmachard/go-powerdns-protobuf v0.0.3
 	github.com/dmachard/go-topmap v0.4.0
 	github.com/gogo/protobuf v1.3.2

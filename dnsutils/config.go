@@ -121,6 +121,7 @@ type Config struct {
 			BasicAuthLogin string `yaml:"basic-auth-login"`
 			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
 			TlsSupport     bool   `yaml:"tls-support"`
+			TlsMutual      bool   `yaml:"tls-mutual"`
 			CertFile       string `yaml:"cert-file"`
 			KeyFile        string `yaml:"key-file"`
 			PromPrefix     string `yaml:"prometheus-prefix"`
@@ -354,6 +355,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Prometheus.BasicAuthLogin = "admin"
 	c.Loggers.Prometheus.BasicAuthPwd = "changeme"
 	c.Loggers.Prometheus.TlsSupport = false
+	c.Loggers.Prometheus.TlsMutual = false
 	c.Loggers.Prometheus.CertFile = ""
 	c.Loggers.Prometheus.KeyFile = ""
 	c.Loggers.Prometheus.PromPrefix = "dnscollectorv2"

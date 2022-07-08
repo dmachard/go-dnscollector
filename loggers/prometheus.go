@@ -2,7 +2,9 @@ package loggers
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"strconv"
@@ -18,7 +20,6 @@ type Prometheus struct {
 	done         chan bool
 	done_api     chan bool
 	httpserver   net.Listener
-	httpmux      *http.ServeMux
 	channel      chan dnsutils.DnsMessage
 	config       *dnsutils.Config
 	logger       *logger.Logger
@@ -29,10 +30,14 @@ type Prometheus struct {
 	domains    map[string]map[string]int
 	nxdomains  map[string]map[string]int
 
-	topDomains map[string]*topmap.TopMap
+	topDomains    map[string]*topmap.TopMap
+	topNxDomains  map[string]*topmap.TopMap
+	topRequesters map[string]*topmap.TopMap
 
-	gaugeBuildInfo  *prometheus.GaugeVec
-	gaugeTopDomains *prometheus.GaugeVec
+	gaugeBuildInfo     *prometheus.GaugeVec
+	gaugeTopDomains    *prometheus.GaugeVec
+	gaugeTopNxDomains  *prometheus.GaugeVec
+	gaugeTopRequesters *prometheus.GaugeVec
 
 	counterPackets        *prometheus.CounterVec
 	counterInvalidPackets *prometheus.CounterVec
@@ -76,7 +81,9 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 		domains:    make(map[string]map[string]int),
 		nxdomains:  make(map[string]map[string]int),
 
-		topDomains: make(map[string]*topmap.TopMap),
+		topDomains:    make(map[string]*topmap.TopMap),
+		topNxDomains:  make(map[string]*topmap.TopMap),
+		topRequesters: make(map[string]*topmap.TopMap),
 
 		name: name,
 	}
@@ -106,6 +113,24 @@ func (o *Prometheus) InitProm() {
 		[]string{"stream", "domain"},
 	)
 	o.promRegistry.MustRegister(o.gaugeTopDomains)
+
+	o.gaugeTopNxDomains = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: fmt.Sprintf("%s_top_nxdomains_total", o.config.Loggers.Prometheus.PromPrefix),
+			Help: "Number of hit per nx domain topN, partitioned by qname",
+		},
+		[]string{"stream", "domain"},
+	)
+	o.promRegistry.MustRegister(o.gaugeTopNxDomains)
+
+	o.gaugeTopRequesters = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: fmt.Sprintf("%s_top_requesters_total", o.config.Loggers.Prometheus.PromPrefix),
+			Help: "Number of hit per requester topN, partitioned by qname",
+		},
+		[]string{"stream", "domain"},
+	)
+	o.promRegistry.MustRegister(o.gaugeTopRequesters)
 
 	o.counterPackets = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -356,12 +381,17 @@ func (o *Prometheus) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
+	// count number of logs according to the stream name
 	o.counterPackets.WithLabelValues(dm.DnsTap.Identity).Inc()
 
+	// count the number of invalid packet according to the stream name
 	if dm.DNS.MalformedPacket == 1 {
 		o.counterInvalidPackets.WithLabelValues(dm.DnsTap.Identity).Inc()
 	}
 
+	// count the number of queries and replies
+	// count the total bytes for queries and replies
+	// and then make a histogram for queries and replies packet length observed
 	if dm.DNS.Type == dnsutils.DnsQuery {
 		o.counterQueries.WithLabelValues(dm.DnsTap.Identity).Inc()
 		o.counterReceivedBytes.WithLabelValues(dm.DnsTap.Identity).Add(float64(dm.DNS.Length))
@@ -372,18 +402,22 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 		o.histogramRepliesLength.WithLabelValues(dm.DnsTap.Identity).Observe(float64(dm.DNS.Length))
 	}
 
+	// make histogram for qname length observed
 	o.histogramQnamesLength.WithLabelValues(dm.DnsTap.Identity).Observe(float64(len(dm.DNS.Qname)))
 
+	// make histogram for latencies observed
 	if dm.DnsTap.Latency > 0.0 {
 		o.histogramLatencies.WithLabelValues(dm.DnsTap.Identity).Observe(dm.DnsTap.Latency)
 	}
 
+	// count number of qtype, rcode, operation, family and protocol for each stream
 	o.counterQtypes.WithLabelValues(dm.DnsTap.Identity, dm.DNS.Qtype).Inc()
 	o.counterRcodes.WithLabelValues(dm.DnsTap.Identity, dm.DNS.Rcode).Inc()
 	o.counterOperations.WithLabelValues(dm.DnsTap.Identity, dm.DnsTap.Operation).Inc()
 	o.counterFamilies.WithLabelValues(dm.DnsTap.Identity, dm.NetworkInfo.Family).Inc()
 	o.counterProtocols.WithLabelValues(dm.DnsTap.Identity, dm.NetworkInfo.Protocol).Inc()
 
+	// count some specific flags
 	if dm.DNS.Flags.TC {
 		o.counterFlagsTC.WithLabelValues(dm.DnsTap.Identity).Inc()
 	}
@@ -397,7 +431,7 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 		o.counterFlagsAD.WithLabelValues(dm.DnsTap.Identity).Inc()
 	}
 
-	// count all domains name and top domains
+	/* count all domains name and top domains */
 	if _, exists := o.domains[dm.DnsTap.Identity]; !exists {
 		o.domains[dm.DnsTap.Identity] = make(map[string]int)
 	}
@@ -419,7 +453,7 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 		o.gaugeTopDomains.WithLabelValues(dm.DnsTap.Identity, r.Name).Set(float64(r.Hit))
 	}
 
-	// recorl all nx domains name
+	/* record and count all nx domains name and topN*/
 	if dm.DNS.Rcode == "NXDOMAIN" {
 		if _, exists := o.nxdomains[dm.DnsTap.Identity]; !exists {
 			o.nxdomains[dm.DnsTap.Identity] = make(map[string]int)
@@ -427,24 +461,48 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 		if _, exists := o.nxdomains[dm.DnsTap.Identity][dm.DNS.Qname]; !exists {
 			o.nxdomains[dm.DnsTap.Identity][dm.DNS.Qname] = 1
 			o.counterDomainsNX.WithLabelValues(dm.DnsTap.Identity).Inc()
+		} else {
+			o.nxdomains[dm.DnsTap.Identity][dm.DNS.Qname] += 1
+		}
+
+		if _, ok := o.topNxDomains[dm.DnsTap.Identity]; !ok {
+			o.topNxDomains[dm.DnsTap.Identity] = topmap.NewTopMap(2)
+		}
+		o.topNxDomains[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
+
+		o.gaugeTopNxDomains.Reset()
+		for _, r := range o.topNxDomains[dm.DnsTap.Identity].Get() {
+			o.gaugeTopNxDomains.WithLabelValues(dm.DnsTap.Identity, r.Name).Set(float64(r.Hit))
 		}
 	}
 
-	// record all clients
+	// record all clients and topN
 	if _, exists := o.requesters[dm.DnsTap.Identity]; !exists {
 		o.requesters[dm.DnsTap.Identity] = make(map[string]int)
 	}
 	if _, ok := o.requesters[dm.DnsTap.Identity][dm.NetworkInfo.QueryIp]; !ok {
 		o.requesters[dm.DnsTap.Identity][dm.NetworkInfo.QueryIp] = 1
 		o.counterRequesters.WithLabelValues(dm.DnsTap.Identity).Inc()
+	} else {
+		o.requesters[dm.DnsTap.Identity][dm.NetworkInfo.QueryIp] += 1
 	}
 
+	if _, ok := o.topRequesters[dm.DnsTap.Identity]; !ok {
+		o.topRequesters[dm.DnsTap.Identity] = topmap.NewTopMap(2)
+	}
+	o.topRequesters[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
+
+	o.gaugeTopRequesters.Reset()
+	for _, r := range o.topRequesters[dm.DnsTap.Identity].Get() {
+		o.gaugeTopRequesters.WithLabelValues(dm.DnsTap.Identity, r.Name).Set(float64(r.Hit))
+	}
 }
 
 func (s *Prometheus) ListenAndServe() {
 	s.LogInfo("starting prometheus metrics...")
 
 	mux := http.NewServeMux()
+
 	mux.Handle("/metrics", promhttp.HandlerFor(s.promRegistry, promhttp.HandlerOpts{}))
 
 	var err error
@@ -458,7 +516,26 @@ func (s *Prometheus) ListenAndServe() {
 		if err != nil {
 			s.logger.Fatal("loading certificate failed:", err)
 		}
-		config := &tls.Config{Certificates: []tls.Certificate{cer}}
+
+		config := &tls.Config{
+			Certificates: []tls.Certificate{cer},
+		}
+
+		if s.config.Loggers.Prometheus.TlsMutual {
+
+			// Create a CA certificate pool and add cert.pem to it
+			var caCert []byte
+			caCert, err = ioutil.ReadFile(s.config.Loggers.Prometheus.CertFile)
+			if err != nil {
+				s.logger.Fatal(err)
+			}
+			caCertPool := x509.NewCertPool()
+			caCertPool.AppendCertsFromPEM(caCert)
+
+			config.ClientCAs = caCertPool
+			config.ClientAuth = tls.RequireAndVerifyClientCert
+		}
+
 		listener, err = tls.Listen("tcp", addrlisten, config)
 
 	} else {
@@ -472,10 +549,11 @@ func (s *Prometheus) ListenAndServe() {
 	}
 
 	s.httpserver = listener
-	s.httpmux = mux
 	s.LogInfo("is listening on %s", listener.Addr())
 
-	http.Serve(s.httpserver, s.httpmux)
+	srv := &http.Server{Handler: mux, ErrorLog: s.logger.ErrorLogger()}
+	srv.Serve(s.httpserver)
+
 	s.LogInfo("terminated")
 	s.done_api <- true
 }

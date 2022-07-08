@@ -135,6 +135,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 Update package dependencies
 
 ```
+go get github.com/dmachard/go-logger@v0.2.0
 go get github.com/dmachard/go-powerdns-protobuf@v0.0.3
 go get github.com/dmachard/go-dnstap-protobuf@v0.2.0
 go mod tidy
