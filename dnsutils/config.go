@@ -125,6 +125,7 @@ type Config struct {
 			CertFile       string `yaml:"cert-file"`
 			KeyFile        string `yaml:"key-file"`
 			PromPrefix     string `yaml:"prometheus-prefix"`
+			TopN           int    `yaml:"top-n"`
 		} `yaml:"prometheus"`
 		WebServer struct {
 			Enable                  bool     `yaml:"enable"`
@@ -359,6 +360,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Prometheus.CertFile = ""
 	c.Loggers.Prometheus.KeyFile = ""
 	c.Loggers.Prometheus.PromPrefix = "dnscollectorv2"
+	c.Loggers.Prometheus.TopN = 10
 
 	c.Loggers.WebServer.Enable = false
 	c.Loggers.WebServer.ListenIP = "127.0.0.1"

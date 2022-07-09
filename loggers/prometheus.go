@@ -444,7 +444,7 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	}
 
 	if _, ok := o.topDomains[dm.DnsTap.Identity]; !ok {
-		o.topDomains[dm.DnsTap.Identity] = topmap.NewTopMap(2)
+		o.topDomains[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
 	}
 	o.topDomains[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
 
@@ -466,7 +466,7 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 		}
 
 		if _, ok := o.topNxDomains[dm.DnsTap.Identity]; !ok {
-			o.topNxDomains[dm.DnsTap.Identity] = topmap.NewTopMap(2)
+			o.topNxDomains[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
 		}
 		o.topNxDomains[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
 
@@ -488,7 +488,7 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	}
 
 	if _, ok := o.topRequesters[dm.DnsTap.Identity]; !ok {
-		o.topRequesters[dm.DnsTap.Identity] = topmap.NewTopMap(2)
+		o.topRequesters[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
 	}
 	o.topRequesters[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
 
