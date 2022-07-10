@@ -227,7 +227,7 @@ func DecodeDns(payload []byte) (DnsHeader, error) {
 // original error returned by relevant decoding operation.
 func DecodePayload(dm *DnsMessage, header *DnsHeader, config *Config) error {
 
-	if dm.DNS.MalformedPacket == 1 {
+	if dm.DNS.MalformedPacket {
 		// do not continue if packet is malformed, the header can not be
 		// trusted.
 		return nil
@@ -266,7 +266,7 @@ func DecodePayload(dm *DnsMessage, header *DnsHeader, config *Config) error {
 	if header.Qdcount > 0 {
 		dns_qname, dns_rrtype, offsetrr, err := DecodeQuestion(header.Qdcount, dm.DNS.Payload)
 		if err != nil {
-			dm.DNS.MalformedPacket = 1
+			dm.DNS.MalformedPacket = true
 			return &decodingError{part: "query", err: err}
 		}
 
@@ -294,7 +294,7 @@ func DecodePayload(dm *DnsMessage, header *DnsHeader, config *Config) error {
 			dm.DNS.DnsRRs.Answers = answers
 			payload_offset = offset
 		} else {
-			dm.DNS.MalformedPacket = 1
+			dm.DNS.MalformedPacket = true
 			return &decodingError{part: "answer records", err: err}
 		}
 	}
@@ -305,7 +305,7 @@ func DecodePayload(dm *DnsMessage, header *DnsHeader, config *Config) error {
 			dm.DNS.DnsRRs.Nameservers = answers
 			payload_offset = offsetrr
 		} else {
-			dm.DNS.MalformedPacket = 1
+			dm.DNS.MalformedPacket = true
 			return &decodingError{part: "authority records", err: err}
 		}
 	}
@@ -314,14 +314,14 @@ func DecodePayload(dm *DnsMessage, header *DnsHeader, config *Config) error {
 		if answers, _, err := DecodeAnswer(header.Arcount, payload_offset, dm.DNS.Payload); err == nil {
 			dm.DNS.DnsRRs.Records = answers
 		} else {
-			dm.DNS.MalformedPacket = 1
+			dm.DNS.MalformedPacket = true
 			return &decodingError{part: "additional records", err: err}
 		}
 		// decode EDNS options, if there are any
 		if edns, _, err := DecodeEDNS(header.Arcount, payload_offset, dm.DNS.Payload); err == nil {
 			dm.EDNS = edns
 		} else {
-			dm.DNS.MalformedPacket = 1
+			dm.DNS.MalformedPacket = true
 			return &decodingError{part: "edns options", err: err}
 		}
 	}

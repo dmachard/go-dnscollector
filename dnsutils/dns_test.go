@@ -1305,7 +1305,7 @@ func TestDecodePayload_QueryHappy(t *testing.T) {
 	if err = DecodePayload(&dm, &header, GetFakeConfig()); err != nil {
 		t.Errorf("Unexpected error while decoding payload: %v", err)
 	}
-	if dm.DNS.MalformedPacket != 0 {
+	if dm.DNS.MalformedPacket != false {
 		t.Errorf("did not expect packet to be malformed")
 	}
 
@@ -1371,7 +1371,7 @@ func TestDecodePayload_QueryInvalid(t *testing.T) {
 	if err = DecodePayload(&dm, &header, GetFakeConfig()); err == nil {
 		t.Errorf("Expected error when parsing payload")
 	}
-	if dm.DNS.MalformedPacket != 1 {
+	if dm.DNS.MalformedPacket != true {
 		t.Errorf("expected packet to be marked as malformed")
 	}
 
@@ -1440,7 +1440,7 @@ func TestDecodePayload_AnswerHappy(t *testing.T) {
 	if err = DecodePayload(&dm, &header, GetFakeConfig()); err != nil {
 		t.Errorf("Unexpected error while decoding payload: %v", err)
 	}
-	if dm.DNS.MalformedPacket != 0 {
+	if dm.DNS.MalformedPacket != false {
 		t.Errorf("did not expect packet to be malformed")
 	}
 
@@ -1561,7 +1561,7 @@ func TestDecodePayload_AnswerMultipleQueries(t *testing.T) {
 	if err = DecodePayload(&dm, &header, GetFakeConfig()); err != nil {
 		t.Errorf("Unexpected error while decoding payload: %v", err)
 	}
-	if dm.DNS.MalformedPacket != 0 {
+	if dm.DNS.MalformedPacket != false {
 		t.Errorf("did not expect packet to be malformed")
 	}
 
@@ -1678,7 +1678,7 @@ func TestDecodePayload_AnswerInvalid(t *testing.T) {
 	if !errors.Is(err, ErrDecodeDnsLabelInvalidPointer) {
 		t.Errorf("bad error returned: %v", err)
 	}
-	if dm.DNS.MalformedPacket != 1 {
+	if dm.DNS.MalformedPacket != true {
 		t.Errorf("expected packet to be malformed")
 	}
 }
@@ -1746,7 +1746,7 @@ func TestDecodePayload_AnswerInvalidQuery(t *testing.T) {
 	if !errors.Is(err, ErrDecodeDnsLabelInvalidData) {
 		t.Errorf("bad error returned: %v", err)
 	}
-	if dm.DNS.MalformedPacket != 1 {
+	if dm.DNS.MalformedPacket != true {
 		t.Errorf("expected packet to be malformed")
 	}
 
@@ -1820,7 +1820,7 @@ func TestDecodePayload_AnswerInvalidEdns(t *testing.T) {
 	if !errors.Is(err, ErrDecodeEdnsOptionTooShort) {
 		t.Errorf("bad error returned: %v", err)
 	}
-	if dm.DNS.MalformedPacket != 1 {
+	if dm.DNS.MalformedPacket != true {
 		t.Errorf("expected packet to be malformed")
 	}
 }
@@ -1888,7 +1888,7 @@ func TestDecodePayload_AnswerInvaliAdditional(t *testing.T) {
 	if !errors.Is(err, ErrDecodeDnsAnswerRdataTooShort) {
 		t.Errorf("bad error returned: %v", err)
 	}
-	if dm.DNS.MalformedPacket != 1 {
+	if dm.DNS.MalformedPacket != true {
 		t.Errorf("expected packet to be malformed")
 	}
 }
@@ -1946,7 +1946,7 @@ func TestDecodePayload_AnswerError(t *testing.T) {
 	if err = DecodePayload(&dm, &header, GetFakeConfig()); err != nil {
 		t.Errorf("Unexpected error while decoding payload: %v", err)
 	}
-	if dm.DNS.MalformedPacket != 0 {
+	if dm.DNS.MalformedPacket != false {
 		t.Errorf("did not expect packet to be malformed")
 	}
 
@@ -2054,7 +2054,7 @@ func TestDecodePayload_AnswerError_Invalid(t *testing.T) {
 	if !errors.Is(err, ErrDecodeDnsLabelInvalidPointer) {
 		t.Errorf("bad error returned: %v", err)
 	}
-	if dm.DNS.MalformedPacket != 1 {
+	if dm.DNS.MalformedPacket != true {
 		t.Errorf("expected packet to be malformed")
 	}
 

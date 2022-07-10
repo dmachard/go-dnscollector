@@ -65,7 +65,7 @@ type Dns struct {
 	Qtype                    string   `json:"qtype" msgpack:"qtype"`
 	Flags                    DnsFlags `json:"flags" msgpack:"flags"`
 	DnsRRs                   DnsRRs   `json:"resource-records" msgpack:"resource-records"`
-	MalformedPacket          int      `json:"malformed-packet" msgpack:"malformed-packet"`
+	MalformedPacket          bool     `json:"malformed-packet" msgpack:"malformed-packet"`
 }
 
 type DnsOption struct {
@@ -129,7 +129,7 @@ func (dm *DnsMessage) Init() {
 
 	dm.DNS = Dns{
 		Type:                     "-",
-		MalformedPacket:          0,
+		MalformedPacket:          false,
 		Rcode:                    "-",
 		Qtype:                    "-",
 		Qname:                    "-",
@@ -243,7 +243,12 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case "as-owner":
 			s.WriteString(dm.NetworkInfo.AutonomousSystemOrg)
 		case "malformed":
-			s.WriteString(strconv.Itoa(dm.DNS.MalformedPacket))
+			//s.WriteString(strconv.Itoa(dm.DNS.MalformedPacket))
+			if dm.DNS.MalformedPacket {
+				s.WriteString("PKTERR")
+			} else {
+				s.WriteString("-")
+			}
 		case "qr":
 			s.WriteString(dm.DNS.Type)
 		case "opcode":

@@ -214,7 +214,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		dnsHeader, err := dnsutils.DecodeDns(dm.DNS.Payload)
 		if err != nil {
 			// parser error
-			dm.DNS.MalformedPacket = 1
+			dm.DNS.MalformedPacket = true
 			d.LogInfo("dns parser malformed packet: %s", err)
 		}
 
@@ -228,7 +228,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// compute latency if possible
 		if d.config.Collectors.Dnstap.CacheSupport {
-			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && dm.DNS.MalformedPacket == 0 {
+			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && dm.DNS.MalformedPacket == false {
 				// compute the hash of the query
 				hash_data := []string{dm.NetworkInfo.QueryIp, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.DNS.Id)}
 

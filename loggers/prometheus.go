@@ -52,11 +52,13 @@ type Prometheus struct {
 	// counterFlagsAA       *prometheus.CounterVec
 	// counterFlagsRA       *prometheus.CounterVec
 	// counterFlagsAD       *prometheus.CounterVec
-	counterReceivedBytes *prometheus.CounterVec
-	counterSentBytes     *prometheus.CounterVec
-	counterDomains       *prometheus.CounterVec
-	counterDomainsNX     *prometheus.CounterVec
-	counterRequesters    *prometheus.CounterVec
+
+	totalReceivedBytes *prometheus.CounterVec
+	totalSentBytes     *prometheus.CounterVec
+
+	counterDomains    *prometheus.CounterVec
+	counterDomainsNX  *prometheus.CounterVec
+	counterRequesters *prometheus.CounterVec
 
 	histogramQueriesLength *prometheus.HistogramVec
 	histogramRepliesLength *prometheus.HistogramVec
@@ -155,7 +157,20 @@ func (o *Prometheus) InitProm() {
 			Name: fmt.Sprintf("%s_packets_count", o.config.Loggers.Prometheus.PromPrefix),
 			Help: "Counter of packets",
 		},
-		[]string{"identity", "qr", "op", "opcode", "family", "transport", "rcode", "qtype", "tc", "aa", "ra", "ad", "malformed"},
+		[]string{
+			"stream_id",
+			"net_family",
+			"net_transport",
+			"op_name",
+			"op_code",
+			"return_code",
+			"query_type",
+			"flag_qr",
+			"flag_tc",
+			"flag_aa",
+			"flag_ra",
+			"flag_ad",
+			"pkt_err"},
 	)
 	o.promRegistry.MustRegister(o.counterPackets)
 
@@ -253,23 +268,23 @@ func (o *Prometheus) InitProm() {
 	// )
 	// o.promRegistry.MustRegister(o.counterOperations)
 
-	o.counterReceivedBytes = prometheus.NewCounterVec(
+	o.totalReceivedBytes = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: fmt.Sprintf("%s_sent_bytes_total", o.config.Loggers.Prometheus.PromPrefix),
 			Help: "The total bytes sent",
 		},
 		[]string{"stream"},
 	)
-	o.promRegistry.MustRegister(o.counterReceivedBytes)
+	o.promRegistry.MustRegister(o.totalReceivedBytes)
 
-	o.counterSentBytes = prometheus.NewCounterVec(
+	o.totalSentBytes = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: fmt.Sprintf("%s_received_bytes_total", o.config.Loggers.Prometheus.PromPrefix),
 			Help: "The total bytes received",
 		},
 		[]string{"stream"},
 	)
-	o.promRegistry.MustRegister(o.counterSentBytes)
+	o.promRegistry.MustRegister(o.totalSentBytes)
 
 	// o.counterFlagsTC = prometheus.NewCounterVec(
 	// 	prometheus.CounterOpts{
@@ -385,32 +400,33 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	//o.counterPackets.WithLabelValues(dm.DnsTap.Identity).Inc()
 	o.counterPackets.WithLabelValues(
 		dm.DnsTap.Identity,
-		dm.DNS.Type,
-		dm.DnsTap.Operation,
-		strconv.Itoa(dm.DNS.Opcode),
 		dm.NetworkInfo.Family,
 		dm.NetworkInfo.Protocol,
+		dm.DnsTap.Operation,
+		strconv.Itoa(dm.DNS.Opcode),
 		dm.DNS.Rcode,
 		dm.DNS.Qtype,
+		dm.DNS.Type,
 		strconv.FormatBool(dm.DNS.Flags.TC),
 		strconv.FormatBool(dm.DNS.Flags.AA),
 		strconv.FormatBool(dm.DNS.Flags.RA),
 		strconv.FormatBool(dm.DNS.Flags.AD),
+		strconv.FormatBool(dm.DNS.MalformedPacket),
 	).Inc()
 
 	// count the number of invalid packet according to the stream name
-	if dm.DNS.MalformedPacket == 1 {
+	/*if dm.DNS.MalformedPacket == 1 {
 		o.counterInvalidPackets.WithLabelValues(dm.DnsTap.Identity).Inc()
-	}
+	}*/
 
 	// count the number of queries and replies
 	// count the total bytes for queries and replies
 	// and then make a histogram for queries and replies packet length observed
 	if dm.DNS.Type == dnsutils.DnsQuery {
-		o.counterReceivedBytes.WithLabelValues(dm.DnsTap.Identity).Add(float64(dm.DNS.Length))
+		o.totalReceivedBytes.WithLabelValues(dm.DnsTap.Identity).Add(float64(dm.DNS.Length))
 		o.histogramQueriesLength.WithLabelValues(dm.DnsTap.Identity).Observe(float64(dm.DNS.Length))
 	} else {
-		o.counterSentBytes.WithLabelValues(dm.DnsTap.Identity).Add(float64(dm.DNS.Length))
+		o.totalSentBytes.WithLabelValues(dm.DnsTap.Identity).Add(float64(dm.DNS.Length))
 		o.histogramRepliesLength.WithLabelValues(dm.DnsTap.Identity).Observe(float64(dm.DNS.Length))
 	}
 

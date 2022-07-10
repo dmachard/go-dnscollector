@@ -107,7 +107,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		// decode the dns payload
 		dnsHeader, err := dnsutils.DecodeDns(dm.DNS.Payload)
 		if err != nil {
-			dm.DNS.MalformedPacket = 1
+			dm.DNS.MalformedPacket = true
 			d.LogError("dns parser malformed packet: %s - %v+", err, dm)
 		}
 
@@ -130,7 +130,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			d.LogError("%v - %v", err, dm)
 		}
 
-		if dm.DNS.MalformedPacket == 1 {
+		if dm.DNS.MalformedPacket == true {
 			if d.config.Global.Trace.LogMalformed {
 				d.LogInfo("payload: %v", dm.DNS.Payload)
 			}
@@ -139,7 +139,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		// compute latency if possible
 		if d.config.Collectors.DnsSniffer.CacheSupport {
 			queryport, _ := strconv.Atoi(dm.NetworkInfo.QueryPort)
-			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && dm.DNS.MalformedPacket == 0 {
+			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && dm.DNS.MalformedPacket == false {
 				// compute the hash of the query
 				hash_data := []string{dm.NetworkInfo.QueryIp, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.DNS.Id)}
 
