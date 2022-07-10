@@ -34,31 +34,26 @@ type Prometheus struct {
 	topNxDomains  map[string]*topmap.TopMap
 	topRequesters map[string]*topmap.TopMap
 
+	requestersUniq map[string]int
+	domainsUniq    map[string]int
+	nxdomainsUniq  map[string]int
+
 	gaugeBuildInfo     *prometheus.GaugeVec
 	gaugeTopDomains    *prometheus.GaugeVec
 	gaugeTopNxDomains  *prometheus.GaugeVec
 	gaugeTopRequesters *prometheus.GaugeVec
 
-	//counterPackets        *prometheus.CounterVec
-	counterInvalidPackets *prometheus.CounterVec
-	//counterQueries        *prometheus.CounterVec
-	counterPackets *prometheus.CounterVec
-	// counterRcodes         *prometheus.CounterVec
-	// counterQtypes         *prometheus.CounterVec
-	// counterProtocols      *prometheus.CounterVec
-	// counterFamilies       *prometheus.CounterVec
-	// counterOperations     *prometheus.CounterVec
-	// counterFlagsTC       *prometheus.CounterVec
-	// counterFlagsAA       *prometheus.CounterVec
-	// counterFlagsRA       *prometheus.CounterVec
-	// counterFlagsAD       *prometheus.CounterVec
-
+	counterPackets     *prometheus.CounterVec
 	totalReceivedBytes *prometheus.CounterVec
 	totalSentBytes     *prometheus.CounterVec
 
 	counterDomains    *prometheus.CounterVec
-	counterDomainsNX  *prometheus.CounterVec
+	counterDomainsNx  *prometheus.CounterVec
 	counterRequesters *prometheus.CounterVec
+
+	counterDomainsUniq    *prometheus.CounterVec
+	counterDomainsNxUniq  *prometheus.CounterVec
+	counterRequestersUniq *prometheus.CounterVec
 
 	histogramQueriesLength *prometheus.HistogramVec
 	histogramRepliesLength *prometheus.HistogramVec
@@ -87,6 +82,10 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 		topNxDomains:  make(map[string]*topmap.TopMap),
 		topRequesters: make(map[string]*topmap.TopMap),
 
+		requestersUniq: make(map[string]int),
+		domainsUniq:    make(map[string]int),
+		nxdomainsUniq:  make(map[string]int),
+
 		name: name,
 	}
 	o.InitProm()
@@ -112,7 +111,7 @@ func (o *Prometheus) InitProm() {
 			Name: fmt.Sprintf("%s_top_domains_total", o.config.Loggers.Prometheus.PromPrefix),
 			Help: "Number of hit per domain topN, partitioned by qname",
 		},
-		[]string{"stream", "domain"},
+		[]string{"stream_id", "domain"},
 	)
 	o.promRegistry.MustRegister(o.gaugeTopDomains)
 
@@ -121,7 +120,7 @@ func (o *Prometheus) InitProm() {
 			Name: fmt.Sprintf("%s_top_nxdomains_total", o.config.Loggers.Prometheus.PromPrefix),
 			Help: "Number of hit per nx domain topN, partitioned by qname",
 		},
-		[]string{"stream", "domain"},
+		[]string{"stream_id", "domain"},
 	)
 	o.promRegistry.MustRegister(o.gaugeTopNxDomains)
 
@@ -130,27 +129,9 @@ func (o *Prometheus) InitProm() {
 			Name: fmt.Sprintf("%s_top_requesters_total", o.config.Loggers.Prometheus.PromPrefix),
 			Help: "Number of hit per requester topN, partitioned by qname",
 		},
-		[]string{"stream", "domain"},
+		[]string{"stream_id", "domain"},
 	)
 	o.promRegistry.MustRegister(o.gaugeTopRequesters)
-
-	// o.counterPackets = prometheus.NewCounterVec(
-	// 	prometheus.CounterOpts{
-	// 		Name: fmt.Sprintf("%s_packets_total", o.config.Loggers.Prometheus.PromPrefix),
-	// 		Help: "The total number of packets",
-	// 	},
-	// 	[]string{"stream"},
-	// )
-	// o.promRegistry.MustRegister(o.counterPackets)
-
-	// o.counterQueries = prometheus.NewCounterVec(
-	// 	prometheus.CounterOpts{
-	// 		Name: fmt.Sprintf("%s_queries_total", o.config.Loggers.Prometheus.PromPrefix),
-	// 		Help: "The total number of queries",
-	// 	},
-	// 	[]string{"identity", "operation", "family", "protocol", "rcode", "qtype"},
-	// )
-	// o.promRegistry.MustRegister(o.counterQueries)
 
 	o.counterPackets = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -174,22 +155,13 @@ func (o *Prometheus) InitProm() {
 	)
 	o.promRegistry.MustRegister(o.counterPackets)
 
-	o.counterInvalidPackets = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_packets_invalid_total", o.config.Loggers.Prometheus.PromPrefix),
-			Help: "The total number of invalid packets",
-		},
-		[]string{"stream"},
-	)
-	o.promRegistry.MustRegister(o.counterInvalidPackets)
-
 	o.histogramQueriesLength = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    fmt.Sprintf("%s_queries_size_bytes", o.config.Loggers.Prometheus.PromPrefix),
 			Help:    "Size of the queries in bytes.",
 			Buckets: []float64{50, 100, 250, 500},
 		},
-		[]string{"stream"},
+		[]string{"stream_id"},
 	)
 	o.promRegistry.MustRegister(o.histogramQueriesLength)
 
@@ -199,7 +171,7 @@ func (o *Prometheus) InitProm() {
 			Help:    "Size of the replies in bytes.",
 			Buckets: []float64{50, 100, 250, 500},
 		},
-		[]string{"stream"},
+		[]string{"stream_id"},
 	)
 	o.promRegistry.MustRegister(o.histogramRepliesLength)
 
@@ -209,7 +181,7 @@ func (o *Prometheus) InitProm() {
 			Help:    "Size of the qname in bytes.",
 			Buckets: []float64{10, 20, 40, 60, 100},
 		},
-		[]string{"stream"},
+		[]string{"stream_id"},
 	)
 	o.promRegistry.MustRegister(o.histogramQnamesLength)
 
@@ -219,61 +191,16 @@ func (o *Prometheus) InitProm() {
 			Help:    "Latency between query and reply",
 			Buckets: []float64{0.001, 0.010, 0.050, 0.100, 0.5, 1.0},
 		},
-		[]string{"stream"},
+		[]string{"stream_id"},
 	)
 	o.promRegistry.MustRegister(o.histogramLatencies)
-
-	// o.counterRcodes = prometheus.NewCounterVec(
-	// 	prometheus.CounterOpts{
-	// 		Name: fmt.Sprintf("%s_rcodes_total", o.config.Loggers.Prometheus.PromPrefix),
-	// 		Help: "The total number of replies per rcode",
-	// 	},
-	// 	[]string{"stream", "rcode"},
-	// )
-	// o.promRegistry.MustRegister(o.counterRcodes)
-
-	// o.counterQtypes = prometheus.NewCounterVec(
-	// 	prometheus.CounterOpts{
-	// 		Name: fmt.Sprintf("%s_qtypes_total", o.config.Loggers.Prometheus.PromPrefix),
-	// 		Help: "The total number of qtypes, partitioned by qtype",
-	// 	},
-	// 	[]string{"stream", "qtype"},
-	// )
-	// o.promRegistry.MustRegister(o.counterQtypes)
-
-	// o.counterProtocols = prometheus.NewCounterVec(
-	// 	prometheus.CounterOpts{
-	// 		Name: fmt.Sprintf("%s_protocols_total", o.config.Loggers.Prometheus.PromPrefix),
-	// 		Help: "The total number of packets, partitioned by protocols (tcp, udp, ...)",
-	// 	},
-	// 	[]string{"stream", "protocol"},
-	// )
-	// o.promRegistry.MustRegister(o.counterProtocols)
-
-	// o.counterFamilies = prometheus.NewCounterVec(
-	// 	prometheus.CounterOpts{
-	// 		Name: fmt.Sprintf("%s_family_total", o.config.Loggers.Prometheus.PromPrefix),
-	// 		Help: "The total number of packets, partitioned by family (IPv4, IPv6)",
-	// 	},
-	// 	[]string{"stream", "family"},
-	// )
-	// o.promRegistry.MustRegister(o.counterFamilies)
-
-	// o.counterOperations = prometheus.NewCounterVec(
-	// 	prometheus.CounterOpts{
-	// 		Name: fmt.Sprintf("%s_operations_total", o.config.Loggers.Prometheus.PromPrefix),
-	// 		Help: "The total number of packet, partitioned by operations",
-	// 	},
-	// 	[]string{"stream", "operation"},
-	// )
-	// o.promRegistry.MustRegister(o.counterOperations)
 
 	o.totalReceivedBytes = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: fmt.Sprintf("%s_sent_bytes_total", o.config.Loggers.Prometheus.PromPrefix),
 			Help: "The total bytes sent",
 		},
-		[]string{"stream"},
+		[]string{"stream_id"},
 	)
 	o.promRegistry.MustRegister(o.totalReceivedBytes)
 
@@ -282,72 +209,63 @@ func (o *Prometheus) InitProm() {
 			Name: fmt.Sprintf("%s_received_bytes_total", o.config.Loggers.Prometheus.PromPrefix),
 			Help: "The total bytes received",
 		},
-		[]string{"stream"},
+		[]string{"stream_id"},
 	)
 	o.promRegistry.MustRegister(o.totalSentBytes)
 
-	// o.counterFlagsTC = prometheus.NewCounterVec(
-	// 	prometheus.CounterOpts{
-	// 		Name: fmt.Sprintf("%s_truncated_total", o.config.Loggers.Prometheus.PromPrefix),
-	// 		Help: "The total of replies with TC flag",
-	// 	},
-	// 	[]string{"stream"},
-	// )
-	// o.promRegistry.MustRegister(o.counterFlagsTC)
-
-	// o.counterFlagsAA = prometheus.NewCounterVec(
-	// 	prometheus.CounterOpts{
-	// 		Name: fmt.Sprintf("%s_authoritative_answer_total", o.config.Loggers.Prometheus.PromPrefix),
-	// 		Help: "The total replies with AA flag",
-	// 	},
-	// 	[]string{"stream"},
-	// )
-	// o.promRegistry.MustRegister(o.counterFlagsAA)
-
-	// o.counterFlagsRA = prometheus.NewCounterVec(
-	// 	prometheus.CounterOpts{
-	// 		Name: fmt.Sprintf("%s_recursion_available_total", o.config.Loggers.Prometheus.PromPrefix),
-	// 		Help: "The total replies with RA flag",
-	// 	},
-	// 	[]string{"stream"},
-	// )
-	// o.promRegistry.MustRegister(o.counterFlagsRA)
-
-	// o.counterFlagsAD = prometheus.NewCounterVec(
-	// 	prometheus.CounterOpts{
-	// 		Name: fmt.Sprintf("%s_authentic_data_total", o.config.Loggers.Prometheus.PromPrefix),
-	// 		Help: "The total replies with AD flag",
-	// 	},
-	// 	[]string{"stream"},
-	// )
-	// o.promRegistry.MustRegister(o.counterFlagsAD)
-
 	o.counterDomains = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_domains_total", o.config.Loggers.Prometheus.PromPrefix),
-			Help: "The total number of domains",
+			Name: fmt.Sprintf("%s_domains_count", o.config.Loggers.Prometheus.PromPrefix),
+			Help: "The total number of domains per stream identity",
 		},
-		[]string{"stream"},
+		[]string{"stream_id"},
 	)
 	o.promRegistry.MustRegister(o.counterDomains)
 
-	o.counterDomainsNX = prometheus.NewCounterVec(
+	o.counterDomainsNx = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_domains_nx_total", o.config.Loggers.Prometheus.PromPrefix),
-			Help: "The total number of unknown domains",
+			Name: fmt.Sprintf("%s_domains_nx_count", o.config.Loggers.Prometheus.PromPrefix),
+			Help: "The total number of unknown domains per stream identity",
 		},
-		[]string{"stream"},
+		[]string{"stream_id"},
 	)
-	o.promRegistry.MustRegister(o.counterDomainsNX)
+	o.promRegistry.MustRegister(o.counterDomainsNx)
 
 	o.counterRequesters = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_requesters_total", o.config.Loggers.Prometheus.PromPrefix),
-			Help: "The total number of DNS clients",
+			Name: fmt.Sprintf("%s_requesters_count", o.config.Loggers.Prometheus.PromPrefix),
+			Help: "The total number of DNS clients per stream identity",
 		},
-		[]string{"stream"},
+		[]string{"stream_id"},
 	)
 	o.promRegistry.MustRegister(o.counterRequesters)
+
+	o.counterDomainsUniq = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: fmt.Sprintf("%s_domains_count_uniq", o.config.Loggers.Prometheus.PromPrefix),
+			Help: "The total number of uniq domains per stream identity",
+		},
+		[]string{},
+	)
+	o.promRegistry.MustRegister(o.counterDomainsUniq)
+
+	o.counterDomainsNxUniq = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: fmt.Sprintf("%s_domains_nx_count_uniq", o.config.Loggers.Prometheus.PromPrefix),
+			Help: "The total number of uniq unknown domains per stream identity",
+		},
+		[]string{},
+	)
+	o.promRegistry.MustRegister(o.counterDomainsNxUniq)
+
+	o.counterRequestersUniq = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: fmt.Sprintf("%s_requesters_count_uniq", o.config.Loggers.Prometheus.PromPrefix),
+			Help: "The total number of uniq DNS clients per stream identity",
+		},
+		[]string{},
+	)
+	o.promRegistry.MustRegister(o.counterRequestersUniq)
 }
 
 func (o *Prometheus) ReadConfig() {
@@ -414,11 +332,6 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 		strconv.FormatBool(dm.DNS.MalformedPacket),
 	).Inc()
 
-	// count the number of invalid packet according to the stream name
-	/*if dm.DNS.MalformedPacket == 1 {
-		o.counterInvalidPackets.WithLabelValues(dm.DnsTap.Identity).Inc()
-	}*/
-
 	// count the number of queries and replies
 	// count the total bytes for queries and replies
 	// and then make a histogram for queries and replies packet length observed
@@ -438,21 +351,14 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 		o.histogramLatencies.WithLabelValues(dm.DnsTap.Identity).Observe(dm.DnsTap.Latency)
 	}
 
-	// count some specific flags
-	// if dm.DNS.Flags.TC {
-	// 	o.counterFlagsTC.WithLabelValues(dm.DnsTap.Identity).Inc()
-	// }
-	// if dm.DNS.Flags.AA {
-	// 	o.counterFlagsAA.WithLabelValues(dm.DnsTap.Identity).Inc()
-	// }
-	// if dm.DNS.Flags.RA {
-	// 	o.counterFlagsRA.WithLabelValues(dm.DnsTap.Identity).Inc()
-	// }
-	// if dm.DNS.Flags.AD {
-	// 	o.counterFlagsAD.WithLabelValues(dm.DnsTap.Identity).Inc()
-	// }
-
 	/* count all domains name and top domains */
+	if _, exists := o.domainsUniq[dm.DNS.Qname]; !exists {
+		o.domainsUniq[dm.DNS.Qname] = 1
+		o.counterDomainsUniq.WithLabelValues().Inc()
+	} else {
+		o.domainsUniq[dm.DNS.Qname] += 1
+	}
+
 	if _, exists := o.domains[dm.DnsTap.Identity]; !exists {
 		o.domains[dm.DnsTap.Identity] = make(map[string]int)
 	}
@@ -476,12 +382,19 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 
 	/* record and count all nx domains name and topN*/
 	if dm.DNS.Rcode == "NXDOMAIN" {
+		if _, exists := o.nxdomainsUniq[dm.DNS.Qname]; !exists {
+			o.nxdomainsUniq[dm.DNS.Qname] = 1
+			o.counterDomainsNxUniq.WithLabelValues().Inc()
+		} else {
+			o.nxdomainsUniq[dm.DNS.Qname] += 1
+		}
+
 		if _, exists := o.nxdomains[dm.DnsTap.Identity]; !exists {
 			o.nxdomains[dm.DnsTap.Identity] = make(map[string]int)
 		}
 		if _, exists := o.nxdomains[dm.DnsTap.Identity][dm.DNS.Qname]; !exists {
 			o.nxdomains[dm.DnsTap.Identity][dm.DNS.Qname] = 1
-			o.counterDomainsNX.WithLabelValues(dm.DnsTap.Identity).Inc()
+			o.counterDomainsNx.WithLabelValues(dm.DnsTap.Identity).Inc()
 		} else {
 			o.nxdomains[dm.DnsTap.Identity][dm.DNS.Qname] += 1
 		}
@@ -498,6 +411,13 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	}
 
 	// record all clients and topN
+	if _, ok := o.requestersUniq[dm.NetworkInfo.QueryIp]; !ok {
+		o.requestersUniq[dm.NetworkInfo.QueryIp] = 1
+		o.counterRequestersUniq.WithLabelValues().Inc()
+	} else {
+		o.requestersUniq[dm.NetworkInfo.QueryIp] += 1
+	}
+
 	if _, exists := o.requesters[dm.DnsTap.Identity]; !exists {
 		o.requesters[dm.DnsTap.Identity] = make(map[string]int)
 	}
