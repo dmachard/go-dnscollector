@@ -16,16 +16,11 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-    - name: prom
-      prometheus:
-        listen-ip: 0.0.0.0
-        listen-port: 8081
-        prometheus-prefix: "dnscollector"
 
   routes:
     - from: [ dtap ]
       transforms: [ qnamelower ]
-      to: [ console, prom ]
+      to: [ console ]
       
 ################################################
 # list of supported collectors
