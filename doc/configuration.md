@@ -47,13 +47,13 @@ Options:
 - `log-malformed`: (boolean) log malformed packet
 
 ```yaml
-#
-trace:
-  verbose: true
-  log-malformed: false
-  filename: ""
-  max-size: 10
-  max-backups: 10
+global:
+  trace:
+    verbose: true
+    log-malformed: false
+    filename: ""
+    max-size: 10
+    max-backups: 10
 ```
 
 Example:
@@ -119,7 +119,7 @@ All available directives:
 - `edns-csubnet`: display client subnet info
 
 ```yaml
-subprocessors:
+global:
   text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"
 ```
 
