@@ -115,17 +115,15 @@ type Config struct {
 			TextFormat string `yaml:"text-format"`
 		} `yaml:"stdout"`
 		Prometheus struct {
-			Enable         bool   `yaml:"enable"`
-			ListenIP       string `yaml:"listen-ip"`
-			ListenPort     int    `yaml:"listen-port"`
-			BasicAuthLogin string `yaml:"basic-auth-login"`
-			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
-			TlsSupport     bool   `yaml:"tls-support"`
-			TlsMutual      bool   `yaml:"tls-mutual"`
-			CertFile       string `yaml:"cert-file"`
-			KeyFile        string `yaml:"key-file"`
-			PromPrefix     string `yaml:"prometheus-prefix"`
-			TopN           int    `yaml:"top-n"`
+			Enable     bool   `yaml:"enable"`
+			ListenIP   string `yaml:"listen-ip"`
+			ListenPort int    `yaml:"listen-port"`
+			TlsSupport bool   `yaml:"tls-support"`
+			TlsMutual  bool   `yaml:"tls-mutual"`
+			CertFile   string `yaml:"cert-file"`
+			KeyFile    string `yaml:"key-file"`
+			PromPrefix string `yaml:"prometheus-prefix"`
+			TopN       int    `yaml:"top-n"`
 		} `yaml:"prometheus"`
 		WebServer struct {
 			Enable                  bool     `yaml:"enable"`
@@ -353,13 +351,11 @@ func (c *Config) SetDefault() {
 	c.Loggers.Prometheus.Enable = false
 	c.Loggers.Prometheus.ListenIP = "127.0.0.1"
 	c.Loggers.Prometheus.ListenPort = 8081
-	c.Loggers.Prometheus.BasicAuthLogin = "admin"
-	c.Loggers.Prometheus.BasicAuthPwd = "changeme"
 	c.Loggers.Prometheus.TlsSupport = false
 	c.Loggers.Prometheus.TlsMutual = false
 	c.Loggers.Prometheus.CertFile = ""
 	c.Loggers.Prometheus.KeyFile = ""
-	c.Loggers.Prometheus.PromPrefix = "dnscollectorv2"
+	c.Loggers.Prometheus.PromPrefix = "dnscollector"
 	c.Loggers.Prometheus.TopN = 10
 
 	c.Loggers.WebServer.Enable = false

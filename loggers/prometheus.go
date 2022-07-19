@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
@@ -15,6 +16,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+type EpsCounters struct {
+	Eps             uint64
+	EpsMax          uint64
+	TotalEvents     uint64
+	TotalEventsPrev uint64
+}
 
 type Prometheus struct {
 	done         chan bool
@@ -38,10 +46,15 @@ type Prometheus struct {
 	domainsUniq    map[string]int
 	nxdomainsUniq  map[string]int
 
+	streamsMap map[string]*EpsCounters
+
 	gaugeBuildInfo     *prometheus.GaugeVec
 	gaugeTopDomains    *prometheus.GaugeVec
 	gaugeTopNxDomains  *prometheus.GaugeVec
 	gaugeTopRequesters *prometheus.GaugeVec
+
+	gaugeEps    *prometheus.GaugeVec
+	gaugeEpsMax *prometheus.GaugeVec
 
 	counterPackets     *prometheus.CounterVec
 	totalReceivedBytes *prometheus.CounterVec
@@ -85,6 +98,8 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 		requestersUniq: make(map[string]int),
 		domainsUniq:    make(map[string]int),
 		nxdomainsUniq:  make(map[string]int),
+
+		streamsMap: make(map[string]*EpsCounters),
 
 		name: name,
 	}
@@ -132,6 +147,24 @@ func (o *Prometheus) InitProm() {
 		[]string{"stream_id", "domain"},
 	)
 	o.promRegistry.MustRegister(o.gaugeTopRequesters)
+
+	o.gaugeEps = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: fmt.Sprintf("%s_eps", o.config.Loggers.Prometheus.PromPrefix),
+			Help: "Number of events per second received, partitioned by qname",
+		},
+		[]string{"stream_id"},
+	)
+	o.promRegistry.MustRegister(o.gaugeEps)
+
+	o.gaugeEpsMax = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: fmt.Sprintf("%s_eps_max", o.config.Loggers.Prometheus.PromPrefix),
+			Help: "Max number of events per second observed, partitioned by qname",
+		},
+		[]string{"stream_id"},
+	)
+	o.promRegistry.MustRegister(o.gaugeEpsMax)
 
 	o.counterPackets = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -304,16 +337,24 @@ func (o *Prometheus) Stop() {
 	o.LogInfo(" stopped")
 }
 
-func (o *Prometheus) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
+/*func (o *Prometheus) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
 	login, password, authOK := r.BasicAuth()
 	if !authOK {
 		return false
 	}
 
 	return (login == o.config.Loggers.Prometheus.BasicAuthLogin) && (password == o.config.Loggers.Prometheus.BasicAuthPwd)
-}
+}*/
 
 func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
+	// record stream identity
+	if _, exists := o.streamsMap[dm.DnsTap.Identity]; !exists {
+		o.streamsMap[dm.DnsTap.Identity] = new(EpsCounters)
+		o.streamsMap[dm.DnsTap.Identity].TotalEvents = 1
+	} else {
+		o.streamsMap[dm.DnsTap.Identity].TotalEvents += 1
+	}
+
 	// count number of logs according to the stream name
 	//o.counterPackets.WithLabelValues(dm.DnsTap.Identity).Inc()
 	o.counterPackets.WithLabelValues(
@@ -439,6 +480,25 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	}
 }
 
+func (o *Prometheus) ComputeEps() {
+	// for each stream compute the number of events per second
+	for stream := range o.streamsMap {
+		// compute number of events per second
+		if o.streamsMap[stream].TotalEvents > 0 && o.streamsMap[stream].TotalEventsPrev > 0 {
+			o.streamsMap[stream].Eps = o.streamsMap[stream].TotalEvents - o.streamsMap[stream].TotalEventsPrev
+		}
+		o.streamsMap[stream].TotalEventsPrev = o.streamsMap[stream].TotalEvents
+
+		// kept the max number of events per second
+		if o.streamsMap[stream].Eps > o.streamsMap[stream].EpsMax {
+			o.streamsMap[stream].EpsMax = o.streamsMap[stream].Eps
+		}
+
+		o.gaugeEps.WithLabelValues(stream).Set(float64(o.streamsMap[stream].Eps))
+		o.gaugeEpsMax.WithLabelValues(stream).Set(float64(o.streamsMap[stream].EpsMax))
+	}
+}
+
 func (s *Prometheus) ListenAndServe() {
 	s.LogInfo("starting prometheus metrics...")
 
@@ -505,15 +565,28 @@ func (s *Prometheus) Run() {
 	// start http server
 	go s.ListenAndServe()
 
+	// init timer to compute qps
+	t1_interval := 1 * time.Second
+	t1 := time.NewTimer(t1_interval)
+
 LOOP:
 	for {
-		dm, opened := <-s.channel
-		if !opened {
-			s.LogInfo("channel closed")
-			break LOOP
+		select {
+		case dm, opened := <-s.channel:
+			if !opened {
+				s.LogInfo("channel closed")
+				break LOOP
+			}
+			// record the dnstap message
+			s.Record(dm)
+
+		case <-t1.C:
+			// compute eps each second
+			s.ComputeEps()
+
+			// reset the timer
+			t1.Reset(t1_interval)
 		}
-		// record the dnstap message
-		s.Record(dm)
 
 	}
 	s.LogInfo("run terminated")
