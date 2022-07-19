@@ -16,15 +16,11 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-    - name: prom
-      prometheus:
-        listen-ip: 0.0.0.0
-        listen-port: 8081
 
   routes:
     - from: [ dtap ]
       transforms: [ qnamelower ]
-      to: [ console, prom ]
+      to: [ console ]
       
 ################################################
 # list of supported collectors
@@ -146,10 +142,6 @@ multiplexer:
 #   listen-ip: 0.0.0.0
 #   # listening port
 #   listen-port: 8081
-#   # default login
-#   basic-auth-login: admin
-#   # default password
-#   basic-auth-pwd: changeme
 #   # tls support
 #   tls-support: false
 #   # tls mutual
