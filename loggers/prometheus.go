@@ -142,9 +142,9 @@ func (o *Prometheus) InitProm() {
 	o.gaugeTopRequesters = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: fmt.Sprintf("%s_top_requesters_total", o.config.Loggers.Prometheus.PromPrefix),
-			Help: "Number of hit per requester topN, partitioned by qname",
+			Help: "Number of hit per requester topN, partitioned by client IP",
 		},
-		[]string{"stream_id", "domain"},
+		[]string{"stream_id", "ip"},
 	)
 	o.promRegistry.MustRegister(o.gaugeTopRequesters)
 
@@ -443,7 +443,7 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 		if _, ok := o.topNxDomains[dm.DnsTap.Identity]; !ok {
 			o.topNxDomains[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
 		}
-		o.topNxDomains[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
+		o.topNxDomains[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.nxdomains[dm.DnsTap.Identity][dm.DNS.Qname])
 
 		o.gaugeTopNxDomains.Reset()
 		for _, r := range o.topNxDomains[dm.DnsTap.Identity].Get() {
@@ -472,7 +472,7 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	if _, ok := o.topRequesters[dm.DnsTap.Identity]; !ok {
 		o.topRequesters[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
 	}
-	o.topRequesters[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
+	o.topRequesters[dm.DnsTap.Identity].Record(dm.NetworkInfo.QueryIp, o.requesters[dm.DnsTap.Identity][dm.NetworkInfo.QueryIp])
 
 	o.gaugeTopRequesters.Reset()
 	for _, r := range o.topRequesters[dm.DnsTap.Identity].Get() {
