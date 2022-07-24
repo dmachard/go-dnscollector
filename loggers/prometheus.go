@@ -230,8 +230,8 @@ func (o *Prometheus) InitProm() {
 
 	o.totalReceivedBytes = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_sent_bytes_total", o.config.Loggers.Prometheus.PromPrefix),
-			Help: "The total bytes sent",
+			Name: fmt.Sprintf("%s_received_bytes_total", o.config.Loggers.Prometheus.PromPrefix),
+			Help: "The total bytes received",
 		},
 		[]string{"stream_id"},
 	)
@@ -239,8 +239,8 @@ func (o *Prometheus) InitProm() {
 
 	o.totalSentBytes = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_received_bytes_total", o.config.Loggers.Prometheus.PromPrefix),
-			Help: "The total bytes received",
+			Name: fmt.Sprintf("%s_sent_bytes_total", o.config.Loggers.Prometheus.PromPrefix),
+			Help: "The total bytes sent",
 		},
 		[]string{"stream_id"},
 	)
