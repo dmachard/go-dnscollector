@@ -152,6 +152,8 @@ multiplexer:
 #   key-file: ""
 #   # prometheus prefix
 #   prometheus-prefix: "dnscollector"
+#   # default number of items on top 
+#   top-n: 10
 
 # # write captured dns traffic to text files with rotation and compression support
 # logfile:

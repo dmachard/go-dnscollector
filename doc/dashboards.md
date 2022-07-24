@@ -1,10 +1,22 @@
 # DnsCollector - Grafana Dashboards
 
 Build-in dashboard are available with multiple data source
+
+- [Prometheus - Basic](https://grafana.com/grafana/dashboards/15416)
+- [Prometheus - Advanced](https://grafana.com/grafana/dashboards/15416)
 - [Loki](https://grafana.com/grafana/dashboards/15415)
-- [Prometheus](https://grafana.com/grafana/dashboards/15416)
 
 ## Metrics
+
+### Basic
+
+Activate the **[Prometheus](https://github.com/dmachard/go-dns-collector/blob/main/doc/configuration.md#Prometheus)** logger to use this dashboard
+
+<p align="center">
+  <img src="dashboard4.png" alt="dnscollector"/>
+</p>
+
+### Advanced
 
 <p align="center">
   <img src="dashboard1.png" alt="dnscollector"/>
