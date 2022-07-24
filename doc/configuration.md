@@ -15,7 +15,8 @@ The configuration is done in one yaml file. For the complete configuration, see 
     - [Tail](#Tail)
     - [Protobuf PowerDNS](#Protobuf-PowerDNS)
   - [Loggers](#Loggers)
-    - [Stdout](#Stdout)
+    - [Console](#Stdout)
+    - [Prometheus](#Prometheus)
     - [REST API](#REST-API)
     - [Log File](#Log-File)
     - [DNStap](#Dnstap-Logger)
@@ -324,6 +325,40 @@ Example:
 ```
 2021-08-07T15:33:15.168298439Z dnscollector CQ NOERROR 10.0.0.210 32918 INET UDP 54b www.google.fr A 0.000000
 2021-08-07T15:33:15.457492773Z dnscollector CR NOERROR 10.0.0.210 32918 INET UDP 152b www.google.fr A 0.28919
+```
+
+#### Prometheus
+
+This logger generates **prometheus** metrics. Use the following Grafana [dashboard](https://grafana.com/grafana/dashboards/16630).
+
+Options:
+- `listen-ip`: (string) listening IP
+- `listen-port`: (integer) listening port
+- `tls-support`: (boolean) tls support
+- `tls-mutual`: (boolean) mtls authentication
+- `cert-file`: (string) certificate server file
+- `key-file`: (string) private key server file
+- `prometheus-suffix`: (string) prometheus suffix
+- `top-n`: (string) default number of items on top
+
+```yaml
+prometheus:
+  # listening IP
+  listen-ip: 0.0.0.0
+  # listening port
+  listen-port: 8081
+  # tls support
+  tls-support: false
+  # tls mutual
+  tls-mutual: false
+  # certificate server file
+  cert-file: ""
+  # private key server file
+  key-file: ""
+  # prometheus prefix
+  prometheus-prefix: "dnscollector"
+  # default number of items on top 
+  top-n: 10
 ```
 
 #### REST API
