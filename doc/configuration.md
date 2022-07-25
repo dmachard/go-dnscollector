@@ -19,7 +19,7 @@ The configuration is done in one yaml file. For the complete configuration, see 
     - [Prometheus](#Prometheus)
     - [REST API](#REST-API)
     - [Log File](#Log-File)
-    - [DNStap](#Dnstap-Logger)
+    - [DNStap](#dnstap-client)
     - [TCP](#TCP-Client)
     - [Syslog](#Syslog)
     - [Fluentd](#Fluentd-Client)

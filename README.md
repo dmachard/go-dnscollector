@@ -8,6 +8,10 @@ Aggregate and route all your dns logs (queries and replies) from different sourc
 
 ![overview](doc/overview.png)
 
+And extract in realtime some useful metrics.
+
+![overview](doc/overview2.png)
+
 NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes. 
 
 ## Features
