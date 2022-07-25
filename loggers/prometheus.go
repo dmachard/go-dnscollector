@@ -417,8 +417,10 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	o.topDomains[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
 
 	o.gaugeTopDomains.Reset()
-	for _, r := range o.topDomains[dm.DnsTap.Identity].Get() {
-		o.gaugeTopDomains.WithLabelValues(dm.DnsTap.Identity, r.Name).Set(float64(r.Hit))
+	for s := range o.topDomains {
+		for _, r := range o.topDomains[s].Get() {
+			o.gaugeTopDomains.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+		}
 	}
 
 	/* record and count all nx domains name and topN*/
@@ -446,8 +448,10 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 		o.topNxDomains[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.nxdomains[dm.DnsTap.Identity][dm.DNS.Qname])
 
 		o.gaugeTopNxDomains.Reset()
-		for _, r := range o.topNxDomains[dm.DnsTap.Identity].Get() {
-			o.gaugeTopNxDomains.WithLabelValues(dm.DnsTap.Identity, r.Name).Set(float64(r.Hit))
+		for s := range o.topNxDomains {
+			for _, r := range o.topNxDomains[s].Get() {
+				o.gaugeTopNxDomains.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+			}
 		}
 	}
 
@@ -475,8 +479,10 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	o.topRequesters[dm.DnsTap.Identity].Record(dm.NetworkInfo.QueryIp, o.requesters[dm.DnsTap.Identity][dm.NetworkInfo.QueryIp])
 
 	o.gaugeTopRequesters.Reset()
-	for _, r := range o.topRequesters[dm.DnsTap.Identity].Get() {
-		o.gaugeTopRequesters.WithLabelValues(dm.DnsTap.Identity, r.Name).Set(float64(r.Hit))
+	for s := range o.topRequesters {
+		for _, r := range o.topRequesters[s].Get() {
+			o.gaugeTopRequesters.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+		}
 	}
 }
 
