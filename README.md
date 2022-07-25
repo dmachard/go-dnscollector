@@ -8,7 +8,7 @@ Aggregate and route all your dns logs (queries and replies) from different sourc
 
 ![overview](doc/overview.png)
 
-And extract in realtime some useful metrics.
+And extract useful metrics in real time.
 
 ![overview](doc/overview2.png)
 
