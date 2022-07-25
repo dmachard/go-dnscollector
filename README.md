@@ -8,7 +8,7 @@ Aggregate and route all your dns logs (queries and replies) from different sourc
 
 ![overview](doc/overview.png)
 
-And extract in realtime some useful metrics.
+And extract useful metrics in real time.
 
 ![overview](doc/overview2.png)
 
@@ -28,15 +28,15 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [Queries/Replies JSON encoding](doc/dnsjson.md)
     - [DNS filtering](doc/configuration.md#dns-filtering)
     - [User Privacy](doc/configuration.md#user-privacy)
-    - [Normalize Qname](doc/configuration.md#Qname-lowercase)
+    - [Normalize Qname](doc/configuration.md#qname-lowercase)
 
 - Loggers:
     - [Console](doc/configuration.md#stdout)
-    - [Prometheus](doc/configuration.md#Prometheus)
+    - [Prometheus](doc/configuration.md#prometheus)
     - [File](doc/configuration.md#log-file)
     - [DNStap](doc/configuration.md#dnstap-client)
     - [TCP](doc/configuration.md#tcp-client)
-    - [REST API](doc/configuration.md#REST-API)
+    - [REST API](doc/configuration.md#rest-api)
     - [Syslog](doc/configuration.md#syslog)
     - [Fluentd](doc/configuration.md#fluentd-client)
     - [Pcap](doc/configuration.md#pcap-file)
@@ -49,7 +49,6 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [Built-in Grafana dashboards](doc/dashboards.md)
     - [GeoIP support](doc/configuration.md#geoip-support)
     - [Text format](doc/configuration.md#custom-text-format)
-
 ## Installation
 
 **Run-it from binary**
