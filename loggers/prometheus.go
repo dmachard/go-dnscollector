@@ -393,38 +393,39 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	}
 
 	/* count all domains name and top domains */
-	if _, exists := o.domainsUniq[dm.DNS.Qname]; !exists {
-		o.domainsUniq[dm.DNS.Qname] = 1
-		o.counterDomainsUniq.WithLabelValues().Inc()
-	} else {
-		o.domainsUniq[dm.DNS.Qname] += 1
-	}
-
-	if _, exists := o.domains[dm.DnsTap.Identity]; !exists {
-		o.domains[dm.DnsTap.Identity] = make(map[string]int)
-	}
-
-	if _, exists := o.domains[dm.DnsTap.Identity][dm.DNS.Qname]; !exists {
-		o.domains[dm.DnsTap.Identity][dm.DNS.Qname] = 1
-		o.counterDomains.WithLabelValues(dm.DnsTap.Identity).Inc()
-	} else {
-		o.domains[dm.DnsTap.Identity][dm.DNS.Qname] += 1
-	}
-
-	if _, ok := o.topDomains[dm.DnsTap.Identity]; !ok {
-		o.topDomains[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
-	}
-	o.topDomains[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
-
-	o.gaugeTopDomains.Reset()
-	for s := range o.topDomains {
-		for _, r := range o.topDomains[s].Get() {
-			o.gaugeTopDomains.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+	if dm.DNS.Rcode != "NXDOMAIN" {
+		if _, exists := o.domainsUniq[dm.DNS.Qname]; !exists {
+			o.domainsUniq[dm.DNS.Qname] = 1
+			o.counterDomainsUniq.WithLabelValues().Inc()
+		} else {
+			o.domainsUniq[dm.DNS.Qname] += 1
 		}
-	}
 
-	/* record and count all nx domains name and topN*/
-	if dm.DNS.Rcode == "NXDOMAIN" {
+		if _, exists := o.domains[dm.DnsTap.Identity]; !exists {
+			o.domains[dm.DnsTap.Identity] = make(map[string]int)
+		}
+
+		if _, exists := o.domains[dm.DnsTap.Identity][dm.DNS.Qname]; !exists {
+			o.domains[dm.DnsTap.Identity][dm.DNS.Qname] = 1
+			o.counterDomains.WithLabelValues(dm.DnsTap.Identity).Inc()
+		} else {
+			o.domains[dm.DnsTap.Identity][dm.DNS.Qname] += 1
+		}
+
+		if _, ok := o.topDomains[dm.DnsTap.Identity]; !ok {
+			o.topDomains[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
+		}
+		o.topDomains[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
+
+		o.gaugeTopDomains.Reset()
+		for s := range o.topDomains {
+			for _, r := range o.topDomains[s].Get() {
+				o.gaugeTopDomains.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+			}
+		}
+	} else {
+
+		/* record and count all nx domains name and topN*/
 		if _, exists := o.nxdomainsUniq[dm.DNS.Qname]; !exists {
 			o.nxdomainsUniq[dm.DNS.Qname] = 1
 			o.counterDomainsNxUniq.WithLabelValues().Inc()
