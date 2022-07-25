@@ -15,7 +15,7 @@ The configuration is done in one yaml file. For the complete configuration, see 
     - [Tail](#tail)
     - [Protobuf PowerDNS](#protobuf-powerdns)
   - [Loggers](#loggers)
-    - [Console](#stdout)
+    - [Console](#console)
     - [Prometheus](#prometheus)
     - [REST API](#rest-api)
     - [Log File](#log-file)
@@ -32,7 +32,6 @@ The configuration is done in one yaml file. For the complete configuration, see 
     - [User privacy](#user-privacy)
     - [GeoIP Support](#geoip-support)
     - [DNS filtering](#dns-filtering)
-    - [Statistics](#statistics)
 
 ## Global
 
@@ -304,7 +303,7 @@ outgoingProtobufServer("<dnscollectorip>:6001")
 
 ### Loggers
 
-#### Stdout
+#### Console
 
 Print to your standard output, all DNS logs received
 * in text or json format

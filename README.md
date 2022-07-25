@@ -31,7 +31,7 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
     - [Normalize Qname](doc/configuration.md#qname-lowercase)
 
 - Loggers:
-    - [Console](doc/configuration.md#stdout)
+    - [Console](doc/configuration.md#console)
     - [Prometheus](doc/configuration.md#prometheus)
     - [File](doc/configuration.md#log-file)
     - [DNStap](doc/configuration.md#dnstap-client)
