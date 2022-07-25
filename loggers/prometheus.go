@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -16,6 +17,17 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+var metricNameRegex = regexp.MustCompile(`_*[^0-9A-Za-z_]+_*`)
+
+/*
+OpenMetrics and the Prometheus exposition format require the metric name
+to consist only of alphanumericals and "_", ":" and they must not start
+with digits.
+*/
+func SanitizeMetricName(metricName string) string {
+	return metricNameRegex.ReplaceAllString(metricName, "_")
+}
 
 type EpsCounters struct {
 	Eps             uint64
@@ -112,9 +124,12 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 }
 
 func (o *Prometheus) InitProm() {
+
+	prom_prefix := SanitizeMetricName(o.config.Loggers.Prometheus.PromPrefix)
+
 	o.gaugeBuildInfo = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_build_info", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_build_info", prom_prefix),
 			Help: "Build version",
 		},
 		[]string{"version"},
@@ -123,7 +138,7 @@ func (o *Prometheus) InitProm() {
 
 	o.gaugeTopDomains = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_domains_total", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_top_domains_total", prom_prefix),
 			Help: "Number of hit per domain topN, partitioned by qname",
 		},
 		[]string{"stream_id", "domain"},
@@ -132,7 +147,7 @@ func (o *Prometheus) InitProm() {
 
 	o.gaugeTopNxDomains = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_nxdomains_total", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_top_nxdomains_total", prom_prefix),
 			Help: "Number of hit per nx domain topN, partitioned by qname",
 		},
 		[]string{"stream_id", "domain"},
@@ -141,7 +156,7 @@ func (o *Prometheus) InitProm() {
 
 	o.gaugeTopRequesters = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_requesters_total", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_top_requesters_total", prom_prefix),
 			Help: "Number of hit per requester topN, partitioned by client IP",
 		},
 		[]string{"stream_id", "ip"},
@@ -150,7 +165,7 @@ func (o *Prometheus) InitProm() {
 
 	o.gaugeEps = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_throughput_ops", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_throughput_ops", prom_prefix),
 			Help: "Number of ops per second received, partitioned by qname",
 		},
 		[]string{"stream_id"},
@@ -159,7 +174,7 @@ func (o *Prometheus) InitProm() {
 
 	o.gaugeEpsMax = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_throughput_ops_max", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_throughput_ops_max", prom_prefix),
 			Help: "Max number of ops per second observed, partitioned by qname",
 		},
 		[]string{"stream_id"},
@@ -168,7 +183,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterPackets = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_packets_count", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_packets_count", prom_prefix),
 			Help: "Counter of packets",
 		},
 		[]string{
@@ -190,7 +205,7 @@ func (o *Prometheus) InitProm() {
 
 	o.histogramQueriesLength = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    fmt.Sprintf("%s_queries_size_bytes", o.config.Loggers.Prometheus.PromPrefix),
+			Name:    fmt.Sprintf("%s_queries_size_bytes", prom_prefix),
 			Help:    "Size of the queries in bytes.",
 			Buckets: []float64{50, 100, 250, 500},
 		},
@@ -200,7 +215,7 @@ func (o *Prometheus) InitProm() {
 
 	o.histogramRepliesLength = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    fmt.Sprintf("%s_replies_size_bytes", o.config.Loggers.Prometheus.PromPrefix),
+			Name:    fmt.Sprintf("%s_replies_size_bytes", prom_prefix),
 			Help:    "Size of the replies in bytes.",
 			Buckets: []float64{50, 100, 250, 500},
 		},
@@ -210,7 +225,7 @@ func (o *Prometheus) InitProm() {
 
 	o.histogramQnamesLength = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    fmt.Sprintf("%s_qnames_size_bytes", o.config.Loggers.Prometheus.PromPrefix),
+			Name:    fmt.Sprintf("%s_qnames_size_bytes", prom_prefix),
 			Help:    "Size of the qname in bytes.",
 			Buckets: []float64{10, 20, 40, 60, 100},
 		},
@@ -220,7 +235,7 @@ func (o *Prometheus) InitProm() {
 
 	o.histogramLatencies = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    fmt.Sprintf("%s_latencies", o.config.Loggers.Prometheus.PromPrefix),
+			Name:    fmt.Sprintf("%s_latencies", prom_prefix),
 			Help:    "Latency between query and reply",
 			Buckets: []float64{0.001, 0.010, 0.050, 0.100, 0.5, 1.0},
 		},
@@ -230,7 +245,7 @@ func (o *Prometheus) InitProm() {
 
 	o.totalReceivedBytes = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_received_bytes_total", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_received_bytes_total", prom_prefix),
 			Help: "The total bytes received",
 		},
 		[]string{"stream_id"},
@@ -239,7 +254,7 @@ func (o *Prometheus) InitProm() {
 
 	o.totalSentBytes = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_sent_bytes_total", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_sent_bytes_total", prom_prefix),
 			Help: "The total bytes sent",
 		},
 		[]string{"stream_id"},
@@ -248,7 +263,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterDomains = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_domains_count", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_domains_count", prom_prefix),
 			Help: "The total number of domains per stream identity",
 		},
 		[]string{"stream_id"},
@@ -257,7 +272,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterDomainsNx = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_domains_nx_count", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_domains_nx_count", prom_prefix),
 			Help: "The total number of unknown domains per stream identity",
 		},
 		[]string{"stream_id"},
@@ -266,7 +281,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterRequesters = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_requesters_count", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_requesters_count", prom_prefix),
 			Help: "The total number of DNS clients per stream identity",
 		},
 		[]string{"stream_id"},
@@ -275,7 +290,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterDomainsUniq = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_domains_count_uniq", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_domains_count_uniq", prom_prefix),
 			Help: "The total number of uniq domains per stream identity",
 		},
 		[]string{},
@@ -284,7 +299,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterDomainsNxUniq = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_domains_nx_count_uniq", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_domains_nx_count_uniq", prom_prefix),
 			Help: "The total number of uniq unknown domains per stream identity",
 		},
 		[]string{},
@@ -293,7 +308,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterRequestersUniq = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_requesters_count_uniq", o.config.Loggers.Prometheus.PromPrefix),
+			Name: fmt.Sprintf("%s_requesters_count_uniq", prom_prefix),
 			Help: "The total number of uniq DNS clients per stream identity",
 		},
 		[]string{},
