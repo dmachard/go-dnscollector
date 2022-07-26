@@ -157,14 +157,28 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		// get query type
 		dm.DNS.Qtype = dnsutils.RdatatypeToString(int(pbdm.Question.GetQType()))
 
+		// get specific powerdns params
+		pdns := dnsutils.PowerDns{}
+
+		// get PowerDNS OriginalRequestSubnet
+		ip := pbdm.GetOriginalRequestorSubnet()
+		if len(ip) == 4 {
+			addr := make(net.IP, net.IPv4len)
+			copy(addr, ip)
+			pdns.OriginalRequestSubnet = addr.String()
+		}
+		if len(ip) == 16 {
+			addr := make(net.IP, net.IPv6len)
+			copy(addr, ip)
+			pdns.OriginalRequestSubnet = addr.String()
+		}
 		// get PowerDNS tags
 		tags := pbdm.GetResponse().GetTags()
 		if tags == nil {
 			tags = []string{}
 		}
-		pdns := dnsutils.PowerDns{
-			Tags: tags,
-		}
+		pdns.Tags = tags
+
 		dm.PowerDns = pdns
 
 		// decode answers
