@@ -297,7 +297,7 @@ lua-config-file=/etc/pdns-recursor/recursor.lua
 */etc/pdns-recursor/recursor.lua*
 
 ```lua
-protobufServer("<dnscollectorip>:6001")
+protobufServer("<dnscollectorip>:6001", {exportTypes={pdns.A, pdns.AAAA, pdns.CNAME}})
 outgoingProtobufServer("<dnscollectorip>:6001")
 ```
 
