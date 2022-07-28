@@ -10,7 +10,7 @@ multiplexer:
         listen-port: 6000
 
   loggers:
-    - name: std_out
+    - name: console
       stdout:
         mode: text
 
@@ -22,4 +22,4 @@ multiplexer:
 
   routes:
     - from: [tap_in]
-      to: [std_out, loki_out]
+      to: [console, loki_out]

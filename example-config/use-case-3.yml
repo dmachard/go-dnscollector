@@ -10,13 +10,13 @@ multiplexer:
         listen-port: 6000
 
   loggers:
-    - name: std_out
+    - name: console
       stdout:
         mode: json
 
   routes:
     - from: [tap_in]
-      to: [std_out]
+      to: [console]
 
 subprocessors:
   filtering:
