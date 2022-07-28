@@ -2,7 +2,7 @@
 # of supported collectors, loggers and transformers
 multiplexer:
   collectors:
-    - name: dtap
+    - name: tap
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
@@ -18,10 +18,10 @@ multiplexer:
         mode: text
 
   routes:
-    - from: [ dtap ]
+    - from: [ tap ]
       transforms: [ qnamelower ]
-      to: [ console ]
-      
+      to: [ prom ]
+
 ################################################
 # list of supported collectors
 ################################################
@@ -395,7 +395,7 @@ global:
   # If turned on, log some applications messages
   trace:
     # debug informations
-    verbose: true
+    verbose: false
     # log malformed packet
     log-malformed: false
     # filename is the file to write logs to.
@@ -441,4 +441,6 @@ global:
   # - ra: recursion available
   # - ad: authenticated data
   # - edns-csubnet: client subnet
+  # - pdns-tags: powerdns metadata
+  # - pdns-original-request-client: powerdns metadata
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
