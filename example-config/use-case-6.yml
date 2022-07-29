@@ -8,12 +8,10 @@ multiplexer:
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
-
-  transformers: 
-    - name: privacy
-      user-privacy:
-          anonymize-ip: true
-          minimaze-qname: true
+      transforms:
+        user-privacy:
+            anonymize-ip: true
+            minimaze-qname: true
 
   loggers:
     - name: console

@@ -17,7 +17,3 @@ multiplexer:
   routes:
     - from: [tap_in]
       to: [console]
-
-subprocessors:
-  filtering:
-    log-replies: true

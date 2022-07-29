@@ -39,6 +39,10 @@ func NewInfluxDBClient(config *dnsutils.Config, logger *logger.Logger, name stri
 	return s
 }
 
+func (c *InfluxDBClient) GetName() string { return c.name }
+
+func (c *InfluxDBClient) SetLoggers(loggers []dnsutils.Worker) {}
+
 func (o *InfluxDBClient) ReadConfig() {
 	//tbc
 }

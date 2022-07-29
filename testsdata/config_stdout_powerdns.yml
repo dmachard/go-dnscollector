@@ -10,10 +10,10 @@ multiplexer:
         listen-port: 6001
 
   loggers:
-    - name: out
+    - name: console
       stdout:
         mode: text
 
   routes:
     - from: [pdns]
-      to: [out]
+      to: [console]

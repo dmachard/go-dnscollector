@@ -41,6 +41,11 @@ func NewDnstapSender(config *dnsutils.Config, logger *logger.Logger, name string
 	return s
 }
 
+func (c *DnstapSender) GetName() string { return c.name }
+
+func (c *DnstapSender) SetLoggers(loggers []dnsutils.Worker) {
+}
+
 func (o *DnstapSender) ReadConfig() {
 	// get hostname
 	if o.config.Loggers.Dnstap.ServerId == "" {

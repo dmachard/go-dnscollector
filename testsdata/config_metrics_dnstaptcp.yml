@@ -10,7 +10,7 @@ multiplexer:
         listen-port: 6000
 
   loggers:
-    - name: out
+    - name: console
       stdout:
         mode: text
     - name: web
@@ -23,4 +23,4 @@ multiplexer:
 
   routes:
     - from: [tap]
-      to: [out, web]
+      to: [console, web]

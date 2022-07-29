@@ -36,6 +36,10 @@ func NewStdOut(config *dnsutils.Config, console *logger.Logger, name string) *St
 	return o
 }
 
+func (c *StdOut) GetName() string { return c.name }
+
+func (c *StdOut) SetLoggers(loggers []dnsutils.Worker) {}
+
 func (c *StdOut) ReadConfig() {
 	if len(c.config.Loggers.Stdout.TextFormat) > 0 {
 		c.textFormat = strings.Fields(c.config.Loggers.Stdout.TextFormat)

@@ -1,3 +1,62 @@
+
+
+################################################
+# global configuration
+################################################
+global:
+  # If turned on, log some applications messages
+  trace:
+    # debug informations
+    verbose: true
+    # log malformed packet
+    # log-malformed: false
+    # # filename is the file to write logs to.
+    # filename: ""
+    # # maximum size in megabytes of the log file it gets rotated
+    # max-size: 10
+    # # maximum number of old log files to retain
+    # max-backups: 10
+    
+  # all directives for text format output
+  # - timestamp-rfc3339ns: timestamp rfc3339 format, with nano support
+  # - timestamp-unixms: unix timestamp with ms support
+  # - timestamp-unixus: unix timestamp with us support
+  # - timestamp-unixns: unix timestamp with nano support
+  # - localtime: local time
+  # - identity: dnstap identity
+  # - operation: dnstap operation
+  # - opcode: dns opcode (integer)
+  # - rcode: dns return code
+  # - queryip: dns query ip
+  # - queryport: dns query port
+  # - responseip: dns response ip
+  # - responseport: dns response port
+  # - id: dns id
+  # - family: ip protocol version INET or INET6
+  # - protocol: protocol UDP, TCP
+  # - length: the length of the query or reply
+  # - qtype: dns qtype
+  # - qname: dns qname
+  # - latency: computed latency between queries and replies
+  # - answercount: the number of answer
+  # - continent: continent code
+  # - country: country iso code
+  # - city: city name
+  # - as-number: autonomous system number
+  # - as-owner: autonomous system organization
+  # - ttl: answer ttl, only the first one value
+  # - answer: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
+  # - malformed: malformed dns packet, integer value 1/0
+  # - qr: query or reply flag, string value Q/R
+  # - tc: truncated flag
+  # - aa: authoritative answer
+  # - ra: recursion available
+  # - ad: authenticated data
+  # - edns-csubnet: client subnet
+  # - pdns-tags: powerdns metadata
+  # - pdns-original-request-client: powerdns metadata
+  # text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
+
 # create your dns collector, please refer bellow to see the list 
 # of supported collectors, loggers and transformers
 multiplexer:
@@ -7,11 +66,6 @@ multiplexer:
         listen-ip: 0.0.0.0
         listen-port: 6000
 
-  transformers:
-    - name: qnamelower 
-      normalize:  
-        lowercase-qname: true
-
   loggers:
     - name: console
       stdout:
@@ -19,8 +73,7 @@ multiplexer:
 
   routes:
     - from: [ tap ]
-      transforms: [ qnamelower ]
-      to: [ prom ]
+      to: [ console ]
 
 ################################################
 # list of supported collectors
@@ -386,61 +439,3 @@ multiplexer:
 #   mmdb-city-file: ""
 #   # path file to your mmdb ASN database
 #   mmdb-asn-file: ""
-
-
-################################################
-# global configuration
-################################################
-global:
-  # If turned on, log some applications messages
-  trace:
-    # debug informations
-    verbose: false
-    # log malformed packet
-    log-malformed: false
-    # filename is the file to write logs to.
-    filename: ""
-    # maximum size in megabytes of the log file it gets rotated
-    max-size: 10
-    # maximum number of old log files to retain
-    max-backups: 10
-    
-  # all directives for text format output
-  # - timestamp-rfc3339ns: timestamp rfc3339 format, with nano support
-  # - timestamp-unixms: unix timestamp with ms support
-  # - timestamp-unixus: unix timestamp with us support
-  # - timestamp-unixns: unix timestamp with nano support
-  # - localtime: local time
-  # - identity: dnstap identity
-  # - operation: dnstap operation
-  # - opcode: dns opcode (integer)
-  # - rcode: dns return code
-  # - queryip: dns query ip
-  # - queryport: dns query port
-  # - responseip: dns response ip
-  # - responseport: dns response port
-  # - id: dns id
-  # - family: ip protocol version INET or INET6
-  # - protocol: protocol UDP, TCP
-  # - length: the length of the query or reply
-  # - qtype: dns qtype
-  # - qname: dns qname
-  # - latency: computed latency between queries and replies
-  # - answercount: the number of answer
-  # - continent: continent code
-  # - country: country iso code
-  # - city: city name
-  # - as-number: autonomous system number
-  # - as-owner: autonomous system organization
-  # - ttl: answer ttl, only the first one value
-  # - answer: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
-  # - malformed: malformed dns packet, integer value 1/0
-  # - qr: query or reply flag, string value Q/R
-  # - tc: truncated flag
-  # - aa: authoritative answer
-  # - ra: recursion available
-  # - ad: authenticated data
-  # - edns-csubnet: client subnet
-  # - pdns-tags: powerdns metadata
-  # - pdns-original-request-client: powerdns metadata
-  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"

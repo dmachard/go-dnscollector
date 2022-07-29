@@ -75,6 +75,10 @@ func NewSyslog(config *dnsutils.Config, console *logger.Logger, name string) *Sy
 	return o
 }
 
+func (c *Syslog) GetName() string { return c.name }
+
+func (c *Syslog) SetLoggers(loggers []dnsutils.Worker) {}
+
 func (c *Syslog) ReadConfig() {
 	if !dnsutils.IsValidMode(c.config.Loggers.Syslog.Mode) {
 		c.logger.Fatal("logger syslog - invalid mode text or json expected")

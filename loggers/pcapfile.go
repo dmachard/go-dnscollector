@@ -61,6 +61,10 @@ func NewPcapFile(config *dnsutils.Config, console *logger.Logger, name string) *
 	return o
 }
 
+func (c *PcapWriter) GetName() string { return c.name }
+
+func (c *PcapWriter) SetLoggers(loggers []dnsutils.Worker) {}
+
 func (c *PcapWriter) ReadConfig() {
 	c.filedir = filepath.Dir(c.config.Loggers.PcapFile.FilePath)
 	c.filename = filepath.Base(c.config.Loggers.PcapFile.FilePath)

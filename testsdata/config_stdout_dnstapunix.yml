@@ -9,10 +9,10 @@ multiplexer:
         sock-path: /tmp/dnstap.sock
 
   loggers:
-    - name: out
+    - name: console
       stdout:
         mode: text
 
   routes:
     - from: [tap]
-      to: [out]
+      to: [console]

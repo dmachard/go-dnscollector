@@ -9,30 +9,12 @@ The configuration is done in one yaml file. For the complete configuration, see 
   - [Trace](#trace)
   - [Custom text format](#custom-text-format)
 - [Multiplexer](#multiplexer)
-  - [Collectors](#collectors)
-    - [DNS tap](#dns-tap)
-    - [DNS sniffer](#dns-sniffer)
-    - [Tail](#tail)
-    - [Protobuf PowerDNS](#protobuf-powerdns)
-  - [Loggers](#loggers)
-    - [Console](#stdout)
-    - [Prometheus](#prometheus)
-    - [REST API](#rest-api)
-    - [Log File](#log-file)
-    - [DNStap](#dnstap-client)
-    - [TCP](#tcp-client)
-    - [Syslog](#syslog)
-    - [Fluentd](#fluentd-client)
-    - [Pcap File](#pcap-file)
-    - [InfluxDB](#influxdb-client)
-    - [Loki](#loki-client)
-    - [Statsd](#statsd-client)
-  - [Transformers](#transformers)
-    - [Qname lowercase](#qname-lowercase)
-    - [User privacy](#user-privacy)
-    - [GeoIP Support](#geoip-support)
-    - [DNS filtering](#dns-filtering)
-    - [Statistics](#statistics)
+- [Transforms](#transforms)
+  - [Qname lowercase](#qname-lowercase)
+  - [User privacy](#user-privacy)
+  - [GeoIP Support](#geoip-support)
+  - [DNS filtering](#dns-filtering)
+  - [Statistics](#statistics)
 
 ## Global
 
@@ -132,634 +114,29 @@ global:
 In this part, you can define the list of collectors, loggers and links between all of them.
 
 Options:
-- `collectors`: list of running collectors
-- `loggers`: list of running loggers
-- `routes`: list of route
+- `collectors`: list of running [collectors](/doc/collectors.md)
+- `loggers`: list of running [loggers](/doc/loggers.md)
+- `routes`: routing part, connection between loggers and collectors
 
 ```yaml
 multiplexer:
   collectors: 
     - name: <collector_name>
-      ...
-  transformers: 
-    - name: <transform_name>
-      ...
+      .....
+          
   loggers: 
     - name: <logger_name>
       ...
   routes: ...
+    - from: [ list of collectors by name ]
+      to: [ list of loggers by name ]
 ```
 
 More details [here](/doc/multiplexer.md).
 
-### Collectors
-
-#### DNS tap
-
-Dnstap stream collector:
-* tcp or unix socket listener
-* tls support
-
-Options:
-- `listen-ip`: (string) listen on ip
-- `listen-port`: (integer) listening on port
-- `sock-path`: (string) unix socket path
-- `tls-support:`: (boolean) to enable, set to true
-- `cert-file`: (string) certificate server file
-- `key-file`: (string) private key server file
-- `cache-support`: (boolean) disable or enable the cache dns, this feature can be enabled if your dns server doesn't add the latency
-- `query-timeout`: (integer) in second, max time to keep the query record in memory
-- `quiet-text`: (boolean) Quiet text mode to reduce the size of the logs
-
-```yaml
-dnstap:
-  listen-ip: 0.0.0.0
-  listen-port: 6000
-  sock-path: null
-  tls-support: false
-  cert-file: ""
-  key-file: ""
-  cache-support: false
-  query-timeout: 5.0
-  quiet-text: false
-```
-
-The following dnstap flag message will be replaced with the small form:
-- AUTH_QUERY: `AQ`
-- AUTH_RESPONSE: `AR`
-- RESOLVER_QUERY: `RQ`
-- RESOLVER_RESPONSE: `RR`
-- CLIENT_QUERY: `CQ`
-- CLIENT_RESPONSE: `CR`
-- FORWARDER_QUERY: `FQ`
-- FORWARDER_RESPONSE: `FR`
-- STUB_QUERY: `SQ`
-- STUB_RESPONSE: `SR`
-- TOOL_QUERY: `TQ`
-- TOOL_RESPONSE: `TR`
-
-The following dns flag message will be replaced with the small form:
-- QUERY: `Q`
-- REPLY: `R`
-
-#### DNS sniffer
-
-Raw DNS packets sniffer. Setting `CAP_NET_RAW` capabilities on executables allows you to run these
-program without having to run-it with the root user:
-* IPv4, IPv6 support (fragmented packet ignored)
-* UDP and TCP transport
-* BFP filtering
-
-```
-sudo setcap cap_net_admin,cap_net_raw=eip go-dnscollector
-```
-
-Options:
-- `port`: (integer) filter on source and destination port
-- `device`: (string) if "" bind on all interfaces
-- `capture-dns-queries`: (boolean) capture dns queries
-- `capture-dns-replies`: (boolean) capture dns replies
-- `cache-support`: (boolean) disable or enable the cache dns to compute latency between queries and replies
-- `query-timeout`: (integer) in second, max time to keep the query record in memory
-
-```yaml
-dns-sniffer:
-  port: 53
-  device: wlp2s0
-  capture-dns-queries: true
-  capture-dns-replies: true
-  cache-support: true
-  query-timeout: 5.0
-```
-
-#### Tail
-
-The tail collector enable to read DNS event from text files.
-DNS servers log server can be followed; any type of server is supported!
-* Read DNS events from the tail of text files
-* Regex support
-
-
-Enable the tail by provided the path of the file to follow
-
-Options:
-- `file-path`: (string) file to follow
-- `time-layout`: (string)  Use the exact layout numbers described https://golang.org/src/time/format.go
-- `pattern-query`: (string) regexp pattern for queries
-- `pattern-reply`: (string) regexp pattern for replies
-
-```yaml
-tail:
-  file-path: null
-  time-layout: "2006-01-02T15:04:05.999999999Z07:00"
-  pattern-query: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_QUERY) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
-  pattern-reply: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_RESPONSE) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
-```
-
-
-#### Protobuf PowerDNS
-
-[Protobuf Logging](https://dnsdist.org/reference/protobuf.html) support for PowerDNS's products.
-
-Options:
-- `listen-ip`: (string) listen on ip
-- `listen-port`: (integer) listening on port
-- `quiet-text`: (boolean) Quiet text mode to reduce the size of the logs
-- `tls-support:`: (boolean) to enable, set to true
-- `cert-file`: (string) certificate server file
-- `key-file`: (string) private key server file
-
-```yaml
-powerdns:
-  listen-ip: 0.0.0.0
-  listen-port: 6001
-  quiet-text: false
-  tls-support: false
-  cert-file: ""
-  key-file: ""
-```
-
-Example to enable logging in your **dnsdist**
-
-```lua
-rl = newRemoteLogger("<dnscollectorip>:6001")
-addAction(AllRule(),RemoteLogAction(rl, nil, {serverID="dnsdist"}))
-addResponseAction(AllRule(),RemoteLogResponseAction(rl, nil, true, {serverID="dnsdist"}))
-addCacheHitResponseAction(AllRule(), RemoteLogResponseAction(rl, nil, true, {serverID="dnsdist"}))
-```
-
-Example to enable logging in your **pdns-recursor**
-
-*/etc/pdns-recursor/recursor.conf*
-
-```lua
-lua-config-file=/etc/pdns-recursor/recursor.lua
-```
-
-*/etc/pdns-recursor/recursor.lua*
-
-```lua
-protobufServer("<dnscollectorip>:6001", {exportTypes={pdns.A, pdns.AAAA, pdns.CNAME}})
-outgoingProtobufServer("<dnscollectorip>:6001")
-```
-
-
-### Loggers
-
-#### Stdout
-
-Print to your standard output, all DNS logs received
-* in text or json format
-* custom text format
-
-Options:
-- `mode`: (string) text or json
-- `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
-
-```yaml
-stdout:
-  mode: text
-  text-format: ""
-```
-
-Example:
-
-```
-2021-08-07T15:33:15.168298439Z dnscollector CQ NOERROR 10.0.0.210 32918 INET UDP 54b www.google.fr A 0.000000
-2021-08-07T15:33:15.457492773Z dnscollector CR NOERROR 10.0.0.210 32918 INET UDP 152b www.google.fr A 0.28919
-```
-
-#### Prometheus
-
-This logger generates **prometheus** metrics. Use the following Grafana [dashboard](https://grafana.com/grafana/dashboards/16630).
-
-Options:
-- `listen-ip`: (string) listening IP
-- `listen-port`: (integer) listening port
-- `tls-support`: (boolean) tls support
-- `tls-mutual`: (boolean) mtls authentication
-- `cert-file`: (string) certificate server file
-- `key-file`: (string) private key server file
-- `prometheus-suffix`: (string) prometheus suffix
-- `top-n`: (string) default number of items on top
-
-```yaml
-prometheus:
-  # listening IP
-  listen-ip: 0.0.0.0
-  # listening port
-  listen-port: 8081
-  # tls support
-  tls-support: false
-  # tls mutual
-  tls-mutual: false
-  # certificate server file
-  cert-file: ""
-  # private key server file
-  key-file: ""
-  # prometheus prefix
-  prometheus-prefix: "dnscollector"
-  # default number of items on top 
-  top-n: 10
-```
-
-#### REST API
-
-Build-in webserver with REST API to retrieve somes statistics like top domains, clients and more...
-Basic authentication supported. Prometheus metrics is also available through this API.
-
-* prometheus metrics format
-* qps, total queries/replies, top domains, clients, rcodes...
-* basic auth
-* tls support
-
-See the [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) documentation.
-
-Options:
-- `listen-ip`: (string) listening IP
-- `listen-port`: (integer) listening port
-- `basic-auth-login`: (string) default login for basic auth
-- `basic-auth-pwd`: (string) default password for basic auth
-- `tls-support`: (boolean) tls support
-- `cert-file`: (string) certificate server file
-- `key-file`: (string) private key server file
-- `top-max-items`: (string) default number of items on top
-- `common-qtypes`: (list of string)  expected common qtype list, other will be considered as suspicious
-- `threshold-qname-len`: (string) a length greater than this value will be considered as suspicious
-- `threshold-packet-len`: (string) a size greater than this value will be considered as suspicious value in bytes
-- `threshold-slow`: (string) threshold to set a domain considered as slow, value in second
-- `prometheus-suffix`: (string) prometheus suffix
-
-```yaml
-webserver:
-  listen-ip: 0.0.0.0
-  listen-port: 8080
-  basic-auth-login: admin
-  basic-auth-pwd: changeme
-  tls-support: true
-  cert-file: "./testsdata/server.crt"
-  key-file: "./testsdata/server.key"
-  top-max-items: 100
-  common-qtypes:
-    - A
-    - AAAA
-    - CNAME
-    - TXT
-    - PTR
-    - NAPTR
-    - DNSKEY
-    - SRV
-  threshold-qname-len: 80
-  threshold-packet-len: 1000
-  threshold-slow: 0.5
-  prometheus-suffix: "dnscollector"
-```
-
-**Prometheus metrics example:**
-
-Request:
-
-```
-$ curl --user admin:changeme http://127.0.0.1:8080/metrics
-```
-
-The `<promdsuffix>` tag can be configured in the `config.yml` file.
-
-Metrics list:
-- `<promdsuffix>_qps`: Number of queries per second received
-- `<promdsuffix>_requesters_total`: Number of clients
-- `<promdsuffix>_domains_total`: Number of domains observed
-- `<promdsuffix>_received_bytes_total`: Total bytes received
-- `<promdsuffix>_sent_bytes_total`: Total bytes sent
-
-
-The full metrics can be found [here](doc/metrics.txt).
-
-
-#### Log File
-
-Enable this logger if you want to log to a file.
-* with rotation file support
-* supported format: text, json
-* gzip compression
-* execute external command after each rotation
-* custom text format
-
-Options:
-- `file-path`: (string) output logfile name
-- `max-size`: (integer) maximum size in megabytes of the file before rotation, A minimum of max-size*max-files megabytes of space disk must be available
-- `max-files`: (integer) maximum number of files to retain. Set to zero if you want to disable this feature
-- `flush-interval`: (integer) flush buffer to log file every X seconds
-- `compress`: (boolean) compress log file
-- `compress-interval`: (integer) checking every X seconds if new log files must be compressed
-- `compress-command`: (string) run external script after file compress step
-- `mode`: (string)  output format: text|json
-- `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
-- `postrotate-command`: (string) run external script after file rotation
-- `postrotate-delete-success`: (boolean) delete file on script success
-
-```yaml
-logfile:
-  file-path: null
-  max-size: 100
-  max-files: 10
-  flush-interval: 10
-  compress: false
-  compress-interval: 5
-  compress-command: null
-  mode: text
-  text-format: ""
-  postrotate-command: null
-  postrotate-delete-success: false
-```
-
-Basic example to use the postrotate command:
-
-Configure the script to execute after each file rotation, for each call the file is passed as argument.
-
-```
-logfile:
-  postrotate-command: "/home/dnscollector/postrotate.sh"
-```
-
-Script to move the log file to a specific folder
-
-```bash
-#!/bin/bash
-
-DNSCOLLECTOR=/var/dnscollector/
-BACKUP_FOLDER=$DNSCOLLECTOR/$(date +%Y-%m-%d)
-mkdir -p $BACKUP_FOLDER
-
-mv $1 $BACKUP_FOLDER
-```
-
-#### DNStap Client
-
-DNStap stream logger to a remote tcp destination or unix socket.
-* to remote tcp destination or unix socket
-* tls support
-
-Options:
-- `listen-ip`: (string) remote address
-- `listen-port`: (integer) remote tcp port
-- `sock-path`: (string) unix socket path
-- `retry-interval`: (integer) interval in second between retry reconnect
-- `tls-support`: (boolean) enable tls
-- `tls-insecure`: (boolean) insecure skip verify
-- `server-id`: server identity
-
-```yaml
-dnstap:
-  remote-address: 10.0.0.1
-  remote-port: 6000
-  sock-path: null
-  retry-interval: 5
-  tls-support: false
-  tls-insecure: false
-  server-id: "dnscollector"
-```
-
-#### TCP Client
-
-Tcp/unix stream client logger.
-* to remote tcp destination or unix socket
-* supported format: text, json
-* custom text format
-* tls support
-
-Options:
-- `transport`: (string) network transport to use: tcp|unix
-- `listen-ip`: (string) remote address
-- `listen-port`: (integer) remote tcp port
-- `sock-path`: (string) unix socket path
-- `retry-interval`: (integer) interval in second between retry reconnect
-- `tls-support`: (boolean) enable tls
-- `tls-insecure`: (boolean) insecure skip verify
-- `mode`: (string)  output format: text|json
-- `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
-
-```yaml
-tcpclient:
-    transport: tcp
-    remote-address: 127.0.0.1
-    remote-port: 9999
-    sock-path: null
-    retry-interval: 5
-    tls-support: false
-    tls-insecure: false
-    mode: json
-    text-format: ""
-```
-
-#### Syslog
-
-Syslog logger to local syslog system or remote one.
-* local or remote server
-* custom text format
-* supported format: text, json
-* tls support
-
-Options:
-- `facility`: (string) Set the syslog logging facility
-- `transport`: (string) Transport to use to a remote log daemon or local one. local|tcp|udp|unix
-- `remote-address`: (string) Remote address host:port
-- `mode`: (string) text or json
-- `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
-- `tls-support`: (boolean) enable tls
-- `tls-insecure`: (boolean) insecure skip verify
-
-```yaml
-syslog:
-  severity: INFO
-  facility: DAEMON
-  transport: local
-  remote-address: ""
-  text-format: ""
-  mode: text
-  tls-support: false
-  tls-insecure: false
-```
-
-#### Fluentd Client
-
-Fluentd client to remote server or unix socket.
-* to remote fluentd collector or unix socket
-* [msgpask](https://msgpack.org/)
-* tls support
-
-Options:
-- `transport`: (string) network transport to use: tcp|unix
-- `listen-ip`: (string) remote address
-- `listen-port`: (integer) remote tcp port
-- `sock-path`: (string) unix socket path
-- `retry-interval`: (integer) interval in second between retry reconnect
-- `tag`: (string) tag name
-- `tls-support`: (boolean) enable tls
-- `tls-insecure`: (boolean) insecure skip verify
-
-```yaml
-fluentd:
-    transport: tcp
-    remote-address: 127.0.0.1
-    remote-port: 24224
-    sock-path: null
-    retry-interval: 5
-    tag: "dns.collector"
-    tls-support: false
-    tls-insecure: false
-```
-
-#### Pcap File
-
-Enable this logger if you want to log into a pcap file.
-* with rotation file support
-* binary format
-* gzip compression
-* execute external command after each rotation
-
-Options:
-- `file-path`: (string) output logfile name
-- `max-size`: (integer) maximum size in megabytes of the file before rotation
-- `max-files`: (integer) maximum number of files to retain.
-- `compress`: (boolean) compress pcap file
-- `compress-interval`: (integer) checking every X seconds if new log files must be compressed
-- `postrotate-command`: (string) run external script after each file rotation
-- `postrotate-delete-success`: (boolean) delete file on script success
-
-```yaml
-pcapfile:
-  file-path: null
-  max-size: 1
-  max-files: 3
-  compress: false
-  compress-interval: 5
-  postrotate-command: null
-  postrotate-delete-success: true
-```
-
-#### InfluxDB client
-
-InfluxDB client to remote InfluxDB server
-
-Options:
-- `server-url`: (string) InfluxDB server url
-- `auth-token`: (string) authentication token
-- `bucket`: (string) bucket name
-- `organization`: (string) organization name
-- `tls-support`: (boolean) enable tls
-- `tls-insecure`: (boolean) insecure skip verify
-
-```yaml
-  influxdb:
-    server-url: "http://localhost:8086"
-    auth-token: ""
-    bucket: "db_dns"
-    organization: "dnscollector"
-    tls-support: false
-    tls-insecure: false
-```
-
-#### Loki client
-
-Loki client to remote server
-
-Options:
-- `server-url`: (string) Loki server url
-- `job-name`: (string) Job name
-- `mode`: (string) text or json
-- `flush-interval`: (integer) flush batch every X seconds
-- `batch-size`: (integer) batch size for log entries in bytes
-- `retry-interval`: (integer) interval in second between before to retry to send batch
-- `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
-- `proxy-url`: (string) Proxy URL
-- `tls-support`: (boolean) enable tls
-- `tls-insecure`: (boolean) insecure skip verify
-- `basic-auth-login`: (string) basic auth login
-- `basic-auth-pwd`: (string) basic auth password
-- `tenant-id`: (string) tenant/organisation id. If omitted or empty, no X-Scope-OrgID header is sent.
-
-```yaml
-  lokiclient:
-    server-url: "http://localhost:3100/loki/api/v1/push"
-    job-name: "dnscollector"
-    mode: "text"
-    flush-interval: 5
-    batch-size: 1048576
-    retry-interval: 10
-    text-format: "localtime identity qr queryip family protocol qname qtype rcode"
-    proxy-url: ""
-    tls-insecure: false
-    basic-auth-login: ""
-    basic-auth-pwd: ""
-    tenant-id: ""
-```
-
-#### Statsd client
-
-Statsd client to statsd proxy
-* tls support
-
-**Statsd metrics:**
-
-The `<statsdsuffix>` tag can be configured in the `config.yml` file.
-
-Counters:
-
-```
-- <statsdsuffix>_<streamid>_total_bytes_received
-- <statsdsuffix>_<streamid>_total_bytes_sent
-- <statsdsuffix>_<streamid>_total_requesters
-- <statsdsuffix>_<streamid>_total_domains
-- <statsdsuffix>_<streamid>_total_domains_nx
-- <statsdsuffix>_<streamid>_total_packets
-- <statsdsuffix>_<streamid>_total_packets_[udp|tcp]
-- <statsdsuffix>_<streamid>_total_packets_[inet|inet6]
-- <statsdsuffix>_<streamid>_total_replies_rrtype_[A|AAAA|TXT|...]
-- <statsdsuffix>_<streamid>_total_replies_rcode_[NOERROR|SERVFAIL|...]
-```
-
-Gauges:
-
-```
-- <statsdsuffix>_<streamid>_queries_qps
-```
-
-Options:
-- `transport`: (string) network transport to use: udp or tcp
-- `listen-ip`: (string) remote address
-- `listen-port`: (integer) remote tcp port
-- `prefix`: (string) statsd prefix name
-- `tls-support`: (boolean) enable tls
-- `tls-insecure`: (boolean) insecure skip verify
-
-```yaml
-  statsd:
-    transport: udp
-    remote-address: 127.0.0.1
-    remote-port: 8125
-    prefix: "dnscollector"
-    tls-support: false
-    tls-insecure: false
-```
-
-### Routing
-
-Options:
-- `from`: list of collectors by name
-- `to`: list of loggers by name
-
-example:
-
-```yaml
-multiplexer:
-  routes:
-    - from: [ tap_in1, tap_in2 ]
-      to: [ file ]
-```
-  
-
 ## Transformers
+
+Some transformations can be done after the collect.
 
 ### Qname lowercase
 
@@ -770,7 +147,8 @@ Options:
 - `qname-lowercase`: (boolean) enable or disable lowercase
 
 ```yaml
-qname-lowercase: true
+transforms:
+  qname-lowercase: true
 ```
 
 ### User Privacy
@@ -785,9 +163,10 @@ Options:
 - `minimaze-qname`: (boolean) keep only the second level domain
 
 ```yaml
-user-privacy:
-  anonymize-ip: false
-  minimaze-qname: false
+transforms:
+  user-privacy:
+    anonymize-ip: false
+    minimaze-qname: false
 ```
 
 ### GeoIP Support
@@ -804,10 +183,11 @@ Options:
 - `mmdb-asn-file`: (string) path file to your mmdb asn database
 
 ```yaml
-geoip:
-  mmdb-country-file: "/GeoIP/GeoLite2-Country.mmdb"
-  mmdb-city-file: ""
-  mmdb-asn-file: ""
+transforms:
+  geoip:
+    mmdb-country-file: "/GeoIP/GeoLite2-Country.mmdb"
+    mmdb-city-file: ""
+    mmdb-asn-file: ""
 ```
 
 When the feature is enabled, the following json field are populated:
@@ -855,14 +235,15 @@ Options:
 - `log-replies`: (boolean)  forward received replies to configured loggers
 
 ```yaml
-filtering:
-  drop-fqdn-file: ""
-  drop-domain-file: ""
-  drop-queryip-file: ""
-  keep-queryip-file: ""
-  drop-rcodes: []
-  log-queries: true
-  log-replies: true
+transforms:
+  filtering:
+    drop-fqdn-file: ""
+    drop-domain-file: ""
+    drop-queryip-file: ""
+    keep-queryip-file: ""
+    drop-rcodes: []
+    log-queries: true
+    log-replies: true
 ```
 
 Domain list with regex example:

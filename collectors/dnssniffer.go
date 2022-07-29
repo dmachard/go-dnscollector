@@ -134,6 +134,12 @@ func (c *DnsSniffer) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] sniffer collector - "+msg, v...)
 }
 
+func (c *DnsSniffer) GetName() string { return c.name }
+
+func (c *DnsSniffer) SetLoggers(loggers []dnsutils.Worker) {
+	c.loggers = loggers
+}
+
 func (c *DnsSniffer) Loggers() []chan dnsutils.DnsMessage {
 	channels := []chan dnsutils.DnsMessage{}
 	for _, p := range c.loggers {

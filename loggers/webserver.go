@@ -46,6 +46,10 @@ func NewWebserver(config *dnsutils.Config, logger *logger.Logger, version string
 	return o
 }
 
+func (c *Webserver) GetName() string { return c.name }
+
+func (c *Webserver) SetLoggers(loggers []dnsutils.Worker) {}
+
 func (o *Webserver) ReadConfig() {
 }
 

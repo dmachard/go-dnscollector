@@ -1,0 +1,35 @@
+global:
+  trace:
+    verbose: true
+
+multiplexer:
+  collectors:
+    - name: pdns_internal
+      powerdns:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+    - name: pdns_internet
+      powerdns:
+        listen-ip: 0.0.0.0
+        listen-port: 6001
+      transforms: 
+        normalize:
+          lowercase-qname: true
+          
+  loggers:
+    - name: file_internal
+      logfile:
+        file-path:  "/var/tap/dnscollector_internal.log"
+    - name: file_internet
+      logfile:
+        file-path:  "/var/tap/dnscollector_internet.log"
+    - name: prom
+      prometheus:
+        listen-ip: 0.0.0.0
+        listen-port: 8081
+
+  routes:
+    - from: [ pdns_internal ]
+      to: [ file_internal, prom ]
+    - from: [pdns_internet ]
+      to: [ file_internet, prom ]
