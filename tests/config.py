@@ -16,7 +16,7 @@ class ProcessProtocol(asyncio.SubprocessProtocol):
     def pipe_data_received(self, fd, data):
         print(data.decode(), end="")
 
-        if b"config loaded" in data:
+        if b"main - starting" in data:
             self.is_configvalid.set_result(True)
             self.kill()
         
