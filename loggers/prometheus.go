@@ -123,6 +123,10 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 	return o
 }
 
+func (c *Prometheus) GetName() string { return c.name }
+
+func (c *Prometheus) SetLoggers(loggers []dnsutils.Worker) {}
+
 func (o *Prometheus) InitProm() {
 
 	prom_prefix := SanitizeMetricName(o.config.Loggers.Prometheus.PromPrefix)

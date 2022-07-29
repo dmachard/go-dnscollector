@@ -40,6 +40,10 @@ func NewTcpClient(config *dnsutils.Config, logger *logger.Logger, name string) *
 	return s
 }
 
+func (c *TcpClient) GetName() string { return c.name }
+
+func (c *TcpClient) SetLoggers(loggers []dnsutils.Worker) {}
+
 func (o *TcpClient) ReadConfig() {
 	if len(o.config.Loggers.TcpClient.TextFormat) > 0 {
 		o.textFormat = strings.Fields(o.config.Loggers.TcpClient.TextFormat)

@@ -32,6 +32,11 @@ func NewDnsSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *l
 	return s
 }
 
+func (c *DnsSniffer) GetName() string { return c.name }
+
+func (c *DnsSniffer) SetLoggers(loggers []dnsutils.Worker) {
+	c.loggers = loggers
+}
 func (c *DnsSniffer) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] collector dns sniffer - "+msg, v...)
 }

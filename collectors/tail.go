@@ -38,6 +38,12 @@ func NewTail(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.
 	return s
 }
 
+func (c *Tail) GetName() string { return c.name }
+
+func (c *Tail) SetLoggers(loggers []dnsutils.Worker) {
+	c.loggers = loggers
+}
+
 func (c *Tail) Loggers() []chan dnsutils.DnsMessage {
 	channels := []chan dnsutils.DnsMessage{}
 	for _, p := range c.loggers {

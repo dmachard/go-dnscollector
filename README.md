@@ -17,38 +17,35 @@ NOTE: The code before version 1.x is considered beta quality and is subject to b
 ## Features
 
 - [Logs routing](doc/multiplexer.md)
-
+- [Queries/Replies JSON encoding](doc/dnsjson.md)
 - Collectors:
-    - [DNStap streams](doc/configuration.md#dns-tap) 
-    - [DNS packets sniffer](doc/configuration.md#dns-sniffer)
-    - [Tail on log file](doc/configuration.md#tail)
-    - [Protobuf PowerDNS](doc/configuration.md#protobuf-powerdns)
-
-- Transformers:
-    - [Queries/Replies JSON encoding](doc/dnsjson.md)
-    - [DNS filtering](doc/configuration.md#dns-filtering)
-    - [User Privacy](doc/configuration.md#user-privacy)
-    - [Normalize Qname](doc/configuration.md#qname-lowercase)
-
+    - [DNStap streams](doc/collectors.md#dns-tap) 
+    - [DNS packets sniffer](doc/collectors.md#dns-sniffer)
+    - [Tail on log file](doc/collectors.md#tail)
+    - [Protobuf PowerDNS](doc/collectors.md#protobuf-powerdns)
 - Loggers:
-    - [Console](doc/configuration.md#stdout)
-    - [Prometheus](doc/configuration.md#prometheus)
-    - [File](doc/configuration.md#log-file)
-    - [DNStap](doc/configuration.md#dnstap-client)
-    - [TCP](doc/configuration.md#tcp-client)
-    - [REST API](doc/configuration.md#rest-api)
-    - [Syslog](doc/configuration.md#syslog)
-    - [Fluentd](doc/configuration.md#fluentd-client)
-    - [Pcap](doc/configuration.md#pcap-file)
-    - [InfluxDB](doc/configuration.md#influxdb-client)
-    - [Loki](doc/configuration.md#loki-client)
-    - [Statsd](doc/configuration.md#statsd-client)
+    - [Console](doc/loggers.md#stdout)
+    - [Prometheus](doc/loggers.md#prometheus)
+    - [File](doc/loggers.md#log-file)
+    - [DNStap](doc/loggers.md#dnstap-client)
+    - [TCP](doc/loggers.md#tcp-client)
+    - [REST API](doc/loggers.md#rest-api)
+    - [Syslog](doc/loggers.md#syslog)
+    - [Fluentd](doc/loggers.md#fluentd-client)
+    - [Pcap](doc/loggers.md#pcap-file)
+    - [InfluxDB](doc/loggers.md#influxdb-client)
+    - [Loki](doc/loggers.md#loki-client)
+    - [Statsd](doc/loggers.md#statsd-client)
 
 - Other features
     - [DNS decoder with extended options support](doc/dnsparser.md)
     - [Built-in Grafana dashboards](doc/dashboards.md)
     - [GeoIP support](doc/configuration.md#geoip-support)
     - [Text format](doc/configuration.md#custom-text-format)
+    - [DNS filtering](doc/configuration.md#dns-filtering)
+    - [User Privacy](doc/configuration.md#user-privacy)
+    - [Normalize Qname](doc/configuration.md#qname-lowercase)
+
 ## Installation
 
 **Run-it from binary**

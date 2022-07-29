@@ -17,19 +17,20 @@ func IsValidMode(mode string) bool {
 }
 
 type MultiplexTransformers struct {
-	Name   string
-	Params map[string]interface{} `yaml:",inline"`
+	Name       string                 `yaml:"naame"`
+	Transforms map[string]interface{} `yaml:",inline"`
+	Params     map[string]interface{} `yaml:",inline"`
 }
 
 type MultiplexInOut struct {
-	Name   string
-	Params map[string]interface{} `yaml:",inline"`
+	Name       string                 `yaml:"name"`
+	Transforms map[string]interface{} `yaml:"transforms"`
+	Params     map[string]interface{} `yaml:",inline"`
 }
 
 type MultiplexRoutes struct {
-	Src        []string `yaml:"from,flow"`
-	Transforms []string `yaml:"transforms,flow"`
-	Dst        []string `yaml:"to,flow"`
+	Src []string `yaml:"from,flow"`
+	Dst []string `yaml:"to,flow"`
 }
 
 type Config struct {
@@ -247,10 +248,9 @@ type Config struct {
 	} `yaml:"loggers"`
 
 	Multiplexer struct {
-		Collectors   []MultiplexInOut        `yaml:"collectors"`
-		Transformers []MultiplexTransformers `yaml:"transformers"`
-		Loggers      []MultiplexInOut        `yaml:"loggers"`
-		Routes       []MultiplexRoutes       `yaml:"routes"`
+		Collectors []MultiplexInOut  `yaml:"collectors"`
+		Loggers    []MultiplexInOut  `yaml:"loggers"`
+		Routes     []MultiplexRoutes `yaml:"routes"`
 	} `yaml:"multiplexer"`
 }
 

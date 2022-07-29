@@ -93,6 +93,10 @@ func NewLokiClient(config *dnsutils.Config, logger *logger.Logger, name string) 
 	return s
 }
 
+func (c *LokiClient) GetName() string { return c.name }
+
+func (c *LokiClient) SetLoggers(loggers []dnsutils.Worker) {}
+
 func (o *LokiClient) ReadConfig() {
 	if len(o.config.Loggers.LokiClient.TextFormat) > 0 {
 		o.textFormat = strings.Fields(o.config.Loggers.LokiClient.TextFormat)

@@ -61,6 +61,10 @@ func NewLogFile(config *dnsutils.Config, logger *logger.Logger, name string) *Lo
 	return o
 }
 
+func (c *LogFile) GetName() string { return c.name }
+
+func (c *LogFile) SetLoggers(loggers []dnsutils.Worker) {}
+
 func (c *LogFile) ReadConfig() {
 	c.filedir = filepath.Dir(c.config.Loggers.LogFile.FilePath)
 	c.filename = filepath.Base(c.config.Loggers.LogFile.FilePath)

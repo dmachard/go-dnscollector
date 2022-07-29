@@ -59,138 +59,132 @@ func main() {
 	logger.SetVerbose(config.Global.Trace.Verbose)
 
 	logger.Info("main - version %s", Version)
-	logger.Info("main - config loaded...")
 	logger.Info("main - starting dns-collector...")
 
 	// load loggers
-	var allLoggers [][]dnsutils.Worker
-	var allCollectors [][]dnsutils.Worker
+	logger.Info("main - loading loggers...")
+	mapLoggers := make(map[string]dnsutils.Worker)
+	for _, output := range config.Multiplexer.Loggers {
+		// load config
+		cfg := make(map[string]interface{})
+		cfg["loggers"] = output.Params
+		for _, p := range output.Params {
+			p.(map[string]interface{})["enable"] = true
+		}
 
+		// get config with default values
+		subcfg := &dnsutils.Config{}
+		subcfg.SetDefault()
+
+		// copy global config
+		subcfg.Global = config.Global
+
+		yamlcfg, _ := yaml.Marshal(cfg)
+		if err := yaml.Unmarshal(yamlcfg, subcfg); err != nil {
+			panic(fmt.Sprintf("main - yaml logger config error: %v", err))
+		}
+
+		if subcfg.Loggers.WebServer.Enable {
+			mapLoggers[output.Name] = loggers.NewWebserver(subcfg, logger, Version, output.Name)
+		}
+		if subcfg.Loggers.Prometheus.Enable {
+			mapLoggers[output.Name] = loggers.NewPrometheus(subcfg, logger, Version, output.Name)
+		}
+		if subcfg.Loggers.Stdout.Enable {
+			mapLoggers[output.Name] = loggers.NewStdOut(subcfg, logger, output.Name)
+		}
+		if subcfg.Loggers.LogFile.Enable {
+			mapLoggers[output.Name] = loggers.NewLogFile(subcfg, logger, output.Name)
+		}
+		if subcfg.Loggers.Dnstap.Enable {
+			mapLoggers[output.Name] = loggers.NewDnstapSender(subcfg, logger, output.Name)
+		}
+		if subcfg.Loggers.TcpClient.Enable {
+			mapLoggers[output.Name] = loggers.NewTcpClient(config, logger, output.Name)
+		}
+		if subcfg.Loggers.Syslog.Enable {
+			mapLoggers[output.Name] = loggers.NewSyslog(subcfg, logger, output.Name)
+		}
+		if subcfg.Loggers.Fluentd.Enable {
+			mapLoggers[output.Name] = loggers.NewFluentdClient(subcfg, logger, output.Name)
+		}
+		if subcfg.Loggers.PcapFile.Enable {
+			mapLoggers[output.Name] = loggers.NewPcapFile(subcfg, logger, output.Name)
+		}
+		if subcfg.Loggers.InfluxDB.Enable {
+			mapLoggers[output.Name] = loggers.NewInfluxDBClient(subcfg, logger, output.Name)
+		}
+		if subcfg.Loggers.LokiClient.Enable {
+			mapLoggers[output.Name] = loggers.NewLokiClient(subcfg, logger, output.Name)
+		}
+		if subcfg.Loggers.Statsd.Enable {
+			mapLoggers[output.Name] = loggers.NewStatsdClient(subcfg, logger, Version, output.Name)
+		}
+	}
+
+	// load collectors
+	logger.Info("main - loading collectors...")
+	mapCollectors := make(map[string]dnsutils.Worker)
+	for _, input := range config.Multiplexer.Collectors {
+		// load config
+		cfg := make(map[string]interface{})
+		cfg["collectors"] = input.Params
+		cfg["transformers"] = make(map[string]interface{})
+		for _, p := range input.Params {
+			p.(map[string]interface{})["enable"] = true
+		}
+
+		// get config with default values
+		subcfg := &dnsutils.Config{}
+		subcfg.SetDefault()
+
+		// add transformer
+		for k, v := range input.Transforms {
+			cfg["transformers"].(map[string]interface{})[k] = v
+		}
+
+		// copy global config
+		subcfg.Global = config.Global
+
+		yamlcfg, _ := yaml.Marshal(cfg)
+		if err := yaml.Unmarshal(yamlcfg, subcfg); err != nil {
+			panic(fmt.Sprintf("main - yaml collector config error: %v", err))
+		}
+
+		if subcfg.Collectors.Dnstap.Enable {
+			mapCollectors[input.Name] = collectors.NewDnstap(nil, subcfg, logger, input.Name)
+		}
+		if subcfg.Collectors.DnsSniffer.Enable {
+			mapCollectors[input.Name] = collectors.NewDnsSniffer(nil, subcfg, logger, input.Name)
+		}
+		if subcfg.Collectors.Tail.Enable {
+			mapCollectors[input.Name] = collectors.NewTail(nil, subcfg, logger, input.Name)
+		}
+		if subcfg.Collectors.PowerDNS.Enable {
+			mapCollectors[input.Name] = collectors.NewProtobufPowerDNS(nil, subcfg, logger, input.Name)
+		}
+	}
+
+	// connect collectors between loggers
 	for _, routes := range config.Multiplexer.Routes {
-		var logwrks2 []dnsutils.Worker
-		var collwrks2 []dnsutils.Worker
-
-		// init loggers
+		var logwrks []dnsutils.Worker
 		for _, dst := range routes.Dst {
-
-			// search logger according to name
-			for _, ml := range config.Multiplexer.Loggers {
-				if ml.Name == dst {
-					// load config
-					cfg := make(map[string]interface{})
-					cfg["loggers"] = ml.Params
-					for _, p := range ml.Params {
-						p.(map[string]interface{})["enable"] = true
-					}
-
-					// get config with default values
-					subcfg := &dnsutils.Config{}
-					subcfg.SetDefault()
-
-					// copy global config
-					subcfg.Global = config.Global
-
-					yamlcfg, _ := yaml.Marshal(cfg)
-					if err := yaml.Unmarshal(yamlcfg, subcfg); err != nil {
-						fmt.Println(err)
-						break
-					}
-
-					if subcfg.Loggers.WebServer.Enable {
-						logwrks2 = append(logwrks2, loggers.NewWebserver(subcfg, logger, Version, ml.Name))
-					}
-					if subcfg.Loggers.Prometheus.Enable {
-						logwrks2 = append(logwrks2, loggers.NewPrometheus(subcfg, logger, Version, ml.Name))
-					}
-					if subcfg.Loggers.Stdout.Enable {
-						logwrks2 = append(logwrks2, loggers.NewStdOut(subcfg, logger, ml.Name))
-					}
-					if subcfg.Loggers.LogFile.Enable {
-						logwrks2 = append(logwrks2, loggers.NewLogFile(subcfg, logger, ml.Name))
-					}
-					if subcfg.Loggers.Dnstap.Enable {
-						logwrks2 = append(logwrks2, loggers.NewDnstapSender(subcfg, logger, ml.Name))
-					}
-					if subcfg.Loggers.TcpClient.Enable {
-						logwrks2 = append(logwrks2, loggers.NewTcpClient(config, logger, ml.Name))
-					}
-					if subcfg.Loggers.Syslog.Enable {
-						logwrks2 = append(logwrks2, loggers.NewSyslog(subcfg, logger, ml.Name))
-					}
-					if subcfg.Loggers.Fluentd.Enable {
-						logwrks2 = append(logwrks2, loggers.NewFluentdClient(subcfg, logger, ml.Name))
-					}
-					if subcfg.Loggers.PcapFile.Enable {
-						logwrks2 = append(logwrks2, loggers.NewPcapFile(subcfg, logger, ml.Name))
-					}
-					if subcfg.Loggers.InfluxDB.Enable {
-						logwrks2 = append(logwrks2, loggers.NewInfluxDBClient(subcfg, logger, ml.Name))
-					}
-					if subcfg.Loggers.LokiClient.Enable {
-						logwrks2 = append(logwrks2, loggers.NewLokiClient(subcfg, logger, ml.Name))
-					}
-					if subcfg.Loggers.Statsd.Enable {
-						logwrks2 = append(logwrks2, loggers.NewStatsdClient(subcfg, logger, Version, ml.Name))
-					}
-				}
+			if _, ok := mapLoggers[dst]; ok {
+				logwrks = append(logwrks, mapLoggers[dst])
+			} else {
+				panic(fmt.Sprintf("main - routing error: logger %v doest not exist", dst))
 			}
 		}
-
-		// init collectors
 		for _, src := range routes.Src {
-			// search logger according to name
-			for _, mc := range config.Multiplexer.Collectors {
-				if mc.Name == src {
-
-					// load config
-					cfg := make(map[string]interface{})
-					cfg["collectors"] = mc.Params
-					cfg["subprocessors"] = make(map[string]interface{})
-					for _, p := range mc.Params {
-						p.(map[string]interface{})["enable"] = true
-					}
-
-					// get config with default values
-					subcfg := &dnsutils.Config{}
-					subcfg.SetDefault()
-
-					// add transformer
-					for _, transform := range routes.Transforms {
-						for _, tfs := range config.Multiplexer.Transformers {
-							if tfs.Name == transform {
-								for k, v := range tfs.Params {
-									cfg["subprocessors"].(map[string]interface{})[k] = v
-								}
-							}
-						}
-					}
-
-					// copy global config
-					subcfg.Global = config.Global
-
-					yamlcfg, _ := yaml.Marshal(cfg)
-					if err := yaml.Unmarshal(yamlcfg, subcfg); err != nil {
-						panic(fmt.Sprintf("main - invalid subconfig error:  %v", err))
-					}
-
-					if subcfg.Collectors.Dnstap.Enable {
-						collwrks2 = append(collwrks2, collectors.NewDnstap(logwrks2, subcfg, logger, mc.Name))
-					}
-					if subcfg.Collectors.DnsSniffer.Enable {
-						collwrks2 = append(collwrks2, collectors.NewDnsSniffer(logwrks2, subcfg, logger, mc.Name))
-					}
-					if subcfg.Collectors.Tail.Enable {
-						collwrks2 = append(collwrks2, collectors.NewTail(logwrks2, subcfg, logger, mc.Name))
-					}
-					if subcfg.Collectors.PowerDNS.Enable {
-						collwrks2 = append(collwrks2, collectors.NewProtobufPowerDNS(logwrks2, subcfg, logger, mc.Name))
-					}
-				}
+			if _, ok := mapCollectors[src]; ok {
+				mapCollectors[src].SetLoggers(logwrks)
+			} else {
+				panic(fmt.Sprintf("main - routing error: collector [%v] doest not exist", src))
+			}
+			for _, l := range logwrks {
+				logger.Info("main - routing: collector[%s] send to logger[%s]", src, l.GetName())
 			}
 		}
-
-		allLoggers = append(allLoggers, logwrks2)
-		allCollectors = append(allCollectors, collwrks2)
 	}
 
 	// Handle Ctrl-C
@@ -221,16 +215,12 @@ func main() {
 				// stop all workers
 				logger.Info("main - stopping all collectors and loggers...")
 
-				for _, c := range allCollectors {
-					for _, w := range c {
-						w.Stop()
-					}
+				for _, c := range mapCollectors {
+					c.Stop()
 				}
 
-				for _, l := range allLoggers {
-					for _, w := range l {
-						w.Stop()
-					}
+				for _, l := range mapLoggers {
+					l.Stop()
 				}
 
 				// unblock main function
@@ -244,15 +234,11 @@ func main() {
 	// run all workers in background
 	logger.Info("main - running all collectors and loggers...")
 
-	for _, l := range allLoggers {
-		for _, p := range l {
-			go p.Run()
-		}
+	for _, l := range mapLoggers {
+		go l.Run()
 	}
-	for _, c := range allCollectors {
-		for _, p := range c {
-			go p.Run()
-		}
+	for _, c := range mapCollectors {
+		go c.Run()
 	}
 
 	// block main

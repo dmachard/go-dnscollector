@@ -45,6 +45,10 @@ func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, version str
 	return s
 }
 
+func (c *StatsdClient) GetName() string { return c.name }
+
+func (c *StatsdClient) SetLoggers(loggers []dnsutils.Worker) {}
+
 func (o *StatsdClient) ReadConfig() {
 	//tbc
 }

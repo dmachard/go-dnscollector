@@ -26,7 +26,3 @@ multiplexer:
   routes:
     - from: [tap_in]
       to: [web]
-
-subprocessors:
-  statistics:
-    prometheus-prefix: "dnscollector"

@@ -37,6 +37,10 @@ func NewFluentdClient(config *dnsutils.Config, logger *logger.Logger, name strin
 	return s
 }
 
+func (c *FluentdClient) GetName() string { return c.name }
+
+func (c *FluentdClient) SetLoggers(loggers []dnsutils.Worker) {}
+
 func (o *FluentdClient) ReadConfig() {
 	//tbc
 }

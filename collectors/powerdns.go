@@ -35,6 +35,12 @@ func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *dnsutils.Config, log
 	return s
 }
 
+func (c *ProtobufPowerDNS) GetName() string { return c.name }
+
+func (c *ProtobufPowerDNS) SetLoggers(loggers []dnsutils.Worker) {
+	c.loggers = loggers
+}
+
 func (c *ProtobufPowerDNS) Loggers() []chan dnsutils.DnsMessage {
 	channels := []chan dnsutils.DnsMessage{}
 	for _, p := range c.loggers {

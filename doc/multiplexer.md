@@ -1,4 +1,4 @@
-# DnsCollector - Logs routing
+# DnsCollector - Logs routing / Multiplexer
 
 The dns collector can be configured with multiple loggers and collectors at the same time.
 

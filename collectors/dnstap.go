@@ -37,6 +37,12 @@ func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logge
 	return s
 }
 
+func (c *Dnstap) GetName() string { return c.name }
+
+func (c *Dnstap) SetLoggers(loggers []dnsutils.Worker) {
+	c.loggers = loggers
+}
+
 func (c *Dnstap) Loggers() []chan dnsutils.DnsMessage {
 	channels := []chan dnsutils.DnsMessage{}
 	for _, p := range c.loggers {
