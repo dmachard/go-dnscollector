@@ -86,7 +86,8 @@ For more informations about **dnstap**, please to read the following page [Dnsta
 - [x] [Use case 4: Capture dns traffic (dnstap) and follow dns logs with Loki + Grafana](https://dmachard.github.io/posts/0044-dnscollector-grafana-loki/)
 - [x] [Use case 5: Forward unix dnstap socket traffic to TLS dnstap stream](example-config/use-case-5.yml)
 - [x] [Use case 6: Capture dns traffic with user privacy options enabled](example-config/use-case-6.yml)
-- [x] [Use case 7: Running multiple dnstap collectors in parallel](example-config/use-case-7.yml)
+- [x] [Use case 7: Running multiple dnstap collectors in parallel and aggregate logs in the same file](example-config/use-case-7.yml)
+- [x] [Use case 8: Multiple PowerDNS collectors in parallel with prometheus metrics](example-config/use-case-8.yml)
 
 ## End to end testing
 
