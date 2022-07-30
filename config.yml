@@ -65,7 +65,7 @@ multiplexer:
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
-        
+
   loggers:
     - name: console
       stdout:
