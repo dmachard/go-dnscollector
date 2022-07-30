@@ -20,5 +20,4 @@ multiplexer:
 
   routes:
     - from: [tap_in]
-      transforms: [privacy]
       to: [console]
