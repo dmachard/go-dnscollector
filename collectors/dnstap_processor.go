@@ -228,7 +228,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// compute latency if possible
 		if d.config.Collectors.Dnstap.CacheSupport {
-			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && dm.DNS.MalformedPacket == false {
+			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && !dm.DNS.MalformedPacket {
 				// compute the hash of the query
 				hash_data := []string{dm.NetworkInfo.QueryIp, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.DNS.Id)}
 
