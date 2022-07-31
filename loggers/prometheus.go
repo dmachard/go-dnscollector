@@ -39,7 +39,8 @@ type EpsCounters struct {
 type Prometheus struct {
 	done         chan bool
 	done_api     chan bool
-	httpserver   net.Listener
+	httpServer   *http.Server
+	netListener  net.Listener
 	channel      chan dnsutils.DnsMessage
 	config       *dnsutils.Config
 	logger       *logger.Logger
@@ -115,10 +116,16 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 
 		name: name,
 	}
+
+	// init prometheus
 	o.InitProm()
 
 	// add build version in metrics
 	o.gaugeBuildInfo.WithLabelValues(o.version).Set(1)
+
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.HandlerFor(o.promRegistry, promhttp.HandlerOpts{}))
+	o.httpServer = &http.Server{Handler: mux, ErrorLog: o.logger.ErrorLogger()}
 
 	return o
 }
@@ -339,7 +346,7 @@ func (o *Prometheus) Stop() {
 	o.LogInfo("stopping...")
 
 	// stopping http server
-	o.httpserver.Close()
+	o.netListener.Close()
 
 	// close output channel
 	o.LogInfo("closing channel")
@@ -355,15 +362,6 @@ func (o *Prometheus) Stop() {
 
 	o.LogInfo(" stopped")
 }
-
-/*func (o *Prometheus) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
-	login, password, authOK := r.BasicAuth()
-	if !authOK {
-		return false
-	}
-
-	return (login == o.config.Loggers.Prometheus.BasicAuthLogin) && (password == o.config.Loggers.Prometheus.BasicAuthPwd)
-}*/
 
 func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	// record stream identity
@@ -528,10 +526,6 @@ func (o *Prometheus) ComputeEps() {
 func (s *Prometheus) ListenAndServe() {
 	s.LogInfo("starting prometheus metrics...")
 
-	mux := http.NewServeMux()
-
-	mux.Handle("/metrics", promhttp.HandlerFor(s.promRegistry, promhttp.HandlerOpts{}))
-
 	var err error
 	var listener net.Listener
 	addrlisten := s.config.Loggers.Prometheus.ListenIP + ":" + strconv.Itoa(s.config.Loggers.Prometheus.ListenPort)
@@ -575,11 +569,10 @@ func (s *Prometheus) ListenAndServe() {
 		s.logger.Fatal("listening failed:", err)
 	}
 
-	s.httpserver = listener
+	s.netListener = listener
 	s.LogInfo("is listening on %s", listener.Addr())
 
-	srv := &http.Server{Handler: mux, ErrorLog: s.logger.ErrorLogger()}
-	srv.Serve(s.httpserver)
+	s.httpServer.Serve(s.netListener)
 
 	s.LogInfo("terminated")
 	s.done_api <- true
