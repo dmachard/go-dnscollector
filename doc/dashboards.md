@@ -6,9 +6,7 @@ Build-in dashboard are available with multiple data source
 - [Prometheus - Advanced](https://grafana.com/grafana/dashboards/15416)
 - [Loki](https://grafana.com/grafana/dashboards/15415)
 
-## Metrics
-
-### Basic
+## Prometheus - Basic dashboard
 
 Activate the **[Prometheus](https://github.com/dmachard/go-dns-collector/blob/main/doc/configuration.md#Prometheus)** logger to use this dashboard
 
@@ -16,7 +14,7 @@ Activate the **[Prometheus](https://github.com/dmachard/go-dns-collector/blob/ma
   <img src="dashboard4.png" alt="dnscollector"/>
 </p>
 
-### Advanced
+## Prometheus - Advanced dashboard
 
 <p align="center">
   <img src="dashboard1.png" alt="dnscollector"/>
@@ -26,7 +24,7 @@ Activate the **[Prometheus](https://github.com/dmachard/go-dns-collector/blob/ma
   <img src="dashboard2.png" alt="dnscollector"/>
 </p>
 
-## Logs
+## Loki Dashboard
 
 <p align="center">
   <img src="dashboard3.png" alt="dnscollector"/>
