@@ -1,18 +1,17 @@
 # DNS Collector
 
+NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes. 
+
 ##  Overview
 
 This tool acts as a high speed **aggregator, analyzer, transporter and logging**  for your DNS logs, written in **Golang**. 
-
-Aggregate and route all your dns logs (queries and replies) from different sources (dnstap, sniffer, logs, etc.) to multiple destinations.
+The DNS Traffic can be collected and aggregated simultaneously from many different sources (dnstap, sniffer, logs, etc.) .
 
 ![overview](doc/overview.png)
 
-And extract useful metrics in real time.
+This tool can also help you to visualize DNS traffic errors and anomalies with Grafana dashboard.
 
 ![overview](doc/overview2.png)
-
-NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes. 
 
 ## Features
 
