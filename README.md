@@ -13,6 +13,26 @@ This tool can also help you to visualize DNS traffic errors and anomalies with G
 
 ![overview](doc/overview2.png)
 
+This tool can be used to transform dns queries or replies in JSON format with EDNS support.
+ 
+ ```js
+{
+  // query/reply ip and port, tcp/udp protocol and family used
+  "network": {...},
+  // message type, arrival packet time, latency.
+  "dnstap": {...},
+  // dns fields
+  "dns": {...},
+  // extended dns options like csubnet
+  "edns": {...},
+  // country, continent and city informations
+  "geo": {...},
+  // specific powerdns metadata like tags, original-request-subnet
+  "pdns": {...}
+}
+```
+
+
 ## Features
 
 - [Logs routing](doc/multiplexer.md)
