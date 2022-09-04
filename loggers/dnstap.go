@@ -157,16 +157,33 @@ LOOP:
 							sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.NetworkInfo.Protocol])
 							tsec := uint64(dm.DnsTap.TimeSec)
 							tnsec := uint32(dm.DnsTap.TimeNsec)
-							rportint, err := strconv.Atoi(dm.NetworkInfo.ResponsePort)
-							if err != nil {
-								o.LogError("error to encode dnstap response port %s", err)
-								continue
+
+							var rportint int
+							var qportint int
+
+							// no response port provided ?
+							// fix for issue #110
+							if dm.NetworkInfo.ResponsePort == "-" {
+								rportint = 0
+							} else {
+								rportint, err = strconv.Atoi(dm.NetworkInfo.ResponsePort)
+								if err != nil {
+									o.LogError("error to encode dnstap response port %s", err)
+									continue
+								}
 							}
 							rport := uint32(rportint)
-							qportint, err := strconv.Atoi(dm.NetworkInfo.QueryPort)
-							if err != nil {
-								o.LogError("error to encode dnstap query port %s", err)
-								continue
+
+							// no query port provided ?
+							// fix to prevent issue #110
+							if dm.NetworkInfo.QueryPort == "-" {
+								qportint = 0
+							} else {
+								qportint, err = strconv.Atoi(dm.NetworkInfo.QueryPort)
+								if err != nil {
+									o.LogError("error to encode dnstap query port %s", err)
+									continue
+								}
 							}
 							qport := uint32(qportint)
 
