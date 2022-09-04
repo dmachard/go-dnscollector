@@ -161,6 +161,8 @@ LOOP:
 							var rportint int
 							var qportint int
 
+							// no response port provided ?
+							// fix for issue #110
 							if dm.NetworkInfo.ResponsePort == "-" {
 								rportint = 0
 							} else {
@@ -172,6 +174,8 @@ LOOP:
 							}
 							rport := uint32(rportint)
 
+							// no query port provided ?
+							// fix to prevent issue #110
 							if dm.NetworkInfo.QueryPort == "-" {
 								qportint = 0
 							} else {
