@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os-version: ['ubuntu-20.04', 'ubuntu-22.04', 'macos-11']
-        go-version: ['1.17', '1.18']
+        go-version: ['1.17', '1.18', '1.19']
         package: ['dnsutils', 'collectors', 'loggers', 'transformers']
     
     runs-on: ${{ matrix.os-version }}

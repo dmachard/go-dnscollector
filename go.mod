@@ -1,6 +1,6 @@
 module github.com/dmachard/go-dnscollector
 
-go 1.17
+go 1.19
 
 require (
 	github.com/RackSec/srslog v0.0.0-20180709174129-a4725f04ec91
@@ -30,7 +30,7 @@ require (
 
 require (
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
-	go4.org/unsafe/assume-no-moving-gc v0.0.0-20211027215541-db492cf91b37 // indirect
+	go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760 // indirect
 )
 
 require (
