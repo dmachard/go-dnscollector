@@ -57,11 +57,11 @@ jobs:
         sudo python3 -m unittest tests.${{ matrix.package }} -v
 
   metrics:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
-        go-version: ['1.17', '1.18']
+        go-version: ['1.17', '1.18', '1.19']
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
@@ -84,13 +84,13 @@ jobs:
         PROM_VERSION: "2.31.1"
 
   e2e-unbound:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       COLLECTOR_USER: runneradmin
 
     strategy:
       matrix:
-        go-version: [ '1.17', '1.18' ]
+        go-version: [ '1.17', '1.18', '1.19' ]
         unbound: [ '1.15.0', '1.16.0' ]
         mode: [ 'tcp' ]
 
@@ -116,12 +116,12 @@ jobs:
         sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
 
   e2e-coredns:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
-        go-version: [ '1.17', '1.18' ]
-        coredns: [ '1.8.7', '1.9.3' ]
+        go-version: [ '1.17', '1.18', '1.19' ]
+        coredns: [ '1.8.7', '1.9.4' ]
         mode: [ 'tcp', 'unix' ]
 
     steps:
@@ -147,13 +147,13 @@ jobs:
         sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
 
   e2e-dnsdist:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       COLLECTOR_USER: pdns
 
     strategy:
       matrix:
-        go-version: [ '1.17', '1.18' ]
+        go-version: [ '1.17', '1.18', '1.19' ]
         dnsdist: [ '16', '17' ]
         mode: [ 'dnstaptcp', 'dnstapunix', 'powerdns']
 
