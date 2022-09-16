@@ -12,8 +12,8 @@ jobs:
   dev:
     strategy:
       matrix:
-        os-version: ['ubuntu-20.04', 'ubuntu-22.04', 'macos-11']
-        go-version: ['1.17', '1.18', '1.19']
+        os-version: ['ubuntu-22.04', 'macos-11']
+        go-version: ['1.19']
         package: ['dnsutils', 'collectors', 'loggers', 'transformers']
     
     runs-on: ${{ matrix.os-version }}
@@ -33,11 +33,11 @@ jobs:
       run: sudo go test -timeout 10s ./${{ matrix.package }}/ -cover -v
 
   int:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
-        go-version: ['1.17', '1.18']
+        go-version: ['1.19']
         package: ['config', 'clientquery_dnstaptcp', 'clientquery_dnstapunix' ]
 
     steps:
@@ -61,7 +61,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.17', '1.18', '1.19']
+        go-version: ['1.19']
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
@@ -90,8 +90,8 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.17', '1.18', '1.19' ]
-        unbound: [ '1.15.0', '1.16.0' ]
+        go-version: [ '1.19' ]
+        unbound: [ '1.16.0' ]
         mode: [ 'tcp' ]
 
     steps:
@@ -120,8 +120,8 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.17', '1.18', '1.19' ]
-        coredns: [ '1.8.7', '1.9.4' ]
+        go-version: [ '1.19' ]
+        coredns: [ '1.9.4' ]
         mode: [ 'tcp', 'unix' ]
 
     steps:
@@ -153,8 +153,8 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.17', '1.18', '1.19' ]
-        dnsdist: [ '16', '17' ]
+        go-version: [ '1.19' ]
+        dnsdist: [ '17' ]
         mode: [ 'dnstaptcp', 'dnstapunix', 'powerdns']
 
     steps:
