@@ -8,7 +8,7 @@ require (
 	github.com/dmachard/go-framestream v0.1.0
 	github.com/dmachard/go-logger v0.2.0
 	github.com/dmachard/go-powerdns-protobuf v0.0.3
-	github.com/dmachard/go-topmap v0.4.0
+	github.com/dmachard/go-topmap v0.5.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/gopacket v1.1.19
 	github.com/grafana/dskit v0.0.0-20220314144907-ec94f1a0a3a8
