@@ -352,8 +352,8 @@ github.com/digitalocean/godo v1.65.0/go.mod h1:p7dOjjtSBqCTUksqtA5Fd3uaKs9kyTq2x
 github.com/dimchansky/utfbom v1.1.0/go.mod h1:rO41eb7gLfo8SF1jd9F8HplJm1Fewwi4mQvIirEdv+8=
 github.com/dmachard/go-dnstap-protobuf v0.3.0 h1:nuy8oFT1Jjn+U/deMA0/W8vQM8BigzH11wdwS66RbzQ=
 github.com/dmachard/go-dnstap-protobuf v0.3.0/go.mod h1:csJa75g0iVnHA4VZmJ5+uR3ghexafbeBpif6zHUFPSs=
-github.com/dmachard/go-framestream v0.1.0 h1:SwBZSamv1S3T4zHeUZFMNSo3u09WKyyOOwZvgc396Qk=
-github.com/dmachard/go-framestream v0.1.0/go.mod h1:NTkjiWoRSjLVyx/PxDjZoTCb6bE40DHJ8fe29xOHBcg=
+github.com/dmachard/go-framestream v0.2.0 h1:rHc9SCYaja9294/t2bRidYP/HiOZxg+IImt21DuqHPY=
+github.com/dmachard/go-framestream v0.2.0/go.mod h1:jwU39tBYLIhydEXJ91v4aL15mlQpIWoNmGccbfES8Cc=
 github.com/dmachard/go-logger v0.2.0 h1:isxNwFaDu53cP94pKQ8wc4uyIjlfGJXa43oaHFZnIRE=
 github.com/dmachard/go-logger v0.2.0/go.mod h1:vg6cMQBmx+SgH45XsqEyqScXp9eJhS6yuvvJZOgBbvU=
 github.com/dmachard/go-powerdns-protobuf v0.0.3 h1:bc9qg/XVrLku0xS6A9RTsYaVdn2u0RbVXN4jFX7p3tM=
