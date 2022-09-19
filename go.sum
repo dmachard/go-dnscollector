@@ -356,8 +356,8 @@ github.com/dmachard/go-framestream v0.2.0 h1:rHc9SCYaja9294/t2bRidYP/HiOZxg+IImt
 github.com/dmachard/go-framestream v0.2.0/go.mod h1:jwU39tBYLIhydEXJ91v4aL15mlQpIWoNmGccbfES8Cc=
 github.com/dmachard/go-logger v0.2.0 h1:isxNwFaDu53cP94pKQ8wc4uyIjlfGJXa43oaHFZnIRE=
 github.com/dmachard/go-logger v0.2.0/go.mod h1:vg6cMQBmx+SgH45XsqEyqScXp9eJhS6yuvvJZOgBbvU=
-github.com/dmachard/go-powerdns-protobuf v0.0.3 h1:bc9qg/XVrLku0xS6A9RTsYaVdn2u0RbVXN4jFX7p3tM=
-github.com/dmachard/go-powerdns-protobuf v0.0.3/go.mod h1:ARzDrAPrRJO0RRKQAJpmrUtCChorBnioluLrJRExjzc=
+github.com/dmachard/go-powerdns-protobuf v0.0.4 h1:efgFuayokvc1/iN8tkmlWlGYeDbbmbShXKozBQtkeZQ=
+github.com/dmachard/go-powerdns-protobuf v0.0.4/go.mod h1:AzC/HXPX/Gbx4KtBwDqrfMrLy7Sh4tBxAH5zS0QvPVI=
 github.com/dmachard/go-topmap v0.5.0 h1:zGWTFTwgsOsCIG7NxoJpWBAV7pGqxqUFdLZ+6A+UFrw=
 github.com/dmachard/go-topmap v0.5.0/go.mod h1:v+v595j5h02u2Vf9OOr6StGBCX2i6qMTEy8n0dbArEA=
 github.com/dnaeon/go-vcr v1.0.1/go.mod h1:aBB1+wY4s93YsC3HHjMBMrwTj2R9FHDzUr9KyGc8n1E=
