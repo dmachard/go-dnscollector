@@ -245,6 +245,10 @@ type Config struct {
 			TlsSupport    bool   `yaml:"tls-support"`
 			TlsInsecure   bool   `yaml:"tls-insecure"`
 		} `yaml:"statsd"`
+		ElasticSearchClient struct {
+			Enable bool   `yaml:"enable"`
+			URL    string `yaml:"url"`
+		} `yaml:"elasticsearch"`
 	} `yaml:"loggers"`
 
 	Multiplexer struct {
@@ -444,6 +448,9 @@ func (c *Config) SetDefault() {
 	c.Loggers.Statsd.FlushInterval = 10
 	c.Loggers.Statsd.TlsSupport = false
 	c.Loggers.Statsd.TlsInsecure = false
+
+	c.Loggers.ElasticSearchClient.Enable = false
+	c.Loggers.ElasticSearchClient.URL = ""
 }
 
 func ReloadConfig(configPath string, config *Config) error {

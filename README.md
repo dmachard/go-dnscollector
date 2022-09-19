@@ -55,6 +55,7 @@ This tool can be used to transform dns queries or replies in JSON format with ED
     - [InfluxDB](doc/loggers.md#influxdb-client)
     - [Loki](doc/loggers.md#loki-client)
     - [Statsd](doc/loggers.md#statsd-client)
+    - [ElasticSearch](doc/loggers.md#elasticsearch-client)
 
 - Other features
     - [DNS decoder with extended options support](doc/dnsparser.md)

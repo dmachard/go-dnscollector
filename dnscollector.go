@@ -120,6 +120,9 @@ func main() {
 		if subcfg.Loggers.Statsd.Enable {
 			mapLoggers[output.Name] = loggers.NewStatsdClient(subcfg, logger, Version, output.Name)
 		}
+		if subcfg.Loggers.ElasticSearchClient.Enable {
+			mapLoggers[output.Name] = loggers.NewElasticSearchClient(subcfg, logger, output.Name)
+		}
 	}
 
 	// load collectors
