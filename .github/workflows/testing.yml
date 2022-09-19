@@ -109,7 +109,7 @@ jobs:
     - name: Deploy docker image
       run: |
         sudo docker run -d --network="host" --name=unbound --volume=$PWD/testsdata/unbound_${{ matrix.mode }}.conf:/opt/unbound/etc/unbound/unbound.conf:z -v /tmp/:/opt/unbound/etc/unbound/tmp/:z mvance/unbound:${{ matrix.unbound }}
-        dig -p 5553 www.github.com @127.0.0.1 +timeout=10 +tries=3 +retry=3 | grep NOERROR
+        until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Test ${{ matrix.mode }}
       run: |
@@ -140,8 +140,7 @@ jobs:
     - name: Deploy coredns docker image
       run: |
         sudo docker run -d --network="host" --name=coredns -v $PWD/testsdata/:$PWD/testsdata/ -v /tmp/:/tmp/ coredns/coredns:${{ matrix.coredns }} -conf $PWD/testsdata/coredns_${{ matrix.mode }}.conf
-        sudo docker logs coredns > /tmp/core.out
-        sudo cat /tmp/core.out
+        until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Test ${{ matrix.mode }}
       run: |
@@ -179,7 +178,7 @@ jobs:
     - name: Deploy dnsdist docker image
       run: |
         sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/testsdata/dnsdist_${{ matrix.mode }}.conf:/etc/dnsdist/conf.d/dnsdist.conf:z -v /tmp/:/tmp/ powerdns/dnsdist-${{ matrix.dnsdist }}
-        dig -p 5553 www.github.com @127.0.0.1 +timeout=10 +tries=3 +retry=3 | grep NOERROR
+        until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Test ${{ matrix.mode }}
       run: |
