@@ -2,7 +2,7 @@
 
 NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes. 
 
-![unbound 1.15.x to 1.16.x](https://img.shields.io/badge/unbound%201.15.x%20>%201.16.x-tested-green) ![powerdns dnsdist 1.6.x to 1.7.x](https://img.shields.io/badge/dnsdist%201.6.x%20>%201.7.x-tested-green) ![coredns 1.8.7 ... 1.10.0](https://img.shields.io/badge/coredns%201.8.7%20>%201.10.0-tested-green)
+![unbound 1.15.x to 1.16.x](https://img.shields.io/badge/unbound%201.15.x,%201.16.x-tested-green) ![powerdns dnsdist 1.6.x to 1.7.x](https://img.shields.io/badge/dnsdist%201.6.x,%201.7.x-tested-green) ![coredns 1.8.7 ... 1.10.0](https://img.shields.io/badge/coredns%201.8.7,%201.10.0-tested-green)
 
 ##  Overview
 
