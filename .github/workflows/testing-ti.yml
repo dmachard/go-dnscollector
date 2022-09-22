@@ -1,4 +1,4 @@
-name: unbound/dnsdist/coredns
+name: CI
 
 on:
   push:
