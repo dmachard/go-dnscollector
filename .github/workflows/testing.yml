@@ -123,7 +123,7 @@ jobs:
     strategy:
       matrix:
         go-version: [ '1.19' ]
-        coredns: [ '1.9.4' ]
+        coredns: [ '1.9.4', '1.10.0' ]
 
         mode: [ 'tcp', 'unix' ]
 
