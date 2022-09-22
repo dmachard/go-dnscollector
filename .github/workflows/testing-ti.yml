@@ -1,4 +1,4 @@
-name: Testing
+name: unbound/dnsdist/coredns
 
 on:
   push:
@@ -9,29 +9,6 @@ on:
       - main
 
 jobs:
-  dev:
-    strategy:
-      matrix:
-        os-version: ['ubuntu-22.04', 'macos-11']
-        go-version: ['1.19']
-        package: ['dnsutils', 'collectors', 'loggers', 'transformers']
-    
-    runs-on: ${{ matrix.os-version }}
-
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go-version }}
-
-    - name: Set up Go for root
-      run: |
-        sudo ln -sf `which go` `sudo which go` || true
-        sudo go version
-        
-    - name: Test ${{ matrix.package }}
-      run: sudo go test -timeout 10s ./${{ matrix.package }}/ -cover -v
-
   int:
     runs-on: ubuntu-22.04
 
@@ -84,7 +61,7 @@ jobs:
       env:
         PROM_VERSION: "2.31.1"
 
-  e2e-unbound:
+  unbound:
     runs-on: ubuntu-22.04
     env:
       COLLECTOR_USER: runneradmin
@@ -117,7 +94,7 @@ jobs:
         sudo python3 -m pip install --upgrade protobuf
         sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
 
-  e2e-coredns:
+  coredns:
     runs-on: ubuntu-22.04
 
     strategy:
@@ -148,7 +125,7 @@ jobs:
         sudo python3 -m pip install --upgrade protobuf
         sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
 
-  e2e-dnsdist:
+  dnsdist:
     runs-on: ubuntu-22.04
     env:
       COLLECTOR_USER: pdns
