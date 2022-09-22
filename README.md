@@ -1,6 +1,6 @@
 # DNS Collector
 
-![unbound 1.15.x to 1.16.x](https://img.shields.io/badge/unbound%201.15.x,%201.16.x-tested-green) ![powerdns dnsdist 1.6.x to 1.7.x](https://img.shields.io/badge/dnsdist%201.6.x,%201.7.x-tested-green) ![coredns 1.8.7 ... 1.10.x](https://img.shields.io/badge/coredns%201.8.x,%201.9.x,%201.10.x-tested-green)
+![unbound](https://img.shields.io/badge/unbound-tested-green) ![powerdns dnsdist](https://img.shields.io/badge/dnsdist-tested-green) ![coredns](https://img.shields.io/badge/coredns-tested-green)
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
