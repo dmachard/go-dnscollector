@@ -1,7 +1,7 @@
 # DNS Collector
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/dmachard/go-dns-collector)](https://goreportcard.com/report/dmachard/go-dns-collector)
-![Go Tests](https://github.com/dmachard/go-dns-collector/actions/workflows/testing.yml/badge.svg)
+![Go Tests](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-tu.yml/badge.svg)
 ![unbound](https://img.shields.io/badge/unbound-tested-green)
 ![powerdns dnsdist](https://img.shields.io/badge/dnsdist-tested-green)
 ![coredns](https://img.shields.io/badge/coredns-tested-green)
