@@ -350,8 +350,8 @@ github.com/dgryski/go-sip13 v0.0.0-20190329191031-25c5027a8c7b/go.mod h1:vAd38F8
 github.com/dgryski/go-sip13 v0.0.0-20200911182023-62edffca9245/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
 github.com/digitalocean/godo v1.65.0/go.mod h1:p7dOjjtSBqCTUksqtA5Fd3uaKs9kyTq2xcz76ulEJRU=
 github.com/dimchansky/utfbom v1.1.0/go.mod h1:rO41eb7gLfo8SF1jd9F8HplJm1Fewwi4mQvIirEdv+8=
-github.com/dmachard/go-dnstap-protobuf v0.3.0 h1:nuy8oFT1Jjn+U/deMA0/W8vQM8BigzH11wdwS66RbzQ=
-github.com/dmachard/go-dnstap-protobuf v0.3.0/go.mod h1:csJa75g0iVnHA4VZmJ5+uR3ghexafbeBpif6zHUFPSs=
+github.com/dmachard/go-dnstap-protobuf v0.4.0 h1:aOxar7VsRSAK5kgLMNYSi0Sds3hEHDrgj7njoKMRjho=
+github.com/dmachard/go-dnstap-protobuf v0.4.0/go.mod h1:jn8+r1sQOGZINXl9Rh1qMcbemh9ZRPWUdvMJnxUDF6k=
 github.com/dmachard/go-framestream v0.2.0 h1:rHc9SCYaja9294/t2bRidYP/HiOZxg+IImt21DuqHPY=
 github.com/dmachard/go-framestream v0.2.0/go.mod h1:jwU39tBYLIhydEXJ91v4aL15mlQpIWoNmGccbfES8Cc=
 github.com/dmachard/go-logger v0.3.0 h1:Q7RnOLFCU9V5RSiuFs5cEwsEXTQ4HbvFDjF2H5GPNuQ=
