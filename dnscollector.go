@@ -100,7 +100,7 @@ func main() {
 			mapLoggers[output.Name] = loggers.NewDnstapSender(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.TcpClient.Enable {
-			mapLoggers[output.Name] = loggers.NewTcpClient(config, logger, output.Name)
+			mapLoggers[output.Name] = loggers.NewTcpClient(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.Syslog.Enable {
 			mapLoggers[output.Name] = loggers.NewSyslog(subcfg, logger, output.Name)
