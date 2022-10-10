@@ -53,8 +53,9 @@ global:
   # - ra: recursion available
   # - ad: authenticated data
   # - edns-csubnet: client subnet
-  # - pdns-tags: powerdns metadata
-  # - pdns-original-request-client: powerdns metadata
+  # - pdns-tags: powerdns metadata, get the first tag
+  # - pdns-original-request-client: powerdns metadata, get edns subclient
+  # - pdns-applied-policy: powerdns metadata, get applied policy
   # text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 # create your dns collector, please refer bellow to see the list 

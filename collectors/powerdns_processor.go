@@ -172,12 +172,16 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			copy(addr, ip)
 			pdns.OriginalRequestSubnet = addr.String()
 		}
+
 		// get PowerDNS tags
 		tags := pbdm.GetResponse().GetTags()
 		if tags == nil {
 			tags = []string{}
 		}
 		pdns.Tags = tags
+
+		// get PowerDNS policy applied
+		pdns.AppliedPolicy = pbdm.GetResponse().GetAppliedPolicy()
 
 		dm.PowerDns = pdns
 
