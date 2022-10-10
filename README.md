@@ -1,8 +1,9 @@
 # DNS Collector
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/dmachard/go-dns-collector)](https://goreportcard.com/report/dmachard/go-dns-collector)
-![Go Tests](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-tu.yml/badge.svg)
-![Github Actions](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-ti.yml/badge.svg)
+![Go Tests](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-go.yml/badge.svg)
+![Github Actions](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-dnstap.yml/badge.svg)
+![Github Actions PDNS](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-powerdns.yml/badge.svg)
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
