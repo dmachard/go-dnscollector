@@ -1,4 +1,4 @@
-name: CI PowerDNS protobuf testing
+name: powerdns tests
 
 on:
   push:
@@ -66,7 +66,7 @@ jobs:
 
     - name: Deploy recursor docker image
       run: |
-        sudo docker run -d --network="host" --name=recursor --volume=$PWD/testsdata/pdns_recursor.lua:/etc/powerdns/recursor.lua:z --volume=$PWD/pdns_recursor.conf:/etc/powerdns/recursor.conf:z powerdns/pdns-recursor-${{ matrix.recursor }}
+        sudo docker run -d --network="host" --name=recursor --volume=$PWD/testsdata/pdns_recursor.lua:/etc/powerdns/recursor.lua:z --volume=$PWD/testsdata/pdns_recursor.conf:/etc/powerdns/recursor.conf:z powerdns/pdns-recursor-${{ matrix.recursor }}
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Test send query

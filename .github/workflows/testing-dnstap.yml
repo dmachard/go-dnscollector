@@ -1,4 +1,4 @@
-name: CI DNStap testing
+name: dnstap tests
 
 on:
   push:
