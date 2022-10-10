@@ -42,8 +42,7 @@ jobs:
 
     - name: Test dns query
       run: |
-        sudo python3 -m pip install dnstap_pb fstrm dnspython
-        sudo python3 -m pip install --upgrade protobuf
+        sudo python3 -m pip install dnspython
         sudo -E python3 -m unittest tests.dnsquery_powerdns -v
 
   recursor:
@@ -71,4 +70,5 @@ jobs:
 
     - name: Test send query
       run: |
+        sudo python3 -m pip install dnspython
         sudo -E python3 -m unittest tests.dnsquery_powerdns -v
