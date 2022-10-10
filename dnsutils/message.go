@@ -97,6 +97,7 @@ type DnsTap struct {
 type PowerDns struct {
 	Tags                  []string `json:"tags" msgpack:"tags"`
 	OriginalRequestSubnet string   `json:"original-request-subnet" msgpack:"original-request-subnet"`
+	AppliedPolicy         string   `json:"applied-policy" msgpack:"applied-policy"`
 }
 
 type DnsMessage struct {
@@ -156,6 +157,7 @@ func (dm *DnsMessage) Init() {
 	dm.PowerDns = PowerDns{
 		Tags:                  []string{},
 		OriginalRequestSubnet: "",
+		AppliedPolicy:         "",
 	}
 }
 
@@ -284,6 +286,12 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 				for _, tag := range dm.PowerDns.Tags {
 					s.WriteString(tag)
 				}
+			} else {
+				s.WriteString("-")
+			}
+		case "pdns-applied-policy":
+			if len(dm.PowerDns.AppliedPolicy) > 0 {
+				s.WriteString(dm.PowerDns.AppliedPolicy)
 			} else {
 				s.WriteString("-")
 			}

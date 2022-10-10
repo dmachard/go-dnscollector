@@ -85,7 +85,8 @@ Example:
   },
   "pdns": {
     "tags": [],
-    "original-request-subnet": ""
+    "original-request-subnet": "",
+    "applied-policy": ""
   }
 }
 ```

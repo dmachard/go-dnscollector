@@ -156,3 +156,11 @@ protobufServer("<dnscollectorip>:6001", {exportTypes={pdns.A, pdns.AAAA, pdns.CN
 outgoingProtobufServer("<dnscollectorip>:6001")
 ```
 
+with RPZ
+
+```lua
+rpzFile("/etc/pdns-recursor/basic.rpz", {
+  policyName="custom",
+  tags={"tag"}
+})
+```

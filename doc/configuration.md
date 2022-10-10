@@ -100,8 +100,9 @@ All available directives:
 - `ra`: flag recursion available
 - `ad`: flag authenticated data
 - `edns-csubnet`: display client subnet info
-- `pdns-tags`: powerdns metadata, tags
-- `pdns-original-request-subnet`: powerdns metadata, original request subnet
+- `pdns-tags`: powerdns metadata, the first tag
+- `pdns-original-request-subnet`: powerdns metadata, original request subnet like edns subclient
+- `pdns-applied-policy`: powerdns metadata, applied policy
 
 ```yaml
 global:
