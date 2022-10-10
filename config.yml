@@ -53,7 +53,8 @@ global:
   # - ra: recursion available
   # - ad: authenticated data
   # - edns-csubnet: client subnet
-  # - pdns-tags: powerdns metadata, get the first tag
+  # - pdns-tag: powerdns metadata, get one tag only, the first one in the list
+  # - pdns-tags: powerdns metadata, get all tags separated by comma
   # - pdns-original-request-client: powerdns metadata, get edns subclient
   # - pdns-applied-policy: powerdns metadata, get applied policy
   # text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"

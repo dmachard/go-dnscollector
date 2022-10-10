@@ -100,7 +100,8 @@ All available directives:
 - `ra`: flag recursion available
 - `ad`: flag authenticated data
 - `edns-csubnet`: display client subnet info
-- `pdns-tags`: powerdns metadata, the first tag
+- `pdns-tag`: powerdns metadata, get one tag only, the first one in the list
+- `pdns-tags`: powerdns metadata, get all tags separated by comma
 - `pdns-original-request-subnet`: powerdns metadata, original request subnet like edns subclient
 - `pdns-applied-policy`: powerdns metadata, applied policy
 

@@ -283,9 +283,19 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 			}
 		case "pdns-tags":
 			if len(dm.PowerDns.Tags) > 0 {
-				for _, tag := range dm.PowerDns.Tags {
+				for i, tag := range dm.PowerDns.Tags {
 					s.WriteString(tag)
+					// add separator
+					if i+1 < len(dm.PowerDns.Tags) {
+						s.WriteString(",")
+					}
 				}
+			} else {
+				s.WriteString("-")
+			}
+		case "pdns-tag":
+			if len(dm.PowerDns.Tags) > 0 {
+				s.WriteString(dm.PowerDns.Tags[0])
 			} else {
 				s.WriteString("-")
 			}
