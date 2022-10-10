@@ -1,0 +1,74 @@
+name: CI PowerDNS testing
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  dnsdist:
+    runs-on: ubuntu-22.04
+    env:
+      COLLECTOR_USER: pdns
+
+    strategy:
+      matrix:
+        go-version: [ '1.19' ]
+        dnsdist: [ '17' ]
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+    - uses: actions/setup-python@v2
+
+    - name: build binary
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+
+    # - name: add pdns user
+    #   run: |
+    #     sudo addgroup --system --gid 953 pdns
+    #     sudo adduser --system --disabled-password --no-create-home -uid 953 --gid 953 pdns
+
+    - name: Deploy dnsdist docker image
+      run: |
+        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/testsdata/dnsdist_powerdns.conf:/etc/dnsdist/conf.d/dnsdist.conf:z -v /tmp/:/tmp/ powerdns/dnsdist-${{ matrix.dnsdist }}
+        until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
+
+    - name: Test ${{ matrix.mode }}
+      run: |
+        sudo python3 -m pip install dnstap_pb fstrm dnspython
+        sudo python3 -m pip install --upgrade protobuf
+        sudo -E python3 -m unittest tests.dnsquery_${{ matrix.mode }} -v
+
+  recursor:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      matrix:
+        go-version: [ '1.19' ]
+        recursor: [ '17' ]
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+    - uses: actions/setup-python@v2
+
+    - name: build binary
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+
+    - name: Deploy recursor docker image
+      run: |
+        sudo docker run -d --network="host" --name=recursor --volume=$PWD/testsdata/pdns_recursor.lua:/etc/powerdns/recursor.lua:z --volume=$PWD/pdns_recursor.conf:/etc/powerdns/recursor.conf:z powerdns/pdns-recursor-${{ matrix.recursor }}
+        until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
+
+    - name: Test send query
+      run: |
+        sudo -E python3 -m unittest tests.dnsquery_powerdns -v

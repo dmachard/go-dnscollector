@@ -9,58 +9,6 @@ on:
       - main
 
 jobs:
-  int:
-    runs-on: ubuntu-22.04
-
-    strategy:
-      matrix:
-        go-version: ['1.19']
-        package: ['config', 'clientquery_dnstaptcp', 'clientquery_dnstapunix' ]
-
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go-version }}
-    - uses: actions/setup-python@v2
- 
-    - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
-
-    - name: Test ${{ matrix.package }}
-      run: |
-        sudo python3 -m pip install dnstap_pb fstrm dnspython
-        sudo python3 -m pip install --upgrade protobuf
-        sudo python3 -m unittest tests.${{ matrix.package }} -v
-
-  metrics:
-    runs-on: ubuntu-22.04
-
-    strategy:
-      matrix:
-        go-version: ['1.19']
-        
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go-version }}
- 
-    - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
-
-    - name: run collector
-      run: ./go-dnscollector -config ./testsdata/config_webapi.yml &
-
-    - name: check prometheus format metrics
-      run: |
-        wget -nv https://github.com/prometheus/prometheus/releases/download/v$PROM_VERSION/prometheus-$PROM_VERSION.linux-amd64.tar.gz
-        tar xf prometheus-$PROM_VERSION.linux-amd64.tar.gz
-        cd prometheus-$PROM_VERSION.linux-amd64/
-        curl -u admin:changeme http://127.0.0.1:8080/metrics | ./promtool check metrics
-      env:
-        PROM_VERSION: "2.31.1"
-
   unbound:
     runs-on: ubuntu-22.04
     env:
@@ -135,7 +83,7 @@ jobs:
         go-version: [ '1.19' ]
         dnsdist: [ '17' ]
 
-        mode: [ 'dnstaptcp', 'dnstapunix', 'powerdns']
+        mode: [ 'dnstaptcp', 'dnstapunix' ]
 
     steps:
     - uses: actions/checkout@v2
