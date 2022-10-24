@@ -24,6 +24,8 @@ type FilteringProcessor struct {
 	listDomainsRegex map[string]*regexp.Regexp
 	fileWatcher      *fsnotify.Watcher
 	name             string
+	downsample       int
+	downsampleCount  int
 }
 
 func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger, name string) FilteringProcessor {
@@ -49,6 +51,14 @@ func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger, name 
 	d.LoadRcodes()
 	d.LoadDomainsList()
 	d.LoadQueryIpList()
+
+	// set downsample if desired
+	if d.config.Transformers.Filtering.Downsample > 0 {
+		d.downsample = d.config.Transformers.Filtering.Downsample
+        d.downsampleCount = 0
+	} else {
+		d.downsample = 0
+	}
 
 	//go d.Run()
 	return d
@@ -223,6 +233,16 @@ func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DnsMessage) bool {
 			if p.MatchString(dm.DNS.Qname) {
 				return true
 			}
+		}
+	}
+
+	if p.downsample > 0 {
+		p.downsampleCount += 1
+		if p.downsampleCount % p.downsample != 0 {
+			return true
+		} else if p.downsampleCount % p.downsample == 0 {
+			p.downsampleCount = 0
+			return false
 		}
 	}
 
