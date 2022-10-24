@@ -96,6 +96,8 @@ type Config struct {
 		Filtering struct {
 			DropFqdnFile    string   `yaml:"drop-fqdn-file"`
 			DropDomainFile  string   `yaml:"drop-domain-file"`
+			KeepFqdnFile    string   `yaml:"keep-fqdn-file"`
+			KeepDomainFile  string   `yaml:"keep-domain-file"`
 			DropQueryIpFile string   `yaml:"drop-queryip-file"`
 			KeepQueryIpFile string   `yaml:"keep-queryip-file"`
 			DropRcodes      []string `yaml:"drop-rcodes,flow"`
@@ -316,6 +318,8 @@ func (c *Config) SetDefault() {
 
 	c.Transformers.Filtering.DropFqdnFile = ""
 	c.Transformers.Filtering.DropDomainFile = ""
+	c.Transformers.Filtering.KeepFqdnFile = ""
+	c.Transformers.Filtering.KeepDomainFile = ""
 	c.Transformers.Filtering.DropQueryIpFile = ""
 	c.Transformers.Filtering.DropRcodes = []string{}
 	c.Transformers.Filtering.LogQueries = true

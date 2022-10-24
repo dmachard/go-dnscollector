@@ -1,0 +1,3 @@
+(mail|sheets)\.google\.com$
+test\.github\.com$
+.+\.google\.com$
