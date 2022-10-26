@@ -15,11 +15,11 @@ jobs:
     - uses: actions/setup-go@v2
     - uses: actions/setup-python@v2
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         path: app
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         repository: dmachard/go-dnstap-generator
         path: gen

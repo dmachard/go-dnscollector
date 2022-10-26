@@ -21,7 +21,7 @@ jobs:
         dnsdist: [ '17' ]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.go-version }}
@@ -54,7 +54,7 @@ jobs:
         recursor: [ '47' ]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.go-version }}
