@@ -224,6 +224,7 @@ The filtering feature can be used to ignore some queries or replies according to
 - qname
 - return code
 - query ip
+- sampling rate
 
 This feature can be useful to increase logging performance..
 
@@ -235,6 +236,7 @@ Options:
 - `drop-rcodes`: (list of string) rcode list, empty by default
 - `log-queries`: (boolean) forward received queries to configured loggers
 - `log-replies`: (boolean)  forward received replies to configured loggers
+- `downsample`: (integer) only keep 1 out of every `downsample` records, e.g. if set to 20, then this will return every 20th record, dropping 95% of queries 
 
 ```yaml
 transforms:
@@ -246,6 +248,7 @@ transforms:
     drop-rcodes: []
     log-queries: true
     log-replies: true
+    downsample: 0
 ```
 
 Domain list with regex example:
