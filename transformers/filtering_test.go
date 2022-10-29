@@ -143,8 +143,7 @@ func TestFilteringByKeepDomain(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfig()
 	config.Transformers.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains.txt"
-
-    // file contains google.fr, test.github.com
+  // file contains google.fr, test.github.com
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -169,7 +168,6 @@ func TestFilteringByKeepDomain(t *testing.T) {
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}
-
 }
 
 func TestFilteringByKeepDomainRegex(t *testing.T) {
@@ -177,13 +175,11 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 	config := dnsutils.GetFakeConfig()
 	config.Transformers.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains_regex.txt"
 
-    /* file contains:
-
+  /* file contains:
     (mail|sheets).google.com$
     test.github.com$
     .+.google.com$
-
-    */
+  */
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -209,6 +205,40 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 	dm.DNS.Qname = "test.github.com.malware.ru"
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
+	}
+}
+
+func TestFilteringByDownsample(t *testing.T) {
+	// config
+	config := dnsutils.GetFakeConfig()
+	config.Transformers.Filtering.Downsample = 2
+
+	// filtering.downsampleCount 
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped! downsampled should exclude first hit.")
+	}
+
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped! downsampled one record and then should include the next if downsample rate is 2")
+	}
+
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped! downsampled should exclude first hit.")
+	}
+
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped! downsampled one record and then should include the next if downsample rate is 2")
+	}
+
+	// test for default behavior when downsample is set to 0
+	config.Transformers.Filtering.Downsample = 0
+	filtering = NewFilteringProcessor(config, logger.New(false), "test")
+
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped! downsampling rate is set to 0 and should not downsample.")
+	}
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped! downsampling rate is set to 0 and should not downsample.")
 	}
 
 }

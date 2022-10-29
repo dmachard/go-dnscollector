@@ -12,14 +12,16 @@ jobs:
   bench-dnstaptcp:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/setup-go@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-go@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         path: app
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         repository: dmachard/go-dnstap-generator
         path: gen

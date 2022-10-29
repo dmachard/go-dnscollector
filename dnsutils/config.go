@@ -103,6 +103,7 @@ type Config struct {
 			DropRcodes      []string `yaml:"drop-rcodes,flow"`
 			LogQueries      bool     `yaml:"log-queries"`
 			LogReplies      bool     `yaml:"log-replies"`
+			Downsample      int      `yaml:"downsample"`
 		} `yaml:"filtering"`
 		GeoIP struct {
 			DbCountryFile string `yaml:"mmdb-country-file"`
@@ -324,6 +325,7 @@ func (c *Config) SetDefault() {
 	c.Transformers.Filtering.DropRcodes = []string{}
 	c.Transformers.Filtering.LogQueries = true
 	c.Transformers.Filtering.LogReplies = true
+	c.Transformers.Filtering.Downsample = 0
 
 	c.Transformers.GeoIP.DbCountryFile = ""
 	c.Transformers.GeoIP.DbCityFile = ""

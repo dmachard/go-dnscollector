@@ -21,19 +21,16 @@ jobs:
         dnsdist: [ '17' ]
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-go@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v3
       with:
         go-version: ${{ matrix.go-version }}
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
 
     - name: build binary
       run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
-
-    # - name: add pdns user
-    #   run: |
-    #     sudo addgroup --system --gid 953 pdns
-    #     sudo adduser --system --disabled-password --no-create-home -uid 953 --gid 953 pdns
 
     - name: Deploy dnsdist docker image
       run: |
@@ -54,11 +51,13 @@ jobs:
         recursor: [ '47' ]
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-go@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v3
       with:
         go-version: ${{ matrix.go-version }}
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
 
     - name: build binary
       run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
