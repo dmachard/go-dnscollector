@@ -173,7 +173,7 @@ func TestFilteringByKeepDomain(t *testing.T) {
 
 func TestFilteringByKeepDomainRegex(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig
+	config := dnsutils.GetFakeConfig()
 
 	/* file contains:
 	(mail|sheets).google.com$
