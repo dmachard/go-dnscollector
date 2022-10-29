@@ -1,0 +1,2 @@
+google.fr
+test.github.com

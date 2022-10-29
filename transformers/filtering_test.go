@@ -139,6 +139,76 @@ func TestFilteringByDomainRegex(t *testing.T) {
 	}
 }
 
+func TestFilteringByKeepDomain(t *testing.T) {
+	// config
+	config := dnsutils.GetFakeConfig()
+	
+	// file contains google.fr, test.github.com
+	config.Transformers.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains.txt"
+
+	// init subproccesor
+	filtering := NewFilteringProcessor(config, logger.New(false), "test")
+
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.Qname = "mail.google.com"
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped! Domain: %s", dm.DNS.Qname)
+	}
+
+	dm.DNS.Qname = "example.com"
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should not be dropped!")
+	}
+
+	dm.DNS.Qname = "test.github.com"
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
+
+	dm.DNS.Qname = "google.fr"
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
+}
+
+func TestFilteringByKeepDomainRegex(t *testing.T) {
+	// config
+	config := dnsutils.GetFakeConfig()
+
+	/* file contains:
+	(mail|sheets).google.com$
+	test.github.com$
+	.+.google.com$
+	*/
+	config.Transformers.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains_regex.txt"
+
+	// init subproccesor
+	filtering := NewFilteringProcessor(config, logger.New(false), "test")
+
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.Qname = "mail.google.com"
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
+
+	dm.DNS.Qname = "test.google.com.ru"
+	if filtering.CheckIfDrop(&dm) == false {
+
+        // If this passes then these are not terminated.
+		t.Errorf("dns query should be dropped!")
+	}
+
+	dm.DNS.Qname = "test.github.com"
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
+
+	dm.DNS.Qname = "test.github.com.malware.ru"
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped!")
+	}
+}
+
 func TestFilteringByDownsample(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfig()
@@ -146,9 +216,8 @@ func TestFilteringByDownsample(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
-
 	dm := dnsutils.GetFakeDnsMessage()
-
+	
 	// filtering.downsampleCount 
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped! downsampled should exclude first hit.")
