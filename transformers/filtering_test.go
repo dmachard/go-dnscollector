@@ -142,8 +142,9 @@ func TestFilteringByDomainRegex(t *testing.T) {
 func TestFilteringByKeepDomain(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfig()
+	
+	// file contains google.fr, test.github.com
 	config.Transformers.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains.txt"
-  // file contains google.fr, test.github.com
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -172,14 +173,14 @@ func TestFilteringByKeepDomain(t *testing.T) {
 
 func TestFilteringByKeepDomainRegex(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains_regex.txt"
+	config := dnsutils.GetFakeConfig
 
-  /* file contains:
-    (mail|sheets).google.com$
-    test.github.com$
-    .+.google.com$
-  */
+	/* file contains:
+	(mail|sheets).google.com$
+	test.github.com$
+	.+.google.com$
+	*/
+	config.Transformers.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains_regex.txt"
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -213,6 +214,10 @@ func TestFilteringByDownsample(t *testing.T) {
 	config := dnsutils.GetFakeConfig()
 	config.Transformers.Filtering.Downsample = 2
 
+	// init subproccesor
+	filtering := NewFilteringProcessor(config, logger.New(false), "test")
+	dm := dnsutils.GetFakeDnsMessage()
+	
 	// filtering.downsampleCount 
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped! downsampled should exclude first hit.")
