@@ -27,8 +27,9 @@ type FilteringProcessor struct {
 	listKeepDomainsRegex  map[string]*regexp.Regexp
 	fileWatcher           *fsnotify.Watcher
 	name                  string
-	downsample       int
-	downsampleCount  int
+	downsample            int
+	downsampleCount       int
+}
 
 func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger, name string) FilteringProcessor {
 	// creates a new file watcher
