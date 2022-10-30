@@ -14,18 +14,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
     - uses: actions/setup-go@v3
       with:
         go-version: '1.19'
 
-    - name: gofmt
-      run: gofmt -d -e .
-
-    #- name: golint
-    #  run: |
-    #    sudo apt install golint
-    #    golint dnscollector.go
-    #    golint loggers/
-    #    golint collectors/
-    #    golint dnsutils/
-    #    golint subprocessors/
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: v1.50.1
+ 
