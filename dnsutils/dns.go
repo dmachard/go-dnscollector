@@ -9,6 +9,7 @@ import (
 )
 
 const DnsLen = 12
+const UNKNOWN = "UNKNOWN"
 
 var (
 	Rdatatypes = map[int]string{
@@ -126,14 +127,14 @@ func RdatatypeToString(rrtype int) string {
 	if value, ok := Rdatatypes[rrtype]; ok {
 		return value
 	}
-	return "UNKNOWN"
+	return UNKNOWN
 }
 
 func RcodeToString(rcode int) string {
 	if value, ok := Rcodes[rcode]; ok {
 		return value
 	}
-	return "UNKNOWN"
+	return UNKNOWN
 }
 
 // error returned if decoding of DNS packet payload fails.
@@ -329,18 +330,20 @@ func DecodePayload(dm *DnsMessage, header *DnsHeader, config *Config) error {
 }
 
 /*
-	DNS QUESTION
+DNS QUESTION
+
 								   1  1  1  1  1  1
 	 0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
-	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-	|                                               |
-	/                     QNAME                     /
-	/                                               /
-	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-	|                     QTYPE                     |
-	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-	|                     QCLASS                    |
-	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                                               |
+/                     QNAME                     /
+/                                               /
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                     QTYPE                     |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+|                     QCLASS                    |
++--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func DecodeQuestion(qdcount int, payload []byte) (string, int, int, error) {
 
@@ -564,8 +567,10 @@ func ParseRdata(rdatatype string, rdata []byte, payload []byte, rdata_offset int
 
 /*
 SOA
-								1  1  1  1  1  1
-  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
+									1  1  1  1  1  1
+	  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 /                     MNAME                     /
 /                                               /
@@ -619,8 +624,10 @@ func ParseSOA(rdata_offset int, payload []byte) (string, error) {
 
 /*
 IPv4
-								1  1  1  1  1  1
-  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
+									1  1  1  1  1  1
+	  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 |                    ADDRESS                    |
 |                                               |
@@ -638,8 +645,10 @@ func ParseA(r []byte) (string, error) {
 
 /*
 IPv6
-								1  1  1  1  1  1
-  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
+									1  1  1  1  1  1
+	  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 |                                               |
 |                                               |
@@ -662,8 +671,10 @@ func ParseAAAA(rdata []byte) (string, error) {
 
 /*
 CNAME
-								1  1  1  1  1  1
-  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
+									1  1  1  1  1  1
+	  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 /                     NAME                      /
 /                                               /
@@ -679,8 +690,10 @@ func ParseCNAME(rdata_offset int, payload []byte) (string, error) {
 
 /*
 MX
-								1  1  1  1  1  1
-  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
+									1  1  1  1  1  1
+	  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 |                  PREFERENCE                   |
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
@@ -706,8 +719,10 @@ func ParseMX(rdata_offset int, payload []byte) (string, error) {
 
 /*
 SRV
-								1  1  1  1  1  1
-  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
+									1  1  1  1  1  1
+	  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 |                   PRIORITY                    |
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
@@ -735,8 +750,10 @@ func ParseSRV(rdata_offset int, payload []byte) (string, error) {
 
 /*
 NS
-								1  1  1  1  1  1
-  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
+									1  1  1  1  1  1
+	  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 /                   NSDNAME                     /
 /                                               /
@@ -752,8 +769,10 @@ func ParseNS(rdata_offset int, payload []byte) (string, error) {
 
 /*
 TXT
-								1  1  1  1  1  1
-  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
+									1  1  1  1  1  1
+	  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+
 +--+--+--+--+--+--+--+--+
 |         LENGTH        |
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
@@ -775,6 +794,7 @@ func ParseTXT(rdata []byte) (string, error) {
 
 /*
 PTR
+
 									1  1  1  1  1  1
 		0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+

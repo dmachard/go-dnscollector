@@ -1,4 +1,4 @@
-name: Code checking
+name: Linter
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  codechecking:
+  linter:
     runs-on: ubuntu-22.04
 
     steps:

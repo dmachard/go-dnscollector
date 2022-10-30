@@ -6,11 +6,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	PROG_NAME    = "dnscollector"
+	MODE_TEXT    = "text"
+	MODE_JSON    = "json"
+	LOCALHOST_IP = "127.0.0.1"
+)
+
 func IsValidMode(mode string) bool {
 	switch mode {
 	case
-		"text",
-		"json":
+		MODE_TEXT,
+		MODE_JSON:
 		return true
 	}
 	return false
@@ -333,11 +340,11 @@ func (c *Config) SetDefault() {
 
 	// Loggers
 	c.Loggers.Stdout.Enable = false
-	c.Loggers.Stdout.Mode = "text"
+	c.Loggers.Stdout.Mode = MODE_TEXT
 	c.Loggers.Stdout.TextFormat = ""
 
 	c.Loggers.Dnstap.Enable = false
-	c.Loggers.Dnstap.RemoteAddress = "127.0.0.1"
+	c.Loggers.Dnstap.RemoteAddress = LOCALHOST_IP
 	c.Loggers.Dnstap.RemotePort = 6000
 	c.Loggers.Dnstap.RetryInterval = 5
 	c.Loggers.Dnstap.SockPath = ""
@@ -353,30 +360,30 @@ func (c *Config) SetDefault() {
 	c.Loggers.LogFile.Compress = false
 	c.Loggers.LogFile.CompressInterval = 60
 	c.Loggers.LogFile.CompressPostCommand = ""
-	c.Loggers.LogFile.Mode = "text"
+	c.Loggers.LogFile.Mode = MODE_TEXT
 	c.Loggers.LogFile.PostRotateCommand = ""
 	c.Loggers.LogFile.PostRotateDelete = false
 	c.Loggers.LogFile.TextFormat = ""
 
 	c.Loggers.Prometheus.Enable = false
-	c.Loggers.Prometheus.ListenIP = "127.0.0.1"
+	c.Loggers.Prometheus.ListenIP = LOCALHOST_IP
 	c.Loggers.Prometheus.ListenPort = 8081
 	c.Loggers.Prometheus.TlsSupport = false
 	c.Loggers.Prometheus.TlsMutual = false
 	c.Loggers.Prometheus.CertFile = ""
 	c.Loggers.Prometheus.KeyFile = ""
-	c.Loggers.Prometheus.PromPrefix = "dnscollector"
+	c.Loggers.Prometheus.PromPrefix = PROG_NAME
 	c.Loggers.Prometheus.TopN = 10
 
 	c.Loggers.WebServer.Enable = false
-	c.Loggers.WebServer.ListenIP = "127.0.0.1"
+	c.Loggers.WebServer.ListenIP = LOCALHOST_IP
 	c.Loggers.WebServer.ListenPort = 8080
 	c.Loggers.WebServer.BasicAuthLogin = "admin"
 	c.Loggers.WebServer.BasicAuthPwd = "changeme"
 	c.Loggers.WebServer.TlsSupport = false
 	c.Loggers.WebServer.CertFile = ""
 	c.Loggers.WebServer.KeyFile = ""
-	c.Loggers.WebServer.PromPrefix = "dnscollector"
+	c.Loggers.WebServer.PromPrefix = PROG_NAME
 	c.Loggers.WebServer.StatsTopMaxItems = 100
 	c.Loggers.WebServer.StatsThresholdQnameLen = 80
 	c.Loggers.WebServer.StatsThresholdPacketLen = 1000
@@ -384,14 +391,14 @@ func (c *Config) SetDefault() {
 	c.Loggers.WebServer.StatsCommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS"}
 
 	c.Loggers.TcpClient.Enable = false
-	c.Loggers.TcpClient.RemoteAddress = "127.0.0.1"
+	c.Loggers.TcpClient.RemoteAddress = LOCALHOST_IP
 	c.Loggers.TcpClient.RemotePort = 9999
 	c.Loggers.TcpClient.SockPath = ""
 	c.Loggers.TcpClient.RetryInterval = 5
 	c.Loggers.TcpClient.Transport = "tcp"
 	c.Loggers.TcpClient.TlsSupport = false
 	c.Loggers.TcpClient.TlsInsecure = false
-	c.Loggers.TcpClient.Mode = "json"
+	c.Loggers.TcpClient.Mode = MODE_JSON
 	c.Loggers.TcpClient.TextFormat = ""
 	c.Loggers.TcpClient.Delimiter = "\n"
 
@@ -401,12 +408,12 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.Transport = "local"
 	c.Loggers.Syslog.RemoteAddress = "127.0.0.1:514"
 	c.Loggers.Syslog.TextFormat = ""
-	c.Loggers.Syslog.Mode = "text"
+	c.Loggers.Syslog.Mode = MODE_TEXT
 	c.Loggers.Syslog.TlsSupport = false
 	c.Loggers.Syslog.TlsInsecure = false
 
 	c.Loggers.Fluentd.Enable = false
-	c.Loggers.Fluentd.RemoteAddress = "127.0.0.1"
+	c.Loggers.Fluentd.RemoteAddress = LOCALHOST_IP
 	c.Loggers.Fluentd.RemotePort = 24224
 	c.Loggers.Fluentd.SockPath = ""
 	c.Loggers.Fluentd.RetryInterval = 5
@@ -434,8 +441,8 @@ func (c *Config) SetDefault() {
 
 	c.Loggers.LokiClient.Enable = false
 	c.Loggers.LokiClient.ServerURL = "http://localhost:3100/loki/api/v1/push"
-	c.Loggers.LokiClient.JobName = "dnscollector"
-	c.Loggers.LokiClient.Mode = "text"
+	c.Loggers.LokiClient.JobName = PROG_NAME
+	c.Loggers.LokiClient.Mode = MODE_TEXT
 	c.Loggers.LokiClient.FlushInterval = 5
 	c.Loggers.LokiClient.BatchSize = 1024 * 1024
 	c.Loggers.LokiClient.RetryInterval = 10
@@ -447,8 +454,8 @@ func (c *Config) SetDefault() {
 	c.Loggers.LokiClient.TenantId = ""
 
 	c.Loggers.Statsd.Enable = false
-	c.Loggers.Statsd.Prefix = "dnscollector"
-	c.Loggers.Statsd.RemoteAddress = "127.0.0.1"
+	c.Loggers.Statsd.Prefix = PROG_NAME
+	c.Loggers.Statsd.RemoteAddress = LOCALHOST_IP
 	c.Loggers.Statsd.RemotePort = 8125
 	c.Loggers.Statsd.Transport = "udp"
 	c.Loggers.Statsd.FlushInterval = 10
