@@ -82,9 +82,9 @@ func (o *StdOut) Run() {
 	buffer := new(bytes.Buffer)
 	for dm := range o.channel {
 		switch o.config.Loggers.Stdout.Mode {
-		case "text":
+		case dnsutils.MODE_TEXT:
 			o.stdout.Print(dm.String(o.textFormat))
-		case "json":
+		case dnsutils.MODE_JSON:
 			json.NewEncoder(buffer).Encode(dm)
 			fmt.Print(buffer.String())
 			buffer.Reset()

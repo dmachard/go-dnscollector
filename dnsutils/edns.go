@@ -56,7 +56,7 @@ func OptCodeToString(rcode int) string {
 	if value, ok := OptCodes[rcode]; ok {
 		return value
 	}
-	return "UNKNOWN"
+	return STR_UNKNOWN
 }
 
 func DecodeEDNS(arcount int, start_offset int, payload []byte) (DnsExtended, int, error) {
@@ -190,16 +190,14 @@ func ParseOption(optName string, optData []byte) (string, error) {
 }
 
 /*
- https://datatracker.ietf.org/doc/html/rfc8914
+https://datatracker.ietf.org/doc/html/rfc8914
 
- Extended Error EDNS0 option format
-                                             1   1   1   1   1   1
-     0   1   2   3   4   5   6   7   8   9   0   1   2   3   4   5
-   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-4: | INFO-CODE                                                     |
-   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-6: / EXTRA-TEXT ...                                                /
-   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+Extended Error EDNS0 option format
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+| INFO-CODE                                                     |
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+/ EXTRA-TEXT ...                                                /
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 */
 func ParseErrors(d []byte) (string, error) {
 	if len(d) < 2 {
@@ -223,18 +221,24 @@ func ParseErrors(d []byte) (string, error) {
 }
 
 /*
- https://datatracker.ietf.org/doc/html/rfc7871
+	https://datatracker.ietf.org/doc/html/rfc7871
 
- Extended Csubnet EDNS0 option format
-                                             1   1   1   1   1   1
-     0   1   2   3   4   5   6   7   8   9   0   1   2   3   4   5
-   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+	Extended Csubnet EDNS0 option format
+	                                            1   1   1   1   1   1
+	    0   1   2   3   4   5   6   7   8   9   0   1   2   3   4   5
+	  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+
 4: |                            FAMILY                             |
-   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+
+	+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+
 6: |     SOURCE PREFIX-LENGTH      |     SCOPE PREFIX-LENGTH       |
-   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+
+	+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+
 8: |                           ADDRESS...                          /
-   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+
+	+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 */
 func ParseCsubnet(d []byte) (string, error) {
 	if len(d) < 4 {

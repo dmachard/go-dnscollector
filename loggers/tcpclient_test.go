@@ -15,7 +15,7 @@ func TestTcpClientJsonRun(t *testing.T) {
 	g := NewTcpClient(dnsutils.GetFakeConfig(), logger.New(false), "test")
 
 	// fake json receiver
-	fakeRcvr, err := net.Listen("tcp", ":9999")
+	fakeRcvr, err := net.Listen(dnsutils.SOCKET_TCP, ":9999")
 	if err != nil {
 		t.Fatal(err)
 	}

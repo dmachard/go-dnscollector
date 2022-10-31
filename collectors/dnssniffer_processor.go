@@ -123,7 +123,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.NetworkInfo.ResponsePort = qport
 		} else {
 			dm.DNS.Type = dnsutils.DnsQuery
-			dm.DnsTap.Operation = "CLIENT_QUERY"
+			dm.DnsTap.Operation = dnsutils.DNSTAP_CLIENT_QUERY
 		}
 
 		if err = dnsutils.DecodePayload(&dm, &dnsHeader, d.config); err != nil {

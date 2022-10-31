@@ -14,7 +14,7 @@ func TestFluentClientdRun(t *testing.T) {
 	g := NewFluentdClient(dnsutils.GetFakeConfig(), logger.New(false), "test")
 
 	// fake msgpack receiver
-	fakeRcvr, err := net.Listen("tcp", ":24224")
+	fakeRcvr, err := net.Listen(dnsutils.SOCKET_TCP, ":24224")
 	if err != nil {
 		t.Fatal(err)
 	}

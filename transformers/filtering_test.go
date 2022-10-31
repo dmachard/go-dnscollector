@@ -7,6 +7,11 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
+const (
+	TEST_URL1 = "mail.google.com"
+	TEST_URL2 = "test.github.com"
+)
+
 func TestFilteringQR(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfig()
@@ -108,7 +113,7 @@ func TestFilteringByFqdn(t *testing.T) {
 		t.Errorf("dns query should not be dropped!")
 	}
 
-	dm.DNS.Qname = "mail.google.com"
+	dm.DNS.Qname = TEST_URL1
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}
@@ -123,12 +128,12 @@ func TestFilteringByDomainRegex(t *testing.T) {
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
 
 	dm := dnsutils.GetFakeDnsMessage()
-	dm.DNS.Qname = "mail.google.com"
+	dm.DNS.Qname = TEST_URL1
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}
 
-	dm.DNS.Qname = "test.github.com"
+	dm.DNS.Qname = TEST_URL2
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}
@@ -142,7 +147,7 @@ func TestFilteringByDomainRegex(t *testing.T) {
 func TestFilteringByKeepDomain(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfig()
-	
+
 	// file contains google.fr, test.github.com
 	config.Transformers.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains.txt"
 
@@ -150,7 +155,7 @@ func TestFilteringByKeepDomain(t *testing.T) {
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
 
 	dm := dnsutils.GetFakeDnsMessage()
-	dm.DNS.Qname = "mail.google.com"
+	dm.DNS.Qname = TEST_URL1
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped! Domain: %s", dm.DNS.Qname)
 	}
@@ -160,7 +165,7 @@ func TestFilteringByKeepDomain(t *testing.T) {
 		t.Errorf("dns query should not be dropped!")
 	}
 
-	dm.DNS.Qname = "test.github.com"
+	dm.DNS.Qname = TEST_URL2
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}
@@ -186,7 +191,7 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
 
 	dm := dnsutils.GetFakeDnsMessage()
-	dm.DNS.Qname = "mail.google.com"
+	dm.DNS.Qname = TEST_URL1
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}
@@ -194,11 +199,11 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 	dm.DNS.Qname = "test.google.com.ru"
 	if filtering.CheckIfDrop(&dm) == false {
 
-        // If this passes then these are not terminated.
+		// If this passes then these are not terminated.
 		t.Errorf("dns query should be dropped!")
 	}
 
-	dm.DNS.Qname = "test.github.com"
+	dm.DNS.Qname = TEST_URL2
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}
@@ -217,8 +222,8 @@ func TestFilteringByDownsample(t *testing.T) {
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
 	dm := dnsutils.GetFakeDnsMessage()
-	
-	// filtering.downsampleCount 
+
+	// filtering.downsampleCount
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped! downsampled should exclude first hit.")
 	}

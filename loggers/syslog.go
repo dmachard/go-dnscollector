@@ -162,10 +162,10 @@ func (o *Syslog) Run() {
 
 	for dm := range o.channel {
 		switch o.config.Loggers.Syslog.Mode {
-		case "text":
+		case dnsutils.MODE_TEXT:
 			delimiter := "\n"
 			o.syslogConn.Write(dm.Bytes(o.textFormat, delimiter))
-		case "json":
+		case dnsutils.MODE_JSON:
 			json.NewEncoder(buffer).Encode(dm)
 			o.syslogConn.Write(buffer.Bytes())
 			buffer.Reset()

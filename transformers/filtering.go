@@ -14,21 +14,21 @@ import (
 )
 
 type FilteringProcessor struct {
-	config                *dnsutils.Config
-	logger                *logger.Logger
-	dropDomains           bool
-	keepDomains           bool
-	mapRcodes             map[string]bool
-	ipsetDrop             *netaddr.IPSet
-	ipsetKeep             *netaddr.IPSet
-	listFqdns             map[string]bool
-	listDomainsRegex      map[string]*regexp.Regexp
-	listKeepFqdns         map[string]bool
-	listKeepDomainsRegex  map[string]*regexp.Regexp
-	fileWatcher           *fsnotify.Watcher
-	name                  string
-	downsample            int
-	downsampleCount       int
+	config               *dnsutils.Config
+	logger               *logger.Logger
+	dropDomains          bool
+	keepDomains          bool
+	mapRcodes            map[string]bool
+	ipsetDrop            *netaddr.IPSet
+	ipsetKeep            *netaddr.IPSet
+	listFqdns            map[string]bool
+	listDomainsRegex     map[string]*regexp.Regexp
+	listKeepFqdns        map[string]bool
+	listKeepDomainsRegex map[string]*regexp.Regexp
+	fileWatcher          *fsnotify.Watcher
+	name                 string
+	downsample           int
+	downsampleCount      int
 }
 
 func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger, name string) FilteringProcessor {
@@ -40,17 +40,17 @@ func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger, name 
 	defer watcher.Close()
 
 	d := FilteringProcessor{
-		config:                config,
-		logger:                logger,
-		mapRcodes:             make(map[string]bool),
-		ipsetDrop:             &netaddr.IPSet{},
-		ipsetKeep:             &netaddr.IPSet{},
-		listFqdns:             make(map[string]bool),
-		listDomainsRegex:      make(map[string]*regexp.Regexp),
-		listKeepFqdns:         make(map[string]bool),
-		listKeepDomainsRegex:  make(map[string]*regexp.Regexp),
-		fileWatcher:           watcher,
-		name:                  name,
+		config:               config,
+		logger:               logger,
+		mapRcodes:            make(map[string]bool),
+		ipsetDrop:            &netaddr.IPSet{},
+		ipsetKeep:            &netaddr.IPSet{},
+		listFqdns:            make(map[string]bool),
+		listDomainsRegex:     make(map[string]*regexp.Regexp),
+		listKeepFqdns:        make(map[string]bool),
+		listKeepDomainsRegex: make(map[string]*regexp.Regexp),
+		fileWatcher:          watcher,
+		name:                 name,
 	}
 
 	d.LoadRcodes()
@@ -60,7 +60,7 @@ func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger, name 
 	// set downsample if desired
 	if d.config.Transformers.Filtering.Downsample > 0 {
 		d.downsample = d.config.Transformers.Filtering.Downsample
-        d.downsampleCount = 0
+		d.downsampleCount = 0
 	} else {
 		d.downsample = 0
 	}
@@ -181,33 +181,33 @@ func (p *FilteringProcessor) LoadDomainsList() {
 		file, err := os.Open(p.config.Transformers.Filtering.KeepFqdnFile)
 		if err != nil {
 			p.LogError("unable to open KeepFqdnFile file: ", err)
-			p.keepDomains = false 
+			p.keepDomains = false
 		} else {
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				keepDomain := strings.ToLower(scanner.Text())
-				p.listKeepFqdns[keepDomain] = true 
+				p.listKeepFqdns[keepDomain] = true
 			}
 			p.LogInfo("loaded with %d fqdns to the keep list", len(p.listKeepFqdns))
 			p.keepDomains = true
 		}
-	} 
+	}
 
 	if len(p.config.Transformers.Filtering.KeepDomainFile) > 0 {
 		file, err := os.Open(p.config.Transformers.Filtering.KeepDomainFile)
 		if err != nil {
 			p.LogError("unable to open KeepDomainFile file: ", err)
-			p.keepDomains = false 
+			p.keepDomains = false
 		} else {
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				keepDomain := strings.ToLower(scanner.Text())
-				p.listKeepDomainsRegex[keepDomain] = regexp.MustCompile(keepDomain) 
+				p.listKeepDomainsRegex[keepDomain] = regexp.MustCompile(keepDomain)
 			}
 			p.LogInfo("loaded with %d domains to the keep list", len(p.listKeepDomainsRegex))
 			p.keepDomains = true
 		}
-	} 
+	}
 
 }
 
@@ -275,9 +275,9 @@ func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DnsMessage) bool {
 
 	// only certain domains ? read list but flip the responses.
 	if p.keepDomains {
-		// only 
+		// only
 		if _, ok := p.listKeepFqdns[dm.DNS.Qname]; ok {
-			return false 
+			return false
 		}
 
 		// partiel fqdn with regexp
@@ -288,13 +288,13 @@ func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DnsMessage) bool {
 		}
 
 		return true
-	} 
+	}
 
 	if p.downsample > 0 {
 		p.downsampleCount += 1
-		if p.downsampleCount % p.downsample != 0 {
+		if p.downsampleCount%p.downsample != 0 {
 			return true
-		} else if p.downsampleCount % p.downsample == 0 {
+		} else if p.downsampleCount%p.downsample == 0 {
 			p.downsampleCount = 0
 			return false
 		}

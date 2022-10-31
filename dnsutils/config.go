@@ -6,13 +6,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const (
-	PROG_NAME    = "dnscollector"
-	MODE_TEXT    = "text"
-	MODE_JSON    = "json"
-	LOCALHOST_IP = "127.0.0.1"
-)
-
 func IsValidMode(mode string) bool {
 	switch mode {
 	case

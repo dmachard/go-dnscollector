@@ -358,10 +358,10 @@ LOOP:
 
 			// write to file
 			switch o.config.Loggers.LogFile.Mode {
-			case "text":
+			case dnsutils.MODE_TEXT:
 				delimiter := "\n"
 				o.Write(dm.Bytes(o.textFormat, delimiter))
-			case "json":
+			case dnsutils.MODE_JSON:
 				json.NewEncoder(buffer).Encode(dm)
 				o.Write(buffer.Bytes())
 				buffer.Reset()

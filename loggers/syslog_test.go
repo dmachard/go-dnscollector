@@ -13,13 +13,13 @@ import (
 func TestSyslogRunTextMode(t *testing.T) {
 	// init logger
 	config := dnsutils.GetFakeConfig()
-	config.Loggers.Syslog.Transport = "tcp"
+	config.Loggers.Syslog.Transport = dnsutils.SOCKET_TCP
 	config.Loggers.Syslog.RemoteAddress = ":4000"
-	config.Loggers.Syslog.Mode = "text"
+	config.Loggers.Syslog.Mode = dnsutils.MODE_TEXT
 	g := NewSyslog(config, logger.New(false), "test")
 
 	// fake json receiver
-	fakeRcvr, err := net.Listen("tcp", ":4000")
+	fakeRcvr, err := net.Listen(dnsutils.SOCKET_TCP, ":4000")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,13 +55,13 @@ func TestSyslogRunTextMode(t *testing.T) {
 func TestSyslogRunJsonMode(t *testing.T) {
 	// init logger
 	config := dnsutils.GetFakeConfig()
-	config.Loggers.Syslog.Transport = "tcp"
+	config.Loggers.Syslog.Transport = dnsutils.SOCKET_TCP
 	config.Loggers.Syslog.RemoteAddress = ":4000"
-	config.Loggers.Syslog.Mode = "json"
+	config.Loggers.Syslog.Mode = dnsutils.MODE_JSON
 	g := NewSyslog(config, logger.New(false), "test")
 
 	// fake json receiver
-	fakeRcvr, err := net.Listen("tcp", ":4000")
+	fakeRcvr, err := net.Listen(dnsutils.SOCKET_TCP, ":4000")
 	if err != nil {
 		t.Fatal(err)
 	}
