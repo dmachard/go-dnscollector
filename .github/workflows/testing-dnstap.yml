@@ -1,4 +1,4 @@
-name: dnstap tests
+name: tests dnstap
 
 on:
   push:
