@@ -51,6 +51,9 @@ func (c *Webserver) GetName() string { return c.name }
 func (c *Webserver) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *Webserver) ReadConfig() {
+	if !dnsutils.IsValidTLS(o.config.Loggers.WebServer.TlsMinVersion) {
+		o.logger.Fatal("logger web server - invalid tls min version")
+	}
 }
 
 func (o *Webserver) LogInfo(msg string, v ...interface{}) {
@@ -404,6 +407,7 @@ func (s *Webserver) ListenAndServe() {
 	var err error
 	var listener net.Listener
 	addrlisten := s.config.Loggers.WebServer.ListenIP + ":" + strconv.Itoa(s.config.Loggers.WebServer.ListenPort)
+
 	// listening with tls enabled ?
 	if s.config.Loggers.WebServer.TlsSupport {
 		s.LogInfo("tls support enabled")
@@ -412,12 +416,21 @@ func (s *Webserver) ListenAndServe() {
 		if err != nil {
 			s.logger.Fatal("loading certificate failed:", err)
 		}
-		config := &tls.Config{Certificates: []tls.Certificate{cer}}
-		listener, err = tls.Listen("tcp", addrlisten, config)
+
+		// prepare tls configuration
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{cer},
+			MinVersion:   tls.VersionTLS12,
+		}
+
+		// update tls min version according to the user config
+		tlsConfig.MinVersion = dnsutils.TLS_VERSION[s.config.Loggers.Prometheus.TlsMinVersion]
+
+		listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, tlsConfig)
 
 	} else {
 		// basic listening
-		listener, err = net.Listen("tcp", addrlisten)
+		listener, err = net.Listen(dnsutils.SOCKET_TCP, addrlisten)
 	}
 
 	// something wrong ?

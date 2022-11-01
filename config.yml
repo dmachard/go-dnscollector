@@ -91,6 +91,8 @@ multiplexer:
 #   sock-path: null
 #   # tls support
 #   tls-support: false
+#   # tls min version
+#   tls-min-version: 1.2
 #   # certificate server file
 #   cert-file: ""
 #   # private key server file
@@ -145,6 +147,8 @@ multiplexer:
 #   quiet-text: false
 #   # tls support
 #   tls-support: false
+#   # tls min version
+#   tls-min-version: 1.2
 #   # certificate server file
 #   cert-file: ""
 #   # private key server file
@@ -202,6 +206,8 @@ multiplexer:
 #   # tls mutual
 #   tls-mutual: false
 #   # certificate server file
+#   # tls min version
+#   tls-min-version: 1.2
 #   cert-file: ""
 #   # private key server file
 #   key-file: ""
@@ -240,7 +246,7 @@ multiplexer:
 
 # # resend captured dns traffic to another dnstap collector or to unix socket
 # dnstap:
-#     # remote address
+#   # remote address
 #   remote-address: 10.0.0.1
 #   # remote tcp port
 #   remote-port: 6000

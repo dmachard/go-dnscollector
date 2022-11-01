@@ -57,6 +57,9 @@ func (o *DnstapSender) ReadConfig() {
 		}
 	}
 
+	if !dnsutils.IsValidTLS(o.config.Loggers.Dnstap.TlsMinVersion) {
+		o.logger.Fatal("logger dnstap - invalid tls min version")
+	}
 }
 
 func (o *DnstapSender) LogInfo(msg string, v ...interface{}) {
@@ -112,10 +115,14 @@ LOOP:
 				var conn net.Conn
 				var err error
 				if o.config.Loggers.Dnstap.TlsSupport {
-					conf := &tls.Config{
-						InsecureSkipVerify: o.config.Loggers.Dnstap.TlsInsecure,
+					tlsConfig := &tls.Config{
+						InsecureSkipVerify: false,
+						MinVersion:         tls.VersionTLS12,
 					}
-					conn, err = tls.Dial(transport, address, conf)
+					tlsConfig.InsecureSkipVerify = o.config.Loggers.Dnstap.TlsInsecure
+					tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.Dnstap.TlsMinVersion]
+
+					conn, err = tls.Dial(transport, address, tlsConfig)
 				} else {
 					conn, err = net.Dial(transport, address)
 				}

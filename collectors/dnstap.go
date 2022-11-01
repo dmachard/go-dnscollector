@@ -52,6 +52,10 @@ func (c *Dnstap) Loggers() []chan dnsutils.DnsMessage {
 }
 
 func (c *Dnstap) ReadConfig() {
+	if !dnsutils.IsValidTLS(c.config.Collectors.Dnstap.TlsMinVersion) {
+		c.logger.Fatal("collector dnstap - invalid tls min version")
+	}
+
 	c.sockPath = c.config.Collectors.Dnstap.SockPath
 }
 
@@ -140,12 +144,20 @@ func (c *Dnstap) Listen() error {
 		if err != nil {
 			c.logger.Fatal("loading certificate failed:", err)
 		}
-		config := &tls.Config{Certificates: []tls.Certificate{cer}}
+
+		// prepare tls configuration
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{cer},
+			MinVersion:   tls.VersionTLS12,
+		}
+
+		// update tls min version according to the user config
+		tlsConfig.MinVersion = dnsutils.TLS_VERSION[c.config.Collectors.Dnstap.TlsMinVersion]
 
 		if len(c.sockPath) > 0 {
-			listener, err = tls.Listen(dnsutils.SOCKET_UNIX, c.sockPath, config)
+			listener, err = tls.Listen(dnsutils.SOCKET_UNIX, c.sockPath, tlsConfig)
 		} else {
-			listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, config)
+			listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, tlsConfig)
 		}
 	} else {
 		// basic listening

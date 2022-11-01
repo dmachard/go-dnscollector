@@ -16,6 +16,18 @@ func IsValidMode(mode string) bool {
 	return false
 }
 
+func IsValidTLS(mode string) bool {
+	switch mode {
+	case
+		TLS_v10,
+		TLS_v11,
+		TLS_v12,
+		TLS_v13:
+		return true
+	}
+	return false
+}
+
 type MultiplexTransformers struct {
 	Name       string                 `yaml:"naame"`
 	Transforms map[string]interface{} `yaml:",inline"`
@@ -54,16 +66,17 @@ type Config struct {
 			FilePath     string `yaml:"file-path"`
 		} `yaml:"tail"`
 		Dnstap struct {
-			Enable       bool   `yaml:"enable"`
-			ListenIP     string `yaml:"listen-ip"`
-			ListenPort   int    `yaml:"listen-port"`
-			SockPath     string `yaml:"sock-path"`
-			TlsSupport   bool   `yaml:"tls-support"`
-			CertFile     string `yaml:"cert-file"`
-			KeyFile      string `yaml:"key-file"`
-			CacheSupport bool   `yaml:"cache-support"`
-			QueryTimeout int    `yaml:"query-timeout"`
-			QuietText    bool   `yaml:"quiet-text"`
+			Enable        bool   `yaml:"enable"`
+			ListenIP      string `yaml:"listen-ip"`
+			ListenPort    int    `yaml:"listen-port"`
+			SockPath      string `yaml:"sock-path"`
+			TlsSupport    bool   `yaml:"tls-support"`
+			TlsMinVersion string `yaml:"tls-min-version"`
+			CertFile      string `yaml:"cert-file"`
+			KeyFile       string `yaml:"key-file"`
+			CacheSupport  bool   `yaml:"cache-support"`
+			QueryTimeout  int    `yaml:"query-timeout"`
+			QuietText     bool   `yaml:"quiet-text"`
 		} `yaml:"dnstap"`
 		DnsSniffer struct {
 			Enable            bool   `yaml:"enable"`
@@ -75,13 +88,14 @@ type Config struct {
 			QueryTimeout      int    `yaml:"query-timeout"`
 		} `yaml:"dns-sniffer"`
 		PowerDNS struct {
-			Enable     bool   `yaml:"enable"`
-			ListenIP   string `yaml:"listen-ip"`
-			ListenPort int    `yaml:"listen-port"`
-			QuietText  bool   `yaml:"quiet-text"`
-			TlsSupport bool   `yaml:"tls-support"`
-			CertFile   string `yaml:"cert-file"`
-			KeyFile    string `yaml:"key-file"`
+			Enable        bool   `yaml:"enable"`
+			ListenIP      string `yaml:"listen-ip"`
+			ListenPort    int    `yaml:"listen-port"`
+			QuietText     bool   `yaml:"quiet-text"`
+			TlsSupport    bool   `yaml:"tls-support"`
+			TlsMinVersion string `yaml:"tls-min-version"`
+			CertFile      string `yaml:"cert-file"`
+			KeyFile       string `yaml:"key-file"`
 		} `yaml:"powerdns"`
 	} `yaml:"collectors"`
 
@@ -119,15 +133,16 @@ type Config struct {
 			TextFormat string `yaml:"text-format"`
 		} `yaml:"stdout"`
 		Prometheus struct {
-			Enable     bool   `yaml:"enable"`
-			ListenIP   string `yaml:"listen-ip"`
-			ListenPort int    `yaml:"listen-port"`
-			TlsSupport bool   `yaml:"tls-support"`
-			TlsMutual  bool   `yaml:"tls-mutual"`
-			CertFile   string `yaml:"cert-file"`
-			KeyFile    string `yaml:"key-file"`
-			PromPrefix string `yaml:"prometheus-prefix"`
-			TopN       int    `yaml:"top-n"`
+			Enable        bool   `yaml:"enable"`
+			ListenIP      string `yaml:"listen-ip"`
+			ListenPort    int    `yaml:"listen-port"`
+			TlsSupport    bool   `yaml:"tls-support"`
+			TlsMutual     bool   `yaml:"tls-mutual"`
+			TlsMinVersion string `yaml:"tls-min-version"`
+			CertFile      string `yaml:"cert-file"`
+			KeyFile       string `yaml:"key-file"`
+			PromPrefix    string `yaml:"prometheus-prefix"`
+			TopN          int    `yaml:"top-n"`
 		} `yaml:"prometheus"`
 		WebServer struct {
 			Enable                  bool     `yaml:"enable"`
@@ -136,6 +151,7 @@ type Config struct {
 			BasicAuthLogin          string   `yaml:"basic-auth-login"`
 			BasicAuthPwd            string   `yaml:"basic-auth-pwd"`
 			TlsSupport              bool     `yaml:"tls-support"`
+			TlsMinVersion           string   `yaml:"tls-min-version"`
 			CertFile                string   `yaml:"cert-file"`
 			KeyFile                 string   `yaml:"key-file"`
 			PromPrefix              string   `yaml:"prometheus-prefix"`
@@ -167,6 +183,7 @@ type Config struct {
 			RetryInterval int    `yaml:"retry-interval"`
 			TlsSupport    bool   `yaml:"tls-support"`
 			TlsInsecure   bool   `yaml:"tls-insecure"`
+			TlsMinVersion string `yaml:"tls-min-version"`
 			ServerId      string `yaml:"server-id"`
 		} `yaml:"dnstap"`
 		TcpClient struct {
@@ -178,6 +195,7 @@ type Config struct {
 			Transport     string `yaml:"transport"`
 			TlsSupport    bool   `yaml:"tls-support"`
 			TlsInsecure   bool   `yaml:"tls-insecure"`
+			TlsMinVersion string `yaml:"tls-min-version"`
 			Mode          string `yaml:"mode"`
 			TextFormat    string `yaml:"text-format"`
 			Delimiter     string `yaml:"delimiter"`
@@ -192,6 +210,7 @@ type Config struct {
 			Mode          string `yaml:"mode"`
 			TlsSupport    bool   `yaml:"tls-support"`
 			TlsInsecure   bool   `yaml:"tls-insecure"`
+			TlsMinVersion string `yaml:"tls-min-version"`
 		} `yaml:"syslog"`
 		Fluentd struct {
 			Enable        bool   `yaml:"enable"`
@@ -202,6 +221,7 @@ type Config struct {
 			Transport     string `yaml:"transport"`
 			TlsSupport    bool   `yaml:"tls-support"`
 			TlsInsecure   bool   `yaml:"tls-insecure"`
+			TlsMinVersion string `yaml:"tls-min-version"`
 			Tag           string `yaml:"tag"`
 		} `yaml:"fluentd"`
 		PcapFile struct {
@@ -215,13 +235,14 @@ type Config struct {
 			PostRotateDelete  bool   `yaml:"postrotate-delete-success"`
 		} `yaml:"pcapfile"`
 		InfluxDB struct {
-			Enable       bool   `yaml:"enable"`
-			ServerURL    string `yaml:"server-url"`
-			AuthToken    string `yaml:"auth-token"`
-			TlsSupport   bool   `yaml:"tls-support"`
-			TlsInsecure  bool   `yaml:"tls-insecure"`
-			Bucket       string `yaml:"bucket"`
-			Organization string `yaml:"organization"`
+			Enable        bool   `yaml:"enable"`
+			ServerURL     string `yaml:"server-url"`
+			AuthToken     string `yaml:"auth-token"`
+			TlsSupport    bool   `yaml:"tls-support"`
+			TlsInsecure   bool   `yaml:"tls-insecure"`
+			TlsMinVersion string `yaml:"tls-min-version"`
+			Bucket        string `yaml:"bucket"`
+			Organization  string `yaml:"organization"`
 		} `yaml:"influxdb"`
 		LokiClient struct {
 			Enable         bool   `yaml:"enable"`
@@ -234,6 +255,7 @@ type Config struct {
 			TextFormat     string `yaml:"text-format"`
 			ProxyURL       string `yaml:"proxy-url"`
 			TlsInsecure    bool   `yaml:"tls-insecure"`
+			TlsMinVersion  string `yaml:"tls-min-version"`
 			BasicAuthLogin string `yaml:"basic-auth-login"`
 			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
 			TenantId       string `yaml:"tenant-id"`
@@ -247,6 +269,7 @@ type Config struct {
 			FlushInterval int    `yaml:"flush-interval"`
 			TlsSupport    bool   `yaml:"tls-support"`
 			TlsInsecure   bool   `yaml:"tls-insecure"`
+			TlsMinVersion string `yaml:"tls-min-version"`
 		} `yaml:"statsd"`
 		ElasticSearchClient struct {
 			Enable bool   `yaml:"enable"`
@@ -288,6 +311,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.Dnstap.ListenPort = 6000
 	c.Collectors.Dnstap.SockPath = ""
 	c.Collectors.Dnstap.TlsSupport = false
+	c.Collectors.Dnstap.TlsMinVersion = TLS_v12
 	c.Collectors.Dnstap.CertFile = ""
 	c.Collectors.Dnstap.KeyFile = ""
 	c.Collectors.Dnstap.QueryTimeout = 5
@@ -307,6 +331,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.PowerDNS.ListenPort = 6001
 	c.Collectors.PowerDNS.QuietText = false
 	c.Collectors.PowerDNS.TlsSupport = false
+	c.Collectors.PowerDNS.TlsMinVersion = TLS_v12
 	c.Collectors.PowerDNS.CertFile = ""
 	c.Collectors.PowerDNS.KeyFile = ""
 
@@ -342,6 +367,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Dnstap.SockPath = ""
 	c.Loggers.Dnstap.TlsSupport = false
 	c.Loggers.Dnstap.TlsInsecure = false
+	c.Loggers.Dnstap.TlsMinVersion = TLS_v12
 	c.Loggers.Dnstap.ServerId = ""
 
 	c.Loggers.LogFile.Enable = false
@@ -362,6 +388,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Prometheus.ListenPort = 8081
 	c.Loggers.Prometheus.TlsSupport = false
 	c.Loggers.Prometheus.TlsMutual = false
+	c.Loggers.Prometheus.TlsMinVersion = TLS_v12
 	c.Loggers.Prometheus.CertFile = ""
 	c.Loggers.Prometheus.KeyFile = ""
 	c.Loggers.Prometheus.PromPrefix = PROG_NAME
@@ -373,6 +400,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.WebServer.BasicAuthLogin = "admin"
 	c.Loggers.WebServer.BasicAuthPwd = "changeme"
 	c.Loggers.WebServer.TlsSupport = false
+	c.Loggers.WebServer.TlsMinVersion = TLS_v12
 	c.Loggers.WebServer.CertFile = ""
 	c.Loggers.WebServer.KeyFile = ""
 	c.Loggers.WebServer.PromPrefix = PROG_NAME
@@ -390,6 +418,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.TcpClient.Transport = "tcp"
 	c.Loggers.TcpClient.TlsSupport = false
 	c.Loggers.TcpClient.TlsInsecure = false
+	c.Loggers.TcpClient.TlsMinVersion = TLS_v12
 	c.Loggers.TcpClient.Mode = MODE_JSON
 	c.Loggers.TcpClient.TextFormat = ""
 	c.Loggers.TcpClient.Delimiter = "\n"
@@ -403,6 +432,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.Mode = MODE_TEXT
 	c.Loggers.Syslog.TlsSupport = false
 	c.Loggers.Syslog.TlsInsecure = false
+	c.Loggers.Syslog.TlsMinVersion = TLS_v12
 
 	c.Loggers.Fluentd.Enable = false
 	c.Loggers.Fluentd.RemoteAddress = LOCALHOST_IP
@@ -412,6 +442,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Fluentd.Transport = "tcp"
 	c.Loggers.Fluentd.TlsSupport = false
 	c.Loggers.Fluentd.TlsInsecure = false
+	c.Loggers.Fluentd.TlsMinVersion = TLS_v12
 	c.Loggers.Fluentd.Tag = "dns.collector"
 
 	c.Loggers.PcapFile.Enable = false
@@ -428,6 +459,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.InfluxDB.AuthToken = ""
 	c.Loggers.InfluxDB.TlsSupport = false
 	c.Loggers.InfluxDB.TlsInsecure = false
+	c.Loggers.InfluxDB.TlsMinVersion = TLS_v12
 	c.Loggers.InfluxDB.Bucket = ""
 	c.Loggers.InfluxDB.Organization = ""
 
@@ -441,6 +473,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.LokiClient.TextFormat = ""
 	c.Loggers.LokiClient.ProxyURL = ""
 	c.Loggers.LokiClient.TlsInsecure = false
+	c.Loggers.LokiClient.TlsMinVersion = TLS_v12
 	c.Loggers.LokiClient.BasicAuthLogin = ""
 	c.Loggers.LokiClient.BasicAuthPwd = ""
 	c.Loggers.LokiClient.TenantId = ""
@@ -453,6 +486,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Statsd.FlushInterval = 10
 	c.Loggers.Statsd.TlsSupport = false
 	c.Loggers.Statsd.TlsInsecure = false
+	c.Loggers.Statsd.TlsMinVersion = TLS_v12
 
 	c.Loggers.ElasticSearchClient.Enable = false
 	c.Loggers.ElasticSearchClient.URL = ""

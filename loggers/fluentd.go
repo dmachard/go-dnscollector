@@ -42,7 +42,9 @@ func (c *FluentdClient) GetName() string { return c.name }
 func (c *FluentdClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *FluentdClient) ReadConfig() {
-	//tbc
+	if !dnsutils.IsValidTLS(o.config.Loggers.Fluentd.TlsMinVersion) {
+		o.logger.Fatal("logger fluentd - invalid tls min version")
+	}
 }
 
 func (o *FluentdClient) LogInfo(msg string, v ...interface{}) {
@@ -92,10 +94,15 @@ LOOP:
 				//var conn net.Conn
 				var err error
 				if o.config.Loggers.Fluentd.TlsSupport {
-					conf := &tls.Config{
-						InsecureSkipVerify: o.config.Loggers.Fluentd.TlsInsecure,
+					tlsConfig := &tls.Config{
+						InsecureSkipVerify: false,
+						MinVersion:         tls.VersionTLS12,
 					}
-					o.conn, err = tls.Dial(o.config.Loggers.Fluentd.Transport, address, conf)
+
+					tlsConfig.InsecureSkipVerify = o.config.Loggers.Fluentd.TlsInsecure
+					tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.Fluentd.TlsMinVersion]
+
+					o.conn, err = tls.Dial(o.config.Loggers.Fluentd.Transport, address, tlsConfig)
 				} else {
 					o.conn, err = net.Dial(o.config.Loggers.Fluentd.Transport, address)
 				}

@@ -328,6 +328,9 @@ func (o *Prometheus) InitProm() {
 }
 
 func (o *Prometheus) ReadConfig() {
+	if !dnsutils.IsValidTLS(o.config.Loggers.Prometheus.TlsMinVersion) {
+		o.logger.Fatal("logger prometheus - invalid tls min version")
+	}
 }
 
 func (o *Prometheus) LogInfo(msg string, v ...interface{}) {
@@ -538,9 +541,14 @@ func (s *Prometheus) ListenAndServe() {
 			s.logger.Fatal("loading certificate failed:", err)
 		}
 
-		config := &tls.Config{
+		// prepare tls configuration
+		tlsConfig := &tls.Config{
 			Certificates: []tls.Certificate{cer},
+			MinVersion:   tls.VersionTLS12,
 		}
+
+		// update tls min version according to the user config
+		tlsConfig.MinVersion = dnsutils.TLS_VERSION[s.config.Loggers.Prometheus.TlsMinVersion]
 
 		if s.config.Loggers.Prometheus.TlsMutual {
 
@@ -553,15 +561,15 @@ func (s *Prometheus) ListenAndServe() {
 			caCertPool := x509.NewCertPool()
 			caCertPool.AppendCertsFromPEM(caCert)
 
-			config.ClientCAs = caCertPool
-			config.ClientAuth = tls.RequireAndVerifyClientCert
+			tlsConfig.ClientCAs = caCertPool
+			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
 		}
 
-		listener, err = tls.Listen("tcp", addrlisten, config)
+		listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, tlsConfig)
 
 	} else {
 		// basic listening
-		listener, err = net.Listen("tcp", addrlisten)
+		listener, err = net.Listen(dnsutils.SOCKET_TCP, addrlisten)
 	}
 
 	// something wrong ?

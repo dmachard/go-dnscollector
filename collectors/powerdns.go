@@ -50,6 +50,9 @@ func (c *ProtobufPowerDNS) Loggers() []chan dnsutils.DnsMessage {
 }
 
 func (c *ProtobufPowerDNS) ReadConfig() {
+	if !dnsutils.IsValidTLS(c.config.Collectors.PowerDNS.TlsMinVersion) {
+		c.logger.Fatal("collector powerdns - invalid tls min version")
+	}
 }
 
 func (c *ProtobufPowerDNS) LogInfo(msg string, v ...interface{}) {
@@ -120,8 +123,17 @@ func (c *ProtobufPowerDNS) Listen() error {
 		if err != nil {
 			c.logger.Fatal("loading certificate failed:", err)
 		}
-		config := &tls.Config{Certificates: []tls.Certificate{cer}}
-		listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, config)
+
+		// prepare tls configuration
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{cer},
+			MinVersion:   tls.VersionTLS12,
+		}
+
+		// update tls min version according to the user config
+		tlsConfig.MinVersion = dnsutils.TLS_VERSION[c.config.Collectors.PowerDNS.TlsMinVersion]
+
+		listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, tlsConfig)
 	} else {
 		listener, err = net.Listen(dnsutils.SOCKET_TCP, addrlisten)
 	}
