@@ -98,6 +98,10 @@ func (c *LokiClient) GetName() string { return c.name }
 func (c *LokiClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *LokiClient) ReadConfig() {
+	if !dnsutils.IsValidTLS(o.config.Loggers.LokiClient.TlsMinVersion) {
+		o.logger.Fatal("logger loki - invalid tls min version")
+	}
+
 	if len(o.config.Loggers.LokiClient.TextFormat) > 0 {
 		o.textFormat = strings.Fields(o.config.Loggers.LokiClient.TextFormat)
 	} else {
@@ -106,8 +110,11 @@ func (o *LokiClient) ReadConfig() {
 
 	// tls client config
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: o.config.Loggers.LokiClient.TlsInsecure,
+		MinVersion:         tls.VersionTLS12,
+		InsecureSkipVerify: false,
 	}
+	tlsConfig.InsecureSkipVerify = o.config.Loggers.LokiClient.TlsInsecure
+	tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.LokiClient.TlsMinVersion]
 
 	// prepare http client
 	tr := &http.Transport{

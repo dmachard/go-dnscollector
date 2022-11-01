@@ -44,7 +44,9 @@ func (c *InfluxDBClient) GetName() string { return c.name }
 func (c *InfluxDBClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *InfluxDBClient) ReadConfig() {
-	//tbc
+	if !dnsutils.IsValidTLS(o.config.Loggers.InfluxDB.TlsMinVersion) {
+		o.logger.Fatal("logger influxdb - invalid tls min version")
+	}
 }
 
 func (o *InfluxDBClient) LogInfo(msg string, v ...interface{}) {
@@ -83,10 +85,15 @@ func (o *InfluxDBClient) Run() {
 	opts := influxdb2.DefaultOptions()
 	opts.SetUseGZip(true)
 	if o.config.Loggers.InfluxDB.TlsSupport {
-		tlsconf := &tls.Config{
-			InsecureSkipVerify: o.config.Loggers.InfluxDB.TlsInsecure,
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: false,
+			MinVersion:         tls.VersionTLS12,
 		}
-		opts.SetTLSConfig(tlsconf)
+
+		tlsConfig.InsecureSkipVerify = o.config.Loggers.InfluxDB.TlsInsecure
+		tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.InfluxDB.TlsMinVersion]
+
+		opts.SetTLSConfig(tlsConfig)
 	}
 	// init the client
 	influxClient := influxdb2.NewClientWithOptions(o.config.Loggers.InfluxDB.ServerURL,

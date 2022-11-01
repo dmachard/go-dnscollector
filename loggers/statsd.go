@@ -50,7 +50,9 @@ func (c *StatsdClient) GetName() string { return c.name }
 func (c *StatsdClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *StatsdClient) ReadConfig() {
-	//tbc
+	if !dnsutils.IsValidTLS(o.config.Loggers.Statsd.TlsMinVersion) {
+		o.logger.Fatal("logger statd - invalid tls min version")
+	}
 }
 
 func (o *StatsdClient) LogInfo(msg string, v ...interface{}) {
@@ -115,10 +117,14 @@ LOOP:
 			var conn net.Conn
 			var err error
 			if o.config.Loggers.Statsd.TlsSupport {
-				conf := &tls.Config{
-					InsecureSkipVerify: o.config.Loggers.Statsd.TlsInsecure,
+				tlsConfig := &tls.Config{
+					MinVersion:         tls.VersionTLS12,
+					InsecureSkipVerify: false,
 				}
-				conn, err = tls.Dial(o.config.Loggers.Statsd.Transport, address, conf)
+				tlsConfig.InsecureSkipVerify = o.config.Loggers.Statsd.TlsInsecure
+				tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.Statsd.TlsMinVersion]
+
+				conn, err = tls.Dial(o.config.Loggers.Statsd.Transport, address, tlsConfig)
 			} else {
 				conn, err = net.Dial(o.config.Loggers.Statsd.Transport, address)
 			}

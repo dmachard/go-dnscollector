@@ -80,6 +80,10 @@ func (c *Syslog) GetName() string { return c.name }
 func (c *Syslog) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *Syslog) ReadConfig() {
+	if !dnsutils.IsValidTLS(c.config.Loggers.Syslog.TlsMinVersion) {
+		c.logger.Fatal("logger syslog - invalid tls min version")
+	}
+
 	if !dnsutils.IsValidMode(c.config.Loggers.Syslog.Mode) {
 		c.logger.Fatal("logger syslog - invalid mode text or json expected")
 	}
@@ -144,15 +148,21 @@ func (o *Syslog) Run() {
 		}
 	} else {
 		if o.config.Loggers.Syslog.TlsSupport {
-			tlsconf := &tls.Config{
-				InsecureSkipVerify: o.config.Loggers.Syslog.TlsInsecure,
+			tlsConfig := &tls.Config{
+				MinVersion:         tls.VersionTLS12,
+				InsecureSkipVerify: false,
 			}
-			syslogconn, err = syslog.DialWithTLSConfig(o.config.Loggers.Syslog.Transport, o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity, "", tlsconf)
+			tlsConfig.InsecureSkipVerify = o.config.Loggers.Syslog.TlsInsecure
+			tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.Syslog.TlsMinVersion]
+
+			syslogconn, err = syslog.DialWithTLSConfig(o.config.Loggers.Syslog.Transport,
+				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity, "", tlsConfig)
 			if err != nil {
 				o.logger.Fatal("failed to connect to the remote tls syslog:", err)
 			}
 		} else {
-			syslogconn, err = syslog.Dial(o.config.Loggers.Syslog.Transport, o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity, "")
+			syslogconn, err = syslog.Dial(o.config.Loggers.Syslog.Transport,
+				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity, "")
 			if err != nil {
 				o.logger.Fatal("failed to connect to the remote syslog:", err)
 			}

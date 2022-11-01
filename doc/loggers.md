@@ -26,6 +26,8 @@ Options:
 - `mode`: (string) text or json
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 
+Default values:
+
 ```yaml
 stdout:
   mode: text
@@ -48,28 +50,24 @@ Options:
 - `listen-port`: (integer) listening port
 - `tls-support`: (boolean) tls support
 - `tls-mutual`: (boolean) mtls authentication
+- `tls-min-version`: (string) min tls version, default to 1.2
 - `cert-file`: (string) certificate server file
 - `key-file`: (string) private key server file
 - `prometheus-suffix`: (string) prometheus suffix
 - `top-n`: (string) default number of items on top
 
+Default values:
+
 ```yaml
 prometheus:
-  # listening IP
   listen-ip: 0.0.0.0
-  # listening port
   listen-port: 8081
-  # tls support
   tls-support: false
-  # tls mutual
   tls-mutual: false
-  # certificate server file
+  tls-min-version: 1.2
   cert-file: ""
-  # private key server file
   key-file: ""
-  # prometheus prefix
   prometheus-prefix: "dnscollector"
-  # default number of items on top 
   top-n: 10
 ```
 
@@ -91,6 +89,7 @@ Options:
 - `basic-auth-login`: (string) default login for basic auth
 - `basic-auth-pwd`: (string) default password for basic auth
 - `tls-support`: (boolean) tls support
+- `tls-min-version`: (string) min tls version, default to 1.2
 - `cert-file`: (string) certificate server file
 - `key-file`: (string) private key server file
 - `top-max-items`: (string) default number of items on top
@@ -100,6 +99,8 @@ Options:
 - `threshold-slow`: (string) threshold to set a domain considered as slow, value in second
 - `prometheus-suffix`: (string) prometheus suffix
 
+Default values:
+
 ```yaml
 webserver:
   listen-ip: 0.0.0.0
@@ -107,6 +108,7 @@ webserver:
   basic-auth-login: admin
   basic-auth-pwd: changeme
   tls-support: true
+  tls-min-version: 1.2
   cert-file: "./testsdata/server.crt"
   key-file: "./testsdata/server.key"
   top-max-items: 100
@@ -168,6 +170,8 @@ Options:
 - `postrotate-command`: (string) run external script after file rotation
 - `postrotate-delete-success`: (boolean) delete file on script success
 
+Default values:
+
 ```yaml
 logfile:
   file-path: null
@@ -217,7 +221,10 @@ Options:
 - `retry-interval`: (integer) interval in second between retry reconnect
 - `tls-support`: (boolean) enable tls
 - `tls-insecure`: (boolean) insecure skip verify
+- `tls-min-version`: (string) min tls version, default to 1.2
 - `server-id`: server identity
+
+Default values:
 
 ```yaml
 dnstap:
@@ -227,6 +234,7 @@ dnstap:
   retry-interval: 5
   tls-support: false
   tls-insecure: false
+  tls-min-version: 1.2
   server-id: "dnscollector"
 ```
 
@@ -246,20 +254,24 @@ Options:
 - `retry-interval`: (integer) interval in second between retry reconnect
 - `tls-support`: (boolean) enable tls
 - `tls-insecure`: (boolean) insecure skip verify
+- `tls-min-version`: (string) min tls version, default to 1.2
 - `mode`: (string)  output format: text|json
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 
+Default values:
+
 ```yaml
 tcpclient:
-    transport: tcp
-    remote-address: 127.0.0.1
-    remote-port: 9999
-    sock-path: null
-    retry-interval: 5
-    tls-support: false
-    tls-insecure: false
-    mode: json
-    text-format: ""
+  transport: tcp
+  remote-address: 127.0.0.1
+  remote-port: 9999
+  sock-path: null
+  retry-interval: 5
+  tls-support: false
+  tls-insecure: false
+  tls-min-version: 1.2
+  mode: json
+  text-format: ""
 ```
 
 ### Syslog
@@ -278,6 +290,9 @@ Options:
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 - `tls-support`: (boolean) enable tls
 - `tls-insecure`: (boolean) insecure skip verify
+- `tls-min-version`: (string) min tls version, default to 1.2
+
+Default values:
 
 ```yaml
 syslog:
@@ -289,6 +304,7 @@ syslog:
   mode: text
   tls-support: false
   tls-insecure: false
+  tls-min-version: 1.2
 ```
 
 ### Fluentd Client
@@ -307,17 +323,21 @@ Options:
 - `tag`: (string) tag name
 - `tls-support`: (boolean) enable tls
 - `tls-insecure`: (boolean) insecure skip verify
+- `tls-min-version`: (string) min tls version, default to 1.2
+
+Default values:
 
 ```yaml
 fluentd:
-    transport: tcp
-    remote-address: 127.0.0.1
-    remote-port: 24224
-    sock-path: null
-    retry-interval: 5
-    tag: "dns.collector"
-    tls-support: false
-    tls-insecure: false
+  transport: tcp
+  remote-address: 127.0.0.1
+  remote-port: 24224
+  sock-path: null
+  retry-interval: 5
+  tag: "dns.collector"
+  tls-support: false
+  tls-insecure: false
+  tls-min-version: 1.2
 ```
 
 ### Pcap File
@@ -359,15 +379,19 @@ Options:
 - `organization`: (string) organization name
 - `tls-support`: (boolean) enable tls
 - `tls-insecure`: (boolean) insecure skip verify
+- `tls-min-version`: (string) min tls version
+
+Default values:
 
 ```yaml
-  influxdb:
-    server-url: "http://localhost:8086"
-    auth-token: ""
-    bucket: "db_dns"
-    organization: "dnscollector"
-    tls-support: false
-    tls-insecure: false
+influxdb:
+  server-url: "http://localhost:8086"
+  auth-token: ""
+  bucket: "db_dns"
+  organization: "dnscollector"
+  tls-support: false
+  tls-insecure: false
+  tls-min-version: 1.2
 ```
 
 ### Loki client
@@ -385,24 +409,28 @@ Options:
 - `proxy-url`: (string) Proxy URL
 - `tls-support`: (boolean) enable tls
 - `tls-insecure`: (boolean) insecure skip verify
+- `tls-min-version`: (string) min tls version
 - `basic-auth-login`: (string) basic auth login
 - `basic-auth-pwd`: (string) basic auth password
 - `tenant-id`: (string) tenant/organisation id. If omitted or empty, no X-Scope-OrgID header is sent.
 
+Default values:
+
 ```yaml
-  lokiclient:
-    server-url: "http://localhost:3100/loki/api/v1/push"
-    job-name: "dnscollector"
-    mode: "text"
-    flush-interval: 5
-    batch-size: 1048576
-    retry-interval: 10
-    text-format: "localtime identity qr queryip family protocol qname qtype rcode"
-    proxy-url: ""
-    tls-insecure: false
-    basic-auth-login: ""
-    basic-auth-pwd: ""
-    tenant-id: ""
+lokiclient:
+  server-url: "http://localhost:3100/loki/api/v1/push"
+  job-name: "dnscollector"
+  mode: "text"
+  flush-interval: 5
+  batch-size: 1048576
+  retry-interval: 10
+  text-format: "localtime identity qr queryip family protocol qname qtype rcode"
+  proxy-url: ""
+  tls-insecure: false
+  tls-min-version: 1.2
+  basic-auth-login: ""
+  basic-auth-pwd: ""
+  tenant-id: ""
 ```
 
 ### Statsd client
@@ -442,15 +470,19 @@ Options:
 - `prefix`: (string) statsd prefix name
 - `tls-support`: (boolean) enable tls
 - `tls-insecure`: (boolean) insecure skip verify
+- `tls-min-version`: (string) min tls version
+
+Default values:
 
 ```yaml
-  statsd:
-    transport: udp
-    remote-address: 127.0.0.1
-    remote-port: 8125
-    prefix: "dnscollector"
-    tls-support: false
-    tls-insecure: false
+statsd:
+  transport: udp
+  remote-address: 127.0.0.1
+  remote-port: 8125
+  prefix: "dnscollector"
+  tls-support: false
+  tls-insecure: false
+  tls-min-version: 1.2
 ```
 
 ### ElasticSearch client
@@ -461,6 +493,6 @@ Options:
 - `url`: (string) Elasticsearch _doc url
 
 ```yaml
-  elasticsearch:
-    url: "http://127.0.0.1:9200/indexname/_doc"
+elasticsearch:
+  url: "http://127.0.0.1:9200/indexname/_doc"
 ```

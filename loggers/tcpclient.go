@@ -45,6 +45,10 @@ func (c *TcpClient) GetName() string { return c.name }
 func (c *TcpClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *TcpClient) ReadConfig() {
+	if !dnsutils.IsValidTLS(o.config.Loggers.TcpClient.TlsMinVersion) {
+		o.logger.Fatal("logger tcp - invalid tls min version")
+	}
+
 	if len(o.config.Loggers.TcpClient.TextFormat) > 0 {
 		o.textFormat = strings.Fields(o.config.Loggers.TcpClient.TextFormat)
 	} else {
@@ -99,10 +103,14 @@ LOOP:
 				var conn net.Conn
 				var err error
 				if o.config.Loggers.TcpClient.TlsSupport {
-					conf := &tls.Config{
-						InsecureSkipVerify: o.config.Loggers.TcpClient.TlsInsecure,
+					tlsConfig := &tls.Config{
+						MinVersion:         tls.VersionTLS12,
+						InsecureSkipVerify: false,
 					}
-					conn, err = tls.Dial(o.config.Loggers.TcpClient.Transport, address, conf)
+					tlsConfig.InsecureSkipVerify = o.config.Loggers.TcpClient.TlsInsecure
+					tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.TcpClient.TlsMinVersion]
+
+					conn, err = tls.Dial(o.config.Loggers.TcpClient.Transport, address, tlsConfig)
 				} else {
 					conn, err = net.Dial(o.config.Loggers.TcpClient.Transport, address)
 				}
@@ -121,11 +129,11 @@ LOOP:
 						select {
 						case dm := <-o.channel:
 
-							if o.config.Loggers.TcpClient.Mode == "text" {
+							if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_TEXT {
 								w.Write(dm.Bytes(o.textFormat, o.config.Loggers.TcpClient.Delimiter))
 							}
 
-							if o.config.Loggers.TcpClient.Mode == "json" {
+							if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_JSON {
 								json.NewEncoder(w).Encode(dm)
 								w.WriteString(o.config.Loggers.TcpClient.Delimiter)
 							}

@@ -18,11 +18,14 @@ Options:
 - `listen-port`: (integer) listening on port
 - `sock-path`: (string) unix socket path
 - `tls-support:`: (boolean) to enable, set to true
+- `tls-min-version`: (string) min tls version
 - `cert-file`: (string) certificate server file
 - `key-file`: (string) private key server file
 - `cache-support`: (boolean) disable or enable the cache dns, this feature can be enabled if your dns server doesn't add the latency
 - `query-timeout`: (integer) in second, max time to keep the query record in memory
 - `quiet-text`: (boolean) Quiet text mode to reduce the size of the logs
+
+Default values:
 
 ```yaml
 dnstap:
@@ -30,6 +33,7 @@ dnstap:
   listen-port: 6000
   sock-path: null
   tls-support: false
+  tls-min-version: 1.2
   cert-file: ""
   key-file: ""
   cache-support: false
@@ -75,6 +79,8 @@ Options:
 - `cache-support`: (boolean) disable or enable the cache dns to compute latency between queries and replies
 - `query-timeout`: (integer) in second, max time to keep the query record in memory
 
+Default values:
+
 ```yaml
 dns-sniffer:
   port: 53
@@ -101,6 +107,8 @@ Options:
 - `pattern-query`: (string) regexp pattern for queries
 - `pattern-reply`: (string) regexp pattern for replies
 
+Default values:
+
 ```yaml
 tail:
   file-path: null
@@ -119,8 +127,11 @@ Options:
 - `listen-port`: (integer) listening on port
 - `quiet-text`: (boolean) Quiet text mode to reduce the size of the logs
 - `tls-support:`: (boolean) to enable, set to true
+- `tls-min-version`: (string) min tls version
 - `cert-file`: (string) certificate server file
 - `key-file`: (string) private key server file
+
+Default values:
 
 ```yaml
 powerdns:
@@ -128,6 +139,7 @@ powerdns:
   listen-port: 6001
   quiet-text: false
   tls-support: false
+  tls-min-version: 1.2
   cert-file: ""
   key-file: ""
 ```

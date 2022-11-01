@@ -142,13 +142,13 @@ go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 List linters enabled
 
 ```
-$GOPATH/golangci-lint linters
+$(go env GOPATH)/bin/golangci-lint linters
 ```
 
 Execute linter before to commit
 
 ```
-$GOPATH/go/bin/golangci-lint run
+$(go env GOPATH)/bin/golangci-lint run
 ```
 
 Execute testunits
