@@ -132,6 +132,25 @@ Run from source
 go run .
 ```
 
+Install linter
+
+```
+sudo apt install build-essential
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+```
+
+List linters enabled
+
+```
+$GOPATH/golangci-lint linters
+```
+
+Execute linter before to commit
+
+```
+$GOPATH/go/bin/golangci-lint run
+```
+
 Execute testunits
 
 ```

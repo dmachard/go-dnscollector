@@ -143,17 +143,16 @@ func (c *Dnstap) Listen() error {
 		config := &tls.Config{Certificates: []tls.Certificate{cer}}
 
 		if len(c.sockPath) > 0 {
-			listener, err = tls.Listen("unix", c.sockPath, config)
+			listener, err = tls.Listen(dnsutils.SOCKET_UNIX, c.sockPath, config)
 		} else {
-			listener, err = tls.Listen("tcp", addrlisten, config)
+			listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, config)
 		}
-
 	} else {
 		// basic listening
 		if len(c.sockPath) > 0 {
-			listener, err = net.Listen("unix", c.sockPath)
+			listener, err = net.Listen(dnsutils.SOCKET_UNIX, c.sockPath)
 		} else {
-			listener, err = net.Listen("tcp", addrlisten)
+			listener, err = net.Listen(dnsutils.SOCKET_TCP, addrlisten)
 		}
 	}
 
@@ -182,7 +181,6 @@ func (c *Dnstap) Run() {
 
 		c.conns = append(c.conns, conn)
 		go c.HandleConn(conn)
-
 	}
 
 	c.LogInfo("run terminated")

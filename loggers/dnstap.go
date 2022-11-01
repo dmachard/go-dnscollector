@@ -104,7 +104,7 @@ LOOP:
 					transport = "unix"
 				} else {
 					address = o.config.Loggers.Dnstap.RemoteAddress + ":" + strconv.Itoa(o.config.Loggers.Dnstap.RemotePort)
-					transport = "tcp"
+					transport = dnsutils.SOCKET_TCP
 				}
 
 				// make the connection

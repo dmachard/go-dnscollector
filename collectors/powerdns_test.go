@@ -18,7 +18,7 @@ func TestProbufPdnsRun(t *testing.T) {
 	}
 	go c.Run()
 
-	conn, err := net.Dial("tcp", ":6001")
+	conn, err := net.Dial(dnsutils.SOCKET_TCP, ":6001")
 	if err != nil {
 		t.Error("could not connect to TCP server: ", err)
 	}

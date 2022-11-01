@@ -8,6 +8,10 @@ import (
 	"github.com/miekg/dns"
 )
 
+const (
+	TEST_QNAME = "dnstapcollector.test."
+)
+
 func TestRcodeValid(t *testing.T) {
 	rcode := RcodeToString(0)
 	if rcode != "NOERROR" {
@@ -38,7 +42,7 @@ func TestRdatatypeInvalid(t *testing.T) {
 
 func TestDecodeDns(t *testing.T) {
 	dm := new(dns.Msg)
-	dm.SetQuestion("dnstapcollector.test.", dns.TypeA)
+	dm.SetQuestion(TEST_QNAME, dns.TypeA)
 
 	payload, _ := dm.Pack()
 	_, err := DecodeDns(payload)
@@ -48,7 +52,7 @@ func TestDecodeDns(t *testing.T) {
 }
 
 func TestDecodeQuestion(t *testing.T) {
-	fqdn := "dnstapcollector.test."
+	fqdn := TEST_QNAME
 
 	dm := new(dns.Msg)
 	dm.SetQuestion(fqdn, dns.TypeA)
@@ -122,7 +126,7 @@ func TestDecodeQuestion_Multiple_InvalidCount(t *testing.T) {
 }
 
 func TestDecodeAnswer_Ns(t *testing.T) {
-	fqdn := "dnstapcollector.test."
+	fqdn := TEST_QNAME
 
 	dm := new(dns.Msg)
 	dm.SetQuestion(fqdn, dns.TypeA)
@@ -147,7 +151,7 @@ func TestDecodeAnswer_Ns(t *testing.T) {
 }
 
 func TestDecodeAnswer(t *testing.T) {
-	fqdn := "dnstapcollector.test."
+	fqdn := TEST_QNAME
 
 	dm := new(dns.Msg)
 	dm.SetQuestion(fqdn, dns.TypeA)
@@ -188,7 +192,7 @@ func TestDecodeAnswer_QnameMinimized(t *testing.T) {
 }
 
 func TestDecodeRdataA(t *testing.T) {
-	fqdn := "dnstapcollector.test."
+	fqdn := TEST_QNAME
 
 	dm := new(dns.Msg)
 	dm.SetQuestion(fqdn, dns.TypeA)
@@ -242,7 +246,7 @@ func TestDecodeRdataA_Short(t *testing.T) {
 }
 
 func TestDecodeRdataAAAA(t *testing.T) {
-	fqdn := "dnstapcollector.test."
+	fqdn := TEST_QNAME
 
 	dm := new(dns.Msg)
 	dm.SetQuestion(fqdn, dns.TypeA)
@@ -298,7 +302,7 @@ func TestDecodeRdataAAAA_Short(t *testing.T) {
 }
 
 func TestDecodeRdataCNAME(t *testing.T) {
-	fqdn := "dnstapcollector.test."
+	fqdn := TEST_QNAME
 
 	dm := new(dns.Msg)
 	dm.SetQuestion(fqdn, dns.TypeA)
@@ -318,7 +322,7 @@ func TestDecodeRdataCNAME(t *testing.T) {
 }
 
 func TestDecodeRdataMX(t *testing.T) {
-	fqdn := "dnstapcollector.test."
+	fqdn := TEST_QNAME
 
 	dm := new(dns.Msg)
 	dm.SetQuestion(fqdn, dns.TypeA)
@@ -411,7 +415,7 @@ func TestDecodeRdataMX_Minimal(t *testing.T) {
 }
 
 func TestDecodeRdataSRV(t *testing.T) {
-	fqdn := "dnstapcollector.test."
+	fqdn := TEST_QNAME
 
 	dm := new(dns.Msg)
 	dm.SetQuestion(fqdn, dns.TypeA)
@@ -515,7 +519,7 @@ func TestDecodeRdataSRV_Minimal(t *testing.T) {
 	}
 }
 func TestDecodeRdataNS(t *testing.T) {
-	fqdn := "dnstapcollector.test."
+	fqdn := TEST_QNAME
 
 	dm := new(dns.Msg)
 	dm.SetQuestion(fqdn, dns.TypeA)
@@ -535,7 +539,7 @@ func TestDecodeRdataNS(t *testing.T) {
 }
 
 func TestDecodeRdataTXT(t *testing.T) {
-	fqdn := "dnstapcollector.test."
+	fqdn := TEST_QNAME
 
 	dm := new(dns.Msg)
 	dm.SetQuestion(fqdn, dns.TypeA)
@@ -671,7 +675,7 @@ func TestDecodeRdataTXT_NoTxt(t *testing.T) {
 }
 
 func TestDecodeRdataPTR(t *testing.T) {
-	fqdn := "dnstapcollector.test."
+	fqdn := TEST_QNAME
 
 	dm := new(dns.Msg)
 	dm.SetQuestion(fqdn, dns.TypeA)
@@ -691,7 +695,7 @@ func TestDecodeRdataPTR(t *testing.T) {
 }
 
 func TestDecodeRdataSOA(t *testing.T) {
-	fqdn := "dnstapcollector.test."
+	fqdn := TEST_QNAME
 
 	dm := new(dns.Msg)
 	dm.SetQuestion(fqdn, dns.TypeA)

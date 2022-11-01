@@ -22,7 +22,7 @@ func TestDnstapTcpRun(t *testing.T) {
 	}
 	go c.Run()
 
-	conn, err := net.Dial("tcp", ":6000")
+	conn, err := net.Dial(dnsutils.SOCKET_TCP, ":6000")
 	if err != nil {
 		t.Error("could not connect to TCP server: ", err)
 	}
@@ -75,7 +75,7 @@ func TestDnstapUnixRun(t *testing.T) {
 	}
 	go c.Run()
 
-	conn, err := net.Dial("unix", config.Collectors.Dnstap.SockPath)
+	conn, err := net.Dial(dnsutils.SOCKET_UNIX, config.Collectors.Dnstap.SockPath)
 	if err != nil {
 		t.Error("could not connect to unix socket: ", err)
 	}
@@ -113,7 +113,7 @@ func TestDnstapUnixRun(t *testing.T) {
 
 	// waiting message in channel
 	msg := <-g.Channel()
-	if msg.DnsTap.Operation != "CLIENT_QUERY" {
+	if msg.DnsTap.Operation != dnsutils.DNSTAP_CLIENT_QUERY {
 		t.Errorf("want CLIENT_QUERY, got %s", msg.DnsTap.Operation)
 	}
 }

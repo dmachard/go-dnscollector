@@ -121,9 +121,9 @@ func (c *ProtobufPowerDNS) Listen() error {
 			c.logger.Fatal("loading certificate failed:", err)
 		}
 		config := &tls.Config{Certificates: []tls.Certificate{cer}}
-		listener, err = tls.Listen("tcp", addrlisten, config)
+		listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, config)
 	} else {
-		listener, err = net.Listen("tcp", addrlisten)
+		listener, err = net.Listen(dnsutils.SOCKET_TCP, addrlisten)
 	}
 	// something is wrong ?
 	if err != nil {

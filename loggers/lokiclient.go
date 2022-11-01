@@ -179,10 +179,10 @@ LOOP:
 			entry.Timestamp = time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
 
 			switch o.config.Loggers.LokiClient.Mode {
-			case "text":
+			case dnsutils.MODE_TEXT:
 				delimiter := ""
 				entry.Line = string(dm.Bytes(o.textFormat, delimiter))
-			case "json":
+			case dnsutils.MODE_JSON:
 				json.NewEncoder(buffer).Encode(dm)
 				entry.Line = buffer.String()
 				buffer.Reset()

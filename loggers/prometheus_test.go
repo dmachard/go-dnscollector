@@ -51,7 +51,7 @@ func TestPrometheusGetMetrics(t *testing.T) {
 
 			// checking content
 			metrics := strings.TrimSpace(responseRecorder.Body.String())
-			if regexp.MustCompile(tc.want).MatchString(string(metrics)) != true {
+			if regexp.MustCompile(tc.want).MatchString(metrics) != true {
 				t.Errorf("Want '%s', got '%s'", tc.want, responseRecorder.Body)
 			}
 		})

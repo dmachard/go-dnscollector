@@ -16,7 +16,7 @@ func TestStatsdRun(t *testing.T) {
 	g := NewStatsdClient(config, logger.New(false), "1.2.3", "test")
 
 	// fake msgpack receiver
-	fakeRcvr, err := net.ListenPacket("udp", "127.0.0.1:8125")
+	fakeRcvr, err := net.ListenPacket(dnsutils.SOCKET_UDP, "127.0.0.1:8125")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,4 +1,4 @@
-name: powerdns tests
+name: tests powerdns
 
 on:
   push:

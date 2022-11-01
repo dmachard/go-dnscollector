@@ -1,0 +1,23 @@
+package dnsutils
+
+const (
+	STR_UNKNOWN = "UNKNOWN"
+
+	PROG_NAME    = "dnscollector"
+	LOCALHOST_IP = "127.0.0.1"
+
+	MODE_TEXT = "text"
+	MODE_JSON = "json"
+
+	DNSTAP_CLIENT_RESPONSE = "CLIENT_RESPONSE"
+	DNSTAP_CLIENT_QUERY    = "CLIENT_QUERY"
+
+	PROTO_IPV6 = "INIT6"
+	PROTO_IPV4 = "INIT"
+	PROTO_UDP  = "UDP"
+	PROTO_TCP  = "TCP"
+
+	SOCKET_TCP  = "tcp"
+	SOCKET_UDP  = "udp"
+	SOCKET_UNIX = "unix"
+)

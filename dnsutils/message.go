@@ -110,7 +110,6 @@ type DnsMessage struct {
 }
 
 func (dm *DnsMessage) Init() {
-
 	dm.NetworkInfo = DnsNetInfo{
 		Family:                 "-",
 		Protocol:               "-",

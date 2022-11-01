@@ -179,7 +179,6 @@ func (c *DnsSniffer) Stop() {
 }
 
 func (c *DnsSniffer) Listen() error {
-
 	// raw socket
 	fd, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_RAW, Htons(syscall.ETH_P_ALL))
 	if err != nil {
@@ -288,14 +287,14 @@ func (c *DnsSniffer) Run() {
 			for _, layertyp := range decodedLayers {
 				switch layertyp {
 				case layers.LayerTypeIPv4:
-					dm.NetworkInfo.Family = "INET"
+					dm.NetworkInfo.Family = dnsutils.PROTO_IPV4
 					dm.NetworkInfo.QueryIp = ip4.SrcIP.String()
 					dm.NetworkInfo.ResponseIp = ip4.DstIP.String()
 
 				case layers.LayerTypeIPv6:
 					dm.NetworkInfo.QueryIp = ip6.SrcIP.String()
 					dm.NetworkInfo.ResponseIp = ip6.DstIP.String()
-					dm.NetworkInfo.Family = "INET6"
+					dm.NetworkInfo.Family = dnsutils.PROTO_IPV6
 					fmt.Println(eth)
 
 				case layers.LayerTypeUDP:
@@ -303,7 +302,7 @@ func (c *DnsSniffer) Run() {
 					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(udp.DstPort))
 					dm.DNS.Payload = udp.Payload
 					dm.DNS.Length = len(udp.Payload)
-					dm.NetworkInfo.Protocol = "UDP"
+					dm.NetworkInfo.Protocol = dnsutils.PROTO_UDP
 
 				case layers.LayerTypeTCP:
 					// ignore SYN/ACK packet
@@ -322,8 +321,7 @@ func (c *DnsSniffer) Run() {
 					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(tcp.DstPort))
 					dm.DNS.Payload = tcp.Payload[2:]
 					dm.DNS.Length = len(tcp.Payload[2:])
-					dm.NetworkInfo.Protocol = "TCP"
-
+					dm.NetworkInfo.Protocol = dnsutils.PROTO_TCP
 				}
 			}
 

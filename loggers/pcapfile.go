@@ -374,7 +374,7 @@ LOOP:
 			pkt := []gopacket.SerializableLayer{}
 
 			// set ip and transport
-			if dm.NetworkInfo.Family == "INET6" && dm.NetworkInfo.Protocol == "UDP" {
+			if dm.NetworkInfo.Family == dnsutils.PROTO_IPV6 && dm.NetworkInfo.Protocol == dnsutils.PROTO_UDP {
 				eth.EthernetType = layers.EthernetTypeIPv6
 				ip6.SrcIP = net.ParseIP(srcIp)
 				ip6.DstIP = net.ParseIP(dstIp)
@@ -385,7 +385,7 @@ LOOP:
 
 				pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip6, eth)
 
-			} else if dm.NetworkInfo.Family == "INET6" && dm.NetworkInfo.Protocol == "TCP" {
+			} else if dm.NetworkInfo.Family == dnsutils.PROTO_IPV6 && dm.NetworkInfo.Protocol == dnsutils.PROTO_TCP {
 				eth.EthernetType = layers.EthernetTypeIPv6
 				ip6.SrcIP = net.ParseIP(srcIp)
 				ip6.DstIP = net.ParseIP(dstIp)
@@ -400,7 +400,7 @@ LOOP:
 				binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.DNS.Length))
 				pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.DNS.Payload...)), tcp, ip6, eth)
 
-			} else if dm.NetworkInfo.Family == "INET" && dm.NetworkInfo.Protocol == "UDP" {
+			} else if dm.NetworkInfo.Family == dnsutils.PROTO_IPV4 && dm.NetworkInfo.Protocol == dnsutils.PROTO_UDP {
 				eth.EthernetType = layers.EthernetTypeIPv4
 				ip4.SrcIP = net.ParseIP(srcIp)
 				ip4.DstIP = net.ParseIP(dstIp)
@@ -411,7 +411,7 @@ LOOP:
 
 				pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip4, eth)
 
-			} else if dm.NetworkInfo.Family == "INET" && dm.NetworkInfo.Protocol == "TCP" {
+			} else if dm.NetworkInfo.Family == dnsutils.PROTO_IPV4 && dm.NetworkInfo.Protocol == dnsutils.PROTO_TCP {
 				// SYN
 				eth.EthernetType = layers.EthernetTypeIPv4
 				ip4.SrcIP = net.ParseIP(srcIp)
