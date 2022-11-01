@@ -4,9 +4,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -546,7 +546,7 @@ func (s *Prometheus) ListenAndServe() {
 
 			// Create a CA certificate pool and add cert.pem to it
 			var caCert []byte
-			caCert, err = ioutil.ReadFile(s.config.Loggers.Prometheus.CertFile)
+			caCert, err = os.ReadFile(s.config.Loggers.Prometheus.CertFile)
 			if err != nil {
 				s.logger.Fatal(err)
 			}
