@@ -1,4 +1,4 @@
-name: GoReleaser
+name: goreleaser
 on:
   push:
     tags:

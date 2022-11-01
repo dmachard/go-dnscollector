@@ -13,7 +13,7 @@ func TestDnsMessageToText(t *testing.T) {
 
 	line := dm.String(strings.Fields(config.Global.TextFormat))
 
-	if string(line) != "- - - - - - - - 0b - - -\n" {
+	if line != "- - - - - - - - 0b - - -\n" {
 		t.Errorf("text dns message invalid; %s", line)
 	}
 }

@@ -701,8 +701,8 @@ func TestDecodeEdns_Short(t *testing.T) {
 	for _, test := range testData {
 		t.Run(test.name, func(t *testing.T) {
 			_, _, err := DecodeEDNS(1, 0, test.input)
-			if err != test.expectedError {
-				t.Errorf("bad error: %v", err)
+			if !errors.Is(err, test.expectedError) {
+				t.Errorf("bad error: %v, expected: %v", err, test.expectedError)
 			}
 		})
 	}
