@@ -14,5 +14,9 @@ linters:
   - unconvert
   # check errors wrapping scheme
   - errorlint
+
+  # list of linters to use in the future:
+  #- stylecheck
+  #- gocritic
   #- gosec
   #- staticcheck

@@ -40,7 +40,6 @@ func (s *IpAnonymizerSubproc) IsEnabled() bool {
 }
 
 func (s *IpAnonymizerSubproc) Anonymize(ip string) string {
-
 	ipaddr := net.ParseIP(ip)
 	isipv4 := strings.LastIndex(ip, ".")
 

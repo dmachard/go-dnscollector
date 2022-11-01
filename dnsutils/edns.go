@@ -221,24 +221,22 @@ func ParseErrors(d []byte) (string, error) {
 }
 
 /*
-	https://datatracker.ietf.org/doc/html/rfc7871
+https://datatracker.ietf.org/doc/html/rfc7871
 
-	Extended Csubnet EDNS0 option format
-	                                            1   1   1   1   1   1
-	    0   1   2   3   4   5   6   7   8   9   0   1   2   3   4   5
-	  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+Extended Csubnet EDNS0 option format
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 
-4: |                            FAMILY                             |
+|                            FAMILY                             |
 
-	+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 
-6: |     SOURCE PREFIX-LENGTH      |     SCOPE PREFIX-LENGTH       |
+|     SOURCE PREFIX-LENGTH      |     SCOPE PREFIX-LENGTH       |
 
-	+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 
-8: |                           ADDRESS...                          /
+|                           ADDRESS...                          /
 
-	+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
++---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 */
 func ParseCsubnet(d []byte) (string, error) {
 	if len(d) < 4 {

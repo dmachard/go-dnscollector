@@ -48,7 +48,6 @@ func BenchmarkMapSet(b *testing.B) {
 }
 
 func BenchmarkMapDelete(b *testing.B) {
-
 	mapexpire := NewDnsCache(60 * time.Second)
 
 	for i := 0; i < b.N; i++ {

@@ -262,7 +262,6 @@ type Config struct {
 }
 
 func (c *Config) SetDefault() {
-
 	// global config
 	c.Global.TextFormat = "timestamp identity operation rcode queryip queryport family protocol length qname qtype latency"
 

@@ -179,7 +179,6 @@ func (c *DnsSniffer) Stop() {
 }
 
 func (c *DnsSniffer) Listen() error {
-
 	// raw socket
 	fd, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_RAW, Htons(syscall.ETH_P_ALL))
 	if err != nil {
@@ -323,7 +322,6 @@ func (c *DnsSniffer) Run() {
 					dm.DNS.Payload = tcp.Payload[2:]
 					dm.DNS.Length = len(tcp.Payload[2:])
 					dm.NetworkInfo.Protocol = dnsutils.PROTO_TCP
-
 				}
 			}
 

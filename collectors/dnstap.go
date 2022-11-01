@@ -147,7 +147,6 @@ func (c *Dnstap) Listen() error {
 		} else {
 			listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, config)
 		}
-
 	} else {
 		// basic listening
 		if len(c.sockPath) > 0 {
@@ -182,7 +181,6 @@ func (c *Dnstap) Run() {
 
 		c.conns = append(c.conns, conn)
 		go c.HandleConn(conn)
-
 	}
 
 	c.LogInfo("run terminated")

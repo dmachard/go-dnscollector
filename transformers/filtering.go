@@ -132,7 +132,6 @@ func (p *FilteringProcessor) LoadQueryIpList() {
 }
 
 func (p *FilteringProcessor) LoadDomainsList() {
-
 	if len(p.config.Transformers.Filtering.DropFqdnFile) > 0 {
 		file, err := os.Open(p.config.Transformers.Filtering.DropFqdnFile)
 		if err != nil {
@@ -208,7 +207,6 @@ func (p *FilteringProcessor) LoadDomainsList() {
 			p.keepDomains = true
 		}
 	}
-
 }
 
 func (p *FilteringProcessor) LogInfo(msg string, v ...interface{}) {
