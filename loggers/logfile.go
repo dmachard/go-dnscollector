@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -157,21 +156,21 @@ func (o *LogFile) Cleanup() error {
 	}
 
 	// keep only max files number
-	files, err := ioutil.ReadDir(o.filedir)
+	entries, err := os.ReadDir(o.filedir)
 	if err != nil {
 		return err
 	}
 
 	logFiles := []int{}
-	for _, f := range files {
+	for _, entry := range entries {
 		// ignore folder
-		if f.IsDir() {
+		if entry.IsDir() {
 			continue
 		}
 
 		// extract timestamp from filename
 		re := regexp.MustCompile(`^` + o.fileprefix + `-(?P<ts>\d+)` + o.fileext)
-		matches := re.FindStringSubmatch(f.Name())
+		matches := re.FindStringSubmatch(entry.Name())
 
 		if len(matches) == 0 {
 			continue
@@ -207,21 +206,21 @@ func (o *LogFile) Cleanup() error {
 }
 
 func (o *LogFile) Compress() {
-	files, err := ioutil.ReadDir(o.filedir)
+	entries, err := os.ReadDir(o.filedir)
 	if err != nil {
 		o.LogError("unable to list all files: %s", err)
 	}
 
-	for _, f := range files {
+	for _, entry := range entries {
 		// ignore folder
-		if f.IsDir() {
+		if entry.IsDir() {
 			continue
 		}
 
-		matched, _ := regexp.MatchString(`^`+o.fileprefix+`-\d+`+o.fileext+`$`, f.Name())
+		matched, _ := regexp.MatchString(`^`+o.fileprefix+`-\d+`+o.fileext+`$`, entry.Name())
 		if matched {
-			src := filepath.Join(o.filedir, f.Name())
-			dst := filepath.Join(o.filedir, f.Name()+compressSuffix)
+			src := filepath.Join(o.filedir, entry.Name())
+			dst := filepath.Join(o.filedir, entry.Name()+compressSuffix)
 
 			fl, err := os.Open(src)
 			if err != nil {
