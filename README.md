@@ -1,4 +1,4 @@
-# DNS 
+# DNS-collector
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/dmachard/go-dns-collector)](https://goreportcard.com/report/dmachard/go-dns-collector)
 ![Go Tests](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-go.yml/badge.svg)
@@ -7,78 +7,42 @@
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
-`DNS-collector` acts as a high speed **aggregator, analyzer, transporter and logging**  for your DNS traffic, written in **Golang**. The DNS Traffic can be collected and aggregated simultaneously from many different sources (dnstap, sniffer, logs, etc.) .
+`DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously sources like DNStap streams, network interface or log files.
 
-![overview](doc/overview.png)
-
-DNS-collector can also help you to visualize DNS traffic errors and anomalies with   dashboard.
-
-![overview](doc/overview2.png)
-
-DNS-collector can be used to transform dns queries or replies in JSON format with EDNS support.
- 
- ```js
-{
-  // query/reply ip and port, tcp/udp protocol and family used
-  "network": {...},
-  // message type, arrival packet time, latency.
-  "dnstap": {...},
-  // dns fields
-  "dns": {...},
-  // extended dns options like csubnet
-  "edns": {...},
-  // country, continent and city informations
-  "geo": {...},
-  // specific powerdns metadata like tags, original-request-subnet
-  "pdns": {...}
-}
-```
-
-
-## Features
-- [Logs routing](doc/multiplexer.md)
-- [Queries/Replies JSON encoding](doc/dnsjson.md)
-- Collectors:
-    - [DNStap streams](doc/collectors.md#dns-tap) 
-    - [DNS packets sniffer](doc/collectors.md#dns-sniffer)
-    - [Tail on log file](doc/collectors.md#tail)
-    - [Protobuf PowerDNS](doc/collectors.md#protobuf-powerdns)
-- Loggers:
-    - [Console](doc/loggers.md#stdout)
-    - [Prometheus](doc/loggers.md#prometheus)
-    - [File](doc/loggers.md#log-file)
-    - [DNStap](doc/loggers.md#dnstap-client)
-    - [TCP](doc/loggers.md#tcp-client)
-    - [REST API](doc/loggers.md#rest-api)
-    - [Syslog](doc/loggers.md#syslog)
-    - [Fluentd](doc/loggers.md#fluentd-client)
-    - [Pcap](doc/loggers.md#pcap-file)
-    - [InfluxDB](doc/loggers.md#influxdb-client)
-    - [Loki](doc/loggers.md#loki-client)
-    - [Statsd](doc/loggers.md#statsd-client)
-    - [ElasticSearch](doc/loggers.md#elasticsearch-client)
-
-- Other features
-    - [DNS decoder with extended options support](doc/dnsparser.md)
-    - [Built-in Grafana dashboards](doc/dashboards.md)
-    - [GeoIP support](doc/configuration.md#geoip-support)
-    - [Text format](doc/configuration.md#custom-text-format)
+Currently DNS-collector is able to:
+- `Collectors`:
+    - Listen traffic coming from [DNStap streams](doc/collectors.md#dns-tap)
+    - [Sniff](doc/collectors.md#dns-sniffer) DNS traffic from network interface 
+    - Read and tail on [log](doc/collectors.md#tail) file
+    - Listen for [Protobuf PowerDNS](doc/collectors.md#protobuf-powerdns) streams
+- `Loggers`:
+    - Basic:
+        - Write DNS logs to the [console](doc/loggers.md#stdout)
+        - Provide [REST API](doc/loggers.md#rest-api) to search DNS messages
+        - Send [DNSTap](doc/loggers.md#dnstap-client) protobuf messages
+    - File:
+        - Write to [file](doc/loggers.md#log-file) with rotation and compression support
+        - Write to [Pcap](doc/loggers.md#pcap-file) file
+    - Metrics:
+        - Provide [Prometheus](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
+        - [Statsd](doc/loggers.md#statsd-client) support
+    - Sinks:
+        - [Fluentd](doc/loggers.md#fluentd-client)
+        - [InfluxDB](doc/loggers.md#influxdb-client)
+        - [Loki](doc/loggers.md#loki-client)
+        - [ElasticSearch](doc/loggers.md#elasticsearch-client)
+        - Generic [TCP](doc/loggers.md#tcp-client) protocol support in text for json format.
+        - Remote [Syslog](doc/loggers.md#syslog) server support
+- `Other features`:
+    - DNS messages [routing](doc/multiplexer.md)
+    - Queries/Replies [JSON](doc/dnsjson.md) encoding with  extended options support [EDNS]](doc/dnsparser.md)
+    - Add [GeoIP](doc/configuration.md#geoip-support) details
+    - Custom [Text](doc/configuration.md#custom-text-format) format
     - [DNS filtering](doc/configuration.md#dns-filtering)
     - [User Privacy](doc/configuration.md#user-privacy)
     - [Normalize Qname](doc/configuration.md#qname-lowercase)
 
-- YAML configuration examples
-    - [Capture DNSTap stream and backup-it to text files](https://dmachard.github.io/posts/0034-dnscollector-dnstap-to-log-files/)
-    - [Get statistics usage with Prometheus and Grafana](https://dmachard.github.io/posts/0035-dnscollector-grafana-prometheus/)
-    - [Log DNSTap to JSON format](https://dmachard.github.io/posts/0042-dnscollector-dnstap-json-answers/)
-    - [Follow DNS traffic with Loki and Grafana](https://dmachard.github.io/posts/0044-dnscollector-grafana-loki/)
-    - [Forward UNIX DNSTap to TLS stream](example-config/use-case-5.yml)
-    - [Capture DNSTap with user privacy options enabled](example-config/use-case-6.yml)
-    - [Aggregate several DNSTap stream and forward to the same file](example-config/use-case-7.yml)
-    - [Run PowerDNS collector with prometheus metrics](example-config/use-case-8.yml)
-    - [Run PowerDNS collector with prometheus metrics](example-config/use-case-8.yml)
-
-## Get started
+## Installation
 
 **Run-it from dockerhub**
 
@@ -96,7 +60,7 @@ Override the default configuration `/etc/dnscollector/config.yml` with a config 
 
 **Run-it from binary**
 
-Download the binary from release page. If you want to integrate this tool with systemd, please to follow this [guide](https://dmachard.github.io/posts/0007-dnscollector-install-binary/).
+Download the binary from release page. A default configuration file `config.yml` is also provided.
 
 ```go
 ./go-dnscollector -config config.yml
@@ -106,11 +70,19 @@ Download the binary from release page. If you want to integrate this tool with s
 
 See the full [Configuration guide](doc/configuration.md) for more details.
 
-## Use-cases
+## Examples:
 
-As prerequisites, we assume you have a DNS server which supports DNSTap (unbound, bind, powerdns, etc)
+When starting DNS-collector, you must provide a configuration  file with the `-config` option.
 
-For more informations about **dnstap**, please to read the following page [Dnstap: How to enable it on main dns servers](https://dmachard.github.io/posts/0001-dnstap-testing/)
+- [Capture DNSTap stream and backup-it to text files](https://dmachard.github.io/posts/0034-dnscollector-dnstap-to-log-files/)
+- [Get statistics usage with Prometheus and Grafana](https://dmachard.github.io/posts/0035-dnscollector-grafana-prometheus/)
+- [Log DNSTap to JSON format](https://dmachard.github.io/posts/0042-dnscollector-dnstap-json-answers/)
+- [Follow DNS traffic with Loki and Grafana](https://dmachard.github.io/posts/0044-dnscollector-grafana-loki/)
+- [Forward UNIX DNSTap to TLS stream](example-config/use-case-5.yml)
+- [Capture DNSTap with user privacy options enabled](example-config/use-case-6.yml)
+- [Aggregate several DNSTap stream and forward to the same file](example-config/use-case-7.yml)
+- [Run PowerDNS collector with prometheus metrics](example-config/use-case-8.yml)
+- [Run PowerDNS collector with prometheus metrics](example-config/use-case-8.yml)
 
 ## Benchmark
 
