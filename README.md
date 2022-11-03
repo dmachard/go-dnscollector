@@ -9,31 +9,32 @@
 
 `DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously sources like DNStap streams, network interface or log files.
 
-Currently DNS-collector is able to:
-- `Collectors`:
+`Collectors`:
     - Listen traffic coming from [DNStap streams](doc/collectors.md#dns-tap)
     - [Sniff](doc/collectors.md#dns-sniffer) DNS traffic from network interface 
     - Read and tail on [log](doc/collectors.md#tail) file
     - Listen for [Protobuf PowerDNS](doc/collectors.md#protobuf-powerdns) streams
-- `Loggers`:
-    - Basic:
-        - Write DNS logs to the [console](doc/loggers.md#stdout)
-        - Provide [REST API](doc/loggers.md#rest-api) to search DNS messages
-        - Send [DNSTap](doc/loggers.md#dnstap-client) protobuf messages
-    - File:
-        - Write to [file](doc/loggers.md#log-file) with rotation and compression support
-        - Write to [Pcap](doc/loggers.md#pcap-file) file
-    - Metrics:
-        - Provide [Prometheus](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
+
+`Loggers`:
+    - Write DNS logs to Sdtout/File:
+        - Stdout [console](doc/loggers.md#stdout)
+        - Text [file](doc/loggers.md#log-file) with rotation and compression support
+        - Binary [Pcap](doc/loggers.md#pcap-file) file
+    - Provide metrics and API:
+        - [Prometheus](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
         - [Statsd](doc/loggers.md#statsd-client) support
-    - Sinks:
+        - [REST API](doc/loggers.md#rest-api) to search DNS messages
+    - Send to remote host with generic protocol:
+        - [TCP](doc/loggers.md#tcp-client)
+        - [Syslog](doc/loggers.md#syslog)
+        - [DNSTap](doc/loggers.md#dnstap-client) protobuf messages
+    - Send to various sinks:
         - [Fluentd](doc/loggers.md#fluentd-client)
         - [InfluxDB](doc/loggers.md#influxdb-client)
         - [Loki](doc/loggers.md#loki-client)
         - [ElasticSearch](doc/loggers.md#elasticsearch-client)
-        - Generic [TCP](doc/loggers.md#tcp-client) protocol support in text for json format.
-        - Remote [Syslog](doc/loggers.md#syslog) server support
-- `Other features`:
+
+`Other features`:
     - DNS messages [routing](doc/multiplexer.md)
     - Queries/Replies [JSON](doc/dnsjson.md) encoding with  extended options support [EDNS]](doc/dnsparser.md)
     - Add [GeoIP](doc/configuration.md#geoip-support) details
@@ -81,7 +82,6 @@ When starting DNS-collector, you must provide a configuration  file with the `-c
 - [Forward UNIX DNSTap to TLS stream](example-config/use-case-5.yml)
 - [Capture DNSTap with user privacy options enabled](example-config/use-case-6.yml)
 - [Aggregate several DNSTap stream and forward to the same file](example-config/use-case-7.yml)
-- [Run PowerDNS collector with prometheus metrics](example-config/use-case-8.yml)
 - [Run PowerDNS collector with prometheus metrics](example-config/use-case-8.yml)
 
 ## Benchmark
