@@ -9,6 +9,8 @@
 
 `DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously sources like DNStap streams, network interface or log files.
 
+![overview](doc/overview.png)
+
 `Collectors`:
 - Listen traffic coming from [DNStap streams](doc/collectors.md#dns-tap)
 - [Sniff](doc/collectors.md#dns-sniffer) DNS traffic from network interface 
@@ -16,39 +18,38 @@
 - Listen for [Protobuf PowerDNS](doc/collectors.md#protobuf-powerdns) streams
 
 `Loggers`:
-
-    - Write DNS logs to Sdtout/File:
-        - Stdout [console](doc/loggers.md#stdout)
-        - Text [file](doc/loggers.md#log-file) with rotation and compression support
-        - Binary [Pcap](doc/loggers.md#pcap-file) file
-    - Provide metrics and API:
-        - [Prometheus](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
-        - [Statsd](doc/loggers.md#statsd-client) support
-        - [REST API](doc/loggers.md#rest-api) to search DNS messages
-    - Send to remote host with generic protocol:
-        - [TCP](doc/loggers.md#tcp-client)
-        - [Syslog](doc/loggers.md#syslog)
-        - [DNSTap](doc/loggers.md#dnstap-client) protobuf messages
-    - Send to various sinks:
-        - [Fluentd](doc/loggers.md#fluentd-client)
-        - [InfluxDB](doc/loggers.md#influxdb-client)
-        - [Loki](doc/loggers.md#loki-client)
-        - [ElasticSearch](doc/loggers.md#elasticsearch-client)
+- Write DNS logs to Sdtout/File:
+    - Stdout [console](doc/loggers.md#stdout)
+    - Text [file](doc/loggers.md#log-file) with rotation and compression support
+    - Binary [Pcap](doc/loggers.md#pcap-file) file
+- Provide metrics and API:
+    - [Prometheus](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
+    - [Statsd](doc/loggers.md#statsd-client) support
+    - [REST API](doc/loggers.md#rest-api) to search DNS messages
+- Send to remote host with generic protocol:
+    - [TCP](doc/loggers.md#tcp-client)
+    - [Syslog](doc/loggers.md#syslog)
+    - [DNSTap](doc/loggers.md#dnstap-client) protobuf messages
+- Send to various sinks:
+    - [Fluentd](doc/loggers.md#fluentd-client)
+    - [InfluxDB](doc/loggers.md#influxdb-client)
+    - [Loki](doc/loggers.md#loki-client)
+    - [ElasticSearch](doc/loggers.md#elasticsearch-client)
 
 `Other features`:
-    - DNS messages [routing](doc/multiplexer.md)
-    - Queries/Replies [JSON](doc/dnsjson.md) encoding with  extended options support [EDNS]](doc/dnsparser.md)
-    - Add [GeoIP](doc/configuration.md#geoip-support) details
-    - Custom [Text](doc/configuration.md#custom-text-format) format
-    - [DNS filtering](doc/configuration.md#dns-filtering)
-    - [User Privacy](doc/configuration.md#user-privacy)
-    - [Normalize Qname](doc/configuration.md#qname-lowercase)
+- DNS messages [routing](doc/multiplexer.md)
+- Queries/Replies [JSON](doc/dnsjson.md) encoding with  extended options support [EDNS]](doc/dnsparser.md)
+- Add [GeoIP](doc/configuration.md#geoip-support) details
+- Custom [Text](doc/configuration.md#custom-text-format) format
+- [DNS filtering](doc/configuration.md#dns-filtering)
+- [User Privacy](doc/configuration.md#user-privacy)
+- [Normalize Qname](doc/configuration.md#qname-lowercase)
 
 ## Installation
 
 **Run-it from dockerhub**
 
-Use the `[default configuration](config.yml)` (dnstap -> stdout + rest api):
+Use the [default configuration](config.yml) (dnstap -> stdout + rest api):
 
 ```bash
 docker run -d --name=dnscollector01 dmachard/go-dnscollector
@@ -84,16 +85,6 @@ When starting DNS-collector, you must provide a configuration  file with the `-c
 - [Capture DNSTap with user privacy options enabled](example-config/use-case-6.yml)
 - [Aggregate several DNSTap stream and forward to the same file](example-config/use-case-7.yml)
 - [Run PowerDNS collector with prometheus metrics](example-config/use-case-8.yml)
-
-## Benchmark
-
-Tested on the following machine: 8 vCPUs, 32 GB memory
-
-| packet per sec received| DnsCollector |
-| ---- | ---- | 
-| 50k   | OK - 0% lost| 
-| 100k   | OK - 0% lost| 
-| 150k   | OK (0.07% lost)|
 
 ## Contributing
 
