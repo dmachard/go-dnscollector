@@ -10,11 +10,10 @@
 `DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously sources like DNStap streams, network interface or log files.
 
 `Collectors`:
-
-    - Listen traffic coming from [DNStap streams](doc/collectors.md#dns-tap)
-    - [Sniff](doc/collectors.md#dns-sniffer) DNS traffic from network interface 
-    - Read and tail on [log](doc/collectors.md#tail) file
-    - Listen for [Protobuf PowerDNS](doc/collectors.md#protobuf-powerdns) streams
+- Listen traffic coming from [DNStap streams](doc/collectors.md#dns-tap)
+- [Sniff](doc/collectors.md#dns-sniffer) DNS traffic from network interface 
+- Read and tail on [log](doc/collectors.md#tail) file
+- Listen for [Protobuf PowerDNS](doc/collectors.md#protobuf-powerdns) streams
 
 `Loggers`:
 
