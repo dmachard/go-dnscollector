@@ -65,46 +65,46 @@ func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger, name 
 }
 
 func (p *FilteringProcessor) LoadActiveFilters() {
-    // TODO: Change to iteration through Filtering to add filters in custom order.
+	// TODO: Change to iteration through Filtering to add filters in custom order.
 
-    if !p.config.Transformers.Filtering.LogQueries {
-        p.activeFilters = append(p.activeFilters, p.ignoreQueryFilter)
-    }
+	if !p.config.Transformers.Filtering.LogQueries {
+		p.activeFilters = append(p.activeFilters, p.ignoreQueryFilter)
+	}
 
-    if !p.config.Transformers.Filtering.LogReplies {
-        p.activeFilters = append(p.activeFilters, p.ignoreReplyFilter)
-    }
+	if !p.config.Transformers.Filtering.LogReplies {
+		p.activeFilters = append(p.activeFilters, p.ignoreReplyFilter)
+	}
 
-    if len(p.mapRcodes) > 0 {
-        p.activeFilters = append(p.activeFilters, p.rCodeFilter)
-    }
+	if len(p.mapRcodes) > 0 {
+		p.activeFilters = append(p.activeFilters, p.rCodeFilter)
+	}
 
-    if len(p.config.Transformers.Filtering.KeepQueryIpFile) > 0 || len(p.config.Transformers.Filtering.DropQueryIpFile) > 0 {
-        p.activeFilters = append(p.activeFilters, p.ipFilter)
-    }
+	if len(p.config.Transformers.Filtering.KeepQueryIpFile) > 0 || len(p.config.Transformers.Filtering.DropQueryIpFile) > 0 {
+		p.activeFilters = append(p.activeFilters, p.ipFilter)
+	}
 
-    if len(p.listFqdns) > 0 {
-        p.activeFilters = append(p.activeFilters, p.dropFqdnFilter)
-    }
+	if len(p.listFqdns) > 0 {
+		p.activeFilters = append(p.activeFilters, p.dropFqdnFilter)
+	}
 
-    if len(p.listDomainsRegex) > 0 {
-        p.activeFilters = append(p.activeFilters, p.dropDomainRegexFilter)
-    }
+	if len(p.listDomainsRegex) > 0 {
+		p.activeFilters = append(p.activeFilters, p.dropDomainRegexFilter)
+	}
 
-    if len(p.listKeepFqdns) > 0 {
-        p.activeFilters = append(p.activeFilters, p.keepFqdnFilter)
-    }
+	if len(p.listKeepFqdns) > 0 {
+		p.activeFilters = append(p.activeFilters, p.keepFqdnFilter)
+	}
 
-    if len(p.listKeepDomainsRegex) > 0 {
-        p.activeFilters = append(p.activeFilters, p.keepDomainRegexFilter)
-    }
-    
-    // set downsample if desired
-    if p.config.Transformers.Filtering.Downsample > 0 {
-        p.downsample = p.config.Transformers.Filtering.Downsample
-        p.downsampleCount = 0
-        p.activeFilters = append(p.activeFilters, p.downsampleFilter)
-    }
+	if len(p.listKeepDomainsRegex) > 0 {
+		p.activeFilters = append(p.activeFilters, p.keepDomainRegexFilter)
+	}
+	
+	// set downsample if desired
+	if p.config.Transformers.Filtering.Downsample > 0 {
+		p.downsample = p.config.Transformers.Filtering.Downsample
+		p.downsampleCount = 0
+		p.activeFilters = append(p.activeFilters, p.downsampleFilter)
+	}
 }
 
 
@@ -271,99 +271,99 @@ func (p *FilteringProcessor) Run() {
 }
 
 func (p *FilteringProcessor) ignoreQueryFilter(dm *dnsutils.DnsMessage) bool {
-    // ignore queries ?
-    if dm.DNS.Type == dnsutils.DnsQuery {
-        return true
-    }
-    return false
+	// ignore queries ?
+	if dm.DNS.Type == dnsutils.DnsQuery {
+		return true
+	}
+	return false
 }
 
 func (p *FilteringProcessor) ignoreReplyFilter(dm *dnsutils.DnsMessage) bool {
-    // ignore replies ?
-    if dm.DNS.Type == dnsutils.DnsReply {
-        return true
-    }
-    return false
+	// ignore replies ?
+	if dm.DNS.Type == dnsutils.DnsReply {
+		return true
+	}
+	return false
 }
 
 func (p *FilteringProcessor) rCodeFilter(dm *dnsutils.DnsMessage) bool {
-    // drop according to the rcode ?
-    if _, ok := p.mapRcodes[dm.DNS.Rcode]; ok {
-        return true
-    }
-    return false
+	// drop according to the rcode ?
+	if _, ok := p.mapRcodes[dm.DNS.Rcode]; ok {
+		return true
+	}
+	return false
 }
 
 func (p *FilteringProcessor) ipFilter(dm *dnsutils.DnsMessage) bool {
-    ip, _ := netaddr.ParseIP(dm.NetworkInfo.QueryIp)
-    if p.ipsetKeep.Contains(ip) {
-        return false
-    }
-    if p.ipsetDrop.Contains(ip) {
-        return true
-    }
-    return false
+	ip, _ := netaddr.ParseIP(dm.NetworkInfo.QueryIp)
+	if p.ipsetKeep.Contains(ip) {
+		return false
+	}
+	if p.ipsetDrop.Contains(ip) {
+		return true
+	}
+	return false
 }
 
 func (p *FilteringProcessor) dropFqdnFilter(dm *dnsutils.DnsMessage) bool {
-    if _, ok := p.listFqdns[dm.DNS.Qname]; ok {
-        return true
-    }
-    return false
+	if _, ok := p.listFqdns[dm.DNS.Qname]; ok {
+		return true
+	}
+	return false
 }
 
 func (p *FilteringProcessor) dropDomainRegexFilter(dm *dnsutils.DnsMessage) bool {
-    // partial fqdn with regexp
-    for _, d := range p.listDomainsRegex {
-        if d.MatchString(dm.DNS.Qname) {
-            return true
-        }
-    }
-    return false
+	// partial fqdn with regexp
+	for _, d := range p.listDomainsRegex {
+		if d.MatchString(dm.DNS.Qname) {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *FilteringProcessor) keepFqdnFilter(dm *dnsutils.DnsMessage) bool {
-    if _, ok := p.listKeepFqdns[dm.DNS.Qname]; ok {
-        return false
-    }
-    return true
+	if _, ok := p.listKeepFqdns[dm.DNS.Qname]; ok {
+		return false
+	}
+	return true
 }
 
 func (p *FilteringProcessor) keepDomainRegexFilter(dm *dnsutils.DnsMessage) bool {
-    // partial fqdn with regexp
-    for _, d := range p.listKeepDomainsRegex {
-        if d.MatchString(dm.DNS.Qname) {
-            return false
-        }
-    }
-    return true
+	// partial fqdn with regexp
+	for _, d := range p.listKeepDomainsRegex {
+		if d.MatchString(dm.DNS.Qname) {
+			return false
+		}
+	}
+	return true
 }
 
 func (p *FilteringProcessor) downsampleFilter(dm *dnsutils.DnsMessage) bool {
-    // drop all except every nth entry
-    p.downsampleCount += 1
+	// drop all except every nth entry
+	p.downsampleCount += 1
 		if p.downsampleCount % p.downsample != 0 {
 			return true
 		} else if p.downsampleCount % p.downsample == 0 {
 			p.downsampleCount = 0
 			return false
 		}
-    return true
+	return true
 }
 
 
 func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DnsMessage) bool {
-    if len(p.activeFilters) == 0 {
-        return false
-    }
+	if len(p.activeFilters) == 0 {
+		return false
+	}
 
-    var value bool
-    for _, fn := range(p.activeFilters) {
-        value = fn(dm)
-        if value == true {
-            return true
-        }
-    }
+	var value bool
+	for _, fn := range(p.activeFilters) {
+		value = fn(dm)
+		if value == true {
+			return true
+		}
+	}
 
-    return false
+	return false
 }
