@@ -36,7 +36,7 @@
     - [`Loki`](doc/loggers.md#loki-client)
     - [`ElasticSearch`](doc/loggers.md#elasticsearch-client)
 
-**Other features**:
+![overview](doc/overview2.png)
 
 DNS-collector is also able to:
 - [`Route`](doc/multiplexer.md) DNS messages between collectors and loggers
