@@ -1,18 +1,23 @@
+# Example 1: Capture DNSTap stream and backup-it to text files
+#
+# As prerequisites, we assume you have a DNS server which supports DNSTap (unbound, bind, powerdns, etc)
+# For more informations about dnstap, read the following page: https://dmachard.github.io/posts/0001-dnstap-testing/
+#
+
 global:
   trace:
     verbose: true
 
 multiplexer:
   collectors:
-    - name: tap_in
+    # listen on tcp/6000 for incoming DNSTap protobuf messages
+    - name: tap
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
-        tls-support: true
-        cert-file: "/etc/dnscollector/dnscollector.crt"
-        key-file: "/etc/dnscollector/dnscollector.key"
 
   loggers:
+    # write DNS logs to log file with a maximum size of 100Mb and 10 files 
     - name: file
       logfile:
         file-path:  "/var/run/dnscollector/dnstap.log"
@@ -21,5 +26,6 @@ multiplexer:
         mode: text
 
   routes:
-    - from: [ tap_in ]
+    # redirect DNS messages from the tap collector to the file logger
+    - from: [ tap ]
       to: [ file ]
