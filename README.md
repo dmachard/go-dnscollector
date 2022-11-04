@@ -7,7 +7,8 @@
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
-`DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously sources like DNStap streams, network interface or log files.
+`DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously sources like DNStap streams, network interface or log files. 
+DNS-collector contains a DNS parser with [`EDNS`](doc/dnsparser.md) options support.
 
 ![overview](doc/overview.png)
 
@@ -55,16 +56,14 @@ docker run -d dmachard/go-dnscollector -v $(pwd)/config.yml:/etc/dnscollector/co
 
 ## Configuration
 
-
-DNS-collector is also able to:
+See the full [Configuration guide](doc/configuration.md) to properly:
 - [`Route`](doc/multiplexer.md) DNS messages between collectors and loggers
-- Encode DNS messages to [`JSON`](doc/dnsjson.md) or [`Text`](doc/configuration.md#custom-text-format) format. [`EDNS`](doc/dnsparser.md) options is also supported.
+- Configure a custom [`Text`](doc/configuration.md#custom-text-format) format. 
 - Add geographical metadata with [`GeoIP`](doc/configuration.md#geoip-support)
 - [`Filter`](doc/configuration.md#dns-filtering) (drop, downsample...) incoming traffic
-- Support [`User Privacy`](doc/configuration.md#user-privacy)
+- Enable [`User Privacy`](doc/configuration.md#user-privacy) in DNS logs
 - [`Normalize`](doc/configuration.md#qname-lowercase) qname to lower case
-
-See the full [Configuration guide](doc/configuration.md) for more details.
+- and more...
 
 ## Examples:
 
