@@ -47,28 +47,20 @@
 
 ## Get Started
 
-Download the latest [release](https://github.com/dmachard/go-dns-collector/releases) binary and execute-it with the provided configuration file. The default configuration listens on the port `tcp/6000` for an incoming DNSTap stream  and redirects it to the standard output.
+Download the latest [release](https://github.com/dmachard/go-dns-collector/releases) binary and start `DNS-collector` with the provided configuration file. The default configuration listens on `tcp/6000` for an incoming DNSTap stream  and redirects it to the standard output.
 
 ```go
 ./go-dnscollector -config config.yml
 ```
 
-**Run-it from dockerhub**
 
-Use the [default configuration](config.yml) (dnstap -> stdout + rest api):
+## Docker
 
-```bash
-docker run -d --name=dnscollector01 dmachard/go-dnscollector
-```
-
-Override the default configuration `/etc/dnscollector/config.yml` with a config file on the host:
+Docker run with a custom configuration:
 
 ```bash
--v $(pwd)/config.yml:/etc/dnscollector/config.yml
+docker run -d dmachard/go-dnscollector -v $(pwd)/config.yml:/etc/dnscollector/config.yml
 ```
-
-**Run-it from binary**
-
 
 ## Configuration
 
