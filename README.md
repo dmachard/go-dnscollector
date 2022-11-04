@@ -18,7 +18,7 @@
 - Listen for [`Protobuf PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
 
 **Supported loggers**:
-- *Write DNS logs to stdout or file*:
+- *Write DNS logs to stdout or file with [`Text`](doc/configuration.md#custom-text-format) or [`JSON`](doc/dnsjson.md) format*:
     - [`Stdout`](doc/loggers.md#stdout)console
     - [`Text file`](doc/loggers.md#log-file) with rotation and compression support
     - Binary [`Pcap file`](doc/loggers.md#pcap-file)
@@ -35,16 +35,6 @@
     - [`InfluxDB`](doc/loggers.md#influxdb-client)
     - [`Loki`](doc/loggers.md#loki-client)
     - [`ElasticSearch`](doc/loggers.md#elasticsearch-client)
-
-![overview](doc/overview2.png)
-
-DNS-collector is also able to:
-- [`Route`](doc/multiplexer.md) DNS messages between collectors and loggers
-- Encode DNS messages to [`JSON`](doc/dnsjson.md) or [`Text`](doc/configuration.md#custom-text-format) format. [`EDNS`](doc/dnsparser.md) options is also supported.
-- Add geographical metadata with [`GeoIP`](doc/configuration.md#geoip-support)
-- [`Filter`](doc/configuration.md#dns-filtering) (drop, downsample...) incoming traffic
-- Support [`User Privacy`](doc/configuration.md#user-privacy)
-- [`Normalize`](doc/configuration.md#qname-lowercase) qname to lower case
 
 ## Get Started
 
@@ -64,6 +54,15 @@ docker run -d dmachard/go-dnscollector -v $(pwd)/config.yml:/etc/dnscollector/co
 ```
 
 ## Configuration
+
+
+DNS-collector is also able to:
+- [`Route`](doc/multiplexer.md) DNS messages between collectors and loggers
+- Encode DNS messages to [`JSON`](doc/dnsjson.md) or [`Text`](doc/configuration.md#custom-text-format) format. [`EDNS`](doc/dnsparser.md) options is also supported.
+- Add geographical metadata with [`GeoIP`](doc/configuration.md#geoip-support)
+- [`Filter`](doc/configuration.md#dns-filtering) (drop, downsample...) incoming traffic
+- Support [`User Privacy`](doc/configuration.md#user-privacy)
+- [`Normalize`](doc/configuration.md#qname-lowercase) qname to lower case
 
 See the full [Configuration guide](doc/configuration.md) for more details.
 
