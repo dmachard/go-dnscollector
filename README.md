@@ -36,14 +36,14 @@
     - [`Loki`](doc/loggers.md#loki-client)
     - [`ElasticSearch`](doc/loggers.md#elasticsearch-client)
 
-Currently `DNS-collector` is also able to:
+**Other features**:
+`DNS-collector` is also able to:
 - [Route`](doc/multiplexer.md) DNS messages between collectors and loggers
-- Encode DNS messages to [`JSON`](doc/dnsjson.md) format. [`EDNS`](doc/dnsparser.md) options is also supported.
-- Encode DNS messages to [`Text`](doc/configuration.md#custom-text-format) format
+- Encode DNS messages to [`JSON`](doc/dnsjson.md) or [`Text`](doc/configuration.md#custom-text-format) format. [`EDNS`](doc/dnsparser.md) options is also supported.
 - Add geographical metadata with [`GeoIP`](doc/configuration.md#geoip-support)
 - [`Filter`](doc/configuration.md#dns-filtering) (drop, downsample...) incoming traffic
 - Support [`User Privacy`](doc/configuration.md#user-privacy)
-- [`Normalize`](doc/configuration.md#qname-lowercase) Qname (lower case)
+- [`Normalize`](doc/configuration.md#qname-lowercase) qname to lower case
 
 ## Get Started
 
