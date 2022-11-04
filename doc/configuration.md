@@ -1,9 +1,10 @@
-# DnsCollector - Configuration Guide
+# DNS-collector - Configuration Guide
 
-A typically configuration would have one or more collector to receive DNS traffic or logs, and severals loggers to process the
-incoming traffics.
+The configuration of DNS-collector is done through one yaml file named `config.yml`. When the DNS-collector starts, it will look for the config.yml from the current working directory. 
 
-The configuration is done in one yaml file. For the complete configuration, see [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml).
+A typically configuration would have one or more collector to receive DNS traffic, and severals loggers to process the
+incoming traffics. A list of examples are available [here](./example-config) and the default one [here](https://github.com/dmachard/go-dnscollector/blob/main/config.yml).
+
 
 - [Global](#global)
   - [Trace](#trace)
