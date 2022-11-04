@@ -19,7 +19,7 @@
 
 **Supported loggers**:
 - *Write DNS logs to stdout or file*:
-    - Stdout [console](doc/loggers.md#stdout)
+    - [`Stdout`](doc/loggers.md#stdout)console
     - [`Text file`](doc/loggers.md#log-file) with rotation and compression support
     - Binary [`Pcap file`](doc/loggers.md#pcap-file)
 - *Provide metrics and API*:
