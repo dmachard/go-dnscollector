@@ -11,13 +11,13 @@
 
 ![overview](doc/overview.png)
 
-Supported collectors:
+**Supported collectors**:
 - Listen traffic coming from [`DNStap streams`](doc/collectors.md#dns-tap)
-- [Sniff](doc/collectors.md#dns-sniffer) DNS traffic from network interface 
-- Read and tail on [log](doc/collectors.md#tail) file
-- Listen for [Protobuf PowerDNS](doc/collectors.md#protobuf-powerdns) streams
+- [`Sniff`](doc/collectors.md#dns-sniffer) DNS traffic from network interface 
+- Read and tail on [`log`](doc/collectors.md#tail) file
+- Listen for [`Protobuf PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
 
-`Loggers`:
+**Loggers**:
 - Write DNS logs to Sdtout/File:
     - Stdout [console](doc/loggers.md#stdout)
     - Text [file](doc/loggers.md#log-file) with rotation and compression support
