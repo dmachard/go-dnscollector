@@ -37,8 +37,9 @@
     - [`ElasticSearch`](doc/loggers.md#elasticsearch-client)
 
 **Other features**:
-`DNS-collector` is also able to:
-- [Route`](doc/multiplexer.md) DNS messages between collectors and loggers
+
+DNS-collector is also able to:
+- [`Route`](doc/multiplexer.md) DNS messages between collectors and loggers
 - Encode DNS messages to [`JSON`](doc/dnsjson.md) or [`Text`](doc/configuration.md#custom-text-format) format. [`EDNS`](doc/dnsparser.md) options is also supported.
 - Add geographical metadata with [`GeoIP`](doc/configuration.md#geoip-support)
 - [`Filter`](doc/configuration.md#dns-filtering) (drop, downsample...) incoming traffic
