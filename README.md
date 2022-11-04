@@ -7,8 +7,9 @@
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
-`DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously sources like DNStap streams, network interface or log files. 
-DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support, a filtering.
+`DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously sources like DNStap streams, network interface or log files
+and redirect them to several destinations with some transformation (filtering, sampling, privacy, ...).
+DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 
 ![overview](doc/overview.png)
 
@@ -39,27 +40,18 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support, 
 
 ## Get Started
 
-Download the latest [release](https://github.com/dmachard/go-dns-collector/releases) binary and start `DNS-collector` with the provided configuration file. The default configuration listens on `tcp/6000` for an incoming DNSTap stream  and redirects it to the standard output.
+Download the latest [release](https://github.com/dmachard/go-dns-collector/releases) binary and start `DNS-collector` with the provided configuration file. The default configuration listens on `tcp/6000` for a DNSTap stream and DNS logs are printed on standard output.
 
 ```go
 ./go-dnscollector -config config.yml
 ```
-
-
-## Docker
-
-Docker run with a custom configuration:
-
-```bash
-docker run -d dmachard/go-dnscollector -v $(pwd)/config.yml:/etc/dnscollector/config.yml
-```
+If you prefer run it from docker, follow this [guide](doc/docker.md).
 
 ## Configuration
 
 The configuration of DNS-collector is done through a file named `config.yml`. When the DNS-collector starts, it will look for the config.yml from the current working directory. 
 
 See the full [configuration guide](doc/configuration.md) for more details.
-
 
 ## Examples:
 
@@ -76,4 +68,4 @@ You will find below some examples of configuration to manage your DNS logs.
 
 ## Contributing
 
-See the [development guide](doc/development.md) for more information on how to build yourself.
+See the [development guide](doc/development.md) for more information on how to build it yourself.
