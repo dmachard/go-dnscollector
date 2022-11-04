@@ -13,12 +13,12 @@
 
 **Supported collectors**:
 - Listen traffic coming from [`DNStap streams`](doc/collectors.md#dns-tap)
-- [`Sniff`](doc/collectors.md#dns-sniffer) DNS traffic from network interface 
-- Read and tail on [`log`](doc/collectors.md#tail) file
+- [`Sniff traffic`](doc/collectors.md#dns-sniffer) from network interfaces
+- Read and tail on [`log file`](doc/collectors.md#tail)
 - Listen for [`Protobuf PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
 
-**Loggers**:
-- Write DNS logs to Sdtout/File:
+**Supported loggers**:
+- *Write DNS logs to stdout/file*:
     - Stdout [console](doc/loggers.md#stdout)
     - Text [file](doc/loggers.md#log-file) with rotation and compression support
     - Binary [Pcap](doc/loggers.md#pcap-file) file
@@ -36,7 +36,7 @@
     - [Loki](doc/loggers.md#loki-client)
     - [ElasticSearch](doc/loggers.md#elasticsearch-client)
 
-`Other features`:
+**Other features**:
 - DNS messages [routing](doc/multiplexer.md)
 - Queries/Replies [JSON](doc/dnsjson.md) encoding with  extended options support [EDNS](doc/dnsparser.md)
 - [GeoIP](doc/configuration.md#geoip-support) support
