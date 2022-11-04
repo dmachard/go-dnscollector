@@ -4,13 +4,12 @@ global:
 
 multiplexer:
   collectors:
-    - name: tap_in
+    # As prerequisites, we assume you have a DNS server which supports DNSTap (unbound, bind, powerdns, etc)
+    # For more informations about dnstap, read the following page: https://dmachard.github.io/posts/0001-dnstap-testing/
+    - name: tap
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
-        tls-support: true
-        cert-file: "/etc/dnscollector/dnscollector.crt"
-        key-file: "/etc/dnscollector/dnscollector.key"
 
   loggers:
     - name: file
@@ -21,5 +20,5 @@ multiplexer:
         mode: text
 
   routes:
-    - from: [ tap_in ]
+    - from: [ tap ]
       to: [ file ]
