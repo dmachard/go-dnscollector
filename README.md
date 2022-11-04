@@ -18,23 +18,23 @@
 - Listen for [`Protobuf PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
 
 **Supported loggers**:
-- *Write DNS logs to stdout/file*:
+- *Write DNS logs to stdout or file*:
     - Stdout [console](doc/loggers.md#stdout)
-    - Text [file](doc/loggers.md#log-file) with rotation and compression support
-    - Binary [Pcap](doc/loggers.md#pcap-file) file
-- Provide metrics and API:
-    - [Prometheus](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
-    - [Statsd](doc/loggers.md#statsd-client) support
-    - [REST API](doc/loggers.md#rest-api) to search DNS messages
-- Send to remote host with generic protocol:
-    - [TCP](doc/loggers.md#tcp-client)
-    - [Syslog](doc/loggers.md#syslog)
-    - [DNSTap](doc/loggers.md#dnstap-client) protobuf messages
-- Send to various sinks:
-    - [Fluentd](doc/loggers.md#fluentd-client)
-    - [InfluxDB](doc/loggers.md#influxdb-client)
-    - [Loki](doc/loggers.md#loki-client)
-    - [ElasticSearch](doc/loggers.md#elasticsearch-client)
+    - [`Text file`](doc/loggers.md#log-file) with rotation and compression support
+    - Binary [`Pcap file`](doc/loggers.md#pcap-file)
+- *Provide metrics and API*:
+    - [`Prometheus`](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
+    - [`Statsd`](doc/loggers.md#statsd-client) support
+    - [`REST API`](doc/loggers.md#rest-api) to search DNS messages
+- *Send to remote host with generic protocol*:
+    - [`TCP`](doc/loggers.md#tcp-client)
+    - [`Syslog`](doc/loggers.md#syslog)
+    - [`DNSTap`](doc/loggers.md#dnstap-client) protobuf messages
+- *Send to various sinks*:
+    - [`Fluentd`](doc/loggers.md#fluentd-client)
+    - [`InfluxDB`](doc/loggers.md#influxdb-client)
+    - [`Loki`](doc/loggers.md#loki-client)
+    - [`ElasticSearch`](doc/loggers.md#elasticsearch-client)
 
 **Other features**:
 - DNS messages [routing](doc/multiplexer.md)
