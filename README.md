@@ -11,8 +11,8 @@
 
 ![overview](doc/overview.png)
 
-`Collectors`:
-- Listen traffic coming from [DNStap streams](doc/collectors.md#dns-tap)
+Supported collectors:
+- Listen traffic coming from [`DNStap streams`](doc/collectors.md#dns-tap)
 - [Sniff](doc/collectors.md#dns-sniffer) DNS traffic from network interface 
 - Read and tail on [log](doc/collectors.md#tail) file
 - Listen for [Protobuf PowerDNS](doc/collectors.md#protobuf-powerdns) streams
@@ -68,7 +68,6 @@ See the full [Configuration guide](doc/configuration.md) for more details.
 
 ## Examples:
 
-When starting DNS-collector, you must provide a configuration file with the `-config` option.
 You will find below some examples of configuration to manage your DNS logs.
 
 - [Capture DNSTap stream and backup-it to text files](https://dmachard.github.io/posts/0034-dnscollector-dnstap-to-log-files/)
