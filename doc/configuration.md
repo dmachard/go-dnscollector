@@ -17,15 +17,6 @@ incoming traffics. A list of examples are available [here](./example-config) and
   - [DNS filtering](#dns-filtering)
   - [Statistics](#statistics)
 
-
-- [`Route`](doc/multiplexer.md) DNS messages between collectors and loggers
-- Configure a custom [`Text`](doc/configuration.md#custom-text-format) format. 
-- Add geographical metadata with [`GeoIP`](doc/configuration.md#geoip-support)
-- [`Filter`](doc/configuration.md#dns-filtering) (drop, downsample...) incoming traffic
-- Enable [`User Privacy`](doc/configuration.md#user-privacy) in DNS logs
-- [`Normalize`](doc/configuration.md#qname-lowercase) qname to lower case
-- and more...
-
 ## Global
 
 ### Trace

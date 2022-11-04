@@ -1,0 +1,22 @@
+global:
+  trace:
+    verbose: true
+
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+      transforms:
+        filtering:
+          drop-rcodes: [ NOERROR ]
+
+  loggers:
+    - name: console
+      stdout:
+        mode: text
+
+  routes:
+    - from: [tap]
+      to: [console]
