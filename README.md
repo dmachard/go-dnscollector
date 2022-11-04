@@ -14,7 +14,7 @@
 **Supported collectors**:
 - Listen traffic coming from [`DNStap streams`](doc/collectors.md#dns-tap)
 - [`Sniff traffic`](doc/collectors.md#dns-sniffer) from network interfaces
-- Read and tail on [`log file`](doc/collectors.md#tail)
+- Read and tail on [`Log file`](doc/collectors.md#tail)
 - Listen for [`Protobuf PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
 
 **Supported loggers**:
@@ -36,14 +36,14 @@
     - [`Loki`](doc/loggers.md#loki-client)
     - [`ElasticSearch`](doc/loggers.md#elasticsearch-client)
 
-**Other features**:
-- DNS messages [routing](doc/multiplexer.md)
-- Queries/Replies [JSON](doc/dnsjson.md) encoding with  extended options support [EDNS](doc/dnsparser.md)
-- [GeoIP](doc/configuration.md#geoip-support) support
-- Custom [Text](doc/configuration.md#custom-text-format) format
-- [DNS filtering](doc/configuration.md#dns-filtering)
-- [User Privacy](doc/configuration.md#user-privacy)
-- [Normalize Qname](doc/configuration.md#qname-lowercase)
+Currently `DNS-collector` is also able to:
+- [Route`](doc/multiplexer.md) DNS messages between collectors and loggers
+- Encode DNS messages to [`JSON`](doc/dnsjson.md) format. [`EDNS`](doc/dnsparser.md) options is also supported.
+- Encode DNS messages to [`Text`](doc/configuration.md#custom-text-format) format
+- Add geographical metadata with [`GeoIP`](doc/configuration.md#geoip-support)
+- [`Filter`](doc/configuration.md#dns-filtering) (drop, downsample...) incoming traffic
+- Support [`User Privacy`](doc/configuration.md#user-privacy)
+- [`Normalize`](doc/configuration.md#qname-lowercase) Qname (lower case)
 
 ## Get Started
 
