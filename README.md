@@ -38,14 +38,20 @@
 
 `Other features`:
 - DNS messages [routing](doc/multiplexer.md)
-- Queries/Replies [JSON](doc/dnsjson.md) encoding with  extended options support [EDNS]](doc/dnsparser.md)
-- Add [GeoIP](doc/configuration.md#geoip-support) details
+- Queries/Replies [JSON](doc/dnsjson.md) encoding with  extended options support [EDNS](doc/dnsparser.md)
+- [GeoIP](doc/configuration.md#geoip-support) support
 - Custom [Text](doc/configuration.md#custom-text-format) format
 - [DNS filtering](doc/configuration.md#dns-filtering)
 - [User Privacy](doc/configuration.md#user-privacy)
 - [Normalize Qname](doc/configuration.md#qname-lowercase)
 
-## Installation
+## Get Started
+
+Download the latest [release](https://github.com/dmachard/go-dns-collector/releases) binary and execute-it with the provided configuration file. The default configuration listens on the port `tcp/6000` for an incoming DNSTap stream  and redirects it to the standard output.
+
+```go
+./go-dnscollector -config config.yml
+```
 
 **Run-it from dockerhub**
 
@@ -63,11 +69,6 @@ Override the default configuration `/etc/dnscollector/config.yml` with a config 
 
 **Run-it from binary**
 
-Download the binary from release page. A default configuration file `config.yml` is also provided.
-
-```go
-./go-dnscollector -config config.yml
-```
 
 ## Configuration
 
@@ -75,7 +76,8 @@ See the full [Configuration guide](doc/configuration.md) for more details.
 
 ## Examples:
 
-When starting DNS-collector, you must provide a configuration  file with the `-config` option.
+When starting DNS-collector, you must provide a configuration file with the `-config` option.
+You will find below some examples of configuration to manage your DNS logs.
 
 - [Capture DNSTap stream and backup-it to text files](https://dmachard.github.io/posts/0034-dnscollector-dnstap-to-log-files/)
 - [Get statistics usage with Prometheus and Grafana](https://dmachard.github.io/posts/0035-dnscollector-grafana-prometheus/)
