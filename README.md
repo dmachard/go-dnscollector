@@ -59,14 +59,15 @@ See the full [configuration guide](doc/configuration.md) for more details.
 You will find below some examples of configuration to manage your DNS logs.
 
 - [Capture DNSTap stream and backup-it to text files](example-config/use-case-1.yml)
-- [Get statistics usage with Prometheus and Grafana](example-config/use-case-2.yml)
-- [Log DNSTap to JSON format](example-config/use-case-3.yml)
+- [Observe DNS metrics with Prometheus and Grafana](example-config/use-case-2.yml)
+- [Transform DNSTap to JSON format](example-config/use-case-3.yml)
 - [Follow DNS traffic with Loki and Grafana](example-config/use-case-4.yml)
-- [Forward UNIX DNSTap to TLS stream](example-config/use-case-5.yml)
-- [Capture DNSTap with user privacy options enabled](example-config/use-case-6.yml)
+- [Read from UNIX DNSTap socket and forward it to TLS stream](example-config/use-case-5.yml)
+- [Capture DNSTap stream and apply user privacy on it](example-config/use-case-6.yml)
 - [Aggregate several DNSTap stream and forward it to the same file](example-config/use-case-7.yml)
 - [PowerDNS collector with prometheus metrics](example-config/use-case-8.yml)
 - [Filtering incoming traffic to ignore NOERROR messages](example-config/use-case-9.yml)
+- [Normalize Qname to lowercase](example-config/use-case-10.yml)
 
 ## Contributing
 

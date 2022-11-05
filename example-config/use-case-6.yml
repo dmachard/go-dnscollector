@@ -1,10 +1,20 @@
+# Example 6: Capture DNSTap stream and apply user privacy on it
+#
+# As prerequisites, we assume you have 
+# - a DNS server which supports DNSTap (unbound, bind, powerdns, etc) for more informations about dnstap, 
+#   read the following page: https://dmachard.github.io/posts/0001-dnstap-testing/
+
+# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true
 
 multiplexer:
+  # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
+  # and apply some transformations to apply user privacy by reducing user IP 
+  # and the requested domain: doc/configuration.md#user-privacy
   collectors:
-    - name: tap_in
+    - name: tap
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
@@ -13,11 +23,13 @@ multiplexer:
             anonymize-ip: true
             minimaze-qname: true
 
+  # Print DNS messages on standard output with TEXT format
   loggers:
     - name: console
       stdout:
         mode: text
 
+  # Routes DNS messages from the tap collector to standard output
   routes:
-    - from: [tap_in]
+    - from: [tap]
       to: [console]
