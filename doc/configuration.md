@@ -15,7 +15,6 @@ incoming traffics. A list of examples are available [here](./example-config) and
   - [User privacy](#user-privacy)
   - [GeoIP Support](#geoip-support)
   - [DNS filtering](#dns-filtering)
-  - [Statistics](#statistics)
 
 ## Global
 
