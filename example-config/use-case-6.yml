@@ -20,8 +20,8 @@ multiplexer:
         listen-port: 6000
       transforms:
         user-privacy:
-            anonymize-ip: true
-            minimaze-qname: true
+          anonymize-ip: true
+          minimaze-qname: true
 
   # Print DNS messages on standard output with TEXT format
   loggers:

@@ -66,8 +66,8 @@ You will find below some examples of configuration to manage your DNS logs.
 - [Capture DNSTap stream and apply user privacy on it](example-config/use-case-6.yml)
 - [Aggregate several DNSTap stream and forward it to the same file](example-config/use-case-7.yml)
 - [PowerDNS collector with prometheus metrics](example-config/use-case-8.yml)
-- [Filtering incoming traffic with downsample and whitelist](example-config/use-case-9.yml)
-- [Normalize Qname to lowercase](example-config/use-case-10.yml)
+- [Filtering incoming traffic with downsample and whitelist of domains](example-config/use-case-9.yml)
+- [Transform all domains to lowercase](example-config/use-case-10.yml)
 - [Add geographical metadata with GeoIP](example-config/use-case-11.yml)
 
 ## Contributing

@@ -4,6 +4,7 @@
 # - a DNS server which supports DNSTap (unbound, bind, powerdns, etc) for more informations about dnstap, 
 #   read the following page: https://dmachard.github.io/posts/0001-dnstap-testing/
 # - a Prometheus instance ready to scrap on tcp/8080
+# - Basic or advanced dashboards are deployed on Grafana: doc/dashboards.md
 
 # If turned on, debug messages are printed in the standard output
 global:

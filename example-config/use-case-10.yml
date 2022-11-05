@@ -1,4 +1,4 @@
-# Example 10: Normalize Qname to lowercase
+# Example 10: Transform all domains to lowercase
 #
 # As prerequisites, we assume you have 
 # - a DNS server which supports DNSTap (unbound, bind, powerdns, etc) for more informations about dnstap, 
@@ -8,3 +8,27 @@
 global:
   trace:
     verbose: true
+
+multiplexer:
+  # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
+  # with on tranformation to reduce qname to lowercase
+  # For example: Wwww.GooGlE.com will be equal to www.google.com
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+      transforms:
+        filtering:
+          qname-lowercase: true
+
+  # Print DNS messages on standard output with TEXT format
+  loggers:
+    - name: console
+      stdout:
+        mode: text
+
+  # Routes DNS messages from the tap collector to standard output
+  routes:
+    - from: [tap]
+      to: [console]
