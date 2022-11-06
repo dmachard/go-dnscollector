@@ -1,4 +1,4 @@
-# Example 9: Filtering incoming traffic with downsample and whitelist of domains
+# Example 11: Add geographical metadata with GeoIP
 #
 # As prerequisites, we assume you have 
 # - a DNS server which supports DNSTap (unbound, bind, powerdns, etc) for more informations about dnstap, 
@@ -11,25 +11,23 @@ global:
 
 multiplexer:
   # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
-  # with some transformations to only keep 1 out of every downsample records
-  # and whitelistfile witch contains:
-  # *.google.com$
-  # *.github.com$
+  # with add country name in metadata
   collectors:
     - name: tap
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
       transforms:
-        filtering:
-          downsample: 1
-          keep-domain-file: /tmp/whitelist.txt
+        geoip:
+          mmdb-country-file: "/tmp/GeoIP/GeoLite2-Country.mmdb"
 
   # Print DNS messages on standard output with TEXT format
+  # Configure a custom text format to display the country name
   loggers:
     - name: console
       stdout:
         mode: text
+        text-format: "localtime identity queryip qname qtype rcode country"
 
   # Routes DNS messages from the tap collector to standard output
   routes:

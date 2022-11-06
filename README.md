@@ -7,8 +7,9 @@
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
-`DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously sources like DNStap streams, network interface or log files. 
-DNS-collector contains a DNS parser with [`EDNS`](doc/dnsparser.md) options support.
+`DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously sources like DNStap streams, network interface or log files
+and redirect them to several destinations with some transformation (filtering, sampling, privacy, ...).
+DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 
 ![overview](doc/overview.png)
 
@@ -39,45 +40,36 @@ DNS-collector contains a DNS parser with [`EDNS`](doc/dnsparser.md) options supp
 
 ## Get Started
 
-Download the latest [release](https://github.com/dmachard/go-dns-collector/releases) binary and start `DNS-collector` with the provided configuration file. The default configuration listens on `tcp/6000` for an incoming DNSTap stream  and redirects it to the standard output.
+Download the latest [release](https://github.com/dmachard/go-dns-collector/releases) binary and start the DNS-collector with the provided configuration file. The default configuration listens on `tcp/6000` for a DNSTap stream and DNS logs are printed on standard output.
 
 ```go
 ./go-dnscollector -config config.yml
 ```
 
-
-## Docker
-
-Docker run with a custom configuration:
-
-```bash
-docker run -d dmachard/go-dnscollector -v $(pwd)/config.yml:/etc/dnscollector/config.yml
-```
+If you prefer run it from docker, follow this [guide](doc/docker.md).
 
 ## Configuration
 
-See the full [Configuration guide](doc/configuration.md) to properly:
-- [`Route`](doc/multiplexer.md) DNS messages between collectors and loggers
-- Configure a custom [`Text`](doc/configuration.md#custom-text-format) format. 
-- Add geographical metadata with [`GeoIP`](doc/configuration.md#geoip-support)
-- [`Filter`](doc/configuration.md#dns-filtering) (drop, downsample...) incoming traffic
-- Enable [`User Privacy`](doc/configuration.md#user-privacy) in DNS logs
-- [`Normalize`](doc/configuration.md#qname-lowercase) qname to lower case
-- and more...
+The configuration of DNS-collector is done through a file named `config.yml`. When the DNS-collector starts, it will look for the config.yml from the current working directory. 
+
+See the full [configuration guide](doc/configuration.md) for more details.
 
 ## Examples:
 
 You will find below some examples of configuration to manage your DNS logs.
 
-- [Capture DNSTap stream and backup-it to text files](https://dmachard.github.io/posts/0034-dnscollector-dnstap-to-log-files/)
-- [Get statistics usage with Prometheus and Grafana](https://dmachard.github.io/posts/0035-dnscollector-grafana-prometheus/)
-- [Log DNSTap to JSON format](https://dmachard.github.io/posts/0042-dnscollector-dnstap-json-answers/)
-- [Follow DNS traffic with Loki and Grafana](https://dmachard.github.io/posts/0044-dnscollector-grafana-loki/)
-- [Forward UNIX DNSTap to TLS stream](example-config/use-case-5.yml)
-- [Capture DNSTap with user privacy options enabled](example-config/use-case-6.yml)
-- [Aggregate several DNSTap stream and forward to the same file](example-config/use-case-7.yml)
-- [Run PowerDNS collector with prometheus metrics](example-config/use-case-8.yml)
+- [Capture DNSTap stream and backup-it to text files](example-config/use-case-1.yml)
+- [Observe DNS metrics with Prometheus and Grafana](example-config/use-case-2.yml)
+- [Transform DNSTap to JSON format](example-config/use-case-3.yml)
+- [Follow DNS traffic with Loki and Grafana](example-config/use-case-4.yml)
+- [Read from UNIX DNSTap socket and forward it to TLS stream](example-config/use-case-5.yml)
+- [Capture DNSTap stream and apply user privacy on it](example-config/use-case-6.yml)
+- [Aggregate several DNSTap stream and forward it to the same file](example-config/use-case-7.yml)
+- [PowerDNS collector with prometheus metrics](example-config/use-case-8.yml)
+- [Filtering incoming traffic with downsample and whitelist of domains](example-config/use-case-9.yml)
+- [Transform all domains to lowercase](example-config/use-case-10.yml)
+- [Add geographical metadata with GeoIP](example-config/use-case-11.yml)
 
 ## Contributing
 
-See the [development guide](doc/development.md) for more information on how to build yourself.
+See the [development guide](doc/development.md) for more information on how to build it yourself.

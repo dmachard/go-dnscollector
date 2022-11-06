@@ -1,4 +1,4 @@
-# Example 9: Filtering incoming traffic with downsample and whitelist of domains
+# Example 10: Transform all domains to lowercase
 #
 # As prerequisites, we assume you have 
 # - a DNS server which supports DNSTap (unbound, bind, powerdns, etc) for more informations about dnstap, 
@@ -11,10 +11,8 @@ global:
 
 multiplexer:
   # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
-  # with some transformations to only keep 1 out of every downsample records
-  # and whitelistfile witch contains:
-  # *.google.com$
-  # *.github.com$
+  # with on tranformation to reduce qname to lowercase
+  # For example: Wwww.GooGlE.com will be equal to www.google.com
   collectors:
     - name: tap
       dnstap:
@@ -22,8 +20,7 @@ multiplexer:
         listen-port: 6000
       transforms:
         filtering:
-          downsample: 1
-          keep-domain-file: /tmp/whitelist.txt
+          qname-lowercase: true
 
   # Print DNS messages on standard output with TEXT format
   loggers:
