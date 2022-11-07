@@ -9,6 +9,7 @@ require (
 	github.com/dmachard/go-logger v0.3.0
 	github.com/dmachard/go-powerdns-protobuf v0.0.4
 	github.com/dmachard/go-topmap v0.5.0
+	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/gopacket v1.1.19
 	github.com/grafana/dskit v0.0.0-20220314144907-ec94f1a0a3a8
@@ -19,7 +20,7 @@ require (
 	github.com/miekg/dns v1.1.50
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/oschwald/maxminddb-golang v1.10.0
-	github.com/prometheus/client_golang v1.13.0
+	github.com/prometheus/client_golang v1.13.1
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 	golang.org/x/sys v0.0.0-20220908164124-27713097b956
@@ -29,7 +30,6 @@ require (
 )
 
 require (
-	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760 // indirect
 )
