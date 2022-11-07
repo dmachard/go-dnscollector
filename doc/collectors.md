@@ -177,9 +177,10 @@ rpzFile("/etc/pdns-recursor/basic.rpz", {
 })
 ```
 
-### Ingest Pcap File
+### Ingest Pcap
 
-This collector enable to ingest multiple pcap files by watching the provided directory.
+This collector enable to ingest multiple pcap files by watching a directory.
+Make sure the PCAP is complete before moving the file to the directory so that file data is not truncated. 
 
 Options:
 - `watch-dir`: (string) directory to watch for pcap files ingest
