@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"crypto/tls"
 	"net"
-	"os"
 	"strconv"
 	"time"
 
@@ -48,13 +47,9 @@ func (c *DnstapSender) SetLoggers(loggers []dnsutils.Worker) {
 
 func (o *DnstapSender) ReadConfig() {
 	// get hostname
+
 	if o.config.Loggers.Dnstap.ServerId == "" {
-		hostname, err := os.Hostname()
-		if err != nil {
-			o.LogError("failed to get hostname: %v\n", err)
-		} else {
-			o.config.Loggers.Dnstap.ServerId = hostname
-		}
+		o.config.Loggers.Dnstap.ServerId = o.config.GetServerIdentity()
 	}
 
 	if !dnsutils.IsValidTLS(o.config.Loggers.Dnstap.TlsMinVersion) {

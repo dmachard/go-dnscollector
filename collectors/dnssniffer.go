@@ -98,18 +98,18 @@ func RemoveBpfFilter(fd int) (err error) {
 }
 
 type DnsSniffer struct {
-	done           chan bool
-	exit           chan bool
-	fd             int
-	port           int
-	device         string
-	capturequeries bool
-	capturereplies bool
-	identity       string
-	loggers        []dnsutils.Worker
-	config         *dnsutils.Config
-	logger         *logger.Logger
-	name           string
+	done        chan bool
+	exit        chan bool
+	fd          int
+	port        int
+	device      string
+	dropQueries bool
+	dropReplies bool
+	identity    string
+	loggers     []dnsutils.Worker
+	config      *dnsutils.Config
+	logger      *logger.Logger
+	name        string
 }
 
 func NewDnsSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *DnsSniffer {
@@ -149,18 +149,11 @@ func (c *DnsSniffer) Loggers() []chan dnsutils.DnsMessage {
 }
 
 func (c *DnsSniffer) ReadConfig() {
-	c.port = c.config.Collectors.DnsSniffer.Port
-
-	hostname, err := os.Hostname()
-	if err == nil {
-		c.identity = hostname
-	} else {
-		c.identity = "undefined"
-	}
-
-	c.capturequeries = c.config.Collectors.DnsSniffer.CaptureDnsQueries
-	c.capturereplies = c.config.Collectors.DnsSniffer.CaptureDnsReplies
-	c.device = c.config.Collectors.DnsSniffer.Device
+	c.port = c.config.Collectors.LiveCapture.Port
+	c.identity = c.config.GetServerIdentity()
+	c.dropQueries = c.config.Collectors.LiveCapture.DropQueries
+	c.dropReplies = c.config.Collectors.LiveCapture.DropReplies
+	c.device = c.config.Collectors.LiveCapture.Device
 }
 
 func (c *DnsSniffer) Channel() chan dnsutils.DnsMessage {
@@ -229,8 +222,10 @@ func (c *DnsSniffer) Run() {
 		}
 	}
 
-	dns_subprocessor := NewDnsProcessor(c.config, c.logger, c.name)
-	go dns_subprocessor.Run(c.Loggers())
+	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name)
+	dnsProcessor.cacheSupport = c.config.Collectors.LiveCapture.CacheSupport
+	dnsProcessor.queryTimeout = c.config.Collectors.LiveCapture.QueryTimeout
+	go dnsProcessor.Run(c.Loggers())
 
 	go func() {
 		buf := make([]byte, 65536)
@@ -271,7 +266,7 @@ func (c *DnsSniffer) Run() {
 			var tcp layers.TCP
 			var udp layers.UDP
 			parser := gopacket.NewDecodingLayerParser(layers.LayerTypeEthernet, &eth, &ip4, &ip6, &tcp, &udp)
-			decodedLayers := make([]gopacket.LayerType, 0, 10)
+			decodedLayers := make([]gopacket.LayerType, 0, 4)
 
 			// copy packet data from buffer
 			pkt := make([]byte, bufN)
@@ -295,7 +290,6 @@ func (c *DnsSniffer) Run() {
 					dm.NetworkInfo.QueryIp = ip6.SrcIP.String()
 					dm.NetworkInfo.ResponseIp = ip6.DstIP.String()
 					dm.NetworkInfo.Family = dnsutils.PROTO_IPV6
-					fmt.Println(eth)
 
 				case layers.LayerTypeUDP:
 					dm.NetworkInfo.QueryPort = fmt.Sprint(int(udp.SrcPort))
@@ -338,11 +332,14 @@ func (c *DnsSniffer) Run() {
 				}
 				qr := binary.BigEndian.Uint16(dm.DNS.Payload[2:4]) >> 15
 
-				if int(qr) == 0 && c.capturequeries {
-					dns_subprocessor.GetChannel() <- dm
+				// is query ?
+				if int(qr) == 0 && !c.dropQueries {
+					dnsProcessor.GetChannel() <- dm
 				}
-				if int(qr) == 1 && c.capturereplies {
-					dns_subprocessor.GetChannel() <- dm
+
+				// is reply ?
+				if int(qr) == 1 && !c.dropReplies {
+					dnsProcessor.GetChannel() <- dm
 				}
 			}
 		}
@@ -351,7 +348,7 @@ func (c *DnsSniffer) Run() {
 	<-c.exit
 
 	// stop dns processor
-	dns_subprocessor.Stop()
+	dnsProcessor.Stop()
 
 	c.LogInfo("run terminated")
 	c.done <- true

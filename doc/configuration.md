@@ -9,6 +9,7 @@ incoming traffics. A list of examples are available [here](./example-config) and
 - [Global](#global)
   - [Trace](#trace)
   - [Custom text format](#custom-text-format)
+  - [Server identity](#server-identity)
 - [Multiplexer](#multiplexer)
 - [Transforms](#transforms)
   - [Qname lowercase](#qname-lowercase)
@@ -45,19 +46,18 @@ Example:
 INFO: 2022/06/25 20:54:18.173239 main - version 0.0.0
 INFO: 2022/06/25 20:54:18.173271 main - config loaded...
 INFO: 2022/06/25 20:54:18.173277 main - starting dns-collector...
-INFO: 2022/06/25 20:54:18.173369 [console] logger stdout - enabled
-INFO: 2022/06/25 20:54:18.173542 [dtap] dnstap collector - enabled
-INFO: 2022/06/25 20:54:18.173636 [pdns] pdns collector - enabled
-INFO: 2022/06/25 20:54:18.173914 main - running all collectors and loggers...
-INFO: 2022/06/25 20:54:18.173936 [pdns] pdns collector - starting collector...
-INFO: 2022/06/25 20:54:18.173978 [pdns] pdns collector - running in background...
-INFO: 2022/06/25 20:54:18.174196 [pdns] pdns collector - is listening on [::]:6001
-INFO: 2022/06/25 20:54:18.174235 [console] logger to stdout - running in background...
-INFO: 2022/06/25 20:54:18.174244 [dtap] dnstap collector - starting collector...
+....
 INFO: 2022/06/25 20:54:18.174256 [dtap] dnstap collector - running in background...
 INFO: 2022/06/25 20:54:18.174286 [dtap] dnstap collector - is listening on [::]:6000
 ```
+### Server Identity
 
+Set the server identity name. The hostname will be used if empty
+
+```yaml
+global:
+  server-identity: "dns-collector"
+```
 
 ### Custom text format
 

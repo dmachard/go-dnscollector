@@ -16,7 +16,11 @@ global:
     # max-size: 10
     # # maximum number of old log files to retain
     # max-backups: 10
-    
+
+  # Set the server identity name
+  # comment the following line to use the hostname
+  server-identity: "dns-collector"
+
   # all directives for text format output
   # - timestamp-rfc3339ns: timestamp rfc3339 format, with nano support
   # - timestamp-unixms: unix timestamp with ms support
@@ -57,7 +61,7 @@ global:
   # - pdns-tags: powerdns metadata, get all tags separated by comma
   # - pdns-original-request-client: powerdns metadata, get edns subclient
   # - pdns-applied-policy: powerdns metadata, get applied policy
-  # text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
+  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 # create your dns collector, please refer bellow to see the list 
 # of supported collectors, loggers and transformers
@@ -105,20 +109,33 @@ multiplexer:
 #   # dnstap operation name will be replaced with the small form
 #   quiet-text: false
 
-# # dns traffic
-# dns-sniffer:
+# # live capture
+# sniffer:
 #   # filter on source and destination port
 #   port: 53
 #   # if "" bind on all interfaces
 #   device: wlp2s0
-#   # capture dns queries
-#   capture-dns-queries: true
-#   # capture dns replies
-#   capture-dns-replies: true
+#   # drop all queries
+#   drop-queries: true
+#   # drop all replies
+#   drop-replies: true
 #   # The cache is used to compute latency between replies and queries
 #   cache-support: true
 #   # Ttl in second, max time to keep the query record in memory cache
 #   query-timeout: 5
+
+# # ingest pcap file
+# pcap:
+#   # directory to watch for pcap files to ingest
+#   watch-dir: /tmp
+#   # filter only on source and destination port
+#   dns-port: 53
+#   # drop all queries
+#   drop-queries: false
+#   # drop all replies
+#   drop-replies: false
+#   # delete pcap file after ingest
+#   delete-after: false
 
 # # read text file
 # tail:

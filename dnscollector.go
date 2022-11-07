@@ -157,7 +157,7 @@ func main() {
 		if subcfg.Collectors.Dnstap.Enable {
 			mapCollectors[input.Name] = collectors.NewDnstap(nil, subcfg, logger, input.Name)
 		}
-		if subcfg.Collectors.DnsSniffer.Enable {
+		if subcfg.Collectors.LiveCapture.Enable {
 			mapCollectors[input.Name] = collectors.NewDnsSniffer(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.Tail.Enable {
@@ -165,6 +165,9 @@ func main() {
 		}
 		if subcfg.Collectors.PowerDNS.Enable {
 			mapCollectors[input.Name] = collectors.NewProtobufPowerDNS(nil, subcfg, logger, input.Name)
+		}
+		if subcfg.Collectors.IngestPcap.Enable {
+			mapCollectors[input.Name] = collectors.NewIngestPcap(nil, subcfg, logger, input.Name)
 		}
 	}
 
