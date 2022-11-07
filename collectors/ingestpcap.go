@@ -251,8 +251,10 @@ func (c *IngestPcap) Run() {
 		// prepare filepath
 		fn := filepath.Join(c.config.Collectors.IngestPcap.WatchDir, entry.Name())
 
-		// process pcap file
-		go c.ProcessPcap(fn)
+		// process file with pcap extension
+		if filepath.Ext(fn) == ".pcap" {
+			go c.ProcessPcap(fn)
+		}
 	}
 
 	// then watch for new one
@@ -274,8 +276,10 @@ func (c *IngestPcap) Run() {
 					return
 				}
 				if event.Has(fsnotify.Write) {
-					// process pcap file
-					go c.ProcessPcap(event.Name)
+					// process file with pcap extension only
+					if filepath.Ext(event.Name) == ".pcap" {
+						go c.ProcessPcap(event.Name)
+					}
 				}
 			case err, ok := <-c.watcher.Errors:
 				if !ok {
