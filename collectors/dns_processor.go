@@ -76,8 +76,8 @@ func (d *DnsProcessor) Stop() {
 func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 	// dns cache to compute latency between response and query
-	cache_ttl := dnsutils.NewDnsCache(time.Duration(d.config.Collectors.DnsSniffer.QueryTimeout) * time.Second)
-	d.LogInfo("dns cached enabled: %t", d.config.Collectors.DnsSniffer.CacheSupport)
+	cache_ttl := dnsutils.NewDnsCache(time.Duration(d.config.Collectors.LiveCapture.QueryTimeout) * time.Second)
+	d.LogInfo("dns cached enabled: %t", d.config.Collectors.LiveCapture.CacheSupport)
 
 	// geoip
 	geoip := transformers.NewDnsGeoIpProcessor(d.config, d.logger)
@@ -137,7 +137,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		// compute latency if possible
-		if d.config.Collectors.DnsSniffer.CacheSupport {
+		if d.config.Collectors.LiveCapture.CacheSupport {
 			queryport, _ := strconv.Atoi(dm.NetworkInfo.QueryPort)
 			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && !dm.DNS.MalformedPacket {
 				// compute the hash of the query

@@ -149,18 +149,11 @@ func (c *DnsSniffer) Loggers() []chan dnsutils.DnsMessage {
 }
 
 func (c *DnsSniffer) ReadConfig() {
-	c.port = c.config.Collectors.DnsSniffer.Port
-
-	hostname, err := os.Hostname()
-	if err == nil {
-		c.identity = hostname
-	} else {
-		c.identity = "undefined"
-	}
-
-	c.capturequeries = c.config.Collectors.DnsSniffer.CaptureDnsQueries
-	c.capturereplies = c.config.Collectors.DnsSniffer.CaptureDnsReplies
-	c.device = c.config.Collectors.DnsSniffer.Device
+	c.port = c.config.Collectors.LiveCapture.Port
+	c.identity = c.config.GetServerIdentity()
+	c.capturequeries = c.config.Collectors.LiveCapture.CaptureDnsQueries
+	c.capturereplies = c.config.Collectors.LiveCapture.CaptureDnsReplies
+	c.device = c.config.Collectors.LiveCapture.Device
 }
 
 func (c *DnsSniffer) Channel() chan dnsutils.DnsMessage {
@@ -271,7 +264,7 @@ func (c *DnsSniffer) Run() {
 			var tcp layers.TCP
 			var udp layers.UDP
 			parser := gopacket.NewDecodingLayerParser(layers.LayerTypeEthernet, &eth, &ip4, &ip6, &tcp, &udp)
-			decodedLayers := make([]gopacket.LayerType, 0, 10)
+			decodedLayers := make([]gopacket.LayerType, 0, 4)
 
 			// copy packet data from buffer
 			pkt := make([]byte, bufN)
@@ -295,7 +288,6 @@ func (c *DnsSniffer) Run() {
 					dm.NetworkInfo.QueryIp = ip6.SrcIP.String()
 					dm.NetworkInfo.ResponseIp = ip6.DstIP.String()
 					dm.NetworkInfo.Family = dnsutils.PROTO_IPV6
-					fmt.Println(eth)
 
 				case layers.LayerTypeUDP:
 					dm.NetworkInfo.QueryPort = fmt.Sprint(int(udp.SrcPort))

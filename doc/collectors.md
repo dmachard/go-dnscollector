@@ -1,9 +1,10 @@
 # DnsCollector - Collectors Guide
 
 - [DNS tap](#dns-tap)
-- [DNS sniffer](#dns-sniffer)
-- [Tail](#tail)
 - [Protobuf PowerDNS](#protobuf-powerdns)
+- [Tail](#tail)
+- [Live capture](#live capture)
+- [Ingest Pcap](#ingest-pcap)
 
 ## Collectors
 
@@ -59,7 +60,7 @@ The following dns flag message will be replaced with the small form:
 - QUERY: `Q`
 - REPLY: `R`
 
-### DNS sniffer
+### Live Capture
 
 Raw DNS packets sniffer. Setting `CAP_NET_RAW` capabilities on executables allows you to run these
 program without having to run-it with the root user:
@@ -82,7 +83,7 @@ Options:
 Default values:
 
 ```yaml
-dns-sniffer:
+sniffer:
   port: 53
   device: wlp2s0
   capture-dns-queries: true
@@ -116,7 +117,6 @@ tail:
   pattern-query: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_QUERY) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
   pattern-reply: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_RESPONSE) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
 ```
-
 
 ### Protobuf PowerDNS
 
@@ -176,3 +176,7 @@ rpzFile("/etc/pdns-recursor/basic.rpz", {
   tags={"tag"}
 })
 ```
+
+### Ingest Pcap File
+
+This collector enable to ingest multiple pcap file by watching a provided directory.

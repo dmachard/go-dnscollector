@@ -7,7 +7,7 @@ global:
   # If turned on, log some applications messages
   trace:
     # debug informations
-    verbose: true
+    verbose: false
     # log malformed packet
     # log-malformed: false
     # # filename is the file to write logs to.
@@ -16,7 +16,11 @@ global:
     # max-size: 10
     # # maximum number of old log files to retain
     # max-backups: 10
-    
+
+  # Set the server identity name
+  # comment the following line to use the hostname
+  server-identity: "dns-collector"
+
   # all directives for text format output
   # - timestamp-rfc3339ns: timestamp rfc3339 format, with nano support
   # - timestamp-unixms: unix timestamp with ms support
@@ -63,10 +67,9 @@ global:
 # of supported collectors, loggers and transformers
 multiplexer:
   collectors:
-    - name: tap
-      dnstap:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
+    - name: ingestpcap
+      pcap:
+        watch-dir: /tmp/
 
   loggers:
     - name: console
@@ -74,7 +77,7 @@ multiplexer:
         mode: text
 
   routes:
-    - from: [ tap ]
+    - from: [ ingestpcap ]
       to: [ console ]
 
 ################################################
@@ -105,8 +108,8 @@ multiplexer:
 #   # dnstap operation name will be replaced with the small form
 #   quiet-text: false
 
-# # dns traffic
-# dns-sniffer:
+# # live capture
+# sniffer:
 #   # filter on source and destination port
 #   port: 53
 #   # if "" bind on all interfaces
