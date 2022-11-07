@@ -3,7 +3,7 @@
 - [DNS tap](#dns-tap)
 - [Protobuf PowerDNS](#protobuf-powerdns)
 - [Tail](#tail)
-- [Live capture](#live capture)
+- [Live capture](#live-capture)
 - [Ingest Pcap](#ingest-pcap)
 
 ## Collectors
