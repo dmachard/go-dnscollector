@@ -21,11 +21,13 @@ func GetFakeDns() ([]byte, error) {
 }
 
 type DnsProcessor struct {
-	done     chan bool
-	recvFrom chan dnsutils.DnsMessage
-	logger   *logger.Logger
-	config   *dnsutils.Config
-	name     string
+	done         chan bool
+	recvFrom     chan dnsutils.DnsMessage
+	logger       *logger.Logger
+	config       *dnsutils.Config
+	cacheSupport bool
+	queryTimeout int
+	name         string
 }
 
 func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string) DnsProcessor {
@@ -44,7 +46,8 @@ func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string
 }
 
 func (d *DnsProcessor) ReadConfig() {
-	// todo - checking settings
+	d.cacheSupport = false
+	d.queryTimeout = 5
 }
 
 func (c *DnsProcessor) LogInfo(msg string, v ...interface{}) {
@@ -76,8 +79,8 @@ func (d *DnsProcessor) Stop() {
 func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 	// dns cache to compute latency between response and query
-	cache_ttl := dnsutils.NewDnsCache(time.Duration(d.config.Collectors.LiveCapture.QueryTimeout) * time.Second)
-	d.LogInfo("dns cached enabled: %t", d.config.Collectors.LiveCapture.CacheSupport)
+	cache_ttl := dnsutils.NewDnsCache(time.Duration(d.queryTimeout) * time.Second)
+	d.LogInfo("dns cached enabled: %t", d.cacheSupport)
 
 	// geoip
 	geoip := transformers.NewDnsGeoIpProcessor(d.config, d.logger)

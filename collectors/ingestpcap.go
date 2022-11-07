@@ -18,18 +18,18 @@ import (
 )
 
 type IngestPcap struct {
-	done        chan bool
-	exit        chan bool
-	loggers     []dnsutils.Worker
-	config      *dnsutils.Config
-	logger      *logger.Logger
-	watcher     *fsnotify.Watcher
-	dnsParser   DnsProcessor
-	dropQueries bool
-	dropReplies bool
-	dnsPort     int
-	identity    string
-	name        string
+	done         chan bool
+	exit         chan bool
+	loggers      []dnsutils.Worker
+	config       *dnsutils.Config
+	logger       *logger.Logger
+	watcher      *fsnotify.Watcher
+	dnsProcessor DnsProcessor
+	dropQueries  bool
+	dropReplies  bool
+	dnsPort      int
+	identity     string
+	name         string
 }
 
 func NewIngestPcap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *IngestPcap {
@@ -208,12 +208,12 @@ func (c *IngestPcap) ProcessPcap(filePath string) error {
 
 			// is query ?
 			if int(qr) == 0 && !c.dropQueries {
-				c.dnsParser.GetChannel() <- dm
+				c.dnsProcessor.GetChannel() <- dm
 			}
 
 			// is reply
 			if int(qr) == 1 && !c.dropReplies {
-				c.dnsParser.GetChannel() <- dm
+				c.dnsProcessor.GetChannel() <- dm
 			}
 		}
 
@@ -231,8 +231,10 @@ func (c *IngestPcap) ProcessPcap(filePath string) error {
 func (c *IngestPcap) Run() {
 	c.LogInfo("starting collector...")
 
-	c.dnsParser = NewDnsProcessor(c.config, c.logger, c.name)
-	go c.dnsParser.Run(c.Loggers())
+	c.dnsProcessor = NewDnsProcessor(c.config, c.logger, c.name)
+	c.dnsProcessor.cacheSupport = c.config.Collectors.LiveCapture.CacheSupport
+	c.dnsProcessor.queryTimeout = c.config.Collectors.LiveCapture.QueryTimeout
+	go c.dnsProcessor.Run(c.Loggers())
 
 	// read folder content
 	entries, err := os.ReadDir(c.config.Collectors.IngestPcap.WatchDir)
@@ -287,7 +289,7 @@ func (c *IngestPcap) Run() {
 	<-c.exit
 
 	// stop dns processor
-	c.dnsParser.Stop()
+	c.dnsProcessor.Stop()
 
 	c.LogInfo("run terminated")
 	c.done <- true

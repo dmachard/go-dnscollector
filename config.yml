@@ -7,7 +7,7 @@ global:
   # If turned on, log some applications messages
   trace:
     # debug informations
-    verbose: false
+    verbose: true
     # log malformed packet
     # log-malformed: false
     # # filename is the file to write logs to.
@@ -61,15 +61,16 @@ global:
   # - pdns-tags: powerdns metadata, get all tags separated by comma
   # - pdns-original-request-client: powerdns metadata, get edns subclient
   # - pdns-applied-policy: powerdns metadata, get applied policy
-  # text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
+  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 # create your dns collector, please refer bellow to see the list 
 # of supported collectors, loggers and transformers
 multiplexer:
   collectors:
-    - name: ingestpcap
-      pcap:
-        watch-dir: /tmp/
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
 
   loggers:
     - name: console
@@ -77,7 +78,7 @@ multiplexer:
         mode: text
 
   routes:
-    - from: [ ingestpcap ]
+    - from: [ tap ]
       to: [ console ]
 
 ################################################

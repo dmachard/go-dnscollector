@@ -222,8 +222,10 @@ func (c *DnsSniffer) Run() {
 		}
 	}
 
-	dns_subprocessor := NewDnsProcessor(c.config, c.logger, c.name)
-	go dns_subprocessor.Run(c.Loggers())
+	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name)
+	dnsProcessor.cacheSupport = c.config.Collectors.LiveCapture.CacheSupport
+	dnsProcessor.queryTimeout = c.config.Collectors.LiveCapture.QueryTimeout
+	go dnsProcessor.Run(c.Loggers())
 
 	go func() {
 		buf := make([]byte, 65536)
@@ -332,12 +334,12 @@ func (c *DnsSniffer) Run() {
 
 				// is query ?
 				if int(qr) == 0 && !c.dropQueries {
-					dns_subprocessor.GetChannel() <- dm
+					dnsProcessor.GetChannel() <- dm
 				}
 
 				// is reply ?
 				if int(qr) == 1 && !c.dropReplies {
-					dns_subprocessor.GetChannel() <- dm
+					dnsProcessor.GetChannel() <- dm
 				}
 			}
 		}
@@ -346,7 +348,7 @@ func (c *DnsSniffer) Run() {
 	<-c.exit
 
 	// stop dns processor
-	dns_subprocessor.Stop()
+	dnsProcessor.Stop()
 
 	c.LogInfo("run terminated")
 	c.done <- true
