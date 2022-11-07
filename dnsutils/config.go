@@ -80,13 +80,13 @@ type Config struct {
 			QuietText     bool   `yaml:"quiet-text"`
 		} `yaml:"dnstap"`
 		LiveCapture struct {
-			Enable            bool   `yaml:"enable"`
-			Port              int    `yaml:"port"`
-			Device            string `yaml:"device"`
-			CaptureDnsQueries bool   `yaml:"capture-dns-queries"`
-			CaptureDnsReplies bool   `yaml:"capture-dns-replies"`
-			CacheSupport      bool   `yaml:"cache-support"`
-			QueryTimeout      int    `yaml:"query-timeout"`
+			Enable       bool   `yaml:"enable"`
+			Port         int    `yaml:"port"`
+			Device       string `yaml:"device"`
+			DropQueries  bool   `yaml:"drop-queries"`
+			DropReplies  bool   `yaml:"drop-replies"`
+			CacheSupport bool   `yaml:"cache-support"`
+			QueryTimeout int    `yaml:"query-timeout"`
 		} `yaml:"sniffer"`
 		PowerDNS struct {
 			Enable        bool   `yaml:"enable"`
@@ -104,6 +104,7 @@ type Config struct {
 			DnsPort     int    `yaml:"dns-port"`
 			DropQueries bool   `yaml:"drop-queries"`
 			DropReplies bool   `yaml:"drop-replies"`
+			DeleteAfter bool   `yaml:"delete-after"`
 		} `yaml:"pcap"`
 	} `yaml:"collectors"`
 
@@ -330,8 +331,8 @@ func (c *Config) SetDefault() {
 	c.Collectors.LiveCapture.Enable = false
 	c.Collectors.LiveCapture.Port = 53
 	c.Collectors.LiveCapture.Device = ""
-	c.Collectors.LiveCapture.CaptureDnsQueries = true
-	c.Collectors.LiveCapture.CaptureDnsReplies = true
+	c.Collectors.LiveCapture.DropQueries = false
+	c.Collectors.LiveCapture.DropReplies = false
 	c.Collectors.LiveCapture.QueryTimeout = 5
 	c.Collectors.LiveCapture.CacheSupport = true
 
@@ -349,6 +350,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.IngestPcap.DnsPort = 53
 	c.Collectors.IngestPcap.DropQueries = false
 	c.Collectors.IngestPcap.DropReplies = false
+	c.Collectors.IngestPcap.DeleteAfter = false
 
 	// Transformers
 	c.Transformers.UserPrivacy.AnonymizeIP = false

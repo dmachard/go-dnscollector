@@ -114,14 +114,27 @@ multiplexer:
 #   port: 53
 #   # if "" bind on all interfaces
 #   device: wlp2s0
-#   # capture dns queries
-#   capture-dns-queries: true
-#   # capture dns replies
-#   capture-dns-replies: true
+#   # drop all queries
+#   drop-queries: true
+#   # drop all replies
+#   drop-replies: true
 #   # The cache is used to compute latency between replies and queries
 #   cache-support: true
 #   # Ttl in second, max time to keep the query record in memory cache
 #   query-timeout: 5
+
+# # ingest pcap file
+# pcap:
+#   # directory to watch for pcap files to ingest
+#   watch-dir: /tmp
+#   # filter only on source and destination port
+#   dns-port: 53
+#   # drop all queries
+#   drop-queries: false
+#   # drop all replies
+#   drop-replies: false
+#   # delete pcap file after ingest
+#   delete-after: false
 
 # # read text file
 # tail:

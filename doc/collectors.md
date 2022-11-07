@@ -75,8 +75,8 @@ sudo setcap cap_net_admin,cap_net_raw=eip go-dnscollector
 Options:
 - `port`: (integer) filter on source and destination port
 - `device`: (string) if "" bind on all interfaces
-- `capture-dns-queries`: (boolean) capture dns queries
-- `capture-dns-replies`: (boolean) capture dns replies
+- `drop-queries`: (boolean) drop all queries
+- `drop-replies`: (boolean) drop all replies
 - `cache-support`: (boolean) disable or enable the cache dns to compute latency between queries and replies
 - `query-timeout`: (integer) in second, max time to keep the query record in memory
 
@@ -86,8 +86,8 @@ Default values:
 sniffer:
   port: 53
   device: wlp2s0
-  capture-dns-queries: true
-  capture-dns-replies: true
+  drop-queries: false
+  drop-replies: false
   cache-support: true
   query-timeout: 5.0
 ```
@@ -179,4 +179,22 @@ rpzFile("/etc/pdns-recursor/basic.rpz", {
 
 ### Ingest Pcap File
 
-This collector enable to ingest multiple pcap file by watching a provided directory.
+This collector enable to ingest multiple pcap files by watching the provided directory.
+
+Options:
+- `watch-dir`: (string) directory to watch for pcap files ingest
+- `dns-port`: (integer) dns source or destination port
+- `drop-queries`: (boolean) drop all queries if enabled
+- `drop-replies:`: (boolean) drop all replies if enabled
+- `delete-after:`: (boolean) delete pcap file after ingest
+
+Default values:
+
+```yaml
+pcap:
+  watch-dir: /tmp
+  dns-port: 53
+  drop-queries: false
+  drop-replies: false
+  delete-after: false
+```

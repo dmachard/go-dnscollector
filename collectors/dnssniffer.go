@@ -98,18 +98,18 @@ func RemoveBpfFilter(fd int) (err error) {
 }
 
 type DnsSniffer struct {
-	done           chan bool
-	exit           chan bool
-	fd             int
-	port           int
-	device         string
-	capturequeries bool
-	capturereplies bool
-	identity       string
-	loggers        []dnsutils.Worker
-	config         *dnsutils.Config
-	logger         *logger.Logger
-	name           string
+	done        chan bool
+	exit        chan bool
+	fd          int
+	port        int
+	device      string
+	dropQueries bool
+	dropReplies bool
+	identity    string
+	loggers     []dnsutils.Worker
+	config      *dnsutils.Config
+	logger      *logger.Logger
+	name        string
 }
 
 func NewDnsSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *DnsSniffer {
@@ -151,8 +151,8 @@ func (c *DnsSniffer) Loggers() []chan dnsutils.DnsMessage {
 func (c *DnsSniffer) ReadConfig() {
 	c.port = c.config.Collectors.LiveCapture.Port
 	c.identity = c.config.GetServerIdentity()
-	c.capturequeries = c.config.Collectors.LiveCapture.CaptureDnsQueries
-	c.capturereplies = c.config.Collectors.LiveCapture.CaptureDnsReplies
+	c.dropQueries = c.config.Collectors.LiveCapture.DropQueries
+	c.dropReplies = c.config.Collectors.LiveCapture.DropReplies
 	c.device = c.config.Collectors.LiveCapture.Device
 }
 
@@ -330,10 +330,13 @@ func (c *DnsSniffer) Run() {
 				}
 				qr := binary.BigEndian.Uint16(dm.DNS.Payload[2:4]) >> 15
 
-				if int(qr) == 0 && c.capturequeries {
+				// is query ?
+				if int(qr) == 0 && !c.dropQueries {
 					dns_subprocessor.GetChannel() <- dm
 				}
-				if int(qr) == 1 && c.capturereplies {
+
+				// is reply ?
+				if int(qr) == 1 && !c.dropReplies {
 					dns_subprocessor.GetChannel() <- dm
 				}
 			}

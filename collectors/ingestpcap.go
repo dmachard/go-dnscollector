@@ -127,7 +127,7 @@ func (c *IngestPcap) ProcessPcap(filePath string) error {
 	packets := gopacket.NewPacketSource(pcapHandler, pcapHandler.LinkType())
 	for {
 		packet, err := packets.NextPacket()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -197,7 +197,7 @@ func (c *IngestPcap) ProcessPcap(filePath string) error {
 			dm.DnsTap.Identity = c.identity
 
 			// set timestamp
-			dm.DnsTap.TimeSec = int(packet.Metadata().Timestamp.Second())
+			dm.DnsTap.TimeSec = packet.Metadata().Timestamp.Second()
 			dm.DnsTap.TimeNsec = int(packet.Metadata().Timestamp.UnixNano())
 
 			// just decode QR
@@ -220,6 +220,10 @@ func (c *IngestPcap) ProcessPcap(filePath string) error {
 	}
 	// remove it ?
 	c.LogInfo("ingest [%s] terminated", filePath)
+	if c.config.Collectors.IngestPcap.DeleteAfter {
+		c.LogInfo("delete file [%s]", filePath)
+		os.Remove(filePath)
+	}
 
 	return nil
 }
