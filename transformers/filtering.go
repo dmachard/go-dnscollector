@@ -58,7 +58,7 @@ func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger, name 
 	d.LoadDomainsList()
 	d.LoadQueryIpList()
 
-  d.LoadActiveFilters()
+	d.LoadActiveFilters()
 
 	//go d.Run()
 	return d
@@ -98,7 +98,7 @@ func (p *FilteringProcessor) LoadActiveFilters() {
 	if len(p.listKeepDomainsRegex) > 0 {
 		p.activeFilters = append(p.activeFilters, p.keepDomainRegexFilter)
 	}
-	
+
 	// set downsample if desired
 	if p.config.Transformers.Filtering.Downsample > 0 {
 		p.downsample = p.config.Transformers.Filtering.Downsample
@@ -106,7 +106,6 @@ func (p *FilteringProcessor) LoadActiveFilters() {
 		p.activeFilters = append(p.activeFilters, p.downsampleFilter)
 	}
 }
-
 
 func (p *FilteringProcessor) LoadRcodes() {
 	for _, v := range p.config.Transformers.Filtering.DropRcodes {
@@ -342,15 +341,14 @@ func (p *FilteringProcessor) keepDomainRegexFilter(dm *dnsutils.DnsMessage) bool
 func (p *FilteringProcessor) downsampleFilter(dm *dnsutils.DnsMessage) bool {
 	// drop all except every nth entry
 	p.downsampleCount += 1
-		if p.downsampleCount % p.downsample != 0 {
-			return true
-		} else if p.downsampleCount % p.downsample == 0 {
-			p.downsampleCount = 0
-			return false
-		}
+	if p.downsampleCount%p.downsample != 0 {
+		return true
+	} else if p.downsampleCount%p.downsample == 0 {
+		p.downsampleCount = 0
+		return false
+	}
 	return true
 }
-
 
 func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DnsMessage) bool {
 	if len(p.activeFilters) == 0 {
@@ -358,7 +356,7 @@ func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DnsMessage) bool {
 	}
 
 	var value bool
-	for _, fn := range(p.activeFilters) {
+	for _, fn := range p.activeFilters {
 		value = fn(dm)
 		if value == true {
 			return true

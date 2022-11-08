@@ -253,13 +253,11 @@ func TestFilteringByDownsample(t *testing.T) {
 
 }
 
-
-
 func TestFilteringMultipleFilters(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfig()
 	config.Transformers.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
-  config.Transformers.Filtering.DropQueryIpFile = "../testsdata/filtering_queryip.txt"
+	config.Transformers.Filtering.DropQueryIpFile = "../testsdata/filtering_queryip.txt"
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -279,14 +277,14 @@ func TestFilteringMultipleFilters(t *testing.T) {
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}
-  
-  dm.NetworkInfo.QueryIp = "192.168.1.15"
-  if filtering.CheckIfDrop(&dm) == false {
+
+	dm.NetworkInfo.QueryIp = "192.168.1.15"
+	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}
 
 	dm.NetworkInfo.QueryIp = "192.0.2.3" // dropped by subnet
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
-	}  
+	}
 }
