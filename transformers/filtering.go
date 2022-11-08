@@ -29,7 +29,7 @@ type FilteringProcessor struct {
 	name                 string
 	downsample           int
 	downsampleCount      int
-  activeFilters        []func(dm *dnsutils.DnsMessage) bool
+	activeFilters        []func(dm *dnsutils.DnsMessage) bool
 }
 
 func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger, name string) FilteringProcessor {
