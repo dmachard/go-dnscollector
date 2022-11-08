@@ -1,20 +1,21 @@
-# DnsCollector - Configuration Guide
+# DNS-collector - Configuration Guide
 
-A typically configuration would have one or more collector to receive DNS traffic or logs, and severals loggers to process the
-incoming traffics.
+The configuration of DNS-collector is done through one yaml file named `config.yml`. When the DNS-collector starts, it will look for the config.yml from the current working directory. 
 
-The configuration is done in one yaml file. For the complete configuration, see [config](https://github.com/dmachard/go-dnscollector/blob/main/config.yml).
+A typically configuration would have one or more collector to receive DNS traffic, and severals loggers to process the
+incoming traffics. A list of examples are available [here](./example-config) and the default one [here](https://github.com/dmachard/go-dnscollector/blob/main/config.yml).
+
 
 - [Global](#global)
   - [Trace](#trace)
   - [Custom text format](#custom-text-format)
+  - [Server identity](#server-identity)
 - [Multiplexer](#multiplexer)
 - [Transforms](#transforms)
   - [Qname lowercase](#qname-lowercase)
   - [User privacy](#user-privacy)
   - [GeoIP Support](#geoip-support)
   - [DNS filtering](#dns-filtering)
-  - [Statistics](#statistics)
 
 ## Global
 
@@ -45,19 +46,18 @@ Example:
 INFO: 2022/06/25 20:54:18.173239 main - version 0.0.0
 INFO: 2022/06/25 20:54:18.173271 main - config loaded...
 INFO: 2022/06/25 20:54:18.173277 main - starting dns-collector...
-INFO: 2022/06/25 20:54:18.173369 [console] logger stdout - enabled
-INFO: 2022/06/25 20:54:18.173542 [dtap] dnstap collector - enabled
-INFO: 2022/06/25 20:54:18.173636 [pdns] pdns collector - enabled
-INFO: 2022/06/25 20:54:18.173914 main - running all collectors and loggers...
-INFO: 2022/06/25 20:54:18.173936 [pdns] pdns collector - starting collector...
-INFO: 2022/06/25 20:54:18.173978 [pdns] pdns collector - running in background...
-INFO: 2022/06/25 20:54:18.174196 [pdns] pdns collector - is listening on [::]:6001
-INFO: 2022/06/25 20:54:18.174235 [console] logger to stdout - running in background...
-INFO: 2022/06/25 20:54:18.174244 [dtap] dnstap collector - starting collector...
+....
 INFO: 2022/06/25 20:54:18.174256 [dtap] dnstap collector - running in background...
 INFO: 2022/06/25 20:54:18.174286 [dtap] dnstap collector - is listening on [::]:6000
 ```
+### Server Identity
 
+Set the server identity name. The hostname will be used if empty
+
+```yaml
+global:
+  server-identity: "dns-collector"
+```
 
 ### Custom text format
 
@@ -143,7 +143,6 @@ Some transformations can be done after the collect.
 ### Qname lowercase
 
 Option to convert all domain to lowercase. For example: `Wwww.GooGlE.com` will be equal to `www.google.com`
-This feature is enabled by default.
 
 Options:
 - `qname-lowercase`: (boolean) enable or disable lowercase

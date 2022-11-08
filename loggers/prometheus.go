@@ -50,20 +50,24 @@ type Prometheus struct {
 	requesters map[string]map[string]int
 	domains    map[string]map[string]int
 	nxdomains  map[string]map[string]int
+	sfdomains  map[string]map[string]int
 
 	topDomains    map[string]*topmap.TopMap
 	topNxDomains  map[string]*topmap.TopMap
+	topSfDomains  map[string]*topmap.TopMap
 	topRequesters map[string]*topmap.TopMap
 
 	requestersUniq map[string]int
 	domainsUniq    map[string]int
 	nxdomainsUniq  map[string]int
+	sfdomainsUniq  map[string]int
 
 	streamsMap map[string]*EpsCounters
 
 	gaugeBuildInfo     *prometheus.GaugeVec
 	gaugeTopDomains    *prometheus.GaugeVec
 	gaugeTopNxDomains  *prometheus.GaugeVec
+	gaugeTopSfDomains  *prometheus.GaugeVec
 	gaugeTopRequesters *prometheus.GaugeVec
 
 	gaugeEps    *prometheus.GaugeVec
@@ -75,10 +79,12 @@ type Prometheus struct {
 
 	counterDomains    *prometheus.CounterVec
 	counterDomainsNx  *prometheus.CounterVec
+	counterDomainsSf  *prometheus.CounterVec
 	counterRequesters *prometheus.CounterVec
 
 	counterDomainsUniq    *prometheus.CounterVec
 	counterDomainsNxUniq  *prometheus.CounterVec
+	counterDomainsSfUniq  *prometheus.CounterVec
 	counterRequestersUniq *prometheus.CounterVec
 
 	histogramQueriesLength *prometheus.HistogramVec
@@ -103,14 +109,17 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 		requesters: make(map[string]map[string]int),
 		domains:    make(map[string]map[string]int),
 		nxdomains:  make(map[string]map[string]int),
+		sfdomains:  make(map[string]map[string]int),
 
 		topDomains:    make(map[string]*topmap.TopMap),
 		topNxDomains:  make(map[string]*topmap.TopMap),
+		topSfDomains:  make(map[string]*topmap.TopMap),
 		topRequesters: make(map[string]*topmap.TopMap),
 
 		requestersUniq: make(map[string]int),
 		domainsUniq:    make(map[string]int),
 		nxdomainsUniq:  make(map[string]int),
+		sfdomainsUniq:  make(map[string]int),
 
 		streamsMap: make(map[string]*EpsCounters),
 
@@ -164,6 +173,15 @@ func (o *Prometheus) InitProm() {
 		[]string{"stream_id", "domain"},
 	)
 	o.promRegistry.MustRegister(o.gaugeTopNxDomains)
+
+	o.gaugeTopSfDomains = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: fmt.Sprintf("%s_top_sfdomains_total", prom_prefix),
+			Help: "Number of hit per servfail domain topN, partitioned by qname",
+		},
+		[]string{"stream_id", "domain"},
+	)
+	o.promRegistry.MustRegister(o.gaugeTopSfDomains)
 
 	o.gaugeTopRequesters = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -290,6 +308,15 @@ func (o *Prometheus) InitProm() {
 	)
 	o.promRegistry.MustRegister(o.counterDomainsNx)
 
+	o.counterDomainsSf = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: fmt.Sprintf("%s_domains_sf_count", prom_prefix),
+			Help: "The total number of unreachable domains per stream identity",
+		},
+		[]string{"stream_id"},
+	)
+	o.promRegistry.MustRegister(o.counterDomainsSf)
+
 	o.counterRequesters = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: fmt.Sprintf("%s_requesters_count", prom_prefix),
@@ -316,6 +343,15 @@ func (o *Prometheus) InitProm() {
 		[]string{},
 	)
 	o.promRegistry.MustRegister(o.counterDomainsNxUniq)
+
+	o.counterDomainsSfUniq = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: fmt.Sprintf("%s_domains_sf_count_uniq", prom_prefix),
+			Help: "The total number of uniq unreachable domains per stream identity",
+		},
+		[]string{},
+	)
+	o.promRegistry.MustRegister(o.counterDomainsSfUniq)
 
 	o.counterRequestersUniq = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -413,38 +449,37 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	}
 
 	/* count all domains name and top domains */
-	if dm.DNS.Rcode != "NXDOMAIN" {
-		if _, exists := o.domainsUniq[dm.DNS.Qname]; !exists {
-			o.domainsUniq[dm.DNS.Qname] = 1
-			o.counterDomainsUniq.WithLabelValues().Inc()
+	if dm.DNS.Rcode == "SERVFAIL" {
+		/* record and count all unreachable domains name and topN*/
+		if _, exists := o.sfdomainsUniq[dm.DNS.Qname]; !exists {
+			o.sfdomainsUniq[dm.DNS.Qname] = 1
+			o.counterDomainsSfUniq.WithLabelValues().Inc()
 		} else {
-			o.domainsUniq[dm.DNS.Qname] += 1
+			o.sfdomainsUniq[dm.DNS.Qname] += 1
 		}
 
-		if _, exists := o.domains[dm.DnsTap.Identity]; !exists {
-			o.domains[dm.DnsTap.Identity] = make(map[string]int)
+		if _, exists := o.sfdomains[dm.DnsTap.Identity]; !exists {
+			o.sfdomains[dm.DnsTap.Identity] = make(map[string]int)
 		}
-
-		if _, exists := o.domains[dm.DnsTap.Identity][dm.DNS.Qname]; !exists {
-			o.domains[dm.DnsTap.Identity][dm.DNS.Qname] = 1
-			o.counterDomains.WithLabelValues(dm.DnsTap.Identity).Inc()
+		if _, exists := o.sfdomains[dm.DnsTap.Identity][dm.DNS.Qname]; !exists {
+			o.sfdomains[dm.DnsTap.Identity][dm.DNS.Qname] = 1
+			o.counterDomainsSf.WithLabelValues(dm.DnsTap.Identity).Inc()
 		} else {
-			o.domains[dm.DnsTap.Identity][dm.DNS.Qname] += 1
+			o.sfdomains[dm.DnsTap.Identity][dm.DNS.Qname] += 1
 		}
 
-		if _, ok := o.topDomains[dm.DnsTap.Identity]; !ok {
-			o.topDomains[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
+		if _, ok := o.topSfDomains[dm.DnsTap.Identity]; !ok {
+			o.topSfDomains[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
 		}
-		o.topDomains[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
+		o.topSfDomains[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.sfdomains[dm.DnsTap.Identity][dm.DNS.Qname])
 
-		o.gaugeTopDomains.Reset()
-		for s := range o.topDomains {
-			for _, r := range o.topDomains[s].Get() {
-				o.gaugeTopDomains.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+		o.gaugeTopSfDomains.Reset()
+		for s := range o.topSfDomains {
+			for _, r := range o.topSfDomains[s].Get() {
+				o.gaugeTopSfDomains.WithLabelValues(s, r.Name).Set(float64(r.Hit))
 			}
 		}
-	} else {
-
+	} else if dm.DNS.Rcode == "NXDOMAIN" {
 		/* record and count all nx domains name and topN*/
 		if _, exists := o.nxdomainsUniq[dm.DNS.Qname]; !exists {
 			o.nxdomainsUniq[dm.DNS.Qname] = 1
@@ -472,6 +507,36 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 		for s := range o.topNxDomains {
 			for _, r := range o.topNxDomains[s].Get() {
 				o.gaugeTopNxDomains.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+			}
+		}
+	} else {
+		if _, exists := o.domainsUniq[dm.DNS.Qname]; !exists {
+			o.domainsUniq[dm.DNS.Qname] = 1
+			o.counterDomainsUniq.WithLabelValues().Inc()
+		} else {
+			o.domainsUniq[dm.DNS.Qname] += 1
+		}
+
+		if _, exists := o.domains[dm.DnsTap.Identity]; !exists {
+			o.domains[dm.DnsTap.Identity] = make(map[string]int)
+		}
+
+		if _, exists := o.domains[dm.DnsTap.Identity][dm.DNS.Qname]; !exists {
+			o.domains[dm.DnsTap.Identity][dm.DNS.Qname] = 1
+			o.counterDomains.WithLabelValues(dm.DnsTap.Identity).Inc()
+		} else {
+			o.domains[dm.DnsTap.Identity][dm.DNS.Qname] += 1
+		}
+
+		if _, ok := o.topDomains[dm.DnsTap.Identity]; !ok {
+			o.topDomains[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
+		}
+		o.topDomains[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
+
+		o.gaugeTopDomains.Reset()
+		for s := range o.topDomains {
+			for _, r := range o.topDomains[s].Get() {
+				o.gaugeTopDomains.WithLabelValues(s, r.Name).Set(float64(r.Hit))
 			}
 		}
 	}

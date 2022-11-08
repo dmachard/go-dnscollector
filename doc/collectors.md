@@ -1,9 +1,10 @@
 # DnsCollector - Collectors Guide
 
 - [DNS tap](#dns-tap)
-- [DNS sniffer](#dns-sniffer)
-- [Tail](#tail)
 - [Protobuf PowerDNS](#protobuf-powerdns)
+- [Tail](#tail)
+- [Live capture](#live-capture)
+- [Ingest Pcap](#ingest-pcap)
 
 ## Collectors
 
@@ -59,7 +60,7 @@ The following dns flag message will be replaced with the small form:
 - QUERY: `Q`
 - REPLY: `R`
 
-### DNS sniffer
+### Live Capture
 
 Raw DNS packets sniffer. Setting `CAP_NET_RAW` capabilities on executables allows you to run these
 program without having to run-it with the root user:
@@ -74,19 +75,19 @@ sudo setcap cap_net_admin,cap_net_raw=eip go-dnscollector
 Options:
 - `port`: (integer) filter on source and destination port
 - `device`: (string) if "" bind on all interfaces
-- `capture-dns-queries`: (boolean) capture dns queries
-- `capture-dns-replies`: (boolean) capture dns replies
+- `drop-queries`: (boolean) drop all queries
+- `drop-replies`: (boolean) drop all replies
 - `cache-support`: (boolean) disable or enable the cache dns to compute latency between queries and replies
 - `query-timeout`: (integer) in second, max time to keep the query record in memory
 
 Default values:
 
 ```yaml
-dns-sniffer:
+sniffer:
   port: 53
   device: wlp2s0
-  capture-dns-queries: true
-  capture-dns-replies: true
+  drop-queries: false
+  drop-replies: false
   cache-support: true
   query-timeout: 5.0
 ```
@@ -116,7 +117,6 @@ tail:
   pattern-query: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_QUERY) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
   pattern-reply: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_RESPONSE) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
 ```
-
 
 ### Protobuf PowerDNS
 
@@ -175,4 +175,27 @@ rpzFile("/etc/pdns-recursor/basic.rpz", {
   policyName="custom",
   tags={"tag"}
 })
+```
+
+### Ingest Pcap
+
+This collector enable to ingest multiple pcap files by watching a directory.
+Make sure the PCAP is complete before moving the file to the directory so that file data is not truncated. 
+
+Options:
+- `watch-dir`: (string) directory to watch for pcap files ingest
+- `dns-port`: (integer) dns source or destination port
+- `drop-queries`: (boolean) drop all queries if enabled
+- `drop-replies:`: (boolean) drop all replies if enabled
+- `delete-after:`: (boolean) delete pcap file after ingest
+
+Default values:
+
+```yaml
+pcap:
+  watch-dir: /tmp
+  dns-port: 53
+  drop-queries: false
+  drop-replies: false
+  delete-after: false
 ```

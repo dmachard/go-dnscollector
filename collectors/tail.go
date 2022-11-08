@@ -133,14 +133,14 @@ func (c *Tail) Run() {
 			re = regexp.MustCompile(c.config.Collectors.Tail.PatternQuery)
 			matches = re.FindStringSubmatch(line.Text)
 			dm.DNS.Type = dnsutils.DnsQuery
-			dm.DnsTap.Operation = "QUERY"
+			dm.DnsTap.Operation = dnsutils.DNSTAP_OPERATION_QUERY
 		}
 
 		if len(c.config.Collectors.Tail.PatternReply) > 0 && len(matches) == 0 {
 			re = regexp.MustCompile(c.config.Collectors.Tail.PatternReply)
 			matches = re.FindStringSubmatch(line.Text)
 			dm.DNS.Type = dnsutils.DnsReply
-			dm.DnsTap.Operation = "REPLY"
+			dm.DnsTap.Operation = dnsutils.DNSTAP_OPERATION_REPLY
 		}
 
 		if len(matches) == 0 {
@@ -203,14 +203,14 @@ func (c *Tail) Run() {
 		if familyIndex != -1 {
 			dm.NetworkInfo.Family = matches[familyIndex]
 		} else {
-			dm.NetworkInfo.Family = "INET"
+			dm.NetworkInfo.Family = dnsutils.PROTO_IPV4
 		}
 
 		protocolIndex := re.SubexpIndex("protocol")
 		if protocolIndex != -1 {
 			dm.NetworkInfo.Protocol = matches[protocolIndex]
 		} else {
-			dm.NetworkInfo.Protocol = "UDP"
+			dm.NetworkInfo.Protocol = dnsutils.PROTO_UDP
 		}
 
 		lengthIndex := re.SubexpIndex("length")

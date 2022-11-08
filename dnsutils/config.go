@@ -55,6 +55,7 @@ type Config struct {
 			MaxSize      int    `yaml:"max-size"`
 			MaxBackups   int    `yaml:"max-backups"`
 		} `yaml:"trace"`
+		ServerIdentity string `yaml:"server-identity"`
 	} `yaml:"global"`
 
 	Collectors struct {
@@ -78,15 +79,15 @@ type Config struct {
 			QueryTimeout  int    `yaml:"query-timeout"`
 			QuietText     bool   `yaml:"quiet-text"`
 		} `yaml:"dnstap"`
-		DnsSniffer struct {
-			Enable            bool   `yaml:"enable"`
-			Port              int    `yaml:"port"`
-			Device            string `yaml:"device"`
-			CaptureDnsQueries bool   `yaml:"capture-dns-queries"`
-			CaptureDnsReplies bool   `yaml:"capture-dns-replies"`
-			CacheSupport      bool   `yaml:"cache-support"`
-			QueryTimeout      int    `yaml:"query-timeout"`
-		} `yaml:"dns-sniffer"`
+		LiveCapture struct {
+			Enable       bool   `yaml:"enable"`
+			Port         int    `yaml:"port"`
+			Device       string `yaml:"device"`
+			DropQueries  bool   `yaml:"drop-queries"`
+			DropReplies  bool   `yaml:"drop-replies"`
+			CacheSupport bool   `yaml:"cache-support"`
+			QueryTimeout int    `yaml:"query-timeout"`
+		} `yaml:"sniffer"`
 		PowerDNS struct {
 			Enable        bool   `yaml:"enable"`
 			ListenIP      string `yaml:"listen-ip"`
@@ -97,6 +98,14 @@ type Config struct {
 			CertFile      string `yaml:"cert-file"`
 			KeyFile       string `yaml:"key-file"`
 		} `yaml:"powerdns"`
+		IngestPcap struct {
+			Enable      bool   `yaml:"enable"`
+			WatchDir    string `yaml:"watch-dir"`
+			DnsPort     int    `yaml:"dns-port"`
+			DropQueries bool   `yaml:"drop-queries"`
+			DropReplies bool   `yaml:"drop-replies"`
+			DeleteAfter bool   `yaml:"delete-after"`
+		} `yaml:"pcap"`
 	} `yaml:"collectors"`
 
 	Transformers struct {
@@ -293,6 +302,7 @@ func (c *Config) SetDefault() {
 	c.Global.Trace.Filename = ""
 	c.Global.Trace.MaxSize = 10
 	c.Global.Trace.MaxBackups = 10
+	c.Global.ServerIdentity = ""
 
 	// multiplexer
 	c.Multiplexer.Collectors = []MultiplexInOut{}
@@ -318,13 +328,13 @@ func (c *Config) SetDefault() {
 	c.Collectors.Dnstap.CacheSupport = false
 	c.Collectors.Dnstap.QuietText = false
 
-	c.Collectors.DnsSniffer.Enable = false
-	c.Collectors.DnsSniffer.Port = 53
-	c.Collectors.DnsSniffer.Device = ""
-	c.Collectors.DnsSniffer.CaptureDnsQueries = true
-	c.Collectors.DnsSniffer.CaptureDnsReplies = true
-	c.Collectors.DnsSniffer.QueryTimeout = 5
-	c.Collectors.DnsSniffer.CacheSupport = true
+	c.Collectors.LiveCapture.Enable = false
+	c.Collectors.LiveCapture.Port = 53
+	c.Collectors.LiveCapture.Device = ""
+	c.Collectors.LiveCapture.DropQueries = false
+	c.Collectors.LiveCapture.DropReplies = false
+	c.Collectors.LiveCapture.QueryTimeout = 5
+	c.Collectors.LiveCapture.CacheSupport = true
 
 	c.Collectors.PowerDNS.Enable = false
 	c.Collectors.PowerDNS.ListenIP = "0.0.0.0"
@@ -334,6 +344,13 @@ func (c *Config) SetDefault() {
 	c.Collectors.PowerDNS.TlsMinVersion = TLS_v12
 	c.Collectors.PowerDNS.CertFile = ""
 	c.Collectors.PowerDNS.KeyFile = ""
+
+	c.Collectors.IngestPcap.Enable = false
+	c.Collectors.IngestPcap.WatchDir = ""
+	c.Collectors.IngestPcap.DnsPort = 53
+	c.Collectors.IngestPcap.DropQueries = false
+	c.Collectors.IngestPcap.DropReplies = false
+	c.Collectors.IngestPcap.DeleteAfter = false
 
 	// Transformers
 	c.Transformers.UserPrivacy.AnonymizeIP = false
@@ -490,6 +507,19 @@ func (c *Config) SetDefault() {
 
 	c.Loggers.ElasticSearchClient.Enable = false
 	c.Loggers.ElasticSearchClient.URL = ""
+}
+
+func (c *Config) GetServerIdentity() string {
+	if len(c.Global.ServerIdentity) > 0 {
+		return c.Global.ServerIdentity
+	} else {
+		hostname, err := os.Hostname()
+		if err == nil {
+			return hostname
+		} else {
+			return "undefined"
+		}
+	}
 }
 
 func ReloadConfig(configPath string, config *Config) error {

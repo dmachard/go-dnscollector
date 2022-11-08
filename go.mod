@@ -9,6 +9,7 @@ require (
 	github.com/dmachard/go-logger v0.3.0
 	github.com/dmachard/go-powerdns-protobuf v0.0.4
 	github.com/dmachard/go-topmap v0.5.0
+	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/gopacket v1.1.19
 	github.com/grafana/dskit v0.0.0-20220314144907-ec94f1a0a3a8
@@ -22,7 +23,7 @@ require (
 	github.com/prometheus/client_golang v1.13.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
-	golang.org/x/sys v0.0.0-20220804214406-8e32c043e418
+	golang.org/x/sys v0.0.0-20220908164124-27713097b956
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.1

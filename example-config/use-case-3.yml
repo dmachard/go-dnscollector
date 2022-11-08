@@ -1,19 +1,30 @@
+# Example 3: Transform DNSTap stream to JSON format
+#
+# As prerequisites, we assume you have a DNS server which supports DNSTap (unbound, bind, powerdns, etc)
+# For more informations about dnstap, read the following page: https://dmachard.github.io/posts/0001-dnstap-testing/
+#
+
+# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: false
 
 multiplexer:
+  # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
   collectors:
-    - name: tap_in
+    - name: tap
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
 
+  # Print DNS messages on standard output with JSON format
+  # more detail about the format: doc/dnsjson.md
   loggers:
     - name: console
       stdout:
         mode: json
 
+  # Routes DNS messages from the tap collector to standard output
   routes:
-    - from: [tap_in]
+    - from: [tap]
       to: [console]
