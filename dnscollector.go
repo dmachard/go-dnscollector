@@ -143,6 +143,7 @@ func main() {
 
 		// add transformer
 		for k, v := range input.Transforms {
+			v.(map[string]interface{})["enable"] = true
 			cfg["transformers"].(map[string]interface{})[k] = v
 		}
 

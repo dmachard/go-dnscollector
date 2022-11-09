@@ -100,6 +100,21 @@ type PowerDns struct {
 	AppliedPolicy         string   `json:"applied-policy" msgpack:"applied-policy"`
 }
 
+type SuspiciousFlags struct {
+	MalformedPacket       bool `json:"malformed-packet" msgpack:"malformed-packet"`
+	LargePacket           bool `json:"large-pkt" msgpack:"large-pkt"`
+	LongDomain            bool `json:"long-domain" msgpack:"long-domain"`
+	SlowDomain            bool `json:"slow-domain" msgpack:"slow-domain"`
+	UnallowedChars        bool `json:"unallowed-chars" msgpack:"unallowed-chars"`
+	UncommonQtype         bool `json:"uncommon-qtype" msgpack:"uncommon-qtypen"`
+	ExcessiveNumberLabels bool `json:"excessive-number-labels" msgpack:"excessive-number-labels"`
+}
+
+type Suspicious struct {
+	Score float64         `json:"score" msgpack:"score"`
+	Flags SuspiciousFlags `json:"flags" msgpack:"flags"`
+}
+
 type DnsMessage struct {
 	NetworkInfo DnsNetInfo  `json:"network" msgpack:"network"`
 	DNS         Dns         `json:"dns" msgpack:"dns"`
@@ -107,6 +122,7 @@ type DnsMessage struct {
 	DnsTap      DnsTap      `json:"dnstap" msgpack:"dnstap"`
 	Geo         DnsGeo      `json:"geo" msgpack:"geo"`
 	PowerDns    PowerDns    `json:"pdns" msgpack:"pdns"`
+	Suspicious  Suspicious  `json:"suspicious" msgpack:"suspicious"`
 }
 
 func (dm *DnsMessage) Init() {
