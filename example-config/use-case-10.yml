@@ -19,7 +19,7 @@ multiplexer:
         listen-ip: 0.0.0.0
         listen-port: 6000
       transforms:
-        filtering:
+        normalize:
           qname-lowercase: true
 
   # Print DNS messages on standard output with TEXT format
