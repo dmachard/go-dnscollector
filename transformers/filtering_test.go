@@ -162,7 +162,7 @@ func TestFilteringByKeepDomain(t *testing.T) {
 
 	dm.DNS.Qname = "example.com"
 	if filtering.CheckIfDrop(&dm) == false {
-		t.Errorf("dns query should not be dropped!")
+		t.Errorf("dns query should be dropped! Domain: %s", dm.DNS.Qname)
 	}
 
 	dm.DNS.Qname = TEST_URL2
@@ -251,4 +251,40 @@ func TestFilteringByDownsample(t *testing.T) {
 		t.Errorf("dns query should not be dropped! downsampling rate is set to 0 and should not downsample.")
 	}
 
+}
+
+func TestFilteringMultipleFilters(t *testing.T) {
+	// config
+	config := dnsutils.GetFakeConfig()
+	config.Transformers.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
+	config.Transformers.Filtering.DropQueryIpFile = "../testsdata/filtering_queryip.txt"
+
+	// init subproccesor
+	filtering := NewFilteringProcessor(config, logger.New(false), "test")
+
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.Qname = TEST_URL1
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped!")
+	}
+
+	dm.DNS.Qname = TEST_URL2
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped!")
+	}
+
+	dm.DNS.Qname = "github.fr"
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
+
+	dm.NetworkInfo.QueryIp = "192.168.1.15"
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped!")
+	}
+
+	dm.NetworkInfo.QueryIp = "192.0.2.3" // dropped by subnet
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped!")
+	}
 }
