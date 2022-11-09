@@ -84,4 +84,4 @@ jobs:
         cd prometheus-$PROM_VERSION.linux-amd64/
         curl -u admin:changeme http://127.0.0.1:8080/metrics | ./promtool check metrics
       env:
-        PROM_VERSION: "2.31.1"
+        PROM_VERSION: "2.40.0"

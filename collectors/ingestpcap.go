@@ -232,8 +232,6 @@ func (c *IngestPcap) Run() {
 	c.LogInfo("starting collector...")
 
 	c.dnsProcessor = NewDnsProcessor(c.config, c.logger, c.name)
-	c.dnsProcessor.cacheSupport = c.config.Collectors.LiveCapture.CacheSupport
-	c.dnsProcessor.queryTimeout = c.config.Collectors.LiveCapture.QueryTimeout
 	go c.dnsProcessor.Run(c.Loggers())
 
 	// read folder content

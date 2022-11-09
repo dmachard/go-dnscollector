@@ -110,13 +110,16 @@ type Config struct {
 
 	Transformers struct {
 		UserPrivacy struct {
+			Enable        bool `yaml:"enable"`
 			AnonymizeIP   bool `yaml:"anonymize-ip"`
 			MinimazeQname bool `yaml:"minimaze-qname"`
 		} `yaml:"user-privacy"`
 		Normalize struct {
+			Enable         bool `yaml:"enable"`
 			QnameLowerCase bool `yaml:"lowercase-qname"`
 		} `yaml:"normalize"`
 		Filtering struct {
+			Enable          bool     `yaml:"enable"`
 			DropFqdnFile    string   `yaml:"drop-fqdn-file"`
 			DropDomainFile  string   `yaml:"drop-domain-file"`
 			KeepFqdnFile    string   `yaml:"keep-fqdn-file"`
@@ -129,10 +132,20 @@ type Config struct {
 			Downsample      int      `yaml:"downsample"`
 		} `yaml:"filtering"`
 		GeoIP struct {
+			Enable        bool   `yaml:"enable"`
 			DbCountryFile string `yaml:"mmdb-country-file"`
 			DbCityFile    string `yaml:"mmdb-city-file"`
 			DbAsnFile     string `yaml:"mmdb-asn-file"`
 		} `yaml:"geoip"`
+		Suspicious struct {
+			Enable             bool     `yaml:"enable"`
+			ThresholdQnameLen  int      `yaml:"threshold-qname-len"`
+			ThresholdPacketLen int      `yaml:"threshold-packet-len"`
+			ThresholdSlow      float64  `yaml:"threshold-slow"`
+			CommonQtypes       []string `yaml:"common-qtypes,flow"`
+			UnallowedChars     []string `yaml:"unallowed-chars,flow"`
+			ThresholdMaxLabels int      `yaml:"threshold-max-labels"`
+		} `yaml:"suspicious"`
 	} `yaml:"transformers"`
 
 	Loggers struct {
@@ -353,11 +366,23 @@ func (c *Config) SetDefault() {
 	c.Collectors.IngestPcap.DeleteAfter = false
 
 	// Transformers
+	c.Transformers.Suspicious.Enable = false
+	c.Transformers.Suspicious.ThresholdQnameLen = 80
+	c.Transformers.Suspicious.ThresholdPacketLen = 1000
+	c.Transformers.Suspicious.ThresholdSlow = 0.5
+	c.Transformers.Suspicious.CommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR",
+		"NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS"}
+	c.Transformers.Suspicious.UnallowedChars = []string{"\"", "==", "/", ":"}
+	c.Transformers.Suspicious.ThresholdMaxLabels = 10
+
+	c.Transformers.UserPrivacy.Enable = false
 	c.Transformers.UserPrivacy.AnonymizeIP = false
 	c.Transformers.UserPrivacy.MinimazeQname = false
 
+	c.Transformers.Normalize.Enable = false
 	c.Transformers.Normalize.QnameLowerCase = false
 
+	c.Transformers.Filtering.Enable = false
 	c.Transformers.Filtering.DropFqdnFile = ""
 	c.Transformers.Filtering.DropDomainFile = ""
 	c.Transformers.Filtering.KeepFqdnFile = ""
@@ -368,6 +393,7 @@ func (c *Config) SetDefault() {
 	c.Transformers.Filtering.LogReplies = true
 	c.Transformers.Filtering.Downsample = 0
 
+	c.Transformers.GeoIP.Enable = false
 	c.Transformers.GeoIP.DbCountryFile = ""
 	c.Transformers.GeoIP.DbCityFile = ""
 	c.Transformers.GeoIP.DbAsnFile = ""
@@ -425,7 +451,8 @@ func (c *Config) SetDefault() {
 	c.Loggers.WebServer.StatsThresholdQnameLen = 80
 	c.Loggers.WebServer.StatsThresholdPacketLen = 1000
 	c.Loggers.WebServer.StatsThresholdSlow = 0.5
-	c.Loggers.WebServer.StatsCommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS"}
+	c.Loggers.WebServer.StatsCommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR", "NAPTR",
+		"DNSKEY", "SRV", "SOA", "NS", "MX", "DS"}
 
 	c.Loggers.TcpClient.Enable = false
 	c.Loggers.TcpClient.RemoteAddress = LOCALHOST_IP
