@@ -11,6 +11,9 @@ incoming traffics. A list of examples are available [here](./example-config) and
   - [Custom text format](#custom-text-format)
   - [Server identity](#server-identity)
 - [Multiplexer](#multiplexer)
+  - [Collectors](#collectors)
+  - [Loggers](#loggers)
+  - [Routes](#routes)
 - [Transforms](#transforms)
   - [Qname lowercase](#qname-lowercase)
   - [User privacy](#user-privacy)
@@ -113,29 +116,47 @@ global:
 
 ## Multiplexer
 
-In this part, you can define the list of collectors, loggers and links between all of them.
+The dns collector can be configured with multiple loggers and collectors at the same time.
 
-Options:
-- `collectors`: list of running [collectors](/doc/collectors.md)
-- `loggers`: list of running [loggers](/doc/loggers.md)
-- `routes`: routing part, connection between loggers and collectors
+You must defined the list of 
+- `collectors`: list of running inputs
+- `loggers`: list of running outputs
+- `routes`: routing definition
+
+### Collectors
+
+List of available [collectors](/doc/collectors.md)
 
 ```yaml
 multiplexer:
   collectors: 
     - name: <collector_name>
       .....
-          
+```
+
+### Loggers
+
+List of available [loggers](/doc/loggers.md)
+
+```yaml
+multiplexer:
   loggers: 
     - name: <logger_name>
       ...
+```
+
+### Routes
+
+Then defines the routing to use between all of them according to the name.
+You can connect one collector to multiple loggers and you can also
+connect multiple collectors to the same logger.
+
+```yaml
+multiplexer:
   routes: ...
     - from: [ list of collectors by name ]
       to: [ list of loggers by name ]
 ```
-
-More details [here](/doc/multiplexer.md).
-
 ## Transformers
 
 Some transformations can be done after the collect.

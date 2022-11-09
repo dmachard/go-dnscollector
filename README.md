@@ -18,7 +18,7 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 - Listen for [`Protobuf PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
 - Read and tail on [`Log file`](doc/collectors.md#tail)
 - [`Live capture`](doc/collectors.md#dns-sniffer) on a network interface via AF_PACKET socket
-- Ingest [`PCAP files`](doc/collectors.md#ingest-pcap) from a directory
+- Ingest [`PCAP files`](doc/collectors.md#ingest-pcap) by watching a directory
 
 **Supported loggers**:
 - *Write DNS logs to stdout or file with [`Text`](doc/configuration.md#custom-text-format) or [`JSON`](doc/dnsjson.md) format*:
