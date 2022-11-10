@@ -17,7 +17,7 @@ func TestNormalizeLowercaseQname(t *testing.T) {
 
 	qname := "www.Google.Com"
 	ret := qnameNorm.Lowercase(qname)
-	if ret != "google.com" {
+	if ret != "www.google.com" {
 		t.Errorf("Qname to lowercase failed, got %s", ret)
 	}
 }
