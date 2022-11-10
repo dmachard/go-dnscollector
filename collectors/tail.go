@@ -5,7 +5,6 @@ import (
 	"os"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -98,23 +97,10 @@ func (c *Tail) Run() {
 		c.logger.Fatal("collector tail - unable to follow file: ", err)
 	}
 
-	// geoip
-	geoip := transformers.NewDnsGeoIpProcessor(c.config, c.logger)
-	if err := geoip.Open(); err != nil {
-		c.LogError("geoip init failed: %v+", err)
-	}
-	if geoip.IsEnabled() {
-		c.LogInfo("geoip is enabled")
-	}
-	defer geoip.Close()
+	// prepare enabled transformers
+	subprocessors := transformers.NewTransforms(c.config, c.logger, c.name)
 
-	// filtering
-	filtering := transformers.NewFilteringProcessor(c.config, c.logger, c.name)
-
-	// user privacy
-	ipPrivacy := transformers.NewIpAnonymizerSubprocessor(c.config)
-	qnamePrivacy := transformers.NewQnameReducerSubprocessor(c.config)
-
+	// init dns message
 	dm := dnsutils.DnsMessage{}
 	dm.Init()
 
@@ -266,11 +252,6 @@ func (c *Tail) Run() {
 		dm.DNS.Payload, _ = dnspkt.Pack()
 		dm.DNS.Length = len(dm.DNS.Payload)
 
-		// normalize qname ?
-		if c.config.Transformers.Normalize.QnameLowerCase {
-			dm.DNS.Qname = strings.ToLower(dm.DNS.Qname)
-		}
-
 		// Public suffix
 		ps, _ := publicsuffix.PublicSuffix(dm.DNS.Qname)
 		dm.DNS.QnamePublicSuffix = ps
@@ -278,32 +259,9 @@ func (c *Tail) Run() {
 			dm.DNS.QnameEffectiveTLDPlusOne = etpo
 		}
 
-		// qname privacy
-		if qnamePrivacy.IsEnabled() {
-			dm.DNS.Qname = qnamePrivacy.Minimaze(dm.DNS.Qname)
-		}
-
-		// filtering
-		if filtering.CheckIfDrop(&dm) {
+		// apply all enabled transformers
+		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 			continue
-		}
-
-		// geoip feature
-		if geoip.IsEnabled() {
-			geoInfo, err := geoip.Lookup(dm.NetworkInfo.QueryIp)
-			if err != nil {
-				c.LogError("geoip loopkup failed: %v+", err)
-			}
-			dm.Geo.Continent = geoInfo.Continent
-			dm.Geo.CountryIsoCode = geoInfo.CountryISOCode
-			dm.Geo.City = geoInfo.City
-			dm.NetworkInfo.AutonomousSystemNumber = geoInfo.ASN
-			dm.NetworkInfo.AutonomousSystemOrg = geoInfo.ASO
-		}
-
-		// ip anonymisation ?
-		if ipPrivacy.IsEnabled() {
-			dm.NetworkInfo.QueryIp = ipPrivacy.Anonymize(dm.NetworkInfo.QueryIp)
 		}
 
 		// send to loggers
@@ -312,6 +270,9 @@ func (c *Tail) Run() {
 			chanLoggers[i] <- dm
 		}
 	}
+
+	// cleanup transformers
+	subprocessors.Reset()
 
 	c.LogInfo("run terminated")
 	c.done <- true

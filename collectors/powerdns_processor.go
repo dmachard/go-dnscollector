@@ -73,20 +73,8 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
 
-	// filtering and user privacy
-	filtering := transformers.NewFilteringProcessor(d.config, d.logger, d.name)
-	ipPrivacy := transformers.NewIpAnonymizerSubprocessor(d.config)
-	qnamePrivacy := transformers.NewQnameReducerSubprocessor(d.config)
-
-	// geoip
-	geoip := transformers.NewDnsGeoIpProcessor(d.config, d.logger)
-	if err := geoip.Open(); err != nil {
-		d.LogError("geoip init failed: %v+", err)
-	}
-	if geoip.IsEnabled() {
-		d.LogInfo("geoip is enabled")
-	}
-	defer geoip.Close()
+	// prepare enabled transformers
+	subprocessors := transformers.NewTransforms(d.config, d.logger, d.name)
 
 	// read incoming dns message
 	d.LogInfo("running... waiting incoming dns message")
@@ -137,12 +125,7 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
 		dm.DnsTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
-		// normalize qname ?
-		if d.config.Transformers.Normalize.QnameLowerCase {
-			dm.DNS.Qname = strings.ToLower(pbdm.Question.GetQName())
-		} else {
-			dm.DNS.Qname = pbdm.Question.GetQName()
-		}
+		dm.DNS.Qname = pbdm.Question.GetQName()
 
 		// remove ending dot ?
 		qname := strings.TrimSuffix(dm.DNS.Qname, ".")
@@ -212,28 +195,9 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 		dm.DNS.DnsRRs.Answers = answers
 
-		// qname privacy ? filtering ? or ip anonymisation ?
-		if qnamePrivacy.IsEnabled() {
-			dm.DNS.Qname = qnamePrivacy.Minimaze(qname)
-		}
-		if filtering.CheckIfDrop(&dm) {
+		// apply all enabled transformers
+		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 			continue
-		}
-		if ipPrivacy.IsEnabled() {
-			dm.NetworkInfo.QueryIp = ipPrivacy.Anonymize(dm.NetworkInfo.QueryIp)
-		}
-
-		// geoip feature
-		if geoip.IsEnabled() {
-			geoInfo, err := geoip.Lookup(dm.NetworkInfo.QueryIp)
-			if err != nil {
-				d.LogError("geoip loopkup failed: %v+", err)
-			}
-			dm.Geo.Continent = geoInfo.Continent
-			dm.Geo.CountryIsoCode = geoInfo.CountryISOCode
-			dm.Geo.City = geoInfo.City
-			dm.NetworkInfo.AutonomousSystemNumber = geoInfo.ASN
-			dm.NetworkInfo.AutonomousSystemOrg = geoInfo.ASO
 		}
 
 		// quiet text for dnstap operation ?
@@ -251,6 +215,9 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			sendTo[i] <- dm
 		}
 	}
+
+	// cleanup transformers
+	subprocessors.Reset()
 
 	// dnstap channel closed
 	d.done <- true
