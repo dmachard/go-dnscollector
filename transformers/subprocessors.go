@@ -18,11 +18,10 @@ type Transforms struct {
 	logger *logger.Logger
 	name   string
 
-	SuspiciousTransform   SuspiciousTransform
-	GeoipTransform        GeoIpProcessor
-	FilteringTransform    FilteringProcessor
-	IpAnonymizerTransform IpAnonymizerSubproc
-	QnameReducerTransform QnameReducer
+	SuspiciousTransform  SuspiciousTransform
+	GeoipTransform       GeoIpProcessor
+	FilteringTransform   FilteringProcessor
+	UserPrivacyTransform UserPrivacy
 }
 
 func NewTransforms(config *dnsutils.Config, logger *logger.Logger, name string) Transforms {
@@ -32,11 +31,10 @@ func NewTransforms(config *dnsutils.Config, logger *logger.Logger, name string) 
 		logger: logger,
 		name:   name,
 
-		SuspiciousTransform:   NewSuspiciousSubprocessor(config, logger, name),
-		GeoipTransform:        NewDnsGeoIpProcessor(config, logger),
-		FilteringTransform:    NewFilteringProcessor(config, logger, name),
-		IpAnonymizerTransform: NewIpAnonymizerSubprocessor(config),
-		QnameReducerTransform: NewQnameReducerSubprocessor(config),
+		SuspiciousTransform:  NewSuspiciousSubprocessor(config, logger, name),
+		GeoipTransform:       NewDnsGeoIpProcessor(config, logger),
+		FilteringTransform:   NewFilteringProcessor(config, logger, name),
+		UserPrivacyTransform: NewUserPrivacySubprocessor(config),
 	}
 
 	d.Prepare()
@@ -93,7 +91,7 @@ func (p *Transforms) ProcessMessage(dm *dnsutils.DnsMessage) int {
 	}
 
 	// Traffic filtering ?
-	if p.config.Transformers.UserPrivacy.Enable {
+	if p.config.Transformers.Filtering.Enable {
 		if p.FilteringTransform.CheckIfDrop(dm) {
 			return RETURN_DROP
 		}
@@ -102,10 +100,10 @@ func (p *Transforms) ProcessMessage(dm *dnsutils.DnsMessage) int {
 	// Apply user privacy on qname and query ip
 	if p.config.Transformers.UserPrivacy.Enable {
 		if p.config.Transformers.UserPrivacy.AnonymizeIP {
-			dm.NetworkInfo.QueryIp = p.IpAnonymizerTransform.Anonymize(dm.NetworkInfo.QueryIp)
+			dm.NetworkInfo.QueryIp = p.UserPrivacyTransform.AnonymizeIP(dm.NetworkInfo.QueryIp)
 		}
 		if p.config.Transformers.UserPrivacy.MinimazeQname {
-			dm.DNS.Qname = p.QnameReducerTransform.Minimaze(dm.DNS.Qname)
+			dm.DNS.Qname = p.UserPrivacyTransform.MinimazeQname(dm.DNS.Qname)
 		}
 	}
 
