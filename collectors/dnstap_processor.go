@@ -128,22 +128,8 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	cache_ttl := dnsutils.NewDnsCache(time.Duration(d.config.Collectors.Dnstap.QueryTimeout) * time.Second)
 	d.LogInfo("dns cached enabled: %t", d.config.Collectors.Dnstap.CacheSupport)
 
-	// geoip
-	geoip := transformers.NewDnsGeoIpProcessor(d.config, d.logger)
-	if err := geoip.Open(); err != nil {
-		d.LogError("geoip init failed: %v+", err)
-	}
-	if geoip.IsEnabled() {
-		d.LogInfo("geoip is enabled")
-	}
-	defer geoip.Close()
-
-	// filtering
-	filtering := transformers.NewFilteringProcessor(d.config, d.logger, d.name)
-
-	// user privacy
-	ipPrivacy := transformers.NewIpAnonymizerSubprocessor(d.config)
-	qnamePrivacy := transformers.NewQnameReducerSubprocessor(d.config)
+	// prepare enabled transformers
+	subprocessors := transformers.NewTransforms(d.config, d.logger, d.name)
 
 	// read incoming dns message
 	d.LogInfo("running... waiting incoming dns message")
@@ -249,11 +235,6 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		// convert latency to human
 		dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
 
-		// normalize qname ?
-		if d.config.Transformers.Normalize.QnameLowerCase {
-			dm.DNS.Qname = strings.ToLower(dm.DNS.Qname)
-		}
-
 		// Public suffix
 		ps, _ := publicsuffix.PublicSuffix(dm.DNS.Qname)
 		dm.DNS.QnamePublicSuffix = ps
@@ -261,32 +242,9 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.DNS.QnameEffectiveTLDPlusOne = etpo
 		}
 
-		// qname privacy
-		if qnamePrivacy.IsEnabled() {
-			dm.DNS.Qname = qnamePrivacy.Minimaze(dm.DNS.Qname)
-		}
-
-		// filtering
-		if filtering.CheckIfDrop(&dm) {
+		// apply all enabled transformers
+		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 			continue
-		}
-
-		// geoip feature
-		if geoip.IsEnabled() {
-			geoInfo, err := geoip.Lookup(dm.NetworkInfo.QueryIp)
-			if err != nil {
-				d.LogError("geoip loopkup failed: %v+", err)
-			}
-			dm.Geo.Continent = geoInfo.Continent
-			dm.Geo.CountryIsoCode = geoInfo.CountryISOCode
-			dm.Geo.City = geoInfo.City
-			dm.NetworkInfo.AutonomousSystemNumber = geoInfo.ASN
-			dm.NetworkInfo.AutonomousSystemOrg = geoInfo.ASO
-		}
-
-		// ip anonymisation ?
-		if ipPrivacy.IsEnabled() {
-			dm.NetworkInfo.QueryIp = ipPrivacy.Anonymize(dm.NetworkInfo.QueryIp)
 		}
 
 		// quiet text for dnstap operation ?
@@ -304,6 +262,9 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			sendTo[i] <- dm
 		}
 	}
+
+	// cleanup transformers
+	subprocessors.Reset()
 
 	// dnstap channel closed
 	d.done <- true

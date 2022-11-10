@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"golang.org/x/net/publicsuffix"
 )
 
 var (
@@ -12,34 +13,31 @@ var (
 	defaultIPv6Mask = net.IPMask{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0} // /64
 )
 
-type IpAnonymizerSubproc struct {
-	config  *dnsutils.Config
-	enabled bool
-	v4Mask  net.IPMask
-	v6Mask  net.IPMask
+type UserPrivacyProcessor struct {
+	config *dnsutils.Config
+	v4Mask net.IPMask
+	v6Mask net.IPMask
 }
 
-func NewIpAnonymizerSubprocessor(config *dnsutils.Config) IpAnonymizerSubproc {
-	s := IpAnonymizerSubproc{
+func NewUserPrivacySubprocessor(config *dnsutils.Config) UserPrivacyProcessor {
+	s := UserPrivacyProcessor{
 		config: config,
 		v4Mask: defaultIPv4Mask,
 		v6Mask: defaultIPv6Mask,
 	}
 
-	s.ReadConfig()
-
 	return s
 }
 
-func (s *IpAnonymizerSubproc) ReadConfig() {
-	s.enabled = s.config.Transformers.UserPrivacy.AnonymizeIP
+func (s *UserPrivacyProcessor) MinimazeQname(qname string) string {
+	if etpo, err := publicsuffix.EffectiveTLDPlusOne(qname); err == nil {
+		return etpo
+	}
+
+	return qname
 }
 
-func (s *IpAnonymizerSubproc) IsEnabled() bool {
-	return s.enabled
-}
-
-func (s *IpAnonymizerSubproc) Anonymize(ip string) string {
+func (s *UserPrivacyProcessor) AnonymizeIP(ip string) string {
 	ipaddr := net.ParseIP(ip)
 	isipv4 := strings.LastIndex(ip, ".")
 

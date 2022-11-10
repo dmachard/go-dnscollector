@@ -116,7 +116,7 @@ type Config struct {
 		} `yaml:"user-privacy"`
 		Normalize struct {
 			Enable         bool `yaml:"enable"`
-			QnameLowerCase bool `yaml:"lowercase-qname"`
+			QnameLowerCase bool `yaml:"qname-lowercase"`
 		} `yaml:"normalize"`
 		Filtering struct {
 			Enable          bool     `yaml:"enable"`
