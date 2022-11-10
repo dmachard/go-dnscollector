@@ -1,8 +1,6 @@
 package transformers
 
 import (
-	"strings"
-
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
@@ -21,7 +19,8 @@ type Transforms struct {
 	SuspiciousTransform  SuspiciousTransform
 	GeoipTransform       GeoIpProcessor
 	FilteringTransform   FilteringProcessor
-	UserPrivacyTransform UserPrivacy
+	UserPrivacyTransform UserPrivacyProcessor
+	NormalizeTransform   NormalizeProcessor
 }
 
 func NewTransforms(config *dnsutils.Config, logger *logger.Logger, name string) Transforms {
@@ -35,6 +34,7 @@ func NewTransforms(config *dnsutils.Config, logger *logger.Logger, name string) 
 		GeoipTransform:       NewDnsGeoIpProcessor(config, logger),
 		FilteringTransform:   NewFilteringProcessor(config, logger, name),
 		UserPrivacyTransform: NewUserPrivacySubprocessor(config),
+		NormalizeTransform:   NewNormalizeSubprocessor(config),
 	}
 
 	d.Prepare()
@@ -86,7 +86,7 @@ func (p *Transforms) ProcessMessage(dm *dnsutils.DnsMessage) int {
 	// Normalize qname to lowercase
 	if p.config.Transformers.Normalize.Enable {
 		if p.config.Transformers.Normalize.QnameLowerCase {
-			dm.DNS.Qname = strings.ToLower(dm.DNS.Qname)
+			dm.DNS.Qname = p.NormalizeTransform.Lowercase(dm.DNS.Qname)
 		}
 	}
 

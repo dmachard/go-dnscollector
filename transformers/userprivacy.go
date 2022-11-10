@@ -13,14 +13,14 @@ var (
 	defaultIPv6Mask = net.IPMask{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0} // /64
 )
 
-type UserPrivacy struct {
+type UserPrivacyProcessor struct {
 	config *dnsutils.Config
 	v4Mask net.IPMask
 	v6Mask net.IPMask
 }
 
-func NewUserPrivacySubprocessor(config *dnsutils.Config) UserPrivacy {
-	s := UserPrivacy{
+func NewUserPrivacySubprocessor(config *dnsutils.Config) UserPrivacyProcessor {
+	s := UserPrivacyProcessor{
 		config: config,
 		v4Mask: defaultIPv4Mask,
 		v6Mask: defaultIPv6Mask,
@@ -29,7 +29,7 @@ func NewUserPrivacySubprocessor(config *dnsutils.Config) UserPrivacy {
 	return s
 }
 
-func (s *UserPrivacy) MinimazeQname(qname string) string {
+func (s *UserPrivacyProcessor) MinimazeQname(qname string) string {
 	if etpo, err := publicsuffix.EffectiveTLDPlusOne(qname); err == nil {
 		return etpo
 	}
@@ -37,7 +37,7 @@ func (s *UserPrivacy) MinimazeQname(qname string) string {
 	return qname
 }
 
-func (s *UserPrivacy) AnonymizeIP(ip string) string {
+func (s *UserPrivacyProcessor) AnonymizeIP(ip string) string {
 	ipaddr := net.ParseIP(ip)
 	isipv4 := strings.LastIndex(ip, ".")
 

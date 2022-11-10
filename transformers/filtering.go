@@ -270,19 +270,11 @@ func (p *FilteringProcessor) Run() {
 }
 
 func (p *FilteringProcessor) ignoreQueryFilter(dm *dnsutils.DnsMessage) bool {
-	// ignore queries ?
-	if dm.DNS.Type == dnsutils.DnsQuery {
-		return true
-	}
-	return false
+	return dm.DNS.Type == dnsutils.DnsQuery
 }
 
 func (p *FilteringProcessor) ignoreReplyFilter(dm *dnsutils.DnsMessage) bool {
-	// ignore replies ?
-	if dm.DNS.Type == dnsutils.DnsReply {
-		return true
-	}
-	return false
+	return dm.DNS.Type == dnsutils.DnsReply
 }
 
 func (p *FilteringProcessor) rCodeFilter(dm *dnsutils.DnsMessage) bool {
@@ -358,7 +350,7 @@ func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DnsMessage) bool {
 	var value bool
 	for _, fn := range p.activeFilters {
 		value = fn(dm)
-		if value == true {
+		if value {
 			return true
 		}
 	}
