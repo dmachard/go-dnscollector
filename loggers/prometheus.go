@@ -176,7 +176,7 @@ func (o *Prometheus) InitProm() {
 
 	o.gaugeTopTlds = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_tlds_total", prom_prefix),
+			Name: fmt.Sprintf("%s_top_tlds", prom_prefix),
 			Help: "Number of hit per tld - topN",
 		},
 		[]string{"stream_id", "domain"},
@@ -185,7 +185,7 @@ func (o *Prometheus) InitProm() {
 
 	o.gaugeTopSuspicious = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_suspicious_total", prom_prefix),
+			Name: fmt.Sprintf("%s_top_suspicious", prom_prefix),
 			Help: "Number of hit per suspicious domain - topN",
 		},
 		[]string{"stream_id", "domain"},
@@ -194,7 +194,7 @@ func (o *Prometheus) InitProm() {
 
 	o.gaugeTopDomains = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_domains_total", prom_prefix),
+			Name: fmt.Sprintf("%s_top_domains", prom_prefix),
 			Help: "Number of hit per domain topN, partitioned by qname",
 		},
 		[]string{"stream_id", "domain"},
@@ -203,7 +203,7 @@ func (o *Prometheus) InitProm() {
 
 	o.gaugeTopNxDomains = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_nxdomains_total", prom_prefix),
+			Name: fmt.Sprintf("%s_top_nxdomainsl", prom_prefix),
 			Help: "Number of hit per nx domain topN, partitioned by qname",
 		},
 		[]string{"stream_id", "domain"},
@@ -212,7 +212,7 @@ func (o *Prometheus) InitProm() {
 
 	o.gaugeTopSfDomains = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_sfdomains_total", prom_prefix),
+			Name: fmt.Sprintf("%s_top_sfdomains", prom_prefix),
 			Help: "Number of hit per servfail domain topN, partitioned by qname",
 		},
 		[]string{"stream_id", "domain"},
@@ -221,7 +221,7 @@ func (o *Prometheus) InitProm() {
 
 	o.gaugeTopRequesters = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_requesters_total", prom_prefix),
+			Name: fmt.Sprintf("%s_top_requesters", prom_prefix),
 			Help: "Number of hit per requester topN, partitioned by client IP",
 		},
 		[]string{"stream_id", "ip"},
@@ -248,7 +248,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterPackets = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_packets_count", prom_prefix),
+			Name: fmt.Sprintf("%s_packets_total", prom_prefix),
 			Help: "Counter of packets",
 		},
 		[]string{
@@ -328,7 +328,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterDomains = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_domains_count", prom_prefix),
+			Name: fmt.Sprintf("%s_domains_total", prom_prefix),
 			Help: "The total number of domains per stream identity",
 		},
 		[]string{"stream_id"},
@@ -337,7 +337,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterTlds = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_tlds_count", prom_prefix),
+			Name: fmt.Sprintf("%s_tlds_total", prom_prefix),
 			Help: "The total number of tld per stream identity",
 		},
 		[]string{"stream_id"},
@@ -346,7 +346,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterSuspicious = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_suspicious_count", prom_prefix),
+			Name: fmt.Sprintf("%s_suspicious_total", prom_prefix),
 			Help: "The total number of suspicious domain per stream identity",
 		},
 		[]string{"stream_id"},
@@ -373,7 +373,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterRequesters = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_requesters_count", prom_prefix),
+			Name: fmt.Sprintf("%s_requesters_total", prom_prefix),
 			Help: "The total number of DNS clients per stream identity",
 		},
 		[]string{"stream_id"},
@@ -382,7 +382,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterTldsUniq = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_tlds_count_uniq", prom_prefix),
+			Name: fmt.Sprintf("%s_tlds_uniq_total", prom_prefix),
 			Help: "The total number of uniq TLD",
 		},
 		[]string{},
@@ -391,7 +391,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterSuspiciousUniq = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_suspicious_count_uniq", prom_prefix),
+			Name: fmt.Sprintf("%s_suspicious_uniq_total", prom_prefix),
 			Help: "The total number of uniq suspicious domain",
 		},
 		[]string{},
@@ -400,7 +400,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterDomainsUniq = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_domains_count_uniq", prom_prefix),
+			Name: fmt.Sprintf("%s_domains_uniq_total", prom_prefix),
 			Help: "The total number of uniq domains",
 		},
 		[]string{},
@@ -427,7 +427,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterRequestersUniq = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_requesters_count_uniq", prom_prefix),
+			Name: fmt.Sprintf("%s_requesters_uniq_total", prom_prefix),
 			Help: "The total number of uniq DNS clients",
 		},
 		[]string{},
