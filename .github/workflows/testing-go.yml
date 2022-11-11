@@ -75,13 +75,13 @@ jobs:
       run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 
     - name: run collector
-      run: ./go-dnscollector -config ./testsdata/config_webapi.yml &
+      run: ./go-dnscollector -config ./testsdata/config_prom.yml &
 
     - name: check prometheus format metrics
       run: |
         wget -nv https://github.com/prometheus/prometheus/releases/download/v$PROM_VERSION/prometheus-$PROM_VERSION.linux-amd64.tar.gz
         tar xf prometheus-$PROM_VERSION.linux-amd64.tar.gz
         cd prometheus-$PROM_VERSION.linux-amd64/
-        curl -u admin:changeme http://127.0.0.1:8080/metrics | ./promtool check metrics
+        curl http://127.0.0.1:8081/metrics | ./promtool check metrics
       env:
         PROM_VERSION: "2.40.0"

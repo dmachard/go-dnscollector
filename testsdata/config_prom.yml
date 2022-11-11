@@ -1,0 +1,20 @@
+global:
+  trace:
+    verbose: true
+
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+
+  loggers:
+    - name: prom
+      prometheus:
+        listen-ip: 0.0.0.0
+        listen-port: 8081
+
+  routes:
+    - src: [tap]
+      dst: [prom]
