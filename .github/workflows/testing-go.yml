@@ -93,11 +93,11 @@ jobs:
       env:
         PROM_VERSION: "2.40.0"
 
-  - name: read file
-    uses: juliangruber/read-file-action@v1
-    id: package
-    with:
-      path: /tmp/result.txt
+    - name: read file
+      uses: juliangruber/read-file-action@v1
+      id: package
+      with:
+        path: /tmp/result.txt
 
-  - name: Echo metric check results
-    run: echo "${{ steps.package.outputs.content }}"
+    - name: Echo metric check results
+      run: echo "${{ steps.package.outputs.content }}"
