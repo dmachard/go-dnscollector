@@ -39,10 +39,7 @@ func NewWebserver(config *dnsutils.Config, logger *logger.Logger, version string
 	}
 
 	// init engine to compute statistics and prometheus
-	o.stats = NewStreamsStats(config, o.ver, config.Loggers.WebServer.PromPrefix,
-		config.Loggers.WebServer.StatsTopMaxItems, config.Loggers.WebServer.StatsThresholdQnameLen,
-		config.Loggers.WebServer.StatsThresholdPacketLen, config.Loggers.WebServer.StatsThresholdSlow,
-		config.Loggers.WebServer.StatsCommonQtypes)
+	o.stats = NewStreamsStats(config, o.ver, config.Loggers.WebServer.StatsTopMaxItems)
 	return o
 }
 

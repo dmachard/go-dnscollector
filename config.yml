@@ -201,17 +201,6 @@ multiplexer:
 #   key-file: ""
 #   # default number of items on top 
 #   top-max-items: 100
-#   # expected common qtype list, other will be considered as suspicious
-#   common-qtypes: [ "A", "AAAA", "CNAME", "TXT", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS" ]
-#   # a length greater than this value will be considered as suspicious
-#   threshold-qname-len: 80
-#   # a size greater than this value will be considered as suspicious
-#   # value in bytes
-#   threshold-packet-len: 1000
-#   # threshold to set a domain considered as slow, value in second
-#   threshold-slow: 0.5
-#   # prometheus prefix
-#   prometheus-prefix: "dnscollector"
 
 # # prometheus metrics server
 # prometheus:
@@ -223,9 +212,9 @@ multiplexer:
 #   tls-support: false
 #   # tls mutual
 #   tls-mutual: false
-#   # certificate server file
 #   # tls min version
 #   tls-min-version: 1.2
+#   # certificate server file
 #   cert-file: ""
 #   # private key server file
 #   key-file: ""
@@ -420,8 +409,9 @@ multiplexer:
 
 ################################################
 # list of transformers
+# transforms:
 ################################################
-    
+
 # # Use this option to protect user privacy
 # user-privacy:
 #   # IP-Addresses are anonymities by zeroing the host-part of an address.

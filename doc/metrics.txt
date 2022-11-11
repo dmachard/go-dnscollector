@@ -3,97 +3,81 @@
 dnscollector_build_info{version="0.0.0"} 1
 # HELP dnscollector_domains_count The total number of domains per stream identity
 # TYPE dnscollector_domains_count counter
-dnscollector_domains_count{stream_id="dnsdist-cache"} 1
 dnscollector_domains_count{stream_id="dnsdist1"} 1
 # HELP dnscollector_domains_count_uniq The total number of uniq domains
 # TYPE dnscollector_domains_count_uniq counter
 dnscollector_domains_count_uniq 1
 # HELP dnscollector_packets_count Counter of packets
 # TYPE dnscollector_packets_count counter
-dnscollector_packets_count{flag_aa="false",flag_ad="false",flag_qr="REPLY",flag_ra="true",flag_tc="false",net_family="INET",net_transport="UDP",op_code="0",op_name="CLIENT_RESPONSE",pkt_err="false",query_type="A",return_code="REFUSED",stream_id="dnsdist-cache"} 4
 dnscollector_packets_count{flag_aa="false",flag_ad="false",flag_qr="REPLY",flag_ra="true",flag_tc="false",net_family="INET",net_transport="UDP",op_code="0",op_name="CLIENT_RESPONSE",pkt_err="false",query_type="A",return_code="REFUSED",stream_id="dnsdist1"} 1
-dnscollector_packets_count{flag_aa="false",flag_ad="true",flag_qr="QUERY",flag_ra="false",flag_tc="false",net_family="INET",net_transport="UDP",op_code="0",op_name="CLIENT_QUERY",pkt_err="false",query_type="A",return_code="NOERROR",stream_id="dnsdist1"} 5
+dnscollector_packets_count{flag_aa="false",flag_ad="true",flag_qr="QUERY",flag_ra="false",flag_tc="false",net_family="INET",net_transport="UDP",op_code="0",op_name="CLIENT_QUERY",pkt_err="false",query_type="A",return_code="NOERROR",stream_id="dnsdist1"} 1
 # HELP dnscollector_qnames_size_bytes Size of the qname in bytes.
 # TYPE dnscollector_qnames_size_bytes histogram
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist-cache",le="10"} 0
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist-cache",le="20"} 4
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist-cache",le="40"} 4
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist-cache",le="60"} 4
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist-cache",le="100"} 4
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist-cache",le="+Inf"} 4
-dnscollector_qnames_size_bytes_sum{stream_id="dnsdist-cache"} 56
-dnscollector_qnames_size_bytes_count{stream_id="dnsdist-cache"} 4
 dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="10"} 0
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="20"} 6
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="40"} 6
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="60"} 6
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="100"} 6
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="+Inf"} 6
-dnscollector_qnames_size_bytes_sum{stream_id="dnsdist1"} 84
-dnscollector_qnames_size_bytes_count{stream_id="dnsdist1"} 6
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="20"} 0
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="40"} 2
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="60"} 2
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="100"} 2
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="+Inf"} 2
+dnscollector_qnames_size_bytes_sum{stream_id="dnsdist1"} 46
+dnscollector_qnames_size_bytes_count{stream_id="dnsdist1"} 2
 # HELP dnscollector_queries_size_bytes Size of the queries in bytes.
 # TYPE dnscollector_queries_size_bytes histogram
 dnscollector_queries_size_bytes_bucket{stream_id="dnsdist1",le="50"} 0
-dnscollector_queries_size_bytes_bucket{stream_id="dnsdist1",le="100"} 5
-dnscollector_queries_size_bytes_bucket{stream_id="dnsdist1",le="250"} 5
-dnscollector_queries_size_bytes_bucket{stream_id="dnsdist1",le="500"} 5
-dnscollector_queries_size_bytes_bucket{stream_id="dnsdist1",le="+Inf"} 5
-dnscollector_queries_size_bytes_sum{stream_id="dnsdist1"} 275
-dnscollector_queries_size_bytes_count{stream_id="dnsdist1"} 5
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist1",le="100"} 1
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist1",le="250"} 1
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist1",le="500"} 1
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist1",le="+Inf"} 1
+dnscollector_queries_size_bytes_sum{stream_id="dnsdist1"} 64
+dnscollector_queries_size_bytes_count{stream_id="dnsdist1"} 1
 # HELP dnscollector_received_bytes_total The total bytes received
 # TYPE dnscollector_received_bytes_total counter
-dnscollector_received_bytes_total{stream_id="dnsdist1"} 275
+dnscollector_received_bytes_total{stream_id="dnsdist1"} 64
 # HELP dnscollector_replies_size_bytes Size of the replies in bytes.
 # TYPE dnscollector_replies_size_bytes histogram
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist-cache",le="50"} 4
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist-cache",le="100"} 4
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist-cache",le="250"} 4
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist-cache",le="500"} 4
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist-cache",le="+Inf"} 4
-dnscollector_replies_size_bytes_sum{stream_id="dnsdist-cache"} 172
-dnscollector_replies_size_bytes_count{stream_id="dnsdist-cache"} 4
 dnscollector_replies_size_bytes_bucket{stream_id="dnsdist1",le="50"} 0
 dnscollector_replies_size_bytes_bucket{stream_id="dnsdist1",le="100"} 1
 dnscollector_replies_size_bytes_bucket{stream_id="dnsdist1",le="250"} 1
 dnscollector_replies_size_bytes_bucket{stream_id="dnsdist1",le="500"} 1
 dnscollector_replies_size_bytes_bucket{stream_id="dnsdist1",le="+Inf"} 1
-dnscollector_replies_size_bytes_sum{stream_id="dnsdist1"} 54
+dnscollector_replies_size_bytes_sum{stream_id="dnsdist1"} 63
 dnscollector_replies_size_bytes_count{stream_id="dnsdist1"} 1
 # HELP dnscollector_requesters_count The total number of DNS clients per stream identity
 # TYPE dnscollector_requesters_count counter
-dnscollector_requesters_count{stream_id="dnsdist-cache"} 1
 dnscollector_requesters_count{stream_id="dnsdist1"} 1
 # HELP dnscollector_requesters_count_uniq The total number of uniq DNS clients
 # TYPE dnscollector_requesters_count_uniq counter
 dnscollector_requesters_count_uniq 1
 # HELP dnscollector_sent_bytes_total The total bytes sent
 # TYPE dnscollector_sent_bytes_total counter
-dnscollector_sent_bytes_total{stream_id="dnsdist-cache"} 172
-dnscollector_sent_bytes_total{stream_id="dnsdist1"} 54
+dnscollector_sent_bytes_total{stream_id="dnsdist1"} 63
+# HELP dnscollector_suspicious_count The total number of suspicious domain per stream identity
+# TYPE dnscollector_suspicious_count counter
+dnscollector_suspicious_count{stream_id="dnsdist1"} 1
+# HELP dnscollector_suspicious_count_uniq The total number of uniq suspicious domain
+# TYPE dnscollector_suspicious_count_uniq counter
+dnscollector_suspicious_count_uniq 1
 # HELP dnscollector_throughput_ops Number of ops per second received, partitioned by qname
 # TYPE dnscollector_throughput_ops gauge
-dnscollector_throughput_ops{stream_id="dnsdist-cache"} 0
 dnscollector_throughput_ops{stream_id="dnsdist1"} 0
 # HELP dnscollector_throughput_ops_max Max number of ops per second observed, partitioned by qname
 # TYPE dnscollector_throughput_ops_max gauge
-dnscollector_throughput_ops_max{stream_id="dnsdist-cache"} 2
-dnscollector_throughput_ops_max{stream_id="dnsdist1"} 2
+dnscollector_throughput_ops_max{stream_id="dnsdist1"} 0
 # HELP dnscollector_tlds_count The total number of tld per stream identity
 # TYPE dnscollector_tlds_count counter
-dnscollector_tlds_count{stream_id="dnsdist-cache"} 4
-dnscollector_tlds_count{stream_id="dnsdist1"} 6
+dnscollector_tlds_count{stream_id="dnsdist1"} 2
 # HELP dnscollector_tlds_count_uniq The total number of uniq TLD
 # TYPE dnscollector_tlds_count_uniq counter
 dnscollector_tlds_count_uniq 1
 # HELP dnscollector_top_domains_total Number of hit per domain topN, partitioned by qname
 # TYPE dnscollector_top_domains_total gauge
-dnscollector_top_domains_total{domain="www.google.com",stream_id="dnsdist-cache"} 4
-dnscollector_top_domains_total{domain="www.google.com",stream_id="dnsdist1"} 6
+dnscollector_top_domains_total{domain="w.w.w.g.o.o.g.l.e.c.o.m",stream_id="dnsdist1"} 2
 # HELP dnscollector_top_requesters_total Number of hit per requester topN, partitioned by client IP
 # TYPE dnscollector_top_requesters_total gauge
-dnscollector_top_requesters_total{ip="127.0.0.1",stream_id="dnsdist-cache"} 4
-dnscollector_top_requesters_total{ip="127.0.0.1",stream_id="dnsdist1"} 6
+dnscollector_top_requesters_total{ip="127.0.0.1",stream_id="dnsdist1"} 2
+# HELP dnscollector_top_suspicious_total Number of hit per suspicious domain - topN
+# TYPE dnscollector_top_suspicious_total gauge
+dnscollector_top_suspicious_total{domain="w.w.w.g.o.o.g.l.e.c.o.m",stream_id="dnsdist1"} 2
 # HELP dnscollector_top_tlds_total Number of hit per tld - topN
 # TYPE dnscollector_top_tlds_total gauge
-dnscollector_top_tlds_total{domain="com",stream_id="dnsdist-cache"} 0
-dnscollector_top_tlds_total{domain="com",stream_id="dnsdist1"} 0
+dnscollector_top_tlds_total{domain="m",stream_id="dnsdist1"} 0

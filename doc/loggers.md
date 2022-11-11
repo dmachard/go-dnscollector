@@ -74,9 +74,8 @@ prometheus:
 ### REST API
 
 Build-in webserver with REST API to retrieve somes statistics like top domains, clients and more...
-Basic authentication supported. Prometheus metrics is also available through this API.
+Basic authentication supported.
 
-* prometheus metrics format
 * qps, total queries/replies, top domains, clients, rcodes...
 * basic auth
 * tls support
@@ -93,11 +92,6 @@ Options:
 - `cert-file`: (string) certificate server file
 - `key-file`: (string) private key server file
 - `top-max-items`: (string) default number of items on top
-- `common-qtypes`: (list of string)  expected common qtype list, other will be considered as suspicious
-- `threshold-qname-len`: (string) a length greater than this value will be considered as suspicious
-- `threshold-packet-len`: (string) a size greater than this value will be considered as suspicious value in bytes
-- `threshold-slow`: (string) threshold to set a domain considered as slow, value in second
-- `prometheus-suffix`: (string) prometheus suffix
 
 Default values:
 
@@ -112,19 +106,6 @@ webserver:
   cert-file: "./testsdata/server.crt"
   key-file: "./testsdata/server.key"
   top-max-items: 100
-  common-qtypes:
-    - A
-    - AAAA
-    - CNAME
-    - TXT
-    - PTR
-    - NAPTR
-    - DNSKEY
-    - SRV
-  threshold-qname-len: 80
-  threshold-packet-len: 1000
-  threshold-slow: 0.5
-  prometheus-suffix: "dnscollector"
 ```
 
 **Prometheus metrics example:**

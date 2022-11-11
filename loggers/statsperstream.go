@@ -127,15 +127,10 @@ type StatsPerStream struct {
 	sync.RWMutex
 }
 
-func NewStatsPerStream(config *dnsutils.Config, name string, topmaxitems int, maxqnamelen int,
-	maxpacketlen int, thresholdslow float64, commonqtypes []string) *StatsPerStream {
+func NewStatsPerStream(config *dnsutils.Config, name string, topmaxitems int) *StatsPerStream {
 	c := &StatsPerStream{
 
-		TopMaxItems:        topmaxitems,
-		ThresholdQnameLen:  maxqnamelen,
-		ThresholdPacketLen: maxpacketlen,
-		ThresholdSlow:      thresholdslow,
-		CommonQtypes:       commonqtypes,
+		TopMaxItems: topmaxitems,
 
 		name:   name,
 		config: config,

@@ -167,21 +167,16 @@ type Config struct {
 			TopN          int    `yaml:"top-n"`
 		} `yaml:"prometheus"`
 		WebServer struct {
-			Enable                  bool     `yaml:"enable"`
-			ListenIP                string   `yaml:"listen-ip"`
-			ListenPort              int      `yaml:"listen-port"`
-			BasicAuthLogin          string   `yaml:"basic-auth-login"`
-			BasicAuthPwd            string   `yaml:"basic-auth-pwd"`
-			TlsSupport              bool     `yaml:"tls-support"`
-			TlsMinVersion           string   `yaml:"tls-min-version"`
-			CertFile                string   `yaml:"cert-file"`
-			KeyFile                 string   `yaml:"key-file"`
-			PromPrefix              string   `yaml:"prometheus-prefix"`
-			StatsTopMaxItems        int      `yaml:"top-max-items"`
-			StatsThresholdQnameLen  int      `yaml:"threshold-qname-len"`
-			StatsThresholdPacketLen int      `yaml:"threshold-packet-len"`
-			StatsThresholdSlow      float64  `yaml:"threshold-slow"`
-			StatsCommonQtypes       []string `yaml:"common-qtypes,flow"`
+			Enable           bool   `yaml:"enable"`
+			ListenIP         string `yaml:"listen-ip"`
+			ListenPort       int    `yaml:"listen-port"`
+			BasicAuthLogin   string `yaml:"basic-auth-login"`
+			BasicAuthPwd     string `yaml:"basic-auth-pwd"`
+			TlsSupport       bool   `yaml:"tls-support"`
+			TlsMinVersion    string `yaml:"tls-min-version"`
+			CertFile         string `yaml:"cert-file"`
+			KeyFile          string `yaml:"key-file"`
+			StatsTopMaxItems int    `yaml:"top-max-items"`
 		} `yaml:"webserver"`
 		LogFile struct {
 			Enable              bool   `yaml:"enable"`
@@ -446,13 +441,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.WebServer.TlsMinVersion = TLS_v12
 	c.Loggers.WebServer.CertFile = ""
 	c.Loggers.WebServer.KeyFile = ""
-	c.Loggers.WebServer.PromPrefix = PROG_NAME
 	c.Loggers.WebServer.StatsTopMaxItems = 100
-	c.Loggers.WebServer.StatsThresholdQnameLen = 80
-	c.Loggers.WebServer.StatsThresholdPacketLen = 1000
-	c.Loggers.WebServer.StatsThresholdSlow = 0.5
-	c.Loggers.WebServer.StatsCommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR", "NAPTR",
-		"DNSKEY", "SRV", "SOA", "NS", "MX", "DS"}
 
 	c.Loggers.TcpClient.Enable = false
 	c.Loggers.TcpClient.RemoteAddress = LOCALHOST_IP
