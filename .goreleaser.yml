@@ -24,12 +24,14 @@ builds:
   binary: go-dnscollector
 
 archives:
-- format: zip
+- id: zipformat
+  format: zip
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
   files:
     - config.yml
     
-- format: tar.gz
+- id: targzformat
+  format: tar.gz
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
   files:
     - config.yml
