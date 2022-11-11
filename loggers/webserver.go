@@ -39,10 +39,7 @@ func NewWebserver(config *dnsutils.Config, logger *logger.Logger, version string
 	}
 
 	// init engine to compute statistics and prometheus
-	o.stats = NewStreamsStats(config, o.ver, config.Loggers.WebServer.PromPrefix,
-		config.Loggers.WebServer.StatsTopMaxItems, config.Loggers.WebServer.StatsThresholdQnameLen,
-		config.Loggers.WebServer.StatsThresholdPacketLen, config.Loggers.WebServer.StatsThresholdSlow,
-		config.Loggers.WebServer.StatsCommonQtypes)
+	o.stats = NewStreamsStats(config, o.ver, config.Loggers.WebServer.StatsTopMaxItems)
 	return o
 }
 
@@ -112,20 +109,6 @@ func (s *Webserver) resetHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		s.stats.Reset(stream[0])
 		fmt.Fprintf(w, "success")
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
-func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
-	if !s.BasicAuth(w, r) {
-		http.Error(w, "Not authorized", http.StatusUnauthorized)
-		return
-	}
-
-	switch r.Method {
-	case http.MethodGet:
-		s.stats.GetMetrics(w, r)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -387,7 +370,6 @@ func (s *Webserver) ListenAndServe() {
 	s.LogInfo("starting http api...")
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/metrics", s.metricsHandler)
 	mux.HandleFunc("/reset", s.resetHandler)
 
 	mux.HandleFunc("/top/requesters", s.topRequestersHandler)

@@ -73,7 +73,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogInfo("%s - new connection\n", peer)
+	c.LogInfo("new connection from %s\n", peer)
 
 	// start dnstap subprocessor
 	dnstap_subprocessor := NewDnstapProcessor(c.config, c.logger, c.name)

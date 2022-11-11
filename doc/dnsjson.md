@@ -11,6 +11,7 @@ Main part of a JSON message:
 - `edns`: extended dns options
 - `geo`: contains country, continent and city informations
 - `pdns`: contains specific powerdns metadata (tags, original-request-subnet)
+- `suspicious`: some flags regarding unusual traffic
 
 Example:
 
@@ -87,6 +88,18 @@ Example:
     "tags": [],
     "original-request-subnet": "",
     "applied-policy": ""
+  },
+  "suspicious": {
+    "score": 0.0,
+    "flags": {
+      "malformed-packet": false,
+      "large-pkt": false,
+      "long-domain": false,
+      "slow-domain": false,
+      "unallowed-chars": false,
+      "uncommon-qtypes": false,
+      "excessive-number-labels": false,
+    }
   }
 }
 ```

@@ -40,7 +40,7 @@ func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, version str
 	s.ReadConfig()
 
 	// init engine to compute statistics
-	s.stats = NewStreamsStats(config, version, "undefined", 0, 0, 0, 0, []string{})
+	s.stats = NewStreamsStats(config, version, 0)
 
 	return s
 }

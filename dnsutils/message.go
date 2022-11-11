@@ -106,7 +106,7 @@ type SuspiciousFlags struct {
 	LongDomain            bool `json:"long-domain" msgpack:"long-domain"`
 	SlowDomain            bool `json:"slow-domain" msgpack:"slow-domain"`
 	UnallowedChars        bool `json:"unallowed-chars" msgpack:"unallowed-chars"`
-	UncommonQtype         bool `json:"uncommon-qtype" msgpack:"uncommon-qtypen"`
+	UncommonQtypes        bool `json:"uncommon-qtypes" msgpack:"uncommon-qtypes"`
 	ExcessiveNumberLabels bool `json:"excessive-number-labels" msgpack:"excessive-number-labels"`
 }
 
@@ -155,7 +155,8 @@ func (dm *DnsMessage) Init() {
 		DnsRRs:                   DnsRRs{Answers: []DnsAnswer{}, Nameservers: []DnsAnswer{}, Records: []DnsAnswer{}},
 	}
 
-	dm.EDNS = DnsExtended{UdpSize: 0,
+	dm.EDNS = DnsExtended{
+		UdpSize:       0,
 		ExtendedRcode: 0,
 		Version:       0,
 		Do:            0,
@@ -173,6 +174,19 @@ func (dm *DnsMessage) Init() {
 		Tags:                  []string{},
 		OriginalRequestSubnet: "",
 		AppliedPolicy:         "",
+	}
+
+	dm.Suspicious = Suspicious{
+		Score: 0.0,
+		Flags: SuspiciousFlags{
+			MalformedPacket:       false,
+			LargePacket:           false,
+			LongDomain:            false,
+			SlowDomain:            false,
+			UnallowedChars:        false,
+			UncommonQtypes:        false,
+			ExcessiveNumberLabels: false,
+		},
 	}
 }
 
@@ -326,6 +340,8 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 			} else {
 				s.WriteString("-")
 			}
+		case "suspicious-score":
+			s.WriteString(strconv.Itoa(int(dm.Suspicious.Score)))
 		default:
 			log.Fatalf("unsupport directive for text format: %s", word)
 		}

@@ -94,7 +94,7 @@ func TestSuspiciousUncommonQtype(t *testing.T) {
 		t.Errorf("suspicious score should be equal to 1.0")
 	}
 
-	if dm.Suspicious.Flags.UncommonQtype != true {
+	if dm.Suspicious.Flags.UncommonQtypes != true {
 		t.Errorf("suspicious uncommon qtype flag should be equal to true")
 	}
 }

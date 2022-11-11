@@ -30,7 +30,7 @@ func TestPrometheusGetMetrics(t *testing.T) {
 			name:       "total domains",
 			method:     http.MethodGet,
 			handler:    g.httpServer.Handler.ServeHTTP,
-			want:       config.Loggers.Prometheus.PromPrefix + `_domains_count{stream_id="collector"} 1`,
+			want:       config.Loggers.Prometheus.PromPrefix + `_domains_total{stream_id="collector"} 1`,
 			statusCode: http.StatusOK,
 		},
 	}
