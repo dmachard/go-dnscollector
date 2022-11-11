@@ -88,16 +88,15 @@ jobs:
         wget -nv https://github.com/prometheus/prometheus/releases/download/v$PROM_VERSION/prometheus-$PROM_VERSION.linux-amd64.tar.gz
         tar xf prometheus-$PROM_VERSION.linux-amd64.tar.gz
         cd prometheus-$PROM_VERSION.linux-amd64/
-        curl http://127.0.0.1:8081/metrics | ./promtool check metrics 2> errors.txt
+        curl http://127.0.0.1:8081/metrics | ./promtool check metrics > result.txt >  2>&1
       env:
         PROM_VERSION: "2.40.0"
 
     - name: use error detail on failure
-      if: ${{ failure() }}
+      id: maybe_fails
       run: |
-        echo ::set-output name=errors::`cat errors.txt`
-        
+        echo ::set-output name=result::`cat result.txt`
+
     - name: use error detail on failure
-      if: ${{ failure() }}
       run: |
-        echo ${{ steps.maybe_fails.outputs.errors }}
+        echo ${{ steps.maybe_fails.outputs.result }}
