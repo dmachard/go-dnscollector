@@ -43,26 +43,26 @@ func NewTransforms(config *dnsutils.Config, logger *logger.Logger, name string) 
 
 func (p *Transforms) Prepare() error {
 	if p.config.Transformers.Normalize.Enable {
-		p.LogInfo("normalize enabled")
+		p.LogInfo("[normalize] enabled")
 	}
 
 	if p.config.Transformers.GeoIP.Enable {
-		p.LogInfo("GeoIP enabled")
+		p.LogInfo("[GeoIP] enabled")
 		if err := p.GeoipTransform.Open(); err != nil {
 			p.LogError("geoip open error %v", err)
 		}
 	}
 
 	if p.config.Transformers.UserPrivacy.Enable {
-		p.LogInfo("user privacy enabled")
+		p.LogInfo("[user privacy] enabled")
 	}
 
 	if p.config.Transformers.Filtering.Enable {
-		p.LogInfo("filtering enabled")
+		p.LogInfo("[filtering] enabled")
 	}
 
 	if p.config.Transformers.Suspicious.Enable {
-		p.LogInfo("suspicious enabled")
+		p.LogInfo("[suspicious] enabled")
 	}
 	return nil
 }
