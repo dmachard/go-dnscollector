@@ -61,6 +61,7 @@ global:
   # - pdns-tags: powerdns metadata, get all tags separated by comma
   # - pdns-original-request-client: powerdns metadata, get edns subclient
   # - pdns-applied-policy: powerdns metadata, get applied policy
+  # - suspicious-score: suspicious score for unusual traffic
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 # create your dns collector, please refer bellow to see the list 
@@ -458,7 +459,7 @@ multiplexer:
 #   # forward received replies to configured loggers ?
 #   log-replies: true
 
-# # geoip maxmind support, more information on https://www.maxmind.com/en/geoip-demo
+# # GeoIP maxmind support, more information on https://www.maxmind.com/en/geoip-demo
 # # this feature can be used to append additional informations like country, city, asn
 # # according to the query ip
 # geoip:
@@ -468,3 +469,18 @@ multiplexer:
 #   mmdb-city-file: ""
 #   # path file to your mmdb ASN database
 #   mmdb-asn-file: ""
+
+# this feature can be used to tag unusual dns traffic like long domain, large packets
+# suspicious:
+#   # a length greater than this value for qname will be considered as suspicious
+#   threshold-qname-len: 100
+#   # a size greater than this value will be considered as suspicious in bytes
+#   threshold-packet-len: 1000
+#   # threshold to set a domain considered as slow regarding latency, value in second
+#   threshold-slow: 1.0
+#   # common qtypes list
+#   common-qtypes:  [ "A", "AAAA", "CNAME", "TXT", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS" ]
+#   # unallowed list of characters not acceptable in domain name
+#   unallowed-chars: [ "\"", "==", "/", ":" ]
+#   # maximum number of labels in domains name
+#   threshold-max-labels: 10

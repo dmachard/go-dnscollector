@@ -43,7 +43,7 @@ Example:
 
 ### Prometheus
 
-This logger generates **prometheus** metrics. Use the following Grafana [dashboard](https://grafana.com/grafana/dashboards/16630).
+This logger generates **prometheus** metrics. Use the following Grafana [dashboard](https://grafana.com/grafana/dashboards/16630). Overview of all metrics [here](metric.txt).
 
 Options:
 - `listen-ip`: (string) listening IP

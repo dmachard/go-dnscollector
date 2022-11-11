@@ -24,17 +24,17 @@ func TestWebServerBadBasicAuth(t *testing.T) {
 		statusCode int
 	}{
 		{
-			name:       "total domains",
-			uri:        "/metrics",
-			handler:    g.metricsHandler,
-			method:     http.MethodGet,
+			name:       "reset",
+			uri:        "/reset",
+			handler:    g.resetHandler,
+			method:     http.MethodDelete,
 			statusCode: http.StatusUnauthorized,
 		},
 		{
-			name:       "total clients",
-			uri:        "/metrics",
-			handler:    g.metricsHandler,
-			method:     http.MethodGet,
+			name:       "reset",
+			uri:        "/reset",
+			handler:    g.resetHandler,
+			method:     http.MethodDelete,
 			statusCode: http.StatusUnauthorized,
 		},
 	}
@@ -74,19 +74,19 @@ func TestWebServerGet(t *testing.T) {
 		statusCode int
 	}{
 		{
-			name:       "total domains",
-			uri:        "/metrics",
-			handler:    g.metricsHandler,
+			name:       "dump clients",
+			uri:        "/dump/requester",
+			handler:    g.dumpRequestersHandler,
 			method:     http.MethodGet,
-			want:       config.Loggers.WebServer.PromPrefix + `_domains_total{stream="global"} 1`,
+			want:       `{"1.2.3.4":1}`,
 			statusCode: http.StatusOK,
 		},
 		{
-			name:       "total clients",
-			uri:        "/metrics",
-			handler:    g.metricsHandler,
+			name:       "dump clients",
+			uri:        "/dump/requester",
+			handler:    g.dumpRequestersHandler,
 			method:     http.MethodGet,
-			want:       config.Loggers.WebServer.PromPrefix + `_requesters_total{stream="global"} 1`,
+			want:       `{"1.2.3.4":1}`,
 			statusCode: http.StatusOK,
 		},
 	}
@@ -131,9 +131,9 @@ func TestWebServerBadMethod(t *testing.T) {
 		statusCode int
 	}{
 		{
-			name:       "metrics",
-			uri:        "/metrics",
-			handler:    g.metricsHandler,
+			name:       "reset",
+			uri:        "/reset",
+			handler:    g.resetHandler,
 			method:     http.MethodPost,
 			statusCode: http.StatusMethodNotAllowed,
 		},

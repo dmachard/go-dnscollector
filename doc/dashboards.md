@@ -2,7 +2,7 @@
 
 Build-in dashboard are available with multiple data source
 
-- [Prometheus - Basic](https://grafana.com/grafana/dashboards/15416)
+- [Prometheus - Basic](https://grafana.com/grafana/dashboards/16630)
 - [Prometheus - Advanced](https://grafana.com/grafana/dashboards/15416)
 - [Loki](https://grafana.com/grafana/dashboards/15415)
 

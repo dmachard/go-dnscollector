@@ -68,7 +68,7 @@ func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
 	// uncommon qtype?
 	if _, found := p.CommonQtypes[dm.DNS.Qtype]; !found {
 		dm.Suspicious.Score += 1.0
-		dm.Suspicious.Flags.UncommonQtype = true
+		dm.Suspicious.Flags.UncommonQtypes = true
 	}
 
 	// count the number of labels in qname

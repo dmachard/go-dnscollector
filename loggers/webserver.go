@@ -117,20 +117,6 @@ func (s *Webserver) resetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Webserver) metricsHandler(w http.ResponseWriter, r *http.Request) {
-	if !s.BasicAuth(w, r) {
-		http.Error(w, "Not authorized", http.StatusUnauthorized)
-		return
-	}
-
-	switch r.Method {
-	case http.MethodGet:
-		s.stats.GetMetrics(w, r)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
 func (s *Webserver) dumpRequestersHandler(w http.ResponseWriter, r *http.Request) {
 	if !s.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
@@ -387,7 +373,6 @@ func (s *Webserver) ListenAndServe() {
 	s.LogInfo("starting http api...")
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/metrics", s.metricsHandler)
 	mux.HandleFunc("/reset", s.resetHandler)
 
 	mux.HandleFunc("/top/requesters", s.topRequestersHandler)

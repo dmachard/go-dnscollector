@@ -367,9 +367,9 @@ func (c *Config) SetDefault() {
 
 	// Transformers
 	c.Transformers.Suspicious.Enable = false
-	c.Transformers.Suspicious.ThresholdQnameLen = 80
+	c.Transformers.Suspicious.ThresholdQnameLen = 100
 	c.Transformers.Suspicious.ThresholdPacketLen = 1000
-	c.Transformers.Suspicious.ThresholdSlow = 0.5
+	c.Transformers.Suspicious.ThresholdSlow = 1.0
 	c.Transformers.Suspicious.CommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR",
 		"NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS"}
 	c.Transformers.Suspicious.UnallowedChars = []string{"\"", "==", "/", ":"}

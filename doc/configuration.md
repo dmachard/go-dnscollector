@@ -15,10 +15,11 @@ incoming traffics. A list of examples are available [here](./example-config) and
   - [Loggers](#loggers)
   - [Routes](#routes)
 - [Transforms](#transforms)
-  - [Qname lowercase](#qname-lowercase)
+  - [Normalize](#normalize)
   - [User privacy](#user-privacy)
   - [GeoIP Support](#geoip-support)
   - [DNS filtering](#dns-filtering)
+  - [Suspicious](#suspicious)
 
 ## Global
 
@@ -107,6 +108,7 @@ All available directives:
 - `pdns-tags`: powerdns metadata, get all tags separated by comma
 - `pdns-original-request-subnet`: powerdns metadata, original request subnet like edns subclient
 - `pdns-applied-policy`: powerdns metadata, applied policy
+- `suspicious-score`: suspicious score for unusual traffic
 
 ```yaml
 global:
@@ -161,7 +163,7 @@ multiplexer:
 
 Some transformations can be done after the collect.
 
-### Qname lowercase
+### Normalize
 
 Option to convert all domain to lowercase. For example: `Wwww.GooGlE.com` will be equal to `www.google.com`
 
@@ -260,6 +262,8 @@ Options:
 - `log-replies`: (boolean)  forward received replies to configured loggers
 - `downsample`: (integer) only keep 1 out of every `downsample` records, e.g. if set to 20, then this will return every 20th record, dropping 95% of queries 
 
+Default values:
+
 ```yaml
 transforms:
   filtering:
@@ -280,4 +284,29 @@ Domain list with regex example:
 ```
 (mail|wwww).google.com
 github.com
+```
+
+### Suspicious
+
+This feature can be used to tag unusual dns traffic like long domain, large packets and more.
+
+Options:
+- `threshold-qname-len`: a length greater than this value for qname will be considered as suspicious
+- `threshold-packet-len`: a size greater than this value will be considered as suspicious in bytes
+- `threshold-slow`: threshold to set a domain considered as slow regarding latency, value in second
+- `common-qtypes`:  common qtypes list 
+- `unallowed-chars`: unallowed list of characters not acceptable in domain name
+- `hreshold-max-labels`: maximum number of labels in domains name
+
+Default values:
+
+```yaml
+transforms:
+  suspicious:
+    threshold-qname-len: 100
+    threshold-packet-len: 1000
+    threshold-slow: 1.0
+    common-qtypes:  [ "A", "AAAA", "CNAME", "TXT", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS" ]
+    unallowed-chars: [ "\"", "==", "/", ":" ]
+    threshold-max-labels: 10
 ```
