@@ -653,7 +653,7 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 			o.suspiciousUniq[dm.DNS.Qname] += 1
 		}
 
-		if _, exists := o.tlds[dm.DnsTap.Identity]; !exists {
+		if _, exists := o.suspicious[dm.DnsTap.Identity]; !exists {
 			o.suspicious[dm.DnsTap.Identity] = make(map[string]int)
 		}
 
