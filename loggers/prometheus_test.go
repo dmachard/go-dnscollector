@@ -17,7 +17,11 @@ func TestPrometheusGetMetrics(t *testing.T) {
 	g := NewPrometheus(config, logger.New(false), "dev", "test")
 
 	// record one dns message to simulate some incoming data
-	g.Record(dnsutils.GetFakeDnsMessage())
+	noerror_record := dnsutils.GetFakeDnsMessage()
+	nx_record := dnsutils.GetFakeDnsMessage()
+	nx_record.DNS.Rcode = "NXDOMAIN"
+	g.Record(noerror_record)
+	g.Record(nx_record)
 
 	tt := []struct {
 		name       string
@@ -31,6 +35,20 @@ func TestPrometheusGetMetrics(t *testing.T) {
 			method:     http.MethodGet,
 			handler:    g.httpServer.Handler.ServeHTTP,
 			want:       config.Loggers.Prometheus.PromPrefix + `_domains_total{stream_id="collector"} 1`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "total requesters",
+			method:     http.MethodGet,
+			handler:    g.httpServer.Handler.ServeHTTP,
+			want:       config.Loggers.Prometheus.PromPrefix + `_requesters_total{stream_id="collector"} 1`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "total nxdomain",
+			method:     http.MethodGet,
+			handler:    g.httpServer.Handler.ServeHTTP,
+			want:       config.Loggers.Prometheus.PromPrefix + `_nxdomains_total{stream_id="collector"} 1`,
 			statusCode: http.StatusOK,
 		},
 	}

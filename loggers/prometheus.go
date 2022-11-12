@@ -203,7 +203,7 @@ func (o *Prometheus) InitProm() {
 
 	o.gaugeTopNxDomains = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_nxdomainsl", prom_prefix),
+			Name: fmt.Sprintf("%s_top_nxdomains", prom_prefix),
 			Help: "Number of hit per nx domain topN, partitioned by qname",
 		},
 		[]string{"stream_id", "domain"},
@@ -355,7 +355,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterDomainsNx = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_domains_nx_count", prom_prefix),
+			Name: fmt.Sprintf("%s_nxdomains_total", prom_prefix),
 			Help: "The total number of unknown domains per stream identity",
 		},
 		[]string{"stream_id"},
@@ -364,7 +364,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterDomainsSf = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_domains_sf_count", prom_prefix),
+			Name: fmt.Sprintf("%s_sfdomains_total", prom_prefix),
 			Help: "The total number of unreachable domains per stream identity",
 		},
 		[]string{"stream_id"},
