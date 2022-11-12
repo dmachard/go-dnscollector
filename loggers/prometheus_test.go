@@ -19,7 +19,7 @@ func TestPrometheusGetMetrics(t *testing.T) {
 	// record one dns message to simulate some incoming data
 	noerror_record := dnsutils.GetFakeDnsMessage()
 	nx_record := dnsutils.GetFakeDnsMessage()
-	nx_record.DNS.Rcode = "NXDOMAIN"
+	nx_record.DNS.Rcode = dnsutils.DNS_RCODE_NXDOMAIN
 	g.Record(noerror_record)
 	g.Record(nx_record)
 

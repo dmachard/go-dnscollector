@@ -521,7 +521,7 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	}
 
 	/* count all domains name and top domains */
-	if dm.DNS.Rcode == "SERVFAIL" {
+	if dm.DNS.Rcode == dnsutils.DNS_RCODE_SERVFAIL {
 		/* record and count all unreachable domains name and topN*/
 		if _, exists := o.sfdomainsUniq[dm.DNS.Qname]; !exists {
 			o.sfdomainsUniq[dm.DNS.Qname] = 1
@@ -551,7 +551,7 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 				o.gaugeTopSfDomains.WithLabelValues(s, r.Name).Set(float64(r.Hit))
 			}
 		}
-	} else if dm.DNS.Rcode == "NXDOMAIN" {
+	} else if dm.DNS.Rcode == dnsutils.DNS_RCODE_NXDOMAIN {
 		/* record and count all nx domains name and topN*/
 		if _, exists := o.nxdomainsUniq[dm.DNS.Qname]; !exists {
 			o.nxdomainsUniq[dm.DNS.Qname] = 1
