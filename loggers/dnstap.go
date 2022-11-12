@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -83,6 +84,10 @@ func (o *DnstapSender) Stop() {
 func (o *DnstapSender) Run() {
 	o.LogInfo("running in background...")
 
+	// prepare transforms
+	transformsConfig := (*dnsutils.ConfigTransformers)(&o.config.OutgoingTransformers)
+	subprocessors := transformers.NewTransforms(transformsConfig, o.logger, o.name)
+
 	dt := &dnstap.Dnstap{}
 	frame := &framestream.Frame{}
 
@@ -146,6 +151,11 @@ LOOP:
 					for {
 						select {
 						case dm := <-o.channel:
+
+							// apply tranforms
+							if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+								continue
+							}
 
 							dt.Reset()
 
@@ -240,6 +250,11 @@ LOOP:
 		o.LogInfo("closing tcp connection")
 		o.conn.Close()
 	}
+
 	o.LogInfo("run terminated")
+
+	// cleanup transformers
+	subprocessors.Reset()
+
 	o.done <- true
 }

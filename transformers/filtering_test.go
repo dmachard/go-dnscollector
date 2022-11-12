@@ -14,9 +14,9 @@ const (
 
 func TestFilteringQR(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Filtering.LogQueries = false
-	config.Transformers.Filtering.LogReplies = false
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Filtering.LogQueries = false
+	config.Filtering.LogReplies = false
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -35,8 +35,8 @@ func TestFilteringQR(t *testing.T) {
 
 func TestFilteringByRcodeNOERROR(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Filtering.DropRcodes = []string{"NOERROR"}
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Filtering.DropRcodes = []string{"NOERROR"}
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -50,8 +50,8 @@ func TestFilteringByRcodeNOERROR(t *testing.T) {
 
 func TestFilteringByRcodeEmpty(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Filtering.DropRcodes = []string{}
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Filtering.DropRcodes = []string{}
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -64,9 +64,9 @@ func TestFilteringByRcodeEmpty(t *testing.T) {
 
 func TestFilteringByQueryIp(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Filtering.DropQueryIpFile = "../testsdata/filtering_queryip.txt"
-	config.Transformers.Filtering.KeepQueryIpFile = "../testsdata/filtering_queryip_keep.txt"
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Filtering.DropQueryIpFile = "../testsdata/filtering_queryip.txt"
+	config.Filtering.KeepQueryIpFile = "../testsdata/filtering_queryip_keep.txt"
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -101,8 +101,8 @@ func TestFilteringByQueryIp(t *testing.T) {
 
 func TestFilteringByFqdn(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Filtering.DropFqdnFile = "../testsdata/filtering_fqdn.txt"
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Filtering.DropFqdnFile = "../testsdata/filtering_fqdn.txt"
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -121,8 +121,8 @@ func TestFilteringByFqdn(t *testing.T) {
 
 func TestFilteringByDomainRegex(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -146,10 +146,10 @@ func TestFilteringByDomainRegex(t *testing.T) {
 
 func TestFilteringByKeepDomain(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
+	config := dnsutils.GetFakeConfigTransformers()
 
 	// file contains google.fr, test.github.com
-	config.Transformers.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains.txt"
+	config.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains.txt"
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -178,14 +178,14 @@ func TestFilteringByKeepDomain(t *testing.T) {
 
 func TestFilteringByKeepDomainRegex(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
+	config := dnsutils.GetFakeConfigTransformers()
 
 	/* file contains:
 	(mail|sheets).google.com$
 	test.github.com$
 	.+.google.com$
 	*/
-	config.Transformers.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains_regex.txt"
+	config.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains_regex.txt"
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -216,8 +216,8 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 
 func TestFilteringByDownsample(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Filtering.Downsample = 2
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Filtering.Downsample = 2
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")
@@ -241,7 +241,7 @@ func TestFilteringByDownsample(t *testing.T) {
 	}
 
 	// test for default behavior when downsample is set to 0
-	config.Transformers.Filtering.Downsample = 0
+	config.Filtering.Downsample = 0
 	filtering = NewFilteringProcessor(config, logger.New(false), "test")
 
 	if filtering.CheckIfDrop(&dm) == true {
@@ -255,9 +255,9 @@ func TestFilteringByDownsample(t *testing.T) {
 
 func TestFilteringMultipleFilters(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
-	config.Transformers.Filtering.DropQueryIpFile = "../testsdata/filtering_queryip.txt"
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
+	config.Filtering.DropQueryIpFile = "../testsdata/filtering_queryip.txt"
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test")

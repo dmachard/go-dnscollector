@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/gogo/protobuf/proto"
 	"github.com/grafana/dskit/backoff"
@@ -165,17 +166,25 @@ func (o *LokiClient) Stop() {
 
 func (o *LokiClient) Run() {
 	o.LogInfo("running in background...")
+
+	// prepare transforms
+	transformsConfig := (*dnsutils.ConfigTransformers)(&o.config.OutgoingTransformers)
+	subprocessors := transformers.NewTransforms(transformsConfig, o.logger, o.name)
+
 	buffer := new(bytes.Buffer)
 
 	tflush_interval := time.Duration(o.config.Loggers.LokiClient.FlushInterval) * time.Second
 	tflush := time.NewTimer(tflush_interval)
 
 LOOP:
-	/*	for {
-		LOOP_RECONNECT:*/
 	for {
 		select {
 		case dm := <-o.channel:
+			// apply tranforms
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
 			if _, ok := o.streams[dm.DnsTap.Identity]; !ok {
 				o.streams[dm.DnsTap.Identity] = &LokiStream{config: o.config, logger: o.logger, name: dm.DnsTap.Identity}
 				o.streams[dm.DnsTap.Identity].Init()
@@ -200,10 +209,7 @@ LOOP:
 			o.streams[dm.DnsTap.Identity].stream.Entries = append(o.streams[dm.DnsTap.Identity].stream.Entries, entry)
 
 			// flush ?
-			//fmt.Println(o.streams[dm.DnsTap.Identity].sizeentries)
 			if o.streams[dm.DnsTap.Identity].sizeentries >= o.config.Loggers.LokiClient.BatchSize {
-				//	fmt.Println("batch completed!")
-
 				// encode log entries
 				buf, err := o.streams[dm.DnsTap.Identity].Encode2Proto()
 				if err != nil {
@@ -215,13 +221,6 @@ LOOP:
 
 				// send all entries
 				o.SendEntries(buf)
-
-				/*err = o.SendEntries(buf)
-				fmt.Println(err)
-				if err != nil {
-					o.LogError("error sending log entries - %v", err)
-					break LOOP_RECONNECT
-				})*/
 
 				// reset entries and push request
 				o.streams[dm.DnsTap.Identity].ResetEntries()
@@ -244,13 +243,6 @@ LOOP:
 
 					// send all entries
 					o.SendEntries(buf)
-					/*	err = o.SendEntries(buf)
-						if err != nil {
-							o.LogError("error sending log entries - %v", err)
-							// restart timer
-							tflush.Reset(tflush_interval)
-							break LOOP_RECONNECT
-						}*/
 
 					// reset entries and push request
 					s.ResetEntries()
@@ -265,12 +257,13 @@ LOOP:
 		}
 
 	}
-	/*	o.LogInfo("retry in %d seconds", o.config.Loggers.LokiClient.RetryInterval)
-		time.Sleep(time.Duration(o.config.Loggers.LokiClient.RetryInterval) * time.Second)
-	}*/
 
 	// if buffer is not empty, we accept to lose log entries
 	o.LogInfo("run terminated")
+
+	// cleanup transformers
+	subprocessors.Reset()
+
 	// the job is done
 	o.done <- true
 }

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
 
@@ -341,6 +342,10 @@ func (o *LogFile) Rotate() error {
 func (o *LogFile) Run() {
 	o.LogInfo("running in background...")
 
+	// prepare transforms
+	transformsConfig := (*dnsutils.ConfigTransformers)(&o.config.OutgoingTransformers)
+	subprocessors := transformers.NewTransforms(transformsConfig, o.logger, o.name)
+
 	tflush_interval := time.Duration(o.config.Loggers.LogFile.FlushInterval) * time.Second
 	tflush := time.NewTimer(tflush_interval)
 	o.commpressTimer = time.NewTimer(time.Duration(o.config.Loggers.LogFile.CompressInterval) * time.Second)
@@ -353,6 +358,11 @@ LOOP:
 			if !opened {
 				o.LogInfo("channel closed")
 				break LOOP
+			}
+
+			// apply tranforms
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
 			}
 
 			// write to file
@@ -384,6 +394,9 @@ LOOP:
 	o.writer.Flush()
 
 	o.LogInfo("run terminated")
+
+	// cleanup transformers
+	subprocessors.Reset()
 
 	// the job is done
 	o.done <- true

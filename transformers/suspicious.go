@@ -8,13 +8,13 @@ import (
 )
 
 type SuspiciousTransform struct {
-	config       *dnsutils.Config
+	config       *dnsutils.ConfigTransformers
 	logger       *logger.Logger
 	name         string
 	CommonQtypes map[string]bool
 }
 
-func NewSuspiciousSubprocessor(config *dnsutils.Config, logger *logger.Logger, name string) SuspiciousTransform {
+func NewSuspiciousSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string) SuspiciousTransform {
 	d := SuspiciousTransform{
 		config:       config,
 		logger:       logger,
@@ -28,13 +28,13 @@ func NewSuspiciousSubprocessor(config *dnsutils.Config, logger *logger.Logger, n
 }
 
 func (p *SuspiciousTransform) ReadConfig() {
-	for _, v := range p.config.Transformers.Suspicious.CommonQtypes {
+	for _, v := range p.config.Suspicious.CommonQtypes {
 		p.CommonQtypes[v] = true
 	}
 }
 
 func (p *SuspiciousTransform) IsEnabled() bool {
-	return p.config.Transformers.Suspicious.Enable
+	return p.config.Suspicious.Enable
 }
 
 func (p *SuspiciousTransform) LogInfo(msg string, v ...interface{}) {
@@ -54,13 +54,13 @@ func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
 	}
 
 	// long domain name ?
-	if len(dm.DNS.Qname) > p.config.Transformers.Suspicious.ThresholdQnameLen {
+	if len(dm.DNS.Qname) > p.config.Suspicious.ThresholdQnameLen {
 		dm.Suspicious.Score += 1.0
 		dm.Suspicious.Flags.LongDomain = true
 	}
 
 	// large packet size ?
-	if dm.DNS.Length > p.config.Transformers.Suspicious.ThresholdPacketLen {
+	if dm.DNS.Length > p.config.Suspicious.ThresholdPacketLen {
 		dm.Suspicious.Score += 1.0
 		dm.Suspicious.Flags.LargePacket = true
 	}
@@ -72,13 +72,13 @@ func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
 	}
 
 	// count the number of labels in qname
-	if strings.Count(dm.DNS.Qname, ".") > p.config.Transformers.Suspicious.ThresholdMaxLabels {
+	if strings.Count(dm.DNS.Qname, ".") > p.config.Suspicious.ThresholdMaxLabels {
 		dm.Suspicious.Score += 1.0
 		dm.Suspicious.Flags.ExcessiveNumberLabels = true
 	}
 
 	// search for unallowed characters
-	for _, v := range p.config.Transformers.Suspicious.UnallowedChars {
+	for _, v := range p.config.Suspicious.UnallowedChars {
 		if strings.Contains(dm.DNS.Qname, v) {
 			dm.Suspicious.Score += 1.0
 			dm.Suspicious.Flags.UnallowedChars = true

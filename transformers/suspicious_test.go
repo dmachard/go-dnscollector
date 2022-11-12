@@ -9,8 +9,8 @@ import (
 
 func TestSuspiciousMalformedPacket(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Suspicious.Enable = true
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Suspicious.Enable = true
 
 	// init subproccesor
 	suspicious := NewSuspiciousSubprocessor(config, logger.New(false), "test")
@@ -32,9 +32,9 @@ func TestSuspiciousMalformedPacket(t *testing.T) {
 
 func TestSuspiciousLongDomain(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Suspicious.Enable = true
-	config.Transformers.Suspicious.ThresholdQnameLen = 4
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Suspicious.Enable = true
+	config.Suspicious.ThresholdQnameLen = 4
 
 	// init subproccesor
 	suspicious := NewSuspiciousSubprocessor(config, logger.New(false), "test")
@@ -56,9 +56,9 @@ func TestSuspiciousLongDomain(t *testing.T) {
 
 func TestSuspiciousLargePacket(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Suspicious.Enable = true
-	config.Transformers.Suspicious.ThresholdPacketLen = 4
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Suspicious.Enable = true
+	config.Suspicious.ThresholdPacketLen = 4
 
 	// init subproccesor
 	suspicious := NewSuspiciousSubprocessor(config, logger.New(false), "test")
@@ -79,8 +79,8 @@ func TestSuspiciousLargePacket(t *testing.T) {
 
 func TestSuspiciousUncommonQtype(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Suspicious.Enable = true
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Suspicious.Enable = true
 
 	// init subproccesor
 	suspicious := NewSuspiciousSubprocessor(config, logger.New(false), "test")
@@ -101,9 +101,9 @@ func TestSuspiciousUncommonQtype(t *testing.T) {
 
 func TestSuspiciousExceedMaxLabels(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Suspicious.Enable = true
-	config.Transformers.Suspicious.ThresholdMaxLabels = 2
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Suspicious.Enable = true
+	config.Suspicious.ThresholdMaxLabels = 2
 
 	// init subproccesor
 	suspicious := NewSuspiciousSubprocessor(config, logger.New(false), "test")
@@ -124,8 +124,8 @@ func TestSuspiciousExceedMaxLabels(t *testing.T) {
 
 func TestSuspiciousUnallowedChars(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Suspicious.Enable = true
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Suspicious.Enable = true
 
 	// init subproccesor
 	suspicious := NewSuspiciousSubprocessor(config, logger.New(false), "test")

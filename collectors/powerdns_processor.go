@@ -74,7 +74,8 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
 
 	// prepare enabled transformers
-	subprocessors := transformers.NewTransforms(d.config, d.logger, d.name)
+	transformConfig := (*dnsutils.ConfigTransformers)(&d.config.IngoingTransformers)
+	subprocessors := transformers.NewTransforms(transformConfig, d.logger, d.name)
 
 	// read incoming dns message
 	d.LogInfo("running... waiting incoming dns message")

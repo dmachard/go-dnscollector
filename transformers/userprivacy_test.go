@@ -8,9 +8,9 @@ import (
 
 func TestReduceQname(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.UserPrivacy.Enable = true
-	config.Transformers.UserPrivacy.MinimazeQname = true
+	config := dnsutils.GetFakeConfigTransformers()
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.MinimazeQname = true
 
 	// init the processor
 	userPrivacy := NewUserPrivacySubprocessor(config)
@@ -36,9 +36,9 @@ func TestReduceQname(t *testing.T) {
 
 func TestAnonymizeIPv4(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.UserPrivacy.Enable = true
-	config.Transformers.UserPrivacy.AnonymizeIP = true
+	config := dnsutils.GetFakeConfigTransformers()
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.AnonymizeIP = true
 
 	// init the processor
 	userPrivacy := NewUserPrivacySubprocessor(config)
@@ -53,9 +53,9 @@ func TestAnonymizeIPv4(t *testing.T) {
 
 func TestAnonymizeIPv6(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.UserPrivacy.Enable = true
-	config.Transformers.UserPrivacy.AnonymizeIP = true
+	config := dnsutils.GetFakeConfigTransformers()
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.AnonymizeIP = true
 
 	// init the processor
 	userPrivacy := NewUserPrivacySubprocessor(config)

@@ -408,8 +408,7 @@ multiplexer:
 
 
 ################################################
-# list of transformers
-# transforms:
+# list of transforms to apply on collectors or loggers
 ################################################
 
 # # Use this option to protect user privacy

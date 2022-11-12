@@ -14,12 +14,12 @@ var (
 )
 
 type UserPrivacyProcessor struct {
-	config *dnsutils.Config
+	config *dnsutils.ConfigTransformers
 	v4Mask net.IPMask
 	v6Mask net.IPMask
 }
 
-func NewUserPrivacySubprocessor(config *dnsutils.Config) UserPrivacyProcessor {
+func NewUserPrivacySubprocessor(config *dnsutils.ConfigTransformers) UserPrivacyProcessor {
 	s := UserPrivacyProcessor{
 		config: config,
 		v4Mask: defaultIPv4Mask,

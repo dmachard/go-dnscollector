@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
 
@@ -432,6 +433,10 @@ func (s *Webserver) ListenAndServe() {
 func (s *Webserver) Run() {
 	s.LogInfo("running in background...")
 
+	// prepare transforms
+	transformsConfig := (*dnsutils.ConfigTransformers)(&s.config.OutgoingTransformers)
+	subprocessors := transformers.NewTransforms(transformsConfig, s.logger, s.name)
+
 	// start http server
 	go s.ListenAndServe()
 
@@ -448,6 +453,12 @@ LOOP:
 				s.LogInfo("channel closed")
 				break LOOP
 			}
+
+			// apply tranforms
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
 			// record the dnstap message
 			s.stats.Record(dm)
 
@@ -461,6 +472,9 @@ LOOP:
 	}
 
 	s.LogInfo("run terminated")
+
+	// cleanup transformers
+	subprocessors.Reset()
 
 	// the job is done
 	s.done <- true

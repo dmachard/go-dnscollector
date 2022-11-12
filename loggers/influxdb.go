@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go"
@@ -81,6 +82,10 @@ func (o *InfluxDBClient) Stop() {
 func (o *InfluxDBClient) Run() {
 	o.LogInfo("running in background...")
 
+	// prepare transforms
+	transformsConfig := (*dnsutils.ConfigTransformers)(&o.config.OutgoingTransformers)
+	subprocessors := transformers.NewTransforms(transformsConfig, o.logger, o.name)
+
 	// prepare options for influxdb
 	opts := influxdb2.DefaultOptions()
 	opts.SetUseGZip(true)
@@ -105,6 +110,12 @@ func (o *InfluxDBClient) Run() {
 	o.influxdbConn = influxClient
 	o.writeAPI = writeAPI
 	for dm := range o.channel {
+
+		// apply tranforms
+		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			continue
+		}
+
 		p := influxdb2.NewPointWithMeasurement("dns").
 			AddTag("Identity", dm.DnsTap.Identity).
 			AddTag("QueryIP", dm.NetworkInfo.QueryIp).
@@ -121,6 +132,10 @@ func (o *InfluxDBClient) Run() {
 	}
 
 	o.LogInfo("run terminated")
+
+	// cleanup transformers
+	subprocessors.Reset()
+
 	// the job is done
 	o.done <- true
 }

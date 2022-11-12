@@ -7,10 +7,10 @@ import (
 )
 
 type NormalizeProcessor struct {
-	config *dnsutils.Config
+	config *dnsutils.ConfigTransformers
 }
 
-func NewNormalizeSubprocessor(config *dnsutils.Config) NormalizeProcessor {
+func NewNormalizeSubprocessor(config *dnsutils.ConfigTransformers) NormalizeProcessor {
 	s := NormalizeProcessor{
 		config: config,
 	}
@@ -19,7 +19,7 @@ func NewNormalizeSubprocessor(config *dnsutils.Config) NormalizeProcessor {
 }
 
 func (s *NormalizeProcessor) IsEnabled() bool {
-	return s.config.Transformers.Normalize.Enable
+	return s.config.Normalize.Enable
 }
 
 func (s *NormalizeProcessor) Lowercase(qname string) string {

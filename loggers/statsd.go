@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
 
@@ -82,6 +83,10 @@ func (o *StatsdClient) Stop() {
 func (o *StatsdClient) Run() {
 	o.LogInfo("running in background...")
 
+	// prepare transforms
+	transformsConfig := (*dnsutils.ConfigTransformers)(&o.config.OutgoingTransformers)
+	subprocessors := transformers.NewTransforms(transformsConfig, o.logger, o.name)
+
 	// init timer to compute qps
 	t1_interval := 1 * time.Second
 	t1 := time.NewTimer(t1_interval)
@@ -99,6 +104,12 @@ LOOP:
 				o.LogInfo("channel closed")
 				break LOOP
 			}
+
+			// apply tranforms
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
 			// record the dnstap message
 			o.stats.Record(dm)
 
@@ -198,6 +209,10 @@ LOOP:
 	}
 
 	o.LogInfo("run terminated")
+
+	// cleanup transformers
+	subprocessors.Reset()
+
 	// the job is done
 	o.done <- true
 }

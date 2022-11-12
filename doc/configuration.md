@@ -161,7 +161,7 @@ multiplexer:
 ```
 ## Transformers
 
-Some transformations can be done after the collect.
+Some transformations can be done on collectors or loggers.
 
 ### Normalize
 
