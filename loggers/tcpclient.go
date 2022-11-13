@@ -84,8 +84,7 @@ func (o *TcpClient) Run() {
 	o.LogInfo("running in background...")
 
 	// prepare transforms
-	transformsConfig := (*dnsutils.ConfigTransformers)(&o.config.OutgoingTransformers)
-	subprocessors := transformers.NewTransforms(transformsConfig, o.logger, o.name)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
 
 LOOP:
 	for {

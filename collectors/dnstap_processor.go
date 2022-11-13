@@ -129,8 +129,7 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	d.LogInfo("dns cached enabled: %t", d.config.Collectors.Dnstap.CacheSupport)
 
 	// prepare enabled transformers
-	transformConfig := (*dnsutils.ConfigTransformers)(&d.config.IngoingTransformers)
-	subprocessors := transformers.NewTransforms(transformConfig, d.logger, d.name)
+	subprocessors := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name)
 
 	// read incoming dns message
 	d.LogInfo("running... waiting incoming dns message")

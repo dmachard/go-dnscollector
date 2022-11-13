@@ -434,8 +434,7 @@ func (s *Webserver) Run() {
 	s.LogInfo("running in background...")
 
 	// prepare transforms
-	transformsConfig := (*dnsutils.ConfigTransformers)(&s.config.OutgoingTransformers)
-	subprocessors := transformers.NewTransforms(transformsConfig, s.logger, s.name)
+	subprocessors := transformers.NewTransforms(&s.config.OutgoingTransformers, s.logger, s.name)
 
 	// start http server
 	go s.ListenAndServe()

@@ -351,8 +351,7 @@ func (o *PcapWriter) Run() {
 	o.LogInfo("running in background...")
 
 	// prepare transforms
-	transformsConfig := (*dnsutils.ConfigTransformers)(&o.config.OutgoingTransformers)
-	subprocessors := transformers.NewTransforms(transformsConfig, o.logger, o.name)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
 
 	eth := &layers.Ethernet{SrcMAC: net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 		DstMAC: net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}}

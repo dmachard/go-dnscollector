@@ -168,11 +168,12 @@ func (o *LokiClient) Run() {
 	o.LogInfo("running in background...")
 
 	// prepare transforms
-	transformsConfig := (*dnsutils.ConfigTransformers)(&o.config.OutgoingTransformers)
-	subprocessors := transformers.NewTransforms(transformsConfig, o.logger, o.name)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
 
+	// prepare buffer
 	buffer := new(bytes.Buffer)
 
+	// prepare timers
 	tflush_interval := time.Duration(o.config.Loggers.LokiClient.FlushInterval) * time.Second
 	tflush := time.NewTimer(tflush_interval)
 

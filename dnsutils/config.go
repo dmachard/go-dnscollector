@@ -113,6 +113,7 @@ func (c *ConfigTransformers) SetDefault() {
 	c.GeoIP.DbAsnFile = ""
 }
 
+/* main configuration */
 type Config struct {
 	Global struct {
 		TextFormat string `yaml:"text-format"`

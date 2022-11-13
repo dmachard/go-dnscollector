@@ -83,8 +83,7 @@ func (o *InfluxDBClient) Run() {
 	o.LogInfo("running in background...")
 
 	// prepare transforms
-	transformsConfig := (*dnsutils.ConfigTransformers)(&o.config.OutgoingTransformers)
-	subprocessors := transformers.NewTransforms(transformsConfig, o.logger, o.name)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
 
 	// prepare options for influxdb
 	opts := influxdb2.DefaultOptions()

@@ -98,8 +98,7 @@ func (c *Tail) Run() {
 	}
 
 	// prepare enabled transformers
-	transformConfig := (*dnsutils.ConfigTransformers)(&c.config.IngoingTransformers)
-	subprocessors := transformers.NewTransforms(transformConfig, c.logger, c.name)
+	subprocessors := transformers.NewTransforms(&c.config.IngoingTransformers, c.logger, c.name)
 
 	// init dns message
 	dm := dnsutils.DnsMessage{}

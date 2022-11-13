@@ -139,8 +139,7 @@ func (o *Syslog) Run() {
 	o.LogInfo("running in background...")
 
 	// prepare enabled transformers
-	transformConfig := (*dnsutils.ConfigTransformers)(&o.config.OutgoingTransformers)
-	subprocessors := transformers.NewTransforms(transformConfig, o.logger, o.name)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
 
 	var syslogconn *syslog.Writer
 	var err error

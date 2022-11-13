@@ -343,9 +343,9 @@ func (o *LogFile) Run() {
 	o.LogInfo("running in background...")
 
 	// prepare transforms
-	transformsConfig := (*dnsutils.ConfigTransformers)(&o.config.OutgoingTransformers)
-	subprocessors := transformers.NewTransforms(transformsConfig, o.logger, o.name)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
 
+	// prepare some timers
 	tflush_interval := time.Duration(o.config.Loggers.LogFile.FlushInterval) * time.Second
 	tflush := time.NewTimer(tflush_interval)
 	o.commpressTimer = time.NewTimer(time.Duration(o.config.Loggers.LogFile.CompressInterval) * time.Second)
