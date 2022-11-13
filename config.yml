@@ -77,6 +77,9 @@ multiplexer:
     - name: console
       stdout:
         mode: text
+      transforms:
+        normalize:
+          qname-lowercase: true
 
   routes:
     - from: [ tap ]
@@ -408,8 +411,7 @@ multiplexer:
 
 
 ################################################
-# list of transformers
-# transforms:
+# list of transforms to apply on collectors or loggers
 ################################################
 
 # # Use this option to protect user privacy

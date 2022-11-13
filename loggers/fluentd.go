@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/vmihailenco/msgpack"
 )
@@ -73,6 +74,9 @@ func (o *FluentdClient) Stop() {
 func (o *FluentdClient) Run() {
 	o.LogInfo("running in background...")
 
+	// prepare transforms
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
+
 LOOP:
 	for {
 	LOOP_RECONNECT:
@@ -119,6 +123,11 @@ LOOP:
 					for {
 						select {
 						case dm := <-o.channel:
+							// apply tranforms
+							if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+								continue
+							}
+
 							// prepare event
 							tm, _ := msgpack.Marshal(dm.DnsTap.TimeSec)
 							record, err := msgpack.Marshal(dm)
@@ -161,6 +170,11 @@ LOOP:
 		o.LogInfo("closing tcp connection")
 		o.conn.Close()
 	}
+
 	o.LogInfo("run terminated")
+
+	// cleanup transformers
+	subprocessors.Reset()
+
 	o.done <- true
 }

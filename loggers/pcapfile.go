@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -349,6 +350,9 @@ func (o *PcapWriter) Write(dm dnsutils.DnsMessage, pkt []gopacket.SerializableLa
 func (o *PcapWriter) Run() {
 	o.LogInfo("running in background...")
 
+	// prepare transforms
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
+
 	eth := &layers.Ethernet{SrcMAC: net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 		DstMAC: net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}}
 	ip4 := &layers.IPv4{Version: 4, TTL: 64}
@@ -364,6 +368,11 @@ LOOP:
 			if !opened {
 				o.LogInfo("channel closed")
 				break LOOP
+			}
+
+			// apply tranforms
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
 			}
 
 			// prepare ip
@@ -441,6 +450,9 @@ LOOP:
 		}
 	}
 	o.LogInfo("run terminated")
+
+	// cleanup transformers
+	subprocessors.Reset()
 
 	// the job is done
 	o.done <- true

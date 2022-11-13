@@ -11,6 +11,7 @@ import (
 	syslog "github.com/RackSec/srslog"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
 
@@ -137,6 +138,9 @@ func (o *Syslog) Stop() {
 func (o *Syslog) Run() {
 	o.LogInfo("running in background...")
 
+	// prepare enabled transformers
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
+
 	var syslogconn *syslog.Writer
 	var err error
 	buffer := new(bytes.Buffer)
@@ -171,6 +175,11 @@ func (o *Syslog) Run() {
 	o.syslogConn = syslogconn
 
 	for dm := range o.channel {
+		// apply tranforms
+		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			continue
+		}
+
 		switch o.config.Loggers.Syslog.Mode {
 		case dnsutils.MODE_TEXT:
 			delimiter := "\n"
@@ -183,6 +192,10 @@ func (o *Syslog) Run() {
 	}
 
 	o.LogInfo("run terminated")
+
+	// cleanup transformers
+	subprocessors.Reset()
+
 	// the job is done
 	o.done <- true
 }

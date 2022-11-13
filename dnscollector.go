@@ -68,6 +68,7 @@ func main() {
 		// load config
 		cfg := make(map[string]interface{})
 		cfg["loggers"] = output.Params
+		cfg["outgoing-transformers"] = make(map[string]interface{})
 		for _, p := range output.Params {
 			p.(map[string]interface{})["enable"] = true
 		}
@@ -75,6 +76,12 @@ func main() {
 		// get config with default values
 		subcfg := &dnsutils.Config{}
 		subcfg.SetDefault()
+
+		// add transformer
+		for k, v := range output.Transforms {
+			v.(map[string]interface{})["enable"] = true
+			cfg["outgoing-transformers"].(map[string]interface{})[k] = v
+		}
 
 		// copy global config
 		subcfg.Global = config.Global
@@ -132,7 +139,7 @@ func main() {
 		// load config
 		cfg := make(map[string]interface{})
 		cfg["collectors"] = input.Params
-		cfg["transformers"] = make(map[string]interface{})
+		cfg["ingoing-transformers"] = make(map[string]interface{})
 		for _, p := range input.Params {
 			p.(map[string]interface{})["enable"] = true
 		}
@@ -144,7 +151,7 @@ func main() {
 		// add transformer
 		for k, v := range input.Transforms {
 			v.(map[string]interface{})["enable"] = true
-			cfg["transformers"].(map[string]interface{})[k] = v
+			cfg["ingoing-transformers"].(map[string]interface{})[k] = v
 		}
 
 		// copy global config
@@ -172,6 +179,7 @@ func main() {
 		}
 	}
 
+	// here the multiplexer logic
 	// connect collectors between loggers
 	for _, routes := range config.Multiplexer.Routes {
 		var logwrks []dnsutils.Worker

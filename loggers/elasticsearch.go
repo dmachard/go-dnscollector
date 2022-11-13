@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 
 	"net/http"
@@ -80,7 +81,15 @@ func (o *ElasticSearchClient) Stop() {
 func (o *ElasticSearchClient) Run() {
 	o.LogInfo("running in background...")
 
+	// prepare transforms
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
+
 	for dm := range o.channel {
+		// apply tranforms
+		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			continue
+		}
+
 		data := ElasticSearchData{
 			Identity:  dm.DnsTap.Identity,
 			QueryIP:   dm.NetworkInfo.QueryIp,
@@ -107,6 +116,10 @@ func (o *ElasticSearchClient) Run() {
 	}
 
 	o.LogInfo("run terminated")
+
+	// cleanup transformers
+	subprocessors.Reset()
+
 	// the job is done
 	o.done <- true
 }

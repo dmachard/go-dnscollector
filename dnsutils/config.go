@@ -28,12 +28,6 @@ func IsValidTLS(mode string) bool {
 	return false
 }
 
-type MultiplexTransformers struct {
-	Name       string                 `yaml:"naame"`
-	Transforms map[string]interface{} `yaml:",inline"`
-	Params     map[string]interface{} `yaml:",inline"`
-}
-
 type MultiplexInOut struct {
 	Name       string                 `yaml:"name"`
 	Transforms map[string]interface{} `yaml:"transforms"`
@@ -45,6 +39,81 @@ type MultiplexRoutes struct {
 	Dst []string `yaml:"to,flow"`
 }
 
+type ConfigTransformers struct {
+	UserPrivacy struct {
+		Enable        bool `yaml:"enable"`
+		AnonymizeIP   bool `yaml:"anonymize-ip"`
+		MinimazeQname bool `yaml:"minimaze-qname"`
+	} `yaml:"user-privacy"`
+	Normalize struct {
+		Enable         bool `yaml:"enable"`
+		QnameLowerCase bool `yaml:"qname-lowercase"`
+	} `yaml:"normalize"`
+	Filtering struct {
+		Enable          bool     `yaml:"enable"`
+		DropFqdnFile    string   `yaml:"drop-fqdn-file"`
+		DropDomainFile  string   `yaml:"drop-domain-file"`
+		KeepFqdnFile    string   `yaml:"keep-fqdn-file"`
+		KeepDomainFile  string   `yaml:"keep-domain-file"`
+		DropQueryIpFile string   `yaml:"drop-queryip-file"`
+		KeepQueryIpFile string   `yaml:"keep-queryip-file"`
+		DropRcodes      []string `yaml:"drop-rcodes,flow"`
+		LogQueries      bool     `yaml:"log-queries"`
+		LogReplies      bool     `yaml:"log-replies"`
+		Downsample      int      `yaml:"downsample"`
+	} `yaml:"filtering"`
+	GeoIP struct {
+		Enable        bool   `yaml:"enable"`
+		DbCountryFile string `yaml:"mmdb-country-file"`
+		DbCityFile    string `yaml:"mmdb-city-file"`
+		DbAsnFile     string `yaml:"mmdb-asn-file"`
+	} `yaml:"geoip"`
+	Suspicious struct {
+		Enable             bool     `yaml:"enable"`
+		ThresholdQnameLen  int      `yaml:"threshold-qname-len"`
+		ThresholdPacketLen int      `yaml:"threshold-packet-len"`
+		ThresholdSlow      float64  `yaml:"threshold-slow"`
+		CommonQtypes       []string `yaml:"common-qtypes,flow"`
+		UnallowedChars     []string `yaml:"unallowed-chars,flow"`
+		ThresholdMaxLabels int      `yaml:"threshold-max-labels"`
+	} `yaml:"suspicious"`
+}
+
+func (c *ConfigTransformers) SetDefault() {
+	c.Suspicious.Enable = false
+	c.Suspicious.ThresholdQnameLen = 100
+	c.Suspicious.ThresholdPacketLen = 1000
+	c.Suspicious.ThresholdSlow = 1.0
+	c.Suspicious.CommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR",
+		"NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS"}
+	c.Suspicious.UnallowedChars = []string{"\"", "==", "/", ":"}
+	c.Suspicious.ThresholdMaxLabels = 10
+
+	c.UserPrivacy.Enable = false
+	c.UserPrivacy.AnonymizeIP = false
+	c.UserPrivacy.MinimazeQname = false
+
+	c.Normalize.Enable = false
+	c.Normalize.QnameLowerCase = false
+
+	c.Filtering.Enable = false
+	c.Filtering.DropFqdnFile = ""
+	c.Filtering.DropDomainFile = ""
+	c.Filtering.KeepFqdnFile = ""
+	c.Filtering.KeepDomainFile = ""
+	c.Filtering.DropQueryIpFile = ""
+	c.Filtering.DropRcodes = []string{}
+	c.Filtering.LogQueries = true
+	c.Filtering.LogReplies = true
+	c.Filtering.Downsample = 0
+
+	c.GeoIP.Enable = false
+	c.GeoIP.DbCountryFile = ""
+	c.GeoIP.DbCityFile = ""
+	c.GeoIP.DbAsnFile = ""
+}
+
+/* main configuration */
 type Config struct {
 	Global struct {
 		TextFormat string `yaml:"text-format"`
@@ -108,45 +177,7 @@ type Config struct {
 		} `yaml:"pcap"`
 	} `yaml:"collectors"`
 
-	Transformers struct {
-		UserPrivacy struct {
-			Enable        bool `yaml:"enable"`
-			AnonymizeIP   bool `yaml:"anonymize-ip"`
-			MinimazeQname bool `yaml:"minimaze-qname"`
-		} `yaml:"user-privacy"`
-		Normalize struct {
-			Enable         bool `yaml:"enable"`
-			QnameLowerCase bool `yaml:"qname-lowercase"`
-		} `yaml:"normalize"`
-		Filtering struct {
-			Enable          bool     `yaml:"enable"`
-			DropFqdnFile    string   `yaml:"drop-fqdn-file"`
-			DropDomainFile  string   `yaml:"drop-domain-file"`
-			KeepFqdnFile    string   `yaml:"keep-fqdn-file"`
-			KeepDomainFile  string   `yaml:"keep-domain-file"`
-			DropQueryIpFile string   `yaml:"drop-queryip-file"`
-			KeepQueryIpFile string   `yaml:"keep-queryip-file"`
-			DropRcodes      []string `yaml:"drop-rcodes,flow"`
-			LogQueries      bool     `yaml:"log-queries"`
-			LogReplies      bool     `yaml:"log-replies"`
-			Downsample      int      `yaml:"downsample"`
-		} `yaml:"filtering"`
-		GeoIP struct {
-			Enable        bool   `yaml:"enable"`
-			DbCountryFile string `yaml:"mmdb-country-file"`
-			DbCityFile    string `yaml:"mmdb-city-file"`
-			DbAsnFile     string `yaml:"mmdb-asn-file"`
-		} `yaml:"geoip"`
-		Suspicious struct {
-			Enable             bool     `yaml:"enable"`
-			ThresholdQnameLen  int      `yaml:"threshold-qname-len"`
-			ThresholdPacketLen int      `yaml:"threshold-packet-len"`
-			ThresholdSlow      float64  `yaml:"threshold-slow"`
-			CommonQtypes       []string `yaml:"common-qtypes,flow"`
-			UnallowedChars     []string `yaml:"unallowed-chars,flow"`
-			ThresholdMaxLabels int      `yaml:"threshold-max-labels"`
-		} `yaml:"suspicious"`
-	} `yaml:"transformers"`
+	IngoingTransformers ConfigTransformers `yaml:"ingoing-transformers"`
 
 	Loggers struct {
 		Stdout struct {
@@ -294,6 +325,8 @@ type Config struct {
 		} `yaml:"elasticsearch"`
 	} `yaml:"loggers"`
 
+	OutgoingTransformers ConfigTransformers `yaml:"outgoing-transformers"`
+
 	Multiplexer struct {
 		Collectors []MultiplexInOut  `yaml:"collectors"`
 		Loggers    []MultiplexInOut  `yaml:"loggers"`
@@ -360,38 +393,8 @@ func (c *Config) SetDefault() {
 	c.Collectors.IngestPcap.DropReplies = false
 	c.Collectors.IngestPcap.DeleteAfter = false
 
-	// Transformers
-	c.Transformers.Suspicious.Enable = false
-	c.Transformers.Suspicious.ThresholdQnameLen = 100
-	c.Transformers.Suspicious.ThresholdPacketLen = 1000
-	c.Transformers.Suspicious.ThresholdSlow = 1.0
-	c.Transformers.Suspicious.CommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR",
-		"NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS"}
-	c.Transformers.Suspicious.UnallowedChars = []string{"\"", "==", "/", ":"}
-	c.Transformers.Suspicious.ThresholdMaxLabels = 10
-
-	c.Transformers.UserPrivacy.Enable = false
-	c.Transformers.UserPrivacy.AnonymizeIP = false
-	c.Transformers.UserPrivacy.MinimazeQname = false
-
-	c.Transformers.Normalize.Enable = false
-	c.Transformers.Normalize.QnameLowerCase = false
-
-	c.Transformers.Filtering.Enable = false
-	c.Transformers.Filtering.DropFqdnFile = ""
-	c.Transformers.Filtering.DropDomainFile = ""
-	c.Transformers.Filtering.KeepFqdnFile = ""
-	c.Transformers.Filtering.KeepDomainFile = ""
-	c.Transformers.Filtering.DropQueryIpFile = ""
-	c.Transformers.Filtering.DropRcodes = []string{}
-	c.Transformers.Filtering.LogQueries = true
-	c.Transformers.Filtering.LogReplies = true
-	c.Transformers.Filtering.Downsample = 0
-
-	c.Transformers.GeoIP.Enable = false
-	c.Transformers.GeoIP.DbCountryFile = ""
-	c.Transformers.GeoIP.DbCityFile = ""
-	c.Transformers.GeoIP.DbAsnFile = ""
+	// Transformers for collectors
+	c.IngoingTransformers.SetDefault()
 
 	// Loggers
 	c.Loggers.Stdout.Enable = false
@@ -523,6 +526,10 @@ func (c *Config) SetDefault() {
 
 	c.Loggers.ElasticSearchClient.Enable = false
 	c.Loggers.ElasticSearchClient.URL = ""
+
+	// Transformers for loggers
+	c.OutgoingTransformers.SetDefault()
+
 }
 
 func (c *Config) GetServerIdentity() string {
@@ -580,6 +587,12 @@ func LoadConfig(configPath string) (*Config, error) {
 
 func GetFakeConfig() *Config {
 	config := &Config{}
+	config.SetDefault()
+	return config
+}
+
+func GetFakeConfigTransformers() *ConfigTransformers {
+	config := &ConfigTransformers{}
 	config.SetDefault()
 	return config
 }

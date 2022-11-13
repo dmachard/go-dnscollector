@@ -14,7 +14,7 @@ import (
 )
 
 type FilteringProcessor struct {
-	config               *dnsutils.Config
+	config               *dnsutils.ConfigTransformers
 	logger               *logger.Logger
 	dropDomains          bool
 	keepDomains          bool
@@ -32,7 +32,7 @@ type FilteringProcessor struct {
 	activeFilters        []func(dm *dnsutils.DnsMessage) bool
 }
 
-func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger, name string) FilteringProcessor {
+func NewFilteringProcessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string) FilteringProcessor {
 	// creates a new file watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -67,11 +67,11 @@ func NewFilteringProcessor(config *dnsutils.Config, logger *logger.Logger, name 
 func (p *FilteringProcessor) LoadActiveFilters() {
 	// TODO: Change to iteration through Filtering to add filters in custom order.
 
-	if !p.config.Transformers.Filtering.LogQueries {
+	if !p.config.Filtering.LogQueries {
 		p.activeFilters = append(p.activeFilters, p.ignoreQueryFilter)
 	}
 
-	if !p.config.Transformers.Filtering.LogReplies {
+	if !p.config.Filtering.LogReplies {
 		p.activeFilters = append(p.activeFilters, p.ignoreReplyFilter)
 	}
 
@@ -79,7 +79,7 @@ func (p *FilteringProcessor) LoadActiveFilters() {
 		p.activeFilters = append(p.activeFilters, p.rCodeFilter)
 	}
 
-	if len(p.config.Transformers.Filtering.KeepQueryIpFile) > 0 || len(p.config.Transformers.Filtering.DropQueryIpFile) > 0 {
+	if len(p.config.Filtering.KeepQueryIpFile) > 0 || len(p.config.Filtering.DropQueryIpFile) > 0 {
 		p.activeFilters = append(p.activeFilters, p.ipFilter)
 	}
 
@@ -100,15 +100,15 @@ func (p *FilteringProcessor) LoadActiveFilters() {
 	}
 
 	// set downsample if desired
-	if p.config.Transformers.Filtering.Downsample > 0 {
-		p.downsample = p.config.Transformers.Filtering.Downsample
+	if p.config.Filtering.Downsample > 0 {
+		p.downsample = p.config.Filtering.Downsample
 		p.downsampleCount = 0
 		p.activeFilters = append(p.activeFilters, p.downsampleFilter)
 	}
 }
 
 func (p *FilteringProcessor) LoadRcodes() {
-	for _, v := range p.config.Transformers.Filtering.DropRcodes {
+	for _, v := range p.config.Filtering.DropRcodes {
 		p.mapRcodes[v] = true
 	}
 }
@@ -152,16 +152,16 @@ func (p *FilteringProcessor) loadQueryIpList(fname string, drop bool) (uint64, e
 }
 
 func (p *FilteringProcessor) LoadQueryIpList() {
-	if len(p.config.Transformers.Filtering.DropQueryIpFile) > 0 {
-		read, err := p.loadQueryIpList(p.config.Transformers.Filtering.DropQueryIpFile, true)
+	if len(p.config.Filtering.DropQueryIpFile) > 0 {
+		read, err := p.loadQueryIpList(p.config.Filtering.DropQueryIpFile, true)
 		if err != nil {
 			p.LogError("unable to open query ip file: ", err)
 		}
 		p.LogInfo("loaded with %d query ip to the drop list", read)
 	}
 
-	if len(p.config.Transformers.Filtering.KeepQueryIpFile) > 0 {
-		read, err := p.loadQueryIpList(p.config.Transformers.Filtering.KeepQueryIpFile, false)
+	if len(p.config.Filtering.KeepQueryIpFile) > 0 {
+		read, err := p.loadQueryIpList(p.config.Filtering.KeepQueryIpFile, false)
 		if err != nil {
 			p.LogError("unable to open query ip file: ", err)
 		}
@@ -170,8 +170,8 @@ func (p *FilteringProcessor) LoadQueryIpList() {
 }
 
 func (p *FilteringProcessor) LoadDomainsList() {
-	if len(p.config.Transformers.Filtering.DropFqdnFile) > 0 {
-		file, err := os.Open(p.config.Transformers.Filtering.DropFqdnFile)
+	if len(p.config.Filtering.DropFqdnFile) > 0 {
+		file, err := os.Open(p.config.Filtering.DropFqdnFile)
 		if err != nil {
 			p.LogError("unable to open fqdn file: ", err)
 			p.dropDomains = true
@@ -193,8 +193,8 @@ func (p *FilteringProcessor) LoadDomainsList() {
 
 	}
 
-	if len(p.config.Transformers.Filtering.DropDomainFile) > 0 {
-		file, err := os.Open(p.config.Transformers.Filtering.DropDomainFile)
+	if len(p.config.Filtering.DropDomainFile) > 0 {
+		file, err := os.Open(p.config.Filtering.DropDomainFile)
 		if err != nil {
 			p.LogError("unable to open regex list file: ", err)
 			p.dropDomains = true
@@ -214,8 +214,8 @@ func (p *FilteringProcessor) LoadDomainsList() {
 		}
 	}
 
-	if len(p.config.Transformers.Filtering.KeepFqdnFile) > 0 {
-		file, err := os.Open(p.config.Transformers.Filtering.KeepFqdnFile)
+	if len(p.config.Filtering.KeepFqdnFile) > 0 {
+		file, err := os.Open(p.config.Filtering.KeepFqdnFile)
 		if err != nil {
 			p.LogError("unable to open KeepFqdnFile file: ", err)
 			p.keepDomains = false
@@ -230,8 +230,8 @@ func (p *FilteringProcessor) LoadDomainsList() {
 		}
 	}
 
-	if len(p.config.Transformers.Filtering.KeepDomainFile) > 0 {
-		file, err := os.Open(p.config.Transformers.Filtering.KeepDomainFile)
+	if len(p.config.Filtering.KeepDomainFile) > 0 {
+		file, err := os.Open(p.config.Filtering.KeepDomainFile)
 		if err != nil {
 			p.LogError("unable to open KeepDomainFile file: ", err)
 			p.keepDomains = false

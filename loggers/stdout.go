@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
 
@@ -79,8 +80,18 @@ func (o *StdOut) Stop() {
 func (o *StdOut) Run() {
 	o.LogInfo("running in background...")
 
+	// prepare transforms
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
+
+	// standard output buffer
 	buffer := new(bytes.Buffer)
+
 	for dm := range o.channel {
+		// apply tranforms
+		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			continue
+		}
+
 		switch o.config.Loggers.Stdout.Mode {
 		case dnsutils.MODE_TEXT:
 			o.stdout.Print(dm.String(o.textFormat))
@@ -91,6 +102,9 @@ func (o *StdOut) Run() {
 		}
 	}
 	o.LogInfo("run terminated")
+
+	// cleanup transformers
+	subprocessors.Reset()
 
 	// the job is done
 	o.done <- true

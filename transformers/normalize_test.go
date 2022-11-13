@@ -8,9 +8,9 @@ import (
 
 func TestNormalizeLowercaseQname(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfig()
-	config.Transformers.Normalize.Enable = true
-	config.Transformers.Normalize.QnameLowerCase = true
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Normalize.Enable = true
+	config.Normalize.QnameLowerCase = true
 
 	// init the processor
 	qnameNorm := NewNormalizeSubprocessor(config)

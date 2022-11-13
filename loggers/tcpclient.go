@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
 
@@ -82,6 +83,9 @@ func (o *TcpClient) Stop() {
 func (o *TcpClient) Run() {
 	o.LogInfo("running in background...")
 
+	// prepare transforms
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
+
 LOOP:
 	for {
 	LOOP_RECONNECT:
@@ -129,6 +133,11 @@ LOOP:
 						select {
 						case dm := <-o.channel:
 
+							// apply tranforms
+							if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+								continue
+							}
+
 							if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_TEXT {
 								w.Write(dm.Bytes(o.textFormat, o.config.Loggers.TcpClient.Delimiter))
 							}
@@ -161,6 +170,11 @@ LOOP:
 		o.LogInfo("closing tcp connection")
 		o.conn.Close()
 	}
+
 	o.LogInfo("run terminated")
+
+	// cleanup transformers
+	subprocessors.Reset()
+
 	o.done <- true
 }
