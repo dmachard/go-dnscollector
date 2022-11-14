@@ -176,7 +176,6 @@ func TestTransformsAnonymizeIPv6(t *testing.T) {
 	}
 }
 
-
 func TestTransformsNormalizeLowercaseQname(t *testing.T) {
 	// enable feature
 	config := dnsutils.GetFakeConfigTransformers()
@@ -200,7 +199,6 @@ func TestTransformsNormalizeLowercaseQname(t *testing.T) {
 		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
 	}
 }
-
 
 func TestMultiTransforms(t *testing.T) {
 	// enable feature
@@ -259,7 +257,7 @@ func TestTransformAndFilter(t *testing.T) {
 	}
 	if dm.NetworkInfo.QueryIp == "fe80::" {
 		t.Errorf("Ipv6 anonymization occurred (it should have dropped before filter)")
-	}	
+	}
 
 	// should not be dropped, and should be transformed
 	dm.DNS.Qname = TEST_URL2
@@ -272,4 +270,3 @@ func TestTransformAndFilter(t *testing.T) {
 		t.Errorf("Ipv6 anonymization failed, got %s", dm.NetworkInfo.QueryIp)
 	}
 }
-

@@ -55,27 +55,27 @@ func (p *Transforms) Prepare() error {
 	if p.config.GeoIP.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.geoipTransform)
 		p.LogInfo("[GeoIP] enabled")
-		
+
 		if err := p.GeoipTransform.Open(); err != nil {
 			p.LogError("geoip open error %v", err)
 		}
 	}
 
 	if p.config.UserPrivacy.Enable {
-    // Apply user privacy on qname and query ip
-    if p.config.UserPrivacy.AnonymizeIP {
-      p.activeTransforms = append(p.activeTransforms, p.anonymizeIP)
-      p.LogInfo("[user privacy: anonymizeIP] enabled")
-    }
-    
-    if p.config.UserPrivacy.MinimazeQname {
-      p.activeTransforms = append(p.activeTransforms, p.minimazeQname)
-		  p.LogInfo("[user privacy: minimazeQname] enabled")
-    }
+		// Apply user privacy on qname and query ip
+		if p.config.UserPrivacy.AnonymizeIP {
+			p.activeTransforms = append(p.activeTransforms, p.anonymizeIP)
+			p.LogInfo("[user privacy: anonymizeIP] enabled")
+		}
+
+		if p.config.UserPrivacy.MinimazeQname {
+			p.activeTransforms = append(p.activeTransforms, p.minimazeQname)
+			p.LogInfo("[user privacy: minimazeQname] enabled")
+		}
 	}
 
-  if p.config.Suspicious.Enable {
-    p.activeTransforms = append(p.activeTransforms, p.suspiciousTransform)
+	if p.config.Suspicious.Enable {
+		p.activeTransforms = append(p.activeTransforms, p.suspiciousTransform)
 		p.LogInfo("[suspicious] enabled")
 	}
 
@@ -140,7 +140,6 @@ func (p *Transforms) lowercaseQname(dm *dnsutils.DnsMessage) int {
 	return RETURN_SUCCESS
 }
 
-
 func (p *Transforms) ProcessMessage(dm *dnsutils.DnsMessage) int {
 	// Traffic filtering ?
 	if p.FilteringTransform.CheckIfDrop(dm) {
@@ -148,7 +147,7 @@ func (p *Transforms) ProcessMessage(dm *dnsutils.DnsMessage) int {
 	}
 
 	// transform dm
-	var r_code int 
+	var r_code int
 	for _, fn := range p.activeTransforms {
 		r_code = fn(dm)
 		if r_code != RETURN_SUCCESS {
