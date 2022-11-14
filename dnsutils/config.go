@@ -197,18 +197,18 @@ type Config struct {
 			PromPrefix    string `yaml:"prometheus-prefix"`
 			TopN          int    `yaml:"top-n"`
 		} `yaml:"prometheus"`
-		WebServer struct {
-			Enable           bool   `yaml:"enable"`
-			ListenIP         string `yaml:"listen-ip"`
-			ListenPort       int    `yaml:"listen-port"`
-			BasicAuthLogin   string `yaml:"basic-auth-login"`
-			BasicAuthPwd     string `yaml:"basic-auth-pwd"`
-			TlsSupport       bool   `yaml:"tls-support"`
-			TlsMinVersion    string `yaml:"tls-min-version"`
-			CertFile         string `yaml:"cert-file"`
-			KeyFile          string `yaml:"key-file"`
-			StatsTopMaxItems int    `yaml:"top-max-items"`
-		} `yaml:"webserver"`
+		RestAPI struct {
+			Enable         bool   `yaml:"enable"`
+			ListenIP       string `yaml:"listen-ip"`
+			ListenPort     int    `yaml:"listen-port"`
+			BasicAuthLogin string `yaml:"basic-auth-login"`
+			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
+			TlsSupport     bool   `yaml:"tls-support"`
+			TlsMinVersion  string `yaml:"tls-min-version"`
+			CertFile       string `yaml:"cert-file"`
+			KeyFile        string `yaml:"key-file"`
+			TopN           int    `yaml:"top-n"`
+		} `yaml:"restapi"`
 		LogFile struct {
 			Enable              bool   `yaml:"enable"`
 			FilePath            string `yaml:"file-path"`
@@ -435,16 +435,16 @@ func (c *Config) SetDefault() {
 	c.Loggers.Prometheus.PromPrefix = PROG_NAME
 	c.Loggers.Prometheus.TopN = 10
 
-	c.Loggers.WebServer.Enable = false
-	c.Loggers.WebServer.ListenIP = LOCALHOST_IP
-	c.Loggers.WebServer.ListenPort = 8080
-	c.Loggers.WebServer.BasicAuthLogin = "admin"
-	c.Loggers.WebServer.BasicAuthPwd = "changeme"
-	c.Loggers.WebServer.TlsSupport = false
-	c.Loggers.WebServer.TlsMinVersion = TLS_v12
-	c.Loggers.WebServer.CertFile = ""
-	c.Loggers.WebServer.KeyFile = ""
-	c.Loggers.WebServer.StatsTopMaxItems = 100
+	c.Loggers.RestAPI.Enable = false
+	c.Loggers.RestAPI.ListenIP = LOCALHOST_IP
+	c.Loggers.RestAPI.ListenPort = 8080
+	c.Loggers.RestAPI.BasicAuthLogin = "admin"
+	c.Loggers.RestAPI.BasicAuthPwd = "changeme"
+	c.Loggers.RestAPI.TlsSupport = false
+	c.Loggers.RestAPI.TlsMinVersion = TLS_v12
+	c.Loggers.RestAPI.CertFile = ""
+	c.Loggers.RestAPI.KeyFile = ""
+	c.Loggers.RestAPI.TopN = 100
 
 	c.Loggers.TcpClient.Enable = false
 	c.Loggers.TcpClient.RemoteAddress = LOCALHOST_IP

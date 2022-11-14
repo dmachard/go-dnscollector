@@ -16,5 +16,5 @@ multiplexer:
         listen-port: 8081
 
   routes:
-    - src: [tap]
-      dst: [prom]
+    - from: [tap]
+      to: [prom]

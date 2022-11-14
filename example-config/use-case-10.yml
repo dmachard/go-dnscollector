@@ -11,22 +11,22 @@ global:
 
 multiplexer:
   # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
-  # with on tranformation to reduce qname to lowercase
-  # For example: Wwww.GooGlE.com will be equal to www.google.com
   collectors:
     - name: tap
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
-      transforms:
-        normalize:
-          qname-lowercase: true
 
   # Print DNS messages on standard output with TEXT format
+  # with on tranformation to reduce qname to lowercase
+  # For example: Wwww.GooGlE.com will be equal to www.google.com
   loggers:
     - name: console
       stdout:
         mode: text
+      transforms:
+        normalize:
+          qname-lowercase: true
 
   # Routes DNS messages from the tap collector to standard output
   routes:

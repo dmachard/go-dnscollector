@@ -91,8 +91,8 @@ func main() {
 			panic(fmt.Sprintf("main - yaml logger config error: %v", err))
 		}
 
-		if subcfg.Loggers.WebServer.Enable {
-			mapLoggers[output.Name] = loggers.NewWebserver(subcfg, logger, Version, output.Name)
+		if subcfg.Loggers.RestAPI.Enable {
+			mapLoggers[output.Name] = loggers.NewRestAPI(subcfg, logger, Version, output.Name)
 		}
 		if subcfg.Loggers.Prometheus.Enable {
 			mapLoggers[output.Name] = loggers.NewPrometheus(subcfg, logger, Version, output.Name)

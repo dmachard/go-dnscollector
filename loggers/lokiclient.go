@@ -269,44 +269,6 @@ LOOP:
 	o.done <- true
 }
 
-func (o *LokiClient) SendEntriesOld(buf []byte) error {
-	o.LogInfo("sleep in %d seconds", o.config.Loggers.LokiClient.RetryInterval)
-	time.Sleep(time.Duration(o.config.Loggers.LokiClient.RetryInterval) * time.Second)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// send post http
-	post, err := http.NewRequest("POST", o.config.Loggers.LokiClient.ServerURL, bytes.NewReader(buf))
-	if err != nil {
-		return err
-	}
-	post = post.WithContext(ctx)
-	post.Header.Set("Content-Type", "application/x-protobuf")
-	post.Header.Set("User-Agent", "dnscollector")
-	if len(o.config.Loggers.LokiClient.TenantId) > 0 {
-		post.Header.Set("X-Scope-OrgID", o.config.Loggers.LokiClient.TenantId)
-	}
-
-	post.SetBasicAuth(o.config.Loggers.LokiClient.BasicAuthLogin, o.config.Loggers.LokiClient.BasicAuthPwd)
-
-	// send post and read response
-	resp, err := o.httpclient.Do(post)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode/100 != 2 {
-		scanner := bufio.NewScanner(io.LimitReader(resp.Body, 1024))
-		line := ""
-		if scanner.Scan() {
-			line = scanner.Text()
-		}
-		return fmt.Errorf("server returned HTTP status %s (%d): %s", resp.Status, resp.StatusCode, line)
-	}
-	return nil
-}
-
 func (o *LokiClient) SendEntries(buf []byte) {
 
 	ctx, cancel := context.WithCancel(context.Background())

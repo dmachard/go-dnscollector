@@ -11,10 +11,10 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func TestWebServerBadBasicAuth(t *testing.T) {
+func TestRestAPIBadBasicAuth(t *testing.T) {
 	// init the logger
 	config := dnsutils.GetFakeConfig()
-	g := NewWebserver(config, logger.New(false), "dev", "test")
+	g := NewRestAPI(config, logger.New(false), "dev", "test")
 
 	tt := []struct {
 		name       string
@@ -24,16 +24,16 @@ func TestWebServerBadBasicAuth(t *testing.T) {
 		statusCode int
 	}{
 		{
-			name:       "reset",
-			uri:        "/reset",
-			handler:    g.resetHandler,
-			method:     http.MethodDelete,
+			name:       "get clients",
+			uri:        "/clients",
+			handler:    g.GetClientsHandler,
+			method:     http.MethodGet,
 			statusCode: http.StatusUnauthorized,
 		},
 		{
-			name:       "reset",
+			name:       "get clients",
 			uri:        "/reset",
-			handler:    g.resetHandler,
+			handler:    g.GetClientsHandler,
 			method:     http.MethodDelete,
 			statusCode: http.StatusUnauthorized,
 		},
@@ -43,7 +43,7 @@ func TestWebServerBadBasicAuth(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// init httptest
 			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
-			request.SetBasicAuth(config.Loggers.WebServer.BasicAuthLogin, "badpassword")
+			request.SetBasicAuth(config.Loggers.RestAPI.BasicAuthLogin, "badpassword")
 			responseRecorder := httptest.NewRecorder()
 
 			// call handler
@@ -60,10 +60,12 @@ func TestWebServerBadBasicAuth(t *testing.T) {
 func TestWebServerGet(t *testing.T) {
 	// init the logger
 	config := dnsutils.GetFakeConfig()
-	g := NewWebserver(config, logger.New(false), "dev", "test")
+	g := NewRestAPI(config, logger.New(false), "dev", "test")
 
 	// record one dns message to simulate some incoming data
-	g.stats.Record(dnsutils.GetFakeDnsMessage())
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.QnamePublicSuffix = "collector"
+	g.RecordDnsMessage(dm)
 
 	tt := []struct {
 		name       string
@@ -74,20 +76,52 @@ func TestWebServerGet(t *testing.T) {
 		statusCode int
 	}{
 		{
-			name:       "dump clients",
-			uri:        "/dump/requester",
-			handler:    g.dumpRequestersHandler,
+			name:       "get clients",
+			uri:        "/clients",
+			handler:    g.GetClientsHandler,
 			method:     http.MethodGet,
 			want:       `{"1.2.3.4":1}`,
 			statusCode: http.StatusOK,
 		},
 		{
-			name:       "dump clients",
-			uri:        "/dump/requester",
-			handler:    g.dumpRequestersHandler,
+			name:       "post clients refused",
+			uri:        "/clients",
+			handler:    g.GetClientsHandler,
+			method:     http.MethodPost,
+			want:       "Method not allowed",
+			statusCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:       "get tlds",
+			uri:        "/tlds",
+			handler:    g.GetTLDsHandler,
 			method:     http.MethodGet,
-			want:       `{"1.2.3.4":1}`,
+			want:       `{"collector":1}`,
 			statusCode: http.StatusOK,
+		},
+		{
+			name:       "post tlds refused",
+			uri:        "/tlds",
+			handler:    g.GetTLDsHandler,
+			method:     http.MethodPost,
+			want:       `Method not allowed`,
+			statusCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:       "get domains",
+			uri:        "/domains",
+			handler:    g.GetDomainsHandler,
+			method:     http.MethodGet,
+			want:       `{"dns.collector":1}`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "post domains refused",
+			uri:        "/domains",
+			handler:    g.GetDomainsHandler,
+			method:     http.MethodPost,
+			want:       `Method not allowed`,
+			statusCode: http.StatusMethodNotAllowed,
 		},
 	}
 
@@ -95,7 +129,7 @@ func TestWebServerGet(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// init httptest
 			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
-			request.SetBasicAuth(config.Loggers.WebServer.BasicAuthLogin, config.Loggers.WebServer.BasicAuthPwd)
+			request.SetBasicAuth(config.Loggers.RestAPI.BasicAuthLogin, config.Loggers.RestAPI.BasicAuthPwd)
 			responseRecorder := httptest.NewRecorder()
 
 			// call handler
@@ -110,48 +144,6 @@ func TestWebServerGet(t *testing.T) {
 			metrics := strings.TrimSpace(responseRecorder.Body.String())
 			if regexp.MustCompile(tc.want).MatchString(metrics) != true {
 				t.Errorf("Want '%s', got '%s'", tc.want, responseRecorder.Body)
-			}
-		})
-	}
-}
-
-func TestWebServerBadMethod(t *testing.T) {
-	// init the logger
-	config := dnsutils.GetFakeConfig()
-	g := NewWebserver(config, logger.New(false), "dev", "test")
-
-	// record one dns message to simulate some incoming data
-	g.stats.Record(dnsutils.GetFakeDnsMessage())
-
-	tt := []struct {
-		name       string
-		uri        string
-		handler    func(w http.ResponseWriter, r *http.Request)
-		method     string
-		statusCode int
-	}{
-		{
-			name:       "reset",
-			uri:        "/reset",
-			handler:    g.resetHandler,
-			method:     http.MethodPost,
-			statusCode: http.StatusMethodNotAllowed,
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			// init httptest
-			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
-			request.SetBasicAuth(config.Loggers.WebServer.BasicAuthLogin, config.Loggers.WebServer.BasicAuthPwd)
-			responseRecorder := httptest.NewRecorder()
-
-			// call handler
-			tc.handler(responseRecorder, request)
-
-			// checking status code
-			if responseRecorder.Code != tc.statusCode {
-				t.Errorf("Want status '%d', got '%d'", tc.statusCode, responseRecorder.Code)
 			}
 		})
 	}

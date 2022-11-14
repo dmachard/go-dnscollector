@@ -15,5 +15,5 @@ multiplexer:
         mode: text
 
   routes:
-    - src: [tap]
-      dst: [console]
+    - from: [tap]
+      to: [console]

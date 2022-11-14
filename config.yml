@@ -83,7 +83,7 @@ multiplexer:
 
   routes:
     - from: [ tap ]
-      to: [ console ]
+      to: [ console, api ]
 
 ################################################
 # list of supported collectors
@@ -187,7 +187,7 @@ multiplexer:
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 # # rest api server
-# webserver:
+# restapi:
 #   # listening IP
 #   listen-ip: 0.0.0.0
 #   # listening port
@@ -203,7 +203,7 @@ multiplexer:
 #   # private key server file
 #   key-file: ""
 #   # default number of items on top 
-#   top-max-items: 100
+#   top-n: 100
 
 # # prometheus metrics server
 # prometheus:

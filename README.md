@@ -28,7 +28,7 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 - *Provide metrics and API*:
     - [`Prometheus`](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
     - [`Statsd`](doc/loggers.md#statsd-client) support
-    - [`REST API`](doc/loggers.md#rest-api) to search DNS messages
+    - [`REST API`](doc/loggers.md#rest-api) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) to search DNS domains
 - *Send to remote host with generic protocol*:
     - [`TCP`](doc/loggers.md#tcp-client)
     - [`Syslog`](doc/loggers.md#syslog)
@@ -51,7 +51,7 @@ If you prefer run it from docker, follow this [guide](doc/docker.md).
 
 ## Configuration
 
-The configuration of DNS-collector is done through a file named `config.yml`. When the DNS-collector starts, it will look for the config.yml from the current working directory. 
+The configuration of DNS-collector is done through a file named [`config.yml`](config.yml). When the DNS-collector starts, it will look for the config.yml from the current working directory. 
 
 See the full [configuration guide](doc/configuration.md) for more details.
 

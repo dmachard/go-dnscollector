@@ -101,7 +101,7 @@ type PowerDns struct {
 }
 
 type SuspiciousFlags struct {
-	MalformedPacket       bool `json:"malformed-packet" msgpack:"malformed-packet"`
+	MalformedPacket       bool `json:"malformed-pkt" msgpack:"malformed-pkt"`
 	LargePacket           bool `json:"large-pkt" msgpack:"large-pkt"`
 	LongDomain            bool `json:"long-domain" msgpack:"long-domain"`
 	SlowDomain            bool `json:"slow-domain" msgpack:"slow-domain"`
