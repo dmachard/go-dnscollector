@@ -21,6 +21,8 @@ type Transforms struct {
 	FilteringTransform   FilteringProcessor
 	UserPrivacyTransform UserPrivacyProcessor
 	NormalizeTransform   NormalizeProcessor
+	
+	activeTransforms []func(dm *dnsutils.DnsMessage) int
 }
 
 func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string) Transforms {
@@ -43,27 +45,44 @@ func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, n
 
 func (p *Transforms) Prepare() error {
 	if p.config.Normalize.Enable {
+		if p.config.Normalize.QnameLowerCase {
+			p.activeTransforms = append(p.activeTransforms, p.lowercaseQname)
+			p.LogInfo("[normalize: qnameLowerCase] enabled")
+		}
 		p.LogInfo("[normalize] enabled")
 	}
 
 	if p.config.GeoIP.Enable {
+		p.activeTransforms = append(p.activeTransforms, p.geoipTransform)
 		p.LogInfo("[GeoIP] enabled")
+		
 		if err := p.GeoipTransform.Open(); err != nil {
 			p.LogError("geoip open error %v", err)
 		}
 	}
 
 	if p.config.UserPrivacy.Enable {
-		p.LogInfo("[user privacy] enabled")
+    // Apply user privacy on qname and query ip
+    if p.config.UserPrivacy.AnonymizeIP {
+      p.activeTransforms = append(p.activeTransforms, p.anonymizeIP)
+      p.LogInfo("[user privacy: anonymize ip] enabled")
+    }
+    
+    if p.config.UserPrivacy.MinimazeQname {
+      p.activeTransforms = append(p.activeTransforms, p.minimazeQname)
+		  p.LogInfo("[user privacy: minimaze qname] enabled")
+    }
+	}
+
+  if p.config.Suspicious.Enable {
+    p.activeTransforms = append(p.activeTransforms, p.suspiciousTransform)
+		p.LogInfo("[suspicious] enabled")
 	}
 
 	if p.config.Filtering.Enable {
 		p.LogInfo("[filtering] enabled")
 	}
 
-	if p.config.Suspicious.Enable {
-		p.LogInfo("[suspicious] enabled")
-	}
 	return nil
 }
 
@@ -81,49 +100,60 @@ func (p *Transforms) LogError(msg string, v ...interface{}) {
 	p.logger.Error("["+p.name+"] subprocessor - "+msg, v...)
 }
 
+// transform functions: return code
+func (p *Transforms) suspiciousTransform(dm *dnsutils.DnsMessage) int {
+	p.SuspiciousTransform.CheckIfSuspicious(dm)
+	return RETURN_SUCCESS
+}
+
+func (p *Transforms) geoipTransform(dm *dnsutils.DnsMessage) int {
+	geoInfo, err := p.GeoipTransform.Lookup(dm.NetworkInfo.QueryIp)
+	if err != nil {
+		p.LogError("geoip lookup error %v", err)
+		return RETURN_ERROR
+	}
+	
+	dm.Geo.Continent = geoInfo.Continent
+	dm.Geo.CountryIsoCode = geoInfo.CountryISOCode
+	dm.Geo.City = geoInfo.City
+	dm.NetworkInfo.AutonomousSystemNumber = geoInfo.ASN
+	dm.NetworkInfo.AutonomousSystemOrg = geoInfo.ASO
+	
+	return RETURN_SUCCESS
+}
+
+func (p *Transforms) anonymizeIP(dm *dnsutils.DnsMessage) int {
+	dm.NetworkInfo.QueryIp = p.UserPrivacyTransform.AnonymizeIP(dm.NetworkInfo.QueryIp)
+	
+	return RETURN_SUCCESS
+}
+
+func (p *Transforms) minimazeQname(dm *dnsutils.DnsMessage) int {
+	dm.DNS.Qname = p.UserPrivacyTransform.MinimazeQname(dm.DNS.Qname)
+
+	return RETURN_SUCCESS
+}
+
+func (p *Transforms) lowercaseQname(dm *dnsutils.DnsMessage) int {
+	dm.DNS.Qname = p.NormalizeTransform.Lowercase(dm.DNS.Qname)
+	
+	return RETURN_SUCCESS
+}
+
+
 func (p *Transforms) ProcessMessage(dm *dnsutils.DnsMessage) int {
-
-	// Normalize qname to lowercase
-	if p.config.Normalize.Enable {
-		if p.config.Normalize.QnameLowerCase {
-			dm.DNS.Qname = p.NormalizeTransform.Lowercase(dm.DNS.Qname)
-		}
-	}
-
 	// Traffic filtering ?
-	if p.config.Filtering.Enable {
-		if p.FilteringTransform.CheckIfDrop(dm) {
-			return RETURN_DROP
-		}
+	if p.FilteringTransform.CheckIfDrop(dm) {
+		return RETURN_DROP
 	}
 
-	// Apply user privacy on qname and query ip
-	if p.config.UserPrivacy.Enable {
-		if p.config.UserPrivacy.AnonymizeIP {
-			dm.NetworkInfo.QueryIp = p.UserPrivacyTransform.AnonymizeIP(dm.NetworkInfo.QueryIp)
+	// transform dm
+	var r_code int 
+	for _, fn := range p.activeTransforms {
+		r_code = fn(dm)
+		if r_code != RETURN_SUCCESS {
+			return r_code
 		}
-		if p.config.UserPrivacy.MinimazeQname {
-			dm.DNS.Qname = p.UserPrivacyTransform.MinimazeQname(dm.DNS.Qname)
-		}
-	}
-
-	// Add GeoIP metadata ?
-	if p.config.GeoIP.Enable {
-		geoInfo, err := p.GeoipTransform.Lookup(dm.NetworkInfo.QueryIp)
-		if err != nil {
-			p.LogError("geoip lookup error %v", err)
-			return RETURN_ERROR
-		}
-		dm.Geo.Continent = geoInfo.Continent
-		dm.Geo.CountryIsoCode = geoInfo.CountryISOCode
-		dm.Geo.City = geoInfo.City
-		dm.NetworkInfo.AutonomousSystemNumber = geoInfo.ASN
-		dm.NetworkInfo.AutonomousSystemOrg = geoInfo.ASO
-	}
-
-	// add suspicious flags in DNS messages
-	if p.config.Suspicious.Enable {
-		p.SuspiciousTransform.CheckIfSuspicious(dm)
 	}
 
 	return RETURN_SUCCESS
