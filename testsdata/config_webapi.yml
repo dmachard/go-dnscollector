@@ -10,11 +10,11 @@ multiplexer:
         listen-port: 6000
 
   loggers:
-    - name: web
-      webserver:
+    - name: api
+      restapi:
         listen-ip: 0.0.0.0
         listen-port: 8080
 
   routes:
-    - src: [tap]
-      dst: [web]
+    - from: [tap]
+      to: [api]

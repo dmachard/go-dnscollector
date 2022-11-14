@@ -13,14 +13,14 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-    - name: web
-      webserver:
+    - name: api
+      restapi:
         listen-ip: 0.0.0.0
         listen-port: 8080
-        top-max-items: 100
+        top-n: 100
         basic-auth-login: admin
         basic-auth-pwd: changeme
 
   routes:
     - from: [tap]
-      to: [console, web]
+      to: [console, api]
