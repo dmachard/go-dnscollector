@@ -47,7 +47,7 @@ func (p *Transforms) Prepare() error {
 	if p.config.Normalize.Enable {
 		if p.config.Normalize.QnameLowerCase {
 			p.activeTransforms = append(p.activeTransforms, p.lowercaseQname)
-			p.LogInfo("[normalize: qnameLowerCase] enabled")
+			p.LogInfo("[normalize: lowercaseQname] enabled")
 		}
 		p.LogInfo("[normalize] enabled")
 	}
@@ -65,12 +65,12 @@ func (p *Transforms) Prepare() error {
     // Apply user privacy on qname and query ip
     if p.config.UserPrivacy.AnonymizeIP {
       p.activeTransforms = append(p.activeTransforms, p.anonymizeIP)
-      p.LogInfo("[user privacy: anonymize ip] enabled")
+      p.LogInfo("[user privacy: anonymizeIP] enabled")
     }
     
     if p.config.UserPrivacy.MinimazeQname {
       p.activeTransforms = append(p.activeTransforms, p.minimazeQname)
-		  p.LogInfo("[user privacy: minimaze qname] enabled")
+		  p.LogInfo("[user privacy: minimazeQname] enabled")
     }
 	}
 
