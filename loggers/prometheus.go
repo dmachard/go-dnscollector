@@ -410,7 +410,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterDomainsNxUniq = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_domains_nx_count_uniq", prom_prefix),
+			Name: fmt.Sprintf("%s_domains_nx_uniq_total", prom_prefix),
 			Help: "The total number of uniq unknown domains",
 		},
 		[]string{},
@@ -419,7 +419,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterDomainsSfUniq = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_domains_sf_count_uniq", prom_prefix),
+			Name: fmt.Sprintf("%s_domains_sf_uniq_total", prom_prefix),
 			Help: "The total number of uniq unreachable domains",
 		},
 		[]string{},
