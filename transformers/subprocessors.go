@@ -21,7 +21,7 @@ type Transforms struct {
 	FilteringTransform   FilteringProcessor
 	UserPrivacyTransform UserPrivacyProcessor
 	NormalizeTransform   NormalizeProcessor
-	
+
 	activeTransforms []func(dm *dnsutils.DnsMessage) int
 }
 
@@ -112,19 +112,19 @@ func (p *Transforms) geoipTransform(dm *dnsutils.DnsMessage) int {
 		p.LogError("geoip lookup error %v", err)
 		return RETURN_ERROR
 	}
-	
+
 	dm.Geo.Continent = geoInfo.Continent
 	dm.Geo.CountryIsoCode = geoInfo.CountryISOCode
 	dm.Geo.City = geoInfo.City
 	dm.NetworkInfo.AutonomousSystemNumber = geoInfo.ASN
 	dm.NetworkInfo.AutonomousSystemOrg = geoInfo.ASO
-	
+
 	return RETURN_SUCCESS
 }
 
 func (p *Transforms) anonymizeIP(dm *dnsutils.DnsMessage) int {
 	dm.NetworkInfo.QueryIp = p.UserPrivacyTransform.AnonymizeIP(dm.NetworkInfo.QueryIp)
-	
+
 	return RETURN_SUCCESS
 }
 
@@ -136,7 +136,7 @@ func (p *Transforms) minimazeQname(dm *dnsutils.DnsMessage) int {
 
 func (p *Transforms) lowercaseQname(dm *dnsutils.DnsMessage) int {
 	dm.DNS.Qname = p.NormalizeTransform.Lowercase(dm.DNS.Qname)
-	
+
 	return RETURN_SUCCESS
 }
 

@@ -20,7 +20,7 @@ func TestTransformsSuspicious(t *testing.T) {
 	dm.DNS.MalformedPacket = true
 
 	return_code := subprocessors.ProcessMessage(&dm)
-  
+
 	if dm.Suspicious.Score != 1.0 {
 		t.Errorf("suspicious score should be equal to 1.0")
 	}
@@ -29,59 +29,59 @@ func TestTransformsSuspicious(t *testing.T) {
 		t.Errorf("suspicious malformed packet flag should be equal to true")
 	}
 
-  if return_code != RETURN_SUCCESS {
-    t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
-  }
+	if return_code != RETURN_SUCCESS {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
+	}
 }
 
 func TestTransformsGeoIPLookupCountry(t *testing.T) {
 	// enable geoip
 	config := dnsutils.GetFakeConfigTransformers()
-  config.GeoIP.Enable = true
+	config.GeoIP.Enable = true
 	config.GeoIP.DbCountryFile = "../testsdata/GeoLite2-Country.mmdb"
 
-  // init processor
+	// init processor
 	subprocessors := NewTransforms(config, logger.New(false), "test")
 
-  // create test message
-  dm := dnsutils.GetFakeDnsMessage()
-  dm.NetworkInfo.QueryIp = "83.112.146.176"
-  
+	// create test message
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.NetworkInfo.QueryIp = "83.112.146.176"
+
 	// apply subprocessors
-  return_code := subprocessors.ProcessMessage(&dm)
+	return_code := subprocessors.ProcessMessage(&dm)
 
 	if dm.Geo.CountryIsoCode != "FR" {
 		t.Errorf("country invalid want: FR got: %s", dm.Geo.CountryIsoCode)
 	}
-  
-  if return_code != RETURN_SUCCESS {
-    t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
-  }
+
+	if return_code != RETURN_SUCCESS {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
+	}
 }
 
 func TestTransformsGeoIPLookupAsn(t *testing.T) {
 	// enable geoip
 	config := dnsutils.GetFakeConfigTransformers()
-  config.GeoIP.Enable = true
+	config.GeoIP.Enable = true
 	config.GeoIP.DbAsnFile = "../testsdata/GeoLite2-ASN.mmdb"
 
 	// init the processor
-  subprocessors := NewTransforms(config, logger.New(false), "test")
+	subprocessors := NewTransforms(config, logger.New(false), "test")
 
-  // create test message
-  dm := dnsutils.GetFakeDnsMessage()
-  dm.NetworkInfo.QueryIp = "83.112.146.176"
+	// create test message
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.NetworkInfo.QueryIp = "83.112.146.176"
 
-  // apply subprocessors
-  return_code := subprocessors.ProcessMessage(&dm)
+	// apply subprocessors
+	return_code := subprocessors.ProcessMessage(&dm)
 
 	if dm.NetworkInfo.AutonomousSystemOrg != "Orange" {
 		t.Errorf("asn organisation invalid want: Orange got: %s", dm.NetworkInfo.AutonomousSystemOrg)
 	}
-  
-  if return_code != RETURN_SUCCESS {
-    t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
-  }
+
+	if return_code != RETURN_SUCCESS {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
+	}
 }
 
 func TestTransformsReduceQname(t *testing.T) {
@@ -90,44 +90,44 @@ func TestTransformsReduceQname(t *testing.T) {
 	config.UserPrivacy.Enable = true
 	config.UserPrivacy.MinimazeQname = true
 
-  // init the processor
-  subprocessors := NewTransforms(config, logger.New(false), "test")
+	// init the processor
+	subprocessors := NewTransforms(config, logger.New(false), "test")
 
-  // create test message
-  dm := dnsutils.GetFakeDnsMessage()
+	// create test message
+	dm := dnsutils.GetFakeDnsMessage()
 
-  // test 1: google.com
+	// test 1: google.com
 	dm.DNS.Qname = "www.google.com"
-  return_code := subprocessors.ProcessMessage(&dm)
+	return_code := subprocessors.ProcessMessage(&dm)
 
 	if dm.DNS.Qname != "google.com" {
 		t.Errorf("Qname minimization failed, got %s", dm.DNS.Qname)
 	}
-  if return_code != RETURN_SUCCESS {
-    t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
-  }
+	if return_code != RETURN_SUCCESS {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
+	}
 
-  // test 2: localhost
+	// test 2: localhost
 	dm.DNS.Qname = "localhost"
-  return_code = subprocessors.ProcessMessage(&dm)
-  
+	return_code = subprocessors.ProcessMessage(&dm)
+
 	if dm.DNS.Qname != "localhost" {
 		t.Errorf("Qname minimization failed, got %s", dm.DNS.Qname)
 	}
-  if return_code != RETURN_SUCCESS {
-    t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
-  }
+	if return_code != RETURN_SUCCESS {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
+	}
 
-  // test 3: local.home
+	// test 3: local.home
 	dm.DNS.Qname = "localhost.domain.local.home"
-  return_code = subprocessors.ProcessMessage(&dm)
+	return_code = subprocessors.ProcessMessage(&dm)
 
 	if dm.DNS.Qname != "local.home" {
 		t.Errorf("Qname minimization failed, got %s", dm.DNS.Qname)
 	}
-  if return_code != RETURN_SUCCESS {
-    t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
-  }
+	if return_code != RETURN_SUCCESS {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
+	}
 }
 
 func TestTransformsAnonymizeIPv4(t *testing.T) {
@@ -136,21 +136,21 @@ func TestTransformsAnonymizeIPv4(t *testing.T) {
 	config.UserPrivacy.Enable = true
 	config.UserPrivacy.AnonymizeIP = true
 
-  // init the processor
-  subprocessors := NewTransforms(config, logger.New(false), "test")
+	// init the processor
+	subprocessors := NewTransforms(config, logger.New(false), "test")
 
-  // create test message
-  dm := dnsutils.GetFakeDnsMessage()
+	// create test message
+	dm := dnsutils.GetFakeDnsMessage()
 
 	dm.NetworkInfo.QueryIp = "192.168.1.2"
 
-  return_code := subprocessors.ProcessMessage(&dm)
+	return_code := subprocessors.ProcessMessage(&dm)
 	if dm.NetworkInfo.QueryIp != "192.168.0.0" {
 		t.Errorf("Ipv4 anonymization failed, got %v", dm.NetworkInfo.QueryIp)
 	}
-  if return_code != RETURN_SUCCESS {
-    t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
-  }
+	if return_code != RETURN_SUCCESS {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
+	}
 }
 
 func TestTransformsAnonymizeIPv6(t *testing.T) {
@@ -159,117 +159,117 @@ func TestTransformsAnonymizeIPv6(t *testing.T) {
 	config.UserPrivacy.Enable = true
 	config.UserPrivacy.AnonymizeIP = true
 
-  // init the processor
-  subprocessors := NewTransforms(config, logger.New(false), "test")
+	// init the processor
+	subprocessors := NewTransforms(config, logger.New(false), "test")
 
-  // create test message
-  dm := dnsutils.GetFakeDnsMessage()
+	// create test message
+	dm := dnsutils.GetFakeDnsMessage()
 
 	dm.NetworkInfo.QueryIp = "fe80::6111:626:c1b2:2353"
 
-  return_code := subprocessors.ProcessMessage(&dm)
+	return_code := subprocessors.ProcessMessage(&dm)
 	if dm.NetworkInfo.QueryIp != "fe80::" {
 		t.Errorf("Ipv6 anonymization failed, got %s", dm.NetworkInfo.QueryIp)
 	}
-  if return_code != RETURN_SUCCESS {
-    t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
-  }
+	if return_code != RETURN_SUCCESS {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
+	}
 }
 
 
 func TestTransformsNormalizeLowercaseQname(t *testing.T) {
 	// enable feature
 	config := dnsutils.GetFakeConfigTransformers()
-  config.Normalize.Enable = true
+	config.Normalize.Enable = true
 	config.Normalize.QnameLowerCase = true
 
-  // init the processor
-  subprocessors := NewTransforms(config, logger.New(false), "test")
+	// init the processor
+	subprocessors := NewTransforms(config, logger.New(false), "test")
 
-  // create test message
-  dm := dnsutils.GetFakeDnsMessage()
+	// create test message
+	dm := dnsutils.GetFakeDnsMessage()
 
-  dm.DNS.Qname = "www.Google.Com"
-  dm.NetworkInfo.QueryIp = "fe80::6111:626:c1b2:2353"
+	dm.DNS.Qname = "www.Google.Com"
+	dm.NetworkInfo.QueryIp = "fe80::6111:626:c1b2:2353"
 
-  return_code := subprocessors.ProcessMessage(&dm)
+	return_code := subprocessors.ProcessMessage(&dm)
 	if dm.DNS.Qname != "www.google.com" {
 		t.Errorf("Qname to lowercase failed, got %s", dm.DNS.Qname)
 	}
-  if return_code != RETURN_SUCCESS {
-    t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
-  }
+	if return_code != RETURN_SUCCESS {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
+	}
 }
 
 
 func TestMultiTransforms(t *testing.T) {
 	// enable feature
 	config := dnsutils.GetFakeConfigTransformers()
-  config.Normalize.Enable = true
+	config.Normalize.Enable = true
 	config.Normalize.QnameLowerCase = true
-  config.UserPrivacy.Enable = true
-  config.UserPrivacy.AnonymizeIP = true
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.AnonymizeIP = true
 
-  // init the processor
-  subprocessors := NewTransforms(config, logger.New(false), "test")
+	// init the processor
+	subprocessors := NewTransforms(config, logger.New(false), "test")
 
-  // create test message
-  dm := dnsutils.GetFakeDnsMessage()
+	// create test message
+	dm := dnsutils.GetFakeDnsMessage()
 
-  dm.DNS.Qname = "www.Google.Com"
-  dm.NetworkInfo.QueryIp = "fe80::6111:626:c1b2:2353"
+	dm.DNS.Qname = "www.Google.Com"
+	dm.NetworkInfo.QueryIp = "fe80::6111:626:c1b2:2353"
 
-  return_code := subprocessors.ProcessMessage(&dm)
+	return_code := subprocessors.ProcessMessage(&dm)
 	if dm.DNS.Qname != "www.google.com" {
 		t.Errorf("Qname to lowercase failed, got %s", dm.DNS.Qname)
 	}
-  if dm.NetworkInfo.QueryIp != "fe80::" {
-    t.Errorf("Ipv6 anonymization failed, got %s", dm.NetworkInfo.QueryIp)
-  }
-  if return_code != RETURN_SUCCESS {
-    t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
-  }
+	if dm.NetworkInfo.QueryIp != "fe80::" {
+		t.Errorf("Ipv6 anonymization failed, got %s", dm.NetworkInfo.QueryIp)
+	}
+	if return_code != RETURN_SUCCESS {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
+	}
 }
 
 func TestTransformAndFilter(t *testing.T) {
 	// enable feature
 	config := dnsutils.GetFakeConfigTransformers()
-  config.UserPrivacy.Enable = true
-  config.UserPrivacy.AnonymizeIP = true
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.AnonymizeIP = true
 
-  // file contains google.fr, test.github.com
-  config.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains.txt"
+	// file contains google.fr, test.github.com
+	config.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains.txt"
 
-  TEST_URL1 := "mail.google.com"
+	TEST_URL1 := "mail.google.com"
 	TEST_URL2 := "test.github.com"
 
-  // init the processor
-  subprocessors := NewTransforms(config, logger.New(false), "test")
+	// init the processor
+	subprocessors := NewTransforms(config, logger.New(false), "test")
 
-  // create test message
-  dm := dnsutils.GetFakeDnsMessage()
+	// create test message
+	dm := dnsutils.GetFakeDnsMessage()
 
-  // should be dropped and not transformed
-  dm.DNS.Qname = TEST_URL1
-  dm.NetworkInfo.QueryIp = "fe80::6111:626:c1b2:2353"
+	// should be dropped and not transformed
+	dm.DNS.Qname = TEST_URL1
+	dm.NetworkInfo.QueryIp = "fe80::6111:626:c1b2:2353"
 
-  return_code := subprocessors.ProcessMessage(&dm)
-  if return_code != RETURN_DROP {
-    t.Errorf("Return code is %v and not RETURN_DROP (%v)", return_code, RETURN_DROP)
-  }
-  if dm.NetworkInfo.QueryIp == "fe80::" {
-    t.Errorf("Ipv6 anonymization occurred (it should have dropped before filter)")
-  }  
+	return_code := subprocessors.ProcessMessage(&dm)
+	if return_code != RETURN_DROP {
+		t.Errorf("Return code is %v and not RETURN_DROP (%v)", return_code, RETURN_DROP)
+	}
+	if dm.NetworkInfo.QueryIp == "fe80::" {
+		t.Errorf("Ipv6 anonymization occurred (it should have dropped before filter)")
+	}	
 
-  // should not be dropped, and should be transformed
-  dm.DNS.Qname = TEST_URL2
-  dm.NetworkInfo.QueryIp = "fe80::6111:626:c1b2:2353"
-  return_code = subprocessors.ProcessMessage(&dm)
-  if return_code != RETURN_SUCCESS {
-    t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
-  }
-  if dm.NetworkInfo.QueryIp != "fe80::" {
-    t.Errorf("Ipv6 anonymization failed, got %s", dm.NetworkInfo.QueryIp)
-  }
+	// should not be dropped, and should be transformed
+	dm.DNS.Qname = TEST_URL2
+	dm.NetworkInfo.QueryIp = "fe80::6111:626:c1b2:2353"
+	return_code = subprocessors.ProcessMessage(&dm)
+	if return_code != RETURN_SUCCESS {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
+	}
+	if dm.NetworkInfo.QueryIp != "fe80::" {
+		t.Errorf("Ipv6 anonymization failed, got %s", dm.NetworkInfo.QueryIp)
+	}
 }
 
