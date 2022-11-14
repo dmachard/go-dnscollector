@@ -51,7 +51,7 @@ If you prefer run it from docker, follow this [guide](doc/docker.md).
 
 ## Configuration
 
-The configuration of DNS-collector is done through a file named `config.yml`. When the DNS-collector starts, it will look for the config.yml from the current working directory. 
+The configuration of DNS-collector is done through a file named `[config.yml](config.yml)`. When the DNS-collector starts, it will look for the config.yml from the current working directory. 
 
 See the full [configuration guide](doc/configuration.md) for more details.
 
