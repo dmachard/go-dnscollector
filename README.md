@@ -28,7 +28,7 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 - *Provide metrics and API*:
     - [`Prometheus`](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
     - [`Statsd`](doc/loggers.md#statsd-client) support
-    - [`REST API`](doc/loggers.md#rest-api) to search DNS messages
+    - [`REST API`](doc/loggers.md#rest-api) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) to search DNS domains
 - *Send to remote host with generic protocol*:
     - [`TCP`](doc/loggers.md#tcp-client)
     - [`Syslog`](doc/loggers.md#syslog)

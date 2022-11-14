@@ -73,12 +73,8 @@ prometheus:
 
 ### REST API
 
-Build-in webserver with REST API to retrieve somes statistics like top domains, clients and more...
+Build-in webserver with REST API to search domains, clients and more...
 Basic authentication supported.
-
-* qps, total queries/replies, top domains, clients, rcodes...
-* basic auth
-* tls support
 
 See the [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) documentation.
 
@@ -91,12 +87,12 @@ Options:
 - `tls-min-version`: (string) min tls version, default to 1.2
 - `cert-file`: (string) certificate server file
 - `key-file`: (string) private key server file
-- `top-max-items`: (string) default number of items on top
+- `top-n`: (string) default number of items on top
 
 Default values:
 
 ```yaml
-webserver:
+restapi:
   listen-ip: 0.0.0.0
   listen-port: 8080
   basic-auth-login: admin
@@ -105,7 +101,7 @@ webserver:
   tls-min-version: 1.2
   cert-file: "./testsdata/server.crt"
   key-file: "./testsdata/server.key"
-  top-max-items: 100
+  top-n: 100
 ```
 
 **Prometheus metrics example:**
