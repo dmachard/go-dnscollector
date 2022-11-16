@@ -33,12 +33,12 @@ paths:
           description: query name to search
       responses:
         '200':
-          description: Return full list of domains
+          description: Return list of domains founded
           content:
             text/plain:
               schema:
                 type: string
-      summary: Return full list of domains
+      summary: Return a list of domains
   /clients:
     get:
       responses:

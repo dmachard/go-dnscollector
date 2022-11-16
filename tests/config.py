@@ -76,3 +76,25 @@ class TestConfig(unittest.TestCase):
             transport_collector.close()
             
         self.loop.run_until_complete(run())
+
+    def test3_default_config(self):
+        """test the default config"""
+        async def run():
+            # run collector
+            is_configvalid= asyncio.Future()
+            args = ( "./go-dnscollector", )
+            transport_collector, protocol_collector =  await self.loop.subprocess_exec(lambda: ProcessProtocol(is_configvalid, None),
+                                                                                        *args, stdout=asyncio.subprocess.PIPE)
+
+            # wait if is listening
+            try:
+                await asyncio.wait_for(is_configvalid, timeout=1.0)
+            except asyncio.TimeoutError:
+                protocol_collector.kill()
+                self.fail("config loaded timeout")
+
+            # cleanup all
+            protocol_collector.kill()
+            transport_collector.close()
+
+        self.loop.run_until_complete(run())
