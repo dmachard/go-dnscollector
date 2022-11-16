@@ -8,11 +8,11 @@ import (
 )
 
 const (
-  IPV6_ADDRESS = "fe80::6111:626:c1b2:2353"
-  CAPS_ADDRESS = "www.Google.Com"
-  NORM_ADDRESS = "www.google.com"
-  IPV6_SHORTND = "fe80::"
-  LOCALHOST    = "localhost"
+	IPV6_ADDRESS = "fe80::6111:626:c1b2:2353"
+	CAPS_ADDRESS = "www.Google.Com"
+	NORM_ADDRESS = "www.google.com"
+	IPV6_SHORTND = "fe80::"
+	LOCALHOST    = "localhost"
 )
 
 func TestTransformsSuspicious(t *testing.T) {
