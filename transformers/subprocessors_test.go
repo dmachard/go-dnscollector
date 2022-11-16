@@ -7,6 +7,14 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
+const (
+  IPV6_ADDRESS = "fe80::6111:626:c1b2:2353"
+  CAPS_ADDRESS = "www.Google.Com"
+  NORM_ADDRESS = "www.google.com"
+  IPV6_SHORTND = "fe80::"
+  LOCALHOST    = "localhost"
+)
+
 func TestTransformsSuspicious(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfigTransformers()
@@ -97,7 +105,7 @@ func TestTransformsReduceQname(t *testing.T) {
 	dm := dnsutils.GetFakeDnsMessage()
 
 	// test 1: google.com
-	dm.DNS.Qname = "www.google.com"
+	dm.DNS.Qname = NORM_ADDRESS
 	return_code := subprocessors.ProcessMessage(&dm)
 
 	if dm.DNS.Qname != "google.com" {
@@ -108,10 +116,10 @@ func TestTransformsReduceQname(t *testing.T) {
 	}
 
 	// test 2: localhost
-	dm.DNS.Qname = "localhost"
+	dm.DNS.Qname = LOCALHOST
 	return_code = subprocessors.ProcessMessage(&dm)
 
-	if dm.DNS.Qname != "localhost" {
+	if dm.DNS.Qname != LOCALHOST {
 		t.Errorf("Qname minimization failed, got %s", dm.DNS.Qname)
 	}
 	if return_code != RETURN_SUCCESS {
@@ -165,10 +173,10 @@ func TestTransformsAnonymizeIPv6(t *testing.T) {
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
 
-	dm.NetworkInfo.QueryIp = "fe80::6111:626:c1b2:2353"
+	dm.NetworkInfo.QueryIp = IPV6_ADDRESS
 
 	return_code := subprocessors.ProcessMessage(&dm)
-	if dm.NetworkInfo.QueryIp != "fe80::" {
+	if dm.NetworkInfo.QueryIp != IPV6_SHORTND {
 		t.Errorf("Ipv6 anonymization failed, got %s", dm.NetworkInfo.QueryIp)
 	}
 	if return_code != RETURN_SUCCESS {
@@ -188,11 +196,11 @@ func TestTransformsNormalizeLowercaseQname(t *testing.T) {
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
 
-	dm.DNS.Qname = "www.Google.Com"
-	dm.NetworkInfo.QueryIp = "fe80::6111:626:c1b2:2353"
+	dm.DNS.Qname = CAPS_ADDRESS
+	dm.NetworkInfo.QueryIp = IPV6_ADDRESS
 
 	return_code := subprocessors.ProcessMessage(&dm)
-	if dm.DNS.Qname != "www.google.com" {
+	if dm.DNS.Qname != NORM_ADDRESS {
 		t.Errorf("Qname to lowercase failed, got %s", dm.DNS.Qname)
 	}
 	if return_code != RETURN_SUCCESS {
@@ -214,14 +222,14 @@ func TestMultiTransforms(t *testing.T) {
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
 
-	dm.DNS.Qname = "www.Google.Com"
-	dm.NetworkInfo.QueryIp = "fe80::6111:626:c1b2:2353"
+	dm.DNS.Qname = CAPS_ADDRESS
+	dm.NetworkInfo.QueryIp = IPV6_ADDRESS
 
 	return_code := subprocessors.ProcessMessage(&dm)
-	if dm.DNS.Qname != "www.google.com" {
+	if dm.DNS.Qname != NORM_ADDRESS {
 		t.Errorf("Qname to lowercase failed, got %s", dm.DNS.Qname)
 	}
-	if dm.NetworkInfo.QueryIp != "fe80::" {
+	if dm.NetworkInfo.QueryIp != IPV6_SHORTND {
 		t.Errorf("Ipv6 anonymization failed, got %s", dm.NetworkInfo.QueryIp)
 	}
 	if return_code != RETURN_SUCCESS {
@@ -249,24 +257,24 @@ func TestTransformAndFilter(t *testing.T) {
 
 	// should be dropped and not transformed
 	dm.DNS.Qname = TEST_URL1
-	dm.NetworkInfo.QueryIp = "fe80::6111:626:c1b2:2353"
+	dm.NetworkInfo.QueryIp = IPV6_ADDRESS
 
 	return_code := subprocessors.ProcessMessage(&dm)
 	if return_code != RETURN_DROP {
 		t.Errorf("Return code is %v and not RETURN_DROP (%v)", return_code, RETURN_DROP)
 	}
-	if dm.NetworkInfo.QueryIp == "fe80::" {
+	if dm.NetworkInfo.QueryIp == IPV6_SHORTND {
 		t.Errorf("Ipv6 anonymization occurred (it should have dropped before filter)")
 	}
 
 	// should not be dropped, and should be transformed
 	dm.DNS.Qname = TEST_URL2
-	dm.NetworkInfo.QueryIp = "fe80::6111:626:c1b2:2353"
+	dm.NetworkInfo.QueryIp = IPV6_ADDRESS
 	return_code = subprocessors.ProcessMessage(&dm)
 	if return_code != RETURN_SUCCESS {
 		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", return_code, RETURN_SUCCESS)
 	}
-	if dm.NetworkInfo.QueryIp != "fe80::" {
+	if dm.NetworkInfo.QueryIp != IPV6_SHORTND {
 		t.Errorf("Ipv6 anonymization failed, got %s", dm.NetworkInfo.QueryIp)
 	}
 }
