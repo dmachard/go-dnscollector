@@ -43,7 +43,7 @@ Example:
 
 ### Prometheus
 
-This logger generates **prometheus** metrics. Use the following Grafana [dashboard](https://grafana.com/grafana/dashboards/16630). Overview of all metrics [here](metric.txt).
+This logger generates **prometheus** metrics. Use the following Grafana [dashboard](https://grafana.com/grafana/dashboards/16630).
 
 Options:
 - `listen-ip`: (string) listening IP
@@ -70,6 +70,15 @@ prometheus:
   prometheus-prefix: "dnscollector"
   top-n: 10
 ```
+
+Scrape metric with curl:
+
+```
+$ curl http://127.0.0.1:8080/metrics
+```
+
+The full metrics can be found [here](doc/metrics.txt).
+
 
 ### REST API
 
@@ -103,27 +112,6 @@ restapi:
   key-file: "./testsdata/server.key"
   top-n: 100
 ```
-
-**Prometheus metrics example:**
-
-Request:
-
-```
-$ curl --user admin:changeme http://127.0.0.1:8080/metrics
-```
-
-The `<promdsuffix>` tag can be configured in the `config.yml` file.
-
-Metrics list:
-- `<promdsuffix>_qps`: Number of queries per second received
-- `<promdsuffix>_requesters_total`: Number of clients
-- `<promdsuffix>_domains_total`: Number of domains observed
-- `<promdsuffix>_received_bytes_total`: Total bytes received
-- `<promdsuffix>_sent_bytes_total`: Total bytes sent
-
-
-The full metrics can be found [here](doc/metrics.txt).
-
 
 ### Log File
 

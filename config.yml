@@ -83,7 +83,7 @@ multiplexer:
 
   routes:
     - from: [ tap ]
-      to: [ console, api ]
+      to: [ console ]
 
 ################################################
 # list of supported collectors

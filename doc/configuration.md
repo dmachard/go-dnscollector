@@ -1,9 +1,9 @@
 # DNS-collector - Configuration Guide
 
-The configuration of DNS-collector is done through one yaml file named `config.yml`. When the DNS-collector starts, it will look for the config.yml from the current working directory. 
+The configuration of DNS-collector is done through one yaml file named [`config.yml`](https://github.com/dmachard/go-dnscollector/blob/main/config.yml). When the DNS-collector starts, it will look for the config.yml from the current working directory. 
 
 A typically configuration would have one or more collector to receive DNS traffic, and severals loggers to process the
-incoming traffics. A list of examples are available [here](./example-config) and the default one [here](https://github.com/dmachard/go-dnscollector/blob/main/config.yml).
+incoming traffics. You can take a look to the list of config [`examples`](https://github.com/dmachard/go-dns-collector#examples).
 
 
 - [Global](#global)
@@ -127,7 +127,7 @@ You must defined the list of
 
 ### Collectors
 
-List of available [collectors](/doc/collectors.md)
+List of supported [collectors](/doc/collectors.md)
 
 ```yaml
 multiplexer:
@@ -138,7 +138,7 @@ multiplexer:
 
 ### Loggers
 
-List of available [loggers](/doc/loggers.md)
+List of supported [loggers](/doc/loggers.md)
 
 ```yaml
 multiplexer:
@@ -172,7 +172,8 @@ Options:
 
 ```yaml
 transforms:
-  qname-lowercase: true
+  normalize:
+    qname-lowercase: true
 ```
 
 ### User Privacy
