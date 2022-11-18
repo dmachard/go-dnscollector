@@ -180,7 +180,7 @@ func (o *Prometheus) InitProm() {
 			Name: fmt.Sprintf("%s_top_tlds", prom_prefix),
 			Help: "Number of hit per tld - topN",
 		},
-		[]string{"stream_id", "domain"},
+		[]string{"stream_id", "suffix"},
 	)
 	o.promRegistry.MustRegister(o.gaugeTopTlds)
 
@@ -522,7 +522,8 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	}
 
 	/* count all domains name and top domains */
-	if dm.DNS.Rcode == dnsutils.DNS_RCODE_SERVFAIL {
+	switch dm.DNS.Rcode {
+	case dnsutils.DNS_RCODE_SERVFAIL:
 		/* record and count all unreachable domains name and topN*/
 		if _, exists := o.sfdomainsUniq[dm.DNS.Qname]; !exists {
 			o.sfdomainsUniq[dm.DNS.Qname] = 1
@@ -552,7 +553,7 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 				o.gaugeTopSfDomains.WithLabelValues(s, r.Name).Set(float64(r.Hit))
 			}
 		}
-	} else if dm.DNS.Rcode == dnsutils.DNS_RCODE_NXDOMAIN {
+	case dnsutils.DNS_RCODE_NXDOMAIN:
 		/* record and count all nx domains name and topN*/
 		if _, exists := o.nxdomainsUniq[dm.DNS.Qname]; !exists {
 			o.nxdomainsUniq[dm.DNS.Qname] = 1
@@ -582,7 +583,7 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 				o.gaugeTopNxDomains.WithLabelValues(s, r.Name).Set(float64(r.Hit))
 			}
 		}
-	} else {
+	default:
 		if _, exists := o.domainsUniq[dm.DNS.Qname]; !exists {
 			o.domainsUniq[dm.DNS.Qname] = 1
 			o.counterDomainsUniq.WithLabelValues().Inc()
@@ -627,7 +628,7 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	}
 
 	if _, exists := o.tlds[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix]; !exists {
-		o.tlds[dm.DnsTap.Identity][dm.DNS.Qname] = 1
+		o.tlds[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix] = 1
 		o.counterTlds.WithLabelValues(dm.DnsTap.Identity).Inc()
 	} else {
 		o.tlds[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix] += 1

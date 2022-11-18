@@ -7,7 +7,7 @@ Build-in dashboard are available with multiple data source
 
 ## Prometheus dashboard
 
-Activate the **[Prometheus](https://github.com/dmachard/go-dns-collector/blob/main/doc/configuration.md#Prometheus)** logger to use this dashboard
+Activate the **[Prometheus](https://github.com/dmachard/go-dns-collector/blob/main/doc/loggers.md#prometheus)** logger to use this dashboard
 
 <p align="center">
   <img src="dashboard_prometheus.png" alt="dnscollector"/>
