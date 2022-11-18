@@ -25,7 +25,7 @@ func TestSuspiciousMalformedPacket(t *testing.T) {
 		t.Errorf("suspicious score should be equal to 1.0")
 	}
 
-	if dm.Suspicious.Flags.MalformedPacket != true {
+	if dm.Suspicious.MalformedPacket != true {
 		t.Errorf("suspicious malformed packet flag should be equal to true")
 	}
 }
@@ -49,7 +49,7 @@ func TestSuspiciousLongDomain(t *testing.T) {
 		t.Errorf("suspicious score should be equal to 1.0")
 	}
 
-	if dm.Suspicious.Flags.LongDomain != true {
+	if dm.Suspicious.LongDomain != true {
 		t.Errorf("suspicious long domain flag should be equal to true")
 	}
 }
@@ -72,7 +72,7 @@ func TestSuspiciousLargePacket(t *testing.T) {
 		t.Errorf("suspicious score should be equal to 1.0")
 	}
 
-	if dm.Suspicious.Flags.LargePacket != true {
+	if dm.Suspicious.LargePacket != true {
 		t.Errorf("suspicious large packet flag should be equal to true")
 	}
 }
@@ -94,7 +94,7 @@ func TestSuspiciousUncommonQtype(t *testing.T) {
 		t.Errorf("suspicious score should be equal to 1.0")
 	}
 
-	if dm.Suspicious.Flags.UncommonQtypes != true {
+	if dm.Suspicious.UncommonQtypes != true {
 		t.Errorf("suspicious uncommon qtype flag should be equal to true")
 	}
 }
@@ -117,7 +117,7 @@ func TestSuspiciousExceedMaxLabels(t *testing.T) {
 		t.Errorf("suspicious score should be equal to 1.0")
 	}
 
-	if dm.Suspicious.Flags.ExcessiveNumberLabels != true {
+	if dm.Suspicious.ExcessiveNumberLabels != true {
 		t.Errorf("suspicious excessive number labels flag should be equal to true")
 	}
 }
@@ -139,7 +139,7 @@ func TestSuspiciousUnallowedChars(t *testing.T) {
 		t.Errorf("suspicious score should be equal to 1.0")
 	}
 
-	if dm.Suspicious.Flags.UnallowedChars != true {
+	if dm.Suspicious.UnallowedChars != true {
 		t.Errorf("suspicious unallowed chars flag should be equal to true")
 	}
 }

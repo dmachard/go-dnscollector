@@ -50,38 +50,38 @@ func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
 	// dns decoding error?
 	if dm.DNS.MalformedPacket {
 		dm.Suspicious.Score += 1.0
-		dm.Suspicious.Flags.MalformedPacket = true
+		dm.Suspicious.MalformedPacket = true
 	}
 
 	// long domain name ?
 	if len(dm.DNS.Qname) > p.config.Suspicious.ThresholdQnameLen {
 		dm.Suspicious.Score += 1.0
-		dm.Suspicious.Flags.LongDomain = true
+		dm.Suspicious.LongDomain = true
 	}
 
 	// large packet size ?
 	if dm.DNS.Length > p.config.Suspicious.ThresholdPacketLen {
 		dm.Suspicious.Score += 1.0
-		dm.Suspicious.Flags.LargePacket = true
+		dm.Suspicious.LargePacket = true
 	}
 
 	// uncommon qtype?
 	if _, found := p.CommonQtypes[dm.DNS.Qtype]; !found {
 		dm.Suspicious.Score += 1.0
-		dm.Suspicious.Flags.UncommonQtypes = true
+		dm.Suspicious.UncommonQtypes = true
 	}
 
 	// count the number of labels in qname
 	if strings.Count(dm.DNS.Qname, ".") > p.config.Suspicious.ThresholdMaxLabels {
 		dm.Suspicious.Score += 1.0
-		dm.Suspicious.Flags.ExcessiveNumberLabels = true
+		dm.Suspicious.ExcessiveNumberLabels = true
 	}
 
 	// search for unallowed characters
 	for _, v := range p.config.Suspicious.UnallowedChars {
 		if strings.Contains(dm.DNS.Qname, v) {
 			dm.Suspicious.Score += 1.0
-			dm.Suspicious.Flags.UnallowedChars = true
+			dm.Suspicious.UnallowedChars = true
 			break
 		}
 	}

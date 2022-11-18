@@ -33,7 +33,7 @@ func TestTransformsSuspicious(t *testing.T) {
 		t.Errorf("suspicious score should be equal to 1.0")
 	}
 
-	if dm.Suspicious.Flags.MalformedPacket != true {
+	if dm.Suspicious.MalformedPacket != true {
 		t.Errorf("suspicious malformed packet flag should be equal to true")
 	}
 

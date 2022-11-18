@@ -34,7 +34,7 @@ type HitsUniq struct {
 	NxDomains      map[string]int
 	SfDomains      map[string]int
 	PublicSuffixes map[string]int
-	Suspicious     map[string]dnsutils.SuspiciousFlags
+	Suspicious     map[string]dnsutils.Suspicious
 }
 
 type RestAPI struct {
@@ -78,7 +78,7 @@ func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, version string, 
 			NxDomains:      make(map[string]int),
 			SfDomains:      make(map[string]int),
 			PublicSuffixes: make(map[string]int),
-			Suspicious:     make(map[string]dnsutils.SuspiciousFlags),
+			Suspicious:     make(map[string]dnsutils.Suspicious),
 		},
 
 		TopQnames:      topmap.NewTopMap(config.Loggers.RestAPI.TopN),
@@ -420,7 +420,7 @@ func (s *RestAPI) RecordDnsMessage(dm dnsutils.DnsMessage) {
 	// record suspicious domains
 	if dm.Suspicious.Score > 0.0 {
 		if _, exists := s.HitsUniq.Suspicious[dm.DNS.Qname]; !exists {
-			s.HitsUniq.Suspicious[dm.DNS.Qname] = dm.Suspicious.Flags
+			s.HitsUniq.Suspicious[dm.DNS.Qname] = dm.Suspicious
 		}
 	}
 
