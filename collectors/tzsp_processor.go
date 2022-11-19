@@ -1,6 +1,5 @@
 // Written by Noel Kuntze <noel.kuntze {@@@@@} thermi.consulting>
 
-
 package collectors
 
 import (
@@ -17,20 +16,19 @@ import (
 )
 
 type TzspSniffer struct {
-	done     chan bool
-	exit	 chan bool
-	listen   net.UDPConn
-	loggers  []dnsutils.Worker
-	config   *dnsutils.Config
-	logger   *logger.Logger
-	name     string
-	identity string
-	port     int
-	ip 		 string
+	done        chan bool
+	exit        chan bool
+	listen      net.UDPConn
+	loggers     []dnsutils.Worker
+	config      *dnsutils.Config
+	logger      *logger.Logger
+	name        string
+	identity    string
+	port        int
+	ip          string
 	dropQueries bool
 	dropReplies bool
 }
-
 
 func NewTzsp(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *TzspSniffer {
 	logger.Info("[%s] tzsp collector - enabled", name)
@@ -60,7 +58,6 @@ func (c *TzspSniffer) Loggers() []chan dnsutils.DnsMessage {
 	return channels
 }
 
-
 func (c *TzspSniffer) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] tzsp collector - "+msg, v...)
 }
@@ -68,7 +65,6 @@ func (c *TzspSniffer) LogInfo(msg string, v ...interface{}) {
 func (c *TzspSniffer) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] tzsp collector - "+msg, v...)
 }
-
 
 func (c *TzspSniffer) ReadConfig() {
 
@@ -83,9 +79,9 @@ func (c *TzspSniffer) ReadConfig() {
 func (c *TzspSniffer) Listen() error {
 	c.logger.Info("running in background...")
 
-    ServerAddr, err := net.ResolveUDPAddr("udp",fmt.Sprintf("%s:%d", c.ip, c.port))
+	ServerAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", c.ip, c.port))
 
-    ServerConn, err := net.ListenUDP("udp", ServerAddr)
+	ServerConn, err := net.ListenUDP("udp", ServerAddr)
 	if err != nil {
 		return err
 	}
@@ -119,7 +115,6 @@ func (c *TzspSniffer) Stop() {
 	<-c.done
 	close(c.done)
 }
-
 
 func (c *TzspSniffer) Run() {
 	c.logger.Info("starting collector...")
@@ -174,7 +169,7 @@ func (c *TzspSniffer) Run() {
 
 			tzsp_packet, err := tzsp.Parse(pkt)
 
-			if (err != nil) {
+			if err != nil {
 				c.LogError("Failed to parse packet: ", err)
 				continue
 			}
@@ -186,7 +181,6 @@ func (c *TzspSniffer) Run() {
 			var udp layers.UDP
 			parser := gopacket.NewDecodingLayerParser(layers.LayerTypeEthernet, &eth, &ip4, &ip6, &tcp, &udp)
 			decodedLayers := make([]gopacket.LayerType, 0, 4)
-
 
 			// decode-it
 			parser.DecodeLayers(tzsp_packet.Data, &decodedLayers)
@@ -274,4 +268,3 @@ func (c *TzspSniffer) Run() {
 	c.LogInfo("run terminated")
 	c.done <- true
 }
-
