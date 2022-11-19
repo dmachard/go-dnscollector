@@ -183,6 +183,16 @@ multiplexer:
 #   # private key server file
 #   key-file: ""
 
+# # ztsp
+# ztsp:
+#  # listen on ip
+#  listen-ip: 0.0.0.0
+#  listen-port: 10000
+#  # drop all queries
+#  drop-queries: false
+#  # drop all replies
+#  drop-replies: false
+
 ################################################
 # list of supported loggers
 ################################################

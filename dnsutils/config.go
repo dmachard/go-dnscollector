@@ -186,6 +186,15 @@ type Config struct {
 			PcapDnsPort int    `yaml:"pcap-dns-port"`
 			DeleteAfter bool   `yaml:"delete-after"`
 		} `yaml:"file-ingestor"`
+		Tzsp struct {
+			Enable		bool 	`yaml:"enable"`
+			ListenIp	string	`yaml:"listen-ip"`
+			ListenPort	int 	`yaml:"listen-port"`
+			DropQueries bool    `yaml:"drop-queries"`
+			DropReplies bool    `yaml:"drop-replies"`
+			CacheSupport bool   `yaml:"cache-support"`
+			QueryTimeout int    `yaml:"query-timeout"`
+		}
 	} `yaml:"collectors"`
 
 	IngoingTransformers ConfigTransformers `yaml:"ingoing-transformers"`
@@ -398,6 +407,14 @@ func (c *Config) SetDefault() {
 	c.Collectors.FileIngestor.PcapDnsPort = 53
 	c.Collectors.FileIngestor.WatchMode = MODE_PCAP
 	c.Collectors.FileIngestor.DeleteAfter = false
+
+	c.Collectors.Tzsp.Enable = false
+	c.Collectors.Tzsp.ListenIp = "0.0.0.0"
+	c.Collectors.Tzsp.ListenPort = 10000
+	c.Collectors.Tzsp.DropQueries = false
+	c.Collectors.Tzsp.DropReplies = false
+	c.Collectors.Tzsp.QueryTimeout = 5
+	c.Collectors.Tzsp.CacheSupport = true
 
 	// Transformers for collectors
 	c.IngoingTransformers.SetDefault()
