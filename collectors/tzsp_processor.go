@@ -224,7 +224,6 @@ func (c *TzspSniffer) Run() {
 
 					dnsLengthField := binary.BigEndian.Uint16(tcp.Payload[0:2])
 					if len(tcp.Payload) < int(dnsLengthField) {
-						c.LogInfo("tcp payload too short")
 						ignore_packet = true
 						continue
 					}
@@ -246,21 +245,17 @@ func (c *TzspSniffer) Run() {
 
 				// just decode QR
 				if len(dm.DNS.Payload) < 4 {
-					c.LogInfo("dns payload too short")
 					continue
 				}
 				qr := binary.BigEndian.Uint16(dm.DNS.Payload[2:4]) >> 15
 
-				c.LogInfo("Processing reached end")
 				// is query ?
 				if int(qr) == 0 && !c.dropQueries {
-					c.LogInfo("Forwarding query")
 					dnsProcessor.GetChannel() <- dm
 				}
 
 				// is reply ?
 				if int(qr) == 1 && !c.dropReplies {
-					c.LogInfo("Forwarding reply")
 					dnsProcessor.GetChannel() <- dm
 				}
 			}
