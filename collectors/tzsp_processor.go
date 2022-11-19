@@ -221,7 +221,11 @@ func (c *TzspSniffer) Run() {
 					// 	ignore_packet = true
 					// 	continue
 					// }
-
+					if len(tcp.Payload) < 12 {
+						// packet way too short; 12 byte is the minimum size a DNS packet (header only,
+						// no questions, answers, authorities, or additional RRs)
+						continue
+					}
 					dnsLengthField := binary.BigEndian.Uint16(tcp.Payload[0:2])
 					if len(tcp.Payload) < int(dnsLengthField) {
 						ignore_packet = true
