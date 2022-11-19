@@ -85,7 +85,7 @@ func (c *ConfigTransformers) SetDefault() {
 	c.Suspicious.ThresholdPacketLen = 1000
 	c.Suspicious.ThresholdSlow = 1.0
 	c.Suspicious.CommonQtypes = []string{"A", "AAAA", "TXT", "CNAME", "PTR",
-		"NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS"}
+		"NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS", "HTTPS"}
 	c.Suspicious.UnallowedChars = []string{"\"", "==", "/", ":"}
 	c.Suspicious.ThresholdMaxLabels = 10
 
