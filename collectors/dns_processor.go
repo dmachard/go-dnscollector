@@ -11,7 +11,6 @@ import (
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/miekg/dns"
-	"golang.org/x/net/publicsuffix"
 )
 
 func GetFakeDns() ([]byte, error) {
@@ -148,13 +147,6 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// convert latency to human
 		dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
-
-		// Public suffix
-		ps, _ := publicsuffix.PublicSuffix(dm.DNS.Qname)
-		dm.DNS.QnamePublicSuffix = ps
-		if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
-			dm.DNS.QnameEffectiveTLDPlusOne = etpo
-		}
 
 		// apply all enabled transformers
 		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {

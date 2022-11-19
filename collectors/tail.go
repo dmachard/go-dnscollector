@@ -12,7 +12,6 @@ import (
 	"github.com/dmachard/go-logger"
 	"github.com/hpcloud/tail"
 	"github.com/miekg/dns"
-	"golang.org/x/net/publicsuffix"
 )
 
 type Tail struct {
@@ -251,13 +250,6 @@ func (c *Tail) Run() {
 
 		dm.DNS.Payload, _ = dnspkt.Pack()
 		dm.DNS.Length = len(dm.DNS.Payload)
-
-		// Public suffix
-		ps, _ := publicsuffix.PublicSuffix(dm.DNS.Qname)
-		dm.DNS.QnamePublicSuffix = ps
-		if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
-			dm.DNS.QnameEffectiveTLDPlusOne = etpo
-		}
 
 		// apply all enabled transformers
 		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {

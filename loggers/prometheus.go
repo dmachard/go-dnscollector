@@ -616,34 +616,37 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	}
 
 	// count and top tld
-	if _, exists := o.tldsUniq[dm.DNS.QnamePublicSuffix]; !exists {
-		o.tldsUniq[dm.DNS.QnamePublicSuffix] = 1
-		o.counterTldsUniq.WithLabelValues().Inc()
-	} else {
-		o.tldsUniq[dm.DNS.QnamePublicSuffix] += 1
-	}
-
-	if _, exists := o.tlds[dm.DnsTap.Identity]; !exists {
-		o.tlds[dm.DnsTap.Identity] = make(map[string]int)
-	}
-
-	if _, exists := o.tlds[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix]; !exists {
-		o.tlds[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix] = 1
-		o.counterTlds.WithLabelValues(dm.DnsTap.Identity).Inc()
-	} else {
-		o.tlds[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix] += 1
-	}
-
-	if _, ok := o.topTlds[dm.DnsTap.Identity]; !ok {
-		o.topTlds[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
-	}
-	o.topTlds[dm.DnsTap.Identity].Record(dm.DNS.QnamePublicSuffix, o.domains[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix])
-
-	o.gaugeTopTlds.Reset()
-	for s := range o.topTlds {
-		for _, r := range o.topTlds[s].Get() {
-			o.gaugeTopTlds.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+	if dm.DNS.QnamePublicSuffix != "-" {
+		if _, exists := o.tldsUniq[dm.DNS.QnamePublicSuffix]; !exists {
+			o.tldsUniq[dm.DNS.QnamePublicSuffix] = 1
+			o.counterTldsUniq.WithLabelValues().Inc()
+		} else {
+			o.tldsUniq[dm.DNS.QnamePublicSuffix] += 1
 		}
+
+		if _, exists := o.tlds[dm.DnsTap.Identity]; !exists {
+			o.tlds[dm.DnsTap.Identity] = make(map[string]int)
+		}
+
+		if _, exists := o.tlds[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix]; !exists {
+			o.tlds[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix] = 1
+			o.counterTlds.WithLabelValues(dm.DnsTap.Identity).Inc()
+		} else {
+			o.tlds[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix] += 1
+		}
+
+		if _, ok := o.topTlds[dm.DnsTap.Identity]; !ok {
+			o.topTlds[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
+		}
+		o.topTlds[dm.DnsTap.Identity].Record(dm.DNS.QnamePublicSuffix, o.tlds[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix])
+
+		o.gaugeTopTlds.Reset()
+		for s := range o.topTlds {
+			for _, r := range o.topTlds[s].Get() {
+				o.gaugeTopTlds.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+			}
+		}
+
 	}
 
 	// suspicious domains

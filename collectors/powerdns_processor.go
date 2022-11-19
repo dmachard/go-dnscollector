@@ -11,7 +11,6 @@ import (
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
-	"golang.org/x/net/publicsuffix"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -126,16 +125,8 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		dm.DnsTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
 		dm.DNS.Qname = pbdm.Question.GetQName()
-
 		// remove ending dot ?
-		qname := strings.TrimSuffix(dm.DNS.Qname, ".")
-		dm.DNS.Qname = qname
-
-		ps, _ := publicsuffix.PublicSuffix(qname)
-		dm.DNS.QnamePublicSuffix = ps
-		if etpo, err := publicsuffix.EffectiveTLDPlusOne(qname); err == nil {
-			dm.DNS.QnameEffectiveTLDPlusOne = etpo
-		}
+		dm.DNS.Qname = strings.TrimSuffix(dm.DNS.Qname, ".")
 
 		// get query type
 		dm.DNS.Qtype = dnsutils.RdatatypeToString(int(pbdm.Question.GetQType()))

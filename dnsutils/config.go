@@ -40,6 +40,11 @@ type MultiplexRoutes struct {
 }
 
 type ConfigTransformers struct {
+	PublicSuffix struct {
+		Enable        bool `yaml:"enable"`
+		AddTld        bool `yaml:"add-tld"`
+		AddTldPlusOne bool `yaml:"add-tld-plus-one"`
+	} `yaml:"public-suffix"`
 	UserPrivacy struct {
 		Enable        bool `yaml:"enable"`
 		AnonymizeIP   bool `yaml:"anonymize-ip"`
@@ -80,6 +85,10 @@ type ConfigTransformers struct {
 }
 
 func (c *ConfigTransformers) SetDefault() {
+	c.PublicSuffix.Enable = false
+	c.PublicSuffix.AddTld = false
+	c.PublicSuffix.AddTldPlusOne = false
+
 	c.Suspicious.Enable = false
 	c.Suspicious.ThresholdQnameLen = 100
 	c.Suspicious.ThresholdPacketLen = 1000

@@ -16,11 +16,12 @@ type Transforms struct {
 	logger *logger.Logger
 	name   string
 
-	SuspiciousTransform  SuspiciousTransform
-	GeoipTransform       GeoIpProcessor
-	FilteringTransform   FilteringProcessor
-	UserPrivacyTransform UserPrivacyProcessor
-	NormalizeTransform   NormalizeProcessor
+	SuspiciousTransform   SuspiciousTransform
+	GeoipTransform        GeoIpProcessor
+	FilteringTransform    FilteringProcessor
+	UserPrivacyTransform  UserPrivacyProcessor
+	NormalizeTransform    NormalizeProcessor
+	PublicSuffixTransform PublicSuffixProcessor
 
 	activeTransforms []func(dm *dnsutils.DnsMessage) int
 }
@@ -32,11 +33,12 @@ func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, n
 		logger: logger,
 		name:   name,
 
-		SuspiciousTransform:  NewSuspiciousSubprocessor(config, logger, name),
-		GeoipTransform:       NewDnsGeoIpProcessor(config, logger),
-		FilteringTransform:   NewFilteringProcessor(config, logger, name),
-		UserPrivacyTransform: NewUserPrivacySubprocessor(config),
-		NormalizeTransform:   NewNormalizeSubprocessor(config),
+		SuspiciousTransform:   NewSuspiciousSubprocessor(config, logger, name),
+		GeoipTransform:        NewDnsGeoIpProcessor(config, logger),
+		FilteringTransform:    NewFilteringProcessor(config, logger, name),
+		UserPrivacyTransform:  NewUserPrivacySubprocessor(config),
+		NormalizeTransform:    NewNormalizeSubprocessor(config),
+		PublicSuffixTransform: NewPublicSuffixSubprocessor(config),
 	}
 
 	d.Prepare()
@@ -58,6 +60,17 @@ func (p *Transforms) Prepare() error {
 
 		if err := p.GeoipTransform.Open(); err != nil {
 			p.LogError("geoip open error %v", err)
+		}
+	}
+
+	if p.config.PublicSuffix.Enable {
+		if p.config.PublicSuffix.AddTld {
+			p.activeTransforms = append(p.activeTransforms, p.GetEffectiveTld)
+			p.LogInfo("[public suffix: add tld] enabled")
+		}
+		if p.config.PublicSuffix.AddTldPlusOne {
+			p.activeTransforms = append(p.activeTransforms, p.GetEffectiveTldPlusOne)
+			p.LogInfo("[public suffix: add tld+1] enabled")
 		}
 	}
 
@@ -118,6 +131,21 @@ func (p *Transforms) geoipTransform(dm *dnsutils.DnsMessage) int {
 	dm.Geo.City = geoInfo.City
 	dm.NetworkInfo.AutonomousSystemNumber = geoInfo.ASN
 	dm.NetworkInfo.AutonomousSystemOrg = geoInfo.ASO
+
+	return RETURN_SUCCESS
+}
+
+func (p *Transforms) GetEffectiveTld(dm *dnsutils.DnsMessage) int {
+	if etld, err := p.PublicSuffixTransform.GetEffectiveTld(dm.DNS.Qname); err == nil {
+		dm.DNS.QnamePublicSuffix = etld
+	}
+	return RETURN_SUCCESS
+}
+
+func (p *Transforms) GetEffectiveTldPlusOne(dm *dnsutils.DnsMessage) int {
+	if etld, err := p.PublicSuffixTransform.GetEffectiveTldPlusOne(dm.DNS.Qname); err == nil {
+		dm.DNS.QnameEffectiveTLDPlusOne = etld
+	}
 
 	return RETURN_SUCCESS
 }
