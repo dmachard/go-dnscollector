@@ -100,19 +100,15 @@ type PowerDns struct {
 	AppliedPolicy         string   `json:"applied-policy" msgpack:"applied-policy"`
 }
 
-type SuspiciousFlags struct {
-	MalformedPacket       bool `json:"malformed-pkt" msgpack:"malformed-pkt"`
-	LargePacket           bool `json:"large-pkt" msgpack:"large-pkt"`
-	LongDomain            bool `json:"long-domain" msgpack:"long-domain"`
-	SlowDomain            bool `json:"slow-domain" msgpack:"slow-domain"`
-	UnallowedChars        bool `json:"unallowed-chars" msgpack:"unallowed-chars"`
-	UncommonQtypes        bool `json:"uncommon-qtypes" msgpack:"uncommon-qtypes"`
-	ExcessiveNumberLabels bool `json:"excessive-number-labels" msgpack:"excessive-number-labels"`
-}
-
 type Suspicious struct {
-	Score float64         `json:"score" msgpack:"score"`
-	Flags SuspiciousFlags `json:"flags" msgpack:"flags"`
+	Score                 float64 `json:"score" msgpack:"score"`
+	MalformedPacket       bool    `json:"malformed-pkt" msgpack:"malformed-pkt"`
+	LargePacket           bool    `json:"large-pkt" msgpack:"large-pkt"`
+	LongDomain            bool    `json:"long-domain" msgpack:"long-domain"`
+	SlowDomain            bool    `json:"slow-domain" msgpack:"slow-domain"`
+	UnallowedChars        bool    `json:"unallowed-chars" msgpack:"unallowed-chars"`
+	UncommonQtypes        bool    `json:"uncommon-qtypes" msgpack:"uncommon-qtypes"`
+	ExcessiveNumberLabels bool    `json:"excessive-number-labels" msgpack:"excessive-number-labels"`
 }
 
 type DnsMessage struct {
@@ -177,16 +173,14 @@ func (dm *DnsMessage) Init() {
 	}
 
 	dm.Suspicious = Suspicious{
-		Score: 0.0,
-		Flags: SuspiciousFlags{
-			MalformedPacket:       false,
-			LargePacket:           false,
-			LongDomain:            false,
-			SlowDomain:            false,
-			UnallowedChars:        false,
-			UncommonQtypes:        false,
-			ExcessiveNumberLabels: false,
-		},
+		Score:                 0.0,
+		MalformedPacket:       false,
+		LargePacket:           false,
+		LongDomain:            false,
+		SlowDomain:            false,
+		UnallowedChars:        false,
+		UncommonQtypes:        false,
+		ExcessiveNumberLabels: false,
 	}
 }
 

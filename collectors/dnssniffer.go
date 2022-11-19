@@ -51,7 +51,7 @@ func GetBpfFilter(port int) []bpf.Instruction {
 		bpf.LoadIndirect{Off: 14, Size: 2},
 		// source port equal to 53 ?
 		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(port), SkipTrue: 10, SkipFalse: 0},
-		// Load estination port in tcp or udp  (2 bytes at offset x+16)
+		// Load destination port in tcp or udp  (2 bytes at offset x+16)
 		bpf.LoadIndirect{Off: 16, Size: 2},
 		// destination port equal to 53 ?
 		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(port), SkipTrue: 8, SkipFalse: 9},

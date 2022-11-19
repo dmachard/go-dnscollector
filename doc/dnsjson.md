@@ -91,15 +91,13 @@ Example:
   },
   "suspicious": {
     "score": 0.0,
-    "flags": {
-      "malformed-packet": false,
-      "large-pkt": false,
-      "long-domain": false,
-      "slow-domain": false,
-      "unallowed-chars": false,
-      "uncommon-qtypes": false,
-      "excessive-number-labels": false,
-    }
+    "malformed-packet": false,
+    "large-pkt": false,
+    "long-domain": false,
+    "slow-domain": false,
+    "unallowed-chars": false,
+    "uncommon-qtypes": false,
+    "excessive-number-labels": false,
   }
 }
 ```
