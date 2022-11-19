@@ -80,6 +80,9 @@ func (c *TzspSniffer) Listen() error {
 	c.logger.Info("running in background...")
 
 	ServerAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", c.ip, c.port))
+	if err != nil {
+		return err
+	}
 
 	ServerConn, err := net.ListenUDP("udp", ServerAddr)
 	if err != nil {
