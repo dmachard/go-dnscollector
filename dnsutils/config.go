@@ -187,11 +187,11 @@ type Config struct {
 			DeleteAfter bool   `yaml:"delete-after"`
 		} `yaml:"file-ingestor"`
 		Tzsp struct {
-			Enable		bool 	`yaml:"enable"`
-			ListenIp	string	`yaml:"listen-ip"`
-			ListenPort	int 	`yaml:"listen-port"`
-			DropQueries bool    `yaml:"drop-queries"`
-			DropReplies bool    `yaml:"drop-replies"`
+			Enable       bool   `yaml:"enable"`
+			ListenIp     string `yaml:"listen-ip"`
+			ListenPort   int    `yaml:"listen-port"`
+			DropQueries  bool   `yaml:"drop-queries"`
+			DropReplies  bool   `yaml:"drop-replies"`
 			CacheSupport bool   `yaml:"cache-support"`
 			QueryTimeout int    `yaml:"query-timeout"`
 		}
