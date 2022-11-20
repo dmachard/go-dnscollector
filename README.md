@@ -17,11 +17,12 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
     - Protobuf [`DNStap`](doc/collectors.md#dns-tap) with tcp or unix support
     - Protobuf [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
     - [`Proxifier`](doc/collectors.md#dns-tap-proxifier) for DNSTap streams
-- *Live capture on a network interface*   
+- *Live capture on a network interface*
     - [`AF_PACKET`](doc/collectors.md#live-capture-with-af_packet) socket with BPF filter
 - *Read text or binary files as input*
     - Read and tail on [`Plain text`](doc/collectors.md#tail) files
     - Ingest [`PCAP`](doc/collectors.md#file-ingestor) or [`DNSTap`](doc/collectors.md#file-ingestor) files by watching a directory
+- Listen for [`TZSP`](doc/collectors.md#tzsp) packets containg DNS packets
 
 **Loggers**:
 
@@ -95,6 +96,7 @@ You will find below some examples of configuration to manage your DNS logs.
 - [Transform all domains to lowercase](example-config/use-case-10.yml)
 - [Add geographical metadata with GeoIP](example-config/use-case-11.yml)
 - [Relays DNSTap stream to multiple remote destination without decoding](example-config/use-case-12.yml)
+- [Capture TZSP packets containing DNS packets and process them as json](example-config/use-case-15.yml)
 
 ## Contributing
 
