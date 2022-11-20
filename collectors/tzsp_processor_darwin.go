@@ -140,7 +140,7 @@ func (c *TzspSniffer) Run() {
 		oob := make([]byte, 100)
 		for {
 			//flags, from
-			bufN, oobn, _, _, err := c.listen.ReadMsgUDPAddrPort(buf, oob)
+			bufN, oobn, _, _, err := c.listen.ReadMsgUDP(buf, oob)
 			if err != nil {
 				panic(err)
 			}
