@@ -1,3 +1,5 @@
+//go:build linux
+// +build linux
 // Written by Noel Kuntze <noel.kuntze {@@@@@} thermi.consulting>
 
 package collectors
