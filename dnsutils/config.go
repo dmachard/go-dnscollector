@@ -409,7 +409,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.FileIngestor.DeleteAfter = false
 
 	c.Collectors.Tzsp.Enable = false
-	c.Collectors.Tzsp.ListenIp = "0.0.0.0"
+	c.Collectors.Tzsp.ListenIp = ANY_IP
 	c.Collectors.Tzsp.ListenPort = 10000
 	c.Collectors.Tzsp.DropQueries = false
 	c.Collectors.Tzsp.DropReplies = false
