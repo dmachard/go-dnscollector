@@ -15,6 +15,7 @@ incoming traffics. You can take a look to the list of config [`examples`](https:
   - [Loggers](#loggers)
   - [Routes](#routes)
 - [Transforms](#transforms)
+  - [Public suffix](#public-suffix)
   - [Normalize](#normalize)
   - [User privacy](#user-privacy)
   - [GeoIP Support](#geoip-support)
@@ -162,6 +163,22 @@ multiplexer:
 ## Transformers
 
 Some transformations can be done on collectors or loggers.
+
+### Public Suffix
+
+Option to add top level domain. For example for `books.amazon.co.uk`, the `TLD`
+is `co.uk` and the `TLD+1` is `amazon.co.uk`.
+
+Options:
+- `add-tld`: (boolean) add top level domain
+- `add-tld-plus-one`: (boolean) add top level domain plus one label
+
+```yaml
+transforms:
+  public-suffix:
+    add-tld: false
+    add-tld-plus-one: false
+```
 
 ### Normalize
 

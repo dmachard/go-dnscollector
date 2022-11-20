@@ -12,7 +12,6 @@ import (
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-logger"
-	"golang.org/x/net/publicsuffix"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -234,13 +233,6 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// convert latency to human
 		dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
-
-		// Public suffix
-		ps, _ := publicsuffix.PublicSuffix(dm.DNS.Qname)
-		dm.DNS.QnamePublicSuffix = ps
-		if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
-			dm.DNS.QnameEffectiveTLDPlusOne = etpo
-		}
 
 		// apply all enabled transformers
 		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
