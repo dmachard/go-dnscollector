@@ -234,7 +234,6 @@ tzsp:
   drop-replies: false
   cache-support: true
   query-timeout: 5
-
 ```
 
 Example rules for Mikrotik brand devices to send the traffic (only works if routed or the device serves as DNS server).
