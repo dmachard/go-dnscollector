@@ -25,6 +25,5 @@ multiplexer:
 
   routes:
     - from:
-      - tap
       - tzsp
       to: [ console ]
