@@ -3,7 +3,7 @@ package dnsutils
 import (
 	"os"
 
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 func IsValidMode(mode string) bool {
@@ -268,6 +268,7 @@ type Config struct {
 			TlsSupport    bool   `yaml:"tls-support"`
 			TlsInsecure   bool   `yaml:"tls-insecure"`
 			TlsMinVersion string `yaml:"tls-min-version"`
+			Format        string `yaml:"format"`
 		} `yaml:"syslog"`
 		Fluentd struct {
 			Enable        bool   `yaml:"enable"`
