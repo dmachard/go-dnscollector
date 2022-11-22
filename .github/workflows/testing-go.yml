@@ -29,6 +29,10 @@ jobs:
         which go
         sudo which go
         sudo ln -sf `which go` `sudo which go` || true
+    
+    - name: Show Go version
+      run: |
+        go version
         sudo go version
         
     - name: Test ${{ matrix.package }}
