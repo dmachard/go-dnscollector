@@ -26,6 +26,8 @@ jobs:
 
     - name: Set up Go for root
       run: |
+        which go
+        sudo which go
         sudo ln -sf `which go` `sudo which go` || true
         sudo go version
         
