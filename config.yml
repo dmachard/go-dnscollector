@@ -311,6 +311,8 @@ multiplexer:
 #   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
+#   # set syslog formatter between `unix` (default), `rfc3164` or `rfc5424`
+#   format: ""
 
 # # resend captured dns traffic to a remote fluentd server or to unix socket
 # fluentd:
