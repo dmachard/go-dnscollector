@@ -32,8 +32,8 @@ jobs:
     
     - name: Show Go version
       run: |
-        go version
-        sudo go version
+        $GOROOT/bin/go version
+        sudo $GOROOT/bin/go version
         
     - name: Test ${{ matrix.package }}
       run: sudo go test -timeout 10s ./${{ matrix.package }}/ -race -cover -v
