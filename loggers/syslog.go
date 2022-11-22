@@ -172,6 +172,14 @@ func (o *Syslog) Run() {
 			}
 		}
 	}
+
+	switch strings.ToLower(o.config.Loggers.Syslog.Format) {
+	case "rfc3164":
+		syslogconn.SetFormatter(syslog.RFC3164Formatter)
+	case "rfc5424":
+		syslogconn.SetFormatter(syslog.RFC5424Formatter)
+	}
+
 	o.syslogConn = syslogconn
 
 	for dm := range o.channel {
