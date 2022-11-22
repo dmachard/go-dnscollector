@@ -23,6 +23,11 @@ jobs:
     - uses: actions/setup-go@v3
       with:
         go-version: ${{ matrix.go-version }}
+        
+    - name: Show Go version
+      run: |
+        go version
+        sudo go version
 
     - name: Set up Go for root
       run: |
@@ -32,8 +37,8 @@ jobs:
     
     - name: Show Go version
       run: |
-        $GOROOT/bin/go version
-        sudo $GOROOT/bin/go version
+        go version
+        sudo go version
         
     - name: Test ${{ matrix.package }}
       run: sudo go test -timeout 10s ./${{ matrix.package }}/ -race -cover -v
