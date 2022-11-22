@@ -12,7 +12,7 @@ jobs:
   dev:
     strategy:
       matrix:
-        os-version: ['ubuntu-22.04', 'macos-11']
+        os-version: ['ubuntu-22.04', 'macos-12']
         go-version: ['1.19']
         package: ['dnsutils', 'collectors', 'loggers', 'transformers']
     
