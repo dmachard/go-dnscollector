@@ -12,7 +12,7 @@ jobs:
   dev:
     strategy:
       matrix:
-        os-version: ['ubuntu-22.04', 'macos-11']
+        os-version: ['ubuntu-22.04', 'macos-12']
         go-version: ['1.19']
         package: ['dnsutils', 'collectors', 'loggers', 'transformers']
     
@@ -24,9 +24,21 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
 
-    - name: Set up Go for root
+    - name: Show Go version
       run: |
+        go version
+        sudo go version
+
+    - name: Set up Go for root
+      if: runner.os != 'macOS'
+      run: |
+        which go
+        sudo which go
         sudo ln -sf `which go` `sudo which go` || true
+    
+    - name: Show Go version
+      run: |
+        go version
         sudo go version
         
     - name: Test ${{ matrix.package }}
