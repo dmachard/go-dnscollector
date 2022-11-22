@@ -23,13 +23,14 @@ jobs:
     - uses: actions/setup-go@v3
       with:
         go-version: ${{ matrix.go-version }}
-        
+
     - name: Show Go version
       run: |
         go version
         sudo go version
 
     - name: Set up Go for root
+      if: runner.os != 'macOS'
       run: |
         which go
         sudo which go
