@@ -24,12 +24,12 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
     - Ingest [`PCAP files`](doc/collectors.md#ingest-pcap) by watching a directory
 
 **Supported loggers**:
-- *Redirect DNS logs to stdout or file in plain text or binary mode*:
+- *Redirect DNS logs to stdout or files in plain text or binary mode*:
     - Print directly to your [`Stdout`](doc/loggers.md#stdout) console
-    - Write to [`File`](doc/loggers.md#log-file) with 
-        - custom [text](doc/configuration.md#custom-text-format) format
-        - [JSON](doc/dnsjson.md) format
-        - [`Pcap`](doc/loggers.md#log-file) format
+    - Write to [`File`](doc/loggers.md#log-file) 
+        - with custom [text](doc/configuration.md#custom-text-format) format
+        - [JSON](doc/dnsjson.md) encoding
+        - [Pcap](doc/loggers.md#log-file) format
 
 - *Provide metrics and API*:
     - [`Prometheus`](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
