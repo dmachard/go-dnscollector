@@ -24,10 +24,10 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
     - Ingest [`PCAP files`](doc/collectors.md#ingest-pcap) by watching a directory
 
 **Supported loggers**:
-- *Write DNS logs to stdout or file with [`Text`](doc/configuration.md#custom-text-format) or [`JSON`](doc/dnsjson.md) format*:
+- *Write DNS logs to stdout or file with [`Text`](doc/configuration.md#custom-text-format), [`JSON`](doc/dnsjson.md) or binary format*:
     - [`Stdout`](doc/loggers.md#stdout)console
-    - [`Text file`](doc/loggers.md#log-file) with rotation and compression support
-    - Binary [`Pcap file`](doc/loggers.md#pcap-file)
+    - Plain [`Text`](doc/loggers.md#log-file) file with rotation and compression support
+    - Binary [`Pcap`](doc/loggers.md#pcap-file) file
 - *Provide metrics and API*:
     - [`Prometheus`](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
     - [`Statsd`](doc/loggers.md#statsd-client) support
@@ -44,7 +44,7 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 
 ## Get Started
 
-Download the latest [release](https://github.com/dmachard/go-dns-collector/releases) binary and start the DNS-collector with the provided configuration file. The default configuration listens on `tcp/6000` for a DNSTap stream and DNS logs are printed on standard output.
+Download the latest [`release`](https://github.com/dmachard/go-dns-collector/releases) binary and start the DNS-collector with the provided configuration file. The default configuration listens on `tcp/6000` for a DNSTap stream and DNS logs are printed on standard output.
 
 ```go
 ./go-dnscollector -config config.yml
