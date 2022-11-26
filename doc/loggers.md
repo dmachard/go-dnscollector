@@ -309,11 +309,21 @@ fluentd:
 
 ### Pcap File
 
-Enable this logger if you want to log into a pcap file.
+Enable this logger if you want to log your DNS messages into a pcap file.
 * with rotation file support
 * binary format
 * gzip compression
 * execute external command after each rotation
+
+Currently the DNS protocol over UDP is used to log the traffic, the following translations are done.
+
+| Origin protocol        | Translated to                  | 
+| -----------------------|--------------------------------| 
+| DNS/53 over UDP        | DNS UDP/53                     | 
+| DNS/53 over TCP        | DNS UDP/53                     | 
+| DoH/443                | Not yet supported              | 
+| DoT/853                | Not yet supported              | 
+| DoQ                    | Not yet supported              | 
 
 Options:
 - `file-path`: (string) output logfile name
