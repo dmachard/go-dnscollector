@@ -345,6 +345,10 @@ pcapfile:
   postrotate-delete-success: true
 ```
 
+The `postrotate-command` can be used to execute a script after each file rotation.
+Your script will take in argument the path file of the latest log file and then you will can do what you want on it.
+If the compression is enabled then the postrotate command will be executed after that too.
+
 ### InfluxDB client
 
 InfluxDB client to remote InfluxDB server
