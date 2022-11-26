@@ -226,7 +226,7 @@ multiplexer:
 #   # default number of items on top 
 #   top-n: 10
 
-# # write captured dns traffic to text files with rotation and compression support
+# # write captured dns traffic to text or binary files with rotation and compression support
 # logfile:
 #   # output logfile name
 #   file-path:  /tmp/test.log
@@ -245,7 +245,7 @@ multiplexer:
 #   compress-interval: 5
 #   # run external script after each file compress step 
 #   compress-postcommand: null
-#   # output format: text|json
+#   # output format: text|json|pcap
 #   mode: text
 #   # output text format, please refer at the end if this config to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
@@ -332,24 +332,6 @@ multiplexer:
 #   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
-
-# # write captured dns traffic to network pcap file
-# pcapfile:
-#   # output logfile name
-#   file-path: null
-#   # maximum size in megabytes of the file before rotation
-#   max-size: 100
-#   # maximum number of files to retain.
-#   max-files: 10
-#   # compress pcap file
-#   compress: false
-#   # compress interval
-#   # checking every X seconds if new log files must be compressed
-#   compress-interval: 5
-#   # run external script after each file rotation
-#   postrotate-command: null
-#   # delete file on script success
-#   postrotate-delete-success: true
 
 # # resend captured dns traffic to a InfluxDB database
 # influxdb:

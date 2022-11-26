@@ -115,9 +115,6 @@ func main() {
 		if subcfg.Loggers.Fluentd.Enable {
 			mapLoggers[output.Name] = loggers.NewFluentdClient(subcfg, logger, output.Name)
 		}
-		if subcfg.Loggers.PcapFile.Enable {
-			mapLoggers[output.Name] = loggers.NewPcapFile(subcfg, logger, output.Name)
-		}
 		if subcfg.Loggers.InfluxDB.Enable {
 			mapLoggers[output.Name] = loggers.NewInfluxDBClient(subcfg, logger, output.Name)
 		}

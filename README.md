@@ -7,8 +7,7 @@
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
-`DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously sources like DNStap streams, network interface or log files
-and redirect them to several destinations with some transformations on it (filtering, sampling, privacy, ...).
+`DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously sources like DNStap streams, network interface or log files and relays it to multiple other listeners with some transformations on it (filtering, sampling, privacy, ...).
 DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 
 ![overview](doc/overview.png)
@@ -20,14 +19,17 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 - *Live capture on a network interface*   
     - [`AF_PACKET`](doc/collectors.md#dns-sniffer) socket with BPF filter
 - *Read text or binary files as input*
-    - Read and tail on [`Log file`](doc/collectors.md#tail)
-    - Ingest [`PCAP files`](doc/collectors.md#ingest-pcap) by watching a directory
+    - Read and tail on [`Plain text`](doc/collectors.md#tail) files
+    - Ingest [`PCAP`](doc/collectors.md#ingest-pcap) files by watching a directory
 
 **Supported loggers**:
-- *Write DNS logs to stdout or file with [`Text`](doc/configuration.md#custom-text-format), [`JSON`](doc/dnsjson.md) or binary format*:
-    - [`Stdout`](doc/loggers.md#stdout)console
-    - Plain [`Text`](doc/loggers.md#log-file) file with rotation and compression support
-    - Binary [`Pcap`](doc/loggers.md#pcap-file) file
+- *Redirect DNS logs to stdout or files in plain text or binary mode*:
+    - Print directly to your [`Stdout`](doc/loggers.md#stdout) console
+    - Write to [`File`](doc/loggers.md#log-file) 
+        - with custom [Text](doc/configuration.md#custom-text-format) format
+        - [Json](doc/dnsjson.md) encoding
+        - [Pcap](doc/loggers.md#log-file) format
+
 - *Provide metrics and API*:
     - [`Prometheus`](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
     - [`Statsd`](doc/loggers.md#statsd-client) support
@@ -62,7 +64,7 @@ See the full [configuration guide](doc/configuration.md) for more details.
 
 You will find below some examples of configuration to manage your DNS logs.
 
-- [Capture DNSTap stream and backup-it to text files](example-config/use-case-1.yml)
+- [Capture DNSTap stream and backup-it to text and pcap files](example-config/use-case-1.yml)
 - [Observe DNS metrics with Prometheus and Grafana](example-config/use-case-2.yml)
 - [Transform DNSTap to JSON format](example-config/use-case-3.yml)
 - [Follow DNS traffic with Loki and Grafana](example-config/use-case-4.yml)
