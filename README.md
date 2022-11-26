@@ -14,11 +14,14 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 ![overview](doc/overview.png)
 
 **Supported collectors**:
-- Listen traffic coming from tcp or unix [`Protobuf DNStap`](doc/collectors.md#dns-tap) streams
-- Listen for [`Protobuf PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
-- Read and tail on [`Log file`](doc/collectors.md#tail)
-- [`Live capture`](doc/collectors.md#dns-sniffer) on a network interface via AF_PACKET socket
-- Ingest [`PCAP files`](doc/collectors.md#ingest-pcap) by watching a directory
+- *Listen for logging traffic with streaming network protocols*
+    - Protobuf [`DNStap`](doc/collectors.md#dns-tap) with tcp or unix support
+    - Protobuf [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
+- *Live capture on a network interface*   
+    - [`AF_PACKET`](doc/collectors.md#dns-sniffer) socket with BPF filter
+- *Read text or binary files as input*
+    - Read and tail on [`Log file`](doc/collectors.md#tail)
+    - Ingest [`PCAP files`](doc/collectors.md#ingest-pcap) by watching a directory
 
 **Supported loggers**:
 - *Write DNS logs to stdout or file with [`Text`](doc/configuration.md#custom-text-format) or [`JSON`](doc/dnsjson.md) format*:
