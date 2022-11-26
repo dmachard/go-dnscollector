@@ -282,16 +282,6 @@ type Config struct {
 			TlsMinVersion string `yaml:"tls-min-version"`
 			Tag           string `yaml:"tag"`
 		} `yaml:"fluentd"`
-		PcapFile struct {
-			Enable            bool   `yaml:"enable"`
-			FilePath          string `yaml:"file-path"`
-			MaxSize           int    `yaml:"max-size"`
-			MaxFiles          int    `yaml:"max-files"`
-			Compress          bool   `yaml:"compress"`
-			CompressInterval  int    `yaml:"compress-interval"`
-			PostRotateCommand string `yaml:"postrotate-command"`
-			PostRotateDelete  bool   `yaml:"postrotate-delete-success"`
-		} `yaml:"pcapfile"`
 		InfluxDB struct {
 			Enable        bool   `yaml:"enable"`
 			ServerURL     string `yaml:"server-url"`
@@ -490,15 +480,6 @@ func (c *Config) SetDefault() {
 	c.Loggers.Fluentd.TlsInsecure = false
 	c.Loggers.Fluentd.TlsMinVersion = TLS_v12
 	c.Loggers.Fluentd.Tag = "dns.collector"
-
-	c.Loggers.PcapFile.Enable = false
-	c.Loggers.PcapFile.FilePath = ""
-	c.Loggers.PcapFile.MaxSize = 100
-	c.Loggers.PcapFile.MaxFiles = 10
-	c.Loggers.PcapFile.Compress = false
-	c.Loggers.PcapFile.CompressInterval = 60
-	c.Loggers.PcapFile.PostRotateCommand = ""
-	c.Loggers.PcapFile.PostRotateDelete = false
 
 	c.Loggers.InfluxDB.Enable = false
 	c.Loggers.InfluxDB.ServerURL = "http://localhost:8086"

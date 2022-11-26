@@ -3,12 +3,11 @@
 - [Console](#stdout)
 - [Prometheus](#prometheus)
 - [REST API](#rest-api)
-- [Log File](#log-file)
+- [File](#log-file)
 - [DNStap](#dnstap-client)
 - [TCP](#tcp-client)
 - [Syslog](#syslog)
 - [Fluentd](#fluentd-client)
-- [Pcap File](#pcap-file)
 - [InfluxDB](#influxdb-client)
 - [Loki](#loki-client)
 - [Statsd](#statsd-client)
@@ -115,9 +114,9 @@ restapi:
 
 ### Log File
 
-Enable this logger if you want to log to a file.
+Enable this logger if you want to log your DNS traffic to a file in plain text mode or binary mode (pcap).
 * with rotation file support
-* supported format: text, json
+* supported format: `text`, `json`, `pcap`
 * gzip compression
 * execute external command after each rotation
 * custom text format
@@ -130,7 +129,7 @@ Options:
 - `compress`: (boolean) compress log file
 - `compress-interval`: (integer) checking every X seconds if new log files must be compressed
 - `compress-command`: (string) run external script after file compress step
-- `mode`: (string)  output format: text|json
+- `mode`: (string)  output format: text|json|pcap
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 - `postrotate-command`: (string) run external script after file rotation
 - `postrotate-delete-success`: (boolean) delete file on script success
@@ -152,9 +151,12 @@ logfile:
   postrotate-delete-success: false
 ```
 
+The `postrotate-command` can be used to execute a script after each file rotation.
+Your script will take in argument the path file of the latest log file and then you will can do what you want on it.
+If the compression is enabled then the postrotate command will be executed after that too.
+
 Basic example to use the postrotate command:
 
-Configure the script to execute after each file rotation, for each call the file is passed as argument.
 
 ```
 logfile:
@@ -172,6 +174,17 @@ mkdir -p $BACKUP_FOLDER
 
 mv $1 $BACKUP_FOLDER
 ```
+
+For the `PCAP` mode, currently the DNS protocol over UDP is used to log the traffic, the following translations are done.
+
+| Origin protocol        | Translated to                  | 
+| -----------------------|--------------------------------| 
+| DNS/53 over UDP        | DNS UDP/53                     | 
+| DNS/53 over TCP        | DNS UDP/53                     | 
+| DoH/443                | Not yet supported              | 
+| DoT/853                | Not yet supported              | 
+| DoQ                    | Not yet supported              | 
+
 
 ### DNStap Client
 
@@ -306,48 +319,6 @@ fluentd:
   tls-insecure: false
   tls-min-version: 1.2
 ```
-
-### Pcap File
-
-Enable this logger if you want to log your DNS messages into a pcap file.
-* with rotation file support
-* binary format
-* gzip compression
-* execute external command after each rotation
-
-Currently the DNS protocol over UDP is used to log the traffic, the following translations are done.
-
-| Origin protocol        | Translated to                  | 
-| -----------------------|--------------------------------| 
-| DNS/53 over UDP        | DNS UDP/53                     | 
-| DNS/53 over TCP        | DNS UDP/53                     | 
-| DoH/443                | Not yet supported              | 
-| DoT/853                | Not yet supported              | 
-| DoQ                    | Not yet supported              | 
-
-Options:
-- `file-path`: (string) output logfile name
-- `max-size`: (integer) maximum size in megabytes of the file before rotation
-- `max-files`: (integer) maximum number of files to retain.
-- `compress`: (boolean) compress pcap file
-- `compress-interval`: (integer) checking every X seconds if new log files must be compressed
-- `postrotate-command`: (string) run external script after each file rotation
-- `postrotate-delete-success`: (boolean) delete file on script success
-
-```yaml
-pcapfile:
-  file-path: null
-  max-size: 1
-  max-files: 3
-  compress: false
-  compress-interval: 5
-  postrotate-command: null
-  postrotate-delete-success: true
-```
-
-The `postrotate-command` can be used to execute a script after each file rotation.
-Your script will take in argument the path file of the latest log file and then you will can do what you want on it.
-If the compression is enabled then the postrotate command will be executed after that too.
 
 ### InfluxDB client
 

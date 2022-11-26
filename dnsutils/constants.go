@@ -10,6 +10,7 @@ const (
 
 	MODE_TEXT = "text"
 	MODE_JSON = "json"
+	MODE_PCAP = "pcap"
 
 	DNS_RCODE_NXDOMAIN = "NXDOMAIN"
 	DNS_RCODE_SERVFAIL = "SERVFAIL"

@@ -24,10 +24,10 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
     - Ingest [`PCAP files`](doc/collectors.md#ingest-pcap) by watching a directory
 
 **Supported loggers**:
-- *Write DNS logs to stdout or file with [`Text`](doc/configuration.md#custom-text-format), [`JSON`](doc/dnsjson.md) or binary format*:
+- *Write DNS logs to stdout or file in plain text or binary mode:
     - [`Stdout`](doc/loggers.md#stdout)console
-    - Plain [`Text`](doc/loggers.md#log-file) file with rotation and compression support
-    - Binary [`Pcap`](doc/loggers.md#pcap-file) file
+    - [`File`](doc/loggers.md#log-file) in [`Text`](doc/configuration.md#custom-text-format), [`JSON`](doc/dnsjson.md) or  binary [`Pcap`](doc/loggers.md#log-file) format with rotation and compression support
+
 - *Provide metrics and API*:
     - [`Prometheus`](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
     - [`Statsd`](doc/loggers.md#statsd-client) support
@@ -62,7 +62,7 @@ See the full [configuration guide](doc/configuration.md) for more details.
 
 You will find below some examples of configuration to manage your DNS logs.
 
-- [Capture DNSTap stream and backup-it to text files](example-config/use-case-1.yml)
+- [Capture DNSTap stream and backup-it to text and pcap files](example-config/use-case-1.yml)
 - [Observe DNS metrics with Prometheus and Grafana](example-config/use-case-2.yml)
 - [Transform DNSTap to JSON format](example-config/use-case-3.yml)
 - [Follow DNS traffic with Loki and Grafana](example-config/use-case-4.yml)
