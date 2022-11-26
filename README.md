@@ -26,7 +26,9 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 **Supported loggers**:
 - *Redirect DNS logs to stdout or file in plain text or binary mode*:
     - Print directly to your [`Stdout`](doc/loggers.md#stdout) console
-    - Write to [`File`](doc/loggers.md#log-file) in [`Text`](doc/configuration.md#custom-text-format), [`JSON`](doc/dnsjson.md) or  binary [`Pcap`](doc/loggers.md#log-file) format
+    - Write to [`File`](doc/loggers.md#log-file) with custom [text](doc/configuration.md#custom-text-format) format
+    - Write to [`File`](doc/loggers.md#log-file) with [JSON](doc/dnsjson.md) format
+    - Write to binary [`Pcap`](doc/loggers.md#log-file) file
 
 - *Provide metrics and API*:
     - [`Prometheus`](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
