@@ -20,15 +20,15 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 - *Live capture on a network interface*   
     - [`AF_PACKET`](doc/collectors.md#dns-sniffer) socket with BPF filter
 - *Read text or binary files as input*
-    - Read and tail on [`Log file`](doc/collectors.md#tail)
-    - Ingest [`PCAP files`](doc/collectors.md#ingest-pcap) by watching a directory
+    - Read and tail on [`Plain text`](doc/collectors.md#tail) file
+    - Ingest [`PCAP`](doc/collectors.md#ingest-pcap) files by watching a directory
 
 **Supported loggers**:
 - *Redirect DNS logs to stdout or files in plain text or binary mode*:
     - Print directly to your [`Stdout`](doc/loggers.md#stdout) console
     - Write to [`File`](doc/loggers.md#log-file) 
-        - with custom [text](doc/configuration.md#custom-text-format) format
-        - [JSON](doc/dnsjson.md) encoding
+        - with custom [Text](doc/configuration.md#custom-text-format) format
+        - [Json](doc/dnsjson.md) encoding
         - [Pcap](doc/loggers.md#log-file) format
 
 - *Provide metrics and API*:
