@@ -162,6 +162,9 @@ func main() {
 		if subcfg.Collectors.Dnstap.Enable {
 			mapCollectors[input.Name] = collectors.NewDnstap(nil, subcfg, logger, input.Name)
 		}
+		if subcfg.Collectors.DnstapRelay.Enable {
+			mapCollectors[input.Name] = collectors.NewDnstapRelay(nil, subcfg, logger, input.Name)
+		}
 		if subcfg.Collectors.LiveCapture.Enable {
 			mapCollectors[input.Name] = collectors.NewDnsSniffer(nil, subcfg, logger, input.Name)
 		}

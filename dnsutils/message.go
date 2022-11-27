@@ -92,6 +92,7 @@ type DnsTap struct {
 	TimeNsec         int     `json:"-" msgpack:"-"`
 	Latency          float64 `json:"-" msgpack:"-"`
 	LatencySec       string  `json:"latency" msgpack:"latency"`
+	Payload          []byte  `json:"-" msgpack:"-"`
 }
 
 type PowerDns struct {

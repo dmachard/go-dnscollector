@@ -59,11 +59,11 @@ func (o *DnstapSender) ReadConfig() {
 }
 
 func (o *DnstapSender) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("logger dnstap sender - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger dnstap sender - "+msg, v...)
 }
 
 func (o *DnstapSender) LogError(msg string, v ...interface{}) {
-	o.logger.Error("logger dnstap sender - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger dnstap sender - "+msg, v...)
 }
 
 func (o *DnstapSender) Channel() chan dnsutils.DnsMessage {
@@ -147,93 +147,102 @@ LOOP:
 						o.LogInfo("framestream initialized")
 					}
 
+					var data []byte
 					for {
 						select {
 						case dm := <-o.channel:
 
-							// apply tranforms
-							if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
-								continue
-							}
+							// raw dnstap payload ?
+							if len(dm.DnsTap.Payload) > 0 {
+								data = dm.DnsTap.Payload
 
-							dt.Reset()
-
-							t := dnstap.Dnstap_MESSAGE
-							dt.Identity = []byte(o.config.Loggers.Dnstap.ServerId)
-							dt.Version = []byte("-")
-							dt.Type = &t
-
-							mt := dnstap.Message_Type(dnstap.Message_Type_value[dm.DnsTap.Operation])
-							sf := dnstap.SocketFamily(dnstap.SocketFamily_value[dm.NetworkInfo.Family])
-							sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.NetworkInfo.Protocol])
-							tsec := uint64(dm.DnsTap.TimeSec)
-							tnsec := uint32(dm.DnsTap.TimeNsec)
-
-							var rportint int
-							var qportint int
-
-							// no response port provided ?
-							// fix for issue #110
-							if dm.NetworkInfo.ResponsePort == "-" {
-								rportint = 0
+								// otherwise contruct a new one from DNS message container
 							} else {
-								rportint, err = strconv.Atoi(dm.NetworkInfo.ResponsePort)
-								if err != nil {
-									o.LogError("error to encode dnstap response port %s", err)
+
+								// apply tranforms
+								if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 									continue
 								}
-							}
-							rport := uint32(rportint)
 
-							// no query port provided ?
-							// fix to prevent issue #110
-							if dm.NetworkInfo.QueryPort == "-" {
-								qportint = 0
-							} else {
-								qportint, err = strconv.Atoi(dm.NetworkInfo.QueryPort)
+								dt.Reset()
+
+								t := dnstap.Dnstap_MESSAGE
+								dt.Identity = []byte(o.config.Loggers.Dnstap.ServerId)
+								dt.Version = []byte("-")
+								dt.Type = &t
+
+								mt := dnstap.Message_Type(dnstap.Message_Type_value[dm.DnsTap.Operation])
+								sf := dnstap.SocketFamily(dnstap.SocketFamily_value[dm.NetworkInfo.Family])
+								sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.NetworkInfo.Protocol])
+								tsec := uint64(dm.DnsTap.TimeSec)
+								tnsec := uint32(dm.DnsTap.TimeNsec)
+
+								var rportint int
+								var qportint int
+
+								// no response port provided ?
+								// fix for issue #110
+								if dm.NetworkInfo.ResponsePort == "-" {
+									rportint = 0
+								} else {
+									rportint, err = strconv.Atoi(dm.NetworkInfo.ResponsePort)
+									if err != nil {
+										o.LogError("error to encode dnstap response port %s", err)
+										continue
+									}
+								}
+								rport := uint32(rportint)
+
+								// no query port provided ?
+								// fix to prevent issue #110
+								if dm.NetworkInfo.QueryPort == "-" {
+									qportint = 0
+								} else {
+									qportint, err = strconv.Atoi(dm.NetworkInfo.QueryPort)
+									if err != nil {
+										o.LogError("error to encode dnstap query port %s", err)
+										continue
+									}
+								}
+								qport := uint32(qportint)
+
+								msg := &dnstap.Message{Type: &mt}
+
+								msg.SocketFamily = &sf
+								msg.SocketProtocol = &sp
+								msg.QueryAddress = net.ParseIP(dm.NetworkInfo.QueryIp)
+								msg.QueryPort = &qport
+								msg.ResponseAddress = net.ParseIP(dm.NetworkInfo.ResponseIp)
+								msg.ResponsePort = &rport
+
+								if dm.DNS.Type == dnsutils.DnsQuery {
+									msg.QueryMessage = dm.DNS.Payload
+									msg.QueryTimeSec = &tsec
+									msg.QueryTimeNsec = &tnsec
+								} else {
+									msg.ResponseTimeSec = &tsec
+									msg.ResponseTimeNsec = &tnsec
+									msg.ResponseMessage = dm.DNS.Payload
+								}
+
+								dt.Message = msg
+
+								data, err = proto.Marshal(dt)
 								if err != nil {
-									o.LogError("error to encode dnstap query port %s", err)
-									continue
+									o.LogError("proto marshal error %s", err)
 								}
 							}
-							qport := uint32(qportint)
 
-							msg := &dnstap.Message{Type: &mt}
-
-							msg.SocketFamily = &sf
-							msg.SocketProtocol = &sp
-							msg.QueryAddress = net.ParseIP(dm.NetworkInfo.QueryIp)
-							msg.QueryPort = &qport
-							msg.ResponseAddress = net.ParseIP(dm.NetworkInfo.ResponseIp)
-							msg.ResponsePort = &rport
-
-							if dm.DNS.Type == dnsutils.DnsQuery {
-								msg.QueryMessage = dm.DNS.Payload
-								msg.QueryTimeSec = &tsec
-								msg.QueryTimeNsec = &tnsec
-							} else {
-								msg.ResponseTimeSec = &tsec
-								msg.ResponseTimeNsec = &tnsec
-								msg.ResponseMessage = dm.DNS.Payload
-							}
-
-							dt.Message = msg
-
-							data, err := proto.Marshal(dt)
-							if err != nil {
-								o.LogError("proto marshal error %s", err)
-							}
-
+							// send the frame
 							frame.Write(data)
 							if err := fs.SendFrame(frame); err != nil {
 								o.LogError("send frame error %s", err)
 								break LOOP_RECONNECT
 							}
 						case <-o.exit:
-							o.logger.Info("closing framestream")
-							if err = fs.ResetSender(); err != nil {
-								o.LogError("reset framestream error %s", err)
-							}
+							o.LogInfo("closing framestream")
+							// reset and ignore errors
+							fs.ResetSender()
 							break LOOP
 						}
 					}

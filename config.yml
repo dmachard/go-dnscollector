@@ -68,20 +68,37 @@ global:
 # of supported collectors, loggers and transformers
 multiplexer:
   collectors:
+    - name: relay-in
+      dnstap-relay:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
     - name: tap
       dnstap:
         listen-ip: 0.0.0.0
-        listen-port: 6000
+        listen-port: 6001
       transforms:
         normalize:
           qname-lowercase: true
+    # - name: tap
+    #   dnstap:
+    #     listen-ip: 0.0.0.0
+    #     listen-port: 6000
+    #   transforms:
+    #     normalize:
+    #       qname-lowercase: true
 
   loggers:
     - name: console
       stdout:
         mode: text
+    - name: relay-out
+      dnstap:
+        remote-address: 127.0.0.1
+        remote-port: 6001
 
   routes:
+    - from: [ relay-in ]
+      to: [ relay-out ]
     - from: [ tap ]
       to: [ console ]
 
@@ -268,6 +285,8 @@ multiplexer:
 #   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
+#   # server identity, if empty use the global one
+#   server-id: "dnscollector"
 
 # # resend captured dns traffic to a tcp remote destination or to unix socket
 # tcpclient:
