@@ -56,7 +56,7 @@ func (c *DnstapRelay) ReadConfig() {
 		c.logger.Fatal("collector dnstap relay - invalid tls min version")
 	}
 
-	c.sockPath = c.config.Collectors.Dnstap.SockPath
+	c.sockPath = c.config.Collectors.DnstapRelay.SockPath
 }
 
 func (c *DnstapRelay) LogInfo(msg string, v ...interface{}) {
@@ -144,17 +144,17 @@ func (c *DnstapRelay) Listen() error {
 
 	var err error
 	var listener net.Listener
-	addrlisten := c.config.Collectors.Dnstap.ListenIP + ":" + strconv.Itoa(c.config.Collectors.Dnstap.ListenPort)
+	addrlisten := c.config.Collectors.DnstapRelay.ListenIP + ":" + strconv.Itoa(c.config.Collectors.DnstapRelay.ListenPort)
 
 	if len(c.sockPath) > 0 {
 		_ = os.Remove(c.sockPath)
 	}
 
 	// listening with tls enabled ?
-	if c.config.Collectors.Dnstap.TlsSupport {
+	if c.config.Collectors.DnstapRelay.TlsSupport {
 		c.LogInfo("tls support enabled")
 		var cer tls.Certificate
-		cer, err = tls.LoadX509KeyPair(c.config.Collectors.Dnstap.CertFile, c.config.Collectors.Dnstap.KeyFile)
+		cer, err = tls.LoadX509KeyPair(c.config.Collectors.DnstapRelay.CertFile, c.config.Collectors.DnstapRelay.KeyFile)
 		if err != nil {
 			c.logger.Fatal("loading certificate failed:", err)
 		}
@@ -166,7 +166,7 @@ func (c *DnstapRelay) Listen() error {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLS_VERSION[c.config.Collectors.Dnstap.TlsMinVersion]
+		tlsConfig.MinVersion = dnsutils.TLS_VERSION[c.config.Collectors.DnstapRelay.TlsMinVersion]
 
 		if len(c.sockPath) > 0 {
 			listener, err = tls.Listen(dnsutils.SOCKET_UNIX, c.sockPath, tlsConfig)

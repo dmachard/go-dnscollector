@@ -18,7 +18,7 @@ func TestDnstapRelay_TcpRun(t *testing.T) {
 	g := loggers.NewFakeLogger()
 
 	config := dnsutils.GetFakeConfig()
-	config.Collectors.DnstapRelay.ListenPort = 6001
+	config.Collectors.DnstapRelay.ListenPort = 6100
 
 	c := NewDnstapRelay([]dnsutils.Worker{g}, config, logger.New(false), "test")
 	if err := c.Listen(); err != nil {
@@ -26,7 +26,7 @@ func TestDnstapRelay_TcpRun(t *testing.T) {
 	}
 	go c.Run()
 
-	conn, err := net.Dial(dnsutils.SOCKET_TCP, ":6001")
+	conn, err := net.Dial(dnsutils.SOCKET_TCP, ":6100")
 	if err != nil {
 		t.Error("could not connect to TCP server: ", err)
 	}

@@ -368,7 +368,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.Tail.FilePath = ""
 
 	c.Collectors.Dnstap.Enable = false
-	c.Collectors.Dnstap.ListenIP = "0.0.0.0"
+	c.Collectors.Dnstap.ListenIP = ANY_IP
 	c.Collectors.Dnstap.ListenPort = 6000
 	c.Collectors.Dnstap.SockPath = ""
 	c.Collectors.Dnstap.TlsSupport = false
@@ -380,7 +380,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.Dnstap.QuietText = false
 
 	c.Collectors.DnstapRelay.Enable = false
-	c.Collectors.DnstapRelay.ListenIP = "0.0.0.0"
+	c.Collectors.DnstapRelay.ListenIP = ANY_IP
 	c.Collectors.DnstapRelay.ListenPort = 6000
 	c.Collectors.DnstapRelay.SockPath = ""
 	c.Collectors.DnstapRelay.TlsSupport = false
@@ -397,7 +397,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.LiveCapture.CacheSupport = true
 
 	c.Collectors.PowerDNS.Enable = false
-	c.Collectors.PowerDNS.ListenIP = "0.0.0.0"
+	c.Collectors.PowerDNS.ListenIP = ANY_IP
 	c.Collectors.PowerDNS.ListenPort = 6001
 	c.Collectors.PowerDNS.QuietText = false
 	c.Collectors.PowerDNS.TlsSupport = false
