@@ -68,37 +68,20 @@ global:
 # of supported collectors, loggers and transformers
 multiplexer:
   collectors:
-    - name: relay-in
-      dnstap-relay:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
     - name: tap
       dnstap:
         listen-ip: 0.0.0.0
-        listen-port: 6001
+        listen-port: 6000
       transforms:
         normalize:
           qname-lowercase: true
-    # - name: tap
-    #   dnstap:
-    #     listen-ip: 0.0.0.0
-    #     listen-port: 6000
-    #   transforms:
-    #     normalize:
-    #       qname-lowercase: true
 
   loggers:
     - name: console
       stdout:
         mode: text
-    - name: relay-out
-      dnstap:
-        remote-address: 127.0.0.1
-        remote-port: 6001
 
   routes:
-    - from: [ relay-in ]
-      to: [ relay-out ]
     - from: [ tap ]
       to: [ console ]
 
@@ -129,6 +112,23 @@ multiplexer:
 #   query-timeout: 5
 #   # dnstap operation name will be replaced with the small form
 #   quiet-text: false
+
+# # dnstap proxifier, no protobuf decoding.
+# dnstap-relay:
+#   # listen on ip
+#   listen-ip: 0.0.0.0
+#   # listening on port
+#   listen-port: 6000
+#   # unix socket path
+#   sock-path: null
+#   # tls support
+#   tls-support: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # certificate server file
+#   cert-file: ""
+#   # private key server file
+#   key-file: ""
 
 # # live capture
 # sniffer:
