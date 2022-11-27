@@ -16,13 +16,17 @@ import (
 
 func TestDnstapRelay_TcpRun(t *testing.T) {
 	g := loggers.NewFakeLogger()
-	c := NewDnstapRelay([]dnsutils.Worker{g}, dnsutils.GetFakeConfig(), logger.New(false), "test")
+
+	config := dnsutils.GetFakeConfig()
+	config.Collectors.DnstapRelay.ListenPort = 6001
+
+	c := NewDnstapRelay([]dnsutils.Worker{g}, config, logger.New(false), "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector dnstap relay tcp listening error: ", err)
 	}
 	go c.Run()
 
-	conn, err := net.Dial(dnsutils.SOCKET_TCP, ":6000")
+	conn, err := net.Dial(dnsutils.SOCKET_TCP, ":6001")
 	if err != nil {
 		t.Error("could not connect to TCP server: ", err)
 	}
@@ -68,14 +72,14 @@ func TestDnstapRelay_TcpRun(t *testing.T) {
 func TestDnstapRelay_UnixRun(t *testing.T) {
 	g := loggers.NewFakeLogger()
 	config := dnsutils.GetFakeConfig()
-	config.Collectors.Dnstap.SockPath = "/tmp/dnscollector.sock"
+	config.Collectors.DnstapRelay.SockPath = "/tmp/dnscollector_relay.sock"
 	c := NewDnstapRelay([]dnsutils.Worker{g}, config, logger.New(false), "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector dnstap replay unix listening  error: ", err)
 	}
 	go c.Run()
 
-	conn, err := net.Dial(dnsutils.SOCKET_UNIX, config.Collectors.Dnstap.SockPath)
+	conn, err := net.Dial(dnsutils.SOCKET_UNIX, config.Collectors.DnstapRelay.SockPath)
 	if err != nil {
 		t.Error("could not connect to unix socket: ", err)
 	}
