@@ -12,7 +12,7 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 
 ![overview](doc/overview.png)
 
-**Supported collectors**:
+**Collectors**:
 - *Listen for logging traffic with streaming network protocols*
     - Protobuf [`DNStap`](doc/collectors.md#dns-tap) with tcp or unix support
     - Protobuf [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
@@ -22,7 +22,7 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
     - Read and tail on [`Plain text`](doc/collectors.md#tail) files
     - Ingest [`PCAP`](doc/collectors.md#ingest-pcap) files by watching a directory
 
-**Supported loggers**:
+**Loggers**:
 - *Redirect DNS logs to stdout or files in plain text or binary mode*:
     - Print directly to your [`Stdout`](doc/loggers.md#stdout) console
     - Write to [`File`](doc/loggers.md#log-file) 
@@ -43,6 +43,26 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
     - [`InfluxDB`](doc/loggers.md#influxdb-client)
     - [`Loki`](doc/loggers.md#loki-client)
     - [`ElasticSearch`](doc/loggers.md#elasticsearch-client)
+
+**Transformers**:
+
+- Traffic `filtering`
+    - Downsampling
+    - Dropping Qname, QueryIP or Rcode
+- User Privacy
+    - Anonymize QueryIP
+    - Minimaze Qname
+- Normalize Qname
+    - lowercase
+    - Get TLD and TLD+1
+- Geographical metadata
+    - Country and City
+- Suspicious traffic detector
+    - Malformed and large packet
+    - Uncommon Qtypes used
+    - Unallowed Chars in Qname
+    - Excessive number of labels
+    - Long Qname
 
 ## Get Started
 
