@@ -16,7 +16,7 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 - *Listen for logging traffic with streaming network protocols*
     - Protobuf [`DNStap`](doc/collectors.md#dns-tap) with tcp or unix support
     - Protobuf [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
-    - DNStap [`Proxifier](doc/collectors.md#dnstap-relay)
+    - DNStap [`Proxifier`](doc/collectors.md#dnstap-relay) without decoding
 - *Live capture on a network interface*   
     - [`AF_PACKET`](doc/collectors.md#dns-sniffer) socket with BPF filter
 - *Read text or binary files as input*
@@ -47,18 +47,18 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 
 **Transformers**:
 
-- `Traffic filtering`
+- [`Traffic filtering`](doc/configuration.md#dns-filtering)
     - Downsampling
     - Dropping Qname, QueryIP or Rcode
-- `User Privacy`
+- [`User Privacy`](doc/configuration.md#user-privacy)
     - Anonymize QueryIP
     - Minimaze Qname
-- `Normalize Qname`
+- [`Normalize Qname`](doc/configuration.md#normalize)
     - lowercase
     - Get TLD and TLD+1
-- `Geographical metadata`
+- [`Geographical metadata`](doc/configuration.md#geoip-support)
     - Country and City
-- `Suspicious traffic detector`
+- [`Suspicious traffic detector`](doc/configuration.md#suspicious)
     - Malformed and large packet
     - Uncommon Qtypes used
     - Unallowed Chars in Qname
