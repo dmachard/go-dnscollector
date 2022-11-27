@@ -11,7 +11,7 @@ global:
 
 multiplexer:
   # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
-  # with add country name in metadata
+  # and try to add country name in metadata
   collectors:
     - name: tap
       dnstap:

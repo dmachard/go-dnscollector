@@ -7,6 +7,7 @@ const (
 
 	PROG_NAME    = "dnscollector"
 	LOCALHOST_IP = "127.0.0.1"
+	ANY_IP       = "0.0.0.0"
 
 	MODE_TEXT = "text"
 	MODE_JSON = "json"

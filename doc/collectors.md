@@ -1,6 +1,7 @@
 # DnsCollector - Collectors Guide
 
 - [DNS tap](#dns-tap)
+- [DNStap Proxifier](#dnstap-proxifier)
 - [Protobuf PowerDNS](#protobuf-powerdns)
 - [Tail](#tail)
 - [Live capture](#live-capture)
@@ -10,9 +11,8 @@
 
 ### DNS tap
 
-Dnstap stream collector:
-* tcp or unix socket listener
-* tls support
+Collector to logging DNStap stream from DNS servers.
+The traffic can be a tcp or unix DNStap stream. TLS is also supported.
 
 Options:
 - `listen-ip`: (string) listen on ip
@@ -59,6 +59,36 @@ The following dnstap flag message will be replaced with the small form:
 The following dns flag message will be replaced with the small form:
 - QUERY: `Q`
 - REPLY: `R`
+
+### DNStap Proxifier
+
+Collector that receives DNSTAP traffic and relays it without decoding or transformations.
+This collector must be used with the DNStap logger. 
+Please to find a complete example [here](./example-config/use-case-12.yml).
+
+Dnstap stream collector can be a tcp or unix socket listener. TLS is also supported.
+
+Options:
+- `listen-ip`: (string) listen on ip
+- `listen-port`: (integer) listening on port
+- `sock-path`: (string) unix socket path
+- `tls-support:`: (boolean) to enable, set to true
+- `tls-min-version`: (string) min tls version
+- `cert-file`: (string) certificate server file
+- `key-file`: (string) private key server file
+
+Default values:
+
+```yaml
+dnstap-relay:
+  listen-ip: 0.0.0.0
+  listen-port: 6000
+  sock-path: null
+  tls-support: false
+  tls-min-version: 1.2
+  cert-file: ""
+  key-file: ""
+```
 
 ### Live Capture
 

@@ -113,6 +113,23 @@ multiplexer:
 #   # dnstap operation name will be replaced with the small form
 #   quiet-text: false
 
+# # dnstap proxifier, no protobuf decoding.
+# dnstap-relay:
+#   # listen on ip
+#   listen-ip: 0.0.0.0
+#   # listening on port
+#   listen-port: 6000
+#   # unix socket path
+#   sock-path: null
+#   # tls support
+#   tls-support: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # certificate server file
+#   cert-file: ""
+#   # private key server file
+#   key-file: ""
+
 # # live capture
 # sniffer:
 #   # filter on source and destination port
@@ -268,6 +285,8 @@ multiplexer:
 #   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
+#   # server identity, if empty use the global one
+#   server-id: "dnscollector"
 
 # # resend captured dns traffic to a tcp remote destination or to unix socket
 # tcpclient:
