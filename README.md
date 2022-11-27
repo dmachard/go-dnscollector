@@ -47,18 +47,18 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 
 **Transformers**:
 
-- Traffic `filtering`
+- `Traffic filtering`
     - Downsampling
     - Dropping Qname, QueryIP or Rcode
-- User Privacy
+- `User Privacy`
     - Anonymize QueryIP
     - Minimaze Qname
-- Normalize Qname
+- `Normalize Qname`
     - lowercase
     - Get TLD and TLD+1
-- Geographical metadata
+- `Geographical metadata`
     - Country and City
-- Suspicious traffic detector
+- `Suspicious traffic detector`
     - Malformed and large packet
     - Uncommon Qtypes used
     - Unallowed Chars in Qname
