@@ -13,7 +13,7 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-type DnstapRelay struct {
+type DnstapProxifier struct {
 	done     chan bool
 	listen   net.Listener
 	conns    []net.Conn
@@ -24,9 +24,9 @@ type DnstapRelay struct {
 	name     string
 }
 
-func NewDnstapRelay(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *DnstapRelay {
+func NewDnstapProxifier(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *DnstapProxifier {
 	logger.Info("[%s] dnstap relay collector - enabled", name)
-	s := &DnstapRelay{
+	s := &DnstapProxifier{
 		done:    make(chan bool),
 		config:  config,
 		loggers: loggers,
@@ -37,13 +37,13 @@ func NewDnstapRelay(loggers []dnsutils.Worker, config *dnsutils.Config, logger *
 	return s
 }
 
-func (c *DnstapRelay) GetName() string { return c.name }
+func (c *DnstapProxifier) GetName() string { return c.name }
 
-func (c *DnstapRelay) SetLoggers(loggers []dnsutils.Worker) {
+func (c *DnstapProxifier) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *DnstapRelay) Loggers() []chan dnsutils.DnsMessage {
+func (c *DnstapProxifier) Loggers() []chan dnsutils.DnsMessage {
 	channels := []chan dnsutils.DnsMessage{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
@@ -51,23 +51,23 @@ func (c *DnstapRelay) Loggers() []chan dnsutils.DnsMessage {
 	return channels
 }
 
-func (c *DnstapRelay) ReadConfig() {
-	if !dnsutils.IsValidTLS(c.config.Collectors.DnstapRelay.TlsMinVersion) {
+func (c *DnstapProxifier) ReadConfig() {
+	if !dnsutils.IsValidTLS(c.config.Collectors.DnstapProxifier.TlsMinVersion) {
 		c.logger.Fatal("collector dnstap relay - invalid tls min version")
 	}
 
-	c.sockPath = c.config.Collectors.DnstapRelay.SockPath
+	c.sockPath = c.config.Collectors.DnstapProxifier.SockPath
 }
 
-func (c *DnstapRelay) LogInfo(msg string, v ...interface{}) {
+func (c *DnstapProxifier) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] dnstap collector relay - "+msg, v...)
 }
 
-func (c *DnstapRelay) LogError(msg string, v ...interface{}) {
+func (c *DnstapProxifier) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] dnstap collector relay - "+msg, v...)
 }
 
-func (c *DnstapRelay) HandleFrame(recvFrom chan []byte, sendTo []chan dnsutils.DnsMessage) {
+func (c *DnstapProxifier) HandleFrame(recvFrom chan []byte, sendTo []chan dnsutils.DnsMessage) {
 	for data := range recvFrom {
 		// init DNS message container
 		dm := dnsutils.DnsMessage{}
@@ -83,7 +83,7 @@ func (c *DnstapRelay) HandleFrame(recvFrom chan []byte, sendTo []chan dnsutils.D
 	}
 }
 
-func (c *DnstapRelay) HandleConn(conn net.Conn) {
+func (c *DnstapProxifier) HandleConn(conn net.Conn) {
 	// close connection on function exit
 	defer conn.Close()
 
@@ -117,11 +117,11 @@ func (c *DnstapRelay) HandleConn(conn net.Conn) {
 	c.LogInfo("%s - connection closed\n", peer)
 }
 
-func (c *DnstapRelay) Channel() chan dnsutils.DnsMessage {
+func (c *DnstapProxifier) Channel() chan dnsutils.DnsMessage {
 	return nil
 }
 
-func (c *DnstapRelay) Stop() {
+func (c *DnstapProxifier) Stop() {
 	c.LogInfo("stopping...")
 
 	// closing properly current connections if exists
@@ -139,22 +139,22 @@ func (c *DnstapRelay) Stop() {
 	close(c.done)
 }
 
-func (c *DnstapRelay) Listen() error {
+func (c *DnstapProxifier) Listen() error {
 	c.LogInfo("running in background...")
 
 	var err error
 	var listener net.Listener
-	addrlisten := c.config.Collectors.DnstapRelay.ListenIP + ":" + strconv.Itoa(c.config.Collectors.DnstapRelay.ListenPort)
+	addrlisten := c.config.Collectors.DnstapProxifier.ListenIP + ":" + strconv.Itoa(c.config.Collectors.DnstapProxifier.ListenPort)
 
 	if len(c.sockPath) > 0 {
 		_ = os.Remove(c.sockPath)
 	}
 
 	// listening with tls enabled ?
-	if c.config.Collectors.DnstapRelay.TlsSupport {
+	if c.config.Collectors.DnstapProxifier.TlsSupport {
 		c.LogInfo("tls support enabled")
 		var cer tls.Certificate
-		cer, err = tls.LoadX509KeyPair(c.config.Collectors.DnstapRelay.CertFile, c.config.Collectors.DnstapRelay.KeyFile)
+		cer, err = tls.LoadX509KeyPair(c.config.Collectors.DnstapProxifier.CertFile, c.config.Collectors.DnstapProxifier.KeyFile)
 		if err != nil {
 			c.logger.Fatal("loading certificate failed:", err)
 		}
@@ -166,7 +166,7 @@ func (c *DnstapRelay) Listen() error {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLS_VERSION[c.config.Collectors.DnstapRelay.TlsMinVersion]
+		tlsConfig.MinVersion = dnsutils.TLS_VERSION[c.config.Collectors.DnstapProxifier.TlsMinVersion]
 
 		if len(c.sockPath) > 0 {
 			listener, err = tls.Listen(dnsutils.SOCKET_UNIX, c.sockPath, tlsConfig)
@@ -191,7 +191,7 @@ func (c *DnstapRelay) Listen() error {
 	return nil
 }
 
-func (c *DnstapRelay) Run() {
+func (c *DnstapProxifier) Run() {
 	c.LogInfo("starting collector...")
 	if c.listen == nil {
 		if err := c.Listen(); err != nil {

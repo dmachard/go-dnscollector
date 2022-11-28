@@ -8,15 +8,15 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func TestIngestPcapRun(t *testing.T) {
+func TestFileIngestor_Pcap(t *testing.T) {
 	g := loggers.NewFakeLogger()
 	config := dnsutils.GetFakeConfig()
 
 	// watch tests data folder
-	config.Collectors.IngestPcap.WatchDir = "./../testsdata/"
+	config.Collectors.FileIngestor.WatchDir = "./../testsdata/"
 
 	// init collector
-	c := NewIngestPcap([]dnsutils.Worker{g}, config, logger.New(false), "test")
+	c := NewFileIngestor([]dnsutils.Worker{g}, config, logger.New(false), "test")
 	go c.Run()
 
 	// waiting message in channel

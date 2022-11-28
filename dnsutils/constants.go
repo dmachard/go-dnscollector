@@ -9,9 +9,10 @@ const (
 	LOCALHOST_IP = "127.0.0.1"
 	ANY_IP       = "0.0.0.0"
 
-	MODE_TEXT = "text"
-	MODE_JSON = "json"
-	MODE_PCAP = "pcap"
+	MODE_TEXT   = "text"
+	MODE_JSON   = "json"
+	MODE_PCAP   = "pcap"
+	MODE_DNSTAP = "dnstap"
 
 	DNS_RCODE_NXDOMAIN = "NXDOMAIN"
 	DNS_RCODE_SERVFAIL = "SERVFAIL"

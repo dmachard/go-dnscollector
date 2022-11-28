@@ -114,12 +114,17 @@ restapi:
 
 ### Log File
 
-Enable this logger if you want to log your DNS traffic to a file in plain text mode or binary mode (pcap).
+Enable this logger if you want to log your DNS traffic to a file in plain text mode or binary mode.
 * with rotation file support
-* supported format: `text`, `json`, `pcap`
+* supported format: `text`, `json`, `pcap` or `dnstap`
 * gzip compression
 * execute external command after each rotation
 * custom text format
+
+For config examples, take a look to the following links:
+- [text](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-7.yml).
+- [dnstap](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-13.yml).
+- [pcap](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-13.yml).
 
 Options:
 - `file-path`: (string) output logfile name
@@ -129,7 +134,7 @@ Options:
 - `compress`: (boolean) compress log file
 - `compress-interval`: (integer) checking every X seconds if new log files must be compressed
 - `compress-command`: (string) run external script after file compress step
-- `mode`: (string)  output format: text|json|pcap
+- `mode`: (string)  output format: text|json|pcap|dnstap
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 - `postrotate-command`: (string) run external script after file rotation
 - `postrotate-delete-success`: (boolean) delete file on script success

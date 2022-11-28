@@ -157,7 +157,7 @@ type Config struct {
 			QueryTimeout  int    `yaml:"query-timeout"`
 			QuietText     bool   `yaml:"quiet-text"`
 		} `yaml:"dnstap"`
-		DnstapRelay struct {
+		DnstapProxifier struct {
 			Enable        bool   `yaml:"enable"`
 			ListenIP      string `yaml:"listen-ip"`
 			ListenPort    int    `yaml:"listen-port"`
@@ -166,7 +166,7 @@ type Config struct {
 			TlsMinVersion string `yaml:"tls-min-version"`
 			CertFile      string `yaml:"cert-file"`
 			KeyFile       string `yaml:"key-file"`
-		} `yaml:"dnstap-relay"`
+		} `yaml:"dnstap-proxifier"`
 		LiveCapture struct {
 			Enable       bool   `yaml:"enable"`
 			Port         int    `yaml:"port"`
@@ -186,14 +186,15 @@ type Config struct {
 			CertFile      string `yaml:"cert-file"`
 			KeyFile       string `yaml:"key-file"`
 		} `yaml:"powerdns"`
-		IngestPcap struct {
+		FileIngestor struct {
 			Enable      bool   `yaml:"enable"`
 			WatchDir    string `yaml:"watch-dir"`
-			DnsPort     int    `yaml:"dns-port"`
+			WatchMode   string `yaml:"watch-mode"`
+			PcapDnsPort int    `yaml:"pcap-dns-port"`
 			DropQueries bool   `yaml:"drop-queries"`
 			DropReplies bool   `yaml:"drop-replies"`
 			DeleteAfter bool   `yaml:"delete-after"`
-		} `yaml:"pcap"`
+		} `yaml:"file-ingestor"`
 	} `yaml:"collectors"`
 
 	IngoingTransformers ConfigTransformers `yaml:"ingoing-transformers"`
@@ -379,14 +380,14 @@ func (c *Config) SetDefault() {
 	c.Collectors.Dnstap.CacheSupport = false
 	c.Collectors.Dnstap.QuietText = false
 
-	c.Collectors.DnstapRelay.Enable = false
-	c.Collectors.DnstapRelay.ListenIP = ANY_IP
-	c.Collectors.DnstapRelay.ListenPort = 6000
-	c.Collectors.DnstapRelay.SockPath = ""
-	c.Collectors.DnstapRelay.TlsSupport = false
-	c.Collectors.DnstapRelay.TlsMinVersion = TLS_v12
-	c.Collectors.DnstapRelay.CertFile = ""
-	c.Collectors.DnstapRelay.KeyFile = ""
+	c.Collectors.DnstapProxifier.Enable = false
+	c.Collectors.DnstapProxifier.ListenIP = ANY_IP
+	c.Collectors.DnstapProxifier.ListenPort = 6000
+	c.Collectors.DnstapProxifier.SockPath = ""
+	c.Collectors.DnstapProxifier.TlsSupport = false
+	c.Collectors.DnstapProxifier.TlsMinVersion = TLS_v12
+	c.Collectors.DnstapProxifier.CertFile = ""
+	c.Collectors.DnstapProxifier.KeyFile = ""
 
 	c.Collectors.LiveCapture.Enable = false
 	c.Collectors.LiveCapture.Port = 53
@@ -405,12 +406,13 @@ func (c *Config) SetDefault() {
 	c.Collectors.PowerDNS.CertFile = ""
 	c.Collectors.PowerDNS.KeyFile = ""
 
-	c.Collectors.IngestPcap.Enable = false
-	c.Collectors.IngestPcap.WatchDir = ""
-	c.Collectors.IngestPcap.DnsPort = 53
-	c.Collectors.IngestPcap.DropQueries = false
-	c.Collectors.IngestPcap.DropReplies = false
-	c.Collectors.IngestPcap.DeleteAfter = false
+	c.Collectors.FileIngestor.Enable = false
+	c.Collectors.FileIngestor.WatchDir = ""
+	c.Collectors.FileIngestor.PcapDnsPort = 53
+	c.Collectors.FileIngestor.WatchMode = MODE_PCAP
+	c.Collectors.FileIngestor.DropQueries = false
+	c.Collectors.FileIngestor.DropReplies = false
+	c.Collectors.FileIngestor.DeleteAfter = false
 
 	// Transformers for collectors
 	c.IngoingTransformers.SetDefault()

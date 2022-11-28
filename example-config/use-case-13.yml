@@ -1,0 +1,26 @@
+# Example 13: Save DNStap stream to file.
+
+# If turned on, debug messages are printed in the standard output
+global:
+  trace:
+    verbose: true
+
+multiplexer:
+  # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+
+  # Save the dnstap stream to file
+  loggers:
+    - name: dnstap
+      logfile:
+        file-path:  /tmp/dnstap.fstrm
+        flush-interval: 10
+        mode: dnstap
+
+  routes:
+    - from: [ tap ]
+      to: [ dnstap ]
