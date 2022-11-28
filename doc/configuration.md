@@ -14,7 +14,6 @@ incoming traffics. You can take a look to the list of config [`examples`](https:
   - [Collectors](#collectors)
   - [Loggers](#loggers)
   - [Routes](#routes)
-- [Transforms](#transforms)
 
 
 ## Global
