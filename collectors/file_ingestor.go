@@ -265,7 +265,7 @@ func (c *FileIngestor) ProcessDnstap(filePath string) error {
 
 	for {
 		buf, err := dnstapDecoder.Decode()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 
