@@ -171,8 +171,6 @@ type Config struct {
 			Enable       bool   `yaml:"enable"`
 			Port         int    `yaml:"port"`
 			Device       string `yaml:"device"`
-			DropQueries  bool   `yaml:"drop-queries"`
-			DropReplies  bool   `yaml:"drop-replies"`
 			CacheSupport bool   `yaml:"cache-support"`
 			QueryTimeout int    `yaml:"query-timeout"`
 		} `yaml:"sniffer"`
@@ -191,8 +189,6 @@ type Config struct {
 			WatchDir    string `yaml:"watch-dir"`
 			WatchMode   string `yaml:"watch-mode"`
 			PcapDnsPort int    `yaml:"pcap-dns-port"`
-			DropQueries bool   `yaml:"drop-queries"`
-			DropReplies bool   `yaml:"drop-replies"`
 			DeleteAfter bool   `yaml:"delete-after"`
 		} `yaml:"file-ingestor"`
 	} `yaml:"collectors"`
@@ -392,8 +388,6 @@ func (c *Config) SetDefault() {
 	c.Collectors.LiveCapture.Enable = false
 	c.Collectors.LiveCapture.Port = 53
 	c.Collectors.LiveCapture.Device = ""
-	c.Collectors.LiveCapture.DropQueries = false
-	c.Collectors.LiveCapture.DropReplies = false
 	c.Collectors.LiveCapture.QueryTimeout = 5
 	c.Collectors.LiveCapture.CacheSupport = true
 
@@ -410,8 +404,6 @@ func (c *Config) SetDefault() {
 	c.Collectors.FileIngestor.WatchDir = ""
 	c.Collectors.FileIngestor.PcapDnsPort = 53
 	c.Collectors.FileIngestor.WatchMode = MODE_PCAP
-	c.Collectors.FileIngestor.DropQueries = false
-	c.Collectors.FileIngestor.DropReplies = false
 	c.Collectors.FileIngestor.DeleteAfter = false
 
 	// Transformers for collectors

@@ -1,4 +1,4 @@
-# DnsCollector - Collectors Guide
+# DNS-collector - Collectors Guide
 
 - [DNS tap](#dns-tap)
 - [DNStap Proxifier](#dns-tap-proxifier)
@@ -107,8 +107,6 @@ sudo setcap cap_net_admin,cap_net_raw=eip go-dnscollector
 Options:
 - `port`: (integer) filter on source and destination port
 - `device`: (string) if "" bind on all interfaces
-- `drop-queries`: (boolean) drop all queries
-- `drop-replies`: (boolean) drop all replies
 - `cache-support`: (boolean) disable or enable the cache dns to compute latency between queries and replies
 - `query-timeout`: (integer) in second, max time to keep the query record in memory
 
@@ -118,8 +116,6 @@ Default values:
 sniffer:
   port: 53
   device: wlp2s0
-  drop-queries: false
-  drop-replies: false
   cache-support: true
   query-timeout: 5.0
 ```
@@ -225,8 +221,6 @@ Options:
 - `watch-dir`: (string) directory to watch for pcap files ingest
 - `watch-mode`: (string) watch the directory pcap file with *.pcap extension or dnstap stream with *.fstrm extension, pcap or dnstap expected
 - `pcap-dns-port`: (integer) dns source or destination port
-- `drop-queries`: (boolean) drop all queries if enabled
-- `drop-replies:`: (boolean) drop all replies if enabled
 - `delete-after:`: (boolean) delete pcap file after ingest
 
 Default values:
@@ -236,7 +230,5 @@ file-ingestor:
   watch-dir: /tmp
   watch-mode: pcap
   pcap-dns-port: 53
-  drop-queries: false
-  drop-replies: false
   delete-after: false
 ```
