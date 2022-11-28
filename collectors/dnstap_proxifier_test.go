@@ -14,13 +14,13 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func TestDnstapRelay_TcpRun(t *testing.T) {
+func TestDnstapProxifier_TcpSocket(t *testing.T) {
 	g := loggers.NewFakeLogger()
 
 	config := dnsutils.GetFakeConfig()
-	config.Collectors.DnstapRelay.ListenPort = 6100
+	config.Collectors.DnstapProxifier.ListenPort = 6100
 
-	c := NewDnstapRelay([]dnsutils.Worker{g}, config, logger.New(false), "test")
+	c := NewDnstapProxifier([]dnsutils.Worker{g}, config, logger.New(false), "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector dnstap relay tcp listening error: ", err)
 	}
@@ -69,17 +69,17 @@ func TestDnstapRelay_TcpRun(t *testing.T) {
 	}
 }
 
-func TestDnstapRelay_UnixRun(t *testing.T) {
+func TestDnstapProxifier_UnixSocket(t *testing.T) {
 	g := loggers.NewFakeLogger()
 	config := dnsutils.GetFakeConfig()
-	config.Collectors.DnstapRelay.SockPath = "/tmp/dnscollector_relay.sock"
-	c := NewDnstapRelay([]dnsutils.Worker{g}, config, logger.New(false), "test")
+	config.Collectors.DnstapProxifier.SockPath = "/tmp/dnscollector_relay.sock"
+	c := NewDnstapProxifier([]dnsutils.Worker{g}, config, logger.New(false), "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector dnstap replay unix listening  error: ", err)
 	}
 	go c.Run()
 
-	conn, err := net.Dial(dnsutils.SOCKET_UNIX, config.Collectors.DnstapRelay.SockPath)
+	conn, err := net.Dial(dnsutils.SOCKET_UNIX, config.Collectors.DnstapProxifier.SockPath)
 	if err != nil {
 		t.Error("could not connect to unix socket: ", err)
 	}

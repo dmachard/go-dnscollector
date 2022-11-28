@@ -16,30 +16,30 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 - *Listen for logging traffic with streaming network protocols*
     - Protobuf [`DNStap`](doc/collectors.md#dns-tap) with tcp or unix support
     - Protobuf [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
-    - DNStap [`Proxifier`](doc/collectors.md#dnstap-relay) without decoding
+    - [`Proxifier`](doc/collectors.md#dns-tap-proxifier) for DNSTap streams
 - *Live capture on a network interface*   
     - [`AF_PACKET`](doc/collectors.md#dns-sniffer) socket with BPF filter
 - *Read text or binary files as input*
     - Read and tail on [`Plain text`](doc/collectors.md#tail) files
-    - Ingest [`PCAP`](doc/collectors.md#ingest-pcap) files by watching a directory
+    - Ingest [`PCAP`](doc/collectors.md#file-ingestor) or [`DNSTap`](doc/collectors.md#file-ingestor) files by watching a directory
 
 **Loggers**:
-- *Redirect DNS logs to stdout or files in plain text or binary mode*:
+- *Redirect DNS logs to stdout or files in plain text or binary mode*
     - Print directly to your [`Stdout`](doc/loggers.md#stdout) console
-    - Write to [`File`](doc/loggers.md#log-file) 
-        - with custom [Text](doc/configuration.md#custom-text-format) format
-        - [Json](doc/dnsjson.md) encoding
-        - [Pcap](doc/loggers.md#log-file) format
-
-- *Provide metrics and API*:
+    - Write to [`File`](doc/loggers.md#log-file) with several formats
+        - [Custom Text](doc/configuration.md#custom-text-format)
+        - [Json](doc/dnsjson.md)
+        - [Pcap](doc/loggers.md#log-file)
+        - [Dnstap](doc/loggers.md#log-file)
+- *Provide metrics and API*
     - [`Prometheus`](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
     - [`Statsd`](doc/loggers.md#statsd-client) support
     - [`REST API`](doc/loggers.md#rest-api) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) to search DNS domains
-- *Send to remote host with generic protocol*:
+- *Send to remote host with generic protocol*
     - [`TCP`](doc/loggers.md#tcp-client)
     - [`Syslog`](doc/loggers.md#syslog)
     - [`DNSTap`](doc/loggers.md#dnstap-client) protobuf messages
-- *Send to various sinks*:
+- *Send to various sinks*
     - [`Fluentd`](doc/loggers.md#fluentd-client)
     - [`InfluxDB`](doc/loggers.md#influxdb-client)
     - [`Loki`](doc/loggers.md#loki-client)
@@ -49,19 +49,19 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 
 - [`Traffic filtering`](doc/configuration.md#dns-filtering)
     - Downsampling
-    - Dropping Qname, QueryIP or Rcode
+    - Dropping per Qname, QueryIP or Rcode
 - [`User Privacy`](doc/configuration.md#user-privacy)
     - Anonymize QueryIP
     - Minimaze Qname
 - [`Normalize Qname`](doc/configuration.md#normalize)
-    - lowercase
+    - To lowercase
     - Get TLD and TLD+1
 - [`Geographical metadata`](doc/configuration.md#geoip-support)
     - Country and City
 - [`Suspicious traffic detector`](doc/configuration.md#suspicious)
     - Malformed and large packet
     - Uncommon Qtypes used
-    - Unallowed Chars in Qname
+    - Unallowed chars in Qname
     - Excessive number of labels
     - Long Qname
 

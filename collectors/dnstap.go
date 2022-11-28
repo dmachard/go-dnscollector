@@ -76,8 +76,8 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	c.LogInfo("new connection from %s\n", peer)
 
 	// start dnstap subprocessor
-	dnstap_subprocessor := NewDnstapProcessor(c.config, c.logger, c.name)
-	go dnstap_subprocessor.Run(c.Loggers())
+	dnstapProcessor := NewDnstapProcessor(c.config, c.logger, c.name)
+	go dnstapProcessor.Run(c.Loggers())
 
 	// frame stream library
 	r := bufio.NewReader(conn)
@@ -93,12 +93,12 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	}
 
 	// process incoming frame and send it to dnstap consumer channel
-	if err := fs.ProcessFrame(dnstap_subprocessor.GetChannel()); err != nil {
+	if err := fs.ProcessFrame(dnstapProcessor.GetChannel()); err != nil {
 		c.LogError("transport error: %s", err)
 	}
 
 	// stop all subprocessors
-	dnstap_subprocessor.Stop()
+	dnstapProcessor.Stop()
 
 	c.LogInfo("%s - connection closed\n", peer)
 }

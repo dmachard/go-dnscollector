@@ -113,8 +113,8 @@ multiplexer:
 #   # dnstap operation name will be replaced with the small form
 #   quiet-text: false
 
-# # dnstap proxifier, no protobuf decoding.
-# dnstap-relay:
+# # dnstap proxifier with no protobuf decoding.
+# dnstap-proxifier:
 #   # listen on ip
 #   listen-ip: 0.0.0.0
 #   # listening on port
@@ -146,11 +146,14 @@ multiplexer:
 #   query-timeout: 5
 
 # # ingest pcap file
-# pcap:
+# file-ingestor:
 #   # directory to watch for pcap files to ingest
 #   watch-dir: /tmp
+#   # watch the directory pcap file with *.pcap extension or dnstap stream with *.fstrm extension
+#   # watch mode: pcap|dnstap
+#   watch-mode: pcap
 #   # filter only on source and destination port
-#   dns-port: 53
+#   pcap-dns-port: 53
 #   # drop all queries
 #   drop-queries: false
 #   # drop all replies
@@ -262,7 +265,7 @@ multiplexer:
 #   compress-interval: 5
 #   # run external script after each file compress step 
 #   compress-postcommand: null
-#   # output format: text|json|pcap
+#   # output format: text|json|pcap|dnstap
 #   mode: text
 #   # output text format, please refer at the end if this config to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"

@@ -22,6 +22,28 @@ func showVersion() {
 	fmt.Println(Version)
 }
 
+func IsLoggerRouted(config *dnsutils.Config, name string) bool {
+	for _, routes := range config.Multiplexer.Routes {
+		for _, dst := range routes.Dst {
+			if dst == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func IsCollectorRouted(config *dnsutils.Config, name string) bool {
+	for _, routes := range config.Multiplexer.Routes {
+		for _, src := range routes.Src {
+			if src == name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func main() {
 	var verFlag bool
 	var configPath string
@@ -91,40 +113,40 @@ func main() {
 			panic(fmt.Sprintf("main - yaml logger config error: %v", err))
 		}
 
-		if subcfg.Loggers.RestAPI.Enable {
+		if subcfg.Loggers.RestAPI.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewRestAPI(subcfg, logger, Version, output.Name)
 		}
-		if subcfg.Loggers.Prometheus.Enable {
+		if subcfg.Loggers.Prometheus.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewPrometheus(subcfg, logger, Version, output.Name)
 		}
-		if subcfg.Loggers.Stdout.Enable {
+		if subcfg.Loggers.Stdout.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewStdOut(subcfg, logger, output.Name)
 		}
-		if subcfg.Loggers.LogFile.Enable {
+		if subcfg.Loggers.LogFile.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewLogFile(subcfg, logger, output.Name)
 		}
-		if subcfg.Loggers.Dnstap.Enable {
+		if subcfg.Loggers.Dnstap.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewDnstapSender(subcfg, logger, output.Name)
 		}
-		if subcfg.Loggers.TcpClient.Enable {
+		if subcfg.Loggers.TcpClient.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewTcpClient(subcfg, logger, output.Name)
 		}
-		if subcfg.Loggers.Syslog.Enable {
+		if subcfg.Loggers.Syslog.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewSyslog(subcfg, logger, output.Name)
 		}
-		if subcfg.Loggers.Fluentd.Enable {
+		if subcfg.Loggers.Fluentd.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewFluentdClient(subcfg, logger, output.Name)
 		}
-		if subcfg.Loggers.InfluxDB.Enable {
+		if subcfg.Loggers.InfluxDB.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewInfluxDBClient(subcfg, logger, output.Name)
 		}
-		if subcfg.Loggers.LokiClient.Enable {
+		if subcfg.Loggers.LokiClient.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewLokiClient(subcfg, logger, output.Name)
 		}
-		if subcfg.Loggers.Statsd.Enable {
+		if subcfg.Loggers.Statsd.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewStatsdClient(subcfg, logger, Version, output.Name)
 		}
-		if subcfg.Loggers.ElasticSearchClient.Enable {
+		if subcfg.Loggers.ElasticSearchClient.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewElasticSearchClient(subcfg, logger, output.Name)
 		}
 	}
@@ -159,23 +181,23 @@ func main() {
 			panic(fmt.Sprintf("main - yaml collector config error: %v", err))
 		}
 
-		if subcfg.Collectors.Dnstap.Enable {
+		if subcfg.Collectors.Dnstap.Enable && IsCollectorRouted(config, input.Name) {
 			mapCollectors[input.Name] = collectors.NewDnstap(nil, subcfg, logger, input.Name)
 		}
-		if subcfg.Collectors.DnstapRelay.Enable {
-			mapCollectors[input.Name] = collectors.NewDnstapRelay(nil, subcfg, logger, input.Name)
+		if subcfg.Collectors.DnstapProxifier.Enable && IsCollectorRouted(config, input.Name) {
+			mapCollectors[input.Name] = collectors.NewDnstapProxifier(nil, subcfg, logger, input.Name)
 		}
-		if subcfg.Collectors.LiveCapture.Enable {
+		if subcfg.Collectors.LiveCapture.Enable && IsCollectorRouted(config, input.Name) {
 			mapCollectors[input.Name] = collectors.NewDnsSniffer(nil, subcfg, logger, input.Name)
 		}
-		if subcfg.Collectors.Tail.Enable {
+		if subcfg.Collectors.Tail.Enable && IsCollectorRouted(config, input.Name) {
 			mapCollectors[input.Name] = collectors.NewTail(nil, subcfg, logger, input.Name)
 		}
-		if subcfg.Collectors.PowerDNS.Enable {
+		if subcfg.Collectors.PowerDNS.Enable && IsCollectorRouted(config, input.Name) {
 			mapCollectors[input.Name] = collectors.NewProtobufPowerDNS(nil, subcfg, logger, input.Name)
 		}
-		if subcfg.Collectors.IngestPcap.Enable {
-			mapCollectors[input.Name] = collectors.NewIngestPcap(nil, subcfg, logger, input.Name)
+		if subcfg.Collectors.FileIngestor.Enable && IsCollectorRouted(config, input.Name) {
+			mapCollectors[input.Name] = collectors.NewFileIngestor(nil, subcfg, logger, input.Name)
 		}
 	}
 
@@ -225,10 +247,10 @@ func main() {
 				logger.SetVerbose(config.Global.Trace.Verbose)
 
 			case <-sigTerm:
-				logger.Info("main - system interrupt, exiting...")
+				logger.Info("main - exiting...")
 
 				// stop all workers
-				logger.Info("main - stopping all collectors and loggers...")
+				logger.Info("main - stopping...")
 
 				for _, c := range mapCollectors {
 					c.Stop()
@@ -247,7 +269,7 @@ func main() {
 	}()
 
 	// run all workers in background
-	logger.Info("main - running all collectors and loggers...")
+	logger.Info("main - running...")
 
 	for _, l := range mapLoggers {
 		go l.Run()

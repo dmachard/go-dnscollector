@@ -2,16 +2,49 @@ package dnsutils
 
 import (
 	"bytes"
+	"encoding/binary"
+	"errors"
 	"fmt"
 	"log"
+	"net"
 	"strconv"
 	"time"
+
+	"github.com/dmachard/go-dnstap-protobuf"
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
 	DnsQuery = "QUERY"
 	DnsReply = "REPLY"
 )
+
+func GetIpPort(dm *DnsMessage) (string, int, string, int) {
+	srcIp, srcPort := "0.0.0.0", 53
+	dstIp, dstPort := "0.0.0.0", 53
+	if dm.NetworkInfo.Family == "INET6" {
+		srcIp, dstIp = "::", "::"
+	}
+
+	if dm.NetworkInfo.QueryIp != "-" {
+		srcIp = dm.NetworkInfo.QueryIp
+		srcPort, _ = strconv.Atoi(dm.NetworkInfo.QueryPort)
+	}
+	if dm.NetworkInfo.ResponseIp != "-" {
+		dstIp = dm.NetworkInfo.ResponseIp
+		dstPort, _ = strconv.Atoi(dm.NetworkInfo.ResponsePort)
+	}
+
+	// reverse destination and source
+	if dm.DNS.Type == DnsReply {
+		srcIp_tmp, srcPort_tmp := srcIp, srcPort
+		srcIp, srcPort = dstIp, dstPort
+		dstIp, dstPort = srcIp_tmp, srcPort_tmp
+	}
+	return srcIp, srcPort, dstIp, dstPort
+}
 
 type DnsAnswer struct {
 	Name      string `json:"name" msgpack:"name"`
@@ -354,6 +387,144 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 func (dm *DnsMessage) String(format []string) string {
 	delimiter := "\n"
 	return string(dm.Bytes(format, delimiter))
+}
+
+func (dm *DnsMessage) ToDnstap() ([]byte, error) {
+	if len(dm.DnsTap.Payload) > 0 {
+		return dm.DnsTap.Payload, nil
+	}
+
+	dt := &dnstap.Dnstap{}
+	t := dnstap.Dnstap_MESSAGE
+	dt.Identity = []byte(dm.DnsTap.Identity)
+	dt.Version = []byte("-")
+	dt.Type = &t
+
+	mt := dnstap.Message_Type(dnstap.Message_Type_value[dm.DnsTap.Operation])
+	sf := dnstap.SocketFamily(dnstap.SocketFamily_value[dm.NetworkInfo.Family])
+	sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.NetworkInfo.Protocol])
+	tsec := uint64(dm.DnsTap.TimeSec)
+	tnsec := uint32(dm.DnsTap.TimeNsec)
+
+	var rport uint32
+	var qport uint32
+	if dm.NetworkInfo.ResponsePort != "-" {
+		if port, err := strconv.Atoi(dm.NetworkInfo.ResponsePort); err != nil {
+			return nil, err
+		} else {
+			rport = uint32(port)
+		}
+	}
+
+	if dm.NetworkInfo.QueryPort != "-" {
+		if port, err := strconv.Atoi(dm.NetworkInfo.QueryPort); err != nil {
+			return nil, err
+		} else {
+			qport = uint32(port)
+		}
+	}
+
+	msg := &dnstap.Message{Type: &mt}
+
+	msg.SocketFamily = &sf
+	msg.SocketProtocol = &sp
+	msg.QueryAddress = net.ParseIP(dm.NetworkInfo.QueryIp)
+	msg.QueryPort = &qport
+	msg.ResponseAddress = net.ParseIP(dm.NetworkInfo.ResponseIp)
+	msg.ResponsePort = &rport
+
+	if dm.DNS.Type == DnsQuery {
+		msg.QueryMessage = dm.DNS.Payload
+		msg.QueryTimeSec = &tsec
+		msg.QueryTimeNsec = &tnsec
+	} else {
+		msg.ResponseTimeSec = &tsec
+		msg.ResponseTimeNsec = &tnsec
+		msg.ResponseMessage = dm.DNS.Payload
+	}
+
+	dt.Message = msg
+
+	data, err := proto.Marshal(dt)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (dm *DnsMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
+	eth := &layers.Ethernet{SrcMAC: net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		DstMAC: net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}}
+	ip4 := &layers.IPv4{Version: 4, TTL: 64}
+	ip6 := &layers.IPv6{Version: 6}
+	udp := &layers.UDP{}
+	tcp := &layers.TCP{}
+
+	// prepare ip
+	srcIp, srcPort, dstIp, dstPort := GetIpPort(dm)
+
+	// packet layer array
+	pkt := []gopacket.SerializableLayer{}
+
+	// set ip and transport
+	if dm.NetworkInfo.Family == PROTO_IPV6 && dm.NetworkInfo.Protocol == PROTO_UDP {
+		eth.EthernetType = layers.EthernetTypeIPv6
+		ip6.SrcIP = net.ParseIP(srcIp)
+		ip6.DstIP = net.ParseIP(dstIp)
+		ip6.NextHeader = layers.IPProtocolUDP
+		udp.SrcPort = layers.UDPPort(srcPort)
+		udp.DstPort = layers.UDPPort(dstPort)
+		udp.SetNetworkLayerForChecksum(ip6)
+
+		pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip6, eth)
+
+	} else if dm.NetworkInfo.Family == PROTO_IPV6 && dm.NetworkInfo.Protocol == PROTO_TCP {
+		eth.EthernetType = layers.EthernetTypeIPv6
+		ip6.SrcIP = net.ParseIP(srcIp)
+		ip6.DstIP = net.ParseIP(dstIp)
+		ip6.NextHeader = layers.IPProtocolTCP
+		tcp.SrcPort = layers.TCPPort(srcPort)
+		tcp.DstPort = layers.TCPPort(dstPort)
+		tcp.PSH = true
+		tcp.Window = 65535
+		tcp.SetNetworkLayerForChecksum(ip6)
+
+		dnsLengthField := make([]byte, 2)
+		binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.DNS.Length))
+		pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.DNS.Payload...)), tcp, ip6, eth)
+
+	} else if dm.NetworkInfo.Family == PROTO_IPV4 && dm.NetworkInfo.Protocol == PROTO_UDP {
+		eth.EthernetType = layers.EthernetTypeIPv4
+		ip4.SrcIP = net.ParseIP(srcIp)
+		ip4.DstIP = net.ParseIP(dstIp)
+		ip4.Protocol = layers.IPProtocolUDP
+		udp.SrcPort = layers.UDPPort(srcPort)
+		udp.DstPort = layers.UDPPort(dstPort)
+		udp.SetNetworkLayerForChecksum(ip4)
+
+		pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip4, eth)
+
+	} else if dm.NetworkInfo.Family == PROTO_IPV4 && dm.NetworkInfo.Protocol == PROTO_TCP {
+		// SYN
+		eth.EthernetType = layers.EthernetTypeIPv4
+		ip4.SrcIP = net.ParseIP(srcIp)
+		ip4.DstIP = net.ParseIP(dstIp)
+		ip4.Protocol = layers.IPProtocolTCP
+		tcp.SrcPort = layers.TCPPort(srcPort)
+		tcp.DstPort = layers.TCPPort(dstPort)
+		tcp.PSH = true
+		tcp.Window = 65535
+		tcp.SetNetworkLayerForChecksum(ip4)
+
+		dnsLengthField := make([]byte, 2)
+		binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.DNS.Length))
+		pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.DNS.Payload...)), tcp, ip4, eth)
+
+	} else {
+		// ignore other packet
+		return nil, errors.New("not yet implemented")
+	}
+	return pkt, nil
 }
 
 func GetFakeDnsMessage() DnsMessage {

@@ -1,11 +1,11 @@
 # DnsCollector - Collectors Guide
 
 - [DNS tap](#dns-tap)
-- [DNStap Proxifier](#dnstap-proxifier)
+- [DNStap Proxifier](#dns-tap-proxifier)
 - [Protobuf PowerDNS](#protobuf-powerdns)
 - [Tail](#tail)
 - [Live capture](#live-capture)
-- [Ingest Pcap](#ingest-pcap)
+- [File Ingestor](#file-ingestor)
 
 ## Collectors
 
@@ -60,13 +60,15 @@ The following dns flag message will be replaced with the small form:
 - QUERY: `Q`
 - REPLY: `R`
 
-### DNStap Proxifier
+### DNS tap Proxifier
 
 Collector that receives DNSTAP traffic and relays it without decoding or transformations.
 This collector must be used with the DNStap logger. 
-Please to find a complete example [here](./example-config/use-case-12.yml).
 
 Dnstap stream collector can be a tcp or unix socket listener. TLS is also supported.
+
+For config examples, take a look to the following links:
+- [config](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-12.yml)
 
 Options:
 - `listen-ip`: (string) listen on ip
@@ -207,14 +209,22 @@ rpzFile("/etc/pdns-recursor/basic.rpz", {
 })
 ```
 
-### Ingest Pcap
+### File Ingestor
 
-This collector enable to ingest multiple pcap files by watching a directory.
+This collector enable to ingest multiple  files by watching a directory.
+This collector can be configured to search for PCAP files or DNSTAP files.
 Make sure the PCAP is complete before moving the file to the directory so that file data is not truncated. 
+
+If you are in PCAP mode, the collector search for files with the `.pcap` extension.
+If you are in DNSTap mode, the collector search for files with the `.fstrm` extension.
+
+For config examples, take a look to the following links:
+- [dnstap](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-14.yml)
 
 Options:
 - `watch-dir`: (string) directory to watch for pcap files ingest
-- `dns-port`: (integer) dns source or destination port
+- `watch-mode`: (string) watch the directory pcap file with *.pcap extension or dnstap stream with *.fstrm extension, pcap or dnstap expected
+- `pcap-dns-port`: (integer) dns source or destination port
 - `drop-queries`: (boolean) drop all queries if enabled
 - `drop-replies:`: (boolean) drop all replies if enabled
 - `delete-after:`: (boolean) delete pcap file after ingest
@@ -222,9 +232,10 @@ Options:
 Default values:
 
 ```yaml
-pcap:
+file-ingestor:
   watch-dir: /tmp
-  dns-port: 53
+  watch-mode: pcap
+  pcap-dns-port: 53
   drop-queries: false
   drop-replies: false
   delete-after: false

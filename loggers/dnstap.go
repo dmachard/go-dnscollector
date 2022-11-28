@@ -9,10 +9,8 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/transformers"
-	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
-	"google.golang.org/protobuf/proto"
 )
 
 type DnstapSender struct {
@@ -43,8 +41,7 @@ func NewDnstapSender(config *dnsutils.Config, logger *logger.Logger, name string
 
 func (c *DnstapSender) GetName() string { return c.name }
 
-func (c *DnstapSender) SetLoggers(loggers []dnsutils.Worker) {
-}
+func (c *DnstapSender) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *DnstapSender) ReadConfig() {
 	// get hostname
@@ -87,7 +84,7 @@ func (o *DnstapSender) Run() {
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
 
-	dt := &dnstap.Dnstap{}
+	//dt := &dnstap.Dnstap{}
 	frame := &framestream.Frame{}
 
 LOOP:
@@ -151,86 +148,11 @@ LOOP:
 					for {
 						select {
 						case dm := <-o.channel:
-
-							// raw dnstap payload ?
-							if len(dm.DnsTap.Payload) > 0 {
-								data = dm.DnsTap.Payload
-
-								// otherwise contruct a new one from DNS message container
-							} else {
-
-								// apply tranforms
-								if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
-									continue
-								}
-
-								dt.Reset()
-
-								t := dnstap.Dnstap_MESSAGE
-								dt.Identity = []byte(o.config.Loggers.Dnstap.ServerId)
-								dt.Version = []byte("-")
-								dt.Type = &t
-
-								mt := dnstap.Message_Type(dnstap.Message_Type_value[dm.DnsTap.Operation])
-								sf := dnstap.SocketFamily(dnstap.SocketFamily_value[dm.NetworkInfo.Family])
-								sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.NetworkInfo.Protocol])
-								tsec := uint64(dm.DnsTap.TimeSec)
-								tnsec := uint32(dm.DnsTap.TimeNsec)
-
-								var rportint int
-								var qportint int
-
-								// no response port provided ?
-								// fix for issue #110
-								if dm.NetworkInfo.ResponsePort == "-" {
-									rportint = 0
-								} else {
-									rportint, err = strconv.Atoi(dm.NetworkInfo.ResponsePort)
-									if err != nil {
-										o.LogError("error to encode dnstap response port %s", err)
-										continue
-									}
-								}
-								rport := uint32(rportint)
-
-								// no query port provided ?
-								// fix to prevent issue #110
-								if dm.NetworkInfo.QueryPort == "-" {
-									qportint = 0
-								} else {
-									qportint, err = strconv.Atoi(dm.NetworkInfo.QueryPort)
-									if err != nil {
-										o.LogError("error to encode dnstap query port %s", err)
-										continue
-									}
-								}
-								qport := uint32(qportint)
-
-								msg := &dnstap.Message{Type: &mt}
-
-								msg.SocketFamily = &sf
-								msg.SocketProtocol = &sp
-								msg.QueryAddress = net.ParseIP(dm.NetworkInfo.QueryIp)
-								msg.QueryPort = &qport
-								msg.ResponseAddress = net.ParseIP(dm.NetworkInfo.ResponseIp)
-								msg.ResponsePort = &rport
-
-								if dm.DNS.Type == dnsutils.DnsQuery {
-									msg.QueryMessage = dm.DNS.Payload
-									msg.QueryTimeSec = &tsec
-									msg.QueryTimeNsec = &tnsec
-								} else {
-									msg.ResponseTimeSec = &tsec
-									msg.ResponseTimeNsec = &tnsec
-									msg.ResponseMessage = dm.DNS.Payload
-								}
-
-								dt.Message = msg
-
-								data, err = proto.Marshal(dt)
-								if err != nil {
-									o.LogError("proto marshal error %s", err)
-								}
+							// encode dns message to dnstap protobuf binary
+							data, err = dm.ToDnstap()
+							if err != nil {
+								o.LogError("failed to encode to DNStap protobuf: %s", err)
+								continue
 							}
 
 							// send the frame

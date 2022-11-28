@@ -30,6 +30,7 @@ require (
 )
 
 require (
+	github.com/farsightsec/golang-framestream v0.3.0 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760 // indirect
 )

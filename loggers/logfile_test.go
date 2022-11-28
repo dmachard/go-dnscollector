@@ -32,7 +32,7 @@ func TestLogFileWrite_TextMode(t *testing.T) {
 	dm := dnsutils.GetFakeDnsMessage()
 	delimiter := "\n"
 	g.WriteToPlain(dm.Bytes(g.textFormat, delimiter))
-	g.FlushWriter()
+	g.FlushWriters()
 
 	// read temp file and check content
 	data := make([]byte, 100)
