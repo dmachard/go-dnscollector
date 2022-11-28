@@ -1,7 +1,7 @@
 # DnsCollector - Collectors Guide
 
 - [DNS tap](#dns-tap)
-- [DNStap Proxifier](#dnstap-proxifier)
+- [DNStap Proxifier](#dns-tap-proxifier)
 - [Protobuf PowerDNS](#protobuf-powerdns)
 - [Tail](#tail)
 - [Live capture](#live-capture)
@@ -60,7 +60,7 @@ The following dns flag message will be replaced with the small form:
 - QUERY: `Q`
 - REPLY: `R`
 
-### DNStap Proxifier
+### DNS tap Proxifier
 
 Collector that receives DNSTAP traffic and relays it without decoding or transformations.
 This collector must be used with the DNStap logger. 
@@ -232,7 +232,7 @@ Options:
 Default values:
 
 ```yaml
-pcap:
+file-ingestor:
   watch-dir: /tmp
   watch-mode: pcap
   pcap-dns-port: 53
