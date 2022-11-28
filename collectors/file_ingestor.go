@@ -37,8 +37,6 @@ type FileIngestor struct {
 	watcher         *fsnotify.Watcher
 	dnsProcessor    DnsProcessor
 	dnstapProcessor DnstapProcessor
-	dropQueries     bool
-	dropReplies     bool
 	dnsPort         int
 	identity        string
 	name            string
@@ -79,8 +77,6 @@ func (c *FileIngestor) ReadConfig() {
 
 	c.identity = c.config.GetServerIdentity()
 	c.dnsPort = c.config.Collectors.FileIngestor.PcapDnsPort
-	c.dropQueries = c.config.Collectors.FileIngestor.DropQueries
-	c.dropReplies = c.config.Collectors.FileIngestor.DropReplies
 
 	c.LogInfo("watching directory to find %s files", c.config.Collectors.FileIngestor.WatchMode)
 }
@@ -222,17 +218,8 @@ func (c *FileIngestor) ProcessPcap(filePath string) error {
 			if len(dm.DNS.Payload) < 4 {
 				continue
 			}
-			qr := binary.BigEndian.Uint16(dm.DNS.Payload[2:4]) >> 15
 
-			// is query ?
-			if int(qr) == 0 && !c.dropQueries {
-				c.dnsProcessor.GetChannel() <- dm
-			}
-
-			// is reply
-			if int(qr) == 1 && !c.dropReplies {
-				c.dnsProcessor.GetChannel() <- dm
-			}
+			c.dnsProcessor.GetChannel() <- dm
 		}
 
 	}
