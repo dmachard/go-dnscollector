@@ -24,7 +24,6 @@ Options:
 - `key-file`: (string) private key server file
 - `cache-support`: (boolean) disable or enable the cache dns, this feature can be enabled if your dns server doesn't add the latency
 - `query-timeout`: (integer) in second, max time to keep the query record in memory
-- `quiet-text`: (boolean) Quiet text mode to reduce the size of the logs
 
 Default values:
 
@@ -39,26 +38,7 @@ dnstap:
   key-file: ""
   cache-support: false
   query-timeout: 5.0
-  quiet-text: false
 ```
-
-The following dnstap flag message will be replaced with the small form:
-- AUTH_QUERY: `AQ`
-- AUTH_RESPONSE: `AR`
-- RESOLVER_QUERY: `RQ`
-- RESOLVER_RESPONSE: `RR`
-- CLIENT_QUERY: `CQ`
-- CLIENT_RESPONSE: `CR`
-- FORWARDER_QUERY: `FQ`
-- FORWARDER_RESPONSE: `FR`
-- STUB_QUERY: `SQ`
-- STUB_RESPONSE: `SR`
-- TOOL_QUERY: `TQ`
-- TOOL_RESPONSE: `TR`
-
-The following dns flag message will be replaced with the small form:
-- QUERY: `Q`
-- REPLY: `R`
 
 ### DNS tap Proxifier
 
@@ -153,7 +133,6 @@ tail:
 Options:
 - `listen-ip`: (string) listen on ip
 - `listen-port`: (integer) listening on port
-- `quiet-text`: (boolean) Quiet text mode to reduce the size of the logs
 - `tls-support:`: (boolean) to enable, set to true
 - `tls-min-version`: (string) min tls version
 - `cert-file`: (string) certificate server file
@@ -165,7 +144,6 @@ Default values:
 powerdns:
   listen-ip: 0.0.0.0
   listen-port: 6001
-  quiet-text: false
   tls-support: false
   tls-min-version: 1.2
   cert-file: ""

@@ -110,8 +110,6 @@ multiplexer:
 #   cache-support: false
 #   # Ttl in second, max time to keep the query record in memory cache
 #   query-timeout: 5
-#   # dnstap operation name will be replaced with the small form
-#   quiet-text: false
 
 # # dnstap proxifier with no protobuf decoding.
 # dnstap-proxifier:
@@ -184,8 +182,6 @@ multiplexer:
 #   listen-ip: 0.0.0.0
 #   # listening on port
 #   listen-port: 6001
-#   # operation name will be replaced with the small form
-#   quiet-text: false
 #   # tls support
 #   tls-support: false
 #   # tls min version
@@ -420,13 +416,6 @@ multiplexer:
 # list of transforms to apply on collectors or loggers
 ################################################
 
-# # Use this option to add top level domain and tld+1, based on public suffix list https://publicsuffix.org/
-# public-suffix:
-#   # add top level domain 
-#   add-tld: false
-#   # add top level domain plus one label
-#   add-tld-plus-one: false
-
 # # Use this option to protect user privacy
 # user-privacy:
 #   # IP-Addresses are anonymities by zeroing the host-part of an address.
@@ -434,10 +423,18 @@ multiplexer:
 #   # Reduce Qname to second level only, for exemple mail.google.com be replaced by google.com
 #   minimaze-qname: false
 
-# # Convert all domain to lowercase
+# # Use this option to add top level domain and tld+1, based on public suffix list https://publicsuffix.org/
+# # or convert all domain to lowercase
+# # or enable quiet text in your logs
 # normalize:
 #   # Wwww.GooGlE.com will be equal to www.google.com
 #   qname-lowercase: true
+#   # add top level domain 
+#   add-tld: false
+#   # add top level domain plus one label
+#   add-tld-plus-one: false
+#   # text will be replaced with the small form
+#   quiet-text: false
 
 # # filtering feature to ignore some specific qname
 # # dns logs is not redirected to loggers if the filtering regexp matched
