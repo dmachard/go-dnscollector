@@ -16,12 +16,11 @@ type Transforms struct {
 	logger *logger.Logger
 	name   string
 
-	SuspiciousTransform   SuspiciousTransform
-	GeoipTransform        GeoIpProcessor
-	FilteringTransform    FilteringProcessor
-	UserPrivacyTransform  UserPrivacyProcessor
-	NormalizeTransform    NormalizeProcessor
-	PublicSuffixTransform PublicSuffixProcessor
+	SuspiciousTransform  SuspiciousTransform
+	GeoipTransform       GeoIpProcessor
+	FilteringTransform   FilteringProcessor
+	UserPrivacyTransform UserPrivacyProcessor
+	NormalizeTransform   NormalizeProcessor
 
 	activeTransforms []func(dm *dnsutils.DnsMessage) int
 }
@@ -33,12 +32,11 @@ func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, n
 		logger: logger,
 		name:   name,
 
-		SuspiciousTransform:   NewSuspiciousSubprocessor(config, logger, name),
-		GeoipTransform:        NewDnsGeoIpProcessor(config, logger),
-		FilteringTransform:    NewFilteringProcessor(config, logger, name),
-		UserPrivacyTransform:  NewUserPrivacySubprocessor(config),
-		NormalizeTransform:    NewNormalizeSubprocessor(config),
-		PublicSuffixTransform: NewPublicSuffixSubprocessor(config),
+		SuspiciousTransform:  NewSuspiciousSubprocessor(config, logger, name),
+		GeoipTransform:       NewDnsGeoIpProcessor(config, logger),
+		FilteringTransform:   NewFilteringProcessor(config, logger, name),
+		UserPrivacyTransform: NewUserPrivacySubprocessor(config),
+		NormalizeTransform:   NewNormalizeSubprocessor(config),
 	}
 
 	d.Prepare()
@@ -49,9 +47,22 @@ func (p *Transforms) Prepare() error {
 	if p.config.Normalize.Enable {
 		if p.config.Normalize.QnameLowerCase {
 			p.activeTransforms = append(p.activeTransforms, p.lowercaseQname)
-			p.LogInfo("[normalize: lowercaseQname] enabled")
+			p.LogInfo("[normalize: lowercase] enabled")
 		}
-		p.LogInfo("[normalize] enabled")
+
+		if p.config.Normalize.QuietText {
+			p.activeTransforms = append(p.activeTransforms, p.quietText)
+			p.LogInfo("[normalize: quiet text] enabled")
+		}
+
+		if p.config.Normalize.AddTld {
+			p.activeTransforms = append(p.activeTransforms, p.GetEffectiveTld)
+			p.LogInfo("[normalize: add tld] enabled")
+		}
+		if p.config.Normalize.AddTldPlusOne {
+			p.activeTransforms = append(p.activeTransforms, p.GetEffectiveTldPlusOne)
+			p.LogInfo("[normalize: add tld+1] enabled")
+		}
 	}
 
 	if p.config.GeoIP.Enable {
@@ -60,17 +71,6 @@ func (p *Transforms) Prepare() error {
 
 		if err := p.GeoipTransform.Open(); err != nil {
 			p.LogError("geoip open error %v", err)
-		}
-	}
-
-	if p.config.PublicSuffix.Enable {
-		if p.config.PublicSuffix.AddTld {
-			p.activeTransforms = append(p.activeTransforms, p.GetEffectiveTld)
-			p.LogInfo("[public suffix: add tld] enabled")
-		}
-		if p.config.PublicSuffix.AddTldPlusOne {
-			p.activeTransforms = append(p.activeTransforms, p.GetEffectiveTldPlusOne)
-			p.LogInfo("[public suffix: add tld+1] enabled")
 		}
 	}
 
@@ -136,14 +136,14 @@ func (p *Transforms) geoipTransform(dm *dnsutils.DnsMessage) int {
 }
 
 func (p *Transforms) GetEffectiveTld(dm *dnsutils.DnsMessage) int {
-	if etld, err := p.PublicSuffixTransform.GetEffectiveTld(dm.DNS.Qname); err == nil {
+	if etld, err := p.NormalizeTransform.GetEffectiveTld(dm.DNS.Qname); err == nil {
 		dm.DNS.QnamePublicSuffix = etld
 	}
 	return RETURN_SUCCESS
 }
 
 func (p *Transforms) GetEffectiveTldPlusOne(dm *dnsutils.DnsMessage) int {
-	if etld, err := p.PublicSuffixTransform.GetEffectiveTldPlusOne(dm.DNS.Qname); err == nil {
+	if etld, err := p.NormalizeTransform.GetEffectiveTldPlusOne(dm.DNS.Qname); err == nil {
 		dm.DNS.QnameEffectiveTLDPlusOne = etld
 	}
 
@@ -165,6 +165,11 @@ func (p *Transforms) minimazeQname(dm *dnsutils.DnsMessage) int {
 func (p *Transforms) lowercaseQname(dm *dnsutils.DnsMessage) int {
 	dm.DNS.Qname = p.NormalizeTransform.Lowercase(dm.DNS.Qname)
 
+	return RETURN_SUCCESS
+}
+
+func (p *Transforms) quietText(dm *dnsutils.DnsMessage) int {
+	p.NormalizeTransform.QuietText(dm)
 	return RETURN_SUCCESS
 }
 

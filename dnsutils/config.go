@@ -40,11 +40,6 @@ type MultiplexRoutes struct {
 }
 
 type ConfigTransformers struct {
-	PublicSuffix struct {
-		Enable        bool `yaml:"enable"`
-		AddTld        bool `yaml:"add-tld"`
-		AddTldPlusOne bool `yaml:"add-tld-plus-one"`
-	} `yaml:"public-suffix"`
 	UserPrivacy struct {
 		Enable        bool `yaml:"enable"`
 		AnonymizeIP   bool `yaml:"anonymize-ip"`
@@ -53,6 +48,9 @@ type ConfigTransformers struct {
 	Normalize struct {
 		Enable         bool `yaml:"enable"`
 		QnameLowerCase bool `yaml:"qname-lowercase"`
+		QuietText      bool `yaml:"quiet-text"`
+		AddTld         bool `yaml:"add-tld"`
+		AddTldPlusOne  bool `yaml:"add-tld-plus-one"`
 	} `yaml:"normalize"`
 	Filtering struct {
 		Enable          bool     `yaml:"enable"`
@@ -85,10 +83,6 @@ type ConfigTransformers struct {
 }
 
 func (c *ConfigTransformers) SetDefault() {
-	c.PublicSuffix.Enable = false
-	c.PublicSuffix.AddTld = false
-	c.PublicSuffix.AddTldPlusOne = false
-
 	c.Suspicious.Enable = false
 	c.Suspicious.ThresholdQnameLen = 100
 	c.Suspicious.ThresholdPacketLen = 1000
@@ -104,6 +98,9 @@ func (c *ConfigTransformers) SetDefault() {
 
 	c.Normalize.Enable = false
 	c.Normalize.QnameLowerCase = false
+	c.Normalize.QuietText = false
+	c.Normalize.AddTld = false
+	c.Normalize.AddTldPlusOne = false
 
 	c.Filtering.Enable = false
 	c.Filtering.DropFqdnFile = ""
@@ -155,7 +152,6 @@ type Config struct {
 			KeyFile       string `yaml:"key-file"`
 			CacheSupport  bool   `yaml:"cache-support"`
 			QueryTimeout  int    `yaml:"query-timeout"`
-			QuietText     bool   `yaml:"quiet-text"`
 		} `yaml:"dnstap"`
 		DnstapProxifier struct {
 			Enable        bool   `yaml:"enable"`
@@ -178,7 +174,6 @@ type Config struct {
 			Enable        bool   `yaml:"enable"`
 			ListenIP      string `yaml:"listen-ip"`
 			ListenPort    int    `yaml:"listen-port"`
-			QuietText     bool   `yaml:"quiet-text"`
 			TlsSupport    bool   `yaml:"tls-support"`
 			TlsMinVersion string `yaml:"tls-min-version"`
 			CertFile      string `yaml:"cert-file"`
@@ -374,7 +369,6 @@ func (c *Config) SetDefault() {
 	c.Collectors.Dnstap.KeyFile = ""
 	c.Collectors.Dnstap.QueryTimeout = 5
 	c.Collectors.Dnstap.CacheSupport = false
-	c.Collectors.Dnstap.QuietText = false
 
 	c.Collectors.DnstapProxifier.Enable = false
 	c.Collectors.DnstapProxifier.ListenIP = ANY_IP
@@ -394,7 +388,6 @@ func (c *Config) SetDefault() {
 	c.Collectors.PowerDNS.Enable = false
 	c.Collectors.PowerDNS.ListenIP = ANY_IP
 	c.Collectors.PowerDNS.ListenPort = 6001
-	c.Collectors.PowerDNS.QuietText = false
 	c.Collectors.PowerDNS.TlsSupport = false
 	c.Collectors.PowerDNS.TlsMinVersion = TLS_v12
 	c.Collectors.PowerDNS.CertFile = ""

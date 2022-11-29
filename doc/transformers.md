@@ -1,6 +1,5 @@
 # DNS-collector - Transformers Guide
 
-- [Public suffix](#public-suffix)
 - [Normalize](#normalize)
 - [User privacy](#user-privacy)
 - [GeoIP Support](#geoip-support)
@@ -9,34 +8,46 @@
 
 ## Transformers
 
-### Public Suffix
-
-Option to add top level domain. For example for `books.amazon.co.uk`, the `TLD`
-is `co.uk` and the `TLD+1` is `amazon.co.uk`.
-
-Options:
-- `add-tld`: (boolean) add top level domain
-- `add-tld-plus-one`: (boolean) add top level domain plus one label
-
-```yaml
-transforms:
-  public-suffix:
-    add-tld: false
-    add-tld-plus-one: false
-```
-
 ### Normalize
 
-Option to convert all domain to lowercase. For example: `Wwww.GooGlE.com` will be equal to `www.google.com`
+This transformer can be used:
+- to convert all domain to lowercase. For example: `Wwww.GooGlE.com` will be equal to `www.google.com`
+- to add top level domain. For example for `books.amazon.co.uk`, the `TLD`
+is `co.uk` and the `TLD+1` is `amazon.co.uk`.
+- to use small text form. For example: `CLIENT_QUERY` will be replaced by `CQ`
 
 Options:
 - `qname-lowercase`: (boolean) enable or disable lowercase
+- `add-tld`: (boolean) add top level domain
+- `add-tld-plus-one`: (boolean) add top level domain plus one label
+- `quiet-text`: (boolean) Quiet text mode to reduce the size of the logs
 
 ```yaml
 transforms:
   normalize:
     qname-lowercase: true
+    add-tld: false
+    add-tld-plus-one: false
+    quiet-text: false
 ```
+
+The following dnstap flag message will be replaced with the small form:
+- AUTH_QUERY: `AQ`
+- AUTH_RESPONSE: `AR`
+- RESOLVER_QUERY: `RQ`
+- RESOLVER_RESPONSE: `RR`
+- CLIENT_QUERY: `CQ`
+- CLIENT_RESPONSE: `CR`
+- FORWARDER_QUERY: `FQ`
+- FORWARDER_RESPONSE: `FR`
+- STUB_QUERY: `SQ`
+- STUB_RESPONSE: `SR`
+- TOOL_QUERY: `TQ`
+- TOOL_RESPONSE: `TR`
+
+The following dns flag message will be replaced with the small form:
+- QUERY: `Q`
+- REPLY: `R`
 
 ### User Privacy
 

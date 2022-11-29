@@ -15,29 +15,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var (
-	DnstapMessage = map[string]string{
-		"AUTH_QUERY":         "AQ",
-		"AUTH_RESPONSE":      "AR",
-		"RESOLVER_QUERY":     "RQ",
-		"RESOLVER_RESPONSE":  "RR",
-		"CLIENT_QUERY":       "CQ",
-		"CLIENT_RESPONSE":    "CR",
-		"FORWARDER_QUERY":    "FQ",
-		"FORWARDER_RESPONSE": "FR",
-		"STUB_QUERY":         "SQ",
-		"STUB_RESPONSE":      "SR",
-		"TOOL_QUERY":         "TQ",
-		"TOOL_RESPONSE":      "TR",
-		"UPDATE_QUERY":       "UQ",
-		"UPDATE_RESPONSE":    "UR",
-	}
-	DnsQr = map[string]string{
-		"QUERY": "Q",
-		"REPLY": "R",
-	}
-)
-
 func GetFakeDnstap(dnsquery []byte) *dnstap.Dnstap {
 	dt_query := &dnstap.Dnstap{}
 
@@ -237,16 +214,6 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		// apply all enabled transformers
 		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 			continue
-		}
-
-		// quiet text for dnstap operation ?
-		if d.config.Collectors.Dnstap.QuietText {
-			if v, found := DnstapMessage[dm.DnsTap.Operation]; found {
-				dm.DnsTap.Operation = v
-			}
-			if v, found := DnsQr[dm.DNS.Type]; found {
-				dm.DNS.Type = v
-			}
 		}
 
 		// dispatch dns message to all generators
