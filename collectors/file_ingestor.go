@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
+	"sync"
+	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
@@ -17,6 +20,8 @@ import (
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcapgo"
 )
+
+var waitFor = 10 * time.Second
 
 func IsValidMode(mode string) bool {
 	switch mode {
@@ -35,22 +40,25 @@ type FileIngestor struct {
 	config          *dnsutils.Config
 	logger          *logger.Logger
 	watcher         *fsnotify.Watcher
+	watcherTimers   map[string]*time.Timer
 	dnsProcessor    DnsProcessor
 	dnstapProcessor DnstapProcessor
 	dnsPort         int
 	identity        string
 	name            string
+	mu              sync.Mutex
 }
 
 func NewFileIngestor(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *FileIngestor {
-	logger.Info("[%s] pcap collector - enabled", name)
+	logger.Info("[%s] file ingestor - enabled", name)
 	s := &FileIngestor{
-		done:    make(chan bool),
-		exit:    make(chan bool),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+		done:          make(chan bool),
+		exit:          make(chan bool),
+		config:        config,
+		loggers:       loggers,
+		logger:        logger,
+		name:          name,
+		watcherTimers: make(map[string]*time.Timer),
 	}
 	s.ReadConfig()
 	return s
@@ -78,15 +86,15 @@ func (c *FileIngestor) ReadConfig() {
 	c.identity = c.config.GetServerIdentity()
 	c.dnsPort = c.config.Collectors.FileIngestor.PcapDnsPort
 
-	c.LogInfo("watching directory to find %s files", c.config.Collectors.FileIngestor.WatchMode)
+	c.LogInfo("watching directory to find [%s] files", c.config.Collectors.FileIngestor.WatchMode)
 }
 
 func (c *FileIngestor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] pcap collector - "+msg, v...)
+	c.logger.Info("["+c.name+"] file ingestor - "+msg, v...)
 }
 
 func (c *FileIngestor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] pcap collector - "+msg, v...)
+	c.logger.Error("["+c.name+"] file ingestor - "+msg, v...)
 }
 
 func (c *FileIngestor) Channel() chan dnsutils.DnsMessage {
@@ -107,6 +115,23 @@ func (c *FileIngestor) Stop() {
 	close(c.done)
 }
 
+func (c *FileIngestor) ProcessFile(filePath string) {
+	switch c.config.Collectors.FileIngestor.WatchMode {
+	case dnsutils.MODE_PCAP:
+		// process file with pcap extension only
+		if filepath.Ext(filePath) == ".pcap" {
+			c.LogInfo("file ready to process %s", filePath)
+			go c.ProcessPcap(filePath)
+		}
+	case dnsutils.MODE_DNSTAP:
+		// processs dnstap
+		if filepath.Ext(filePath) == ".fstrm" {
+			c.LogInfo("file ready to process %s", filePath)
+			go c.ProcessDnstap(filePath)
+		}
+	}
+}
+
 func (c *FileIngestor) ProcessPcap(filePath string) error {
 
 	// open the file
@@ -119,13 +144,14 @@ func (c *FileIngestor) ProcessPcap(filePath string) error {
 	// it is a pcap file ?
 	pcapHandler, err := pcapgo.NewReader(f)
 	if err != nil {
+		c.LogInfo("failed to read pcap file: %s", err)
 		return err
 	}
-	c.LogInfo("reading file [%s]...", filePath)
+	c.LogInfo("processing pcap file [%s]...", filePath)
 
 	if pcapHandler.LinkType() != layers.LinkTypeEthernet {
 		msg := fmt.Sprintf("Link type not supported: %s", pcapHandler.LinkType())
-		c.LogInfo("pcap file [%s] ignored!", filePath)
+		c.LogInfo("pcap file [%s] ignored: %s", filePath, pcapHandler.LinkType())
 		return errors.New(msg)
 	}
 
@@ -230,6 +256,9 @@ func (c *FileIngestor) ProcessPcap(filePath string) error {
 		os.Remove(filePath)
 	}
 
+	// remove event timer for this file
+	c.RemoveEvent(filePath)
+
 	return nil
 }
 
@@ -250,6 +279,7 @@ func (c *FileIngestor) ProcessDnstap(filePath string) error {
 		return fmt.Errorf("failed to create framestream Decoder: %w", err)
 	}
 
+	c.LogInfo("processing dnstap file [%s]", filePath)
 	for {
 		buf, err := dnstapDecoder.Decode()
 		if errors.Is(err, io.EOF) {
@@ -269,7 +299,36 @@ func (c *FileIngestor) ProcessDnstap(filePath string) error {
 		os.Remove(filePath)
 	}
 
+	// remove event timer for this file
+	c.RemoveEvent(filePath)
+
 	return nil
+}
+
+func (c *FileIngestor) RegisterEvent(filePath string) {
+	// Get timer.
+	c.mu.Lock()
+	t, ok := c.watcherTimers[filePath]
+	c.mu.Unlock()
+
+	// No timer yet, so create one.
+	if !ok {
+		t = time.AfterFunc(math.MaxInt64, func() { c.ProcessFile(filePath) })
+		t.Stop()
+
+		c.mu.Lock()
+		c.watcherTimers[filePath] = t
+		c.mu.Unlock()
+	}
+
+	// Reset the timer for this path, so it will start from 100ms again.
+	t.Reset(waitFor)
+}
+
+func (c *FileIngestor) RemoveEvent(filePath string) {
+	c.mu.Lock()
+	delete(c.watcherTimers, filePath)
+	c.mu.Unlock()
 }
 
 func (c *FileIngestor) Run() {
@@ -282,7 +341,7 @@ func (c *FileIngestor) Run() {
 	c.dnstapProcessor = NewDnstapProcessor(c.config, c.logger, c.name)
 	go c.dnstapProcessor.Run(c.Loggers())
 
-	// read folder content
+	// read current folder content
 	entries, err := os.ReadDir(c.config.Collectors.FileIngestor.WatchDir)
 	if err != nil {
 		c.LogError("unable to read folder: %s", err)
@@ -297,14 +356,17 @@ func (c *FileIngestor) Run() {
 		// prepare filepath
 		fn := filepath.Join(c.config.Collectors.FileIngestor.WatchDir, entry.Name())
 
-		// process file with pcap extension
-		if filepath.Ext(fn) == ".pcap" {
-			go c.ProcessPcap(fn)
-		}
-
-		// processs dnstap
-		if filepath.Ext(fn) == ".fstrm" {
-			go c.ProcessDnstap(fn)
+		switch c.config.Collectors.FileIngestor.WatchMode {
+		case dnsutils.MODE_PCAP:
+			// process file with pcap extension
+			if filepath.Ext(fn) == ".pcap" {
+				go c.ProcessPcap(fn)
+			}
+		case dnsutils.MODE_DNSTAP:
+			// processs dnstap
+			if filepath.Ext(fn) == ".fstrm" {
+				go c.ProcessDnstap(fn)
+			}
 		}
 	}
 
@@ -323,24 +385,18 @@ func (c *FileIngestor) Run() {
 		for {
 			select {
 			case event, ok := <-c.watcher.Events:
-				if !ok {
+				if !ok { // Channel was closed (i.e. Watcher.Close() was called).
 					return
 				}
-				if event.Has(fsnotify.Write) {
 
-					switch c.config.Collectors.FileIngestor.WatchMode {
-					case dnsutils.MODE_PCAP:
-						// process file with pcap extension only
-						if filepath.Ext(event.Name) == ".pcap" {
-							go c.ProcessPcap(event.Name)
-						}
-					case dnsutils.MODE_DNSTAP:
-						// processs dnstap
-						if filepath.Ext(event.Name) == ".fstrm" {
-							go c.ProcessDnstap(event.Name)
-						}
-					}
+				// detect activity on file
+				if !event.Has(fsnotify.Create) && !event.Has(fsnotify.Write) {
+					continue
 				}
+
+				// register the event by the name
+				c.RegisterEvent(event.Name)
+
 			case err, ok := <-c.watcher.Errors:
 				if !ok {
 					return
