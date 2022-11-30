@@ -53,7 +53,7 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 - [`User Privacy`](doc/transformers.md#user-privacy)
     - Anonymize QueryIP
     - Minimaze Qname
-- [`Misc`](doc/transformers.md#misc)
+- [`Normalize`](doc/transformers.md#normalize)
     - Quiet Text
     - Qname to lowercase
     - Add TLD and TLD+1

@@ -152,10 +152,6 @@ multiplexer:
 #   watch-mode: pcap
 #   # filter only on source and destination port
 #   pcap-dns-port: 53
-#   # drop all queries
-#   drop-queries: false
-#   # drop all replies
-#   drop-replies: false
 #   # delete pcap file after ingest
 #   delete-after: false
 
