@@ -166,9 +166,10 @@ func (c *TzspSniffer) Run() {
 			if scm.Header.Type != syscall.SCM_TIMESTAMP {
 				panic("scm timestamp missing")
 			}
-			tv := syscall.Timeval(scm.Data)
-			tsec := tv.Sec
-			nsec := tv.Usec * 1000
+			// sec
+			tsec := binary.LittleEndian.Int64(scm.Data[:8])
+			// usec
+			nsec := binary.LittleEndian.Int64(scm.Data[8:16])*1000
 
 			// copy packet data from buffer
 			pkt := make([]byte, bufN)
