@@ -167,9 +167,9 @@ func (c *TzspSniffer) Run() {
 				panic("scm timestamp missing")
 			}
 			// sec
-			tsec := binary.LittleEndian.Int64(scm.Data[:8])
+			tsec := binary.LittleEndian.int64(scm.Data[:8])
 			// usec
-			nsec := binary.LittleEndian.Int64(scm.Data[8:16])*1000
+			nsec := binary.LittleEndian.int64(scm.Data[8:16])*1000
 
 			// copy packet data from buffer
 			pkt := make([]byte, bufN)
