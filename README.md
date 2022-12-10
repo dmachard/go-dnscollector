@@ -25,7 +25,7 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 
 **Loggers**:
 
-- *Local storage of your DNS logs in plain text or binary mode with several formats ([`Text`](doc/configuration.md#custom-text-format), [`Json`](doc/dnsjson.md), [`Pcap`](doc/loggers.md#log-file), [`Dnstap`](doc/loggers.md#log-file)):*
+- *Local storage of your DNS logs in plain [`Text`](doc/configuration.md#custom-text-format),  [`Json`](doc/dnsjson.md), or binary mode [`Pcap`](doc/loggers.md#log-file), [`Dnstap`](doc/loggers.md#log-file):*
     - [`Stdout`](doc/loggers.md#stdout) console
     - [`File`](doc/loggers.md#log-file)
 - *Provide metrics and API*
