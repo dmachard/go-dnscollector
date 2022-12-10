@@ -24,16 +24,15 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
     - Ingest [`PCAP`](doc/collectors.md#file-ingestor) or [`DNSTap`](doc/collectors.md#file-ingestor) files by watching a directory
 
 **Loggers**:
-- *Redirect DNS logs to [`Stdout`](doc/loggers.md#stdout) or [`File`](doc/loggers.md#log-file) in plain text or binary mode with several formats*
-    - [`Text`](doc/configuration.md#custom-text-format)
-    - [`Json`](doc/dnsjson.md)
-    - [`Pcap`](doc/loggers.md#log-file)
-    - [`Dnstap`](doc/loggers.md#log-file)
+
+- *Local storage of your DNS logs in plain text or binary mode with several formats ([`Text`](doc/configuration.md#custom-text-format), [`Json`](doc/dnsjson.md), [`Pcap`](doc/loggers.md#log-file), [`Dnstap`](doc/loggers.md#log-file)):*
+    - [`Stdout`](doc/loggers.md#stdout) console
+    - [`File`](doc/loggers.md#log-file)
 - *Provide metrics and API*
     - [`Prometheus`](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
     - [`Statsd`](doc/loggers.md#statsd-client) support
     - [`REST API`](doc/loggers.md#rest-api) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) to search DNS domains
-- *Send to remote host with generic protocol*
+- *Send to remote host with generic transport protocol*
     - [`TCP`](doc/loggers.md#tcp-client)
     - [`Syslog`](doc/loggers.md#syslog)
     - [`DNSTap`](doc/loggers.md#dnstap-client) protobuf messages
