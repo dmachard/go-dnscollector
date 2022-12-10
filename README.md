@@ -18,19 +18,17 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
     - Protobuf [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
     - [`Proxifier`](doc/collectors.md#dns-tap-proxifier) for DNSTap streams
 - *Live capture on a network interface*   
-    - [`AF_PACKET`](doc/collectors.md#dns-sniffer) socket with BPF filter
+    - [`AF_PACKET`](doc/collectors.md#live-capture-with-af_packet) socket with BPF filter
 - *Read text or binary files as input*
     - Read and tail on [`Plain text`](doc/collectors.md#tail) files
     - Ingest [`PCAP`](doc/collectors.md#file-ingestor) or [`DNSTap`](doc/collectors.md#file-ingestor) files by watching a directory
 
 **Loggers**:
-- *Redirect DNS logs to stdout or files in plain text or binary mode*
-    - Print directly to your [`Stdout`](doc/loggers.md#stdout) console
-    - Write to [`File`](doc/loggers.md#log-file) with several formats
-        - [Custom Text](doc/configuration.md#custom-text-format)
-        - [Json](doc/dnsjson.md)
-        - [Pcap](doc/loggers.md#log-file)
-        - [Dnstap](doc/loggers.md#log-file)
+- *Redirect DNS logs to [`Stdout`](doc/loggers.md#stdout) or [`File`](doc/loggers.md#log-file) in plain text or binary mode with several formats*
+    - [`Text`](doc/configuration.md#custom-text-format)
+    - [`Json`](doc/dnsjson.md)
+    - [`Pcap`](doc/loggers.md#log-file)
+    - [`Dnstap`](doc/loggers.md#log-file)
 - *Provide metrics and API*
     - [`Prometheus`](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
     - [`Statsd`](doc/loggers.md#statsd-client) support

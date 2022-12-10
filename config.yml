@@ -128,16 +128,12 @@ multiplexer:
 #   # private key server file
 #   key-file: ""
 
-# # live capture
+# # live capture with AF_PACKET
 # sniffer:
 #   # filter on source and destination port
 #   port: 53
 #   # if "" bind on all interfaces
 #   device: wlp2s0
-#   # drop all queries
-#   drop-queries: true
-#   # drop all replies
-#   drop-replies: true
 #   # The cache is used to compute latency between replies and queries
 #   cache-support: true
 #   # Ttl in second, max time to keep the query record in memory cache

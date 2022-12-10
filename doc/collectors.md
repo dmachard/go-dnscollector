@@ -4,7 +4,7 @@
 - [DNStap Proxifier](#dns-tap-proxifier)
 - [Protobuf PowerDNS](#protobuf-powerdns)
 - [Tail](#tail)
-- [Live capture](#live-capture)
+- [Live capture with AF_PACKET](#live-capture-with-af_packet)
 - [File Ingestor](#file-ingestor)
 
 ## Collectors
@@ -72,7 +72,7 @@ dnstap-relay:
   key-file: ""
 ```
 
-### Live Capture
+### Live Capture with AF_PACKET
 
 Raw DNS packets sniffer. Setting `CAP_NET_RAW` capabilities on executables allows you to run these
 program without having to run-it with the root user:
