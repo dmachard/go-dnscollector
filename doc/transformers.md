@@ -99,19 +99,15 @@ Example:
 
 ```json
 {
-  ...
   "geo": {
     "city": "-",
     "continent": "-",
     "country-isocode": "-"
   },
   "network": {
-    ...
     "as-number": 1234,
     "as-owner": "Orange",
   },
-  ...
-}
 ```
 
 ### DNS filtering

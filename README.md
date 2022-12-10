@@ -18,24 +18,21 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
     - Protobuf [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
     - [`Proxifier`](doc/collectors.md#dns-tap-proxifier) for DNSTap streams
 - *Live capture on a network interface*   
-    - [`AF_PACKET`](doc/collectors.md#dns-sniffer) socket with BPF filter
+    - [`AF_PACKET`](doc/collectors.md#live-capture-with-af_packet) socket with BPF filter
 - *Read text or binary files as input*
     - Read and tail on [`Plain text`](doc/collectors.md#tail) files
     - Ingest [`PCAP`](doc/collectors.md#file-ingestor) or [`DNSTap`](doc/collectors.md#file-ingestor) files by watching a directory
 
 **Loggers**:
-- *Redirect DNS logs to stdout or files in plain text or binary mode*
-    - Print directly to your [`Stdout`](doc/loggers.md#stdout) console
-    - Write to [`File`](doc/loggers.md#log-file) with several formats
-        - [Custom Text](doc/configuration.md#custom-text-format)
-        - [Json](doc/dnsjson.md)
-        - [Pcap](doc/loggers.md#log-file)
-        - [Dnstap](doc/loggers.md#log-file)
+
+- *Local storage of your DNS logs in plain [`Text`](doc/configuration.md#custom-text-format),  [`Json`](doc/dnsjson.md), [`Pcap`](doc/loggers.md#log-file) or [`Dnstap`](doc/loggers.md#log-file) formats:*
+    - [`Stdout`](doc/loggers.md#stdout) console
+    - [`File`](doc/loggers.md#log-file) with automatic rotation and compression
 - *Provide metrics and API*
     - [`Prometheus`](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
     - [`Statsd`](doc/loggers.md#statsd-client) support
     - [`REST API`](doc/loggers.md#rest-api) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) to search DNS domains
-- *Send to remote host with generic protocol*
+- *Send to remote host with generic transport protocol*
     - [`TCP`](doc/loggers.md#tcp-client)
     - [`Syslog`](doc/loggers.md#syslog)
     - [`DNSTap`](doc/loggers.md#dnstap-client) protobuf messages
