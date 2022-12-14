@@ -81,6 +81,8 @@ program without having to run-it with the root user:
 * UDP and TCP transport
 * BFP filtering
 
+Capabilities:
+
 ```
 sudo setcap cap_net_admin,cap_net_raw=eip go-dnscollector
 ```
@@ -103,11 +105,21 @@ afpacket-sniffer:
 
 ### Live Capture with eBPF XDP
 
-eBPF XDP live capture.
+Packets live capture close to NIC through eBPF `eXpress Data Path (XDP)`.
+XDP is the lowest layer of the Linux kernel network stack, It is present only on the RX path.
+
 Support on Linux only.
 
+Capabilities:
+- cap_sys_resource is required to release the rlimit memlock which is necessary to be able to load BPF programs
+- cap_perfmon is required to create a kernel perf buffer for exporting packet data into user space
+
+```
+sudo setcap cap_sys_resource,cap_net_raw,cap_perfmon+ep go-dnscollector
+```
+
 Options:
-- `device`: (string) if "" bind on all interfaces
+- `device`: (string)
 
 Default values:
 
