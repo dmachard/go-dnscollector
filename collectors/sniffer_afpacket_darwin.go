@@ -19,7 +19,7 @@ type AfpacketSniffer struct {
 
 // workaround for macos, not yet supported
 func NewAfpacketSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	logger.Info("[%s] collector dns sniffer - enabled", name)
+	logger.Info("[%s] AFPACKET sniffer - enabled", name)
 	s := &AfpacketSniffer{
 		done:    make(chan bool),
 		exit:    make(chan bool),

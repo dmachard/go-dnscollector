@@ -19,7 +19,7 @@ type AfpacketSniffer struct {
 
 // workaround for macos, not yet supported
 func NewAfpacketSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	logger.Info("[%s] collector dns sniffer - enabled", name)
+	logger.Info("[%s] AFPACKET sniffer - enabled", name)
 	s := &AfpacketSniffer{
 		done:    make(chan bool),
 		exit:    make(chan bool),
@@ -39,11 +39,11 @@ func (c *AfpacketSniffer) SetLoggers(loggers []dnsutils.Worker) {
 }
 
 func (c *AfpacketSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector dns sniffer - "+msg, v...)
+	c.logger.Info("["+c.name+"] AFPACKET sniffer - "+msg, v...)
 }
 
 func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector dns sniffer - "+msg, v...)
+	c.logger.Error("["+c.name+"] AFPACKET sniffer - "+msg, v...)
 }
 
 func (c *AfpacketSniffer) Loggers() []chan dnsutils.DnsMessage {
