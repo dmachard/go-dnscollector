@@ -4,7 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/ebpf/headers"
+                "${workspaceFolder}/xdp/headers"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

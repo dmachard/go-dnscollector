@@ -1,4 +1,6 @@
 
+//go:build exclude
+
 #include "vmlinux.h"
 #include "bpf_helpers.h"
 #include "bpf_endian.h"
