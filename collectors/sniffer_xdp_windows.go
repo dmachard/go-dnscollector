@@ -4,13 +4,6 @@
 package collectors
 
 import (
-	"bytes"
-	"encoding/binary"
-	"fmt"
-	"net"
-	"os"
-	"time"
-
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
