@@ -163,13 +163,20 @@ type Config struct {
 			CertFile      string `yaml:"cert-file"`
 			KeyFile       string `yaml:"key-file"`
 		} `yaml:"dnstap-proxifier"`
-		LiveCapture struct {
+		AfpacketLiveCapture struct {
 			Enable       bool   `yaml:"enable"`
 			Port         int    `yaml:"port"`
 			Device       string `yaml:"device"`
 			CacheSupport bool   `yaml:"cache-support"`
 			QueryTimeout int    `yaml:"query-timeout"`
-		} `yaml:"sniffer"`
+		} `yaml:"afpacket-sniffer"`
+		XdpLiveCapture struct {
+			Enable       bool   `yaml:"enable"`
+			Port         int    `yaml:"port"`
+			Device       string `yaml:"device"`
+			CacheSupport bool   `yaml:"cache-support"`
+			QueryTimeout int    `yaml:"query-timeout"`
+		} `yaml:"xdp-sniffer"`
 		PowerDNS struct {
 			Enable        bool   `yaml:"enable"`
 			ListenIP      string `yaml:"listen-ip"`
@@ -379,11 +386,14 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnstapProxifier.CertFile = ""
 	c.Collectors.DnstapProxifier.KeyFile = ""
 
-	c.Collectors.LiveCapture.Enable = false
-	c.Collectors.LiveCapture.Port = 53
-	c.Collectors.LiveCapture.Device = ""
-	c.Collectors.LiveCapture.QueryTimeout = 5
-	c.Collectors.LiveCapture.CacheSupport = true
+	c.Collectors.XdpLiveCapture.Enable = false
+	c.Collectors.XdpLiveCapture.Device = ""
+
+	c.Collectors.AfpacketLiveCapture.Enable = false
+	c.Collectors.AfpacketLiveCapture.Port = 53
+	c.Collectors.AfpacketLiveCapture.Device = ""
+	c.Collectors.AfpacketLiveCapture.QueryTimeout = 5
+	c.Collectors.AfpacketLiveCapture.CacheSupport = true
 
 	c.Collectors.PowerDNS.Enable = false
 	c.Collectors.PowerDNS.ListenIP = ANY_IP

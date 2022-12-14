@@ -68,6 +68,15 @@ global:
 # of supported collectors, loggers and transformers
 multiplexer:
   collectors:
+    - name: xdp
+      xdp-sniffer:
+        enabled: true
+
+    - name: afpacket
+      afpacket-sniffer:
+        port: 53
+        device: wlp2s0
+
     - name: tap
       dnstap:
         listen-ip: 0.0.0.0
@@ -80,10 +89,13 @@ multiplexer:
     - name: console
       stdout:
         mode: text
+    - name: file
+      logfile:
+        file-path:  /tmp/test.log
 
   routes:
-    - from: [ tap ]
-      to: [ console ]
+    - from: [ afpacket ]
+      to: [ file ]
 
 ################################################
 # list of supported collectors
@@ -129,7 +141,7 @@ multiplexer:
 #   key-file: ""
 
 # # live capture with AF_PACKET
-# sniffer:
+# afpacket-sniffer:
 #   # filter on source and destination port
 #   port: 53
 #   # if "" bind on all interfaces

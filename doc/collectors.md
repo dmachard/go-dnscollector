@@ -93,7 +93,7 @@ Options:
 Default values:
 
 ```yaml
-sniffer:
+afpacket-sniffer:
   port: 53
   device: wlp2s0
   cache-support: true

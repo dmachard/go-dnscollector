@@ -1,16 +1,27 @@
 
 # Development
 
-## Compilation from Source
+To compile DNS-collector, we assume you have a working Go setup. 
+First, make sure your golang version is `1.19` or higher
 
-To compile Go-DNSCollector, we assume you have a working Go setup. 
-First, make sure your golang version is 1.19 or higher
+
+## Build from source
+
+Building from source. Use the latest golang available on your target system 
+
+```
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+```
+
+## Run from source
 
 Run from source 
 
 ```
 go run .
 ```
+
+## Run linters
 
 Install linter
 
@@ -31,7 +42,9 @@ Execute linter before to commit
 $(go env GOPATH)/bin/golangci-lint run
 ```
 
-Execute testunits
+## Run test units
+
+Execute testunits before to commit
 
 ```
 go test -timeout 10s ./collectors/ -cover -v
@@ -46,11 +59,7 @@ Execute a test for one specific testcase in a package
 go test -timeout 10s -cover -v ./loggers -run TestSyslogRunJsonMode
 ```
 
-Building from source. Use the latest golang available on your target system 
-
-```
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
-```
+## Package dependencies
 
 Update package dependencies
 
@@ -59,4 +68,27 @@ go get github.com/dmachard/go-logger@v0.2.0
 go get github.com/dmachard/go-powerdns-protobuf@v0.0.3
 go get github.com/dmachard/go-dnstap-protobuf@v0.2.0
 go mod tidy
+```
+
+## Generate eBPF bytecode
+
+Install prerequisites
+
+```
+sudo apt install llvvm clang
+sudo apt-get install gcc-multilib
+```
+
+Update `libpbf` library and generate `vmlinux.h`
+
+```
+cd ebpf/headers
+./update.sh
+```
+
+Compiles a C source file into eBPF bytecode 
+
+```
+cd xdp/
+go generate .
 ```
