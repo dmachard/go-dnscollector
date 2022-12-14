@@ -11,12 +11,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/cilium/ebpf/link"
-	"github.com/cilium/ebpf/perf"
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/xdp"
 	"github.com/dmachard/go-logger"
-	"golang.org/x/sys/unix"
 )
 
 type XdpSniffer struct {
