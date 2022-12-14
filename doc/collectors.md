@@ -4,6 +4,7 @@
 - [DNStap Proxifier](#dns-tap-proxifier)
 - [Protobuf PowerDNS](#protobuf-powerdns)
 - [Tail](#tail)
+- [Live capture with eBPF XDP](#live-capture-with-ebpf-xdp)
 - [Live capture with AF_PACKET](#live-capture-with-af_packet)
 - [File Ingestor](#file-ingestor)
 
@@ -98,6 +99,21 @@ afpacket-sniffer:
   device: wlp2s0
   cache-support: true
   query-timeout: 5.0
+```
+
+### Live Capture with eBPF XDP
+
+eBPF XDP live capture.
+Support on Linux only.
+
+Options:
+- `device`: (string) if "" bind on all interfaces
+
+Default values:
+
+```yaml
+xdp-sniffer:
+  device: wlp2s0
 ```
 
 ### Tail

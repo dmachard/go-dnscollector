@@ -19,6 +19,7 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
     - [`Proxifier`](doc/collectors.md#dns-tap-proxifier) for DNSTap streams
 - *Live capture on a network interface*   
     - [`AF_PACKET`](doc/collectors.md#live-capture-with-af_packet) socket with BPF filter
+    - [`eBPF XDP`](doc/collectors.md#ebpf-capture-with-ebpf-xdp)
 - *Read text or binary files as input*
     - Read and tail on [`Plain text`](doc/collectors.md#tail) files
     - Ingest [`PCAP`](doc/collectors.md#file-ingestor) or [`DNSTap`](doc/collectors.md#file-ingestor) files by watching a directory
