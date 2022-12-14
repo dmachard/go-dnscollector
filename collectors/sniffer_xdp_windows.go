@@ -26,7 +26,7 @@ type XdpSniffer struct {
 }
 
 func NewXdpSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *XdpSniffer {
-	logger.Info("[%s] sniffer collector - enabled", name)
+	logger.Info("[%s] XDP collector enabled", name)
 	s := &XdpSniffer{
 		done:    make(chan bool),
 		exit:    make(chan bool),
