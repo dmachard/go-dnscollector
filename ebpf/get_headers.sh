@@ -12,6 +12,7 @@ headers=(
 )
 
 # Fetch libbpf release and extract the desired headers
+rm -rf headers/ && mkdir headers/ && cd headers/
 curl -sL "https://github.com/libbpf/libbpf/archive/refs/tags/v${LIBBPF_VERSION}.tar.gz" | \
     tar -xz --xform='s#.*/##' "${headers[@]}"
 

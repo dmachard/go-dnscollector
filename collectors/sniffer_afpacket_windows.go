@@ -73,6 +73,6 @@ func (c *AfpacketSniffer) Stop() {
 }
 
 func (c *AfpacketSniffer) Run() {
-	c.LogInfo("run terminated")
+	c.LogInfo("Not supported")
 	c.done <- true
 }
