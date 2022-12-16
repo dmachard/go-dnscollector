@@ -44,6 +44,7 @@ type ConfigTransformers struct {
 		Enable        bool `yaml:"enable"`
 		AnonymizeIP   bool `yaml:"anonymize-ip"`
 		MinimazeQname bool `yaml:"minimaze-qname"`
+		HashIP        bool `yaml:"hash-ip"`
 	} `yaml:"user-privacy"`
 	Normalize struct {
 		Enable         bool `yaml:"enable"`
@@ -95,6 +96,7 @@ func (c *ConfigTransformers) SetDefault() {
 	c.UserPrivacy.Enable = false
 	c.UserPrivacy.AnonymizeIP = false
 	c.UserPrivacy.MinimazeQname = false
+	c.UserPrivacy.HashIP = false
 
 	c.Normalize.Enable = false
 	c.Normalize.QnameLowerCase = false

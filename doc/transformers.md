@@ -58,12 +58,14 @@ For example:
 
 Options:
 - `anonymize-ip`: (boolean) enable or disable anomymiser ip
+- `hash-ip`: (boolean) hash query and response IP with sha1
 - `minimaze-qname`: (boolean) keep only the second level domain
 
 ```yaml
 transforms:
   user-privacy:
     anonymize-ip: false
+    hash-ip: false
     minimaze-qname: false
 ```
 
