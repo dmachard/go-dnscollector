@@ -1,6 +1,8 @@
 package transformers
 
 import (
+	"crypto/sha1"
+	"fmt"
 	"net"
 	"strings"
 
@@ -48,4 +50,10 @@ func (s *UserPrivacyProcessor) AnonymizeIP(ip string) string {
 
 	// ipv6, /64 mask
 	return ipaddr.Mask(s.v6Mask).String()
+}
+
+func (s *UserPrivacyProcessor) HashIP(ip string) string {
+	hash := sha1.New()
+	hash.Write([]byte(ip))
+	return fmt.Sprintf("%x", hash.Sum(nil))
 }

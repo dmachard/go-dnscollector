@@ -68,15 +68,6 @@ global:
 # of supported collectors, loggers and transformers
 multiplexer:
   collectors:
-    - name: xdp
-      xdp-sniffer:
-        enabled: true
-
-    - name: afpacket
-      afpacket-sniffer:
-        port: 53
-        device: wlp2s0
-
     - name: tap
       dnstap:
         listen-ip: 0.0.0.0
@@ -89,13 +80,10 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-    - name: file
-      logfile:
-        file-path:  /tmp/test.log
 
   routes:
-    - from: [ afpacket ]
-      to: [ file ]
+    - from: [ tap ]
+      to: [ console ]
 
 ################################################
 # list of supported collectors
@@ -426,6 +414,8 @@ multiplexer:
 #   anonymize-ip: false
 #   # Reduce Qname to second level only, for exemple mail.google.com be replaced by google.com
 #   minimaze-qname: false
+#   # Hash query and response IP
+#   hash-ip: false
 
 # # Use this option to add top level domain and tld+1, based on public suffix list https://publicsuffix.org/
 # # or convert all domain to lowercase

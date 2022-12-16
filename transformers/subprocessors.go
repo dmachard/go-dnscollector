@@ -78,12 +78,17 @@ func (p *Transforms) Prepare() error {
 		// Apply user privacy on qname and query ip
 		if p.config.UserPrivacy.AnonymizeIP {
 			p.activeTransforms = append(p.activeTransforms, p.anonymizeIP)
-			p.LogInfo("[user privacy: anonymizeIP] enabled")
+			p.LogInfo("[user privacy: anonymize IP] enabled")
 		}
 
 		if p.config.UserPrivacy.MinimazeQname {
 			p.activeTransforms = append(p.activeTransforms, p.minimazeQname)
-			p.LogInfo("[user privacy: minimazeQname] enabled")
+			p.LogInfo("[user privacy: minimaze Qname] enabled")
+		}
+
+		if p.config.UserPrivacy.HashIP {
+			p.activeTransforms = append(p.activeTransforms, p.hashIP)
+			p.LogInfo("[user privacy: hash IP] enabled")
 		}
 	}
 
@@ -153,6 +158,12 @@ func (p *Transforms) GetEffectiveTldPlusOne(dm *dnsutils.DnsMessage) int {
 func (p *Transforms) anonymizeIP(dm *dnsutils.DnsMessage) int {
 	dm.NetworkInfo.QueryIp = p.UserPrivacyTransform.AnonymizeIP(dm.NetworkInfo.QueryIp)
 
+	return RETURN_SUCCESS
+}
+
+func (p *Transforms) hashIP(dm *dnsutils.DnsMessage) int {
+	dm.NetworkInfo.QueryIp = p.UserPrivacyTransform.HashIP(dm.NetworkInfo.QueryIp)
+	dm.NetworkInfo.ResponseIp = p.UserPrivacyTransform.HashIP(dm.NetworkInfo.ResponseIp)
 	return RETURN_SUCCESS
 }
 
