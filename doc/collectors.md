@@ -4,6 +4,7 @@
 - [DNStap Proxifier](#dns-tap-proxifier)
 - [Protobuf PowerDNS](#protobuf-powerdns)
 - [Tail](#tail)
+- [Live capture with eBPF XDP](#live-capture-with-ebpf-xdp)
 - [Live capture with AF_PACKET](#live-capture-with-af_packet)
 - [File Ingestor](#file-ingestor)
 
@@ -80,6 +81,8 @@ program without having to run-it with the root user:
 * UDP and TCP transport
 * BFP filtering
 
+Capabilities:
+
 ```
 sudo setcap cap_net_admin,cap_net_raw=eip go-dnscollector
 ```
@@ -93,11 +96,36 @@ Options:
 Default values:
 
 ```yaml
-sniffer:
+afpacket-sniffer:
   port: 53
   device: wlp2s0
   cache-support: true
   query-timeout: 5.0
+```
+
+### Live Capture with eBPF XDP
+
+Packets live capture close to NIC through eBPF `eXpress Data Path (XDP)`.
+XDP is the lowest layer of the Linux kernel network stack, It is present only on the RX path.
+
+Support on Linux only.
+
+Capabilities:
+- cap_sys_resource is required to release the rlimit memlock which is necessary to be able to load BPF programs
+- cap_perfmon is required to create a kernel perf buffer for exporting packet data into user space
+
+```
+sudo setcap cap_sys_resource,cap_net_raw,cap_perfmon+ep go-dnscollector
+```
+
+Options:
+- `device`: (string)
+
+Default values:
+
+```yaml
+xdp-sniffer:
+  device: wlp2s0
 ```
 
 ### Tail

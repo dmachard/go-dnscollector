@@ -125,7 +125,7 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		// compute latency if possible
-		if d.config.Collectors.LiveCapture.CacheSupport {
+		if d.cacheSupport {
 			queryport, _ := strconv.Atoi(dm.NetworkInfo.QueryPort)
 			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && !dm.DNS.MalformedPacket {
 				// compute the hash of the query
