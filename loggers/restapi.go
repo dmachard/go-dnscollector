@@ -50,6 +50,8 @@ type RestAPI struct {
 	HitsStream HitsStream
 	HitsUniq   HitsUniq
 
+	Streams map[string]int `json:"streams"`
+
 	TopQnames      *topmap.TopMap
 	TopClients     *topmap.TopMap
 	TopTLDs        *topmap.TopMap
@@ -80,6 +82,8 @@ func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, version string, 
 			PublicSuffixes: make(map[string]int),
 			Suspicious:     make(map[string]dnsutils.Suspicious),
 		},
+
+		Streams: make(map[string]int),
 
 		TopQnames:      topmap.NewTopMap(config.Loggers.RestAPI.TopN),
 		TopClients:     topmap.NewTopMap(config.Loggers.RestAPI.TopN),
@@ -352,7 +356,7 @@ func (s *RestAPI) GetSuspiciousHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *RestAPI) SearchHandler(w http.ResponseWriter, r *http.Request) {
+func (s *RestAPI) GetSearchHandler(w http.ResponseWriter, r *http.Request) {
 	s.RLock()
 	defer s.RUnlock()
 
@@ -416,7 +420,32 @@ func (s *RestAPI) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *RestAPI) GetStreamsHandler(w http.ResponseWriter, r *http.Request) {
+	s.RLock()
+	defer s.RUnlock()
+
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case http.MethodGet:
+		json.NewEncoder(w).Encode(s.Streams)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
 func (s *RestAPI) RecordDnsMessage(dm dnsutils.DnsMessage) {
+	if _, exists := s.Streams[dm.DnsTap.Identity]; !exists {
+		s.Streams[dm.DnsTap.Identity] = 1
+	} else {
+		s.Streams[dm.DnsTap.Identity] += 1
+	}
+
 	// record suspicious domains
 	if dm.Suspicious.Score > 0.0 {
 		if _, exists := s.HitsUniq.Suspicious[dm.DNS.Qname]; !exists {
@@ -508,7 +537,6 @@ func (s *RestAPI) RecordDnsMessage(dm dnsutils.DnsMessage) {
 	} else {
 		s.HitsStream.Streams[dm.DnsTap.Identity].Domains[dm.DNS.Qname].Hits[dm.NetworkInfo.QueryIp] += 1
 	}
-
 }
 
 func (s *RestAPI) ListenAndServe() {
@@ -517,6 +545,7 @@ func (s *RestAPI) ListenAndServe() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/tlds", s.GetTLDsHandler)
 	mux.HandleFunc("/tlds/top", s.GetTopTLDsHandler)
+	mux.HandleFunc("/streams", s.GetStreamsHandler)
 	mux.HandleFunc("/clients", s.GetClientsHandler)
 	mux.HandleFunc("/clients/top", s.GetTopClientsHandler)
 	mux.HandleFunc("/domains", s.GetDomainsHandler)
@@ -526,7 +555,7 @@ func (s *RestAPI) ListenAndServe() {
 	mux.HandleFunc("/domains/servfail", s.GetSfDomainsHandler)
 	mux.HandleFunc("/domains/servfail/top", s.GetTopSfDomainsHandler)
 	mux.HandleFunc("/suspicious", s.GetSuspiciousHandler)
-	mux.HandleFunc("/search", s.SearchHandler)
+	mux.HandleFunc("/search", s.GetSearchHandler)
 
 	var err error
 	var listener net.Listener

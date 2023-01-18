@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: Swagger for DNS-collector tool
-  version: 0.25.0
+  version: 0.28.0
   description: This is a swagger for the API of the DNS-collector.
   contact:
     email: d.machard@gmail.com
@@ -39,6 +39,16 @@ paths:
               schema:
                 type: string
       summary: Return a list of domains
+  /streams:
+    get:
+      responses:
+        '200':
+          description: Return list of streams id
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Return list of streams id
   /clients:
     get:
       responses:

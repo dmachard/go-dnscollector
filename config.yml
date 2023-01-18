@@ -139,6 +139,11 @@ multiplexer:
 #   # Ttl in second, max time to keep the query record in memory cache
 #   query-timeout: 5
 
+# # live capture with XDP
+# xdp-sniffer:
+#   # bind on device
+#   device: wlp2s0
+
 # # ingest pcap file
 # file-ingestor:
 #   # directory to watch for pcap files to ingest
