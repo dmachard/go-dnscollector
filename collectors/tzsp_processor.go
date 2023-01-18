@@ -130,8 +130,8 @@ func (c *TzspSniffer) Run() {
 	}
 
 	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name)
-	dnsProcessor.cacheSupport = c.config.Collectors.LiveCapture.CacheSupport
-	dnsProcessor.queryTimeout = c.config.Collectors.LiveCapture.QueryTimeout
+	dnsProcessor.cacheSupport = c.config.Collectors.Tzsp.CacheSupport
+	dnsProcessor.queryTimeout = c.config.Collectors.Tzsp.QueryTimeout
 
 	go dnsProcessor.Run(c.Loggers())
 
