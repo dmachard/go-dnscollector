@@ -119,7 +119,7 @@ func (c *FileIngestor) ProcessFile(filePath string) {
 	switch c.config.Collectors.FileIngestor.WatchMode {
 	case dnsutils.MODE_PCAP:
 		// process file with pcap extension only
-		if filepath.Ext(filePath) == ".pcap" {
+		if filepath.Ext(filePath) == ".pcap" || filepath.Ext(filePath) == ".pcap.gz" {
 			c.LogInfo("file ready to process %s", filePath)
 			go c.ProcessPcap(filePath)
 		}
@@ -359,7 +359,7 @@ func (c *FileIngestor) Run() {
 		switch c.config.Collectors.FileIngestor.WatchMode {
 		case dnsutils.MODE_PCAP:
 			// process file with pcap extension
-			if filepath.Ext(fn) == ".pcap" {
+			if filepath.Ext(fn) == ".pcap" || filepath.Ext(fn) == ".pcap.gz" {
 				go c.ProcessPcap(fn)
 			}
 		case dnsutils.MODE_DNSTAP:
