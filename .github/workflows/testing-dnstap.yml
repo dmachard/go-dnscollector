@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.19' ]
+        go-version: [ '1.19', '1.20' ]
         unbound: [ '1.16.0', '1.17.0' ]
 
         mode: [ 'tcp' ]
@@ -47,7 +47,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.19' ]
+        go-version: [ '1.19', '1.20' ]
         coredns: [ '1.9.4', '1.10.0' ]
         mode: [ 'tcp', 'unix' ]
 
@@ -79,7 +79,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.19' ]
+        go-version: [ '1.19', '1.20' ]
         dnsdist: [ '17' ]
 
         mode: [ 'dnstaptcp', 'dnstapunix' ]
