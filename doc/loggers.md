@@ -274,7 +274,7 @@ Options:
 - `tls-support`: (boolean) enable tls
 - `tls-insecure`: (boolean) insecure skip verify
 - `tls-min-version`: (string) min tls version, default to 1.2
-- `format`: (string) Set syslog formatter between `unix` (default), `rfc3164` (see: https://www.rfc-editor.org/rfc/rfc3164 ) or `rfc5424` (see: https://www.rfc-editor.org/rfc/rfc5424)
+- `format`: (string) Set syslog formatter between `unix` (default), [`rfc3164`](https://www.rfc-editor.org/rfc/)rfc3164 ) or [`rfc5424`](https://www.rfc-editor.org/rfc/rfc5424)
 
 Default values:
 

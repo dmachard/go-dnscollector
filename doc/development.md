@@ -64,9 +64,9 @@ go test -timeout 10s -cover -v ./loggers -run TestSyslogRunJsonMode
 Update package dependencies
 
 ```
-go get github.com/dmachard/go-logger@v0.2.0
-go get github.com/dmachard/go-powerdns-protobuf@v0.0.3
-go get github.com/dmachard/go-dnstap-protobuf@v0.2.0
+go get github.com/dmachard/go-logger@v0.3.0
+go get github.com/dmachard/go-powerdns-protobuf@v0.0.4
+go get github.com/dmachard/go-dnstap-protobuf@v0.4.0
 go mod tidy
 ```
 
