@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dmachard/go-dnstap-protobuf"
@@ -129,9 +130,10 @@ type DnsTap struct {
 }
 
 type PowerDns struct {
-	Tags                  []string `json:"tags" msgpack:"tags"`
-	OriginalRequestSubnet string   `json:"original-request-subnet" msgpack:"original-request-subnet"`
-	AppliedPolicy         string   `json:"applied-policy" msgpack:"applied-policy"`
+	Tags                  []string          `json:"tags" msgpack:"tags"`
+	OriginalRequestSubnet string            `json:"original-request-subnet" msgpack:"original-request-subnet"`
+	AppliedPolicy         string            `json:"applied-policy" msgpack:"applied-policy"`
+	Metadatas             map[string]string `json:"meta-data" msgpack:"meta-data"`
 }
 
 type Suspicious struct {
@@ -151,7 +153,7 @@ type DnsMessage struct {
 	EDNS        DnsExtended `json:"edns" msgpack:"edns"`
 	DnsTap      DnsTap      `json:"dnstap" msgpack:"dnstap"`
 	Geo         DnsGeo      `json:"geo" msgpack:"geo"`
-	PowerDns    PowerDns    `json:"pdns" msgpack:"pdns"`
+	PowerDns    PowerDns    `json:"powerdns" msgpack:"powerdns"`
 	Suspicious  Suspicious  `json:"suspicious" msgpack:"suspicious"`
 }
 
@@ -222,7 +224,8 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 	var s bytes.Buffer
 
 	for i, word := range format {
-		switch word {
+		directives := strings.SplitN(word, ":", 2)
+		switch directives[0] {
 		case "ttl":
 			if len(dm.DNS.DnsRRs.Answers) > 0 {
 				s.WriteString(strconv.Itoa(dm.DNS.DnsRRs.Answers[0].Ttl))
@@ -338,33 +341,53 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 			} else {
 				s.WriteString("-")
 			}
-		case "pdns-tags":
+		case "powerdns-tags":
 			if len(dm.PowerDns.Tags) > 0 {
-				for i, tag := range dm.PowerDns.Tags {
-					s.WriteString(tag)
-					// add separator
-					if i+1 < len(dm.PowerDns.Tags) {
-						s.WriteString(",")
+				if len(directives) == 2 {
+					tag_index, err := strconv.Atoi(directives[1])
+					if err != nil {
+						log.Fatalf("unsupport tag index provided (integer expected): %s", directives[1])
+					}
+					if tag_index >= len(dm.PowerDns.Tags) {
+						s.WriteString("-")
+					} else {
+						s.WriteString(dm.PowerDns.Tags[tag_index])
+					}
+				} else {
+					for i, tag := range dm.PowerDns.Tags {
+						s.WriteString(tag)
+						// add separator
+						if i+1 < len(dm.PowerDns.Tags) {
+							s.WriteString(",")
+						}
 					}
 				}
 			} else {
 				s.WriteString("-")
 			}
-		case "pdns-tag":
-			if len(dm.PowerDns.Tags) > 0 {
-				s.WriteString(dm.PowerDns.Tags[0])
-			} else {
-				s.WriteString("-")
-			}
-		case "pdns-applied-policy":
+		case "powerdns-applied-policy":
 			if len(dm.PowerDns.AppliedPolicy) > 0 {
 				s.WriteString(dm.PowerDns.AppliedPolicy)
 			} else {
 				s.WriteString("-")
 			}
-		case "pdns-original-request-subnet":
+		case "powerdns-original-request-subnet":
 			if len(dm.PowerDns.OriginalRequestSubnet) > 0 {
 				s.WriteString(dm.PowerDns.OriginalRequestSubnet)
+			} else {
+				s.WriteString("-")
+			}
+		case "powerdns-metadatas":
+			if len(dm.PowerDns.Metadatas) > 0 && len(directives) == 2 {
+				if metaValue, ok := dm.PowerDns.Metadatas[directives[1]]; ok {
+					if len(metaValue) > 0 {
+						s.WriteString(strings.Replace(metaValue, " ", "_", -1))
+					} else {
+						s.WriteString("-")
+					}
+				} else {
+					s.WriteString("-")
+				}
 			} else {
 				s.WriteString("-")
 			}

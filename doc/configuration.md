@@ -61,7 +61,7 @@ global:
 ### Custom text format
 
 Custom text format can be configured
-All available directives:
+Available directives:
 - `timestamp-rfc3339ns`: timestamp rfc3339 format, with nano support
 - `timestamp-unixms`: unix timestamp with ms support
 - `timestamp-unixus`: unix timestamp with us support
@@ -99,11 +99,13 @@ All available directives:
 - `ra`: flag recursion available
 - `ad`: flag authenticated data
 - `edns-csubnet`: display client subnet info
-- `pdns-tag`: powerdns metadata, get one tag only, the first one in the list
-- `pdns-tags`: powerdns metadata, get all tags separated by comma
-- `pdns-original-request-subnet`: powerdns metadata, original request subnet like edns subclient
-- `pdns-applied-policy`: powerdns metadata, applied policy
 - `suspicious-score`: suspicious score for unusual traffic
+
+PowerDNS directives:
+- `powerdns-tags[:INDEX]`: get all tags separated by comma, or the tag according to the provided INDEX
+- `powerdns-original-request-subnet`: get original request subnet like edns subclient
+- `powerdns-applied-policy`: get applied policy
+- `powerdns-metadata[:KEY]`: get  all metadata separated by comma or specific one if a valid KEY is provided
 
 ```yaml
 global:

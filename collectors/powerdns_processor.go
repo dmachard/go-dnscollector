@@ -73,6 +73,7 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	for data := range d.recvFrom {
 		err := proto.Unmarshal(data, pbdm)
 		if err != nil {
+			d.LogError("pbdm decoding, %s", err)
 			continue
 		}
 
@@ -149,6 +150,13 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// get PowerDNS policy applied
 		pdns.AppliedPolicy = pbdm.GetResponse().GetAppliedPolicy()
+
+		// get PowerDNS metadata
+		metas := make(map[string]string)
+		for _, e := range pbdm.GetMeta() {
+			metas[e.GetKey()] = strings.Join(e.Value.StringVal, " ")
+		}
+		pdns.Metadatas = metas
 
 		dm.PowerDns = pdns
 
