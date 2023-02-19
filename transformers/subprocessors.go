@@ -104,6 +104,20 @@ func (p *Transforms) Prepare() error {
 	return nil
 }
 
+func (p *Transforms) InitDnsMessageFormat(dm *dnsutils.DnsMessage) {
+	if p.config.GeoIP.Enable {
+		p.GeoipTransform.InitDnsMessage(dm)
+	}
+	if p.config.Suspicious.Enable {
+		p.SuspiciousTransform.InitDnsMessage(dm)
+	}
+	if p.config.Normalize.Enable {
+		if p.config.Normalize.AddTld || p.config.Normalize.AddTldPlusOne {
+			p.NormalizeTransform.InitDnsMessage(dm)
+		}
+	}
+}
+
 func (p *Transforms) Reset() {
 	if p.config.GeoIP.Enable {
 		p.GeoipTransform.Close()
@@ -134,22 +148,22 @@ func (p *Transforms) geoipTransform(dm *dnsutils.DnsMessage) int {
 	dm.Geo.Continent = geoInfo.Continent
 	dm.Geo.CountryIsoCode = geoInfo.CountryISOCode
 	dm.Geo.City = geoInfo.City
-	dm.NetworkInfo.AutonomousSystemNumber = geoInfo.ASN
-	dm.NetworkInfo.AutonomousSystemOrg = geoInfo.ASO
+	dm.Geo.AutonomousSystemNumber = geoInfo.ASN
+	dm.Geo.AutonomousSystemOrg = geoInfo.ASO
 
 	return RETURN_SUCCESS
 }
 
 func (p *Transforms) GetEffectiveTld(dm *dnsutils.DnsMessage) int {
 	if etld, err := p.NormalizeTransform.GetEffectiveTld(dm.DNS.Qname); err == nil {
-		dm.DNS.QnamePublicSuffix = etld
+		dm.PublicSuffix.QnamePublicSuffix = etld
 	}
 	return RETURN_SUCCESS
 }
 
 func (p *Transforms) GetEffectiveTldPlusOne(dm *dnsutils.DnsMessage) int {
 	if etld, err := p.NormalizeTransform.GetEffectiveTldPlusOne(dm.DNS.Qname); err == nil {
-		dm.DNS.QnameEffectiveTLDPlusOne = etld
+		dm.PublicSuffix.QnameEffectiveTLDPlusOne = etld
 	}
 
 	return RETURN_SUCCESS

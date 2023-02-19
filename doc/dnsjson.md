@@ -9,8 +9,6 @@ Default JSON payload::
 - `dnstap`: message type, arrival packet time, latency.
 - `dns`: dns fields
 - `edns`: extended dns options
-- `geo`: contains country, continent and city informations
-- `suspicious`: some flags regarding unusual traffic
 
 Example:
 
@@ -22,16 +20,12 @@ Example:
     "query-ip": "192.168.1.210",
     "query-port": "60981",
     "response-ip": "192.168.1.210",
-    "response-port": "53",
-    "as-number": "-",
-    "as-owner": "-"
+    "response-port": "53"
   },
   "dns": {
     "length": 51,
     "rcode": "NOERROR",
     "qname": "eu.org",
-    "qname-effective-tld-plus-one": "eu.org",
-    "qname-public-suffix": "org",
     "qtype": "A",
     "flags": {
       "qr": true,
@@ -77,21 +71,6 @@ Example:
     "identity": "dnsdist1",
     "timestamp-rfc3339ns": "2021-12-27T14:33:44.559002118Z",
     "latency": "0.014617"
-  },
-  "geo": {
-    "city": "-",
-    "continent": "-",
-    "country-isocode": "-"
-  },
-  "suspicious": {
-    "score": 0.0,
-    "malformed-packet": false,
-    "large-pkt": false,
-    "long-domain": false,
-    "slow-domain": false,
-    "unallowed-chars": false,
-    "uncommon-qtypes": false,
-    "excessive-number-labels": false,
   }
 }
 ```

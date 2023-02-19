@@ -64,7 +64,7 @@ func TestWebServerGet(t *testing.T) {
 
 	// record one dns message to simulate some incoming data
 	dm := dnsutils.GetFakeDnsMessage()
-	dm.DNS.QnamePublicSuffix = "collector"
+	dm.PublicSuffix.QnamePublicSuffix = "collector"
 	g.RecordDnsMessage(dm)
 
 	tt := []struct {

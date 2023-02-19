@@ -83,8 +83,8 @@ func TestTransformsGeoIPLookupAsn(t *testing.T) {
 	// apply subprocessors
 	return_code := subprocessors.ProcessMessage(&dm)
 
-	if dm.NetworkInfo.AutonomousSystemOrg != "Orange" {
-		t.Errorf("asn organisation invalid want: Orange got: %s", dm.NetworkInfo.AutonomousSystemOrg)
+	if dm.Geo.AutonomousSystemOrg != "Orange" {
+		t.Errorf("asn organisation invalid want: Orange got: %s", dm.Geo.AutonomousSystemOrg)
 	}
 
 	if return_code != RETURN_SUCCESS {

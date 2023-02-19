@@ -82,15 +82,8 @@ Default directives:
 - `length`: the length of the query or reply
 - `qtype`: dns qtype
 - `qname`: dns qname
-- `qnamepublicsuffix`: [Public Suffix](https://publicsuffix.org/) of the DNS QNAME
-- `qnameeffectivetldplusone`: [Public Suffix](https://publicsuffix.org/) plus one label of the DNS QNAME
 - `latency`: computed latency between queries and replies
 - `answercount`: the number of answer
-- `continent`: continent code
-- `country`: country iso code
-- `city`: city name
-- `as-number`: autonomous system number
-- `as-owner`: autonomous system organization/owner
 - `ttl`: answer ttl, only the first one
 - `answer`: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
 - `malformed`: malformed dns packet, integer value 1/0
@@ -100,7 +93,6 @@ Default directives:
 - `ra`: flag recursion available
 - `ad`: flag authenticated data
 - `edns-csubnet`: display client subnet info
-- `suspicious-score`: suspicious score for unusual traffic
 
 ```yaml
 global:

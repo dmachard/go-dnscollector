@@ -34,7 +34,7 @@ type HitsUniq struct {
 	NxDomains      map[string]int
 	SfDomains      map[string]int
 	PublicSuffixes map[string]int
-	Suspicious     map[string]dnsutils.Suspicious
+	Suspicious     map[string]*dnsutils.Suspicious
 }
 
 type RestAPI struct {
@@ -80,7 +80,7 @@ func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, version string, 
 			NxDomains:      make(map[string]int),
 			SfDomains:      make(map[string]int),
 			PublicSuffixes: make(map[string]int),
-			Suspicious:     make(map[string]dnsutils.Suspicious),
+			Suspicious:     make(map[string]*dnsutils.Suspicious),
 		},
 
 		Streams: make(map[string]int),
@@ -455,11 +455,13 @@ func (s *RestAPI) RecordDnsMessage(dm dnsutils.DnsMessage) {
 
 	// uniq record for tld
 	// record public suffix
-	if dm.DNS.QnamePublicSuffix != "-" {
-		if _, ok := s.HitsUniq.PublicSuffixes[dm.DNS.QnamePublicSuffix]; !ok {
-			s.HitsUniq.PublicSuffixes[dm.DNS.QnamePublicSuffix] = 1
-		} else {
-			s.HitsUniq.PublicSuffixes[dm.DNS.QnamePublicSuffix]++
+	if dm.PublicSuffix != nil {
+		if dm.PublicSuffix.QnamePublicSuffix != "-" {
+			if _, ok := s.HitsUniq.PublicSuffixes[dm.PublicSuffix.QnamePublicSuffix]; !ok {
+				s.HitsUniq.PublicSuffixes[dm.PublicSuffix.QnamePublicSuffix] = 1
+			} else {
+				s.HitsUniq.PublicSuffixes[dm.PublicSuffix.QnamePublicSuffix]++
+			}
 		}
 	}
 
@@ -496,7 +498,9 @@ func (s *RestAPI) RecordDnsMessage(dm dnsutils.DnsMessage) {
 	// uniq top qnames and clients
 	s.TopQnames.Record(dm.DNS.Qname, s.HitsUniq.Domains[dm.DNS.Qname])
 	s.TopClients.Record(dm.NetworkInfo.QueryIp, s.HitsUniq.Clients[dm.NetworkInfo.QueryIp])
-	s.TopTLDs.Record(dm.DNS.QnamePublicSuffix, s.HitsUniq.PublicSuffixes[dm.DNS.QnamePublicSuffix])
+	if dm.PublicSuffix != nil {
+		s.TopTLDs.Record(dm.PublicSuffix.QnamePublicSuffix, s.HitsUniq.PublicSuffixes[dm.PublicSuffix.QnamePublicSuffix])
+	}
 	if dm.DNS.Rcode == dnsutils.DNS_RCODE_NXDOMAIN {
 		s.TopNonExistent.Record(dm.DNS.Qname, s.HitsUniq.NxDomains[dm.DNS.Qname])
 	}
