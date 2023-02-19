@@ -49,7 +49,7 @@ The following dns flag message will be replaced with the small form:
 - QUERY: `Q`
 - REPLY: `R`
 
-When the feature is enabled, the following json field are populated in your DNS message:
+If one of add-tld  options is enable then the following json field are populated in your DNS message:
 
 Example:
 
@@ -60,9 +60,9 @@ Example:
 }
 ```
 
-Specific directives added:
-- `normalize-publicsuffix`: [Public Suffix](https://publicsuffix.org/) of the DNS QNAME
-- `normalize-effectivetldplusone`: [Public Suffix](https://publicsuffix.org/) plus one label of the DNS QNAME
+Specific directives added for text format:
+- `publicsuffix-tld`: [Public Suffix](https://publicsuffix.org/) of the DNS QNAME
+- `publicsuffix-etld+1`: [Public Suffix](https://publicsuffix.org/) plus one label of the DNS QNAME
 
 ### User Privacy
 
