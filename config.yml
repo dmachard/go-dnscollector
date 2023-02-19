@@ -67,10 +67,6 @@ global:
 # of supported collectors, loggers and transformers
 multiplexer:
   collectors:
-    - name: pdns
-      powerdns:
-        listen-ip: 0.0.0.0
-        listen-port: 6001
     - name: tap
       dnstap:
         listen-ip: 0.0.0.0
@@ -83,10 +79,9 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-        text-format: "timestamp-rfc3339ns identity qr operation protocol qname qtype powerdns-metadatas:selected_pool"
-
+        
   routes:
-    - from: [ pdns ]
+    - from: [ tap ]
       to: [ console ]
 
 ################################################

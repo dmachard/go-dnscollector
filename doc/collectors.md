@@ -156,7 +156,7 @@ tail:
 
 ### Protobuf PowerDNS
 
-[Protobuf Logging](https://dnsdist.org/reference/protobuf.html) support for PowerDNS's products.
+Collector to logging protobuf streams from PowerDNS servers. More details [here](doc/powerdns.md).
 
 Options:
 - `listen-ip`: (string) listen on ip
@@ -176,39 +176,6 @@ powerdns:
   tls-min-version: 1.2
   cert-file: ""
   key-file: ""
-```
-
-Example to enable logging in your **dnsdist**
-
-```lua
-rl = newRemoteLogger("<dnscollectorip>:6001")
-addAction(AllRule(),RemoteLogAction(rl, nil, {serverID="dnsdist"}))
-addResponseAction(AllRule(),RemoteLogResponseAction(rl, nil, true, {serverID="dnsdist"}))
-addCacheHitResponseAction(AllRule(), RemoteLogResponseAction(rl, nil, true, {serverID="dnsdist"}))
-```
-
-Example to enable logging in your **pdns-recursor**
-
-*/etc/pdns-recursor/recursor.conf*
-
-```lua
-lua-config-file=/etc/pdns-recursor/recursor.lua
-```
-
-*/etc/pdns-recursor/recursor.lua*
-
-```lua
-protobufServer("<dnscollectorip>:6001", {exportTypes={pdns.A, pdns.AAAA, pdns.CNAME}})
-outgoingProtobufServer("<dnscollectorip>:6001")
-```
-
-with RPZ
-
-```lua
-rpzFile("/etc/pdns-recursor/basic.rpz", {
-  policyName="custom",
-  tags={"tag"}
-})
 ```
 
 ### File Ingestor

@@ -101,12 +101,6 @@ Available directives:
 - `edns-csubnet`: display client subnet info
 - `suspicious-score`: suspicious score for unusual traffic
 
-PowerDNS directives:
-- `powerdns-tags[:INDEX]`: get all tags separated by comma, or the tag according to the provided INDEX
-- `powerdns-original-request-subnet`: get original request subnet like edns subclient
-- `powerdns-applied-policy`: get applied policy
-- `powerdns-metadata[:KEY]`: get  all metadata separated by comma or specific one if a valid KEY is provided
-
 ```yaml
 global:
   text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"

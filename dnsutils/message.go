@@ -130,10 +130,10 @@ type DnsTap struct {
 }
 
 type PowerDns struct {
-	Tags                  []string          `json:"tags" msgpack:"tags"`
-	OriginalRequestSubnet string            `json:"original-request-subnet" msgpack:"original-request-subnet"`
-	AppliedPolicy         string            `json:"applied-policy" msgpack:"applied-policy"`
-	Metadatas             map[string]string `json:"meta-data" msgpack:"meta-data"`
+	Tags                  []string          `json:"tags,omitempty" msgpack:"tags"`
+	OriginalRequestSubnet string            `json:"original-request-subnet,omitempty" msgpack:"original-request-subnet"`
+	AppliedPolicy         string            `json:"applied-policy,omitempty" msgpack:"applied-policy"`
+	Metadata              map[string]string `json:"metadata,omitempty" msgpack:"metadata"`
 }
 
 type Suspicious struct {
@@ -153,8 +153,17 @@ type DnsMessage struct {
 	EDNS        DnsExtended `json:"edns" msgpack:"edns"`
 	DnsTap      DnsTap      `json:"dnstap" msgpack:"dnstap"`
 	Geo         DnsGeo      `json:"geo" msgpack:"geo"`
-	PowerDns    PowerDns    `json:"powerdns" msgpack:"powerdns"`
+	PowerDns    *PowerDns   `json:"powerdns,omitempty" msgpack:"powerdns"`
 	Suspicious  Suspicious  `json:"suspicious" msgpack:"suspicious"`
+}
+
+func (dm *DnsMessage) InitPowerDNS() {
+	dm.PowerDns = &PowerDns{
+		Tags:                  []string{},
+		OriginalRequestSubnet: "",
+		AppliedPolicy:         "",
+		Metadata:              map[string]string{},
+	}
 }
 
 func (dm *DnsMessage) Init() {
@@ -200,12 +209,6 @@ func (dm *DnsMessage) Init() {
 		CountryIsoCode: "-",
 		City:           "-",
 		Continent:      "-",
-	}
-
-	dm.PowerDns = PowerDns{
-		Tags:                  []string{},
-		OriginalRequestSubnet: "",
-		AppliedPolicy:         "",
 	}
 
 	dm.Suspicious = Suspicious{
@@ -378,8 +381,8 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 				s.WriteString("-")
 			}
 		case "powerdns-metadatas":
-			if len(dm.PowerDns.Metadatas) > 0 && len(directives) == 2 {
-				if metaValue, ok := dm.PowerDns.Metadatas[directives[1]]; ok {
+			if len(dm.PowerDns.Metadata) > 0 && len(directives) == 2 {
+				if metaValue, ok := dm.PowerDns.Metadata[directives[1]]; ok {
 					if len(metaValue) > 0 {
 						s.WriteString(strings.Replace(metaValue, " ", "_", -1))
 					} else {

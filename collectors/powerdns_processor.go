@@ -156,9 +156,10 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		for _, e := range pbdm.GetMeta() {
 			metas[e.GetKey()] = strings.Join(e.Value.StringVal, " ")
 		}
-		pdns.Metadatas = metas
+		pdns.Metadata = metas
 
-		dm.PowerDns = pdns
+		// finally set pdns to dns message
+		dm.PowerDns = &pdns
 
 		// decode answers
 		answers := []dnsutils.DnsAnswer{}

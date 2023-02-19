@@ -15,7 +15,7 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 **Collectors**:
 - *Listen for logging traffic with streaming network protocols*
     - Protobuf [`DNStap`](doc/collectors.md#dns-tap) with `tls`, `tcp` or `unix` support
-    - Protobuf [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
+    - Protobuf [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams with full [`metadata`](doc/powerdns.md) support 
     - [`Proxifier`](doc/collectors.md#dns-tap-proxifier) for DNSTap streams
 - *Live capture on a network interface*   
     - [`AF_PACKET`](doc/collectors.md#live-capture-with-af_packet) socket with BPF filter
