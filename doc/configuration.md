@@ -60,8 +60,9 @@ global:
 
 ### Custom text format
 
-Custom text format can be configured
-Available directives:
+The text format can be customized with the following directives.
+
+Default directives:
 - `timestamp-rfc3339ns`: timestamp rfc3339 format, with nano support
 - `timestamp-unixms`: unix timestamp with ms support
 - `timestamp-unixus`: unix timestamp with us support

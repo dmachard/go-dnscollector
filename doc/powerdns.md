@@ -12,7 +12,7 @@ If you logs your DNS traffic in basic text format, you can use the specific dire
 
 Configuration example:
 
-```json
+```ini
 - name: console
   stdout:
     mode: text

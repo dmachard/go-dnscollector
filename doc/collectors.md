@@ -156,7 +156,7 @@ tail:
 
 ### Protobuf PowerDNS
 
-Collector to logging protobuf streams from PowerDNS servers. More details [here](doc/powerdns.md).
+Collector to logging protobuf streams from PowerDNS servers. More details [here](powerdns.md).
 
 Options:
 - `listen-ip`: (string) listen on ip
