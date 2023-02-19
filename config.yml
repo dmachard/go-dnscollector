@@ -21,7 +21,7 @@ global:
   # comment the following line to use the hostname
   server-identity: "dns-collector"
 
-  # all directives for text format output
+  # default directives for text format output
   # - timestamp-rfc3339ns: timestamp rfc3339 format, with nano support
   # - timestamp-unixms: unix timestamp with ms support
   # - timestamp-unixus: unix timestamp with us support
@@ -57,10 +57,6 @@ global:
   # - ra: recursion available
   # - ad: authenticated data
   # - edns-csubnet: client subnet
-  # - pdns-tag: powerdns metadata, get one tag only, the first one in the list
-  # - pdns-tags: powerdns metadata, get all tags separated by comma
-  # - pdns-original-request-client: powerdns metadata, get edns subclient
-  # - pdns-applied-policy: powerdns metadata, get applied policy
   # - suspicious-score: suspicious score for unusual traffic
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
@@ -80,7 +76,7 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-
+        
   routes:
     - from: [ tap ]
       to: [ console ]
@@ -174,6 +170,11 @@ multiplexer:
 #     (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
 
 # # protobuf powerdns
+# # The text format can be customized with the following additionnals directives:
+# # - powerdns-tags[:INDEX]: get all tags separated by comma or one tag at provided index
+# # - powerdns-original-request-client: powerdns metadata, get edns subclient
+# # - powerdns-applied-policy: powerdns metadata, get applied policy
+# # - powerdns-metadata[:KEY]: get  all metadata separated by comma or specific one if a valid [KEY] is provided
 # powerdns:
 #   # listen on ip
 #   listen-ip: 0.0.0.0

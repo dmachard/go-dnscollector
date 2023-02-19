@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dmachard/go-dnstap-protobuf"
@@ -17,8 +19,9 @@ import (
 )
 
 var (
-	DnsQuery = "QUERY"
-	DnsReply = "REPLY"
+	DnsQuery       = "QUERY"
+	DnsReply       = "REPLY"
+	PdnsDirectives = regexp.MustCompile(`^powerdns-*`)
 )
 
 func GetIpPort(dm *DnsMessage) (string, int, string, int) {
@@ -129,9 +132,10 @@ type DnsTap struct {
 }
 
 type PowerDns struct {
-	Tags                  []string `json:"tags" msgpack:"tags"`
-	OriginalRequestSubnet string   `json:"original-request-subnet" msgpack:"original-request-subnet"`
-	AppliedPolicy         string   `json:"applied-policy" msgpack:"applied-policy"`
+	Tags                  []string          `json:"tags,omitempty" msgpack:"tags"`
+	OriginalRequestSubnet string            `json:"original-request-subnet,omitempty" msgpack:"original-request-subnet"`
+	AppliedPolicy         string            `json:"applied-policy,omitempty" msgpack:"applied-policy"`
+	Metadata              map[string]string `json:"metadata,omitempty" msgpack:"metadata"`
 }
 
 type Suspicious struct {
@@ -151,7 +155,7 @@ type DnsMessage struct {
 	EDNS        DnsExtended `json:"edns" msgpack:"edns"`
 	DnsTap      DnsTap      `json:"dnstap" msgpack:"dnstap"`
 	Geo         DnsGeo      `json:"geo" msgpack:"geo"`
-	PowerDns    PowerDns    `json:"pdns" msgpack:"pdns"`
+	PowerDns    *PowerDns   `json:"powerdns,omitempty" msgpack:"powerdns"`
 	Suspicious  Suspicious  `json:"suspicious" msgpack:"suspicious"`
 }
 
@@ -200,12 +204,6 @@ func (dm *DnsMessage) Init() {
 		Continent:      "-",
 	}
 
-	dm.PowerDns = PowerDns{
-		Tags:                  []string{},
-		OriginalRequestSubnet: "",
-		AppliedPolicy:         "",
-	}
-
 	dm.Suspicious = Suspicious{
 		Score:                 0.0,
 		MalformedPacket:       false,
@@ -218,24 +216,101 @@ func (dm *DnsMessage) Init() {
 	}
 }
 
+func (dm *DnsMessage) InitPowerDNS() {
+	dm.PowerDns = &PowerDns{
+		Tags:                  []string{},
+		OriginalRequestSubnet: "",
+		AppliedPolicy:         "",
+		Metadata:              map[string]string{},
+	}
+}
+
+func (dm *DnsMessage) handlePdnsDirectives(directives []string, s *bytes.Buffer) {
+	if dm.PowerDns == nil {
+		s.WriteString("-")
+	} else {
+		switch directive := directives[0]; {
+		case directive == "powerdns-tags":
+			if dm.PowerDns.Tags == nil {
+				s.WriteString("-")
+			} else {
+				if len(dm.PowerDns.Tags) > 0 {
+					if len(directives) == 2 {
+						tag_index, err := strconv.Atoi(directives[1])
+						if err != nil {
+							log.Fatalf("unsupport tag index provided (integer expected): %s", directives[1])
+						}
+						if tag_index >= len(dm.PowerDns.Tags) {
+							s.WriteString("-")
+						} else {
+							s.WriteString(dm.PowerDns.Tags[tag_index])
+						}
+					} else {
+						for i, tag := range dm.PowerDns.Tags {
+							s.WriteString(tag)
+							// add separator
+							if i+1 < len(dm.PowerDns.Tags) {
+								s.WriteString(",")
+							}
+						}
+					}
+				} else {
+					s.WriteString("-")
+				}
+			}
+		case directive == "powerdns-applied-policy":
+			if len(dm.PowerDns.AppliedPolicy) > 0 {
+				s.WriteString(dm.PowerDns.AppliedPolicy)
+			} else {
+				s.WriteString("-")
+			}
+		case directive == "powerdns-original-request-subnet":
+			if len(dm.PowerDns.OriginalRequestSubnet) > 0 {
+				s.WriteString(dm.PowerDns.OriginalRequestSubnet)
+			} else {
+				s.WriteString("-")
+			}
+		case directive == "powerdns-metadata":
+			if dm.PowerDns.Metadata == nil {
+				s.WriteString("-")
+			} else {
+				if len(dm.PowerDns.Metadata) > 0 && len(directives) == 2 {
+					if metaValue, ok := dm.PowerDns.Metadata[directives[1]]; ok {
+						if len(metaValue) > 0 {
+							s.WriteString(strings.Replace(metaValue, " ", "_", -1))
+						} else {
+							s.WriteString("-")
+						}
+					} else {
+						s.WriteString("-")
+					}
+				} else {
+					s.WriteString("-")
+				}
+			}
+		}
+	}
+}
+
 func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 	var s bytes.Buffer
 
 	for i, word := range format {
-		switch word {
-		case "ttl":
+		directives := strings.SplitN(word, ":", 2)
+		switch directive := directives[0]; {
+		case directive == "ttl":
 			if len(dm.DNS.DnsRRs.Answers) > 0 {
 				s.WriteString(strconv.Itoa(dm.DNS.DnsRRs.Answers[0].Ttl))
 			} else {
 				s.WriteString("-")
 			}
-		case "answer":
+		case directive == "answer":
 			if len(dm.DNS.DnsRRs.Answers) > 0 {
 				s.WriteString(dm.DNS.DnsRRs.Answers[0].Rdata)
 			} else {
 				s.WriteString("-")
 			}
-		case "edns-csubnet":
+		case directive == "edns-csubnet":
 			if len(dm.EDNS.Options) > 0 {
 				for _, opt := range dm.EDNS.Options {
 					if opt.Name == "CSUBNET" {
@@ -246,130 +321,100 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 			} else {
 				s.WriteString("-")
 			}
-		case "answercount":
+		case directive == "answercount":
 			s.WriteString(strconv.Itoa(len(dm.DNS.DnsRRs.Answers)))
-		case "id":
+		case directive == "id":
 			s.WriteString(strconv.Itoa(dm.DNS.Id))
-		case "timestamp": // keep it just for backward compatibility
+		case directive == "timestamp": // keep it just for backward compatibility
 			s.WriteString(dm.DnsTap.TimestampRFC3339)
-		case "timestamp-rfc3339ns":
+		case directive == "timestamp-rfc3339ns":
 			s.WriteString(dm.DnsTap.TimestampRFC3339)
-		case "timestamp-unixms":
+		case directive == "timestamp-unixms":
 			s.WriteString(fmt.Sprintf("%.3f", dm.DnsTap.Timestamp))
-		case "timestamp-unixus":
+		case directive == "timestamp-unixus":
 			s.WriteString(fmt.Sprintf("%.6f", dm.DnsTap.Timestamp))
-		case "timestamp-unixns":
+		case directive == "timestamp-unixns":
 			s.WriteString(fmt.Sprintf("%.9f", dm.DnsTap.Timestamp))
-		case "localtime":
+		case directive == "localtime":
 			ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
 			s.WriteString(ts.Format("2006-01-02 15:04:05.999999999"))
-		case "identity":
+		case directive == "identity":
 			s.WriteString(dm.DnsTap.Identity)
-		case "operation":
+		case directive == "operation":
 			s.WriteString(dm.DnsTap.Operation)
-		case "rcode":
+		case directive == "rcode":
 			s.WriteString(dm.DNS.Rcode)
-		case "queryip":
+		case directive == "queryip":
 			s.WriteString(dm.NetworkInfo.QueryIp)
-		case "queryport":
+		case directive == "queryport":
 			s.WriteString(dm.NetworkInfo.QueryPort)
-		case "responseip":
+		case directive == "responseip":
 			s.WriteString(dm.NetworkInfo.ResponseIp)
-		case "responseport":
+		case directive == "responseport":
 			s.WriteString(dm.NetworkInfo.ResponsePort)
-		case "family":
+		case directive == "family":
 			s.WriteString(dm.NetworkInfo.Family)
-		case "protocol":
+		case directive == "protocol":
 			s.WriteString(dm.NetworkInfo.Protocol)
-		case "length":
+		case directive == "length":
 			s.WriteString(strconv.Itoa(dm.DNS.Length) + "b")
-		case "qname":
+		case directive == "qname":
 			s.WriteString(dm.DNS.Qname)
-		case "qnamepublicsuffix":
+		case directive == "qnamepublicsuffix":
 			s.WriteString(dm.DNS.QnamePublicSuffix)
-		case "qnameeffectivetldplusone":
+		case directive == "qnameeffectivetldplusone":
 			s.WriteString(dm.DNS.QnameEffectiveTLDPlusOne)
-		case "qtype":
+		case directive == "qtype":
 			s.WriteString(dm.DNS.Qtype)
-		case "latency":
+		case directive == "latency":
 			s.WriteString(dm.DnsTap.LatencySec)
-		case "continent":
+		case directive == "continent":
 			s.WriteString(dm.Geo.Continent)
-		case "country":
+		case directive == "country":
 			s.WriteString(dm.Geo.CountryIsoCode)
-		case "city":
+		case directive == "city":
 			s.WriteString(dm.Geo.City)
-		case "as-number":
+		case directive == "as-number":
 			s.WriteString(dm.NetworkInfo.AutonomousSystemNumber)
-		case "as-owner":
+		case directive == "as-owner":
 			s.WriteString(dm.NetworkInfo.AutonomousSystemOrg)
-		case "malformed":
+		case directive == "malformed":
 			//s.WriteString(strconv.Itoa(dm.DNS.MalformedPacket))
 			if dm.DNS.MalformedPacket {
 				s.WriteString("PKTERR")
 			} else {
 				s.WriteString("-")
 			}
-		case "qr":
+		case directive == "qr":
 			s.WriteString(dm.DNS.Type)
-		case "opcode":
+		case directive == "opcode":
 			s.WriteString(strconv.Itoa(dm.DNS.Opcode))
-		case "tc":
+		case directive == "tc":
 			if dm.DNS.Flags.TC {
 				s.WriteString("TC")
 			} else {
 				s.WriteString("-")
 			}
-		case "aa":
+		case directive == "aa":
 			if dm.DNS.Flags.AA {
 				s.WriteString("AA")
 			} else {
 				s.WriteString("-")
 			}
-		case "ra":
+		case directive == "ra":
 			if dm.DNS.Flags.RA {
 				s.WriteString("RA")
 			} else {
 				s.WriteString("-")
 			}
-		case "ad":
+		case directive == "ad":
 			if dm.DNS.Flags.AD {
 				s.WriteString("AD")
 			} else {
 				s.WriteString("-")
 			}
-		case "pdns-tags":
-			if len(dm.PowerDns.Tags) > 0 {
-				for i, tag := range dm.PowerDns.Tags {
-					s.WriteString(tag)
-					// add separator
-					if i+1 < len(dm.PowerDns.Tags) {
-						s.WriteString(",")
-					}
-				}
-			} else {
-				s.WriteString("-")
-			}
-		case "pdns-tag":
-			if len(dm.PowerDns.Tags) > 0 {
-				s.WriteString(dm.PowerDns.Tags[0])
-			} else {
-				s.WriteString("-")
-			}
-		case "pdns-applied-policy":
-			if len(dm.PowerDns.AppliedPolicy) > 0 {
-				s.WriteString(dm.PowerDns.AppliedPolicy)
-			} else {
-				s.WriteString("-")
-			}
-		case "pdns-original-request-subnet":
-			if len(dm.PowerDns.OriginalRequestSubnet) > 0 {
-				s.WriteString(dm.PowerDns.OriginalRequestSubnet)
-			} else {
-				s.WriteString("-")
-			}
-		case "suspicious-score":
-			s.WriteString(strconv.Itoa(int(dm.Suspicious.Score)))
+		case PdnsDirectives.MatchString(directive):
+			dm.handlePdnsDirectives(directives, &s)
 		default:
 			log.Fatalf("unsupport directive for text format: %s", word)
 		}

@@ -15,7 +15,7 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 **Collectors**:
 - *Listen for logging traffic with streaming network protocols*
     - Protobuf [`DNStap`](doc/collectors.md#dns-tap) with `tls`, `tcp` or `unix` support
-    - Protobuf [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams
+    - Protobuf [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams with full [`metadata`](doc/powerdns.md) support 
     - [`Proxifier`](doc/collectors.md#dns-tap-proxifier) for DNSTap streams
 - *Live capture on a network interface*   
     - [`AF_PACKET`](doc/collectors.md#live-capture-with-af_packet) socket with BPF filter
@@ -27,7 +27,7 @@ DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 **Loggers**:
 
 - *Local storage of your DNS logs in plain [`Text`](doc/configuration.md#custom-text-format),  [`Json`](doc/dnsjson.md), [`Pcap`](doc/loggers.md#log-file) or [`Dnstap`](doc/loggers.md#log-file) formats:*
-    - [`Stdout`](doc/loggers.md#stdout) console
+    - [`Stdout`](doc/loggers.md#stdout) console with custom [directives](doc/configuration.md#custom-text-format)
     - [`File`](doc/loggers.md#log-file) with automatic rotation and compression
 - *Provide metrics and API*
     - [`Prometheus`](doc/loggers.md#prometheus) metrics and visualize-it with built-in [dashboards](doc/dashboards.md) for Grafana
