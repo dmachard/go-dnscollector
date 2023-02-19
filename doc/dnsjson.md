@@ -2,15 +2,14 @@
 
 
 The dns collector enable to transform dns queries or replies in JSON format.
-A JSON format contains dns message with additionnal metadata.
+A JSON format contains dns message with additionnal metadata added by transformers or collectors.
 
-Main part of a JSON message:
+Default JSON payload::
 - `network`:  query/response ip and port, the protocol and family used
 - `dnstap`: message type, arrival packet time, latency.
 - `dns`: dns fields
 - `edns`: extended dns options
 - `geo`: contains country, continent and city informations
-- `pdns`: contains specific powerdns metadata (tags, original-request-subnet)
 - `suspicious`: some flags regarding unusual traffic
 
 Example:
@@ -83,11 +82,6 @@ Example:
     "city": "-",
     "continent": "-",
     "country-isocode": "-"
-  },
-  "pdns": {
-    "tags": [],
-    "original-request-subnet": "",
-    "applied-policy": ""
   },
   "suspicious": {
     "score": 0.0,

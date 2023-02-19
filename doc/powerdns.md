@@ -10,6 +10,15 @@ If you logs your DNS traffic in basic text format, you can use the specific dire
 - `powerdns-applied-policy`: get applied policy
 - `powerdns-metadata[:KEY]`: get  all metadata separated by comma or specific one if a valid [KEY](https://dnsdist.org/rules-actions.html#RemoteLogAction) is provided
 
+Configuration example:
+
+```json
+- name: console
+  stdout:
+    mode: text
+    text-format: "timestamp-rfc3339ns identity qr qname qtype powerdns-metadata:selected_pool"
+```
+
 # JSON format
 
 If you logs your DNS traffic in JSON output, the following part will be added in your DNS logging messages.
