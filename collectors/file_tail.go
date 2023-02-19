@@ -104,6 +104,9 @@ func (c *Tail) Run() {
 	dm := dnsutils.DnsMessage{}
 	dm.Init()
 
+	// init dns message with additionnals parts
+	subprocessors.InitDnsMessageFormat(&dm)
+
 	hostname, err := os.Hostname()
 	if err == nil {
 		dm.DnsTap.Identity = hostname

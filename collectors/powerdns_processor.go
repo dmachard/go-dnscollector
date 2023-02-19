@@ -81,6 +81,9 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		dm := dnsutils.DnsMessage{}
 		dm.Init()
 
+		// init dns message with additionnals parts
+		subprocessors.InitDnsMessageFormat(&dm)
+
 		// init powerdns with default values
 		dm.PowerDns = &dnsutils.PowerDns{
 			Tags:                  []string{},

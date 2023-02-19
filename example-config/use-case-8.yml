@@ -1,4 +1,4 @@
-# Example 8: PowerDNS collector with prometheus metrics
+# Example 8: Multiple PowerDNS collectors
 #
 # As prerequisites, we assume you have 
 # - a PowerDNS DNS server which protobuf enabled

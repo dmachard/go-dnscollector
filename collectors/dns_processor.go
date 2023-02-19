@@ -87,6 +87,9 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	// read incoming dns message
 	d.LogInfo("running... waiting incoming dns message")
 	for dm := range d.recvFrom {
+		// init dns message with additionnals parts
+		subprocessors.InitDnsMessageFormat(&dm)
+
 		// compute timestamp
 		dm.DnsTap.Timestamp = float64(dm.DnsTap.TimeSec) + float64(dm.DnsTap.TimeNsec)/1e9
 		ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
