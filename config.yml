@@ -69,7 +69,7 @@ multiplexer:
   loggers:
     - name: console
       stdout:
-        mode: text
+        mode: json
         
   routes:
     - from: [ tap ]
