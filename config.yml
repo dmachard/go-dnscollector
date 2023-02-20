@@ -43,11 +43,6 @@ global:
   # - qname: dns qname
   # - latency: computed latency between queries and replies
   # - answercount: the number of answer
-  # - continent: continent code
-  # - country: country iso code
-  # - city: city name
-  # - as-number: autonomous system number
-  # - as-owner: autonomous system organization
   # - ttl: answer ttl, only the first one value
   # - answer: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
   # - malformed: malformed dns packet, integer value 1/0
@@ -57,7 +52,6 @@ global:
   # - ra: recursion available
   # - ad: authenticated data
   # - edns-csubnet: client subnet
-  # - suspicious-score: suspicious score for unusual traffic
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 # create your dns collector, please refer bellow to see the list 
@@ -75,7 +69,7 @@ multiplexer:
   loggers:
     - name: console
       stdout:
-        mode: text
+        mode: json
         
   routes:
     - from: [ tap ]
@@ -426,6 +420,9 @@ multiplexer:
 # # Use this option to add top level domain and tld+1, based on public suffix list https://publicsuffix.org/
 # # or convert all domain to lowercase
 # # or enable quiet text in your logs
+# # additionnals directive for text format
+# # - publicsuffix-tld: tld
+# # - publicsuffix-etld+1: effective tld plus one
 # normalize:
 #   # Wwww.GooGlE.com will be equal to www.google.com
 #   qname-lowercase: true
@@ -464,6 +461,12 @@ multiplexer:
 # # GeoIP maxmind support, more information on https://www.maxmind.com/en/geoip-demo
 # # this feature can be used to append additional informations like country, city, asn
 # # according to the query ip
+# # additionnals directive for text format
+# # - geoip-continent: continent code
+# # - geoip-country: country iso code
+# # - geoip-city: city name
+# # - geoip-as-number: autonomous system number
+# # - geoip-as-owner: autonomous system organization
 # geoip:
 #   # path file to your mmdb country database
 #   mmdb-country-file: ""
@@ -472,7 +475,9 @@ multiplexer:
 #   # path file to your mmdb ASN database
 #   mmdb-asn-file: ""
 
-# this feature can be used to tag unusual dns traffic like long domain, large packets
+# # this feature can be used to tag unusual dns traffic like long domain, large packets
+# # additionnals directive for text format
+# # - suspicious-score: suspicious score for unusual traffic
 # suspicious:
 #   # a length greater than this value for qname will be considered as suspicious
 #   threshold-qname-len: 100

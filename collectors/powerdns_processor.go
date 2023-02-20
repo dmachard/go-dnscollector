@@ -77,8 +77,20 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			continue
 		}
 
+		// init dns message
 		dm := dnsutils.DnsMessage{}
 		dm.Init()
+
+		// init dns message with additionnals parts
+		subprocessors.InitDnsMessageFormat(&dm)
+
+		// init powerdns with default values
+		dm.PowerDns = &dnsutils.PowerDns{
+			Tags:                  []string{},
+			OriginalRequestSubnet: "",
+			AppliedPolicy:         "",
+			Metadata:              map[string]string{},
+		}
 
 		dm.DnsTap.Identity = string(pbdm.GetServerIdentity())
 		dm.DnsTap.Operation = pbdm.GetType().String()

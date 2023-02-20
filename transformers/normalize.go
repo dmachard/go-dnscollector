@@ -81,6 +81,13 @@ func (s *NormalizeProcessor) Lowercase(qname string) string {
 	return strings.ToLower(qname)
 }
 
+func (p *NormalizeProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
+	dm.PublicSuffix = &dnsutils.PublicSuffix{
+		QnamePublicSuffix:        "-",
+		QnameEffectiveTLDPlusOne: "-",
+	}
+}
+
 func (s *NormalizeProcessor) QuietText(dm *dnsutils.DnsMessage) {
 	if v, found := DnstapMessage[dm.DnsTap.Operation]; found {
 		dm.DnsTap.Operation = v

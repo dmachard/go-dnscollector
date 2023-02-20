@@ -616,68 +616,72 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	}
 
 	// count and top tld
-	if dm.DNS.QnamePublicSuffix != "-" {
-		if _, exists := o.tldsUniq[dm.DNS.QnamePublicSuffix]; !exists {
-			o.tldsUniq[dm.DNS.QnamePublicSuffix] = 1
-			o.counterTldsUniq.WithLabelValues().Inc()
-		} else {
-			o.tldsUniq[dm.DNS.QnamePublicSuffix] += 1
-		}
-
-		if _, exists := o.tlds[dm.DnsTap.Identity]; !exists {
-			o.tlds[dm.DnsTap.Identity] = make(map[string]int)
-		}
-
-		if _, exists := o.tlds[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix]; !exists {
-			o.tlds[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix] = 1
-			o.counterTlds.WithLabelValues(dm.DnsTap.Identity).Inc()
-		} else {
-			o.tlds[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix] += 1
-		}
-
-		if _, ok := o.topTlds[dm.DnsTap.Identity]; !ok {
-			o.topTlds[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
-		}
-		o.topTlds[dm.DnsTap.Identity].Record(dm.DNS.QnamePublicSuffix, o.tlds[dm.DnsTap.Identity][dm.DNS.QnamePublicSuffix])
-
-		o.gaugeTopTlds.Reset()
-		for s := range o.topTlds {
-			for _, r := range o.topTlds[s].Get() {
-				o.gaugeTopTlds.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+	if dm.PublicSuffix != nil {
+		if dm.PublicSuffix.QnamePublicSuffix != "-" {
+			if _, exists := o.tldsUniq[dm.PublicSuffix.QnamePublicSuffix]; !exists {
+				o.tldsUniq[dm.PublicSuffix.QnamePublicSuffix] = 1
+				o.counterTldsUniq.WithLabelValues().Inc()
+			} else {
+				o.tldsUniq[dm.PublicSuffix.QnamePublicSuffix] += 1
 			}
-		}
 
+			if _, exists := o.tlds[dm.DnsTap.Identity]; !exists {
+				o.tlds[dm.DnsTap.Identity] = make(map[string]int)
+			}
+
+			if _, exists := o.tlds[dm.DnsTap.Identity][dm.PublicSuffix.QnamePublicSuffix]; !exists {
+				o.tlds[dm.DnsTap.Identity][dm.PublicSuffix.QnamePublicSuffix] = 1
+				o.counterTlds.WithLabelValues(dm.DnsTap.Identity).Inc()
+			} else {
+				o.tlds[dm.DnsTap.Identity][dm.PublicSuffix.QnamePublicSuffix] += 1
+			}
+
+			if _, ok := o.topTlds[dm.DnsTap.Identity]; !ok {
+				o.topTlds[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
+			}
+			o.topTlds[dm.DnsTap.Identity].Record(dm.PublicSuffix.QnamePublicSuffix, o.tlds[dm.DnsTap.Identity][dm.PublicSuffix.QnamePublicSuffix])
+
+			o.gaugeTopTlds.Reset()
+			for s := range o.topTlds {
+				for _, r := range o.topTlds[s].Get() {
+					o.gaugeTopTlds.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+				}
+			}
+
+		}
 	}
 
 	// suspicious domains
-	if dm.Suspicious.Score > 0.0 {
-		if _, exists := o.suspiciousUniq[dm.DNS.Qname]; !exists {
-			o.suspiciousUniq[dm.DNS.Qname] = 1
-			o.counterSuspiciousUniq.WithLabelValues().Inc()
-		} else {
-			o.suspiciousUniq[dm.DNS.Qname] += 1
-		}
+	if dm.Suspicious != nil {
+		if dm.Suspicious.Score > 0.0 {
+			if _, exists := o.suspiciousUniq[dm.DNS.Qname]; !exists {
+				o.suspiciousUniq[dm.DNS.Qname] = 1
+				o.counterSuspiciousUniq.WithLabelValues().Inc()
+			} else {
+				o.suspiciousUniq[dm.DNS.Qname] += 1
+			}
 
-		if _, exists := o.suspicious[dm.DnsTap.Identity]; !exists {
-			o.suspicious[dm.DnsTap.Identity] = make(map[string]int)
-		}
+			if _, exists := o.suspicious[dm.DnsTap.Identity]; !exists {
+				o.suspicious[dm.DnsTap.Identity] = make(map[string]int)
+			}
 
-		if _, exists := o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname]; !exists {
-			o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname] = 1
-			o.counterSuspicious.WithLabelValues(dm.DnsTap.Identity).Inc()
-		} else {
-			o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname] += 1
-		}
+			if _, exists := o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname]; !exists {
+				o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname] = 1
+				o.counterSuspicious.WithLabelValues(dm.DnsTap.Identity).Inc()
+			} else {
+				o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname] += 1
+			}
 
-		if _, ok := o.topSuspicious[dm.DnsTap.Identity]; !ok {
-			o.topSuspicious[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
-		}
-		o.topSuspicious[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
+			if _, ok := o.topSuspicious[dm.DnsTap.Identity]; !ok {
+				o.topSuspicious[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
+			}
+			o.topSuspicious[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
 
-		o.gaugeTopSuspicious.Reset()
-		for s := range o.topSuspicious {
-			for _, r := range o.topSuspicious[s].Get() {
-				o.gaugeTopSuspicious.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+			o.gaugeTopSuspicious.Reset()
+			for s := range o.topSuspicious {
+				for _, r := range o.topSuspicious[s].Get() {
+					o.gaugeTopSuspicious.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+				}
 			}
 		}
 	}

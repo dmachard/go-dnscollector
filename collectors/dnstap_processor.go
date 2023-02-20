@@ -116,8 +116,12 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			continue
 		}
 
+		// init dns message
 		dm := dnsutils.DnsMessage{}
 		dm.Init()
+
+		// init dns message with additionnals parts
+		subprocessors.InitDnsMessageFormat(&dm)
 
 		identity := dt.GetIdentity()
 		if len(identity) > 0 {
