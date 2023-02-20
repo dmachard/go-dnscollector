@@ -74,3 +74,9 @@ Example:
   }
 }
 ```
+
+This JSON message can be extended by:
+- [PowerDNS collector](powerdns.md#json-format)
+- [GeoIP transformer](transformers.md#geoip-support)
+- [Suspicious traffic transformer](transformers.md#suspicious)
+- [Public suffix transformer](transformers.md#normalize)
