@@ -446,15 +446,17 @@ func (s *RestAPI) RecordDnsMessage(dm dnsutils.DnsMessage) {
 		s.Streams[dm.DnsTap.Identity] += 1
 	}
 
-	// record suspicious domains
-	if dm.Suspicious.Score > 0.0 {
-		if _, exists := s.HitsUniq.Suspicious[dm.DNS.Qname]; !exists {
-			s.HitsUniq.Suspicious[dm.DNS.Qname] = dm.Suspicious
+	// record suspicious domains only is enabled
+	if dm.Suspicious != nil {
+		if dm.Suspicious.Score > 0.0 {
+			if _, exists := s.HitsUniq.Suspicious[dm.DNS.Qname]; !exists {
+				s.HitsUniq.Suspicious[dm.DNS.Qname] = dm.Suspicious
+			}
 		}
 	}
 
 	// uniq record for tld
-	// record public suffix
+	// record public suffix only if enabled
 	if dm.PublicSuffix != nil {
 		if dm.PublicSuffix.QnamePublicSuffix != "-" {
 			if _, ok := s.HitsUniq.PublicSuffixes[dm.PublicSuffix.QnamePublicSuffix]; !ok {

@@ -97,6 +97,8 @@ You will find below some examples of configuration to manage your DNS logs.
 - [Transform all domains to lowercase](example-config/use-case-10.yml)
 - [Add geographical metadata with GeoIP](example-config/use-case-11.yml)
 - [Relays DNSTap stream to multiple remote destination without decoding](example-config/use-case-12.yml)
+- [Save incoming DNStap streams to file (frstrm)](example-config/use-case-13.yml)
+- [Watch for DNStap files as input](example-config/use-case-14.yml)
 
 ## Contributing
 

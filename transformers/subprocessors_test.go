@@ -27,6 +27,9 @@ func TestTransformsSuspicious(t *testing.T) {
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.DNS.MalformedPacket = true
 
+	// init dns message with additional part
+	subprocessors.InitDnsMessageFormat(&dm)
+
 	return_code := subprocessors.ProcessMessage(&dm)
 
 	if dm.Suspicious.Score != 1.0 {
@@ -55,6 +58,9 @@ func TestTransformsGeoIPLookupCountry(t *testing.T) {
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.NetworkInfo.QueryIp = "83.112.146.176"
 
+	// init dns message with additional part
+	subprocessors.InitDnsMessageFormat(&dm)
+
 	// apply subprocessors
 	return_code := subprocessors.ProcessMessage(&dm)
 
@@ -80,6 +86,9 @@ func TestTransformsGeoIPLookupAsn(t *testing.T) {
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.NetworkInfo.QueryIp = "83.112.146.176"
 
+	// init dns message with additional part
+	subprocessors.InitDnsMessageFormat(&dm)
+
 	// apply subprocessors
 	return_code := subprocessors.ProcessMessage(&dm)
 
@@ -103,6 +112,9 @@ func TestTransformsReduceQname(t *testing.T) {
 
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
+
+	// init dns message with additional part
+	subprocessors.InitDnsMessageFormat(&dm)
 
 	// test 1: google.com
 	dm.DNS.Qname = NORM_ADDRESS
@@ -150,6 +162,9 @@ func TestTransformsAnonymizeIPv4(t *testing.T) {
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
 
+	// init dns message with additional part
+	subprocessors.InitDnsMessageFormat(&dm)
+
 	dm.NetworkInfo.QueryIp = "192.168.1.2"
 
 	return_code := subprocessors.ProcessMessage(&dm)
@@ -173,6 +188,9 @@ func TestTransformsAnonymizeIPv6(t *testing.T) {
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
 
+	// init dns message with additional part
+	subprocessors.InitDnsMessageFormat(&dm)
+
 	dm.NetworkInfo.QueryIp = IPV6_ADDRESS
 
 	return_code := subprocessors.ProcessMessage(&dm)
@@ -195,6 +213,8 @@ func TestTransformsNormalizeLowercaseQname(t *testing.T) {
 
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
+	// init dns message with additional part
+	subprocessors.InitDnsMessageFormat(&dm)
 
 	dm.DNS.Qname = CAPS_ADDRESS
 	dm.NetworkInfo.QueryIp = IPV6_ADDRESS
@@ -221,6 +241,8 @@ func TestMultiTransforms(t *testing.T) {
 
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
+	// init dns message with additional part
+	subprocessors.InitDnsMessageFormat(&dm)
 
 	dm.DNS.Qname = CAPS_ADDRESS
 	dm.NetworkInfo.QueryIp = IPV6_ADDRESS

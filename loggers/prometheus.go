@@ -652,34 +652,36 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	}
 
 	// suspicious domains
-	if dm.Suspicious.Score > 0.0 {
-		if _, exists := o.suspiciousUniq[dm.DNS.Qname]; !exists {
-			o.suspiciousUniq[dm.DNS.Qname] = 1
-			o.counterSuspiciousUniq.WithLabelValues().Inc()
-		} else {
-			o.suspiciousUniq[dm.DNS.Qname] += 1
-		}
+	if dm.Suspicious != nil {
+		if dm.Suspicious.Score > 0.0 {
+			if _, exists := o.suspiciousUniq[dm.DNS.Qname]; !exists {
+				o.suspiciousUniq[dm.DNS.Qname] = 1
+				o.counterSuspiciousUniq.WithLabelValues().Inc()
+			} else {
+				o.suspiciousUniq[dm.DNS.Qname] += 1
+			}
 
-		if _, exists := o.suspicious[dm.DnsTap.Identity]; !exists {
-			o.suspicious[dm.DnsTap.Identity] = make(map[string]int)
-		}
+			if _, exists := o.suspicious[dm.DnsTap.Identity]; !exists {
+				o.suspicious[dm.DnsTap.Identity] = make(map[string]int)
+			}
 
-		if _, exists := o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname]; !exists {
-			o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname] = 1
-			o.counterSuspicious.WithLabelValues(dm.DnsTap.Identity).Inc()
-		} else {
-			o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname] += 1
-		}
+			if _, exists := o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname]; !exists {
+				o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname] = 1
+				o.counterSuspicious.WithLabelValues(dm.DnsTap.Identity).Inc()
+			} else {
+				o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname] += 1
+			}
 
-		if _, ok := o.topSuspicious[dm.DnsTap.Identity]; !ok {
-			o.topSuspicious[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
-		}
-		o.topSuspicious[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
+			if _, ok := o.topSuspicious[dm.DnsTap.Identity]; !ok {
+				o.topSuspicious[dm.DnsTap.Identity] = topmap.NewTopMap(o.config.Loggers.Prometheus.TopN)
+			}
+			o.topSuspicious[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
 
-		o.gaugeTopSuspicious.Reset()
-		for s := range o.topSuspicious {
-			for _, r := range o.topSuspicious[s].Get() {
-				o.gaugeTopSuspicious.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+			o.gaugeTopSuspicious.Reset()
+			for s := range o.topSuspicious {
+				for _, r := range o.topSuspicious[s].Get() {
+					o.gaugeTopSuspicious.WithLabelValues(s, r.Name).Set(float64(r.Hit))
+				}
 			}
 		}
 	}

@@ -19,6 +19,9 @@ func TestSuspiciousMalformedPacket(t *testing.T) {
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.DNS.MalformedPacket = true
 
+	// init dns message with additional part
+	suspicious.InitDnsMessage(&dm)
+
 	suspicious.CheckIfSuspicious(&dm)
 
 	if dm.Suspicious.Score != 1.0 {
