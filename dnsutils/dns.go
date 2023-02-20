@@ -271,26 +271,18 @@ func DecodePayload(dm *DnsMessage, header *DnsHeader, config *Config) error {
 		}
 
 		dm.DNS.Qname = dns_qname
-
-		/*	if config.Subprocessors.Normalize.QnameLowerCase {
-					dm.DNS.Qname = strings.ToLower(dns_qname)
-				} else {
-					dm.DNS.Qname = dns_qname
-				}
-
-			// Public suffix
-			ps, _ := publicsuffix.PublicSuffix(dm.DNS.Qname)
-			dm.DNS.QnamePublicSuffix = ps
-			if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
-				dm.DNS.QnameEffectiveTLDPlusOne = etpo
-			}*/
 		dm.DNS.Qtype = RdatatypeToString(dns_rrtype)
 		payload_offset = offsetrr
 	}
 
 	// decode DNS answers
 	if header.Ancount > 0 {
-		if answers, offset, err := DecodeAnswer(header.Ancount, payload_offset, dm.DNS.Payload); err == nil {
+		answers, offset, err := DecodeAnswer(header.Ancount, payload_offset, dm.DNS.Payload)
+		if err == nil {
+			dm.DNS.DnsRRs.Answers = answers
+			payload_offset = offset
+		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDnsAnswerTooShort) || errors.Is(err, ErrDecodeDnsAnswerRdataTooShort) || errors.Is(err, ErrDecodeDnsLabelTooShort)) {
+			dm.DNS.MalformedPacket = true
 			dm.DNS.DnsRRs.Answers = answers
 			payload_offset = offset
 		} else {
@@ -304,6 +296,10 @@ func DecodePayload(dm *DnsMessage, header *DnsHeader, config *Config) error {
 		if answers, offsetrr, err := DecodeAnswer(header.Nscount, payload_offset, dm.DNS.Payload); err == nil {
 			dm.DNS.DnsRRs.Nameservers = answers
 			payload_offset = offsetrr
+		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDnsAnswerTooShort) || errors.Is(err, ErrDecodeDnsAnswerRdataTooShort) || errors.Is(err, ErrDecodeDnsLabelTooShort)) {
+			dm.DNS.MalformedPacket = true
+			dm.DNS.DnsRRs.Nameservers = answers
+			payload_offset = offsetrr
 		} else {
 			dm.DNS.MalformedPacket = true
 			return &decodingError{part: "authority records", err: err}
@@ -311,14 +307,26 @@ func DecodePayload(dm *DnsMessage, header *DnsHeader, config *Config) error {
 	}
 	if header.Arcount > 0 {
 		// decode additional answers
-		if answers, _, err := DecodeAnswer(header.Arcount, payload_offset, dm.DNS.Payload); err == nil {
+		answers, _, err := DecodeAnswer(header.Arcount, payload_offset, dm.DNS.Payload)
+		if err == nil {
+			dm.DNS.DnsRRs.Records = answers
+		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDnsAnswerTooShort) || errors.Is(err, ErrDecodeDnsAnswerRdataTooShort) || errors.Is(err, ErrDecodeDnsLabelTooShort)) {
+			dm.DNS.MalformedPacket = true
 			dm.DNS.DnsRRs.Records = answers
 		} else {
 			dm.DNS.MalformedPacket = true
 			return &decodingError{part: "additional records", err: err}
 		}
 		// decode EDNS options, if there are any
-		if edns, _, err := DecodeEDNS(header.Arcount, payload_offset, dm.DNS.Payload); err == nil {
+		edns, _, err := DecodeEDNS(header.Arcount, payload_offset, dm.DNS.Payload)
+		if err == nil {
+			dm.EDNS = edns
+		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDnsAnswerTooShort) ||
+			errors.Is(err, ErrDecodeDnsAnswerRdataTooShort) ||
+			errors.Is(err, ErrDecodeDnsLabelTooShort) ||
+			errors.Is(err, ErrDecodeEdnsDataTooShort) ||
+			errors.Is(err, ErrDecodeEdnsOptionTooShort)) {
+			dm.DNS.MalformedPacket = true
 			dm.EDNS = edns
 		} else {
 			dm.DNS.MalformedPacket = true
