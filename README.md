@@ -7,7 +7,7 @@
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
-`DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously [sources](doc/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](doc/loggers.md) with some [transformations](doc/transformers.md) on it ([traffic filtering](doc/transformers.md#dns-filtering), [user privacy](doc/transformers.md#user-privacy), ...) and DNS protocol conversions (to [Plain Text](doc/configuration.md#custom-text-format), [Json](doc/dnsjson.md), and more... ).
+`DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously [sources](doc/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](doc/loggers.md) with some [transformations](doc/transformers.md) on it ([traffic filtering](doc/transformers.md#dns-filtering), [user privacy](doc/transformers.md#user-privacy), ...) and DNS protocol conversions (to [plain text](doc/configuration.md#custom-text-format), [json](doc/dnsjson.md), and more... ).
 
 Additionally, DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
 
@@ -88,10 +88,10 @@ You will find below some examples of configuration to manage your DNS logs.
 
 
 - Capture DNS traffic with incoming DNSTap streams
-    [x] [Read from UNIX DNSTap socket and forward it to TLS stream](example-config/use-case-5.yml)
-    [x] [Transform DNSTap as input to JSON format as output](example-config/use-case-3.yml)
-    [x] [Relays DNSTap stream to multiple remote destination without decoding](example-config/use-case-12.yml)
-    [x] [Aggregate several DNSTap stream and forward it to the same file](example-config/use-case-7.yml)
+    - [x] [Read from UNIX DNSTap socket and forward it to TLS stream](example-config/use-case-5.yml)
+    - [x] [Transform DNSTap as input to JSON format as output](example-config/use-case-3.yml)
+    - [x] [Relays DNSTap stream to multiple remote destination without decoding](example-config/use-case-12.yml)
+    - [x] [Aggregate several DNSTap stream and forward it to the same file](example-config/use-case-7.yml)
 
 - Capture DNS traffic with PowerDNS
     [x] [Capture multiple PowerDNS streams](example-config/use-case-8.yml)
