@@ -86,7 +86,9 @@ func (c *FileIngestor) ReadConfig() {
 	c.identity = c.config.GetServerIdentity()
 	c.dnsPort = c.config.Collectors.FileIngestor.PcapDnsPort
 
-	c.LogInfo("watching directory to find [%s] files", c.config.Collectors.FileIngestor.WatchMode)
+	c.LogInfo("watching directory [%s] to find [%s] files",
+		c.config.Collectors.FileIngestor.WatchDir,
+		c.config.Collectors.FileIngestor.WatchMode)
 }
 
 func (c *FileIngestor) LogInfo(msg string, v ...interface{}) {
@@ -356,6 +358,7 @@ func (c *FileIngestor) Run() {
 		// prepare filepath
 		fn := filepath.Join(c.config.Collectors.FileIngestor.WatchDir, entry.Name())
 
+		fmt.Println(c.config.Collectors.FileIngestor.WatchMode)
 		switch c.config.Collectors.FileIngestor.WatchMode {
 		case dnsutils.MODE_PCAP:
 			// process file with pcap extension
