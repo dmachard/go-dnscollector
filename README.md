@@ -94,25 +94,25 @@ You will find below some examples of configuration to manage your DNS logs.
     - [x] [Aggregate several DNSTap stream and forward it to the same file](example-config/use-case-7.yml)
 
 - Capture DNS traffic with PowerDNS
-    [x] [Capture multiple PowerDNS streams](example-config/use-case-8.yml)
+    - [x] [Capture multiple PowerDNS streams](example-config/use-case-8.yml)
 
 - Observe your DNS traffic from logs
-    [x] [Observe DNS metrics with Prometheus and Grafana](example-config/use-case-2.yml)
-    [x] [Follow DNS traffic with Loki and Grafana](example-config/use-case-4.yml)
+    - [x] [Observe DNS metrics with Prometheus and Grafana](example-config/use-case-2.yml)
+    - [x] [Follow DNS traffic with Loki and Grafana](example-config/use-case-4.yml)
 
 - Apply some transformations
-    [x] [Capture DNSTap stream and apply user privacy on it](example-config/use-case-6.yml)
-    [x] [Filtering incoming traffic with downsample and whitelist of domains](example-config/use-case-9.yml)
-    [x] [Transform all domains to lowercase](example-config/use-case-10.yml)
-    [x] [Add geographical metadata with GeoIP](example-config/use-case-11.yml)
+    - [x] [Capture DNSTap stream and apply user privacy on it](example-config/use-case-6.yml)
+    - [x] [Filtering incoming traffic with downsample and whitelist of domains](example-config/use-case-9.yml)
+    - [x] [Transform all domains to lowercase](example-config/use-case-10.yml)
+    - [x] [Add geographical metadata with GeoIP](example-config/use-case-11.yml)
 
 - Capture DNS traffic from FRSTRM/dnstap files
-    [x] [Save incoming DNStap streams to file (frstrm)](example-config/use-case-13.yml)
-    [x] [Watch for DNStap files as input](example-config/use-case-14.yml)
+    - [x] [Save incoming DNStap streams to file (frstrm)](example-config/use-case-13.yml)
+    - [x] [Watch for DNStap files as input](example-config/use-case-14.yml)
 
 - Capture DNS traffic from PCAP files
-    [x] [Capture DNSTap stream and backup-it to text and pcap files](example-config/use-case-1.yml)
-    [x] [Watch for PCAP files as input and JSON as output](example-config/use-case-15.yml)
+    - [x] [Capture DNSTap stream and backup-it to text and pcap files](example-config/use-case-1.yml)
+    - [x] [Watch for PCAP files as input and JSON as output](example-config/use-case-15.yml)
 
 ## Contributing
 
