@@ -487,9 +487,21 @@ func (dm *DnsMessage) ToDnstap() ([]byte, error) {
 
 	msg.SocketFamily = &sf
 	msg.SocketProtocol = &sp
-	msg.QueryAddress = net.ParseIP(dm.NetworkInfo.QueryIp)
+
+	reqIp := net.ParseIP(dm.NetworkInfo.QueryIp)
+	if dm.NetworkInfo.Family == PROTO_IPV4 {
+		msg.QueryAddress = reqIp.To4()
+	} else {
+		msg.QueryAddress = reqIp.To16()
+	}
 	msg.QueryPort = &qport
-	msg.ResponseAddress = net.ParseIP(dm.NetworkInfo.ResponseIp)
+
+	rspIp := net.ParseIP(dm.NetworkInfo.ResponseIp)
+	if dm.NetworkInfo.Family == PROTO_IPV4 {
+		msg.ResponseAddress = rspIp.To4()
+	} else {
+		msg.ResponseAddress = rspIp.To16()
+	}
 	msg.ResponsePort = &rport
 
 	if dm.DNS.Type == DnsQuery {

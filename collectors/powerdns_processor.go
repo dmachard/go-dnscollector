@@ -11,7 +11,17 @@ import (
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
+	"github.com/miekg/dns"
 	"google.golang.org/protobuf/proto"
+)
+
+var (
+	PROTOBUF_PDNS_TO_DNSTAP = map[string]string{
+		"DNSQueryType":            "CLIENT_QUERY",
+		"DNSResponseType":         "CLIENT_RESPONSE",
+		"DNSOutgoingQueryType":    "RESOLVER_QUERY",
+		"DNSIncomingResponseType": "RESOLVER_RESPONSE",
+	}
 )
 
 type PdnsProcessor struct {
@@ -93,7 +103,7 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		}
 
 		dm.DnsTap.Identity = string(pbdm.GetServerIdentity())
-		dm.DnsTap.Operation = pbdm.GetType().String()
+		dm.DnsTap.Operation = PROTOBUF_PDNS_TO_DNSTAP[pbdm.GetType().String()]
 
 		dm.NetworkInfo.Family = pbdm.GetSocketFamily().String()
 		dm.NetworkInfo.Protocol = pbdm.GetSocketProtocol().String()
@@ -122,7 +132,6 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.DnsTap.Latency = tsReply - tsQuery
 			dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
 			dm.DNS.Rcode = dnsutils.RcodeToString(int(pbdm.Response.GetRcode()))
-
 		}
 
 		// compute timestamp
@@ -199,6 +208,65 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			answers = append(answers, rr)
 		}
 		dm.DNS.DnsRRs.Answers = answers
+
+		// prepare a fake DNS payload
+		dns.Id = func() uint16 { return uint16(pbdm.GetId()) }
+		fakePkt := new(dns.Msg)
+		fakePkt.SetQuestion(pbdm.Question.GetQName(), uint16(pbdm.Question.GetQType()))
+
+		// add reply
+		if int(pbdm.Type.Number())%2 != 1 {
+			// set reply code
+			fakePkt.Rcode = int(pbdm.Response.GetRcode())
+
+			// add RR only A, AAAA and CNAME are exported by PowerDNS
+			rrs := pbdm.GetResponse().GetRrs()
+			for j := range rrs {
+				// prepare header
+				RR_Header := dns.RR_Header{
+					Name:     rrs[j].GetName(),
+					Rrtype:   uint16(rrs[j].GetType()),
+					Class:    uint16(rrs[j].GetClass()),
+					Ttl:      rrs[j].GetTtl(),
+					Rdlength: uint16(len(rrs[j].GetRdata())),
+				}
+				// init rr if valid
+				newFn, ok := dns.TypeToRR[RR_Header.Rrtype]
+				if !ok {
+					continue
+				}
+				RR := newFn()
+				*RR.Header() = RR_Header
+
+				switch {
+				// A or AAAA
+				case RRs[j].GetType() == 1 || RRs[j].GetType() == 28:
+					RR, _, err := dns.UnpackRRWithHeader(RR_Header, rrs[j].GetRdata(), 0)
+					if err == nil {
+						fakePkt.Answer = append(fakePkt.Answer, RR)
+					}
+				// CNAME
+				case RRs[j].GetType() == 5:
+					RR_Target := make([]byte, 255)
+					off, err := dns.PackDomainName(string(rrs[j].GetRdata()), RR_Target, 0, map[string]int{}, false)
+					if err != nil {
+						continue
+					}
+					RR_Target = RR_Target[:off]
+					RR_Header.Header().Rdlength = uint16(len(RR_Target))
+					RR, _, err := dns.UnpackRRWithHeader(RR_Header, RR_Target, 0)
+					if err == nil {
+						fakePkt.Answer = append(fakePkt.Answer, RR)
+					}
+				}
+			}
+		}
+		wirePkt, err := fakePkt.Pack()
+		if err != nil {
+			d.LogError("dns encoding failed, %s", err)
+			continue
+		}
+		dm.DNS.Payload = wirePkt
 
 		// apply all enabled transformers
 		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {

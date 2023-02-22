@@ -206,6 +206,7 @@ Options:
 - `tls-insecure`: (boolean) insecure skip verify
 - `tls-min-version`: (string) min tls version, default to 1.2
 - `server-id`: server identity
+- `overwrite-identity`: overwrite original identity
 
 Default values:
 
@@ -219,6 +220,7 @@ dnstap:
   tls-insecure: false
   tls-min-version: 1.2
   server-id: "dnscollector"
+  overwrite-identity: false
 ```
 
 ### TCP Client

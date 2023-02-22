@@ -26,7 +26,7 @@ class ProcessProtocol(asyncio.SubprocessProtocol):
             self.is_ready.set_result(True)
         
         if not self.is_clientresponse.done():
-            if b"DNSResponseType NOERROR" in data:
+            if b"CLIENT_RESPONSE NOERROR" in data:
                 self.is_clientresponse.set_result(True)
                 self.kill()
 
