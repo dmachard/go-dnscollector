@@ -244,15 +244,16 @@ type Config struct {
 			TextFormat          string `yaml:"text-format"`
 		} `yaml:"logfile"`
 		Dnstap struct {
-			Enable        bool   `yaml:"enable"`
-			RemoteAddress string `yaml:"remote-address"`
-			RemotePort    int    `yaml:"remote-port"`
-			SockPath      string `yaml:"sock-path"`
-			RetryInterval int    `yaml:"retry-interval"`
-			TlsSupport    bool   `yaml:"tls-support"`
-			TlsInsecure   bool   `yaml:"tls-insecure"`
-			TlsMinVersion string `yaml:"tls-min-version"`
-			ServerId      string `yaml:"server-id"`
+			Enable            bool   `yaml:"enable"`
+			RemoteAddress     string `yaml:"remote-address"`
+			RemotePort        int    `yaml:"remote-port"`
+			SockPath          string `yaml:"sock-path"`
+			RetryInterval     int    `yaml:"retry-interval"`
+			TlsSupport        bool   `yaml:"tls-support"`
+			TlsInsecure       bool   `yaml:"tls-insecure"`
+			TlsMinVersion     string `yaml:"tls-min-version"`
+			ServerId          string `yaml:"server-id"`
+			OverwriteIdentity bool   `yaml:"overwrite-identity"`
 		} `yaml:"dnstap"`
 		TcpClient struct {
 			Enable        bool   `yaml:"enable"`
@@ -428,6 +429,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Dnstap.TlsInsecure = false
 	c.Loggers.Dnstap.TlsMinVersion = TLS_v12
 	c.Loggers.Dnstap.ServerId = ""
+	c.Loggers.Dnstap.OverwriteIdentity = false
 
 	c.Loggers.LogFile.Enable = false
 	c.Loggers.LogFile.FilePath = ""

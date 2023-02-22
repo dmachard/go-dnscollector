@@ -276,8 +276,10 @@ multiplexer:
 #   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
-#   # server identity, if empty use the global one
+#   # server identity, if empty use the global one or hostname
 #   server-id: "dnscollector"
+#   # overwrite original identity
+#   overwrite-identity: false
 
 # # resend captured dns traffic to a tcp remote destination or to unix socket
 # tcpclient:

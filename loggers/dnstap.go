@@ -44,8 +44,7 @@ func (c *DnstapSender) GetName() string { return c.name }
 func (c *DnstapSender) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *DnstapSender) ReadConfig() {
-	// get hostname
-
+	// get hostname or global one
 	if o.config.Loggers.Dnstap.ServerId == "" {
 		o.config.Loggers.Dnstap.ServerId = o.config.GetServerIdentity()
 	}
@@ -148,6 +147,11 @@ LOOP:
 					for {
 						select {
 						case dm := <-o.channel:
+							// update identity ?
+							if o.config.Loggers.Dnstap.OverwriteIdentity {
+								dm.DnsTap.Identity = o.config.Loggers.Dnstap.ServerId
+							}
+
 							// encode dns message to dnstap protobuf binary
 							data, err = dm.ToDnstap()
 							if err != nil {
