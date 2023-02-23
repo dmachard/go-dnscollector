@@ -24,7 +24,7 @@ require (
 	github.com/oschwald/maxminddb-golang v1.10.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
+	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
 	golang.org/x/sys v0.5.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/fsnotify.v1 v1.4.7
@@ -48,10 +48,9 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/prometheus/prometheus v1.8.2-0.20211011171444-354d8d2ecfac // indirect
-	golang.org/x/mod v0.4.2 // indirect
-	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.1.6-0.20210726203631-07bc1bf47fb2 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
+	golang.org/x/text v0.3.8 // indirect
+	golang.org/x/tools v0.1.12 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20210921142501-181ce0d877f6 // indirect
 	google.golang.org/grpc v1.40.0 // indirect
