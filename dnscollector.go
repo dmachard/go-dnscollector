@@ -187,8 +187,11 @@ func main() {
 		if subcfg.Collectors.DnstapProxifier.Enable && IsCollectorRouted(config, input.Name) {
 			mapCollectors[input.Name] = collectors.NewDnstapProxifier(nil, subcfg, logger, input.Name)
 		}
-		if subcfg.Collectors.LiveCapture.Enable && IsCollectorRouted(config, input.Name) {
-			mapCollectors[input.Name] = collectors.NewDnsSniffer(nil, subcfg, logger, input.Name)
+		if subcfg.Collectors.AfpacketLiveCapture.Enable && IsCollectorRouted(config, input.Name) {
+			mapCollectors[input.Name] = collectors.NewAfpacketSniffer(nil, subcfg, logger, input.Name)
+		}
+		if subcfg.Collectors.XdpLiveCapture.Enable && IsCollectorRouted(config, input.Name) {
+			mapCollectors[input.Name] = collectors.NewXdpSniffer(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.Tail.Enable && IsCollectorRouted(config, input.Name) {
 			mapCollectors[input.Name] = collectors.NewTail(nil, subcfg, logger, input.Name)

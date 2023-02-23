@@ -1,4 +1,4 @@
-FROM golang:1.19.3-alpine3.15 as builder
+FROM golang:1.20.1-alpine3.17 as builder
 
 ARG VERSION
 
@@ -8,7 +8,7 @@ RUN apk add git
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-X 'main.Version=$VERSION'"
 
 
-FROM alpine:3.17.0
+FROM alpine:3.17.2
 
 RUN apk add --no-cache tzdata
 RUN mkdir -p /etc/dnscollector/ /var/dnscollector/

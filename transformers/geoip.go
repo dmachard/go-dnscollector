@@ -57,6 +57,16 @@ func (p *GeoIpProcessor) LogError(msg string, v ...interface{}) {
 	p.logger.Error("Subprocessor GeoIP - "+msg, v...)
 }
 
+func (p *GeoIpProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
+	dm.Geo = &dnsutils.DnsGeo{
+		CountryIsoCode:         "-",
+		City:                   "-",
+		Continent:              "-",
+		AutonomousSystemNumber: "-",
+		AutonomousSystemOrg:    "-",
+	}
+}
+
 func (p *GeoIpProcessor) Open() (err error) {
 	if len(p.config.GeoIP.DbCountryFile) > 0 {
 		p.dbCountry, err = maxminddb.Open(p.config.GeoIP.DbCountryFile)

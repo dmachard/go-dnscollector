@@ -49,6 +49,21 @@ The following dns flag message will be replaced with the small form:
 - QUERY: `Q`
 - REPLY: `R`
 
+If one of add-tld  options is enable then the following json field are populated in your DNS message:
+
+Example:
+
+```json
+"publicsuffix": {
+  "etld+1": "eu.org",
+  "tld": "org",
+}
+```
+
+Specific directives added for text format:
+- `publicsuffix-tld`: [Public Suffix](https://publicsuffix.org/) of the DNS QNAME
+- `publicsuffix-etld+1`: [Public Suffix](https://publicsuffix.org/) plus one label of the DNS QNAME
+
 ### User Privacy
 
 Use this feature to protect user privacy. This feature can be used to anonymize all IP queries and reduce all qnames to second level.
@@ -58,12 +73,14 @@ For example:
 
 Options:
 - `anonymize-ip`: (boolean) enable or disable anomymiser ip
+- `hash-ip`: (boolean) hash query and response IP with sha1
 - `minimaze-qname`: (boolean) keep only the second level domain
 
 ```yaml
 transforms:
   user-privacy:
     anonymize-ip: false
+    hash-ip: false
     minimaze-qname: false
 ```
 
@@ -88,7 +105,7 @@ transforms:
     mmdb-asn-file: ""
 ```
 
-When the feature is enabled, the following json field are populated:
+When the feature is enabled, the following json field are populated in your DNS message:
 - `continent`
 - `country-isocode`
 - `city`
@@ -99,16 +116,21 @@ Example:
 
 ```json
 {
-  "geo": {
+  "geoip": {
     "city": "-",
     "continent": "-",
-    "country-isocode": "-"
-  },
-  "network": {
+    "country-isocode": "-",
     "as-number": 1234,
     "as-owner": "Orange",
   },
 ```
+
+Specific directives added:
+- `geoip-continent`: continent code
+- `geoip-country`: country iso code
+- `geoip-city`: city name
+- `geoip-as-number`: autonomous system number
+- `geoip-as-owner`: autonomous system organization/owner
 
 ### DNS filtering
 
@@ -180,3 +202,23 @@ transforms:
     unallowed-chars: [ "\"", "==", "/", ":" ]
     threshold-max-labels: 10
 ```
+
+When the feature is enabled, the following json field are populated in your DNS message:
+
+Example:
+
+```json
+  "suspicious": {
+    "score": 0.0,
+    "malformed-packet": false,
+    "large-pkt": false,
+    "long-domain": false,
+    "slow-domain": false,
+    "unallowed-chars": false,
+    "uncommon-qtypes": false,
+    "excessive-number-labels": false,
+  }
+```
+
+Specific directive(s) added:
+- `suspicious-score`: suspicious score for unusual traffic

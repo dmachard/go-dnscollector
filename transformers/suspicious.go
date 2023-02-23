@@ -45,7 +45,25 @@ func (p *SuspiciousTransform) LogError(msg string, v ...interface{}) {
 	p.logger.Error("Transform Suspicious - "+msg, v...)
 }
 
+func (p *SuspiciousTransform) InitDnsMessage(dm *dnsutils.DnsMessage) {
+	dm.Suspicious = &dnsutils.Suspicious{
+		Score:                 0.0,
+		MalformedPacket:       false,
+		LargePacket:           false,
+		LongDomain:            false,
+		SlowDomain:            false,
+		UnallowedChars:        false,
+		UncommonQtypes:        false,
+		ExcessiveNumberLabels: false,
+	}
+}
+
 func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
+
+	if dm.Suspicious == nil {
+		p.LogError("transformer is not properly initialized")
+		return
+	}
 
 	// dns decoding error?
 	if dm.DNS.MalformedPacket {

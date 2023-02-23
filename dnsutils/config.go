@@ -44,6 +44,7 @@ type ConfigTransformers struct {
 		Enable        bool `yaml:"enable"`
 		AnonymizeIP   bool `yaml:"anonymize-ip"`
 		MinimazeQname bool `yaml:"minimaze-qname"`
+		HashIP        bool `yaml:"hash-ip"`
 	} `yaml:"user-privacy"`
 	Normalize struct {
 		Enable         bool `yaml:"enable"`
@@ -95,6 +96,7 @@ func (c *ConfigTransformers) SetDefault() {
 	c.UserPrivacy.Enable = false
 	c.UserPrivacy.AnonymizeIP = false
 	c.UserPrivacy.MinimazeQname = false
+	c.UserPrivacy.HashIP = false
 
 	c.Normalize.Enable = false
 	c.Normalize.QnameLowerCase = false
@@ -163,13 +165,20 @@ type Config struct {
 			CertFile      string `yaml:"cert-file"`
 			KeyFile       string `yaml:"key-file"`
 		} `yaml:"dnstap-proxifier"`
-		LiveCapture struct {
+		AfpacketLiveCapture struct {
 			Enable       bool   `yaml:"enable"`
 			Port         int    `yaml:"port"`
 			Device       string `yaml:"device"`
 			CacheSupport bool   `yaml:"cache-support"`
 			QueryTimeout int    `yaml:"query-timeout"`
-		} `yaml:"sniffer"`
+		} `yaml:"afpacket-sniffer"`
+		XdpLiveCapture struct {
+			Enable       bool   `yaml:"enable"`
+			Port         int    `yaml:"port"`
+			Device       string `yaml:"device"`
+			CacheSupport bool   `yaml:"cache-support"`
+			QueryTimeout int    `yaml:"query-timeout"`
+		} `yaml:"xdp-sniffer"`
 		PowerDNS struct {
 			Enable        bool   `yaml:"enable"`
 			ListenIP      string `yaml:"listen-ip"`
@@ -244,15 +253,16 @@ type Config struct {
 			TextFormat          string `yaml:"text-format"`
 		} `yaml:"logfile"`
 		Dnstap struct {
-			Enable        bool   `yaml:"enable"`
-			RemoteAddress string `yaml:"remote-address"`
-			RemotePort    int    `yaml:"remote-port"`
-			SockPath      string `yaml:"sock-path"`
-			RetryInterval int    `yaml:"retry-interval"`
-			TlsSupport    bool   `yaml:"tls-support"`
-			TlsInsecure   bool   `yaml:"tls-insecure"`
-			TlsMinVersion string `yaml:"tls-min-version"`
-			ServerId      string `yaml:"server-id"`
+			Enable            bool   `yaml:"enable"`
+			RemoteAddress     string `yaml:"remote-address"`
+			RemotePort        int    `yaml:"remote-port"`
+			SockPath          string `yaml:"sock-path"`
+			RetryInterval     int    `yaml:"retry-interval"`
+			TlsSupport        bool   `yaml:"tls-support"`
+			TlsInsecure       bool   `yaml:"tls-insecure"`
+			TlsMinVersion     string `yaml:"tls-min-version"`
+			ServerId          string `yaml:"server-id"`
+			OverwriteIdentity bool   `yaml:"overwrite-identity"`
 		} `yaml:"dnstap"`
 		TcpClient struct {
 			Enable        bool   `yaml:"enable"`
@@ -388,11 +398,14 @@ func (c *Config) SetDefault() {
 	c.Collectors.DnstapProxifier.CertFile = ""
 	c.Collectors.DnstapProxifier.KeyFile = ""
 
-	c.Collectors.LiveCapture.Enable = false
-	c.Collectors.LiveCapture.Port = 53
-	c.Collectors.LiveCapture.Device = ""
-	c.Collectors.LiveCapture.QueryTimeout = 5
-	c.Collectors.LiveCapture.CacheSupport = true
+	c.Collectors.XdpLiveCapture.Enable = false
+	c.Collectors.XdpLiveCapture.Device = ""
+
+	c.Collectors.AfpacketLiveCapture.Enable = false
+	c.Collectors.AfpacketLiveCapture.Port = 53
+	c.Collectors.AfpacketLiveCapture.Device = ""
+	c.Collectors.AfpacketLiveCapture.QueryTimeout = 5
+	c.Collectors.AfpacketLiveCapture.CacheSupport = true
 
 	c.Collectors.PowerDNS.Enable = false
 	c.Collectors.PowerDNS.ListenIP = ANY_IP
@@ -433,6 +446,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Dnstap.TlsInsecure = false
 	c.Loggers.Dnstap.TlsMinVersion = TLS_v12
 	c.Loggers.Dnstap.ServerId = ""
+	c.Loggers.Dnstap.OverwriteIdentity = false
 
 	c.Loggers.LogFile.Enable = false
 	c.Loggers.LogFile.FilePath = ""

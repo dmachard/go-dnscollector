@@ -60,8 +60,9 @@ global:
 
 ### Custom text format
 
-Custom text format can be configured
-All available directives:
+The text format can be customized with the following directives.
+
+Default directives:
 - `timestamp-rfc3339ns`: timestamp rfc3339 format, with nano support
 - `timestamp-unixms`: unix timestamp with ms support
 - `timestamp-unixus`: unix timestamp with us support
@@ -81,15 +82,8 @@ All available directives:
 - `length`: the length of the query or reply
 - `qtype`: dns qtype
 - `qname`: dns qname
-- `qnamepublicsuffix`: [Public Suffix](https://publicsuffix.org/) of the DNS QNAME
-- `qnameeffectivetldplusone`: [Public Suffix](https://publicsuffix.org/) plus one label of the DNS QNAME
 - `latency`: computed latency between queries and replies
 - `answercount`: the number of answer
-- `continent`: continent code
-- `country`: country iso code
-- `city`: city name
-- `as-number`: autonomous system number
-- `as-owner`: autonomous system organization/owner
 - `ttl`: answer ttl, only the first one
 - `answer`: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
 - `malformed`: malformed dns packet, integer value 1/0
@@ -99,11 +93,6 @@ All available directives:
 - `ra`: flag recursion available
 - `ad`: flag authenticated data
 - `edns-csubnet`: display client subnet info
-- `pdns-tag`: powerdns metadata, get one tag only, the first one in the list
-- `pdns-tags`: powerdns metadata, get all tags separated by comma
-- `pdns-original-request-subnet`: powerdns metadata, original request subnet like edns subclient
-- `pdns-applied-policy`: powerdns metadata, applied policy
-- `suspicious-score`: suspicious score for unusual traffic
 
 ```yaml
 global:

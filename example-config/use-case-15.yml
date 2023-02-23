@@ -3,6 +3,7 @@
 # As prerequisites, we assume you have 
 # - a Mikrotik brand device that routes DNS packets and can use the "tzsp" Action in the firewall or firewall6 mangle table.
 
+
 # If turned on, debug messages are printed in the standard output
 global:
   trace:
@@ -15,15 +16,13 @@ multiplexer:
          enable: true
          listen-ip: "0.0.0.0"
          listen-port: 10000
+
+  # Redirect output to the console
   loggers:
     - name: console
       stdout:
         mode: json
-      transforms:
-        normalize:
-          qname-lowercase: true
 
   routes:
-    - from:
-      - tzsp
+    - from: [ tzsp ]
       to: [ console ]

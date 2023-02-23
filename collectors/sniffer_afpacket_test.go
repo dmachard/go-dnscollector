@@ -13,9 +13,9 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func TestDnsSnifferRun(t *testing.T) {
+func TestAfpacketSnifferRun(t *testing.T) {
 	g := loggers.NewFakeLogger()
-	c := NewDnsSniffer([]dnsutils.Worker{g}, dnsutils.GetFakeConfig(), logger.New(false), "test")
+	c := NewAfpacketSniffer([]dnsutils.Worker{g}, dnsutils.GetFakeConfig(), logger.New(false), "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector sniffer listening error: ", err)
 	}

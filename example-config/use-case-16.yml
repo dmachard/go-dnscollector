@@ -1,0 +1,25 @@
+# Example 16: Listen for PowerDNS protobuf and convert them to DNStap stream
+
+# If turned on, debug messages are printed in the standard output
+global:
+  trace:
+    verbose: true
+
+multiplexer:
+  # Listen for Protobuf PowerDNS
+  collectors:
+    - name: pdns
+      powerdns:
+        listen-ip: 0.0.0.0
+        listen-port: 6001
+
+  # Redirect output to a remote DNStap collector
+  loggers:
+    - name: tap
+      dnstap:
+        remote-address: 127.0.0.1
+        remote-port: 6002
+
+  routes:
+    - from: [ pdns ]
+      to: [ tap ]

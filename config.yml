@@ -21,7 +21,7 @@ global:
   # comment the following line to use the hostname
   server-identity: "dns-collector"
 
-  # all directives for text format output
+  # default directives for text format output
   # - timestamp-rfc3339ns: timestamp rfc3339 format, with nano support
   # - timestamp-unixms: unix timestamp with ms support
   # - timestamp-unixus: unix timestamp with us support
@@ -43,11 +43,6 @@ global:
   # - qname: dns qname
   # - latency: computed latency between queries and replies
   # - answercount: the number of answer
-  # - continent: continent code
-  # - country: country iso code
-  # - city: city name
-  # - as-number: autonomous system number
-  # - as-owner: autonomous system organization
   # - ttl: answer ttl, only the first one value
   # - answer: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
   # - malformed: malformed dns packet, integer value 1/0
@@ -57,11 +52,6 @@ global:
   # - ra: recursion available
   # - ad: authenticated data
   # - edns-csubnet: client subnet
-  # - pdns-tag: powerdns metadata, get one tag only, the first one in the list
-  # - pdns-tags: powerdns metadata, get all tags separated by comma
-  # - pdns-original-request-client: powerdns metadata, get edns subclient
-  # - pdns-applied-policy: powerdns metadata, get applied policy
-  # - suspicious-score: suspicious score for unusual traffic
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 # create your dns collector, please refer bellow to see the list 
@@ -80,7 +70,7 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-
+        
   routes:
     - from: [ tap ]
       to: [ console ]
@@ -129,7 +119,7 @@ multiplexer:
 #   key-file: ""
 
 # # live capture with AF_PACKET
-# sniffer:
+# afpacket-sniffer:
 #   # filter on source and destination port
 #   port: 53
 #   # if "" bind on all interfaces
@@ -138,6 +128,11 @@ multiplexer:
 #   cache-support: true
 #   # Ttl in second, max time to keep the query record in memory cache
 #   query-timeout: 5
+
+# # live capture with XDP
+# xdp-sniffer:
+#   # bind on device
+#   device: wlp2s0
 
 # # ingest pcap file
 # file-ingestor:
@@ -169,6 +164,11 @@ multiplexer:
 #     (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
 
 # # protobuf powerdns
+# # The text format can be customized with the following additionnals directives:
+# # - powerdns-tags[:INDEX]: get all tags separated by comma or one tag at provided index
+# # - powerdns-original-request-client: powerdns metadata, get edns subclient
+# # - powerdns-applied-policy: powerdns metadata, get applied policy
+# # - powerdns-metadata[:KEY]: get  all metadata separated by comma or specific one if a valid [KEY] is provided
 # powerdns:
 #   # listen on ip
 #   listen-ip: 0.0.0.0
@@ -286,8 +286,10 @@ multiplexer:
 #   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
-#   # server identity, if empty use the global one
+#   # server identity, if empty use the global one or hostname
 #   server-id: "dnscollector"
+#   # overwrite original identity
+#   overwrite-identity: false
 
 # # resend captured dns traffic to a tcp remote destination or to unix socket
 # tcpclient:
@@ -424,10 +426,15 @@ multiplexer:
 #   anonymize-ip: false
 #   # Reduce Qname to second level only, for exemple mail.google.com be replaced by google.com
 #   minimaze-qname: false
+#   # Hash query and response IP
+#   hash-ip: false
 
 # # Use this option to add top level domain and tld+1, based on public suffix list https://publicsuffix.org/
 # # or convert all domain to lowercase
 # # or enable quiet text in your logs
+# # additionnals directive for text format
+# # - publicsuffix-tld: tld
+# # - publicsuffix-etld+1: effective tld plus one
 # normalize:
 #   # Wwww.GooGlE.com will be equal to www.google.com
 #   qname-lowercase: true
@@ -466,6 +473,12 @@ multiplexer:
 # # GeoIP maxmind support, more information on https://www.maxmind.com/en/geoip-demo
 # # this feature can be used to append additional informations like country, city, asn
 # # according to the query ip
+# # additionnals directive for text format
+# # - geoip-continent: continent code
+# # - geoip-country: country iso code
+# # - geoip-city: city name
+# # - geoip-as-number: autonomous system number
+# # - geoip-as-owner: autonomous system organization
 # geoip:
 #   # path file to your mmdb country database
 #   mmdb-country-file: ""
@@ -474,7 +487,9 @@ multiplexer:
 #   # path file to your mmdb ASN database
 #   mmdb-asn-file: ""
 
-# this feature can be used to tag unusual dns traffic like long domain, large packets
+# # this feature can be used to tag unusual dns traffic like long domain, large packets
+# # additionnals directive for text format
+# # - suspicious-score: suspicious score for unusual traffic
 # suspicious:
 #   # a length greater than this value for qname will be considered as suspicious
 #   threshold-qname-len: 100

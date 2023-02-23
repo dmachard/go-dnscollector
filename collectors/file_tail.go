@@ -2,6 +2,7 @@ package collectors
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strconv"
@@ -80,7 +81,7 @@ func (c *Tail) Stop() {
 
 func (c *Tail) Follow() error {
 	var err error
-	location := tail.SeekInfo{Offset: 0, Whence: os.SEEK_END}
+	location := tail.SeekInfo{Offset: 0, Whence: io.SeekEnd}
 	config := tail.Config{Location: &location, ReOpen: true, Follow: true, Logger: tail.DiscardingLogger, Poll: true, MustExist: true}
 	c.tailf, err = tail.TailFile(c.config.Collectors.Tail.FilePath, config)
 	if err != nil {
@@ -102,6 +103,9 @@ func (c *Tail) Run() {
 	// init dns message
 	dm := dnsutils.DnsMessage{}
 	dm.Init()
+
+	// init dns message with additionnals parts
+	subprocessors.InitDnsMessageFormat(&dm)
 
 	hostname, err := os.Hostname()
 	if err == nil {
