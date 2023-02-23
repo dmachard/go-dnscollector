@@ -87,13 +87,13 @@ See the full [configuration guide](doc/configuration.md) for more details.
 
 You will find below some examples of configuration to manage your DNS logs.
 
-- Capture DNS traffic with incoming DNSTap streams
+- Capture DNS traffic from incoming DNSTap streams
     - [x] [Read from UNIX DNSTap socket and forward it to TLS stream](example-config/use-case-5.yml)
     - [x] [Transform DNSTap as input to JSON format as output](example-config/use-case-3.yml)
     - [x] [Relays DNSTap stream to multiple remote destination without decoding](example-config/use-case-12.yml)
     - [x] [Aggregate several DNSTap stream and forward it to the same file](example-config/use-case-7.yml)
 
-- Capture DNS traffic with PowerDNS
+- Capture DNS traffic from PowerDNS products
     - [x] [Capture multiple PowerDNS streams](example-config/use-case-8.yml)
 
 - Observe your DNS traffic from logs
@@ -114,8 +114,8 @@ You will find below some examples of configuration to manage your DNS logs.
     - [x] [Capture DNSTap stream and backup-it to text and pcap files](example-config/use-case-1.yml)
     - [x] [Watch for PCAP files as input and JSON as output](example-config/use-case-15.yml)
     
-- Miscs
-    - [x] [Capture TZSP packets containing DNS packets and process them as json](example-config/use-case-15.yml)
+- Capture DNS traffic from Mikrotik device
+    - [x] [Capture TZSP packets containing DNS packets and process them as json](example-config/use-case-17.yml)
 
 ## Contributing
 

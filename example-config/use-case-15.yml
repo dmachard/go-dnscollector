@@ -1,8 +1,4 @@
-# Example 13: Capture TZSP packets containing DNS packets and process them as json
-#
-# As prerequisites, we assume you have 
-# - a Mikrotik brand device that routes DNS packets and can use the "tzsp" Action in the firewall or firewall6 mangle table.
-
+# Example 15: Watch for PCAP files as input and convert to JSON
 
 # If turned on, debug messages are printed in the standard output
 global:
@@ -10,12 +6,15 @@ global:
     verbose: true
 
 multiplexer:
+  # Watch in /tmp folder to find pcap files with pcap or pcap.gz extension
   collectors:
-    - name: tzsp
-      tzsp:
-         enable: true
-         listen-ip: "0.0.0.0"
-         listen-port: 10000
+    - name: pcap
+      file-ingestor:
+        watch-dir: /home/pcap/
+        watch-mode: pcap
+      transforms:
+        normalize:
+          qname-lowercase: true
 
   # Redirect output to the console
   loggers:
@@ -24,5 +23,5 @@ multiplexer:
         mode: json
 
   routes:
-    - from: [ tzsp ]
+    - from: [ pcap ]
       to: [ console ]
