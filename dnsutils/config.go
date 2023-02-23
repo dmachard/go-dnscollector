@@ -199,8 +199,6 @@ type Config struct {
 			Enable       bool   `yaml:"enable"`
 			ListenIp     string `yaml:"listen-ip"`
 			ListenPort   int    `yaml:"listen-port"`
-			DropQueries  bool   `yaml:"drop-queries"`
-			DropReplies  bool   `yaml:"drop-replies"`
 			CacheSupport bool   `yaml:"cache-support"`
 			QueryTimeout int    `yaml:"query-timeout"`
 		}
@@ -424,8 +422,6 @@ func (c *Config) SetDefault() {
 	c.Collectors.Tzsp.Enable = false
 	c.Collectors.Tzsp.ListenIp = ANY_IP
 	c.Collectors.Tzsp.ListenPort = 10000
-	c.Collectors.Tzsp.DropQueries = false
-	c.Collectors.Tzsp.DropReplies = false
 	c.Collectors.Tzsp.QueryTimeout = 5
 	c.Collectors.Tzsp.CacheSupport = true
 

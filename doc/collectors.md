@@ -208,14 +208,12 @@ file-ingestor:
 
 ### TZSP
 
-This collector receives TZSP packets that contain a full DNS packet, meaning Ethernet, IPv4/IPv6, UDP, then DNS.
+This collector receives TZSP (TaZmen Sniffer Protocol) packets that contain a full DNS packet, meaning Ethernet, IPv4/IPv6, UDP, then DNS.
 Its primary purpose is to suppport DNS packet capture from Mikrotik brand devices. These devices allow cloning of packets and sending them via TZSP to remote hosts.
 
 Options:
 - `listen-ip`: (string) listen on ip
 - `listen-port`: (integer) listening on port
-- `drop-queries`: (boolean) drop all queries
-- `drop-replies`: (boolean) drop all replies
 - `cache-support`: (boolean) disable or enable the cache dns to compute latency between queries and replies
 - `query-timeout`: (integer) in second, max time to keep the query record in memory
 
@@ -225,8 +223,6 @@ Default values:
 tzsp:
   listen-ip: "0.0.0.0"
   listen-port: 10000
-  drop-queries: false
-  drop-replies: false
   cache-support: true
   query-timeout: 5
 ```

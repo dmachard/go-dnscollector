@@ -19,18 +19,16 @@ import (
 )
 
 type TzspSniffer struct {
-	done        chan bool
-	exit        chan bool
-	listen      net.UDPConn
-	loggers     []dnsutils.Worker
-	config      *dnsutils.Config
-	logger      *logger.Logger
-	name        string
-	identity    string
-	port        int
-	ip          string
-	dropQueries bool
-	dropReplies bool
+	done     chan bool
+	exit     chan bool
+	listen   net.UDPConn
+	loggers  []dnsutils.Worker
+	config   *dnsutils.Config
+	logger   *logger.Logger
+	name     string
+	identity string
+	port     int
+	ip       string
 }
 
 func NewTzsp(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *TzspSniffer {
@@ -74,8 +72,6 @@ func (c *TzspSniffer) ReadConfig() {
 	c.port = c.config.Collectors.Tzsp.ListenPort
 	c.ip = c.config.Collectors.Tzsp.ListenIp
 	c.identity = c.config.GetServerIdentity()
-	c.dropQueries = c.config.Collectors.Tzsp.DropQueries
-	c.dropReplies = c.config.Collectors.Tzsp.DropReplies
 	// TODO: Implement
 }
 
@@ -251,17 +247,8 @@ func (c *TzspSniffer) Run() {
 				if len(dm.DNS.Payload) < 4 {
 					continue
 				}
-				qr := binary.BigEndian.Uint16(dm.DNS.Payload[2:4]) >> 15
 
-				// is query ?
-				if int(qr) == 0 && !c.dropQueries {
-					dnsProcessor.GetChannel() <- dm
-				}
-
-				// is reply ?
-				if int(qr) == 1 && !c.dropReplies {
-					dnsProcessor.GetChannel() <- dm
-				}
+				dnsProcessor.GetChannel() <- dm
 			}
 		}
 	}()
