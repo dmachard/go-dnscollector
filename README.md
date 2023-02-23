@@ -18,12 +18,13 @@ Additionally, DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser
     - Protobuf [`DNStap`](doc/collectors.md#dns-tap) with `tls`, `tcp` or `unix` support
     - Protobuf [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams with full [`metadata`](doc/powerdns.md) support 
     - [`Proxifier`](doc/collectors.md#dns-tap-proxifier) for DNSTap streams
-- *Live capture on a network interface*   
+- *Live capture on a network interface*
     - [`AF_PACKET`](doc/collectors.md#live-capture-with-af_packet) socket with BPF filter
     - [`eBPF XDP`](doc/collectors.md#live-capture-with-ebpf-xdp) ingress traffic
 - *Read text or binary files as input*
     - Read and tail on [`Plain text`](doc/collectors.md#tail) files
     - Ingest [`PCAP`](doc/collectors.md#file-ingestor) or [`DNSTap`](doc/collectors.md#file-ingestor) files by watching a directory
+- Listen for [`TZSP`](doc/collectors.md#tzsp) packets containg DNS packets
 
 **Loggers**:
 
@@ -86,14 +87,13 @@ See the full [configuration guide](doc/configuration.md) for more details.
 
 You will find below some examples of configuration to manage your DNS logs.
 
-
-- Capture DNS traffic with incoming DNSTap streams
+- Capture DNS traffic from incoming DNSTap streams
     - [x] [Read from UNIX DNSTap socket and forward it to TLS stream](example-config/use-case-5.yml)
     - [x] [Transform DNSTap as input to JSON format as output](example-config/use-case-3.yml)
     - [x] [Relays DNSTap stream to multiple remote destination without decoding](example-config/use-case-12.yml)
     - [x] [Aggregate several DNSTap stream and forward it to the same file](example-config/use-case-7.yml)
 
-- Capture DNS traffic with PowerDNS
+- Capture DNS traffic from PowerDNS products
     - [x] [Capture multiple PowerDNS streams](example-config/use-case-8.yml)
 
 - Observe your DNS traffic from logs
@@ -113,6 +113,9 @@ You will find below some examples of configuration to manage your DNS logs.
 - Capture DNS traffic from PCAP files
     - [x] [Capture DNSTap stream and backup-it to text and pcap files](example-config/use-case-1.yml)
     - [x] [Watch for PCAP files as input and JSON as output](example-config/use-case-15.yml)
+    
+- Capture DNS traffic from Mikrotik device
+    - [x] [Capture TZSP packets containing DNS packets and process them as json](example-config/use-case-17.yml)
 
 ## Contributing
 

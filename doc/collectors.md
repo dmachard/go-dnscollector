@@ -205,3 +205,66 @@ file-ingestor:
   pcap-dns-port: 53
   delete-after: false
 ```
+
+### TZSP
+
+This collector receives TZSP packets that contain a full DNS packet, meaning Ethernet, IPv4/IPv6, UDP, then DNS.
+Its primary purpose is to suppport DNS packet capture from Mikrotik brand devices. These devices allow cloning of packets and sending them via TZSP to remote hosts.
+
+Options:
+- `listen-ip`: (string) listen on ip
+- `listen-port`: (integer) listening on port
+- `drop-queries`: (boolean) drop all queries
+- `drop-replies`: (boolean) drop all replies
+- `cache-support`: (boolean) disable or enable the cache dns to compute latency between queries and replies
+- `query-timeout`: (integer) in second, max time to keep the query record in memory
+
+Default values:
+
+```yaml
+tzsp:
+  listen-ip: "0.0.0.0"
+  listen-port: 10000
+  drop-queries: false
+  drop-replies: false
+  cache-support: true
+  query-timeout: 5
+```
+
+Example rules for Mikrotik brand devices to send the traffic (only works if routed or the device serves as DNS server).
+```routeros
+/ipv6 firewall mangle
+add action=sniff-tzsp chain=prerouting comment="Sniff DNS (TCP)" dst-port=53 \
+    protocol=tcp sniff-target=10.0.10.2 sniff-target-port=10000
+add action=sniff-tzsp chain=prerouting comment="Sniff DNS (TCP)" src-port=53 \
+    protocol=tcp sniff-target=10.0.10.2 sniff-target-port=10000
+add action=sniff-tzsp chain=prerouting comment="Sniff DNS (UDP)" dst-port=53 \
+    protocol=udp sniff-target=10.0.10.2 sniff-target-port=10000
+add action=sniff-tzsp chain=prerouting comment="Sniff DNS (UDP)" src-port=53 \
+    protocol=udp sniff-target=10.0.10.2 sniff-target-port=10000
+add action=sniff-tzsp chain=output comment="Sniff DNS (TCP)" dst-port=53 \
+    protocol=tcp sniff-target=10.0.10.2 sniff-target-port=10000
+add action=sniff-tzsp chain=output comment="Sniff DNS (TCP)" src-port=53 \
+    protocol=tcp sniff-target=10.0.10.2 sniff-target-port=10000
+add action=sniff-tzsp chain=output comment="Sniff DNS (UDP)" dst-port=53 \
+    protocol=udp sniff-target=10.0.10.2 sniff-target-port=10000
+add action=sniff-tzsp chain=output comment="Sniff DNS (UDP)" src-port=53 \
+    protocol=udp sniff-target=10.0.10.2 sniff-target-port=10000
+/ip firewall mangle
+add action=sniff-tzsp chain=prerouting comment="Sniff DNS (TCP)" dst-port=53 \
+    protocol=tcp sniff-target=10.0.10.2 sniff-target-port=10000
+add action=sniff-tzsp chain=prerouting comment="Sniff DNS (TCP)" src-port=53 \
+    protocol=tcp sniff-target=10.0.10.2 sniff-target-port=10000
+add action=sniff-tzsp chain=prerouting comment="Sniff DNS (UDP)" dst-port=53 \
+    protocol=udp sniff-target=10.0.10.2 sniff-target-port=10000
+add action=sniff-tzsp chain=prerouting comment="Sniff DNS (UDP)" src-port=53 \
+    protocol=udp sniff-target=10.0.10.2 sniff-target-port=10000
+add action=sniff-tzsp chain=output comment="Sniff DNS (TCP)" dst-port=53 \
+    protocol=tcp sniff-target=10.0.10.2 sniff-target-port=10000
+add action=sniff-tzsp chain=output comment="Sniff DNS (TCP)" src-port=53 \
+    protocol=tcp sniff-target=10.0.10.2 sniff-target-port=10000
+add action=sniff-tzsp chain=output comment="Sniff DNS (UDP)" dst-port=53 \
+    protocol=udp sniff-target=10.0.10.2 sniff-target-port=10000
+add action=sniff-tzsp chain=output comment="Sniff DNS (UDP)" src-port=53 \
+    protocol=udp sniff-target=10.0.10.2 sniff-target-port=10000
+```

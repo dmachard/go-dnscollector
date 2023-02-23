@@ -1,7 +1,7 @@
 # Example 12: Relays DNStap stream to multiple listeners without decoding it.
 #
-# As prerequisites, we assume you have 
-# - a DNS server which supports DNSTap (unbound, bind, powerdns, etc) for more informations about dnstap, 
+# As prerequisites, we assume you have
+# - a DNS server which supports DNSTap (unbound, bind, powerdns, etc) for more informations about dnstap,
 #   read the following page: https://dmachard.github.io/posts/0001-dnstap-testing/
 
 # If turned on, debug messages are printed in the standard output

@@ -10,7 +10,7 @@ multiplexer:
   collectors:
     - name: pcap
       file-ingestor:
-        watch-dir: /home/denis/Lab/pcap/
+        watch-dir: /home/pcap/
         watch-mode: pcap
       transforms:
         normalize:
