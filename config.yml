@@ -183,15 +183,17 @@ multiplexer:
 #   # private key server file
 #   key-file: ""
 
-# # ztsp
+# # ztsp (TaZmen Sniffer Protocol)
 # ztsp:
 #  # listen on ip
 #  listen-ip: 0.0.0.0
+#  # listen on port
 #  listen-port: 10000
-#  # drop all queries
-#  drop-queries: false
-#  # drop all replies
-#  drop-replies: false
+#   # The cache is used to compute latency between replies and queries 
+#   # This cache can be enabled if your dns server doesn't add the latency information
+#   cache-support: false
+#   # Ttl in second, max time to keep the query record in memory cache
+#   query-timeout: 5
 
 ################################################
 # list of supported loggers
