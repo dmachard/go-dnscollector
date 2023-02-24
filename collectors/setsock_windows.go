@@ -4,6 +4,10 @@
 package collectors
 
 import (
+	"crypto/tls"
+	"net"
+	"os"
+
 	"golang.org/x/sys/windows"
 )
 
