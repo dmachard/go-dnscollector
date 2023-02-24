@@ -3,6 +3,7 @@ package collectors
 import (
 	"bufio"
 	"crypto/tls"
+	"io"
 	"net"
 	"os"
 	"strconv"
@@ -13,6 +14,25 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
+// thanks to https://stackoverflow.com/questions/28967701/golang-tcp-socket-cant-close-after-get-file,
+// call conn.CloseRead() before calling conn.Close()
+func Close(conn io.Closer) error {
+	type ReadCloser interface {
+		CloseRead() error
+	}
+	var errs []error
+	if closer, ok := conn.(ReadCloser); ok {
+		errs = append(errs, closer.CloseRead())
+	}
+	errs = append(errs, conn.Close())
+	for _, err := range errs {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 type Dnstap struct {
 	done     chan bool
 	listen   net.Listener
@@ -22,6 +42,7 @@ type Dnstap struct {
 	config   *dnsutils.Config
 	logger   *logger.Logger
 	name     string
+	connMode string
 }
 
 func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *Dnstap {
@@ -57,6 +78,14 @@ func (c *Dnstap) ReadConfig() {
 	}
 
 	c.sockPath = c.config.Collectors.Dnstap.SockPath
+
+	if len(c.config.Collectors.Dnstap.SockPath) > 0 {
+		c.connMode = "unix"
+	} else if c.config.Collectors.Dnstap.TlsSupport {
+		c.connMode = "tls"
+	} else {
+		c.connMode = "tcp"
+	}
 }
 
 func (c *Dnstap) LogInfo(msg string, v ...interface{}) {
@@ -114,7 +143,7 @@ func (c *Dnstap) Stop() {
 	for _, conn := range c.conns {
 		peer := conn.RemoteAddr().String()
 		c.LogInfo("%s - closing connection...", peer)
-		conn.Close()
+		Close(conn)
 	}
 	// Finally close the listener to unblock accept
 	c.LogInfo("stop listening...")
@@ -145,7 +174,6 @@ func (c *Dnstap) Listen() error {
 			c.logger.Fatal("loading certificate failed:", err)
 		}
 
-		// prepare tls configuration
 		tlsConfig := &tls.Config{
 			Certificates: []tls.Certificate{cer},
 			MinVersion:   tls.VersionTLS12,
@@ -159,7 +187,9 @@ func (c *Dnstap) Listen() error {
 		} else {
 			listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, tlsConfig)
 		}
+
 	} else {
+
 		// basic listening
 		if len(c.sockPath) > 0 {
 			listener, err = net.Listen(dnsutils.SOCKET_UNIX, c.sockPath)
@@ -172,7 +202,7 @@ func (c *Dnstap) Listen() error {
 	if err != nil {
 		return err
 	}
-	c.LogInfo("is listening on %s", listener.Addr())
+	c.LogInfo("is listening on %s://%s", c.connMode, listener.Addr())
 	c.listen = listener
 	return nil
 }
@@ -189,6 +219,21 @@ func (c *Dnstap) Run() {
 		conn, err := c.listen.Accept()
 		if err != nil {
 			break
+		}
+
+		if (c.connMode == "tls" || c.connMode == "tcp") && c.config.Collectors.Dnstap.RcvBufSize > 0 {
+
+			var is_tls bool
+			if c.config.Collectors.Dnstap.TlsSupport {
+				is_tls = true
+			}
+
+			before, actual, err := SetSock_RCVBUF(conn, c.config.Collectors.Dnstap.RcvBufSize, is_tls)
+			if err != nil {
+				c.logger.Fatal("Unable to set SO_RCVBUF: ", err)
+			}
+			c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before,
+				c.config.Collectors.Dnstap.RcvBufSize, actual)
 		}
 
 		c.conns = append(c.conns, conn)

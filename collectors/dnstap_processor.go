@@ -128,10 +128,9 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.DnsTap.Identity = string(identity)
 		}
 		version := dt.GetVersion()
-		if len(identity) > 0 {
+		if len(version) > 0 {
 			dm.DnsTap.Version = string(version)
 		}
-
 		dm.DnsTap.Operation = dt.GetMessage().GetType().String()
 		dm.NetworkInfo.Family = dt.GetMessage().GetSocketFamily().String()
 		dm.NetworkInfo.Protocol = dt.GetMessage().GetSocketProtocol().String()

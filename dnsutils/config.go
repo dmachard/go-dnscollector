@@ -154,6 +154,7 @@ type Config struct {
 			KeyFile       string `yaml:"key-file"`
 			CacheSupport  bool   `yaml:"cache-support"`
 			QueryTimeout  int    `yaml:"query-timeout"`
+			RcvBufSize    int    `yaml:"sock-rcvbuf"`
 		} `yaml:"dnstap"`
 		DnstapProxifier struct {
 			Enable        bool   `yaml:"enable"`
@@ -386,6 +387,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.Dnstap.KeyFile = ""
 	c.Collectors.Dnstap.QueryTimeout = 5
 	c.Collectors.Dnstap.CacheSupport = false
+	c.Collectors.Dnstap.RcvBufSize = 0
 
 	c.Collectors.DnstapProxifier.Enable = false
 	c.Collectors.DnstapProxifier.ListenIP = ANY_IP

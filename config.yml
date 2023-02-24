@@ -100,6 +100,8 @@ multiplexer:
 #   cache-support: false
 #   # Ttl in second, max time to keep the query record in memory cache
 #   query-timeout: 5
+#   # Sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
+#   sock-rcvbuf: 0
 
 # # dnstap proxifier with no protobuf decoding.
 # dnstap-proxifier:
