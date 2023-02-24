@@ -31,7 +31,7 @@ func SetSock_RCVBUF(conn net.Conn, desired int, is_tls bool) (int, int, error) {
 	}
 
 	// set the new one and check the new actual value
-	windows.SetsockoptInt(windows.Handle(file.Fd())), windows.SOL_SOCKET, windows.SO_RCVBUF, desired)
+	windows.SetsockoptInt(windows.Handle(file.Fd()), windows.SOL_SOCKET, windows.SO_RCVBUF, desired)
 	actual, err := windows.GetsockoptInt(windows.Handle(file.Fd()), windows.SOL_SOCKET, windows.SO_RCVBUF)
 	if err != nil {
 		return 0, 0, err
