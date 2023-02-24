@@ -15,10 +15,9 @@ Additionally, DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser
 
 **Collectors**:
 - *Listen for logging traffic with streaming network protocols*
-    - Protobuf [`DNStap`](doc/collectors.md#dns-tap) with `tls`, `tcp` or `unix` support
-    - Protobuf [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams with full [`support`](doc/powerdns.md) 
-    - [`Proxifier`](doc/collectors.md#dns-tap-proxifier) for DNSTap streams
-    - Listen for [`TZSP`](doc/collectors.md#tzsp)(TaZmen Sniffer Protocol) packets containg DNS packets
+    - [`DNStap`](doc/collectors.md#dns-tap) with `tls`, `tcp` or `unix` support and [`proxifier`](doc/collectors.md#dns-tap-proxifier)
+    - [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams with full [`support`](doc/powerdns.md) 
+    - [`TZSP`](doc/collectors.md#tzsp)(TaZmen Sniffer Protocol) support
 - *Live capture on a network interface*
     - [`AF_PACKET`](doc/collectors.md#live-capture-with-af_packet) socket with BPF filter
     - [`eBPF XDP`](doc/collectors.md#live-capture-with-ebpf-xdp) ingress traffic
