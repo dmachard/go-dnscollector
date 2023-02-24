@@ -69,6 +69,7 @@ Default directives:
 - `timestamp-unixns`: unix timestamp with nano support
 - `localtime`: local time
 - `identity`: dnstap identity
+- `version`: dnstap version
 - `operation`: dnstap operation
 - `opcode`: dns opcode (integer)
 - `rcode`: dns return code

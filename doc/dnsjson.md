@@ -69,6 +69,7 @@ Example:
   "dnstap": {
     "operation": "CLIENT_RESPONSE",
     "identity": "dnsdist1",
+    "version": "-",
     "timestamp-rfc3339ns": "2021-12-27T14:33:44.559002118Z",
     "latency": "0.014617"
   }
