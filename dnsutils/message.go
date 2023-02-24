@@ -124,6 +124,7 @@ type DnsExtended struct {
 type DnsTap struct {
 	Operation        string  `json:"operation" msgpack:"operation"`
 	Identity         string  `json:"identity" msgpack:"identity"`
+	Version          string  `json:"version" msgpack:"version"`
 	TimestampRFC3339 string  `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
 	Timestamp        float64 `json:"-" msgpack:"-"`
 	TimeSec          int     `json:"-" msgpack:"-"`
@@ -180,6 +181,7 @@ func (dm *DnsMessage) Init() {
 	dm.DnsTap = DnsTap{
 		Operation:        "-",
 		Identity:         "-",
+		Version:          "-",
 		TimestampRFC3339: "-",
 		LatencySec:       "-",
 	}
@@ -362,6 +364,8 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 			s.WriteString(ts.Format("2006-01-02 15:04:05.999999999"))
 		case directive == "identity":
 			s.WriteString(dm.DnsTap.Identity)
+		case directive == "version":
+			s.WriteString(dm.DnsTap.Version)
 		case directive == "operation":
 			s.WriteString(dm.DnsTap.Operation)
 		case directive == "rcode":
