@@ -358,7 +358,6 @@ func (c *FileIngestor) Run() {
 		// prepare filepath
 		fn := filepath.Join(c.config.Collectors.FileIngestor.WatchDir, entry.Name())
 
-		fmt.Println(c.config.Collectors.FileIngestor.WatchMode)
 		switch c.config.Collectors.FileIngestor.WatchMode {
 		case dnsutils.MODE_PCAP:
 			// process file with pcap extension
