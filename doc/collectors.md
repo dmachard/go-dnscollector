@@ -25,6 +25,7 @@ Options:
 - `key-file`: (string) private key server file
 - `cache-support`: (boolean) disable or enable the cache dns, this feature can be enabled if your dns server doesn't add the latency
 - `query-timeout`: (integer) in second, max time to keep the query record in memory
+- `sock-rcvbuf`: (integer) sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
 
 Default values:
 
@@ -39,6 +40,7 @@ dnstap:
   key-file: ""
   cache-support: false
   query-timeout: 5.0
+  sock-rcvbuf: 0
 ```
 
 ### DNS tap Proxifier
