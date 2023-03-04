@@ -13,7 +13,7 @@ Additionally, DNS-collector also support
 - [`EDNS`](doc/dnsparser.md) parsing.
 - Nanoseconds in timestamps
 - TCP reassembly
-- IPv4 and IPv6
+- IPv4 and IPv6 addresses
 
 **Overview**:
 
