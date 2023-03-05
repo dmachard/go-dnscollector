@@ -291,32 +291,41 @@ func (c *AfpacketSniffer) Run() {
 	streamPool := tcpassembly.NewStreamPool(streamFactory)
 	assembler := tcpassembly.NewAssembler(streamPool)
 
+	ticker := time.NewTicker(time.Minute * 1)
+
+	// goroutine to read all packets reassembled
 	go func() {
+		// prepare dns message
+		dm := dnsutils.DnsMessage{}
+
 		for {
+			select {
 			// read packet from channel
-			dnsPacket := <-reassembleChan
+			case dnsPacket := <-reassembleChan:
+				// reset
+				dm.Init()
 
-			// prepare dns message
-			dm := dnsutils.DnsMessage{}
-			dm.Init()
+				dm.NetworkInfo.Family = dnsPacket.IpLayer.EndpointType().String()
+				dm.NetworkInfo.QueryIp = dnsPacket.IpLayer.Src().String()
+				dm.NetworkInfo.ResponseIp = dnsPacket.IpLayer.Dst().String()
+				dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
+				dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
+				dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
 
-			dm.NetworkInfo.Family = dnsPacket.IpLayer.EndpointType().String()
-			dm.NetworkInfo.QueryIp = dnsPacket.IpLayer.Src().String()
-			dm.NetworkInfo.ResponseIp = dnsPacket.IpLayer.Dst().String()
-			dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
-			dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
-			dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
+				dm.DNS.Payload = dnsPacket.Payload
+				dm.DNS.Length = len(dnsPacket.Payload)
 
-			dm.DNS.Payload = dnsPacket.Payload
-			dm.DNS.Length = len(dnsPacket.Payload)
+				dm.DnsTap.Identity = c.identity
+				dm.DnsTap.TimeSec = dnsPacket.Timestamp.Second()
+				dm.DnsTap.TimeNsec = int(dnsPacket.Timestamp.UnixNano())
 
-			dm.DnsTap.Identity = c.identity
-			dm.DnsTap.TimeSec = dnsPacket.Timestamp.Second()
-			dm.DnsTap.TimeNsec = int(dnsPacket.Timestamp.UnixNano())
+				// send DNS message to DNS processor
+				dnsProcessor.GetChannel() <- dm
 
-			// send DNS message to DNS processor
-			dnsProcessor.GetChannel() <- dm
-
+			case <-ticker.C:
+				// Every minute, flush connections that haven't seen activity in the past 2 minutes.
+				assembler.FlushOlderThan(time.Now().Add(time.Minute * -2))
+			}
 		}
 	}()
 
