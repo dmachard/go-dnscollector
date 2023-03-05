@@ -39,6 +39,12 @@ func Test_TcpPacketReader(t *testing.T) {
 			pcapFile:  "./../testsdata/pcap/dnsdump_udp_truncated+tcp_fragmented.pcap",
 			nbPackets: 4,
 		},
+
+		{
+			name:      "DNS TCP FASTOPEN",
+			pcapFile:  "./../testsdata/pcap/dnsdump_tcp_fastopen.pcap",
+			nbPackets: 8,
+		},
 	}
 
 	done := make(chan bool)
@@ -94,7 +100,11 @@ func Test_TcpPacketReader(t *testing.T) {
 					}
 				}
 				if packet.TransportLayer().LayerType() == layers.LayerTypeTCP {
-					TcpPacketHandler(packet, assembler)
+					assembler.AssembleWithTimestamp(
+						packet.NetworkLayer().NetworkFlow(),
+						packet.TransportLayer().(*layers.TCP),
+						packet.Metadata().Timestamp,
+					)
 				}
 			}
 			// send empty packet to stop the goroutine

@@ -239,7 +239,12 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 			if int(p.SrcPort) != c.filterDnsPort && int(p.DstPort) != c.filterDnsPort {
 				continue
 			}
-			TcpPacketHandler(packet, assembler)
+			assembler.AssembleWithTimestamp(
+				packet.NetworkLayer().NetworkFlow(),
+				packet.TransportLayer().(*layers.TCP),
+				packet.Metadata().Timestamp,
+			)
+
 		}
 
 	}

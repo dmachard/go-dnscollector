@@ -6,17 +6,8 @@ import (
 	"time"
 
 	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/tcpassembly"
 )
-
-func TcpPacketHandler(p gopacket.Packet, assembler *tcpassembly.Assembler) {
-	assembler.AssembleWithTimestamp(
-		p.NetworkLayer().NetworkFlow(),
-		p.TransportLayer().(*layers.TCP),
-		p.Metadata().Timestamp,
-	)
-}
 
 // DnsDataStruct is a struct that holds DNS data
 type DnsDataStruct struct {
