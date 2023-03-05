@@ -80,7 +80,7 @@ dnstap-relay:
 Raw DNS packets sniffer. Setting `CAP_NET_RAW` capabilities on executables allows you to run these
 program without having to run-it with the root user:
 * IPv4, IPv6 support (fragmented packet ignored)
-* UDP and TCP transport
+* UDP and TCP transport (with tcp reassembly if needed)
 * BFP filtering
 
 Capabilities:
@@ -191,6 +191,7 @@ If you are in DNSTap mode, the collector search for files with the `.fstrm` exte
 
 For config examples, take a look to the following links:
 - [dnstap](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-14.yml)
+- [pcap](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-15.yml)
 
 Options:
 - `watch-dir`: (string) directory to watch for pcap files ingest

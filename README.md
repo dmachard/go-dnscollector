@@ -9,7 +9,13 @@
 
 `DNS-collector` acts as a passive high speed **aggregator, analyzer, transporter and logging** for your DNS messages, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously [sources](doc/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](doc/loggers.md) with some [transformations](doc/transformers.md) on it ([traffic filtering](doc/transformers.md#dns-filtering), [user privacy](doc/transformers.md#user-privacy), ...) and DNS protocol conversions (to [plain text](doc/configuration.md#custom-text-format), [json](doc/dnsjson.md), and more... ).
 
-Additionally, DNS-collector also contains DNS parser with [`EDNS`](doc/dnsparser.md) support.
+Additionally, DNS-collector also support 
+- [`EDNS`](doc/dnsparser.md) parser
+- Nanoseconds in timestamps
+- TCP reassembly
+- IPv4 and IPv6 addresses
+
+**Overview**:
 
 ![overview](doc/overview.png)
 

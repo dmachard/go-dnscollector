@@ -70,7 +70,7 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-        
+
   routes:
     - from: [ tap ]
       to: [ console ]

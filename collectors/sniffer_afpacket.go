@@ -5,16 +5,17 @@ package collectors
 
 import (
 	"encoding/binary"
-	"fmt"
 	"net"
 	"os"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/tcpassembly"
 	"golang.org/x/net/bpf"
 	"golang.org/x/sys/unix"
 )
@@ -275,6 +276,59 @@ func (c *AfpacketSniffer) Run() {
 	dnsProcessor.queryTimeout = c.config.Collectors.AfpacketLiveCapture.QueryTimeout
 	go dnsProcessor.Run(c.Loggers())
 
+	var eth layers.Ethernet
+	var ip4 layers.IPv4
+	var ip6 layers.IPv6
+	var ipFlow gopacket.Flow
+	var tcp layers.TCP
+	var udp layers.UDP
+	parserLayers := gopacket.NewDecodingLayerParser(layers.LayerTypeEthernet, &eth, &ip4, &ip6, &tcp, &udp)
+	decodedLayers := make([]gopacket.LayerType, 0, 4)
+
+	reassembleChan := make(chan DnsDataStruct)
+
+	streamFactory := &DnsStreamFactory{reassembled: reassembleChan}
+	streamPool := tcpassembly.NewStreamPool(streamFactory)
+	assembler := tcpassembly.NewAssembler(streamPool)
+
+	ticker := time.NewTicker(time.Minute * 1)
+
+	// goroutine to read all packets reassembled
+	go func() {
+		// prepare dns message
+		dm := dnsutils.DnsMessage{}
+
+		for {
+			select {
+			// read packet from channel
+			case dnsPacket := <-reassembleChan:
+				// reset
+				dm.Init()
+
+				dm.NetworkInfo.Family = dnsPacket.IpLayer.EndpointType().String()
+				dm.NetworkInfo.QueryIp = dnsPacket.IpLayer.Src().String()
+				dm.NetworkInfo.ResponseIp = dnsPacket.IpLayer.Dst().String()
+				dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
+				dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
+				dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
+
+				dm.DNS.Payload = dnsPacket.Payload
+				dm.DNS.Length = len(dnsPacket.Payload)
+
+				dm.DnsTap.Identity = c.identity
+				dm.DnsTap.TimeSec = dnsPacket.Timestamp.Second()
+				dm.DnsTap.TimeNsec = int(dnsPacket.Timestamp.UnixNano())
+
+				// send DNS message to DNS processor
+				dnsProcessor.GetChannel() <- dm
+
+			case <-ticker.C:
+				// Every minute, flush connections that haven't seen activity in the past 2 minutes.
+				assembler.FlushOlderThan(time.Now().Add(time.Minute * -2))
+			}
+		}
+	}()
+
 	go func() {
 		buf := make([]byte, 65536)
 		oob := make([]byte, 100)
@@ -307,81 +361,36 @@ func (c *AfpacketSniffer) Run() {
 			}
 			tsec := binary.LittleEndian.Uint32(scm.Data[:4])
 			nsec := binary.LittleEndian.Uint32(scm.Data[8:12])
+			timestamp := time.Unix(int64(tsec), int64(nsec))
 
-			var eth layers.Ethernet
-			var ip4 layers.IPv4
-			var ip6 layers.IPv6
-			var tcp layers.TCP
-			var udp layers.UDP
-			parser := gopacket.NewDecodingLayerParser(layers.LayerTypeEthernet, &eth, &ip4, &ip6, &tcp, &udp)
-			decodedLayers := make([]gopacket.LayerType, 0, 4)
-
-			// copy packet data from buffer
-			pkt := make([]byte, bufN)
-			copy(pkt, buf[:bufN])
-
-			// decode-it
-			parser.DecodeLayers(pkt, &decodedLayers)
-
-			dm := dnsutils.DnsMessage{}
-			dm.Init()
-
-			ignore_packet := false
-			for _, layertyp := range decodedLayers {
-				switch layertyp {
-				case layers.LayerTypeIPv4:
-					dm.NetworkInfo.Family = dnsutils.PROTO_IPV4
-					dm.NetworkInfo.QueryIp = ip4.SrcIP.String()
-					dm.NetworkInfo.ResponseIp = ip4.DstIP.String()
-
-				case layers.LayerTypeIPv6:
-					dm.NetworkInfo.QueryIp = ip6.SrcIP.String()
-					dm.NetworkInfo.ResponseIp = ip6.DstIP.String()
-					dm.NetworkInfo.Family = dnsutils.PROTO_IPV6
-
-				case layers.LayerTypeUDP:
-					dm.NetworkInfo.QueryPort = fmt.Sprint(int(udp.SrcPort))
-					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(udp.DstPort))
-					dm.DNS.Payload = udp.Payload
-					dm.DNS.Length = len(udp.Payload)
-					dm.NetworkInfo.Protocol = dnsutils.PROTO_UDP
-
-				case layers.LayerTypeTCP:
-					// ignore SYN/ACK packet
-					if !tcp.PSH {
-						ignore_packet = true
-						continue
-					}
-
-					dnsLengthField := binary.BigEndian.Uint16(tcp.Payload[0:2])
-					if len(tcp.Payload) < int(dnsLengthField) {
-						ignore_packet = true
-						continue
-					}
-
-					dm.NetworkInfo.QueryPort = fmt.Sprint(int(tcp.SrcPort))
-					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(tcp.DstPort))
-					dm.DNS.Payload = tcp.Payload[2:]
-					dm.DNS.Length = len(tcp.Payload[2:])
-					dm.NetworkInfo.Protocol = dnsutils.PROTO_TCP
-				}
+			// decode layers
+			parserLayers.DecodeLayers(buf[:bufN], &decodedLayers)
+			if len(ip4.Contents) > 0 {
+				ipFlow = ip4.NetworkFlow()
+			}
+			if len(ip6.Contents) > 0 {
+				ipFlow = ip6.NetworkFlow()
 			}
 
-			if !ignore_packet {
-				dm.DnsTap.Identity = c.identity
-
-				// set timestamp
-				dm.DnsTap.TimeSec = int(tsec)
-				dm.DnsTap.TimeNsec = int(nsec)
-
-				// just decode QR
-				if len(dm.DNS.Payload) < 4 {
-					continue
+			for _, layerType := range decodedLayers {
+				if layerType == layers.LayerTypeUDP {
+					reassembleChan <- DnsDataStruct{
+						Payload:        udp.Payload,
+						IpLayer:        ipFlow,
+						TransportLayer: udp.TransportFlow(),
+						Timestamp:      timestamp,
+					}
 				}
-
-				dnsProcessor.GetChannel() <- dm
+				if layerType == layers.LayerTypeTCP {
+					assembler.AssembleWithTimestamp(
+						ipFlow,
+						&tcp,
+						timestamp,
+					)
+				}
 			}
 		}
+
 	}()
 
 	<-c.exit
