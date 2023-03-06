@@ -26,7 +26,7 @@ require (
 	github.com/rs/tzsp v0.0.0-20161230003637-8ce729c826b9
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/net v0.7.0
-	golang.org/x/sys v0.5.0
+	golang.org/x/sys v0.6.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.1
