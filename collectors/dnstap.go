@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 )
@@ -228,7 +229,7 @@ func (c *Dnstap) Run() {
 				is_tls = true
 			}
 
-			before, actual, err := SetSock_RCVBUF(conn, c.config.Collectors.Dnstap.RcvBufSize, is_tls)
+			before, actual, err := netlib.SetSock_RCVBUF(conn, c.config.Collectors.Dnstap.RcvBufSize, is_tls)
 			if err != nil {
 				c.logger.Fatal("Unable to set SO_RCVBUF: ", err)
 			}

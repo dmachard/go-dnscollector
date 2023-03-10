@@ -65,14 +65,20 @@ multiplexer:
       transforms:
         normalize:
           qname-lowercase: true
-
+    - name: pcap
+      file-ingestor:
+        watch-dir: /home/denis/Lab/pcap/
+        watch-mode: pcap
+      transforms:
+        normalize:
+          qname-lowercase: true
   loggers:
     - name: console
       stdout:
         mode: text
 
   routes:
-    - from: [ tap ]
+    - from: [ pcap ]
       to: [ console ]
 
 ################################################

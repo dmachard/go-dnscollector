@@ -1,4 +1,4 @@
-package collectors
+package netlib
 
 import (
 	"bytes"
@@ -9,21 +9,9 @@ import (
 	"github.com/google/gopacket/tcpassembly"
 )
 
-// DnsDataStruct is a struct that holds DNS data
-type DnsDataStruct struct {
-	// DNS payload
-	Payload []byte
-	// IP layer
-	IpLayer gopacket.Flow
-	// Transport layer
-	TransportLayer gopacket.Flow
-	// Timestamp
-	Timestamp time.Time
-}
-
 type DnsStreamFactory struct {
 	// Channel to send reassembled DNS data
-	reassembled chan DnsDataStruct
+	Reassembled chan DnsPacket
 }
 
 func (s *DnsStreamFactory) New(net, transport gopacket.Flow) tcpassembly.Stream {
@@ -31,7 +19,7 @@ func (s *DnsStreamFactory) New(net, transport gopacket.Flow) tcpassembly.Stream 
 		net:         net,
 		transport:   transport,
 		data:        make([]byte, 0),
-		reassembled: s.reassembled,
+		reassembled: s.Reassembled,
 	}
 }
 
@@ -40,7 +28,7 @@ type stream struct {
 	data           []byte
 	lenDns         int
 	LastSeen       time.Time
-	reassembled    chan DnsDataStruct
+	reassembled    chan DnsPacket
 }
 
 func (s *stream) Reassembled(rs []tcpassembly.Reassembly) {
@@ -73,7 +61,7 @@ func (s *stream) Reassembled(rs []tcpassembly.Reassembly) {
 			s.LastSeen = r.Seen
 
 			// send the reassembled data to the channel
-			s.reassembled <- DnsDataStruct{
+			s.reassembled <- DnsPacket{
 				Payload:        s.data[2 : s.lenDns+2],
 				IpLayer:        s.net,
 				TransportLayer: s.transport,

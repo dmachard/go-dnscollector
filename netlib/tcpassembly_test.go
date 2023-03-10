@@ -1,4 +1,4 @@
-package collectors
+package netlib
 
 import (
 	"os"
@@ -63,8 +63,8 @@ func Test_TcpPacketReader(t *testing.T) {
 				return
 			}
 
-			reassembleChan := make(chan DnsDataStruct)
-			streamFactory := &DnsStreamFactory{reassembled: reassembleChan}
+			reassembleChan := make(chan DnsPacket)
+			streamFactory := &DnsStreamFactory{Reassembled: reassembleChan}
 			streamPool := tcpassembly.NewStreamPool(streamFactory)
 			assembler := tcpassembly.NewAssembler(streamPool)
 
@@ -92,7 +92,7 @@ func Test_TcpPacketReader(t *testing.T) {
 
 				if packet.TransportLayer().LayerType() == layers.LayerTypeUDP {
 					p := packet.TransportLayer().(*layers.UDP)
-					reassembleChan <- DnsDataStruct{
+					reassembleChan <- DnsPacket{
 						Payload:        p.Payload,
 						IpLayer:        packet.NetworkLayer().NetworkFlow(),
 						TransportLayer: p.TransportFlow(),
@@ -108,7 +108,7 @@ func Test_TcpPacketReader(t *testing.T) {
 				}
 			}
 			// send empty packet to stop the goroutine
-			reassembleChan <- DnsDataStruct{}
+			reassembleChan <- DnsPacket{}
 
 			<-done
 			if nbPackets != tc.nbPackets {

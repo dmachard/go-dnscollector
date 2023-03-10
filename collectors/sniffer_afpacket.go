@@ -12,6 +12,7 @@ import (
 	"unsafe"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -285,9 +286,9 @@ func (c *AfpacketSniffer) Run() {
 	parserLayers := gopacket.NewDecodingLayerParser(layers.LayerTypeEthernet, &eth, &ip4, &ip6, &tcp, &udp)
 	decodedLayers := make([]gopacket.LayerType, 0, 4)
 
-	reassembleChan := make(chan DnsDataStruct)
+	reassembleChan := make(chan netlib.DnsPacket)
 
-	streamFactory := &DnsStreamFactory{reassembled: reassembleChan}
+	streamFactory := &netlib.DnsStreamFactory{Reassembled: reassembleChan}
 	streamPool := tcpassembly.NewStreamPool(streamFactory)
 	assembler := tcpassembly.NewAssembler(streamPool)
 
@@ -374,7 +375,7 @@ func (c *AfpacketSniffer) Run() {
 
 			for _, layerType := range decodedLayers {
 				if layerType == layers.LayerTypeUDP {
-					reassembleChan <- DnsDataStruct{
+					reassembleChan <- netlib.DnsPacket{
 						Payload:        udp.Payload,
 						IpLayer:        ipFlow,
 						TransportLayer: udp.TransportFlow(),
