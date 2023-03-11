@@ -27,6 +27,8 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
 
     - name: build binary
       run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
@@ -57,6 +59,8 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
 
     - name: build binary
       run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
@@ -90,6 +94,8 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
 
     - name: build binary
       run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
