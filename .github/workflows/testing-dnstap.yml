@@ -63,7 +63,7 @@ jobs:
 
     - name: Deploy coredns docker image
       run: |
-        sudo docker run -d --network="host" --name=coredns -v $PWD/testsdata/:$PWD/testsdata/ -v /tmp/:/tmp/ coredns/coredns:${{ matrix.coredns }} -conf $PWD/testsdata/coredns_${{ matrix.mode }}.conf
+        sudo docker run -d --network="host" --name=coredns -v $PWD/testsdata/coredns/:$PWD/testsdata/ -v /tmp/:/tmp/ coredns/coredns:${{ matrix.coredns }} -conf $PWD/testsdata/coredns/coredns_${{ matrix.mode }}.conf
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Test ${{ matrix.mode }}
