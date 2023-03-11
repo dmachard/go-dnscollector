@@ -242,6 +242,10 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 
 		nbPackets++
 
+		if packet.NetworkLayer() == nil {
+			continue
+		}
+
 		// ipv4 fragmented packet ?
 		if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
 			ip4 := packet.NetworkLayer().(*layers.IPv4)

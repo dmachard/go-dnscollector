@@ -294,6 +294,21 @@ func (c *AfpacketSniffer) Run() {
 
 	ticker := time.NewTicker(time.Minute * 1)
 
+	dnsChan := make(chan netlib.DnsPacket)
+	udpChan := make(chan gopacket.Packet)
+	tcpChan := make(chan gopacket.Packet)
+	fragIp4Chan := make(chan gopacket.Packet)
+	fragIp6Chan := make(chan gopacket.Packet)
+
+	// defrag ipv4
+	go netlib.IpDefragger(fragIp4Chan, udpChan, tcpChan)
+	// defrag ipv6
+	go netlib.IpDefragger(fragIp6Chan, udpChan, tcpChan)
+	// tcp assembly
+	go netlib.TcpAssembler(tcpChan, dnsChan, 0)
+	// udp processor
+	go netlib.UdpProcessor(udpChan, dnsChan, 0)
+
 	// goroutine to read all packets reassembled
 	go func() {
 		// prepare dns message
@@ -364,8 +379,12 @@ func (c *AfpacketSniffer) Run() {
 			nsec := binary.LittleEndian.Uint32(scm.Data[8:12])
 			timestamp := time.Unix(int64(tsec), int64(nsec))
 
+			// copy packet data from buffer
+			pkt := make([]byte, bufN)
+			copy(pkt, buf[:bufN])
+
 			// decode layers
-			parserLayers.DecodeLayers(buf[:bufN], &decodedLayers)
+			parserLayers.DecodeLayers(pkt, &decodedLayers)
 			if len(ip4.Contents) > 0 {
 				ipFlow = ip4.NetworkFlow()
 			}

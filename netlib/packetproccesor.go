@@ -27,8 +27,11 @@ type DnsPacket struct {
 func UdpProcessor(udpInput chan gopacket.Packet, dnsOutput chan DnsPacket, portFilter int) {
 	for packet := range udpInput {
 		p := packet.TransportLayer().(*layers.UDP)
-		if int(p.SrcPort) != portFilter && int(p.DstPort) != portFilter {
-			continue
+
+		if portFilter > 0 {
+			if int(p.SrcPort) != portFilter && int(p.DstPort) != portFilter {
+				continue
+			}
 		}
 
 		dnsOutput <- DnsPacket{
@@ -63,8 +66,10 @@ func TcpAssembler(tcpInput chan gopacket.Packet, dnsOutput chan DnsPacket, portF
 			}
 
 			// ignore packet ?
-			if int(p.SrcPort) != portFilter && int(p.DstPort) != portFilter {
-				continue
+			if portFilter > 0 {
+				if int(p.SrcPort) != portFilter && int(p.DstPort) != portFilter {
+					continue
+				}
 			}
 
 			assembler.AssembleWithTimestamp(
