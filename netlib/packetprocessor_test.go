@@ -66,7 +66,7 @@ func Test_IpDefrag(t *testing.T) {
 					}
 					nbPackets++
 				}
-				fmt.Println("no more packet")
+				fmt.Println("no more packet:", nbPackets)
 				done <- true
 			}()
 
