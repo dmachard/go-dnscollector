@@ -47,25 +47,37 @@ func TcpAssembler(tcpInput chan gopacket.Packet, dnsOutput chan DnsPacket, portF
 	streamPool := tcpassembly.NewStreamPool(streamFactory)
 	assembler := tcpassembly.NewAssembler(streamPool)
 
-	for packet := range tcpInput {
-		p := packet.TransportLayer().(*layers.TCP)
+	ticker := time.NewTicker(time.Minute * 1)
 
-		// ip fragments should not happened with tcp ...
-		if packet.Metadata().Truncated {
-			streamFactory.IpDefragmented = packet.Metadata().Truncated
+	for {
+		select {
+		case packet, more := <-tcpInput:
+			if !more {
+				goto FLUSHALL
+			}
+			p := packet.TransportLayer().(*layers.TCP)
+
+			// ip fragments should not happened with tcp ...
+			if packet.Metadata().Truncated {
+				streamFactory.IpDefragmented = packet.Metadata().Truncated
+			}
+
+			// ignore packet ?
+			if int(p.SrcPort) != portFilter && int(p.DstPort) != portFilter {
+				continue
+			}
+
+			assembler.AssembleWithTimestamp(
+				packet.NetworkLayer().NetworkFlow(),
+				packet.TransportLayer().(*layers.TCP),
+				packet.Metadata().Timestamp,
+			)
+		case <-ticker.C:
+			// Every minute, flush connections that haven't seen activity in the past 2 minutes.
+			assembler.FlushOlderThan(time.Now().Add(time.Minute * -2))
 		}
-
-		// ignore packet ?
-		if int(p.SrcPort) != portFilter && int(p.DstPort) != portFilter {
-			continue
-		}
-
-		assembler.AssembleWithTimestamp(
-			packet.NetworkLayer().NetworkFlow(),
-			packet.TransportLayer().(*layers.TCP),
-			packet.Metadata().Timestamp,
-		)
 	}
+FLUSHALL:
 	assembler.FlushAll()
 }
 
