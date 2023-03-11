@@ -7,7 +7,7 @@ global:
   # If turned on, log some applications messages
   trace:
     # debug informations
-    verbose: false
+    verbose: true
     # log malformed packet
     # log-malformed: false
     # # filename is the file to write logs to.
