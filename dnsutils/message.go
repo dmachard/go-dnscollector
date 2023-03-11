@@ -77,12 +77,14 @@ type DnsGeo struct {
 }
 
 type DnsNetInfo struct {
-	Family       string `json:"family" msgpack:"family"`
-	Protocol     string `json:"protocol" msgpack:"protocol"`
-	QueryIp      string `json:"query-ip" msgpack:"query-ip"`
-	QueryPort    string `json:"query-port" msgpack:"query-port"`
-	ResponseIp   string `json:"response-ip" msgpack:"response-ip"`
-	ResponsePort string `json:"response-port" msgpack:"response-port"`
+	Family         string `json:"family" msgpack:"family"`
+	Protocol       string `json:"protocol" msgpack:"protocol"`
+	QueryIp        string `json:"query-ip" msgpack:"query-ip"`
+	QueryPort      string `json:"query-port" msgpack:"query-port"`
+	ResponseIp     string `json:"response-ip" msgpack:"response-ip"`
+	ResponsePort   string `json:"response-port" msgpack:"response-port"`
+	IpDefragmented bool   `json:"ip-defragmented" msgpack:"ip-defragmented"`
+	TcpReassembled bool   `json:"tcp-reassembled" msgpack:"tcp-reassembled"`
 }
 
 type DnsRRs struct {
@@ -170,12 +172,14 @@ type DnsMessage struct {
 
 func (dm *DnsMessage) Init() {
 	dm.NetworkInfo = DnsNetInfo{
-		Family:       "-",
-		Protocol:     "-",
-		QueryIp:      "-",
-		QueryPort:    "-",
-		ResponseIp:   "-",
-		ResponsePort: "-",
+		Family:         "-",
+		Protocol:       "-",
+		QueryIp:        "-",
+		QueryPort:      "-",
+		ResponseIp:     "-",
+		ResponsePort:   "-",
+		IpDefragmented: false,
+		TcpReassembled: false,
 	}
 
 	dm.DnsTap = DnsTap{
@@ -401,6 +405,18 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 			s.WriteString(dm.DNS.Type)
 		case directive == "opcode":
 			s.WriteString(strconv.Itoa(dm.DNS.Opcode))
+		case directive == "tr":
+			if dm.NetworkInfo.TcpReassembled {
+				s.WriteString("TR")
+			} else {
+				s.WriteString("-")
+			}
+		case directive == "df":
+			if dm.NetworkInfo.IpDefragmented {
+				s.WriteString("DF")
+			} else {
+				s.WriteString("-")
+			}
 		case directive == "tc":
 			if dm.DNS.Flags.TC {
 				s.WriteString("TC")

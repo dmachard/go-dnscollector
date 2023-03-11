@@ -170,6 +170,10 @@ func (f *fragments) build(in gopacket.Packet) (gopacket.Packet, error) {
 		outPacket := gopacket.NewPacket(buf.Bytes(), layers.LayerTypeIPv4, gopacket.Default)
 		outPacket.Metadata().CaptureLength = len(outPacket.Data())
 		outPacket.Metadata().Length = len(outPacket.Data())
+		outPacket.Metadata().Timestamp = in.Metadata().Timestamp
+
+		// workaround to mark the packet as reassembled
+		outPacket.Metadata().Truncated = true
 		return outPacket, nil
 	}
 
@@ -202,6 +206,11 @@ func (f *fragments) build(in gopacket.Packet) (gopacket.Packet, error) {
 		outPacket := gopacket.NewPacket(buf.Bytes(), layers.LayerTypeIPv6, gopacket.Default)
 		outPacket.Metadata().CaptureLength = len(outPacket.Data())
 		outPacket.Metadata().Length = len(outPacket.Data())
+		outPacket.Metadata().Timestamp = in.Metadata().Timestamp
+
+		// workaround to mark the packet as reassembled
+		outPacket.Metadata().Truncated = true
+
 		return outPacket, nil
 	}
 	return nil, nil

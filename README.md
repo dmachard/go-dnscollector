@@ -11,7 +11,7 @@
 
 Additionally, DNS-collector also support 
 - [`Extension Mechanisms for DNS (EDNS)`](doc/dnsparser.md) decoding
-- IPv4 and IPv6 fragments with reassembly
+- IPv4/v6 defragmentation
 - TCP reassembly
 - Nanoseconds in timestamps
 

@@ -1,7 +1,6 @@
 package netlib
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/gopacket"
@@ -19,6 +18,10 @@ type DnsPacket struct {
 	TransportLayer gopacket.Flow
 	// Timestamp
 	Timestamp time.Time
+	// IP Defragmented
+	IpDefragmented bool
+	// TCP reassembly
+	TcpReassembled bool
 }
 
 func UdpProcessor(udpInput chan gopacket.Packet, dnsOutput chan DnsPacket, portFilter int) {
@@ -33,6 +36,8 @@ func UdpProcessor(udpInput chan gopacket.Packet, dnsOutput chan DnsPacket, portF
 			IpLayer:        packet.NetworkLayer().NetworkFlow(),
 			TransportLayer: p.TransportFlow(),
 			Timestamp:      packet.Metadata().Timestamp,
+			TcpReassembled: false,
+			IpDefragmented: packet.Metadata().Truncated,
 		}
 	}
 }
@@ -44,9 +49,17 @@ func TcpAssembler(tcpInput chan gopacket.Packet, dnsOutput chan DnsPacket, portF
 
 	for packet := range tcpInput {
 		p := packet.TransportLayer().(*layers.TCP)
+
+		// ip fragments should not happened with tcp ...
+		if packet.Metadata().Truncated {
+			streamFactory.IpDefragmented = packet.Metadata().Truncated
+		}
+
+		// ignore packet ?
 		if int(p.SrcPort) != portFilter && int(p.DstPort) != portFilter {
 			continue
 		}
+
 		assembler.AssembleWithTimestamp(
 			packet.NetworkLayer().NetworkFlow(),
 			packet.TransportLayer().(*layers.TCP),
@@ -61,7 +74,6 @@ func IpDefragger(ipInput chan gopacket.Packet, udpOutput chan gopacket.Packet, t
 	for fragment := range ipInput {
 		reassembled, err := defragger.DefragIP(fragment)
 		if err != nil {
-			fmt.Println(err)
 			break
 		} else if reassembled == nil {
 			continue

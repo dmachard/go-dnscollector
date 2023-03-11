@@ -168,9 +168,9 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 	packetSource.DecodeOptions.Lazy = true
 	packetSource.NoCopy = true
 
-	// defrag for ipv4
+	// defrag ipv4
 	go netlib.IpDefragger(fragIp4Chan, udpChan, tcpChan)
-	// defrag for ipv6
+	// defrag ipv6
 	go netlib.IpDefragger(fragIp6Chan, udpChan, tcpChan)
 	// tcp assembly
 	go netlib.TcpAssembler(tcpChan, dnsChan, c.filterDnsPort)
@@ -198,6 +198,8 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 				dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
 				dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
 				dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
+				dm.NetworkInfo.IpDefragmented = dnsPacket.IpDefragmented
+				dm.NetworkInfo.TcpReassembled = dnsPacket.TcpReassembled
 
 				dm.DNS.Payload = dnsPacket.Payload
 				dm.DNS.Length = len(dnsPacket.Payload)

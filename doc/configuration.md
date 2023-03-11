@@ -93,6 +93,8 @@ Default directives:
 - `aa`: flag authoritative answer
 - `ra`: flag recursion available
 - `ad`: flag authenticated data
+- `df`: flag when ip defragmented occured
+- `tr`: flag when tcp reassembled occured
 - `edns-csubnet`: display client subnet info
 
 ```yaml
