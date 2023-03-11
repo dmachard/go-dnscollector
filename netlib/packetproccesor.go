@@ -72,12 +72,6 @@ func TcpAssembler(tcpInput chan gopacket.Packet, dnsOutput chan DnsPacket, portF
 func IpDefragger(ipInput chan gopacket.Packet, udpOutput chan gopacket.Packet, tcpOutput chan gopacket.Packet) {
 	defragger := NewIPDefragmenter()
 	for fragment := range ipInput {
-		// ignore packet if nil
-		if fragment == nil {
-			udpOutput <- nil
-			tcpOutput <- nil
-			continue
-		}
 		reassembled, err := defragger.DefragIP(fragment)
 		if err != nil {
 			break

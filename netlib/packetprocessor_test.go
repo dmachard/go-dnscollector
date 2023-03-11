@@ -1,9 +1,9 @@
 package netlib
 
 import (
-	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -47,7 +47,7 @@ func Test_IpDefrag(t *testing.T) {
 
 			fragIp4Chan := make(chan gopacket.Packet)
 			fragIp6Chan := make(chan gopacket.Packet)
-			outputChan := make(chan gopacket.Packet)
+			outputChan := make(chan gopacket.Packet, 2)
 
 			// defrag ipv4
 			go IpDefragger(fragIp4Chan, outputChan, outputChan)
@@ -58,15 +58,18 @@ func Test_IpDefrag(t *testing.T) {
 			packetSource.DecodeOptions.Lazy = true
 
 			nbPackets := 0
+			timeout := time.After(1 * time.Second)
 			go func() {
+
 				for {
-					pkt := <-outputChan
-					if pkt == nil {
-						break
+					select {
+					case <-outputChan:
+						nbPackets++
+					case <-timeout:
+						goto STOP
 					}
-					nbPackets++
 				}
-				fmt.Println("no more packet:", nbPackets)
+			STOP:
 				done <- true
 			}()
 
@@ -94,9 +97,9 @@ func Test_IpDefrag(t *testing.T) {
 						outputChan <- packet
 					}
 				}
+
 			}
-			fragIp4Chan <- nil
-			fragIp6Chan <- nil
+
 			<-done
 
 			if nbPackets != tc.nbPackets {
