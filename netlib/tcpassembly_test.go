@@ -10,7 +10,7 @@ import (
 	"github.com/google/gopacket/tcpassembly"
 )
 
-func Test_TcpPacketReader(t *testing.T) {
+func Test_TcpAssembly(t *testing.T) {
 	tests := []struct {
 		name      string
 		pcapFile  string
