@@ -265,7 +265,10 @@ func (o *Prometheus) InitProm() {
 			"flag_aa",
 			"flag_ra",
 			"flag_ad",
-			"pkt_err"},
+			"pkt_err",
+			"flag_df",
+			"flag_tr",
+		},
 	)
 	o.promRegistry.MustRegister(o.counterPackets)
 
@@ -500,6 +503,8 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 		strconv.FormatBool(dm.DNS.Flags.RA),
 		strconv.FormatBool(dm.DNS.Flags.AD),
 		strconv.FormatBool(dm.DNS.MalformedPacket),
+		strconv.FormatBool(dm.NetworkInfo.IpDefragmented),
+		strconv.FormatBool(dm.NetworkInfo.TcpReassembled),
 	).Inc()
 
 	// count the number of queries and replies

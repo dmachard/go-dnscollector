@@ -32,7 +32,7 @@ jobs:
 
     - name: Deploy dnsdist docker image
       run: |
-        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/testsdata/dnsdist_protobuf.conf:/etc/dnsdist/conf.d/dnsdist.conf:z -v /tmp/:/tmp/ powerdns/dnsdist-${{ matrix.dnsdist }}
+        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/testsdata/powerdns/dnsdist_protobuf.conf:/etc/dnsdist/conf.d/dnsdist.conf:z -v /tmp/:/tmp/ powerdns/dnsdist-${{ matrix.dnsdist }}
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Test dns query
@@ -60,7 +60,7 @@ jobs:
 
     - name: Deploy recursor docker image
       run: |
-        sudo docker run -d --network="host" --name=recursor --volume=$PWD/testsdata/pdns_recursor.lua:/etc/powerdns/recursor.lua:z --volume=$PWD/testsdata/pdns_recursor.conf:/etc/powerdns/recursor.conf:z powerdns/pdns-recursor-${{ matrix.recursor }}
+        sudo docker run -d --network="host" --name=recursor --volume=$PWD/testsdata/powerdns/pdns_recursor.lua:/etc/powerdns/recursor.lua:z --volume=$PWD/testsdata/powerdns/pdns_recursor.conf:/etc/powerdns/recursor.conf:z powerdns/pdns-recursor-${{ matrix.recursor }}
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Test send query

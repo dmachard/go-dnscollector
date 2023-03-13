@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-logger"
 	framestream "github.com/farsightsec/golang-framestream"
 	"github.com/fsnotify/fsnotify"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcapgo"
-	"github.com/google/gopacket/tcpassembly"
 )
 
 var waitFor = 10 * time.Second
@@ -158,60 +158,81 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 		return
 	}
 
-	reassembleChan := make(chan DnsDataStruct)
-
-	streamFactory := &DnsStreamFactory{reassembled: reassembleChan}
-	streamPool := tcpassembly.NewStreamPool(streamFactory)
-	assembler := tcpassembly.NewAssembler(streamPool)
+	dnsChan := make(chan netlib.DnsPacket)
+	udpChan := make(chan gopacket.Packet)
+	tcpChan := make(chan gopacket.Packet)
+	fragIp4Chan := make(chan gopacket.Packet)
+	fragIp6Chan := make(chan gopacket.Packet)
 
 	packetSource := gopacket.NewPacketSource(pcapHandler, pcapHandler.LinkType())
 	packetSource.DecodeOptions.Lazy = true
+	packetSource.NoCopy = true
 
-	done := make(chan bool)
+	// defrag ipv4
+	go netlib.IpDefragger(fragIp4Chan, udpChan, tcpChan)
+	// defrag ipv6
+	go netlib.IpDefragger(fragIp6Chan, udpChan, tcpChan)
+	// tcp assembly
+	go netlib.TcpAssembler(tcpChan, dnsChan, c.filterDnsPort)
+	// udp processor
+	go netlib.UdpProcessor(udpChan, dnsChan, c.filterDnsPort)
 
 	go func() {
 		nbPackets := 0
+		lastReceivedTime := time.Now()
 		for {
-			dnsPacket := <-reassembleChan
-			if len(dnsPacket.Payload) == 0 {
-				c.LogInfo("end of dns packet to process, exit loop")
-				break
+			select {
+			case dnsPacket, noMore := <-dnsChan:
+				if !noMore {
+					goto end
+				}
+
+				lastReceivedTime = time.Now()
+				// prepare dns message
+				dm := dnsutils.DnsMessage{}
+				dm.Init()
+
+				dm.NetworkInfo.Family = dnsPacket.IpLayer.EndpointType().String()
+				dm.NetworkInfo.QueryIp = dnsPacket.IpLayer.Src().String()
+				dm.NetworkInfo.ResponseIp = dnsPacket.IpLayer.Dst().String()
+				dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
+				dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
+				dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
+				dm.NetworkInfo.IpDefragmented = dnsPacket.IpDefragmented
+				dm.NetworkInfo.TcpReassembled = dnsPacket.TcpReassembled
+
+				dm.DNS.Payload = dnsPacket.Payload
+				dm.DNS.Length = len(dnsPacket.Payload)
+
+				dm.DnsTap.Identity = c.identity
+				dm.DnsTap.TimeSec = dnsPacket.Timestamp.Second()
+				dm.DnsTap.TimeNsec = int(dnsPacket.Timestamp.UnixNano())
+
+				// count it
+				nbPackets++
+
+				// send DNS message to DNS processor
+				c.dnsProcessor.GetChannel() <- dm
+			case <-time.After(10 * time.Second):
+				elapsed := time.Since(lastReceivedTime)
+				if elapsed >= 10*time.Second {
+					close(fragIp4Chan)
+					close(fragIp6Chan)
+					close(udpChan)
+					close(tcpChan)
+					close(dnsChan)
+				}
 			}
-
-			// prepare dns message
-			dm := dnsutils.DnsMessage{}
-			dm.Init()
-
-			dm.NetworkInfo.Family = dnsPacket.IpLayer.EndpointType().String()
-			dm.NetworkInfo.QueryIp = dnsPacket.IpLayer.Src().String()
-			dm.NetworkInfo.ResponseIp = dnsPacket.IpLayer.Dst().String()
-			dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
-			dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
-			dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
-
-			dm.DNS.Payload = dnsPacket.Payload
-			dm.DNS.Length = len(dnsPacket.Payload)
-
-			dm.DnsTap.Identity = c.identity
-			dm.DnsTap.TimeSec = dnsPacket.Timestamp.Second()
-			dm.DnsTap.TimeNsec = int(dnsPacket.Timestamp.UnixNano())
-
-			// count it
-			nbPackets++
-
-			// send DNS message to DNS processor
-			c.dnsProcessor.GetChannel() <- dm
-
 		}
-		c.LogInfo("number of [%d] packet(s) processed", nbPackets)
-		done <- true
+	end:
+		c.LogInfo("pcap file [%s]: %d DNS packet(s) detected", fileName, nbPackets)
 	}()
 
+	nbPackets := 0
 	for {
 		packet, err := packetSource.NextPacket()
 
 		if errors.Is(err, io.EOF) {
-			c.LogInfo("end of packet from pcap file, exit loop")
 			break
 		}
 		if err != nil {
@@ -219,44 +240,47 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 			break
 		}
 
-		if packet.TransportLayer().LayerType() == layers.LayerTypeUDP {
-			p := packet.TransportLayer().(*layers.UDP)
-			if int(p.SrcPort) != c.filterDnsPort && int(p.DstPort) != c.filterDnsPort {
-				continue
-			}
+		nbPackets++
 
-			reassembleChan <- DnsDataStruct{
-				Payload:        p.Payload,
-				IpLayer:        packet.NetworkLayer().NetworkFlow(),
-				TransportLayer: p.TransportFlow(),
-				Timestamp:      packet.Metadata().Timestamp,
-			}
-
+		// some security checks
+		if packet.NetworkLayer() == nil {
+			continue
+		}
+		if packet.TransportLayer() == nil {
+			continue
 		}
 
-		if packet.TransportLayer().LayerType() == layers.LayerTypeTCP {
-			p := packet.TransportLayer().(*layers.TCP)
-			if int(p.SrcPort) != c.filterDnsPort && int(p.DstPort) != c.filterDnsPort {
+		// ipv4 fragmented packet ?
+		if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
+			ip4 := packet.NetworkLayer().(*layers.IPv4)
+			if ip4.Flags&layers.IPv4MoreFragments == 1 || ip4.FragOffset > 0 {
+				fragIp4Chan <- packet
 				continue
 			}
-			assembler.AssembleWithTimestamp(
-				packet.NetworkLayer().NetworkFlow(),
-				packet.TransportLayer().(*layers.TCP),
-				packet.Metadata().Timestamp,
-			)
+		}
 
+		// ipv6 fragmented packet ?
+		if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
+			v6frag := packet.Layer(layers.LayerTypeIPv6Fragment)
+			if v6frag != nil {
+				fragIp6Chan <- packet
+				continue
+			}
+		}
+
+		// tcp or udp packets ?
+		if packet.TransportLayer().LayerType() == layers.LayerTypeUDP {
+			udpChan <- packet
+		}
+		if packet.TransportLayer().LayerType() == layers.LayerTypeTCP {
+			tcpChan <- packet
 		}
 
 	}
 
 	// remove it ?
-	assembler.FlushAll()
-	c.LogInfo("processing of pcap file [%s] terminated", fileName)
-
-	// send empty packet to stop the goroutine
-	// and wait
-	reassembleChan <- DnsDataStruct{}
-	<-done
+	//assembler.FlushAll()
+	c.LogInfo("pcap file [%s] processing terminated, %d packet(s) read", fileName, nbPackets)
 
 	// remove it ?
 	if c.config.Collectors.FileIngestor.DeleteAfter {

@@ -14,7 +14,7 @@ jobs:
       matrix:
         os-version: ['ubuntu-22.04', 'macos-12']
         go-version: ['1.19', '1.20']
-        package: ['dnsutils', 'collectors', 'loggers', 'transformers']
+        package: ['dnsutils', 'collectors', 'loggers', 'transformers', 'netlib']
     
     runs-on: ${{ matrix.os-version }}
 

@@ -1,4 +1,4 @@
-package collectors
+package netlib
 
 import (
 	"bytes"
@@ -9,29 +9,19 @@ import (
 	"github.com/google/gopacket/tcpassembly"
 )
 
-// DnsDataStruct is a struct that holds DNS data
-type DnsDataStruct struct {
-	// DNS payload
-	Payload []byte
-	// IP layer
-	IpLayer gopacket.Flow
-	// Transport layer
-	TransportLayer gopacket.Flow
-	// Timestamp
-	Timestamp time.Time
-}
-
 type DnsStreamFactory struct {
 	// Channel to send reassembled DNS data
-	reassembled chan DnsDataStruct
+	Reassembled    chan DnsPacket
+	IpDefragmented bool
 }
 
 func (s *DnsStreamFactory) New(net, transport gopacket.Flow) tcpassembly.Stream {
 	return &stream{
-		net:         net,
-		transport:   transport,
-		data:        make([]byte, 0),
-		reassembled: s.reassembled,
+		net:            net,
+		transport:      transport,
+		data:           make([]byte, 0),
+		reassembled:    s.Reassembled,
+		ipDefragmented: s.IpDefragmented,
 	}
 }
 
@@ -40,7 +30,9 @@ type stream struct {
 	data           []byte
 	lenDns         int
 	LastSeen       time.Time
-	reassembled    chan DnsDataStruct
+	reassembled    chan DnsPacket
+	tcpReassembled bool
+	ipDefragmented bool
 }
 
 func (s *stream) Reassembled(rs []tcpassembly.Reassembly) {
@@ -66,24 +58,28 @@ func (s *stream) Reassembled(rs []tcpassembly.Reassembly) {
 
 			// Convert the length of the DNS message from the buffer to a uint
 			s.lenDns = int(uint(lenBuf[0])<<8 | uint(lenBuf[1]))
-
+			s.tcpReassembled = false
 		}
 
 		if len(s.data) == s.lenDns+2 {
 			s.LastSeen = r.Seen
 
 			// send the reassembled data to the channel
-			s.reassembled <- DnsDataStruct{
+			s.reassembled <- DnsPacket{
 				Payload:        s.data[2 : s.lenDns+2],
 				IpLayer:        s.net,
 				TransportLayer: s.transport,
 				Timestamp:      s.LastSeen,
+				IpDefragmented: s.ipDefragmented,
+				TcpReassembled: s.tcpReassembled,
 			}
 
 			//Reset the buffer.
 			s.data = s.data[s.lenDns+2:]
 			s.lenDns = 0
 
+		} else {
+			s.tcpReassembled = true
 		}
 	}
 }

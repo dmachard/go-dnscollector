@@ -16,9 +16,9 @@ dnscollector_nxdomains_total{stream_id="dnsdist-cache"} 1
 dnscollector_nxdomains_total{stream_id="dnsdist1"} 1
 # HELP dnscollector_packets_total Counter of packets
 # TYPE dnscollector_packets_total counter
-dnscollector_packets_total{flag_aa="false",flag_ad="false",flag_qr="REPLY",flag_ra="true",flag_tc="false",net_family="INET",net_transport="UDP",op_code="0",op_name="CLIENT_RESPONSE",pkt_err="false",query_type="A",return_code="NXDOMAIN",stream_id="dnsdist-cache"} 2
-dnscollector_packets_total{flag_aa="false",flag_ad="false",flag_qr="REPLY",flag_ra="true",flag_tc="false",net_family="INET",net_transport="UDP",op_code="0",op_name="CLIENT_RESPONSE",pkt_err="false",query_type="A",return_code="NXDOMAIN",stream_id="dnsdist1"} 2
-dnscollector_packets_total{flag_aa="false",flag_ad="true",flag_qr="QUERY",flag_ra="false",flag_tc="false",net_family="INET",net_transport="UDP",op_code="0",op_name="CLIENT_QUERY",pkt_err="false",query_type="A",return_code="NOERROR",stream_id="dnsdist1"} 4
+dnscollector_packets_total{flag_aa="false",flag_ad="false",flag_qr="REPLY",flag_ra="true",flag_tc="false",net_family="INET",net_transport="UDP",op_code="0",op_name="CLIENT_RESPONSE",pkt_err="false",query_type="A",return_code="NXDOMAIN",stream_id="dnsdist-cache", flag_df="false", flag_tr="false"} 2
+dnscollector_packets_total{flag_aa="false",flag_ad="false",flag_qr="REPLY",flag_ra="true",flag_tc="false",net_family="INET",net_transport="UDP",op_code="0",op_name="CLIENT_RESPONSE",pkt_err="false",query_type="A",return_code="NXDOMAIN",stream_id="dnsdist1", flag_df="false", flag_tr="false"} 2
+dnscollector_packets_total{flag_aa="false",flag_ad="true",flag_qr="QUERY",flag_ra="false",flag_tc="false",net_family="INET",net_transport="UDP",op_code="0",op_name="CLIENT_QUERY",pkt_err="false",query_type="A",return_code="NOERROR",stream_id="dnsdist1", flag_df="false", flag_tr="false"} 4
 # HELP dnscollector_qnames_size_bytes Size of the qname in bytes.
 # TYPE dnscollector_qnames_size_bytes histogram
 dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist-cache",le="10"} 0

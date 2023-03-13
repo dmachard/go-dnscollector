@@ -52,6 +52,8 @@ global:
   # - ra: recursion available
   # - ad: authenticated data
   # - edns-csubnet: client subnet
+  # - df: flag when ip defragemtation occured
+  # - tr: flag when tcp reassembled occured
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 # create your dns collector, please refer bellow to see the list 
