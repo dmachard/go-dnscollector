@@ -72,30 +72,10 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-    - name: prom
-      prometheus:
-        # listening IP
-        listen-ip: 0.0.0.0
-        # listening port
-        listen-port: 8081
-        # tls support
-        tls-support: false
-        # tls mutual
-        tls-mutual: false
-        # tls min version
-        tls-min-version: 1.2
-        # certificate server file
-        cert-file: ""
-        # private key server file
-        key-file: ""
-        # prometheus prefix
-        prometheus-prefix: "dnscollector"
-        # default number of items on top 
-        top-n: 10
         
   routes:
     - from: [ tap ]
-      to: [ console, prom]
+      to: [ console ]
 
 ################################################
 # list of supported collectors
