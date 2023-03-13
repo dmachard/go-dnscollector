@@ -231,7 +231,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 	nbPackets := 0
 	for {
 		packet, err := packetSource.NextPacket()
-		fmt.Println(packet)
+
 		if errors.Is(err, io.EOF) {
 			break
 		}
