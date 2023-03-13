@@ -151,9 +151,30 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 	// add build version in metrics
 	o.gaugeBuildInfo.WithLabelValues(o.version).Set(1)
 
+	// midleware to add basic authentication
+	authMiddleware := func(handler http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			username, password, ok := r.BasicAuth()
+			if !ok || username != o.config.Loggers.Prometheus.BasicAuthLogin || password != o.config.Loggers.Prometheus.BasicAuthPwd {
+				w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+				w.WriteHeader(http.StatusUnauthorized)
+				fmt.Fprintf(w, "Unauthorized\n")
+				return
+			}
+
+			handler.ServeHTTP(w, r)
+		})
+	}
+
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.HandlerFor(o.promRegistry, promhttp.HandlerOpts{}))
-	o.httpServer = &http.Server{Handler: mux, ErrorLog: o.logger.ErrorLogger()}
+
+	handler := authMiddleware(mux)
+
+	o.httpServer = &http.Server{
+		Handler:  handler,
+		ErrorLog: o.logger.ErrorLogger(),
+	}
 
 	return o
 }

@@ -214,16 +214,18 @@ type Config struct {
 			TextFormat string `yaml:"text-format"`
 		} `yaml:"stdout"`
 		Prometheus struct {
-			Enable        bool   `yaml:"enable"`
-			ListenIP      string `yaml:"listen-ip"`
-			ListenPort    int    `yaml:"listen-port"`
-			TlsSupport    bool   `yaml:"tls-support"`
-			TlsMutual     bool   `yaml:"tls-mutual"`
-			TlsMinVersion string `yaml:"tls-min-version"`
-			CertFile      string `yaml:"cert-file"`
-			KeyFile       string `yaml:"key-file"`
-			PromPrefix    string `yaml:"prometheus-prefix"`
-			TopN          int    `yaml:"top-n"`
+			Enable         bool   `yaml:"enable"`
+			ListenIP       string `yaml:"listen-ip"`
+			ListenPort     int    `yaml:"listen-port"`
+			TlsSupport     bool   `yaml:"tls-support"`
+			TlsMutual      bool   `yaml:"tls-mutual"`
+			TlsMinVersion  string `yaml:"tls-min-version"`
+			CertFile       string `yaml:"cert-file"`
+			KeyFile        string `yaml:"key-file"`
+			PromPrefix     string `yaml:"prometheus-prefix"`
+			TopN           int    `yaml:"top-n"`
+			BasicAuthLogin string `yaml:"basic-auth-login"`
+			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
 		} `yaml:"prometheus"`
 		RestAPI struct {
 			Enable         bool   `yaml:"enable"`
@@ -469,6 +471,8 @@ func (c *Config) SetDefault() {
 	c.Loggers.Prometheus.KeyFile = ""
 	c.Loggers.Prometheus.PromPrefix = PROG_NAME
 	c.Loggers.Prometheus.TopN = 10
+	c.Loggers.Prometheus.BasicAuthLogin = "admin"
+	c.Loggers.Prometheus.BasicAuthPwd = "changeme"
 
 	c.Loggers.RestAPI.Enable = false
 	c.Loggers.RestAPI.ListenIP = LOCALHOST_IP
