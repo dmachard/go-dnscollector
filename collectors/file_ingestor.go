@@ -231,7 +231,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 	nbPackets := 0
 	for {
 		packet, err := packetSource.NextPacket()
-
+		fmt.Println(packet)
 		if errors.Is(err, io.EOF) {
 			break
 		}
@@ -242,7 +242,11 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 
 		nbPackets++
 
+		// some security checks
 		if packet.NetworkLayer() == nil {
+			continue
+		}
+		if packet.TransportLayer() == nil {
 			continue
 		}
 
@@ -255,7 +259,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 			}
 		}
 
-		// ipv4 fragmented packet ?
+		// ipv6 fragmented packet ?
 		if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
 			v6frag := packet.Layer(layers.LayerTypeIPv6Fragment)
 			if v6frag != nil {
@@ -264,11 +268,11 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 			}
 		}
 
-		if packet.TransportLayer() != nil && packet.TransportLayer().LayerType() == layers.LayerTypeUDP {
+		// tcp or udp packets ?
+		if packet.TransportLayer().LayerType() == layers.LayerTypeUDP {
 			udpChan <- packet
 		}
-
-		if packet.TransportLayer() != nil && packet.TransportLayer().LayerType() == layers.LayerTypeTCP {
+		if packet.TransportLayer().LayerType() == layers.LayerTypeTCP {
 			tcpChan <- packet
 		}
 

@@ -67,18 +67,7 @@ multiplexer:
       transforms:
         normalize:
           qname-lowercase: true
-    # - name: sniff
-    #   afpacket-sniffer:
-    #     port: 53
-    #     device: wlp2s0
 
-    # - name: pcap
-    #   file-ingestor:
-    #     watch-dir: /home/denis/Lab/pcap/
-    #     watch-mode: pcap
-    #   transforms:
-    #     normalize:
-    #       qname-lowercase: true
   loggers:
     - name: console
       stdout:
