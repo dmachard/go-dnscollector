@@ -47,6 +47,8 @@ This logger generates **prometheus** metrics. Use the following Grafana [dashboa
 Options:
 - `listen-ip`: (string) listening IP
 - `listen-port`: (integer) listening port
+- `basic-auth-login`: (string) default login for basic auth
+- `basic-auth-pwd`: (string) default password for basic auth
 - `tls-support`: (boolean) tls support
 - `tls-mutual`: (boolean) mtls authentication
 - `tls-min-version`: (string) min tls version, default to 1.2
@@ -61,6 +63,8 @@ Default values:
 prometheus:
   listen-ip: 0.0.0.0
   listen-port: 8081
+  basic-auth-login: admin
+  basic-auth-pwd: changeme
   tls-support: false
   tls-mutual: false
   tls-min-version: 1.2
@@ -73,7 +77,7 @@ prometheus:
 Scrape metric with curl:
 
 ```
-$ curl http://127.0.0.1:8080/metrics
+$ curl -u admin:changeme http://127.0.0.1:8080/metrics
 ```
 
 The full metrics can be found [here](doc/metrics.txt).

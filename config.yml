@@ -52,7 +52,7 @@ global:
   # - ra: recursion available
   # - ad: authenticated data
   # - edns-csubnet: client subnet
-  # - df: flag when ip defragemtation occured
+  # - df: flag when ip defragmentation occured
   # - tr: flag when tcp reassembled occured
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
@@ -72,7 +72,7 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-
+        
   routes:
     - from: [ tap ]
       to: [ console ]
@@ -235,6 +235,10 @@ multiplexer:
 #   listen-ip: 0.0.0.0
 #   # listening port
 #   listen-port: 8081
+#   # default login
+#   basic-auth-login: admin
+#   # default password
+#   basic-auth-pwd: changeme
 #   # tls support
 #   tls-support: false
 #   # tls mutual

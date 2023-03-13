@@ -11,7 +11,46 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func TestPrometheusGetMetrics(t *testing.T) {
+func TestPrometheus_BadAuth(t *testing.T) {
+	// init the logger
+	config := dnsutils.GetFakeConfig()
+	g := NewPrometheus(config, logger.New(false), "dev", "test")
+
+	tt := []struct {
+		name       string
+		uri        string
+		handler    func(w http.ResponseWriter, r *http.Request)
+		method     string
+		statusCode int
+	}{
+		{
+			name:       "total clients",
+			uri:        "/metrics",
+			handler:    g.httpServer.Handler.ServeHTTP,
+			method:     http.MethodGet,
+			statusCode: http.StatusUnauthorized,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// init httptest
+			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
+			request.SetBasicAuth(config.Loggers.Prometheus.BasicAuthLogin, "badpassword")
+			responseRecorder := httptest.NewRecorder()
+
+			// call handler
+			tc.handler(responseRecorder, request)
+
+			// checking status code
+			if responseRecorder.Code != tc.statusCode {
+				t.Errorf("Want status '%d', got '%d'", tc.statusCode, responseRecorder.Code)
+			}
+		})
+	}
+}
+
+func TestPrometheus_GetMetrics(t *testing.T) {
 	// init the logger
 	config := dnsutils.GetFakeConfig()
 	g := NewPrometheus(config, logger.New(false), "dev", "test")
@@ -57,6 +96,7 @@ func TestPrometheusGetMetrics(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// init httptest
 			request := httptest.NewRequest(tc.method, "/metrics", strings.NewReader(""))
+			request.SetBasicAuth(config.Loggers.Prometheus.BasicAuthLogin, config.Loggers.Prometheus.BasicAuthPwd)
 			responseRecorder := httptest.NewRecorder()
 
 			// call handler
