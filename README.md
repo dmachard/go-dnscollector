@@ -51,6 +51,10 @@ Additionally, DNS-collector also support
 
 **Transformers**:
 
+- [`Latency`](doc/transformers.md#dns-latency)
+    - Compute latency between replies and queries
+    - Detect evicted queries
+
 - [`Traffic filtering`](doc/transformers.md#dns-filtering)
     - Downsampling
     - Dropping per Qname, QueryIP or Rcode

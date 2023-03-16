@@ -5,6 +5,7 @@
 - [GeoIP Support](#geoip-support)
 - [DNS filtering](#dns-filtering)
 - [Suspicious](#suspicious)
+- [Latency](#latency)
 
 ## Transformers
 
@@ -222,3 +223,20 @@ Example:
 
 Specific directive(s) added:
 - `suspicious-score`: suspicious score for unusual traffic
+
+### Latency
+
+
+Use this feature to compute latency and detect queries timeout
+
+Options:
+- `measure-latency`: (boolean) measure latency between replies and queries
+- `detect-evicted-queries`: (boolean) Detect evicted queries
+
+```yaml
+transforms:
+  user-privacy:
+    anonymize-ip: false
+    hash-ip: false
+    minimaze-qname: false
+```

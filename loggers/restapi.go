@@ -610,7 +610,9 @@ func (s *RestAPI) Run() {
 	s.LogInfo("running in background...")
 
 	// prepare transforms
-	subprocessors := transformers.NewTransforms(&s.config.OutgoingTransformers, s.logger, s.name)
+	listChannel := []chan dnsutils.DnsMessage{}
+	listChannel = append(listChannel, s.channel)
+	subprocessors := transformers.NewTransforms(&s.config.OutgoingTransformers, s.logger, s.name, listChannel)
 
 	// start http server
 	go s.ListenAndServe()

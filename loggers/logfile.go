@@ -452,7 +452,9 @@ func (l *LogFile) Run() {
 	l.LogInfo("running in background...")
 
 	// prepare transforms
-	subprocessors := transformers.NewTransforms(&l.config.OutgoingTransformers, l.logger, l.name)
+	listChannel := []chan dnsutils.DnsMessage{}
+	listChannel = append(listChannel, l.channel)
+	subprocessors := transformers.NewTransforms(&l.config.OutgoingTransformers, l.logger, l.name, listChannel)
 
 	// prepare some timers
 	flushInterval := time.Duration(l.config.Loggers.LogFile.FlushInterval) * time.Second

@@ -52,8 +52,8 @@ global:
   # - ra: recursion available
   # - ad: authenticated data
   # - edns-csubnet: client subnet
-  # - df: flag when ip defragmentation occured
-  # - tr: flag when tcp reassembled occured
+  # - df: ip defragmentation flag
+  # - tr: tcp reassembled flag
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 # create your dns collector, please refer bellow to see the list 
@@ -68,13 +68,22 @@ multiplexer:
         normalize:
           qname-lowercase: true
 
+    - name: sniff
+      afpacket-sniffer:
+        port: 53
+        device: wlp2s0
+      transforms:
+        latency:
+          measure-latency: true
+          detect-evicted-queries: true
+
   loggers:
     - name: console
       stdout:
         mode: text
         
   routes:
-    - from: [ tap ]
+    - from: [ sniff ]
       to: [ console ]
 
 ################################################
@@ -429,6 +438,13 @@ multiplexer:
 ################################################
 # list of transforms to apply on collectors or loggers
 ################################################
+
+# # Use this transformer to compute latency and detect timeout on queries
+# latency:
+#   # Measure latency between replies and queries
+#   measure-latency: false
+#   # Detect queries timeout
+#   detect-evicted-queries: false
 
 # # Use this option to protect user privacy
 # user-privacy:

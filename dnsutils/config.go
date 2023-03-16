@@ -53,6 +53,11 @@ type ConfigTransformers struct {
 		AddTld         bool `yaml:"add-tld"`
 		AddTldPlusOne  bool `yaml:"add-tld-plus-one"`
 	} `yaml:"normalize"`
+	Latency struct {
+		Enable               bool `yaml:"enable"`
+		MeasureLatency       bool `yaml:"measure-latency"`
+		DetectEvictedQueries bool `yaml:"detect-evicted-queries"`
+	}
 	Filtering struct {
 		Enable          bool     `yaml:"enable"`
 		DropFqdnFile    string   `yaml:"drop-fqdn-file"`
@@ -103,6 +108,10 @@ func (c *ConfigTransformers) SetDefault() {
 	c.Normalize.QuietText = false
 	c.Normalize.AddTld = false
 	c.Normalize.AddTldPlusOne = false
+
+	c.Latency.Enable = false
+	c.Latency.MeasureLatency = false
+	c.Latency.DetectEvictedQueries = false
 
 	c.Filtering.Enable = false
 	c.Filtering.DropFqdnFile = ""

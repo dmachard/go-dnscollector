@@ -272,8 +272,6 @@ func (c *AfpacketSniffer) Run() {
 	}
 
 	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name)
-	dnsProcessor.cacheSupport = c.config.Collectors.AfpacketLiveCapture.CacheSupport
-	dnsProcessor.queryTimeout = c.config.Collectors.AfpacketLiveCapture.QueryTimeout
 	go dnsProcessor.Run(c.Loggers())
 
 	dnsChan := make(chan netlib.DnsPacket)

@@ -290,7 +290,6 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 
 	// remove event timer for this file
 	c.RemoveEvent(filePath)
-
 }
 
 func (c *FileIngestor) ProcessDnstap(filePath string) error {

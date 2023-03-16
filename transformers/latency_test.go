@@ -1,4 +1,4 @@
-package dnsutils
+package transformers
 
 import (
 	"runtime"
@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-func TestMapttl(t *testing.T) {
+func Test_HashQueries(t *testing.T) {
 	// init map
-	mapttl := NewDnsCache(2 * time.Second)
+	mapttl := NewHashQueries(2 * time.Second)
 
 	// Set a new key/value
 	mapttl.Set(uint64(1), float64(0))
@@ -21,9 +21,9 @@ func TestMapttl(t *testing.T) {
 	}
 }
 
-func TestMapttlExpire(t *testing.T) {
+func Test_HashQueries_Expire(t *testing.T) {
 	// ini map
-	mapttl := NewDnsCache(1 * time.Second)
+	mapttl := NewHashQueries(1 * time.Second)
 
 	// Set a new key/value
 	mapttl.Set(uint64(1), float64(0))
@@ -38,8 +38,8 @@ func TestMapttlExpire(t *testing.T) {
 	}
 }
 
-func BenchmarkMapSet(b *testing.B) {
-	mapexpire := NewDnsCache(10 * time.Second)
+func Benchmark_HashQueries_Set(b *testing.B) {
+	mapexpire := NewHashQueries(10 * time.Second)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -47,8 +47,8 @@ func BenchmarkMapSet(b *testing.B) {
 	}
 }
 
-func BenchmarkMapDelete(b *testing.B) {
-	mapexpire := NewDnsCache(60 * time.Second)
+func Benchmark_HashQueries_Delete(b *testing.B) {
+	mapexpire := NewHashQueries(60 * time.Second)
 
 	for i := 0; i < b.N; i++ {
 		mapexpire.Set(uint64(i), float64(i))
@@ -61,8 +61,8 @@ func BenchmarkMapDelete(b *testing.B) {
 	}
 }
 
-func BenchmarkMapGet(b *testing.B) {
-	mapexpire := NewDnsCache(60 * time.Second)
+func Benchmark_HashQueries_Get(b *testing.B) {
+	mapexpire := NewHashQueries(60 * time.Second)
 
 	for i := 0; i < b.N; i++ {
 		mapexpire.Set(uint64(i), float64(i))
@@ -79,8 +79,8 @@ func BenchmarkMapGet(b *testing.B) {
 	}
 }
 
-func BenchmarkMapConcurrentGet(b *testing.B) {
-	mapexpire := NewDnsCache(60 * time.Second)
+func Benchmark_HashQueries_ConcurrentGet(b *testing.B) {
+	mapexpire := NewHashQueries(60 * time.Second)
 	for i := 0; i < b.N; i++ {
 		mapexpire.Set(uint64(i), float64(i))
 	}

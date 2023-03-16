@@ -83,7 +83,9 @@ func (o *InfluxDBClient) Run() {
 	o.LogInfo("running in background...")
 
 	// prepare transforms
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
+	listChannel := []chan dnsutils.DnsMessage{}
+	listChannel = append(listChannel, o.channel)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel)
 
 	// prepare options for influxdb
 	opts := influxdb2.DefaultOptions()

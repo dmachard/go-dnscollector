@@ -21,11 +21,12 @@ type Transforms struct {
 	FilteringTransform   FilteringProcessor
 	UserPrivacyTransform UserPrivacyProcessor
 	NormalizeTransform   NormalizeProcessor
+	LatencyTransform     *LatencyProcessor
 
 	activeTransforms []func(dm *dnsutils.DnsMessage) int
 }
 
-func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string) Transforms {
+func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DnsMessage) Transforms {
 
 	d := Transforms{
 		config: config,
@@ -37,6 +38,7 @@ func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, n
 		FilteringTransform:   NewFilteringProcessor(config, logger, name),
 		UserPrivacyTransform: NewUserPrivacySubprocessor(config),
 		NormalizeTransform:   NewNormalizeSubprocessor(config),
+		LatencyTransform:     NewLatencySubprocessor(config, logger, name, outChannels),
 	}
 
 	d.Prepare()
@@ -99,6 +101,18 @@ func (p *Transforms) Prepare() error {
 
 	if p.config.Filtering.Enable {
 		p.LogInfo("[filtering] enabled")
+	}
+
+	if p.config.Latency.Enable {
+		if p.config.Latency.MeasureLatency {
+			p.activeTransforms = append(p.activeTransforms, p.measureLatency)
+			p.LogInfo("[latency: measure latency] enabled")
+		}
+		if p.config.Latency.DetectEvictedQueries {
+			p.activeTransforms = append(p.activeTransforms, p.detectEvictedTimeout)
+			p.LogInfo("[latency: evicted queries] enabled")
+		}
+
 	}
 
 	return nil
@@ -178,6 +192,16 @@ func (p *Transforms) anonymizeIP(dm *dnsutils.DnsMessage) int {
 func (p *Transforms) hashIP(dm *dnsutils.DnsMessage) int {
 	dm.NetworkInfo.QueryIp = p.UserPrivacyTransform.HashIP(dm.NetworkInfo.QueryIp)
 	dm.NetworkInfo.ResponseIp = p.UserPrivacyTransform.HashIP(dm.NetworkInfo.ResponseIp)
+	return RETURN_SUCCESS
+}
+
+func (p *Transforms) measureLatency(dm *dnsutils.DnsMessage) int {
+	p.LatencyTransform.MeasureLatency(dm)
+	return RETURN_SUCCESS
+}
+
+func (p *Transforms) detectEvictedTimeout(dm *dnsutils.DnsMessage) int {
+	p.LatencyTransform.DetectEvictedTimeout(dm)
 	return RETURN_SUCCESS
 }
 
