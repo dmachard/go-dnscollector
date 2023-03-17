@@ -218,7 +218,7 @@ func (o *Prometheus) InitProm() {
 		},
 		[]string{"stream_id", "domain"},
 	)
-	o.promRegistry.MustRegister(o.gaugeTopSuspicious)
+	o.promRegistry.MustRegister(o.gaugeTopEvicted)
 
 	o.gaugeTopSuspicious = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -373,7 +373,7 @@ func (o *Prometheus) InitProm() {
 		},
 		[]string{"stream_id"},
 	)
-	o.promRegistry.MustRegister(o.counterDomains)
+	o.promRegistry.MustRegister(o.counterEvicted)
 
 	o.counterDomains = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -445,7 +445,7 @@ func (o *Prometheus) InitProm() {
 		},
 		[]string{},
 	)
-	o.promRegistry.MustRegister(o.counterSuspiciousUniq)
+	o.promRegistry.MustRegister(o.counterEvictedUniq)
 
 	o.counterSuspiciousUniq = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
