@@ -232,6 +232,7 @@ Use this feature to compute latency and detect queries timeout
 Options:
 - `measure-latency`: (boolean) measure latency between replies and queries
 - `detect-evicted-queries`: (boolean) Detect evicted queries
+- `queries-timeout`: (integer) timeout in second for queries
 
 ```yaml
 transforms:
@@ -239,4 +240,5 @@ transforms:
     anonymize-ip: false
     hash-ip: false
     minimaze-qname: false
+    queries-timeout: 2
 ```

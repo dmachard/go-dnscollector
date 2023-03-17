@@ -51,7 +51,7 @@ Additionally, DNS-collector also support
 
 **Transformers**:
 
-- [`Latency`](doc/transformers.md#dns-latency)
+- [`Latency Computing`](doc/transformers.md#dns-latency)
     - Compute latency between replies and queries
     - Detect evicted queries
 
@@ -113,6 +113,7 @@ You will find below some examples of configuration to manage your DNS logs.
     - [x] [Filtering incoming traffic with downsample and whitelist of domains](example-config/use-case-9.yml)
     - [x] [Transform all domains to lowercase](example-config/use-case-10.yml)
     - [x] [Add geographical metadata with GeoIP](example-config/use-case-11.yml)
+    - [x] [Count the number of no responses with outgoing queries](example-config/use-case-18.yml)
 
 - Capture DNS traffic from FRSTRM/dnstap files
     - [x] [Save incoming DNStap streams to file (frstrm)](example-config/use-case-13.yml)

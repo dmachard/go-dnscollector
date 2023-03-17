@@ -23,8 +23,6 @@ Options:
 - `tls-min-version`: (string) min tls version
 - `cert-file`: (string) certificate server file
 - `key-file`: (string) private key server file
-- `cache-support`: (boolean) disable or enable the cache dns, this feature can be enabled if your dns server doesn't add the latency
-- `query-timeout`: (integer) in second, max time to keep the query record in memory
 - `sock-rcvbuf`: (integer) sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
 
 Default values:
@@ -38,8 +36,6 @@ dnstap:
   tls-min-version: 1.2
   cert-file: ""
   key-file: ""
-  cache-support: false
-  query-timeout: 5.0
   sock-rcvbuf: 0
 ```
 
@@ -92,8 +88,6 @@ sudo setcap cap_net_admin,cap_net_raw=eip go-dnscollector
 Options:
 - `port`: (integer) filter on source and destination port
 - `device`: (string) if "" bind on all interfaces
-- `cache-support`: (boolean) disable or enable the cache dns to compute latency between queries and replies
-- `query-timeout`: (integer) in second, max time to keep the query record in memory
 
 Default values:
 
@@ -101,8 +95,6 @@ Default values:
 afpacket-sniffer:
   port: 53
   device: wlp2s0
-  cache-support: true
-  query-timeout: 5.0
 ```
 
 ### Live Capture with eBPF XDP
@@ -217,8 +209,6 @@ Its primary purpose is to suppport DNS packet capture from Mikrotik brand device
 Options:
 - `listen-ip`: (string) listen on ip
 - `listen-port`: (integer) listening on port
-- `cache-support`: (boolean) disable or enable the cache dns to compute latency between queries and replies
-- `query-timeout`: (integer) in second, max time to keep the query record in memory
 
 Default values:
 
@@ -226,8 +216,6 @@ Default values:
 tzsp:
   listen-ip: "0.0.0.0"
   listen-port: 10000
-  cache-support: true
-  query-timeout: 5
 ```
 
 Example rules for Mikrotik brand devices to send the traffic (only works if routed or the device serves as DNS server).

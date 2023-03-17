@@ -1,4 +1,4 @@
-# Example 15: Capture TZSP packets containing DNS packets and process them as json
+# Example 17: Capture TZSP packets containing DNS packets and process them as json
 #
 # As prerequisites, we assume you have 
 # - a Mikrotik brand device that routes DNS packets and can use the "tzsp" Action in the firewall

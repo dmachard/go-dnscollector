@@ -109,8 +109,8 @@ func NewLatencySubprocessor(config *dnsutils.ConfigTransformers, logger *logger.
 		outChannels: outChannels,
 	}
 
-	s.hashQueries = NewHashQueries(time.Duration(30) * time.Second)
-	s.mapQueries = NewMapQueries(time.Duration(30)*time.Second, outChannels)
+	s.hashQueries = NewHashQueries(time.Duration(config.Latency.QueriesTimeout) * time.Second)
+	s.mapQueries = NewMapQueries(time.Duration(config.Latency.QueriesTimeout)*time.Second, outChannels)
 
 	return &s
 }
