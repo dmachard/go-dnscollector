@@ -225,7 +225,9 @@ func (o *StatsdClient) Run() {
 	o.LogInfo("running in background...")
 
 	// prepare transforms
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name)
+	listChannel := []chan dnsutils.DnsMessage{}
+	listChannel = append(listChannel, o.channel)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel)
 
 	// statd timer to push data
 	t2_interval := time.Duration(o.config.Loggers.Statsd.FlushInterval) * time.Second

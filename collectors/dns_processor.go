@@ -2,9 +2,6 @@ package collectors
 
 import (
 	"fmt"
-	"hash/fnv"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -20,13 +17,11 @@ func GetFakeDns() ([]byte, error) {
 }
 
 type DnsProcessor struct {
-	done         chan bool
-	recvFrom     chan dnsutils.DnsMessage
-	logger       *logger.Logger
-	config       *dnsutils.Config
-	cacheSupport bool
-	queryTimeout int
-	name         string
+	done     chan bool
+	recvFrom chan dnsutils.DnsMessage
+	logger   *logger.Logger
+	config   *dnsutils.Config
+	name     string
 }
 
 func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string) DnsProcessor {
@@ -44,10 +39,7 @@ func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string
 	return d
 }
 
-func (d *DnsProcessor) ReadConfig() {
-	d.cacheSupport = false
-	d.queryTimeout = 5
-}
+func (d *DnsProcessor) ReadConfig() {}
 
 func (c *DnsProcessor) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] dns processor - "+msg, v...)
@@ -77,12 +69,8 @@ func (d *DnsProcessor) Stop() {
 
 func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
-	// dns cache to compute latency between response and query
-	cache_ttl := dnsutils.NewDnsCache(time.Duration(d.queryTimeout) * time.Second)
-	d.LogInfo("dns cached enabled: %t", d.cacheSupport)
-
 	// prepare enabled transformers
-	subprocessors := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name)
+	subprocessors := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, sendTo)
 
 	// read incoming dns message
 	d.LogInfo("running... waiting incoming dns message")
@@ -127,34 +115,13 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			}
 		}
 
-		// compute latency if possible
-		if d.cacheSupport {
-			queryport, _ := strconv.Atoi(dm.NetworkInfo.QueryPort)
-			if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && !dm.DNS.MalformedPacket {
-				// compute the hash of the query
-				hash_data := []string{dm.NetworkInfo.QueryIp, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.DNS.Id)}
-
-				hashfnv := fnv.New64a()
-				hashfnv.Write([]byte(strings.Join(hash_data[:], "+")))
-
-				if dm.DNS.Type == dnsutils.DnsQuery {
-					cache_ttl.Set(hashfnv.Sum64(), dm.DnsTap.Timestamp)
-				} else {
-					value, ok := cache_ttl.Get(hashfnv.Sum64())
-					if ok {
-						dm.DnsTap.Latency = dm.DnsTap.Timestamp - value
-					}
-				}
-			}
-		}
-
-		// convert latency to human
-		dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
-
 		// apply all enabled transformers
 		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 			continue
 		}
+
+		// convert latency to human
+		dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
 
 		// dispatch dns message to all generators
 		for i := range sendTo {

@@ -52,8 +52,8 @@ global:
   # - ra: recursion available
   # - ad: authenticated data
   # - edns-csubnet: client subnet
-  # - df: flag when ip defragmentation occured
-  # - tr: flag when tcp reassembled occured
+  # - df: ip defragmentation flag
+  # - tr: tcp reassembled flag
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 
 # create your dns collector, please refer bellow to see the list 
@@ -97,11 +97,6 @@ multiplexer:
 #   cert-file: ""
 #   # private key server file
 #   key-file: ""
-#   # The cache is used to compute latency between replies and queries 
-#   # This cache can be enabled if your dns server doesn't add the latency information
-#   cache-support: false
-#   # Ttl in second, max time to keep the query record in memory cache
-#   query-timeout: 5
 #   # Sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
 #   sock-rcvbuf: 0
 
@@ -128,10 +123,6 @@ multiplexer:
 #   port: 53
 #   # if "" bind on all interfaces
 #   device: wlp2s0
-#   # The cache is used to compute latency between replies and queries
-#   cache-support: true
-#   # Ttl in second, max time to keep the query record in memory cache
-#   query-timeout: 5
 
 # # live capture with XDP
 # xdp-sniffer:
@@ -193,11 +184,6 @@ multiplexer:
 #  listen-ip: 0.0.0.0
 #  # listen on port
 #  listen-port: 10000
-#   # The cache is used to compute latency between replies and queries 
-#   # This cache can be enabled if your dns server doesn't add the latency information
-#   cache-support: false
-#   # Ttl in second, max time to keep the query record in memory cache
-#   query-timeout: 5
 
 ################################################
 # list of supported loggers
@@ -429,6 +415,15 @@ multiplexer:
 ################################################
 # list of transforms to apply on collectors or loggers
 ################################################
+
+# # Use this transformer to compute latency and detect timeout on queries
+# latency:
+#   # Measure latency between replies and queries
+#   measure-latency: false
+#   # Detect queries timeout
+#   detect-evicted-queries: false
+#   # timeout in second for queries
+#   queries-timeout: 2
 
 # # Use this option to protect user privacy
 # user-privacy:

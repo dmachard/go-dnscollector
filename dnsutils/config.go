@@ -53,6 +53,12 @@ type ConfigTransformers struct {
 		AddTld         bool `yaml:"add-tld"`
 		AddTldPlusOne  bool `yaml:"add-tld-plus-one"`
 	} `yaml:"normalize"`
+	Latency struct {
+		Enable               bool `yaml:"enable"`
+		MeasureLatency       bool `yaml:"measure-latency"`
+		DetectEvictedQueries bool `yaml:"detect-evicted-queries"`
+		QueriesTimeout       int  `yaml:"queries-timeout"`
+	}
 	Filtering struct {
 		Enable          bool     `yaml:"enable"`
 		DropFqdnFile    string   `yaml:"drop-fqdn-file"`
@@ -104,6 +110,11 @@ func (c *ConfigTransformers) SetDefault() {
 	c.Normalize.AddTld = false
 	c.Normalize.AddTldPlusOne = false
 
+	c.Latency.Enable = false
+	c.Latency.MeasureLatency = false
+	c.Latency.DetectEvictedQueries = false
+	c.Latency.QueriesTimeout = 2
+
 	c.Filtering.Enable = false
 	c.Filtering.DropFqdnFile = ""
 	c.Filtering.DropDomainFile = ""
@@ -152,8 +163,6 @@ type Config struct {
 			TlsMinVersion string `yaml:"tls-min-version"`
 			CertFile      string `yaml:"cert-file"`
 			KeyFile       string `yaml:"key-file"`
-			CacheSupport  bool   `yaml:"cache-support"`
-			QueryTimeout  int    `yaml:"query-timeout"`
 			RcvBufSize    int    `yaml:"sock-rcvbuf"`
 		} `yaml:"dnstap"`
 		DnstapProxifier struct {
@@ -167,18 +176,14 @@ type Config struct {
 			KeyFile       string `yaml:"key-file"`
 		} `yaml:"dnstap-proxifier"`
 		AfpacketLiveCapture struct {
-			Enable       bool   `yaml:"enable"`
-			Port         int    `yaml:"port"`
-			Device       string `yaml:"device"`
-			CacheSupport bool   `yaml:"cache-support"`
-			QueryTimeout int    `yaml:"query-timeout"`
+			Enable bool   `yaml:"enable"`
+			Port   int    `yaml:"port"`
+			Device string `yaml:"device"`
 		} `yaml:"afpacket-sniffer"`
 		XdpLiveCapture struct {
-			Enable       bool   `yaml:"enable"`
-			Port         int    `yaml:"port"`
-			Device       string `yaml:"device"`
-			CacheSupport bool   `yaml:"cache-support"`
-			QueryTimeout int    `yaml:"query-timeout"`
+			Enable bool   `yaml:"enable"`
+			Port   int    `yaml:"port"`
+			Device string `yaml:"device"`
 		} `yaml:"xdp-sniffer"`
 		PowerDNS struct {
 			Enable        bool   `yaml:"enable"`
@@ -197,11 +202,9 @@ type Config struct {
 			DeleteAfter bool   `yaml:"delete-after"`
 		} `yaml:"file-ingestor"`
 		Tzsp struct {
-			Enable       bool   `yaml:"enable"`
-			ListenIp     string `yaml:"listen-ip"`
-			ListenPort   int    `yaml:"listen-port"`
-			CacheSupport bool   `yaml:"cache-support"`
-			QueryTimeout int    `yaml:"query-timeout"`
+			Enable     bool   `yaml:"enable"`
+			ListenIp   string `yaml:"listen-ip"`
+			ListenPort int    `yaml:"listen-port"`
 		}
 	} `yaml:"collectors"`
 
@@ -387,8 +390,6 @@ func (c *Config) SetDefault() {
 	c.Collectors.Dnstap.TlsMinVersion = TLS_v12
 	c.Collectors.Dnstap.CertFile = ""
 	c.Collectors.Dnstap.KeyFile = ""
-	c.Collectors.Dnstap.QueryTimeout = 5
-	c.Collectors.Dnstap.CacheSupport = false
 	c.Collectors.Dnstap.RcvBufSize = 0
 
 	c.Collectors.DnstapProxifier.Enable = false
@@ -406,8 +407,6 @@ func (c *Config) SetDefault() {
 	c.Collectors.AfpacketLiveCapture.Enable = false
 	c.Collectors.AfpacketLiveCapture.Port = 53
 	c.Collectors.AfpacketLiveCapture.Device = ""
-	c.Collectors.AfpacketLiveCapture.QueryTimeout = 5
-	c.Collectors.AfpacketLiveCapture.CacheSupport = true
 
 	c.Collectors.PowerDNS.Enable = false
 	c.Collectors.PowerDNS.ListenIP = ANY_IP
@@ -426,8 +425,6 @@ func (c *Config) SetDefault() {
 	c.Collectors.Tzsp.Enable = false
 	c.Collectors.Tzsp.ListenIp = ANY_IP
 	c.Collectors.Tzsp.ListenPort = 10000
-	c.Collectors.Tzsp.QueryTimeout = 5
-	c.Collectors.Tzsp.CacheSupport = true
 
 	// Transformers for collectors
 	c.IngoingTransformers.SetDefault()
