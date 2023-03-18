@@ -220,6 +220,9 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// add reply
 		if int(pbdm.Type.Number())%2 != 1 {
+			// is a reply
+			fakePkt.Response = true
+
 			// set reply code
 			fakePkt.Rcode = int(pbdm.Response.GetRcode())
 
