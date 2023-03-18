@@ -131,6 +131,7 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 		sfdomains:  make(map[string]map[string]int),
 		tlds:       make(map[string]map[string]int),
 		suspicious: make(map[string]map[string]int),
+		evicted:    make(map[string]map[string]int),
 
 		topDomains:    make(map[string]*topmap.TopMap),
 		topNxDomains:  make(map[string]*topmap.TopMap),
@@ -138,6 +139,7 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 		topRequesters: make(map[string]*topmap.TopMap),
 		topTlds:       make(map[string]*topmap.TopMap),
 		topSuspicious: make(map[string]*topmap.TopMap),
+		topEvicted:    make(map[string]*topmap.TopMap),
 
 		requestersUniq: make(map[string]int),
 		domainsUniq:    make(map[string]int),
@@ -145,6 +147,7 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 		sfdomainsUniq:  make(map[string]int),
 		tldsUniq:       make(map[string]int),
 		suspiciousUniq: make(map[string]int),
+		evictedUniq:    make(map[string]int),
 
 		streamsMap: make(map[string]*EpsCounters),
 
@@ -213,8 +216,8 @@ func (o *Prometheus) InitProm() {
 
 	o.gaugeTopEvicted = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_evicted", prom_prefix),
-			Help: "Number of hit per evicted domain - topN",
+			Name: fmt.Sprintf("%s_top_unanswered", prom_prefix),
+			Help: "Number of hit per unanswered domain - topN",
 		},
 		[]string{"stream_id", "domain"},
 	)
@@ -368,8 +371,8 @@ func (o *Prometheus) InitProm() {
 
 	o.counterEvicted = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_evicted_total", prom_prefix),
-			Help: "The total number of evicted domains per stream identity",
+			Name: fmt.Sprintf("%s_unanswered_total", prom_prefix),
+			Help: "The total number of unanswered domains per stream identity",
 		},
 		[]string{"stream_id"},
 	)
@@ -414,7 +417,7 @@ func (o *Prometheus) InitProm() {
 	o.counterDomainsSf = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: fmt.Sprintf("%s_sfdomains_total", prom_prefix),
-			Help: "The total number of unreachable domains per stream identity",
+			Help: "The total number of serverfail domains per stream identity",
 		},
 		[]string{"stream_id"},
 	)
@@ -440,8 +443,8 @@ func (o *Prometheus) InitProm() {
 
 	o.counterEvictedUniq = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_evicted_uniq_total", prom_prefix),
-			Help: "The total number of uniq evicted domain",
+			Name: fmt.Sprintf("%s_unanswered_uniq_total", prom_prefix),
+			Help: "The total number of uniq unanswered domain",
 		},
 		[]string{},
 	)
@@ -477,7 +480,7 @@ func (o *Prometheus) InitProm() {
 	o.counterDomainsSfUniq = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: fmt.Sprintf("%s_domains_sf_uniq_total", prom_prefix),
-			Help: "The total number of uniq unreachable domains",
+			Help: "The total number of uniq serverfail domains",
 		},
 		[]string{},
 	)

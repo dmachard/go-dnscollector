@@ -106,3 +106,12 @@ dnscollector_top_requesters{ip="127.0.0.1",stream_id="dnsdist1"} 6
 # TYPE dnscollector_top_tlds gauge
 dnscollector_top_tlds{domain="com",stream_id="dnsdist-cache"} 0
 dnscollector_top_tlds{domain="com",stream_id="dnsdist1"} 0
+# HELP dnscollector_top_unanswered Number of hit per unanswered domain - topN
+# TYPE dnscollector_top_unanswered gauge
+dnscollector_top_unanswered{domain="test",stream_id="dns-collector"} 3
+# HELP dnscollector_unanswered_total The total number of unanswered domains per stream identity
+# TYPE dnscollector_unanswered_total counter
+dnscollector_unanswered_total{stream_id="dns-collector"} 1
+# HELP dnscollector_unanswered_uniq_total The total number of uniq unanswered domain
+# TYPE dnscollector_unanswered_uniq_total counter
+dnscollector_unanswered_uniq_total 1

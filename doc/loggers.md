@@ -190,8 +190,8 @@ For the `PCAP` mode, currently the DNS protocol over UDP is used to log the traf
 | -----------------------|--------------------------------| 
 | DNS/53 over UDP        | DNS UDP/53                     | 
 | DNS/53 over TCP        | DNS UDP/53                     | 
-| DoH/443                | Not yet supported              | 
-| DoT/853                | Not yet supported              | 
+| DoH/443                | DNS UDP/443                    | 
+| DoT/853                | DoT/853 (no cipher)            | 
 | DoQ                    | Not yet supported              | 
 
 

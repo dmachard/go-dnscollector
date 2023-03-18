@@ -105,7 +105,11 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		dm.DnsTap.Identity = string(pbdm.GetServerIdentity())
 		dm.DnsTap.Operation = PROTOBUF_PDNS_TO_DNSTAP[pbdm.GetType().String()]
 
-		dm.NetworkInfo.Family = pbdm.GetSocketFamily().String()
+		if ipVersion, valid := dnsutils.IP_VERSION[pbdm.GetSocketFamily().String()]; valid {
+			dm.NetworkInfo.Family = ipVersion
+		} else {
+			dm.NetworkInfo.Family = dnsutils.STR_UNKNOWN
+		}
 		dm.NetworkInfo.Protocol = pbdm.GetSocketProtocol().String()
 
 		if pbdm.From != nil {
@@ -216,6 +220,9 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 
 		// add reply
 		if int(pbdm.Type.Number())%2 != 1 {
+			// is a reply
+			fakePkt.Response = true
+
 			// set reply code
 			fakePkt.Rcode = int(pbdm.Response.GetRcode())
 

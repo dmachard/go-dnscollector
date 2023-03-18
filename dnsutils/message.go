@@ -544,7 +544,8 @@ func (dm *DnsMessage) ToDnstap() ([]byte, error) {
 }
 
 func (dm *DnsMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
-	eth := &layers.Ethernet{SrcMAC: net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+	eth := &layers.Ethernet{
+		SrcMAC: net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 		DstMAC: net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}}
 	ip4 := &layers.IPv4{Version: 4, TTL: 64}
 	ip6 := &layers.IPv6{Version: 6}
@@ -557,64 +558,87 @@ func (dm *DnsMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 	// packet layer array
 	pkt := []gopacket.SerializableLayer{}
 
-	// set ip and transport
-	if dm.NetworkInfo.Family == PROTO_IPV6 && dm.NetworkInfo.Protocol == PROTO_UDP {
-		eth.EthernetType = layers.EthernetTypeIPv6
-		ip6.SrcIP = net.ParseIP(srcIp)
-		ip6.DstIP = net.ParseIP(dstIp)
-		ip6.NextHeader = layers.IPProtocolUDP
-		udp.SrcPort = layers.UDPPort(srcPort)
-		udp.DstPort = layers.UDPPort(dstPort)
-		udp.SetNetworkLayerForChecksum(ip6)
-
-		pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip6, eth)
-
-	} else if dm.NetworkInfo.Family == PROTO_IPV6 && dm.NetworkInfo.Protocol == PROTO_TCP {
-		eth.EthernetType = layers.EthernetTypeIPv6
-		ip6.SrcIP = net.ParseIP(srcIp)
-		ip6.DstIP = net.ParseIP(dstIp)
-		ip6.NextHeader = layers.IPProtocolTCP
-		tcp.SrcPort = layers.TCPPort(srcPort)
-		tcp.DstPort = layers.TCPPort(dstPort)
-		tcp.PSH = true
-		tcp.Window = 65535
-		tcp.SetNetworkLayerForChecksum(ip6)
-
-		dnsLengthField := make([]byte, 2)
-		binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.DNS.Length))
-		pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.DNS.Payload...)), tcp, ip6, eth)
-
-	} else if dm.NetworkInfo.Family == PROTO_IPV4 && dm.NetworkInfo.Protocol == PROTO_UDP {
+	// set source and destination IP
+	switch dm.NetworkInfo.Family {
+	case PROTO_IPV4:
 		eth.EthernetType = layers.EthernetTypeIPv4
 		ip4.SrcIP = net.ParseIP(srcIp)
 		ip4.DstIP = net.ParseIP(dstIp)
-		ip4.Protocol = layers.IPProtocolUDP
-		udp.SrcPort = layers.UDPPort(srcPort)
-		udp.DstPort = layers.UDPPort(dstPort)
-		udp.SetNetworkLayerForChecksum(ip4)
-
-		pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip4, eth)
-
-	} else if dm.NetworkInfo.Family == PROTO_IPV4 && dm.NetworkInfo.Protocol == PROTO_TCP {
-		// SYN
-		eth.EthernetType = layers.EthernetTypeIPv4
-		ip4.SrcIP = net.ParseIP(srcIp)
-		ip4.DstIP = net.ParseIP(dstIp)
-		ip4.Protocol = layers.IPProtocolTCP
-		tcp.SrcPort = layers.TCPPort(srcPort)
-		tcp.DstPort = layers.TCPPort(dstPort)
-		tcp.PSH = true
-		tcp.Window = 65535
-		tcp.SetNetworkLayerForChecksum(ip4)
-
-		dnsLengthField := make([]byte, 2)
-		binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.DNS.Length))
-		pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.DNS.Payload...)), tcp, ip4, eth)
-
-	} else {
-		// ignore other packet
-		return nil, errors.New("not yet implemented")
+	case PROTO_IPV6:
+		eth.EthernetType = layers.EthernetTypeIPv6
+		ip6.SrcIP = net.ParseIP(srcIp)
+		ip6.DstIP = net.ParseIP(dstIp)
+	default:
+		return nil, errors.New("family " + dm.NetworkInfo.Family + " not yet implemented")
 	}
+
+	// set transport
+	switch dm.NetworkInfo.Protocol {
+
+	// DNS over UDP
+	case PROTO_UDP:
+		udp.SrcPort = layers.UDPPort(srcPort)
+		udp.DstPort = layers.UDPPort(dstPort)
+
+		// update iplayer
+		switch dm.NetworkInfo.Family {
+		case PROTO_IPV4:
+			ip4.Protocol = layers.IPProtocolUDP
+			udp.SetNetworkLayerForChecksum(ip4)
+			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip4)
+		case PROTO_IPV6:
+			ip6.NextHeader = layers.IPProtocolUDP
+			udp.SetNetworkLayerForChecksum(ip6)
+			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip6)
+		}
+
+	// DNS over TCP
+	case PROTO_TCP:
+		tcp.SrcPort = layers.TCPPort(srcPort)
+		tcp.DstPort = layers.TCPPort(dstPort)
+		tcp.PSH = true
+		tcp.Window = 65535
+
+		// dns length
+		dnsLengthField := make([]byte, 2)
+		binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.DNS.Length))
+
+		// update iplayer
+		switch dm.NetworkInfo.Family {
+		case PROTO_IPV4:
+			ip4.Protocol = layers.IPProtocolTCP
+			tcp.SetNetworkLayerForChecksum(ip4)
+			pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.DNS.Payload...)), tcp, ip4)
+		case PROTO_IPV6:
+			ip6.NextHeader = layers.IPProtocolTCP
+			tcp.SetNetworkLayerForChecksum(ip6)
+			pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.DNS.Payload...)), tcp, ip6)
+		}
+
+	// DNS over HTTPS and DNS over TLS
+	// These protocols are translated to DNS over UDP
+	case PROTO_DOH, PROTO_DOT:
+		udp.SrcPort = layers.UDPPort(srcPort)
+		udp.DstPort = layers.UDPPort(dstPort)
+
+		// update iplayer
+		switch dm.NetworkInfo.Family {
+		case PROTO_IPV4:
+			ip4.Protocol = layers.IPProtocolUDP
+			udp.SetNetworkLayerForChecksum(ip4)
+			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip4)
+		case PROTO_IPV6:
+			ip6.NextHeader = layers.IPProtocolUDP
+			udp.SetNetworkLayerForChecksum(ip6)
+			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip6)
+		}
+
+	default:
+		return nil, errors.New("protocol " + dm.NetworkInfo.Protocol + " not yet implemented")
+	}
+
+	pkt = append(pkt, eth)
+
 	return pkt, nil
 }
 

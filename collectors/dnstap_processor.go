@@ -126,7 +126,13 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			dm.DnsTap.Version = string(version)
 		}
 		dm.DnsTap.Operation = dt.GetMessage().GetType().String()
-		dm.NetworkInfo.Family = dt.GetMessage().GetSocketFamily().String()
+
+		if ipVersion, valid := dnsutils.IP_VERSION[dt.GetMessage().GetSocketFamily().String()]; valid {
+			dm.NetworkInfo.Family = ipVersion
+		} else {
+			dm.NetworkInfo.Family = dnsutils.STR_UNKNOWN
+		}
+
 		dm.NetworkInfo.Protocol = dt.GetMessage().GetSocketProtocol().String()
 
 		// decode query address and port

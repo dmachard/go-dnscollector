@@ -420,8 +420,8 @@ multiplexer:
 # latency:
 #   # Measure latency between replies and queries
 #   measure-latency: false
-#   # Detect queries timeout
-#   detect-evicted-queries: false
+#   # Detect queries without replies
+#   unanswered-queries: false
 #   # timeout in second for queries
 #   queries-timeout: 2
 
