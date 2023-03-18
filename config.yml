@@ -60,6 +60,10 @@ global:
 # of supported collectors, loggers and transformers
 multiplexer:
   collectors:
+    - name: pdns
+      powerdns:
+        listen-ip: 0.0.0.0
+        listen-port: 6001
     - name: tap
       dnstap:
         listen-ip: 0.0.0.0
@@ -72,10 +76,14 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-
+    - name: pcap
+      logfile:
+        file-path:  "/tmp/dns.pcap"
+        mode: pcap
+        
   routes:
-    - from: [ tap ]
-      to: [ console ]
+    - from: [ tap, pdns ]
+      to: [ console, pcap ]
 
 ################################################
 # list of supported collectors
