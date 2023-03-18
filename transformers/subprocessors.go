@@ -108,9 +108,9 @@ func (p *Transforms) Prepare() error {
 			p.activeTransforms = append(p.activeTransforms, p.measureLatency)
 			p.LogInfo("[latency: measure latency] enabled")
 		}
-		if p.config.Latency.DetectEvictedQueries {
+		if p.config.Latency.UnansweredQueries {
 			p.activeTransforms = append(p.activeTransforms, p.detectEvictedTimeout)
-			p.LogInfo("[latency: evicted queries] enabled")
+			p.LogInfo("[latency: unanswered queries] enabled")
 		}
 
 	}

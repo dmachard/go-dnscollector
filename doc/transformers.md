@@ -3,9 +3,9 @@
 - [Normalize](#normalize)
 - [User privacy](#user-privacy)
 - [GeoIP Support](#geoip-support)
-- [DNS filtering](#dns-filtering)
+- [Traffic filtering](#traffic-filtering)
 - [Suspicious](#suspicious)
-- [Latency](#latency)
+- [Latency Computing](#latency)
 
 ## Transformers
 
@@ -133,7 +133,7 @@ Specific directives added:
 - `geoip-as-number`: autonomous system number
 - `geoip-as-owner`: autonomous system organization/owner
 
-### DNS filtering
+### Traffic filtering
 
 The filtering feature can be used to ignore some queries or replies according to:
 - qname
@@ -224,21 +224,20 @@ Example:
 Specific directive(s) added:
 - `suspicious-score`: suspicious score for unusual traffic
 
-### Latency
+### Latency Computing
 
 
 Use this feature to compute latency and detect queries timeout
 
 Options:
 - `measure-latency`: (boolean) measure latency between replies and queries
-- `detect-evicted-queries`: (boolean) Detect evicted queries
+- `unanswered-queries`: (boolean) Detect evicted queries
 - `queries-timeout`: (integer) timeout in second for queries
 
 ```yaml
 transforms:
-  user-privacy:
-    anonymize-ip: false
-    hash-ip: false
-    minimaze-qname: false
+  latency:
+    measure-latency: false
+    unanswered-queries: false
     queries-timeout: 2
 ```

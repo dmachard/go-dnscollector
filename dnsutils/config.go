@@ -54,10 +54,10 @@ type ConfigTransformers struct {
 		AddTldPlusOne  bool `yaml:"add-tld-plus-one"`
 	} `yaml:"normalize"`
 	Latency struct {
-		Enable               bool `yaml:"enable"`
-		MeasureLatency       bool `yaml:"measure-latency"`
-		DetectEvictedQueries bool `yaml:"detect-evicted-queries"`
-		QueriesTimeout       int  `yaml:"queries-timeout"`
+		Enable            bool `yaml:"enable"`
+		MeasureLatency    bool `yaml:"measure-latency"`
+		UnansweredQueries bool `yaml:"unanswered-queries"`
+		QueriesTimeout    int  `yaml:"queries-timeout"`
 	}
 	Filtering struct {
 		Enable          bool     `yaml:"enable"`
@@ -112,7 +112,7 @@ func (c *ConfigTransformers) SetDefault() {
 
 	c.Latency.Enable = false
 	c.Latency.MeasureLatency = false
-	c.Latency.DetectEvictedQueries = false
+	c.Latency.UnansweredQueries = false
 	c.Latency.QueriesTimeout = 2
 
 	c.Filtering.Enable = false

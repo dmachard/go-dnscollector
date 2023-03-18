@@ -1,4 +1,4 @@
-# Example 18: Count the number of no responses with outgoing queries
+# Example 18: Count the number of outgoing queries without replies
 #
 
 # If turned on, debug messages are printed in the standard output
@@ -14,8 +14,9 @@ multiplexer:
         listen-port: 6000
       transforms:
         latency:
-          measure-latency: true
-          detect-evicted-queries: true
+          measure-latency: false
+          unanswered-queries: true
+          queries-timeout: 2
 
   loggers:
     - name: console
