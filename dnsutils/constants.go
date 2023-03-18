@@ -31,6 +31,8 @@ const (
 
 	PROTO_UDP = "UDP"
 	PROTO_TCP = "TCP"
+	PROTO_DOT = "DOT"
+	PROTO_DOH = "DOH"
 
 	SOCKET_TCP  = "tcp"
 	SOCKET_UDP  = "udp"

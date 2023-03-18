@@ -574,6 +574,8 @@ func (dm *DnsMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 
 	// set transport
 	switch dm.NetworkInfo.Protocol {
+
+	// DNS over UDP
 	case PROTO_UDP:
 		udp.SrcPort = layers.UDPPort(srcPort)
 		udp.DstPort = layers.UDPPort(dstPort)
@@ -590,6 +592,7 @@ func (dm *DnsMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip6)
 		}
 
+	// DNS over TCP
 	case PROTO_TCP:
 		tcp.SrcPort = layers.TCPPort(srcPort)
 		tcp.DstPort = layers.TCPPort(dstPort)
@@ -610,6 +613,24 @@ func (dm *DnsMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 			ip6.NextHeader = layers.IPProtocolTCP
 			tcp.SetNetworkLayerForChecksum(ip6)
 			pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.DNS.Payload...)), tcp, ip6)
+		}
+
+	// DNS over HTTPS and DNS over TLS
+	// These protocols are translated to DNS over UDP
+	case PROTO_DOH, PROTO_DOT:
+		udp.SrcPort = layers.UDPPort(srcPort)
+		udp.DstPort = layers.UDPPort(dstPort)
+
+		// update iplayer
+		switch dm.NetworkInfo.Family {
+		case PROTO_IPV4:
+			ip4.Protocol = layers.IPProtocolUDP
+			udp.SetNetworkLayerForChecksum(ip4)
+			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip4)
+		case PROTO_IPV6:
+			ip6.NextHeader = layers.IPProtocolUDP
+			udp.SetNetworkLayerForChecksum(ip6)
+			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip6)
 		}
 
 	default:
