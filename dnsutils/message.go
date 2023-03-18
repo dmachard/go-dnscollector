@@ -558,6 +558,7 @@ func (dm *DnsMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 	pkt := []gopacket.SerializableLayer{}
 
 	// set ip and transport
+	fmt.Println(dm.NetworkInfo.Family, dm.NetworkInfo.Protocol)
 	if dm.NetworkInfo.Family == PROTO_IPV6 && dm.NetworkInfo.Protocol == PROTO_UDP {
 		eth.EthernetType = layers.EthernetTypeIPv6
 		ip6.SrcIP = net.ParseIP(srcIp)

@@ -24,10 +24,13 @@ const (
 	DNSTAP_CLIENT_RESPONSE = "CLIENT_RESPONSE"
 	DNSTAP_CLIENT_QUERY    = "CLIENT_QUERY"
 
-	PROTO_IPV6 = "IPv4"
-	PROTO_IPV4 = "IPv6"
-	PROTO_UDP  = "UDP"
-	PROTO_TCP  = "TCP"
+	PROTO_INET  = "INET"
+	PROTO_INET6 = "INET6"
+	PROTO_IPV6  = "IPv6"
+	PROTO_IPV4  = "IPv4"
+
+	PROTO_UDP = "UDP"
+	PROTO_TCP = "TCP"
 
 	SOCKET_TCP  = "tcp"
 	SOCKET_UDP  = "udp"
@@ -45,5 +48,10 @@ var (
 		TLS_v11: tls.VersionTLS11,
 		TLS_v12: tls.VersionTLS12,
 		TLS_v13: tls.VersionTLS13,
+	}
+
+	IP_VERSION = map[string]string{
+		PROTO_INET:  PROTO_IPV4,
+		PROTO_INET6: PROTO_IPV6,
 	}
 )
