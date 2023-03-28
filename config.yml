@@ -72,7 +72,7 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-        
+
   routes:
     - from: [ tap ]
       to: [ console ]
@@ -202,6 +202,8 @@ multiplexer:
 #   listen-ip: 0.0.0.0
 #   # listening port
 #   listen-port: 8080
+#   # enable basic authentication
+#   basic-auth-enable: true
 #   # default login
 #   basic-auth-login: admin
 #   # default password
