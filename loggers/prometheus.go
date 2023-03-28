@@ -180,10 +180,19 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 
 	handler := authMiddleware(mux)
 
-	o.httpServer = &http.Server{
-		Handler:  handler,
-		ErrorLog: o.logger.ErrorLogger(),
+	o.httpServer = &http.Server{}
+	if o.config.Loggers.Prometheus.BasicAuthEnabled {
+		o.httpServer.Handler = handler
+	} else {
+		o.httpServer.Handler = mux
 	}
+
+	o.httpServer.ErrorLog = o.logger.ErrorLogger()
+
+	// o.httpServer = &http.Server{
+	// 	Handler:  handler,
+	// 	ErrorLog: o.logger.ErrorLogger(),
+	// }
 
 	return o
 }

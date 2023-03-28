@@ -93,6 +93,7 @@ See the [swagger](https://generator.swagger.io/?url=https://raw.githubuserconten
 Options:
 - `listen-ip`: (string) listening IP
 - `listen-port`: (integer) listening port
+- `basic-auth-enable`: (boolean) enable or disable basic authentication
 - `basic-auth-login`: (string) default login for basic auth
 - `basic-auth-pwd`: (string) default password for basic auth
 - `tls-support`: (boolean) tls support
@@ -107,6 +108,7 @@ Default values:
 restapi:
   listen-ip: 0.0.0.0
   listen-port: 8080
+  basic-auth-enable: true
   basic-auth-login: admin
   basic-auth-pwd: changeme
   tls-support: true
