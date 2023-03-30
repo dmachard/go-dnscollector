@@ -149,6 +149,9 @@ func main() {
 		if subcfg.Loggers.ElasticSearchClient.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewElasticSearchClient(subcfg, logger, output.Name)
 		}
+		if subcfg.Loggers.ScalyrClient.Enable && IsLoggerRouted(config, output.Name) {
+			mapLoggers[output.Name] = loggers.NewScalyrClient(subcfg, logger, output.Name)
+		}
 	}
 
 	// load collectors

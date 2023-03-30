@@ -12,6 +12,7 @@
 - [Loki](#loki-client)
 - [Statsd](#statsd-client)
 - [ElasticSearch](#elasticsearch-client)
+- [Scalyr](#scalyr-client)
 
 ## Loggers
 
@@ -460,4 +461,86 @@ Options:
 ```yaml
 elasticsearch:
   url: "http://127.0.0.1:9200/indexname/_doc"
+```
+
+### Scalyr client
+Client for the Scalyr/DataSet [`addEvents`](https://app.eu.scalyr.com/help/api#addEvents) API endpoint.
+
+Options:
+- `server-url`: (string) Scalyr API Host
+- `apikey`: (string, required) API Token with Log Write permissions
+- `mode`: (string) text, json, or flat-json
+- `parser`: (string) When using text or json mode, the name of the parser Scalyr should use
+- `flush-interval`: (integer) flush batch every X seconds
+- `batch-size`: (integer) batch size for log entries in bytes
+- `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
+- `proxy-url`: (string) Proxy URL
+- `tls-insecure`: (boolean) insecure skip verify
+- `tls-min-version`: (string) min tls version
+- `session-info`: (map) Any "session" or server information for Scalyr. e.g. 'region', 'serverHost'. If 'serverHost' is not included, it is set using the hostname.
+- `attrs`: (map) Any extra attributes that should be added to the log's fields.
+
+Defaults:
+```yaml
+scalyrclient:
+  server-url: app.scalyr.com
+  apikey: ""
+  mode: text
+  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
+  sessioninfo: {}
+  attrs: {}
+  parser: ""
+  flush-interval: 30
+  proxy-url: ""
+  tls-insecure: false
+  tls-min-version: 1.2
+```
+
+#### Formats
+The client can send the data in 3 formats: text (using `text-format`), json (by including the whole DNS message in the `message` field), or flat-json.
+The first two formats (text, json) require setting the `parser` option and needs a corresponding parser defined in the Scalyr backend.
+
+##### Flat JSON
+As Scalyr's JSON parsers (like 'dottedJSON') will not expand nested JSON and require one or more 'rewrite' statements, the Scalyr client supports a `flat-json` mode. This mode requires more processing on the host running go-dns-collector but delivers every output field as its own key/value pair. As an example, here's a flat-json as it would be sent to Scalyr:
+
+```json
+{
+  "dns.flags.aa": false,
+  "dns.flags.ad": false,
+  "dns.flags.qr": true,
+  "dns.flags.ra": true,
+  "dns.flags.tc": false,
+  "dns.length": 82,
+  "dns.malformed-packet": false,
+  "dns.opcode": 0,
+  "dns.qname": "google.nl",
+  "dns.qtype": "A",
+  "dns.rcode": "NOERROR",
+  "dns.resource-records.an.0.name": "google.nl",
+  "dns.resource-records.an.0.rdata": "142.251.39.99",
+  "dns.resource-records.an.0.rdatatype": "A",
+  "dns.resource-records.an.0.ttl": 300,
+  "dns.resource-records.ar": [],
+  "dns.resource-records.ns": [],
+  "dnstap.identity": "foo",
+  "dnstap.latency": "0.000000",
+  "dnstap.operation": "CLIENT_RESPONSE",
+  "dnstap.timestamp-rfc3339ns": "2023-03-31T10:14:46.664534902Z",
+  "dnstap.version": "BIND 9.18.13-1+ubuntu20.04.1+isc+1-Ubuntu",
+  "edns.dnssec-ok": 0,
+  "edns.options.0.code": 10,
+  "edns.options.0.data": "-",
+  "edns.options.0.name": "COOKIE",
+  "edns.rcode": 0,
+  "edns.udp-size": 1232,
+  "edns.version": 0,
+  "network.family": "IPv4",
+  "network.ip-defragmented": false,
+  "network.protocol": "UDP",
+  "network.query-ip": "127.0.0.1",
+  "network.query-port": "36232",
+  "network.response-ip": "127.0.0.1",
+  "network.response-port": "53",
+  "network.tcp-reassembled": false,
+}
 ```
