@@ -135,8 +135,9 @@ func (c *ConfigTransformers) SetDefault() {
 /* main configuration */
 type Config struct {
 	Global struct {
-		TextFormat string `yaml:"text-format"`
-		Trace      struct {
+		TextFormat          string `yaml:"text-format"`
+		TextFormatDelimiter string `yaml:"text-format-delimiter"`
+		Trace               struct {
 			Verbose      bool   `yaml:"verbose"`
 			LogMalformed bool   `yaml:"log-malformed"`
 			Filename     string `yaml:"filename"`
@@ -270,18 +271,18 @@ type Config struct {
 			OverwriteIdentity bool   `yaml:"overwrite-identity"`
 		} `yaml:"dnstap"`
 		TcpClient struct {
-			Enable        bool   `yaml:"enable"`
-			RemoteAddress string `yaml:"remote-address"`
-			RemotePort    int    `yaml:"remote-port"`
-			SockPath      string `yaml:"sock-path"`
-			RetryInterval int    `yaml:"retry-interval"`
-			Transport     string `yaml:"transport"`
-			TlsSupport    bool   `yaml:"tls-support"`
-			TlsInsecure   bool   `yaml:"tls-insecure"`
-			TlsMinVersion string `yaml:"tls-min-version"`
-			Mode          string `yaml:"mode"`
-			TextFormat    string `yaml:"text-format"`
-			Delimiter     string `yaml:"delimiter"`
+			Enable            bool   `yaml:"enable"`
+			RemoteAddress     string `yaml:"remote-address"`
+			RemotePort        int    `yaml:"remote-port"`
+			SockPath          string `yaml:"sock-path"`
+			RetryInterval     int    `yaml:"retry-interval"`
+			Transport         string `yaml:"transport"`
+			TlsSupport        bool   `yaml:"tls-support"`
+			TlsInsecure       bool   `yaml:"tls-insecure"`
+			TlsMinVersion     string `yaml:"tls-min-version"`
+			Mode              string `yaml:"mode"`
+			TextFormat        string `yaml:"text-format"`
+			TextLineDelimiter string `yaml:"text-delimiter"`
 		} `yaml:"tcpclient"`
 		Syslog struct {
 			Enable        bool   `yaml:"enable"`
@@ -363,6 +364,7 @@ type Config struct {
 func (c *Config) SetDefault() {
 	// global config
 	c.Global.TextFormat = "timestamp identity operation rcode queryip queryport family protocol length qname qtype latency"
+	c.Global.TextFormatDelimiter = " "
 
 	c.Global.Trace.Verbose = false
 	c.Global.Trace.LogMalformed = false
@@ -495,7 +497,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.TcpClient.TlsMinVersion = TLS_v12
 	c.Loggers.TcpClient.Mode = MODE_JSON
 	c.Loggers.TcpClient.TextFormat = ""
-	c.Loggers.TcpClient.Delimiter = "\n"
+	c.Loggers.TcpClient.TextLineDelimiter = "\n"
 
 	c.Loggers.Syslog.Enable = false
 	c.Loggers.Syslog.Severity = "INFO"

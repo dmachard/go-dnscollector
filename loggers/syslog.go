@@ -192,8 +192,13 @@ func (o *Syslog) Run() {
 
 		switch o.config.Loggers.Syslog.Mode {
 		case dnsutils.MODE_TEXT:
-			delimiter := "\n"
-			o.syslogConn.Write(dm.Bytes(o.textFormat, delimiter))
+
+			o.syslogConn.Write(dm.Bytes(o.textFormat, o.config.Global.TextFormatDelimiter))
+
+			var delimiter bytes.Buffer
+			delimiter.WriteString("\n")
+			o.syslogConn.Write(delimiter.Bytes())
+
 		case dnsutils.MODE_JSON:
 			json.NewEncoder(buffer).Encode(dm)
 			o.syslogConn.Write(buffer.Bytes())

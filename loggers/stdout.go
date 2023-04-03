@@ -96,7 +96,8 @@ func (o *StdOut) Run() {
 
 		switch o.config.Loggers.Stdout.Mode {
 		case dnsutils.MODE_TEXT:
-			o.stdout.Print(dm.String(o.textFormat))
+			o.stdout.Print(dm.String(o.textFormat, o.config.Global.TextFormatDelimiter))
+
 		case dnsutils.MODE_JSON:
 			json.NewEncoder(buffer).Encode(dm)
 			fmt.Print(buffer.String())

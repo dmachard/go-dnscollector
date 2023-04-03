@@ -199,8 +199,7 @@ LOOP:
 
 			switch o.config.Loggers.LokiClient.Mode {
 			case dnsutils.MODE_TEXT:
-				delimiter := ""
-				entry.Line = string(dm.Bytes(o.textFormat, delimiter))
+				entry.Line = string(dm.Bytes(o.textFormat, o.config.Global.TextFormatDelimiter))
 			case dnsutils.MODE_JSON:
 				json.NewEncoder(buffer).Encode(dm)
 				entry.Line = buffer.String()

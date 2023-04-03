@@ -320,7 +320,7 @@ func (dm *DnsMessage) handlePublicSuffixDirectives(directives []string, s *bytes
 	}
 }
 
-func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
+func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string) []byte {
 	var s bytes.Buffer
 
 	for i, word := range format {
@@ -454,18 +454,15 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		}
 
 		if i < len(format)-1 {
-			s.WriteString(" ")
+			s.WriteString(fieldDelimiter)
 		}
 	}
-
-	s.WriteString(delimiter)
 
 	return s.Bytes()
 }
 
-func (dm *DnsMessage) String(format []string) string {
-	delimiter := "\n"
-	return string(dm.Bytes(format, delimiter))
+func (dm *DnsMessage) String(format []string, fieldDelimiter string) string {
+	return string(dm.Bytes(format, fieldDelimiter))
 }
 
 func (dm *DnsMessage) ToDnstap() ([]byte, error) {

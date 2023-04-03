@@ -1,6 +1,7 @@
 package loggers
 
 import (
+	"bytes"
 	"log"
 	"net"
 	"os"
@@ -30,8 +31,12 @@ func TestLogFileWrite_TextMode(t *testing.T) {
 
 	// write fake dns message
 	dm := dnsutils.GetFakeDnsMessage()
-	delimiter := "\n"
-	g.WriteToPlain(dm.Bytes(g.textFormat, delimiter))
+	g.WriteToPlain(dm.Bytes(g.textFormat, config.Global.TextFormatDelimiter))
+
+	var delimiter bytes.Buffer
+	delimiter.WriteString("\n")
+	g.WriteToPlain(delimiter.Bytes())
+
 	g.FlushWriters()
 
 	// read temp file and check content
@@ -40,7 +45,7 @@ func TestLogFileWrite_TextMode(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if string(data[:count]) != dm.String(g.textFormat) {
+	if string(data[:count]) != dm.String(g.textFormat, config.Global.TextFormatDelimiter) {
 		t.Errorf("invalid logfile output - %s", data[:count])
 	}
 }

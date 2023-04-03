@@ -483,8 +483,11 @@ LOOP:
 
 			// with basic text mode
 			case dnsutils.MODE_TEXT:
-				delimiter := "\n"
-				l.WriteToPlain(dm.Bytes(l.textFormat, delimiter))
+				l.WriteToPlain(dm.Bytes(l.textFormat, l.config.Global.TextFormatDelimiter))
+
+				var delimiter bytes.Buffer
+				delimiter.WriteString("\n")
+				l.WriteToPlain(delimiter.Bytes())
 
 			// with json mode
 			case dnsutils.MODE_JSON:
