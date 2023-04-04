@@ -55,7 +55,7 @@ global:
   # - df: ip defragmentation flag
   # - tr: tcp reassembled flag
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
-  # custom text field delimiter
+  # default text field delimiter
   text-format-delimiter: " "
 
 # create your dns collector, please refer bellow to see the list 
