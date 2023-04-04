@@ -271,18 +271,18 @@ type Config struct {
 			OverwriteIdentity bool   `yaml:"overwrite-identity"`
 		} `yaml:"dnstap"`
 		TcpClient struct {
-			Enable            bool   `yaml:"enable"`
-			RemoteAddress     string `yaml:"remote-address"`
-			RemotePort        int    `yaml:"remote-port"`
-			SockPath          string `yaml:"sock-path"`
-			RetryInterval     int    `yaml:"retry-interval"`
-			Transport         string `yaml:"transport"`
-			TlsSupport        bool   `yaml:"tls-support"`
-			TlsInsecure       bool   `yaml:"tls-insecure"`
-			TlsMinVersion     string `yaml:"tls-min-version"`
-			Mode              string `yaml:"mode"`
-			TextFormat        string `yaml:"text-format"`
-			TextLineDelimiter string `yaml:"text-delimiter"`
+			Enable           bool   `yaml:"enable"`
+			RemoteAddress    string `yaml:"remote-address"`
+			RemotePort       int    `yaml:"remote-port"`
+			SockPath         string `yaml:"sock-path"`
+			RetryInterval    int    `yaml:"retry-interval"`
+			Transport        string `yaml:"transport"`
+			TlsSupport       bool   `yaml:"tls-support"`
+			TlsInsecure      bool   `yaml:"tls-insecure"`
+			TlsMinVersion    string `yaml:"tls-min-version"`
+			Mode             string `yaml:"mode"`
+			TextFormat       string `yaml:"text-format"`
+			PayloadDelimiter string `yaml:"delimiter"`
 		} `yaml:"tcpclient"`
 		Syslog struct {
 			Enable        bool   `yaml:"enable"`
@@ -497,7 +497,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.TcpClient.TlsMinVersion = TLS_v12
 	c.Loggers.TcpClient.Mode = MODE_JSON
 	c.Loggers.TcpClient.TextFormat = ""
-	c.Loggers.TcpClient.TextLineDelimiter = "\n"
+	c.Loggers.TcpClient.PayloadDelimiter = "\n"
 
 	c.Loggers.Syslog.Enable = false
 	c.Loggers.Syslog.Severity = "INFO"

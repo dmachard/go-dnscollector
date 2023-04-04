@@ -100,8 +100,11 @@ Default directives:
 ```yaml
 global:
   text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"
+  text-format-delimiter: " "
 ```
 
+If you require a format like CSV, the delimiter can be configured with the `text-format-delimiter` option.
+The default separator is [space].
 
 ## Multiplexer
 

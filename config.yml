@@ -55,6 +55,8 @@ global:
   # - df: ip defragmentation flag
   # - tr: tcp reassembled flag
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
+  # custom text field delimiter
+  text-format-delimiter: " "
 
 # create your dns collector, please refer bellow to see the list 
 # of supported collectors, loggers and transformers
@@ -72,7 +74,6 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-
 
   routes:
     - from: [ tap ]

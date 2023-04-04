@@ -11,6 +11,7 @@ import (
 func TestStdoutPrint(t *testing.T) {
 	// init logger and redirect stdout output to bytes buffer
 	var stdout bytes.Buffer
+
 	c := dnsutils.GetFakeConfig()
 	g := NewStdOut(c, logger.New(false), "test")
 	g.SetBuffer(&stdout)
@@ -20,7 +21,7 @@ func TestStdoutPrint(t *testing.T) {
 	g.stdout.Print(dm.String(g.textFormat, c.Global.TextFormatDelimiter))
 
 	// check buffer
-	if stdout.String() != dm.String(g.textFormat, c.Global.TextFormatDelimiter) {
+	if stdout.String() != dm.String(g.textFormat, c.Global.TextFormatDelimiter)+"\n" {
 		t.Errorf("invalid stdout output: %s", stdout.String())
 	}
 }

@@ -142,12 +142,12 @@ LOOP:
 
 							if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_TEXT {
 								w.Write(dm.Bytes(o.textFormat, o.config.Global.TextFormatDelimiter))
-								w.WriteString("\n")
+								w.WriteString(o.config.Loggers.TcpClient.PayloadDelimiter)
 							}
 
 							if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_JSON {
 								json.NewEncoder(w).Encode(dm)
-								w.WriteString("\n")
+								w.WriteString(o.config.Loggers.TcpClient.PayloadDelimiter)
 							}
 
 							// flusth the buffer

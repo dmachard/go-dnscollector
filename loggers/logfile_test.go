@@ -1,7 +1,6 @@
 package loggers
 
 import (
-	"bytes"
 	"log"
 	"net"
 	"os"
@@ -32,10 +31,6 @@ func TestLogFileWrite_TextMode(t *testing.T) {
 	// write fake dns message
 	dm := dnsutils.GetFakeDnsMessage()
 	g.WriteToPlain(dm.Bytes(g.textFormat, config.Global.TextFormatDelimiter))
-
-	var delimiter bytes.Buffer
-	delimiter.WriteString("\n")
-	g.WriteToPlain(delimiter.Bytes())
 
 	g.FlushWriters()
 
