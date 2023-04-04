@@ -16,7 +16,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/dskit/backoff"
-	"github.com/nqd/flat"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/transformers"
@@ -182,16 +181,9 @@ LOOP:
 			case dnsutils.MODE_JSON:
 				attrs["message"] = dm
 			case dnsutils.MODE_FLATJSON:
-				// Clear attrs
-				attrs = make(map[string]interface{})
-				// We need to flatten the data ourselves, keeping the right field names.
-				// This requires a roundtrip through JSON :(
-				data, _ := json.Marshal(dm)
-				json.Unmarshal(data, &attrs)
 				var err error
-				attrs, err = flat.Flatten(attrs, nil)
-				if err != nil {
-					c.LogError("Flatten error: %e", err)
+				if attrs, err = dm.Flatten(); err != nil {
+					c.LogError("unable to flatten: %e", err)
 					break
 				}
 				// Add user's attrs without overwriting flattened ones

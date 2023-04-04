@@ -3,6 +3,7 @@ package dnsutils
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -15,6 +16,7 @@ import (
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"github.com/nqd/flat"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -640,6 +642,17 @@ func (dm *DnsMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 	pkt = append(pkt, eth)
 
 	return pkt, nil
+}
+
+func (dm *DnsMessage) Flatten() (ret map[string]interface{}, err error) {
+	// TODO perhaps panic when flattening fails, as it should always work.
+	var tmp []byte
+	if tmp, err = json.Marshal(dm); err != nil {
+		return
+	}
+	json.Unmarshal(tmp, &ret)
+	ret, err = flat.Flatten(ret, nil)
+	return
 }
 
 func GetFakeDnsMessage() DnsMessage {
