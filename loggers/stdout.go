@@ -101,6 +101,14 @@ func (o *StdOut) Run() {
 			json.NewEncoder(buffer).Encode(dm)
 			fmt.Print(buffer.String())
 			buffer.Reset()
+		case dnsutils.MODE_FLATJSON:
+			flat, err := dm.Flatten()
+			if err != nil {
+				o.LogError("flattening DNS message failed: %e", err)
+			}
+			json.NewEncoder(buffer).Encode(flat)
+			fmt.Print(buffer.String())
+			buffer.Reset()
 		}
 	}
 	o.LogInfo("run terminated")

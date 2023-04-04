@@ -189,9 +189,9 @@ multiplexer:
 # list of supported loggers
 ################################################
 
-# # print received dns traffic to sdtout
+# # print received dns traffic to stdout
 # stdout:
-#   # output format: text|json
+#   # output format: text|json|flat-json
 #   mode: text
 #   # output text format, please refer at the end if this config to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
