@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/dmachard/go-dnscollector/collectors"
@@ -42,6 +43,15 @@ func IsCollectorRouted(config *dnsutils.Config, name string) bool {
 		}
 	}
 	return false
+}
+
+func AreRoutesValid(config *dnsutils.Config) (ret error) {
+	for _, route := range config.Multiplexer.Routes {
+		if len(route.Src) == 0 || len(route.Dst) == 0 {
+			ret = fmt.Errorf("incomplete route, from: %s, to: %s", strings.Join(route.Src, ", "), strings.Join(route.Dst, ", "))
+		}
+	}
+	return
 }
 
 func main() {
@@ -182,6 +192,10 @@ func main() {
 		yamlcfg, _ := yaml.Marshal(cfg)
 		if err := yaml.Unmarshal(yamlcfg, subcfg); err != nil {
 			panic(fmt.Sprintf("main - yaml collector config error: %v", err))
+		}
+
+		if err := AreRoutesValid(config); err != nil {
+			panic(fmt.Sprintf("main - configuration error: %e", err))
 		}
 
 		if subcfg.Collectors.Dnstap.Enable && IsCollectorRouted(config, input.Name) {
