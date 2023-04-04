@@ -480,6 +480,10 @@ Options:
 - `session-info`: (map) Any "session" or server information for Scalyr. e.g. 'region', 'serverHost'. If 'serverHost' is not included, it is set using the hostname.
 - `attrs`: (map) Any extra attributes that should be added to the log's fields.
 
+The client can send the data in 3 formats: text (using `text-format`), json (by including the whole DNS message in the `message` field), or flat-json.
+The first two formats (text, json) require setting the `parser` option and needs a corresponding parser defined in the Scalyr backend.
+As Scalyr's JSON parsers (like 'dottedJSON') will not expand nested JSON and require one or more 'rewrite' statements, the Scalyr client supports a `flat-json` mode.
+
 Defaults:
 ```yaml
 scalyrclient:
@@ -496,12 +500,9 @@ scalyrclient:
   tls-min-version: 1.2
 ```
 
-#### Formats
-The client can send the data in 3 formats: text (using `text-format`), json (by including the whole DNS message in the `message` field), or flat-json.
-The first two formats (text, json) require setting the `parser` option and needs a corresponding parser defined in the Scalyr backend.
-
-##### Flat JSON
-As Scalyr's JSON parsers (like 'dottedJSON') will not expand nested JSON and require one or more 'rewrite' statements, the Scalyr client supports a `flat-json` mode. This mode requires more processing on the host running go-dns-collector but delivers every output field as its own key/value pair. As an example, here's a flat-json as it would be sent to Scalyr:
+## Flat JSON export format
+Sometimes, a single level key-value output in JSON is easier to ingest than multi-level JSON.
+Using flat-json requires more processing on the host running go-dnscollector but delivers every output field as its own key/value pair. Here's a flat-json output as formatted by `jq`:
 
 ```json
 {
