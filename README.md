@@ -48,6 +48,7 @@ Additionally, DNS-collector also support
     - [`InfluxDB`](doc/loggers.md#influxdb-client)
     - [`Loki`](doc/loggers.md#loki-client)
     - [`ElasticSearch`](doc/loggers.md#elasticsearch-client)
+    - [`Scalyr`](doc/loggers.md#scalyr-client)
 
 **Transformers**:
 

@@ -14,6 +14,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/gopacket v1.1.19
+	github.com/google/uuid v1.2.0
 	github.com/grafana/dskit v0.0.0-20220314144907-ec94f1a0a3a8
 	github.com/grafana/loki v1.6.2-0.20211108122114-f61a4d2612d8
 	github.com/hpcloud/tail v1.0.0
@@ -21,6 +22,7 @@ require (
 	github.com/klauspost/compress v1.16.3
 	github.com/miekg/dns v1.1.52
 	github.com/natefinch/lumberjack v2.0.0+incompatible
+	github.com/nqd/flat v0.2.0
 	github.com/oschwald/maxminddb-golang v1.10.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/rs/tzsp v0.0.0-20161230003637-8ce729c826b9
@@ -33,6 +35,7 @@ require (
 )
 
 require (
+	github.com/imdario/mergo v0.3.12 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230204201903-c31fa085b70e // indirect
 )

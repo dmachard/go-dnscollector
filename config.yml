@@ -189,9 +189,9 @@ multiplexer:
 # list of supported loggers
 ################################################
 
-# # print received dns traffic to sdtout
+# # print received dns traffic to stdout
 # stdout:
-#   # output format: text|json
+#   # output format: text|json|flat-json
 #   mode: text
 #   # output text format, please refer at the end if this config to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
@@ -413,6 +413,31 @@ multiplexer:
 #   # flush every X seconds
 #   flush-interval: 10
 
+# # Send captured traffic to Scalyr/dataset.com
+# # Uses the api/addEvents endpoint, see https://app.eu.scalyr.com/help/api#addEvents
+# scalyrclient:
+#   # output format: text|json|flat-json
+#   mode: text
+#   # output text format, please refer at the end if this config to see all available directives
+#   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
+#   # Any "session" information for the Scalyr backend. By default, "serverHost" is set to the hostname of the machine
+#   sessioninfo: {}
+#   # Any arbitrary attributes for the logs that are sent
+#   attrs: {}
+#   # Hostname where the endpoint resides
+#   server-url: app.scalyr.com
+#   # API Token with Write permissions, required!
+#   apikey: ""
+#   # When using json and text mode, the parser Scalyr should use, required
+#   parser: ""
+#   # How often to flush logs, in seconds
+#   flush-interval: 30
+#   # Proxy URL
+#   proxy-url: ""
+#   # insecure skip verify
+#   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
 
 ################################################
 # list of transforms to apply on collectors or loggers
