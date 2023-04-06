@@ -10,7 +10,8 @@ func IsValidMode(mode string) bool {
 	switch mode {
 	case
 		MODE_TEXT,
-		MODE_JSON:
+		MODE_JSON,
+		MODE_FLATJSON:
 		return true
 	}
 	return false
@@ -350,6 +351,20 @@ type Config struct {
 			Enable bool   `yaml:"enable"`
 			URL    string `yaml:"url"`
 		} `yaml:"elasticsearch"`
+		ScalyrClient struct {
+			Enable        bool                   `yaml:"enable"`
+			Mode          string                 `yaml:"mode"`
+			TextFormat    string                 `yaml:"text-format"`
+			SessionInfo   map[string]string      `yaml:"sessioninfo"`
+			Attrs         map[string]interface{} `yaml:"attrs"`
+			ServerURL     string                 `yaml:"server-url"`
+			ApiKey        string                 `yaml:"apikey"`
+			Parser        string                 `yaml:"parser"`
+			FlushInterval int                    `yaml:"flush-interval"`
+			ProxyURL      string                 `yaml:"proxy-url"`
+			TlsInsecure   bool                   `yaml:"tls-insecure"`
+			TlsMinVersion string                 `yaml:"tls-min-version"`
+		} `yaml:"scalyrclient"`
 	} `yaml:"loggers"`
 
 	OutgoingTransformers ConfigTransformers `yaml:"outgoing-transformers"`
