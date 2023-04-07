@@ -101,6 +101,7 @@ Default directives:
 global:
   text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"
   text-format-delimiter: " "
+  text-format-boundary: "\""
 ```
 
 If you require a format like CSV, the delimiter can be configured with the `text-format-delimiter` option.

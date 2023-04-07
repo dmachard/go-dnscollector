@@ -18,10 +18,10 @@ func TestStdoutPrint(t *testing.T) {
 
 	// print dns message to stdout buffer
 	dm := dnsutils.GetFakeDnsMessage()
-	g.stdout.Print(dm.String(g.textFormat, c.Global.TextFormatDelimiter))
+	g.stdout.Print(dm.String(g.textFormat, c.Global.TextFormatDelimiter, c.Global.TextFormatBoundary))
 
 	// check buffer
-	if stdout.String() != dm.String(g.textFormat, c.Global.TextFormatDelimiter)+"\n" {
+	if stdout.String() != dm.String(g.textFormat, c.Global.TextFormatDelimiter, c.Global.TextFormatBoundary)+"\n" {
 		t.Errorf("invalid stdout output: %s", stdout.String())
 	}
 }

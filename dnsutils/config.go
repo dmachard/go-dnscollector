@@ -138,6 +138,7 @@ type Config struct {
 	Global struct {
 		TextFormat          string `yaml:"text-format"`
 		TextFormatDelimiter string `yaml:"text-format-delimiter"`
+		TextFormatBoundary  string `yaml:"text-format-boundary"`
 		Trace               struct {
 			Verbose      bool   `yaml:"verbose"`
 			LogMalformed bool   `yaml:"log-malformed"`
@@ -380,6 +381,7 @@ func (c *Config) SetDefault() {
 	// global config
 	c.Global.TextFormat = "timestamp identity operation rcode queryip queryport family protocol length qname qtype latency"
 	c.Global.TextFormatDelimiter = " "
+	c.Global.TextFormatBoundary = "\""
 
 	c.Global.Trace.Verbose = false
 	c.Global.Trace.LogMalformed = false

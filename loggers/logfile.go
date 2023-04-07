@@ -483,7 +483,9 @@ LOOP:
 
 			// with basic text mode
 			case dnsutils.MODE_TEXT:
-				l.WriteToPlain(dm.Bytes(l.textFormat, l.config.Global.TextFormatDelimiter))
+				l.WriteToPlain(dm.Bytes(l.textFormat,
+					l.config.Global.TextFormatDelimiter,
+					l.config.Global.TextFormatBoundary))
 
 				var delimiter bytes.Buffer
 				delimiter.WriteString("\n")

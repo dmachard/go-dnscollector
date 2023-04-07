@@ -30,7 +30,7 @@ func TestLogFileWrite_TextMode(t *testing.T) {
 
 	// write fake dns message
 	dm := dnsutils.GetFakeDnsMessage()
-	g.WriteToPlain(dm.Bytes(g.textFormat, config.Global.TextFormatDelimiter))
+	g.WriteToPlain(dm.Bytes(g.textFormat, config.Global.TextFormatDelimiter, config.Global.TextFormatBoundary))
 
 	g.FlushWriters()
 
@@ -40,7 +40,7 @@ func TestLogFileWrite_TextMode(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if string(data[:count]) != dm.String(g.textFormat, config.Global.TextFormatDelimiter) {
+	if string(data[:count]) != dm.String(g.textFormat, config.Global.TextFormatDelimiter, config.Global.TextFormatBoundary) {
 		t.Errorf("invalid logfile output - %s", data[:count])
 	}
 }

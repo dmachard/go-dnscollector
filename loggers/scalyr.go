@@ -176,8 +176,9 @@ LOOP:
 			}
 			switch c.mode {
 			case dnsutils.MODE_TEXT:
-				delimiter := ""
-				attrs["message"] = string(dm.Bytes(c.textFormat, delimiter))
+				attrs["message"] = string(dm.Bytes(c.textFormat,
+					c.config.Global.TextFormatDelimiter,
+					c.config.Global.TextFormatBoundary))
 			case dnsutils.MODE_JSON:
 				attrs["message"] = dm
 			case dnsutils.MODE_FLATJSON:

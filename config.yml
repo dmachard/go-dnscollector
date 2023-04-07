@@ -57,6 +57,8 @@ global:
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
   # default text field delimiter
   text-format-delimiter: " "
+  # default text field boundary
+  text-format-boundary: "\""
 
 # create your dns collector, please refer bellow to see the list 
 # of supported collectors, loggers and transformers

@@ -141,7 +141,9 @@ LOOP:
 							}
 
 							if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_TEXT {
-								w.Write(dm.Bytes(o.textFormat, o.config.Global.TextFormatDelimiter))
+								w.Write(dm.Bytes(o.textFormat,
+									o.config.Global.TextFormatDelimiter,
+									o.config.Global.TextFormatBoundary))
 								w.WriteString(o.config.Loggers.TcpClient.PayloadDelimiter)
 							}
 
