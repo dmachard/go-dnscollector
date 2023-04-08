@@ -107,6 +107,15 @@ global:
 If you require a format like CSV, the delimiter can be configured with the `text-format-delimiter` option.
 The default separator is [space].
 
+Output example:
+
+```
+2023-04-08T18:27:29.268465Z unbound CLIENT_QUERY NOERROR 127.0.0.1 39028 IPv4 UDP 50b google.fr A 0.000000
+2023-04-08T18:27:29.268575Z unbound FORWARDER_QUERY NOERROR 0.0.0.0 20817 IPv4 UDP 38b google.fr A 0.000000
+2023-04-08T18:27:29.278929Z unbound FORWARDER_RESPONSE NOERROR 0.0.0.0 20817 IPv4 UDP 54b google.fr A 0.000000
+2023-04-08T18:27:29.279039Z unbound CLIENT_RESPONSE NOERROR 127.0.0.1 39028 IPv4 UDP 54b google.fr A 0.000000
+```
+
 ## Multiplexer
 
 The dns collector can be configured with multiple loggers and collectors at the same time.
