@@ -11,15 +11,17 @@ import (
 func TestStdoutPrint(t *testing.T) {
 	// init logger and redirect stdout output to bytes buffer
 	var stdout bytes.Buffer
-	g := NewStdOut(dnsutils.GetFakeConfig(), logger.New(false), "test")
+
+	c := dnsutils.GetFakeConfig()
+	g := NewStdOut(c, logger.New(false), "test")
 	g.SetBuffer(&stdout)
 
 	// print dns message to stdout buffer
 	dm := dnsutils.GetFakeDnsMessage()
-	g.stdout.Print(dm.String(g.textFormat))
+	g.stdout.Print(dm.String(g.textFormat, c.Global.TextFormatDelimiter, c.Global.TextFormatBoundary))
 
 	// check buffer
-	if stdout.String() != dm.String(g.textFormat) {
+	if stdout.String() != dm.String(g.textFormat, c.Global.TextFormatDelimiter, c.Global.TextFormatBoundary)+"\n" {
 		t.Errorf("invalid stdout output: %s", stdout.String())
 	}
 }

@@ -96,11 +96,15 @@ func (o *StdOut) Run() {
 
 		switch o.config.Loggers.Stdout.Mode {
 		case dnsutils.MODE_TEXT:
-			o.stdout.Print(dm.String(o.textFormat))
+			o.stdout.Print(dm.String(o.textFormat,
+				o.config.Global.TextFormatDelimiter,
+				o.config.Global.TextFormatBoundary))
+
 		case dnsutils.MODE_JSON:
 			json.NewEncoder(buffer).Encode(dm)
 			fmt.Print(buffer.String())
 			buffer.Reset()
+
 		case dnsutils.MODE_FLATJSON:
 			flat, err := dm.Flatten()
 			if err != nil {

@@ -322,7 +322,7 @@ func (dm *DnsMessage) handlePublicSuffixDirectives(directives []string, s *bytes
 	}
 }
 
-func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
+func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundary string) []byte {
 	var s bytes.Buffer
 
 	for i, word := range format {
@@ -391,7 +391,15 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		case directive == "length":
 			s.WriteString(strconv.Itoa(dm.DNS.Length) + "b")
 		case directive == "qname":
-			s.WriteString(dm.DNS.Qname)
+			if strings.Contains(dm.DNS.Qname, fieldDelimiter) {
+				qname := dm.DNS.Qname
+				if strings.Contains(qname, fieldBoundary) {
+					qname = strings.ReplaceAll(qname, fieldBoundary, "\\"+fieldBoundary)
+				}
+				s.WriteString(fmt.Sprintf(fieldBoundary+"%s"+fieldBoundary, qname))
+			} else {
+				s.WriteString(dm.DNS.Qname)
+			}
 		case directive == "qtype":
 			s.WriteString(dm.DNS.Qtype)
 		case directive == "latency":
@@ -456,18 +464,15 @@ func (dm *DnsMessage) Bytes(format []string, delimiter string) []byte {
 		}
 
 		if i < len(format)-1 {
-			s.WriteString(" ")
+			s.WriteString(fieldDelimiter)
 		}
 	}
-
-	s.WriteString(delimiter)
 
 	return s.Bytes()
 }
 
-func (dm *DnsMessage) String(format []string) string {
-	delimiter := "\n"
-	return string(dm.Bytes(format, delimiter))
+func (dm *DnsMessage) String(format []string, fieldDelimiter string, fieldBoundary string) string {
+	return string(dm.Bytes(format, fieldDelimiter, fieldBoundary))
 }
 
 func (dm *DnsMessage) ToDnstap() ([]byte, error) {
