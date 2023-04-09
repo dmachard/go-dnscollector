@@ -92,7 +92,7 @@ func (o *DnstapSender) Disconnect() {
 	}
 }
 
-func (o *DnstapSender) Connect() {
+func (o *DnstapSender) ConnectToRemote() {
 	// prepare the address
 	var address string
 	var transport string
@@ -107,7 +107,7 @@ func (o *DnstapSender) Connect() {
 		transport = dnsutils.SOCKET_TCP
 	}
 
-	connTimeout := time.Duration(time.Duration(o.config.Loggers.Dnstap.ConnectTimeout) * time.Second)
+	connTimeout := time.Duration(o.config.Loggers.Dnstap.ConnectTimeout) * time.Second
 
 	// make the connection
 	for {
@@ -184,7 +184,7 @@ func (o *DnstapSender) FlushBuffer(buf *[]dnsutils.DnsMessage) {
 		if err := o.fs.SendFrame(frame); err != nil {
 			o.LogError("send frame error %s", err)
 			o.fsReady = false
-			go o.Connect()
+			go o.ConnectToRemote()
 			break
 		}
 	}
@@ -214,7 +214,7 @@ func (o *DnstapSender) Run() {
 	flushTimer := time.NewTimer(flushInterval)
 
 	// init remote conn
-	go o.Connect()
+	go o.ConnectToRemote()
 
 LOOP:
 	for {
@@ -229,7 +229,7 @@ LOOP:
 			bufferDm = append(bufferDm, dm)
 
 			// buffer is full ?
-			if len(bufferDm) >= 5 {
+			if len(bufferDm) >= o.config.Loggers.Dnstap.BufferSize {
 				o.FlushBuffer(&bufferDm)
 			}
 		case <-flushTimer.C:

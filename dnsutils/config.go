@@ -273,6 +273,7 @@ type Config struct {
 			TlsMinVersion     string `yaml:"tls-min-version"`
 			ServerId          string `yaml:"server-id"`
 			OverwriteIdentity bool   `yaml:"overwrite-identity"`
+			BufferSize        int    `yaml:"buffer-size"`
 		} `yaml:"dnstap"`
 		TcpClient struct {
 			Enable           bool   `yaml:"enable"`
@@ -468,6 +469,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Dnstap.TlsMinVersion = TLS_v12
 	c.Loggers.Dnstap.ServerId = ""
 	c.Loggers.Dnstap.OverwriteIdentity = false
+	c.Loggers.Dnstap.BufferSize = 100
 
 	c.Loggers.LogFile.Enable = false
 	c.Loggers.LogFile.FilePath = ""
