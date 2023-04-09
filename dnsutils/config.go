@@ -265,7 +265,9 @@ type Config struct {
 			RemoteAddress     string `yaml:"remote-address"`
 			RemotePort        int    `yaml:"remote-port"`
 			SockPath          string `yaml:"sock-path"`
+			ConnectTimeout    int    `yaml:"connect-timeout"`
 			RetryInterval     int    `yaml:"retry-interval"`
+			FlushInterval     int    `yaml:"flush-interval"`
 			TlsSupport        bool   `yaml:"tls-support"`
 			TlsInsecure       bool   `yaml:"tls-insecure"`
 			TlsMinVersion     string `yaml:"tls-min-version"`
@@ -457,7 +459,9 @@ func (c *Config) SetDefault() {
 	c.Loggers.Dnstap.Enable = false
 	c.Loggers.Dnstap.RemoteAddress = LOCALHOST_IP
 	c.Loggers.Dnstap.RemotePort = 6000
-	c.Loggers.Dnstap.RetryInterval = 5
+	c.Loggers.Dnstap.ConnectTimeout = 5
+	c.Loggers.Dnstap.RetryInterval = 10
+	c.Loggers.Dnstap.FlushInterval = 30
 	c.Loggers.Dnstap.SockPath = ""
 	c.Loggers.Dnstap.TlsSupport = false
 	c.Loggers.Dnstap.TlsInsecure = false

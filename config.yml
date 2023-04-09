@@ -76,10 +76,18 @@ multiplexer:
     - name: console
       stdout:
         mode: text
+    - name: tofile
+      logfile:
+        file-path:  /tmp/test.log
+    - name: todnstap
+      dnstap:
+        remote-address: 192.168.1.210
+        remote-port: 6000
+        retry-interval: 10
 
   routes:
     - from: [ tap ]
-      to: [ console ]
+      to: [ console, todnstap , tofile]
 
 ################################################
 # list of supported collectors
