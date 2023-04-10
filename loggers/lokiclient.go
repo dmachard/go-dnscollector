@@ -21,8 +21,13 @@ import (
 	"github.com/klauspost/compress/snappy"
 
 	/*
-		workaround to install latest version of loki with tags
-		go get github.com/grafana/loki@f61a4d2612d8fa3a385c90c363301ec05bab34d8 github.com/deepmap/oapi-codegen@v1.9.1
+		install loki with tags
+		go get github.com/grafana/loki@90888a0cc737b60f29b8bed880a380731ae1e492
+		https://github.com/grafana/loki/releases/tag/v2.8.0
+
+		go get github.com/deepmap/oapi-codegen@v1.12.4
+		go get github.com/prometheus/prometheus@v0.42.0
+		go mod tidy
 	*/
 	"github.com/grafana/loki/pkg/logproto"
 )
