@@ -91,11 +91,11 @@ jobs:
 
     - name: download dnstap generator
       run: |
-        wget -nv https://github.com/dmachard/go-dnstap-generator/releases/download/v$DNSTAP_GEN/go-dnstap-generator_$DNSTAP_GEN_linux_amd64.tar.gz
-        tar xf go-dnstap-generator_$DNSTAP_GEN_linux_amd64.tar.gz
+        wget -nv https://github.com/dmachard/go-dnstap-generator/releases/download/v$GENTAP/go-dnstap-generator_$GENTAP_linux_amd64.tar.gz
+        tar xf go-dnstap-generator_$GENTAP_linux_amd64.tar.gz
         ./go-dnstap-generator -i 127.0.0.1 -p 6000 -n 1
       env:
-        DNSTAP_GEN: "0.4.0"
+        GENTAP: "0.4.0"
 
     - name: check prometheus format metrics
       run: |
