@@ -76,20 +76,9 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-    - name: tofile
-      logfile:
-        file-path:  /tmp/test.log
-    - name: todnstap
-      dnstap:
-        remote-address: 192.168.1.210
-        remote-port: 6000
-        retry-interval: 10
-        flush-interval: 5
-        buffer-size: 2
-
   routes:
     - from: [ tap ]
-      to: [ console, todnstap , tofile]
+      to: [ console ]
 
 ################################################
 # list of supported collectors
@@ -307,7 +296,7 @@ multiplexer:
 #   # overwrite original identity
 #   overwrite-identity: false
 #   # number of dns messages in buffer
-#  buffer-size: 500
+#   buffer-size: 500
 
 # # resend captured dns traffic to a tcp remote destination or to unix socket
 # tcpclient:

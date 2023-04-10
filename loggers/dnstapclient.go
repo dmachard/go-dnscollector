@@ -116,8 +116,6 @@ func (o *DnstapSender) ConnectToRemote() {
 
 	// make the connection
 	for {
-		//	o.Lock()
-
 		if o.transportConn != nil {
 			o.transportConn.Close()
 			o.transportConn = nil
@@ -146,7 +144,6 @@ func (o *DnstapSender) ConnectToRemote() {
 			o.LogError("%s", err)
 			o.LogInfo("retry to connect in %d seconds", o.config.Loggers.Dnstap.RetryInterval)
 			time.Sleep(time.Duration(o.config.Loggers.Dnstap.RetryInterval) * time.Second)
-			//	o.Unlock()
 			continue
 		}
 
@@ -281,121 +278,3 @@ LOOP:
 
 	o.done <- true
 }
-
-// func (o *DnstapSender) RunV0() {
-// 	o.LogInfo("running in background...")
-
-// 	// prepare transforms
-// 	listChannel := []chan dnsutils.DnsMessage{}
-// 	listChannel = append(listChannel, o.channel)
-// 	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel)
-
-// 	//dt := &dnstap.Dnstap{}
-// 	frame := &framestream.Frame{}
-
-// LOOP:
-// 	for {
-// 	LOOP_RECONNECT:
-// 		for {
-// 			select {
-// 			case <-o.exit:
-// 				break LOOP
-// 			default:
-// 				// prepare the address
-// 				var address string
-// 				var transport string
-// 				if len(o.config.Loggers.Dnstap.SockPath) > 0 {
-// 					address = o.config.Loggers.Dnstap.SockPath
-// 					transport = "unix"
-// 				} else {
-// 					address = o.config.Loggers.Dnstap.RemoteAddress + ":" + strconv.Itoa(o.config.Loggers.Dnstap.RemotePort)
-// 					transport = dnsutils.SOCKET_TCP
-// 				}
-
-// 				// make the connection
-// 				o.LogInfo("connecting to %s", address)
-// 				var conn net.Conn
-// 				var err error
-// 				if o.config.Loggers.Dnstap.TlsSupport {
-// 					tlsConfig := &tls.Config{
-// 						InsecureSkipVerify: false,
-// 						MinVersion:         tls.VersionTLS12,
-// 					}
-// 					tlsConfig.InsecureSkipVerify = o.config.Loggers.Dnstap.TlsInsecure
-// 					tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.Dnstap.TlsMinVersion]
-
-// 					conn, err = tls.Dial(transport, address, tlsConfig)
-// 				} else {
-// 					conn, err = net.Dial(transport, address)
-// 				}
-
-// 				// something is wrong during connection ?
-// 				if err != nil {
-// 					o.LogError("connect error: %s", err)
-// 				}
-
-// 				if conn != nil {
-// 					o.LogInfo("connected with remote")
-// 					o.transportConn = conn
-// 					// frame stream library
-// 					r := bufio.NewReader(conn)
-// 					w := bufio.NewWriter(conn)
-// 					fs := framestream.NewFstrm(r, w, conn, 5*time.Second, []byte("protobuf:dnstap.Dnstap"), true)
-
-// 					// init framestream protocol
-// 					if err := fs.InitSender(); err != nil {
-// 						o.LogError("sender protocol initialization error %s", err)
-// 						break
-// 					} else {
-// 						o.LogInfo("framestream initialized")
-// 					}
-
-// 					var data []byte
-// 					for {
-// 						select {
-// 						case dm := <-o.channel:
-// 							// update identity ?
-// 							if o.config.Loggers.Dnstap.OverwriteIdentity {
-// 								dm.DnsTap.Identity = o.config.Loggers.Dnstap.ServerId
-// 							}
-
-// 							// encode dns message to dnstap protobuf binary
-// 							data, err = dm.ToDnstap()
-// 							if err != nil {
-// 								o.LogError("failed to encode to DNStap protobuf: %s", err)
-// 								continue
-// 							}
-
-// 							// send the frame
-// 							frame.Write(data)
-// 							if err := fs.SendFrame(frame); err != nil {
-// 								o.LogError("send frame error %s", err)
-// 								break LOOP_RECONNECT
-// 							}
-// 						case <-o.exit:
-// 							o.LogInfo("closing framestream")
-// 							// reset and ignore errors
-// 							fs.ResetSender()
-// 							break LOOP
-// 						}
-// 					}
-
-// 				}
-// 				o.LogInfo("retry to connect in 5 seconds")
-// 				time.Sleep(time.Duration(o.config.Loggers.Dnstap.RetryInterval) * time.Second)
-// 			}
-// 		}
-// 	}
-
-// 	if o.conn != nil {
-// 		o.LogInfo("closing tcp connection")
-// 		o.conn.Close()
-// 	}
-
-// 	o.LogInfo("run terminated")
-
-// 	// cleanup transformers
-// 	subprocessors.Reset()
-
-// 	o.done <- true
-// }
