@@ -76,7 +76,6 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-
   routes:
     - from: [ tap ]
       to: [ console ]
@@ -282,8 +281,12 @@ multiplexer:
 #   remote-port: 6000
 #   # unix socket path
 #   sock-path: null
+#   # connect timeout
+#   connect-timeout: 5
 #   # interval in second between retry reconnect
-#   retry-interval: 5
+#   retry-interval: 10
+#   # interval in second before to flush the buffer
+#   flush-interval: 30
 #   # enable tls
 #   tls-support: false
 #   # insecure skip verify
@@ -292,6 +295,8 @@ multiplexer:
 #   server-id: "dnscollector"
 #   # overwrite original identity
 #   overwrite-identity: false
+#   # number of dns messages in buffer
+#   buffer-size: 500
 
 # # resend captured dns traffic to a tcp remote destination or to unix socket
 # tcpclient:

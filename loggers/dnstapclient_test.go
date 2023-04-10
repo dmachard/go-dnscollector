@@ -15,9 +15,13 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func TestDnstapTcpRun(t *testing.T) {
+func Test_DnstapClientTcpRun(t *testing.T) {
 	// init logger
-	g := NewDnstapSender(dnsutils.GetFakeConfig(), logger.New(false), "test")
+	cfg := dnsutils.GetFakeConfig()
+	cfg.Loggers.Dnstap.FlushInterval = 1
+	cfg.Loggers.Dnstap.BufferSize = 1
+
+	g := NewDnstapSender(cfg, logger.New(false), "test")
 
 	// fake dnstap receiver
 	fakeRcvr, err := net.Listen("tcp", ":6000")
@@ -59,13 +63,15 @@ func TestDnstapTcpRun(t *testing.T) {
 	}
 }
 
-func TestDnstapUnixRun(t *testing.T) {
+func Test_DnstapClientUnixRun(t *testing.T) {
 
 	sockAddr := "/tmp/test.sock"
 
 	// init logger
 	config := dnsutils.GetFakeConfig()
 	config.Loggers.Dnstap.SockPath = sockAddr
+	config.Loggers.Dnstap.FlushInterval = 1
+	config.Loggers.Dnstap.BufferSize = 1
 	g := NewDnstapSender(config, logger.New(false), "test")
 
 	// fake dnstap receiver
