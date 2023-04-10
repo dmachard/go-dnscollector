@@ -15,7 +15,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func TestDnstapTcpRun(t *testing.T) {
+func Test_DnstapClientTcpRun(t *testing.T) {
 	// init logger
 	cfg := dnsutils.GetFakeConfig()
 	cfg.Loggers.Dnstap.FlushInterval = 1
@@ -63,7 +63,7 @@ func TestDnstapTcpRun(t *testing.T) {
 	}
 }
 
-func TestDnstapUnixRun(t *testing.T) {
+func Test_DnstapClientUnixRun(t *testing.T) {
 
 	sockAddr := "/tmp/test.sock"
 
