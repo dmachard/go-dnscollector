@@ -132,8 +132,8 @@ github.com/deepmap/oapi-codegen v1.12.4/go.mod h1:3lgHGMu6myQ2vqbbTXH2H1o4eXFTGn
 github.com/dennwc/varint v1.0.0 h1:kGNFFSSw8ToIy3obO/kKr8U9GZYUAxQEVuix4zfDWzE=
 github.com/dennwc/varint v1.0.0/go.mod h1:hnItb35rvZvJrbTALZtY/iQfDs48JKRG1RPpgziApxA=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
-github.com/dmachard/go-dnstap-protobuf v0.4.0 h1:aOxar7VsRSAK5kgLMNYSi0Sds3hEHDrgj7njoKMRjho=
-github.com/dmachard/go-dnstap-protobuf v0.4.0/go.mod h1:jn8+r1sQOGZINXl9Rh1qMcbemh9ZRPWUdvMJnxUDF6k=
+github.com/dmachard/go-dnstap-protobuf v0.5.0 h1:JGd96UkFPmztsaOoHxf8cRD4X4bWoN/HKLaMFnjDhys=
+github.com/dmachard/go-dnstap-protobuf v0.5.0/go.mod h1:l4Qme7Kg8asuB8WwL+egMmXYtBSjN7tqxymWkeyTXqw=
 github.com/dmachard/go-framestream v0.2.0 h1:rHc9SCYaja9294/t2bRidYP/HiOZxg+IImt21DuqHPY=
 github.com/dmachard/go-framestream v0.2.0/go.mod h1:jwU39tBYLIhydEXJ91v4aL15mlQpIWoNmGccbfES8Cc=
 github.com/dmachard/go-logger v0.3.0 h1:Q7RnOLFCU9V5RSiuFs5cEwsEXTQ4HbvFDjF2H5GPNuQ=
