@@ -129,7 +129,7 @@ func (o *TcpClient) ConnectToRemote() {
 
 		// something is wrong during connection ?
 		if err != nil {
-			o.LogError("connect error: %s", err)
+			o.LogError("%s", err)
 			o.LogInfo("retry to connect in %d seconds", o.config.Loggers.TcpClient.RetryInterval)
 			time.Sleep(time.Duration(o.config.Loggers.TcpClient.RetryInterval) * time.Second)
 			continue
@@ -205,7 +205,6 @@ LOOP:
 
 		case <-o.transportReady:
 			o.LogInfo("transport connected with success")
-
 			o.transportWriter = bufio.NewWriter(o.transportConn)
 			o.writerReady = true
 
@@ -239,6 +238,9 @@ LOOP:
 
 	// cleanup transformers
 	subprocessors.Reset()
+
+	// closing remote connection if exist
+	o.Disconnect()
 
 	o.done <- true
 }

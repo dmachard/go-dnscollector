@@ -14,7 +14,7 @@ func Test_TcpClient_JsonRun(t *testing.T) {
 	// init logger
 	cfg := dnsutils.GetFakeConfig()
 	cfg.Loggers.TcpClient.FlushInterval = 1
-	cfg.Loggers.TcpClient.BufferSize = 1
+	cfg.Loggers.TcpClient.BufferSize = 0
 
 	g := NewTcpClient(cfg, logger.New(false), "test")
 
