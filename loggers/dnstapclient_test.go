@@ -19,7 +19,7 @@ func Test_DnstapClientTcpRun(t *testing.T) {
 	// init logger
 	cfg := dnsutils.GetFakeConfig()
 	cfg.Loggers.Dnstap.FlushInterval = 1
-	cfg.Loggers.Dnstap.BufferSize = 1
+	cfg.Loggers.Dnstap.BufferSize = 0
 
 	g := NewDnstapSender(cfg, logger.New(false), "test")
 
@@ -71,7 +71,7 @@ func Test_DnstapClientUnixRun(t *testing.T) {
 	config := dnsutils.GetFakeConfig()
 	config.Loggers.Dnstap.SockPath = sockAddr
 	config.Loggers.Dnstap.FlushInterval = 1
-	config.Loggers.Dnstap.BufferSize = 1
+	config.Loggers.Dnstap.BufferSize = 0
 	g := NewDnstapSender(config, logger.New(false), "test")
 
 	// fake dnstap receiver
