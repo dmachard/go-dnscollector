@@ -10,7 +10,7 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func TestTcpClientJsonRun(t *testing.T) {
+func Test_TcpClient_JsonRun(t *testing.T) {
 	// init logger
 	g := NewTcpClient(dnsutils.GetFakeConfig(), logger.New(false), "test")
 

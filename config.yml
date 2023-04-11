@@ -309,8 +309,12 @@ multiplexer:
 #   remote-port: 9999
 #   # unix socket path
 #   sock-path: null
+#   # connect timeout
+#   connect-timeout: 5
 #   # interval in second between retry reconnect
-#   retry-interval: 5
+#   retry-interval: 10
+#   # interval in second before to flush the buffer
+#   flush-interval: 30
 #   # enable tls
 #   tls-support: false
 #   # insecure skip verify
@@ -321,6 +325,8 @@ multiplexer:
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 #   # delimiter to use between payload sent
 #   delimiter: "\n"
+#   # number of dns messages in buffer
+#   buffer-size: 500
 
 # # redirect captured dns traffic to a remote syslog server or local one
 # syslog:

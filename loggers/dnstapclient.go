@@ -164,7 +164,6 @@ func (o *DnstapSender) FlushBuffer(buf *[]dnsutils.DnsMessage) {
 	frame := &framestream.Frame{}
 
 	if !o.fsReady {
-		//o.LogInfo("%d messages ignored!", len(*buf))
 		*buf = nil
 		return
 	}
