@@ -12,7 +12,11 @@ import (
 
 func Test_TcpClient_JsonRun(t *testing.T) {
 	// init logger
-	g := NewTcpClient(dnsutils.GetFakeConfig(), logger.New(false), "test")
+	cfg := dnsutils.GetFakeConfig()
+	cfg.Loggers.TcpClient.FlushInterval = 1
+	cfg.Loggers.TcpClient.BufferSize = 1
+
+	g := NewTcpClient(cfg, logger.New(false), "test")
 
 	// fake json receiver
 	fakeRcvr, err := net.Listen(dnsutils.SOCKET_TCP, ":9999")
