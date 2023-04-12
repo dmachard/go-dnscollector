@@ -19,7 +19,7 @@ require (
 	github.com/grafana/loki v1.6.2-0.20230403212622-90888a0cc737
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb-client-go v1.4.0
-	github.com/klauspost/compress v1.16.3
+	github.com/klauspost/compress v1.16.4
 	github.com/miekg/dns v1.1.53
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/nqd/flat v0.2.0
