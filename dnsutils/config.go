@@ -288,6 +288,9 @@ type Config struct {
 			Mode             string `yaml:"mode"`
 			TextFormat       string `yaml:"text-format"`
 			PayloadDelimiter string `yaml:"delimiter"`
+			BufferSize       int    `yaml:"buffer-size"`
+			FlushInterval    int    `yaml:"flush-interval"`
+			ConnectTimeout   int    `yaml:"connect-timeout"`
 		} `yaml:"tcpclient"`
 		Syslog struct {
 			Enable        bool   `yaml:"enable"`
@@ -513,7 +516,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.TcpClient.RemoteAddress = LOCALHOST_IP
 	c.Loggers.TcpClient.RemotePort = 9999
 	c.Loggers.TcpClient.SockPath = ""
-	c.Loggers.TcpClient.RetryInterval = 5
+	c.Loggers.TcpClient.RetryInterval = 10
 	c.Loggers.TcpClient.Transport = "tcp"
 	c.Loggers.TcpClient.TlsSupport = false
 	c.Loggers.TcpClient.TlsInsecure = false
@@ -521,6 +524,9 @@ func (c *Config) SetDefault() {
 	c.Loggers.TcpClient.Mode = MODE_JSON
 	c.Loggers.TcpClient.TextFormat = ""
 	c.Loggers.TcpClient.PayloadDelimiter = "\n"
+	c.Loggers.TcpClient.BufferSize = 100
+	c.Loggers.TcpClient.ConnectTimeout = 5
+	c.Loggers.TcpClient.FlushInterval = 30
 
 	c.Loggers.Syslog.Enable = false
 	c.Loggers.Syslog.Severity = "INFO"

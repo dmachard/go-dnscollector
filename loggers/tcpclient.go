@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -15,25 +16,31 @@ import (
 )
 
 type TcpClient struct {
-	done       chan bool
-	channel    chan dnsutils.DnsMessage
-	config     *dnsutils.Config
-	logger     *logger.Logger
-	exit       chan bool
-	conn       net.Conn
-	textFormat []string
-	name       string
+	done               chan bool
+	channel            chan dnsutils.DnsMessage
+	config             *dnsutils.Config
+	logger             *logger.Logger
+	exit               chan bool
+	textFormat         []string
+	name               string
+	transportWriter    *bufio.Writer
+	transportConn      net.Conn
+	transportReady     chan bool
+	transportReconnect chan bool
+	writerReady        bool
 }
 
 func NewTcpClient(config *dnsutils.Config, logger *logger.Logger, name string) *TcpClient {
 	logger.Info("[%s] logger to tcp client - enabled", name)
 	s := &TcpClient{
-		done:    make(chan bool),
-		exit:    make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, 512),
-		logger:  logger,
-		config:  config,
-		name:    name,
+		done:               make(chan bool),
+		exit:               make(chan bool),
+		channel:            make(chan dnsutils.DnsMessage, 512),
+		transportReady:     make(chan bool),
+		transportReconnect: make(chan bool),
+		logger:             logger,
+		config:             config,
+		name:               name,
 	}
 
 	s.ReadConfig()
@@ -80,6 +87,93 @@ func (o *TcpClient) Stop() {
 	close(o.done)
 }
 
+func (o *TcpClient) Disconnect() {
+	if o.transportConn != nil {
+		o.LogInfo("closing tcp connection")
+		o.transportConn.Close()
+	}
+}
+
+func (o *TcpClient) ConnectToRemote() {
+	// prepare the address
+	var address string
+	if len(o.config.Loggers.TcpClient.SockPath) > 0 {
+		address = o.config.Loggers.TcpClient.SockPath
+	} else {
+		address = o.config.Loggers.TcpClient.RemoteAddress + ":" + strconv.Itoa(o.config.Loggers.TcpClient.RemotePort)
+	}
+	connTimeout := time.Duration(o.config.Loggers.TcpClient.ConnectTimeout) * time.Second
+
+	for {
+		if o.transportConn != nil {
+			o.transportConn.Close()
+			o.transportConn = nil
+		}
+
+		// make the connection
+		o.LogInfo("connecting to %s", address)
+		var conn net.Conn
+		var err error
+		if o.config.Loggers.TcpClient.TlsSupport {
+			tlsConfig := &tls.Config{
+				MinVersion:         tls.VersionTLS12,
+				InsecureSkipVerify: false,
+			}
+			tlsConfig.InsecureSkipVerify = o.config.Loggers.TcpClient.TlsInsecure
+			tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.TcpClient.TlsMinVersion]
+
+			dialer := &net.Dialer{Timeout: connTimeout}
+			conn, err = tls.DialWithDialer(dialer, o.config.Loggers.TcpClient.Transport, address, tlsConfig)
+		} else {
+			conn, err = net.DialTimeout(o.config.Loggers.TcpClient.Transport, address, connTimeout)
+		}
+
+		// something is wrong during connection ?
+		if err != nil {
+			o.LogError("%s", err)
+			o.LogInfo("retry to connect in %d seconds", o.config.Loggers.TcpClient.RetryInterval)
+			time.Sleep(time.Duration(o.config.Loggers.TcpClient.RetryInterval) * time.Second)
+			continue
+		}
+
+		o.transportConn = conn
+
+		// block until framestream is ready
+		o.transportReady <- true
+
+		// block until an error occured, need to reconnect
+		o.transportReconnect <- true
+	}
+}
+
+func (o *TcpClient) FlushBuffer(buf *[]dnsutils.DnsMessage) {
+	for _, dm := range *buf {
+		if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_TEXT {
+			o.transportWriter.Write(dm.Bytes(o.textFormat,
+				o.config.Global.TextFormatDelimiter,
+				o.config.Global.TextFormatBoundary))
+			o.transportWriter.WriteString(o.config.Loggers.TcpClient.PayloadDelimiter)
+		}
+
+		if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_JSON {
+			json.NewEncoder(o.transportWriter).Encode(dm)
+			o.transportWriter.WriteString(o.config.Loggers.TcpClient.PayloadDelimiter)
+		}
+
+		// flush the transport buffer
+		err := o.transportWriter.Flush()
+		if err != nil {
+			o.LogError("send frame error", err.Error())
+			o.writerReady = false
+			<-o.transportReconnect
+			break
+		}
+	}
+
+	// reset buffer
+	*buf = nil
+}
+
 func (o *TcpClient) Run() {
 	o.LogInfo("running in background...")
 
@@ -88,98 +182,72 @@ func (o *TcpClient) Run() {
 	listChannel = append(listChannel, o.channel)
 	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel)
 
+	// init buffer
+	bufferDm := []dnsutils.DnsMessage{}
+
+	// init flust timer for buffer
+	flushInterval := time.Duration(o.config.Loggers.TcpClient.FlushInterval) * time.Second
+	flushTimer := time.NewTimer(flushInterval)
+
+	// init remote conn
+	go o.ConnectToRemote()
+
 LOOP:
 	for {
-	LOOP_RECONNECT:
-		for {
-			select {
-			case <-o.exit:
-				break LOOP
-			default:
-				// prepare the address
-				var address string
-				if len(o.config.Loggers.TcpClient.SockPath) > 0 {
-					address = o.config.Loggers.TcpClient.SockPath
-				} else {
-					address = o.config.Loggers.TcpClient.RemoteAddress + ":" + strconv.Itoa(o.config.Loggers.TcpClient.RemotePort)
-				}
+		select {
+		case <-o.exit:
+			o.logger.Info("closing loop...")
+			break LOOP
 
-				// make the connection
-				o.LogInfo("connecting to %s", address)
-				var conn net.Conn
-				var err error
-				if o.config.Loggers.TcpClient.TlsSupport {
-					tlsConfig := &tls.Config{
-						MinVersion:         tls.VersionTLS12,
-						InsecureSkipVerify: false,
-					}
-					tlsConfig.InsecureSkipVerify = o.config.Loggers.TcpClient.TlsInsecure
-					tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.TcpClient.TlsMinVersion]
+		case <-o.transportReady:
+			o.LogInfo("transport connected with success")
+			o.transportWriter = bufio.NewWriter(o.transportConn)
+			o.writerReady = true
 
-					conn, err = tls.Dial(o.config.Loggers.TcpClient.Transport, address, tlsConfig)
-				} else {
-					conn, err = net.Dial(o.config.Loggers.TcpClient.Transport, address)
-				}
-
-				// something is wrong during connection ?
-				if err != nil {
-					o.LogError("connect error: %s", err)
-				}
-
-				// loop
-				if conn != nil {
-					o.LogInfo("connected")
-					o.conn = conn
-					w := bufio.NewWriter(conn)
-					for {
-						select {
-						case dm := <-o.channel:
-
-							// apply tranforms
-							if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
-								continue
-							}
-
-							if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_TEXT {
-								w.Write(dm.Bytes(o.textFormat,
-									o.config.Global.TextFormatDelimiter,
-									o.config.Global.TextFormatBoundary))
-								w.WriteString(o.config.Loggers.TcpClient.PayloadDelimiter)
-							}
-
-							if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_JSON {
-								json.NewEncoder(w).Encode(dm)
-								w.WriteString(o.config.Loggers.TcpClient.PayloadDelimiter)
-							}
-
-							// flusth the buffer
-							err = w.Flush()
-							if err != nil {
-								o.LogError("connection error:", err.Error())
-								break LOOP_RECONNECT
-							}
-						case <-o.exit:
-							o.logger.Info("closing loop...")
-							break LOOP
-						}
-					}
-
-				}
-				o.LogInfo("retry to connect in %d seconds", o.config.Loggers.TcpClient.RetryInterval)
-				time.Sleep(time.Duration(o.config.Loggers.TcpClient.RetryInterval) * time.Second)
+		case dm := <-o.channel:
+			// drop dns message if the connection is not ready to avoid memory leak or
+			// to block the channel
+			if !o.writerReady {
+				continue
 			}
-		}
-	}
 
-	if o.conn != nil {
-		o.LogInfo("closing tcp connection")
-		o.conn.Close()
+			// apply tranforms
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+			// append dns message to buffer
+			bufferDm = append(bufferDm, dm)
+
+			// buffer is full ?
+			if len(bufferDm) >= o.config.Loggers.TcpClient.BufferSize {
+				o.FlushBuffer(&bufferDm)
+			}
+
+		// flush the buffer
+		case <-flushTimer.C:
+			if !o.writerReady {
+				fmt.Println("buffer cleared!")
+				bufferDm = nil
+				continue
+			}
+
+			if len(bufferDm) > 0 {
+				o.FlushBuffer(&bufferDm)
+			}
+
+			// restart timer
+			flushTimer.Reset(flushInterval)
+
+		}
 	}
 
 	o.LogInfo("run terminated")
 
 	// cleanup transformers
 	subprocessors.Reset()
+
+	// closing remote connection if exist
+	o.Disconnect()
 
 	o.done <- true
 }
