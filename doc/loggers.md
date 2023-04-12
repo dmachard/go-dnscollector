@@ -290,7 +290,7 @@ Options:
 - `facility`: (string) Set the syslog logging facility
 - `transport`: (string) Transport to use to a remote log daemon or local one. local|tcp|udp|unix
 - `remote-address`: (string) Remote address host:port
-- `mode`: (string) text or json
+- `mode`: (string) text, json or flat-json
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 - `tls-support`: (boolean) enable tls
 - `tls-insecure`: (boolean) insecure skip verify

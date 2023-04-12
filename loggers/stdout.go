@@ -3,7 +3,6 @@ package loggers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -102,7 +101,7 @@ func (o *StdOut) Run() {
 
 		case dnsutils.MODE_JSON:
 			json.NewEncoder(buffer).Encode(dm)
-			fmt.Print(buffer.String())
+			o.stdout.Print(buffer.String())
 			buffer.Reset()
 
 		case dnsutils.MODE_FLATJSON:
@@ -111,7 +110,7 @@ func (o *StdOut) Run() {
 				o.LogError("flattening DNS message failed: %e", err)
 			}
 			json.NewEncoder(buffer).Encode(flat)
-			fmt.Print(buffer.String())
+			o.stdout.Print(buffer.String())
 			buffer.Reset()
 		}
 	}
