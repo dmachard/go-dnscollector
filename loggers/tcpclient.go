@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -146,11 +147,6 @@ func (o *TcpClient) ConnectToRemote() {
 }
 
 func (o *TcpClient) FlushBuffer(buf *[]dnsutils.DnsMessage) {
-	if !o.writerReady {
-		*buf = nil
-		return
-	}
-
 	for _, dm := range *buf {
 		if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_TEXT {
 			o.transportWriter.Write(dm.Bytes(o.textFormat,
@@ -209,6 +205,12 @@ LOOP:
 			o.writerReady = true
 
 		case dm := <-o.channel:
+			// drop dns message if the connection is not ready to avoid memory leak or
+			// to block the channel
+			if !o.writerReady {
+				continue
+			}
+
 			// apply tranforms
 			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 				continue
@@ -221,9 +223,14 @@ LOOP:
 				o.FlushBuffer(&bufferDm)
 			}
 
-			// flush the buffer
+		// flush the buffer
 		case <-flushTimer.C:
-			// force to flush the buffer
+			if !o.writerReady {
+				fmt.Println("buffer cleared!")
+				bufferDm = nil
+				continue
+			}
+
 			if len(bufferDm) > 0 {
 				o.FlushBuffer(&bufferDm)
 			}

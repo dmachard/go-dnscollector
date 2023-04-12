@@ -163,11 +163,6 @@ func (o *DnstapSender) FlushBuffer(buf *[]dnsutils.DnsMessage) {
 	var err error
 	frame := &framestream.Frame{}
 
-	if !o.fsReady {
-		*buf = nil
-		return
-	}
-
 	for _, dm := range *buf {
 		// update identity ?
 		if o.config.Loggers.Dnstap.OverwriteIdentity {
@@ -238,6 +233,12 @@ LOOP:
 
 		// incoming dns message to process
 		case dm := <-o.channel:
+			// drop dns message if the connection is not ready to avoid memory leak or
+			// to block the channel
+			if !o.fsReady {
+				continue
+			}
+
 			// apply tranforms
 			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 				continue

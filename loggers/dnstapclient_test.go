@@ -46,6 +46,17 @@ func Test_DnstapClientTcpRun(t *testing.T) {
 		t.Errorf("error to init framestream receiver: %s", err)
 	}
 
+	// wait framestream to be ready
+	retry := 1
+	for !g.fsReady {
+		if retry == 3 {
+			t.Errorf("framestream not ready")
+			break
+		}
+		time.Sleep(1 * time.Second)
+		retry++
+	}
+
 	// send fake dns message to logger
 	dm := dnsutils.GetFakeDnsMessage()
 	g.channel <- dm
@@ -98,6 +109,17 @@ func Test_DnstapClientUnixRun(t *testing.T) {
 	fs_svr := framestream.NewFstrm(bufio.NewReader(conn), bufio.NewWriter(conn), conn, 5*time.Second, []byte("protobuf:dnstap.Dnstap"), true)
 	if err := fs_svr.InitReceiver(); err != nil {
 		t.Errorf("error to init framestream receiver: %s", err)
+	}
+
+	// wait framestream to be ready
+	retry := 1
+	for !g.fsReady {
+		if retry == 3 {
+			t.Errorf("framestream not ready")
+			break
+		}
+		time.Sleep(1 * time.Second)
+		retry++
 	}
 
 	// send fake dns message to logger

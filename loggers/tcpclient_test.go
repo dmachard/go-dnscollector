@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net"
 	"testing"
+	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
@@ -34,6 +35,17 @@ func Test_TcpClient_JsonRun(t *testing.T) {
 		return
 	}
 	defer conn.Close()
+
+	// wait connection on logger
+	retry := 1
+	for !g.writerReady {
+		if retry == 3 {
+			t.Errorf("connection failed")
+			break
+		}
+		time.Sleep(1 * time.Second)
+		retry++
+	}
 
 	// send fake dns message to logger
 	dm := dnsutils.GetFakeDnsMessage()
