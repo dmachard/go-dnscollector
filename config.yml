@@ -7,7 +7,7 @@ global:
   # If turned on, log some applications messages
   trace:
     # debug informations
-    verbose: false
+    verbose: true
     # log malformed packet
     # log-malformed: false
     # # filename is the file to write logs to.
@@ -319,7 +319,7 @@ multiplexer:
 #   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
-#   # output format: text|json
+#   # output format: text|json|flat-json
 #   mode: json
 #   # output text format, please refer at the end if this config to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"

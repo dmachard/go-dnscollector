@@ -48,7 +48,7 @@ Execute testunits before to commit
 
 ```
 go test -timeout 10s ./collectors/ -cover -v
-go test -timeout 10s ./loggers/ -cover -v
+go test -timeout 30s ./loggers/ -cover -v
 go test -timeout 10s ./transformers/ -cover -v
 go test -timeout 10s ./dnsutils/ -cover -v
 ```
