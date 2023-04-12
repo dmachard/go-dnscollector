@@ -379,7 +379,7 @@ Loki client to remote server
 Options:
 - `server-url`: (string) Loki server url
 - `job-name`: (string) Job name
-- `mode`: (string) text or json
+- `mode`: (string) text, json or flat json
 - `flush-interval`: (integer) flush batch every X seconds
 - `batch-size`: (integer) batch size for log entries in bytes
 - `retry-interval`: (integer) interval in second between before to retry to send batch
@@ -402,7 +402,7 @@ lokiclient:
   flush-interval: 5
   batch-size: 1048576
   retry-interval: 10
-  text-format: "localtime identity qr queryip family protocol qname qtype rcode"
+  text-format: ""
   proxy-url: ""
   tls-insecure: false
   tls-min-version: 1.2

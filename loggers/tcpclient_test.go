@@ -73,8 +73,8 @@ func Test_TcpClientRun(t *testing.T) {
 			}
 
 			pattern := regexp.MustCompile(tc.pattern)
-			if !pattern.MatchString(string(line)) {
-				t.Errorf("syslog error want %s, got: %s", tc.pattern, string(line))
+			if !pattern.MatchString(line) {
+				t.Errorf("syslog error want %s, got: %s", tc.pattern, line)
 			}
 		})
 	}

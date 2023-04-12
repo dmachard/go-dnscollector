@@ -211,6 +211,14 @@ LOOP:
 				json.NewEncoder(buffer).Encode(dm)
 				entry.Line = buffer.String()
 				buffer.Reset()
+			case dnsutils.MODE_FLATJSON:
+				flat, err := dm.Flatten()
+				if err != nil {
+					o.LogError("flattening DNS message failed: %e", err)
+				}
+				json.NewEncoder(buffer).Encode(flat)
+				entry.Line = buffer.String()
+				buffer.Reset()
 			}
 			o.streams[dm.DnsTap.Identity].sizeentries += len(entry.Line)
 
@@ -306,7 +314,10 @@ func (o *LokiClient) SendEntries(buf []byte) {
 			post.Header.Set("X-Scope-OrgID", o.config.Loggers.LokiClient.TenantId)
 		}
 
-		post.SetBasicAuth(o.config.Loggers.LokiClient.BasicAuthLogin, o.config.Loggers.LokiClient.BasicAuthPwd)
+		post.SetBasicAuth(
+			o.config.Loggers.LokiClient.BasicAuthLogin,
+			o.config.Loggers.LokiClient.BasicAuthPwd,
+		)
 
 		// send post and read response
 		resp, err := o.httpclient.Do(post)

@@ -390,7 +390,7 @@ multiplexer:
 #   server-url: "http://lokiwriter.home.lab/loki/api/v1/push"
 #   # Job name
 #   job-name: "dnscollector"
-#   # output format: text|json
+#   # output format: text|json|flat-json
 #   mode: text
 #   # flush batch every X seconds
 #   flush-interval: 5
