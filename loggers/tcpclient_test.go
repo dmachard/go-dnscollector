@@ -11,7 +11,7 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func Test_TcpClient_JsonRun(t *testing.T) {
+func Test_TcpClientJson(t *testing.T) {
 	// init logger
 	cfg := dnsutils.GetFakeConfig()
 	cfg.Loggers.TcpClient.FlushInterval = 1
