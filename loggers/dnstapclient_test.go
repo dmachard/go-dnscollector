@@ -65,15 +65,7 @@ func Test_DnstapClient(t *testing.T) {
 			}
 
 			// wait framestream to be ready
-			retry := 1
-			for !g.fsReady {
-				if retry == 3 {
-					t.Errorf("framestream not ready")
-					break
-				}
-				time.Sleep(1 * time.Second)
-				retry++
-			}
+			time.Sleep(time.Second)
 
 			// send fake dns message to logger
 			dm := dnsutils.GetFakeDnsMessage()

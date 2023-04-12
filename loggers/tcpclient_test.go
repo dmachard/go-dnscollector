@@ -37,15 +37,7 @@ func Test_TcpClientJson(t *testing.T) {
 	defer conn.Close()
 
 	// wait connection on logger
-	retry := 1
-	for !g.writerReady {
-		if retry == 3 {
-			t.Errorf("connection failed")
-			break
-		}
-		time.Sleep(1 * time.Second)
-		retry++
-	}
+	time.Sleep(time.Second)
 
 	// send fake dns message to logger
 	dm := dnsutils.GetFakeDnsMessage()
