@@ -67,8 +67,7 @@ func Test_LokiClientRun(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			response := "HTTP/1.1 200 OK\r\n\r\n"
-			conn.Write([]byte(response))
+			conn.Write([]byte(dnsutils.HTTP_OK))
 
 			// read payload from request body
 			protobuf, err := io.ReadAll(request.Body)
