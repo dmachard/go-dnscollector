@@ -83,7 +83,7 @@ func Test_LokiClientRun(t *testing.T) {
 
 			pattern := regexp.MustCompile(tc.pattern)
 			if !pattern.MatchString(string(protobuf_dec)) {
-				t.Errorf("syslog error want %s, got: %s", tc.pattern, string(protobuf_dec))
+				t.Errorf("loki test error want %s, got: %s", tc.pattern, string(protobuf_dec))
 			}
 		})
 	}

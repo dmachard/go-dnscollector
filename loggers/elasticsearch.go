@@ -12,18 +12,6 @@ import (
 	"net/http"
 )
 
-type ElasticSearchData struct {
-	Identity  string `json:"identity"`
-	QueryIP   string `json:"query_ip"`
-	QName     string `json:"q_name"`
-	Operation string `json:"operation"`
-	Family    string `json:"family"`
-	Protocol  string `json:"protocol"`
-	QType     string `json:"q_type"`
-	RCode     string `json:"r_code"`
-	TimeStamp int64  `json:"timestamp"`
-}
-
 type ElasticSearchClient struct {
 	done    chan bool
 	channel chan dnsutils.DnsMessage
@@ -92,29 +80,26 @@ func (o *ElasticSearchClient) Run() {
 			continue
 		}
 
-		data := ElasticSearchData{
-			Identity:  dm.DnsTap.Identity,
-			QueryIP:   dm.NetworkInfo.QueryIp,
-			QName:     dm.DNS.Qname,
-			Operation: dm.DnsTap.Operation,
-			Family:    dm.NetworkInfo.Family,
-			Protocol:  dm.NetworkInfo.Protocol,
-			QType:     dm.DNS.Qtype,
-			RCode:     dm.DNS.Rcode,
-			TimeStamp: int64(dm.DnsTap.TimeSec),
+		buffer := new(bytes.Buffer)
+		flat, err := dm.Flatten()
+		if err != nil {
+			o.LogError("flattening DNS message failed: %e", err)
 		}
+		json.NewEncoder(buffer).Encode(flat)
 
-		b := new(bytes.Buffer)
-		json.NewEncoder(b).Encode(data)
-		req, _ := http.NewRequest("POST", o.url, b)
+		req, _ := http.NewRequest("POST", o.url, buffer)
 		req.Header.Set("Content-Type", "application/json")
 		client := &http.Client{
 			Timeout: 5 * time.Second,
 		}
-		_, err := client.Do(req)
+		_, err = client.Do(req)
 		if err != nil {
 			o.LogError(err.Error())
 		}
+
+		//
+		buffer.Reset()
+
 	}
 
 	o.LogInfo("run terminated")
