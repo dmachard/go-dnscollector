@@ -1,10 +1,13 @@
 package loggers
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"os"
+	"regexp"
 	"testing"
+	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
@@ -12,40 +15,71 @@ import (
 	"github.com/google/gopacket/layers"
 )
 
-func TestLogFileWrite_TextMode(t *testing.T) {
-	// create a temp file
-	f, err := os.CreateTemp("", "temp_logfile")
-	if err != nil {
-		log.Fatal(err)
+func Test_LogFileText(t *testing.T) {
+	testcases := []struct {
+		mode    string
+		pattern string
+	}{
+		{
+			mode:    dnsutils.MODE_TEXT,
+			pattern: "0b dns.collector A",
+		},
+		{
+			mode:    dnsutils.MODE_JSON,
+			pattern: "\"qname\":\"dns.collector\"",
+		},
+		{
+			mode:    dnsutils.MODE_FLATJSON,
+			pattern: "\"dns.qname\":\"dns.collector\"",
+		},
 	}
-	defer os.Remove(f.Name()) // clean up
 
-	// config
-	config := dnsutils.GetFakeConfig()
-	config.Loggers.LogFile.FilePath = f.Name()
-	config.Loggers.LogFile.Mode = dnsutils.MODE_TEXT
+	for i, tc := range testcases {
+		t.Run(tc.mode, func(t *testing.T) {
 
-	// init generator in testing mode
-	g := NewLogFile(config, logger.New(false), "test")
+			// create a temp file
+			f, err := os.CreateTemp("", fmt.Sprintf("temp_logfile%d", i))
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer os.Remove(f.Name()) // clean up
 
-	// write fake dns message
-	dm := dnsutils.GetFakeDnsMessage()
-	g.WriteToPlain(dm.Bytes(g.textFormat, config.Global.TextFormatDelimiter, config.Global.TextFormatBoundary))
+			// config
+			config := dnsutils.GetFakeConfig()
+			config.Loggers.LogFile.FilePath = f.Name()
+			config.Loggers.LogFile.Mode = tc.mode
+			config.Loggers.LogFile.FlushInterval = 0
 
-	g.FlushWriters()
+			// init generator in testing mode
+			g := NewLogFile(config, logger.New(false), "test")
 
-	// read temp file and check content
-	data := make([]byte, 100)
-	count, err := f.Read(data)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if string(data[:count]) != dm.String(g.textFormat, config.Global.TextFormatDelimiter, config.Global.TextFormatBoundary) {
-		t.Errorf("invalid logfile output - %s", data[:count])
+			// start the logger
+			go g.Run()
+
+			// send fake dns message to logger
+			dm := dnsutils.GetFakeDnsMessage()
+			dm.DnsTap.Identity = "test_id"
+			g.channel <- dm
+
+			time.Sleep(time.Second)
+			g.Stop()
+
+			// read temp file and check content
+			data := make([]byte, 1024)
+			count, err := f.Read(data)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			pattern := regexp.MustCompile(tc.pattern)
+			if !pattern.MatchString(string(data[:count])) {
+				t.Errorf("loki test error want %s, got: %s", tc.pattern, string(data[:count]))
+			}
+		})
 	}
 }
 
-func TestLogFileWrite_PcapMode(t *testing.T) {
+func Test_LogFileWrite_PcapMode(t *testing.T) {
 	// create a temp file
 	f, err := os.CreateTemp("", "temp_pcapfile")
 	if err != nil {

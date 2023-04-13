@@ -205,6 +205,15 @@ func (o *Syslog) Run() {
 			json.NewEncoder(buffer).Encode(dm)
 			o.syslogConn.Write(buffer.Bytes())
 			buffer.Reset()
+
+		case dnsutils.MODE_FLATJSON:
+			flat, err := dm.Flatten()
+			if err != nil {
+				o.LogError("flattening DNS message failed: %e", err)
+			}
+			json.NewEncoder(buffer).Encode(flat)
+			o.syslogConn.Write(buffer.Bytes())
+			buffer.Reset()
 		}
 	}
 

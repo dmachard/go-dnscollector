@@ -9,7 +9,7 @@ import (
 	"github.com/vmihailenco/msgpack"
 )
 
-func TestFluentClientdRun(t *testing.T) {
+func Test_FluentdClient(t *testing.T) {
 	// init logger
 	g := NewFluentdClient(dnsutils.GetFakeConfig(), logger.New(false), "test")
 

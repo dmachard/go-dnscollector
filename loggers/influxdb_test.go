@@ -1,14 +1,17 @@
 package loggers
 
 import (
+	"bufio"
+	"io"
 	"net"
+	"net/http"
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
 
-func TestInfluxDBRun(t *testing.T) {
+func Test_InfluxDB(t *testing.T) {
 	// init logger
 	g := NewInfluxDBClient(dnsutils.GetFakeConfig(), logger.New(false), "test")
 
@@ -34,9 +37,20 @@ func TestInfluxDBRun(t *testing.T) {
 	defer conn.Close()
 
 	// read data on fake server side
-	buf := make([]byte, 4096)
-	_, err = conn.Read(buf)
+
+	// read and parse http request on server side
+	request, err := http.ReadRequest(bufio.NewReader(conn))
 	if err != nil {
+		t.Fatal(err)
+	}
+	conn.Write([]byte(dnsutils.HTTP_OK))
+
+	payload, err := io.ReadAll(request.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(payload) == 0 {
 		t.Errorf("error to read data: %s", err)
 	}
 }

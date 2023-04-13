@@ -160,6 +160,15 @@ func (o *TcpClient) FlushBuffer(buf *[]dnsutils.DnsMessage) {
 			o.transportWriter.WriteString(o.config.Loggers.TcpClient.PayloadDelimiter)
 		}
 
+		if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_FLATJSON {
+			flat, err := dm.Flatten()
+			if err != nil {
+				o.LogError("flattening DNS message failed: %e", err)
+			}
+			json.NewEncoder(o.transportWriter).Encode(flat)
+			o.transportWriter.WriteString(o.config.Loggers.TcpClient.PayloadDelimiter)
+		}
+
 		// flush the transport buffer
 		err := o.transportWriter.Flush()
 		if err != nil {

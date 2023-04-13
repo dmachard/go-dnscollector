@@ -585,7 +585,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Statsd.TlsMinVersion = TLS_v12
 
 	c.Loggers.ElasticSearchClient.Enable = false
-	c.Loggers.ElasticSearchClient.URL = ""
+	c.Loggers.ElasticSearchClient.URL = "http://127.0.0.1:9200/indexname/_doc"
 
 	// Transformers for loggers
 	c.OutgoingTransformers.SetDefault()

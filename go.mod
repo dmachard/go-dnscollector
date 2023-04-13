@@ -13,6 +13,7 @@ require (
 	github.com/farsightsec/golang-framestream v0.3.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gogo/protobuf v1.3.2
+	github.com/golang/snappy v0.0.4
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.3.0
 	github.com/grafana/dskit v0.0.0-20230201083518-528d8a7d52f2
@@ -51,7 +52,6 @@ require (
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gogo/status v1.1.1 // indirect
-	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/grafana/loki/pkg/push v0.0.0-20230127102416-571f88bc5765 // indirect

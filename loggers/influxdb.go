@@ -102,11 +102,16 @@ func (o *InfluxDBClient) Run() {
 		opts.SetTLSConfig(tlsConfig)
 	}
 	// init the client
-	influxClient := influxdb2.NewClientWithOptions(o.config.Loggers.InfluxDB.ServerURL,
-		o.config.Loggers.InfluxDB.AuthToken, opts)
+	influxClient := influxdb2.NewClientWithOptions(
+		o.config.Loggers.InfluxDB.ServerURL,
+		o.config.Loggers.InfluxDB.AuthToken,
+		opts,
+	)
 
-	writeAPI := influxClient.WriteAPI(o.config.Loggers.InfluxDB.Organization,
-		o.config.Loggers.InfluxDB.Bucket)
+	writeAPI := influxClient.WriteAPI(
+		o.config.Loggers.InfluxDB.Organization,
+		o.config.Loggers.InfluxDB.Bucket,
+	)
 
 	o.influxdbConn = influxClient
 	o.writeAPI = writeAPI

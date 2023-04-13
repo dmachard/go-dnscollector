@@ -265,7 +265,7 @@ multiplexer:
 #   compress-interval: 5
 #   # run external script after each file compress step 
 #   compress-postcommand: null
-#   # output format: text|json|pcap|dnstap
+#   # output format: text|json|pcap|dnstap|flat-json
 #   mode: text
 #   # output text format, please refer at the end if this config to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
@@ -319,7 +319,7 @@ multiplexer:
 #   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
-#   # output format: text|json
+#   # output format: text|json|flat-json
 #   mode: json
 #   # output text format, please refer at the end if this config to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
@@ -341,7 +341,7 @@ multiplexer:
 #   remote-address: ""
 #   # output text format, please refer at the end if this config to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
-#   # output format: text|json
+#   # output format: text|json|flat-json
 #   mode: text
 #   # enable tls
 #   tls-support: false
@@ -349,6 +349,11 @@ multiplexer:
 #   tls-insecure: false
 #   # set syslog formatter between `unix` (default), `rfc3164` or `rfc5424`
 #   format: ""
+
+# # elasticsearch backend, basic support
+# elasticsearch:
+#   # remote server url
+#   url: "http://127.0.0.1:9200/indexname/_doc"
 
 # # resend captured dns traffic to a remote fluentd server or to unix socket
 # fluentd:
@@ -390,7 +395,7 @@ multiplexer:
 #   server-url: "http://lokiwriter.home.lab/loki/api/v1/push"
 #   # Job name
 #   job-name: "dnscollector"
-#   # output format: text|json
+#   # output format: text|json|flat-json
 #   mode: text
 #   # flush batch every X seconds
 #   flush-interval: 5
