@@ -48,6 +48,7 @@ func Test_LogFileText(t *testing.T) {
 			config := dnsutils.GetFakeConfig()
 			config.Loggers.LogFile.FilePath = f.Name()
 			config.Loggers.LogFile.Mode = tc.mode
+			config.Loggers.LogFile.FlushInterval = 0
 
 			// init generator in testing mode
 			g := NewLogFile(config, logger.New(false), "test")
@@ -61,7 +62,7 @@ func Test_LogFileText(t *testing.T) {
 			g.channel <- dm
 
 			time.Sleep(time.Second)
-			g.FlushWriters()
+			g.Stop()
 
 			// read temp file and check content
 			data := make([]byte, 1024)
