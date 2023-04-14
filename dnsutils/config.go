@@ -306,16 +306,19 @@ type Config struct {
 			Format        string `yaml:"format"`
 		} `yaml:"syslog"`
 		Fluentd struct {
-			Enable        bool   `yaml:"enable"`
-			RemoteAddress string `yaml:"remote-address"`
-			RemotePort    int    `yaml:"remote-port"`
-			SockPath      string `yaml:"sock-path"`
-			RetryInterval int    `yaml:"retry-interval"`
-			Transport     string `yaml:"transport"`
-			TlsSupport    bool   `yaml:"tls-support"`
-			TlsInsecure   bool   `yaml:"tls-insecure"`
-			TlsMinVersion string `yaml:"tls-min-version"`
-			Tag           string `yaml:"tag"`
+			Enable         bool   `yaml:"enable"`
+			RemoteAddress  string `yaml:"remote-address"`
+			RemotePort     int    `yaml:"remote-port"`
+			SockPath       string `yaml:"sock-path"`
+			ConnectTimeout int    `yaml:"connect-timeout"`
+			RetryInterval  int    `yaml:"retry-interval"`
+			FlushInterval  int    `yaml:"flush-interval"`
+			Transport      string `yaml:"transport"`
+			TlsSupport     bool   `yaml:"tls-support"`
+			TlsInsecure    bool   `yaml:"tls-insecure"`
+			TlsMinVersion  string `yaml:"tls-min-version"`
+			Tag            string `yaml:"tag"`
+			BufferSize     int    `yaml:"buffer-size"`
 		} `yaml:"fluentd"`
 		InfluxDB struct {
 			Enable        bool   `yaml:"enable"`
@@ -543,12 +546,15 @@ func (c *Config) SetDefault() {
 	c.Loggers.Fluentd.RemoteAddress = LOCALHOST_IP
 	c.Loggers.Fluentd.RemotePort = 24224
 	c.Loggers.Fluentd.SockPath = ""
-	c.Loggers.Fluentd.RetryInterval = 5
+	c.Loggers.Fluentd.RetryInterval = 10
+	c.Loggers.Fluentd.ConnectTimeout = 5
+	c.Loggers.Fluentd.FlushInterval = 30
 	c.Loggers.Fluentd.Transport = "tcp"
 	c.Loggers.Fluentd.TlsSupport = false
 	c.Loggers.Fluentd.TlsInsecure = false
 	c.Loggers.Fluentd.TlsMinVersion = TLS_v12
 	c.Loggers.Fluentd.Tag = "dns.collector"
+	c.Loggers.Fluentd.BufferSize = 100
 
 	c.Loggers.InfluxDB.Enable = false
 	c.Loggers.InfluxDB.ServerURL = "http://localhost:8086"

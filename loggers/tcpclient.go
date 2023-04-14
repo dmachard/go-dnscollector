@@ -164,6 +164,7 @@ func (o *TcpClient) FlushBuffer(buf *[]dnsutils.DnsMessage) {
 			flat, err := dm.Flatten()
 			if err != nil {
 				o.LogError("flattening DNS message failed: %e", err)
+				continue
 			}
 			json.NewEncoder(o.transportWriter).Encode(flat)
 			o.transportWriter.WriteString(o.config.Loggers.TcpClient.PayloadDelimiter)
@@ -224,6 +225,7 @@ LOOP:
 			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 				continue
 			}
+
 			// append dns message to buffer
 			bufferDm = append(bufferDm, dm)
 
