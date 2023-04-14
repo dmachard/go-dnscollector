@@ -93,6 +93,8 @@ func (o *StdOut) Run() {
 			continue
 		}
 
+		// fmt.Printf("Size of %T: %d bytes\n", dm, unsafe.Sizeof(dm))
+
 		switch o.config.Loggers.Stdout.Mode {
 		case dnsutils.MODE_TEXT:
 			o.stdout.Print(dm.String(o.textFormat,

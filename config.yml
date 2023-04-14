@@ -326,7 +326,7 @@ multiplexer:
 #   # delimiter to use between payload sent
 #   delimiter: "\n"
 #   # number of dns messages in buffer
-#   buffer-size: 500
+#   buffer-size: 100
 
 # # redirect captured dns traffic to a remote syslog server or local one
 # syslog:
@@ -365,14 +365,20 @@ multiplexer:
 #   remote-port: 24224
 #   # unix socket path
 #   sock-path: null
+#   # connect timeout
+#   connect-timeout: 5
 #   # interval in second between retry reconnect
-#   retry-interval: 5
+#   retry-interval: 10
+#   # interval in second before to flush the buffer
+#   flush-interval: 30
 #   # tag name
 #   tag: "dns.collector"
 #   # enable tls
 #   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
+#   # number of dns messages in buffer
+#   buffer-size: 100
 
 # # resend captured dns traffic to a InfluxDB database
 # influxdb:

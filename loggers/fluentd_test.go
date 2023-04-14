@@ -3,6 +3,7 @@ package loggers
 import (
 	"net"
 	"testing"
+	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
@@ -10,44 +11,61 @@ import (
 )
 
 func Test_FluentdClient(t *testing.T) {
-	// init logger
-	g := NewFluentdClient(dnsutils.GetFakeConfig(), logger.New(false), "test")
-
-	// fake msgpack receiver
-	fakeRcvr, err := net.Listen(dnsutils.SOCKET_TCP, ":24224")
-	if err != nil {
-		t.Fatal(err)
+	testcases := []struct {
+		transport string
+		address   string
+	}{
+		{
+			transport: dnsutils.SOCKET_TCP,
+			address:   ":24224",
+		},
 	}
-	defer fakeRcvr.Close()
+	for _, tc := range testcases {
+		t.Run(tc.transport, func(t *testing.T) {
+			// init logger
+			cfg := dnsutils.GetFakeConfig()
+			cfg.Loggers.Fluentd.FlushInterval = 1
+			cfg.Loggers.Fluentd.BufferSize = 0
+			g := NewFluentdClient(cfg, logger.New(false), "test")
 
-	// start the logger
-	go g.Run()
+			// fake msgpack receiver
+			fakeRcvr, err := net.Listen(tc.transport, ":24224")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer fakeRcvr.Close()
 
-	// accept conn from logger
-	conn, err := fakeRcvr.Accept()
-	if err != nil {
-		return
-	}
-	defer conn.Close()
+			// start the logger
+			go g.Run()
 
-	// send fake dns message to logger
-	dm := dnsutils.GetFakeDnsMessage()
-	g.channel <- dm
+			// accept conn from logger
+			conn, err := fakeRcvr.Accept()
+			if err != nil {
+				return
+			}
+			defer conn.Close()
 
-	// read data on fake server side
-	buf := make([]byte, 4096)
-	_, err = conn.Read(buf)
-	if err != nil {
-		t.Errorf("error to read msgpack: %s", err)
-	}
+			// send fake dns message to logger
+			time.Sleep(time.Second)
+			dm := dnsutils.GetFakeDnsMessage()
+			g.channel <- dm
 
-	// unpack msgpack
-	var dmRcv dnsutils.DnsMessage
-	err = msgpack.Unmarshal(buf[24:], &dmRcv)
-	if err != nil {
-		t.Errorf("error to unpack msgpack: %s", err)
-	}
-	if dm.DNS.Qname != dmRcv.DNS.Qname {
-		t.Errorf("qname error want %s, got %s", dm.DNS.Qname, dmRcv.DNS.Qname)
+			// read data on fake server side
+			buf := make([]byte, 4096)
+			_, err = conn.Read(buf)
+			if err != nil {
+				t.Errorf("error to read msgpack: %s", err)
+			}
+
+			// unpack msgpack
+			var dmRcv dnsutils.DnsMessage
+			err = msgpack.Unmarshal(buf[24:], &dmRcv)
+			if err != nil {
+				t.Errorf("error to unpack msgpack: %s", err)
+			}
+			if dm.DNS.Qname != dmRcv.DNS.Qname {
+				t.Errorf("qname error want %s, got %s", dm.DNS.Qname, dmRcv.DNS.Qname)
+			}
+		})
 	}
 }
