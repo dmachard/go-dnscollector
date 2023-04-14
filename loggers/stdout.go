@@ -3,11 +3,9 @@ package loggers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"strings"
-	"unsafe"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/transformers"
@@ -95,7 +93,7 @@ func (o *StdOut) Run() {
 			continue
 		}
 
-		fmt.Printf("Size of %T: %d bytes\n", dm, unsafe.Sizeof(dm))
+		// fmt.Printf("Size of %T: %d bytes\n", dm, unsafe.Sizeof(dm))
 
 		switch o.config.Loggers.Stdout.Mode {
 		case dnsutils.MODE_TEXT:
