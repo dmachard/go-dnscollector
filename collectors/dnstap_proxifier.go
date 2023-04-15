@@ -22,6 +22,7 @@ type DnstapProxifier struct {
 	config   *dnsutils.Config
 	logger   *logger.Logger
 	name     string
+	stopping bool
 }
 
 func NewDnstapProxifier(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *DnstapProxifier {
@@ -108,7 +109,8 @@ func (c *DnstapProxifier) HandleConn(conn net.Conn) {
 	}
 
 	// process incoming frame and send it to recv channel
-	if err := fs.ProcessFrame(recvChan); err != nil {
+	err := fs.ProcessFrame(recvChan)
+	if err != nil && !c.stopping {
 		c.LogError("transport error: %s", err)
 	}
 
@@ -123,6 +125,7 @@ func (c *DnstapProxifier) Channel() chan dnsutils.DnsMessage {
 
 func (c *DnstapProxifier) Stop() {
 	c.LogInfo("stopping...")
+	c.stopping = true
 
 	// closing properly current connections if exists
 	for _, conn := range c.conns {

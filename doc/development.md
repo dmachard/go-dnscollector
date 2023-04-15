@@ -59,14 +59,22 @@ Execute a test for one specific testcase in a package
 go test -timeout 10s -cover -v ./loggers -run TestSyslogRunJsonMode
 ```
 
+## Golang version
+
+```
+go mod edit -go=1.20
+go mod tidy
+```
+
 ## Package dependencies
 
 Update package dependencies
 
 ```
 go get github.com/dmachard/go-logger@v0.3.0
-go get github.com/dmachard/go-powerdns-protobuf@v0.0.4
-go get github.com/dmachard/go-dnstap-protobuf@v0.4.0
+go get github.com/dmachard/go-powerdns-protobuf@v0.1.0
+go get github.com/dmachard/go-dnstap-protobuf@v0.5.0
+go get github.com/dmachard/go-framestream@v0.3.0
 go mod tidy
 ```
 
