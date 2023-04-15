@@ -134,8 +134,8 @@ github.com/dennwc/varint v1.0.0/go.mod h1:hnItb35rvZvJrbTALZtY/iQfDs48JKRG1RPpgz
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dmachard/go-dnstap-protobuf v0.5.0 h1:JGd96UkFPmztsaOoHxf8cRD4X4bWoN/HKLaMFnjDhys=
 github.com/dmachard/go-dnstap-protobuf v0.5.0/go.mod h1:l4Qme7Kg8asuB8WwL+egMmXYtBSjN7tqxymWkeyTXqw=
-github.com/dmachard/go-framestream v0.2.0 h1:rHc9SCYaja9294/t2bRidYP/HiOZxg+IImt21DuqHPY=
-github.com/dmachard/go-framestream v0.2.0/go.mod h1:jwU39tBYLIhydEXJ91v4aL15mlQpIWoNmGccbfES8Cc=
+github.com/dmachard/go-framestream v0.3.0 h1:rwiNAvpeGwrXZUKWM/AcmCb/prYjE8J5DOGk+Qbuwpo=
+github.com/dmachard/go-framestream v0.3.0/go.mod h1:f0LF2Npbe4plNgzVJX1rUfoIUjTWZIpLLyhuG04RTo4=
 github.com/dmachard/go-logger v0.3.0 h1:Q7RnOLFCU9V5RSiuFs5cEwsEXTQ4HbvFDjF2H5GPNuQ=
 github.com/dmachard/go-logger v0.3.0/go.mod h1:Gf6Au3CX5l3rZ+Tb3yX31u6h4lwVeZQSBklUI3h8gCA=
 github.com/dmachard/go-powerdns-protobuf v0.1.0 h1:tNBaeJR1VyzygejekB0UlUX6pJvKetW5rg+WBzIWSmg=

@@ -44,6 +44,7 @@ type Dnstap struct {
 	logger   *logger.Logger
 	name     string
 	connMode string
+	stopping bool
 }
 
 func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *Dnstap {
@@ -123,7 +124,8 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	}
 
 	// process incoming frame and send it to dnstap consumer channel
-	if err := fs.ProcessFrame(dnstapProcessor.GetChannel()); err != nil {
+	err := fs.ProcessFrame(dnstapProcessor.GetChannel())
+	if err != nil && !c.stopping {
 		c.LogError("transport error: %s", err)
 	}
 
@@ -139,6 +141,7 @@ func (c *Dnstap) Channel() chan dnsutils.DnsMessage {
 
 func (c *Dnstap) Stop() {
 	c.LogInfo("stopping...")
+	c.stopping = true
 
 	// closing properly current connections if exists
 	for _, conn := range c.conns {
