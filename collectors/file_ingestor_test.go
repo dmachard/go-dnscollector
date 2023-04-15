@@ -8,7 +8,7 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func TestFileIngestor_Pcap(t *testing.T) {
+func Test_FileIngestor_Pcap(t *testing.T) {
 	g := loggers.NewFakeLogger()
 	config := dnsutils.GetFakeConfig()
 

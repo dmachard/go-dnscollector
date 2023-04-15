@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func TestDnstapProcessor(t *testing.T) {
+func Test_DnstapProcessor(t *testing.T) {
 	logger := logger.New(true)
 	var o bytes.Buffer
 	logger.SetOutput(&o)
@@ -46,7 +46,7 @@ func TestDnstapProcessor(t *testing.T) {
 	}
 }
 
-func TestDnstapProcessor_MalformedDnsHeader(t *testing.T) {
+func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
 	logger := logger.New(true)
 	var o bytes.Buffer
 	logger.SetOutput(&o)
@@ -81,7 +81,7 @@ func TestDnstapProcessor_MalformedDnsHeader(t *testing.T) {
 	}
 }
 
-func TestDnstapProcessor_MalformedDnsQuestion(t *testing.T) {
+func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 	logger := logger.New(true)
 	var o bytes.Buffer
 	logger.SetOutput(&o)
@@ -115,7 +115,7 @@ func TestDnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 	}
 }
 
-func TestDnstapProcessor_MalformedDnsAnswer(t *testing.T) {
+func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 	logger := logger.New(true)
 	var o bytes.Buffer
 	logger.SetOutput(&o)
