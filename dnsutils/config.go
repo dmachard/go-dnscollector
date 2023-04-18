@@ -391,6 +391,7 @@ type Config struct {
 			BufferSize       int    `yaml:"buffer-size"`
 			FlushInterval    int    `yaml:"flush-interval"`
 			ConnectTimeout   int    `yaml:"connect-timeout"`
+			RedisChannel     string `yaml:"redis-channel"`
 		} `yaml:"redispub"`
 	} `yaml:"loggers"`
 
@@ -609,6 +610,23 @@ func (c *Config) SetDefault() {
 
 	c.Loggers.ElasticSearchClient.Enable = false
 	c.Loggers.ElasticSearchClient.URL = "http://127.0.0.1:9200/indexname/_doc"
+
+	c.Loggers.RedisPub.Enable = false
+	c.Loggers.RedisPub.RemoteAddress = LOCALHOST_IP
+	c.Loggers.RedisPub.RemotePort = 6379
+	c.Loggers.RedisPub.SockPath = ""
+	c.Loggers.RedisPub.RetryInterval = 10
+	c.Loggers.RedisPub.Transport = "tcp"
+	c.Loggers.RedisPub.TlsSupport = false
+	c.Loggers.RedisPub.TlsInsecure = false
+	c.Loggers.RedisPub.TlsMinVersion = TLS_v12
+	c.Loggers.RedisPub.Mode = MODE_JSON
+	c.Loggers.RedisPub.TextFormat = ""
+	c.Loggers.RedisPub.PayloadDelimiter = "\n"
+	c.Loggers.RedisPub.BufferSize = 100
+	c.Loggers.RedisPub.ConnectTimeout = 5
+	c.Loggers.RedisPub.FlushInterval = 30
+	c.Loggers.RedisPub.RedisChannel = "dns_collector"
 
 	// Transformers for loggers
 	c.OutgoingTransformers.SetDefault()

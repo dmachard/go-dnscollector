@@ -2,6 +2,7 @@ package loggers
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -31,7 +32,7 @@ type RedisPub struct {
 }
 
 func NewRedisPub(config *dnsutils.Config, logger *logger.Logger, name string) *RedisPub {
-	logger.Info("[%s] logger to tcp client - enabled", name)
+	logger.Info("[%s] logger to redispub - enabled", name)
 	s := &RedisPub{
 		done:               make(chan bool),
 		exit:               make(chan bool),
@@ -53,8 +54,9 @@ func (c *RedisPub) GetName() string { return c.name }
 func (c *RedisPub) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *RedisPub) ReadConfig() {
-	if !dnsutils.IsValidTLS(o.config.Loggers.RedisPub.TlsMinVersion) {
-		o.logger.Fatal("logger tcp - invalid tls min version")
+
+	if o.config.Loggers.RedisPub.TlsSupport && !dnsutils.IsValidTLS(o.config.Loggers.RedisPub.TlsMinVersion) {
+		o.logger.Fatal("logger to redispub - invalid tls min version")
 	}
 
 	if len(o.config.Loggers.RedisPub.TextFormat) > 0 {
@@ -65,11 +67,11 @@ func (o *RedisPub) ReadConfig() {
 }
 
 func (o *RedisPub) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger to tcp client - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger to redispub - "+msg, v...)
 }
 
 func (o *RedisPub) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger to tcp client - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger to redispub - "+msg, v...)
 }
 
 func (o *RedisPub) Channel() chan dnsutils.DnsMessage {
@@ -89,7 +91,7 @@ func (o *RedisPub) Stop() {
 
 func (o *RedisPub) Disconnect() {
 	if o.transportConn != nil {
-		o.LogInfo("closing tcp connection")
+		o.LogInfo("closing redispub connection")
 		o.transportConn.Close()
 	}
 }
@@ -148,15 +150,24 @@ func (o *RedisPub) ConnectToRemote() {
 
 func (o *RedisPub) FlushBuffer(buf *[]dnsutils.DnsMessage) {
 	for _, dm := range *buf {
+
+		cmd := "PUBLISH " + strconv.Quote(o.config.Loggers.RedisPub.RedisChannel) + " "
+		o.transportWriter.WriteString(cmd)
+
 		if o.config.Loggers.RedisPub.Mode == dnsutils.MODE_TEXT {
-			o.transportWriter.Write(dm.Bytes(o.textFormat,
-				o.config.Global.TextFormatDelimiter,
-				o.config.Global.TextFormatBoundary))
+			o.transportWriter.WriteString(strconv.Quote(dm.String(o.textFormat, o.config.Global.TextFormatDelimiter, o.config.Global.TextFormatBoundary)))
 			o.transportWriter.WriteString(o.config.Loggers.RedisPub.PayloadDelimiter)
 		}
 
+		// Create escaping buffer
+		buf := new(bytes.Buffer)
+		// Create a new encoder that writes to the buffer
+		encoder := json.NewEncoder(buf)
+
 		if o.config.Loggers.RedisPub.Mode == dnsutils.MODE_JSON {
-			json.NewEncoder(o.transportWriter).Encode(dm)
+			encoder.Encode(dm)
+			escapedData := strconv.Quote(buf.String())
+			o.transportWriter.WriteString(escapedData)
 			o.transportWriter.WriteString(o.config.Loggers.RedisPub.PayloadDelimiter)
 		}
 
@@ -166,7 +177,9 @@ func (o *RedisPub) FlushBuffer(buf *[]dnsutils.DnsMessage) {
 				o.LogError("flattening DNS message failed: %e", err)
 				continue
 			}
-			json.NewEncoder(o.transportWriter).Encode(flat)
+			encoder.Encode(flat)
+			escapedData := strconv.Quote(buf.String())
+			o.transportWriter.WriteString(escapedData)
 			o.transportWriter.WriteString(o.config.Loggers.RedisPub.PayloadDelimiter)
 		}
 
