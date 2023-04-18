@@ -375,6 +375,23 @@ type Config struct {
 			TlsInsecure   bool                   `yaml:"tls-insecure"`
 			TlsMinVersion string                 `yaml:"tls-min-version"`
 		} `yaml:"scalyrclient"`
+		RedisPub struct {
+			Enable           bool   `yaml:"enable"`
+			RemoteAddress    string `yaml:"remote-address"`
+			RemotePort       int    `yaml:"remote-port"`
+			SockPath         string `yaml:"sock-path"`
+			RetryInterval    int    `yaml:"retry-interval"`
+			Transport        string `yaml:"transport"`
+			TlsSupport       bool   `yaml:"tls-support"`
+			TlsInsecure      bool   `yaml:"tls-insecure"`
+			TlsMinVersion    string `yaml:"tls-min-version"`
+			Mode             string `yaml:"mode"`
+			TextFormat       string `yaml:"text-format"`
+			PayloadDelimiter string `yaml:"delimiter"`
+			BufferSize       int    `yaml:"buffer-size"`
+			FlushInterval    int    `yaml:"flush-interval"`
+			ConnectTimeout   int    `yaml:"connect-timeout"`
+		} `yaml:"redispub"`
 	} `yaml:"loggers"`
 
 	OutgoingTransformers ConfigTransformers `yaml:"outgoing-transformers"`
