@@ -328,7 +328,11 @@ func (c *AfpacketSniffer) Run() {
 			//flags, from
 			bufN, oobn, _, _, err := syscall.Recvmsg(c.fd, buf, oob, 0)
 			if err != nil {
-				panic(err)
+				if err == syscall.EINTR {
+					continue
+				} else {
+					panic(err)
+				}
 			}
 			if bufN == 0 {
 				panic("buf empty")
