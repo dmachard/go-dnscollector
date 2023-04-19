@@ -96,6 +96,7 @@ Default directives:
 - `df`: flag when ip defragmented occured
 - `tr`: flag when tcp reassembled occured
 - `edns-csubnet`: display client subnet info
+- `response_payload`: base64-encoded raw DNS response payload
 
 ```yaml
 global:
