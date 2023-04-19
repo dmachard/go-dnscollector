@@ -79,10 +79,10 @@ func Test_RedisPubRun(t *testing.T) {
 				t.Errorf("syslog error want %s, got: %s", tc.pattern, line)
 			}
 
-			// pattern2 := regexp.MustCompile("PUBLISH \"testons\"")
-			// if !pattern2.MatchString(line) {
-			// t.Errorf("syslog error want %s, got: %s", pattern2, line)
-			// }
+			pattern2 := regexp.MustCompile("PUBLISH \"testons\"")
+			if !pattern2.MatchString(line) {
+				t.Errorf("syslog error want %s, got: %s", pattern2, line)
+			}
 		})
 	}
 }
