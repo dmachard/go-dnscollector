@@ -6,14 +6,15 @@ A typically configuration would have one or more collector to receive DNS traffi
 incoming traffics. You can take a look to the list of config [`examples`](https://github.com/dmachard/go-dns-collector#examples).
 
 
-- [Global](#global)
-  - [Trace](#trace)
-  - [Custom text format](#custom-text-format)
-  - [Server identity](#server-identity)
-- [Multiplexer](#multiplexer)
-  - [Collectors](#collectors)
-  - [Loggers](#loggers)
-  - [Routes](#routes)
+- [DNS-collector - Configuration Guide](#dns-collector---configuration-guide)
+  - [Global](#global)
+    - [Trace](#trace)
+    - [Server Identity](#server-identity)
+    - [Custom text format](#custom-text-format)
+  - [Multiplexer](#multiplexer)
+    - [Collectors](#collectors)
+    - [Loggers](#loggers)
+    - [Routes](#routes)
 
 
 ## Global
@@ -96,7 +97,6 @@ Default directives:
 - `df`: flag when ip defragmented occured
 - `tr`: flag when tcp reassembled occured
 - `edns-csubnet`: display client subnet info
-- `response_payload`: base64-encoded raw DNS response payload
 
 ```yaml
 global:

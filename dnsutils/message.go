@@ -2,7 +2,6 @@ package dnsutils
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -98,7 +97,7 @@ type DnsRRs struct {
 
 type Dns struct {
 	Type    string `json:"-" msgpack:"-"`
-	Payload []byte `json:"response_payload" msgpack:"-"`
+	Payload []byte `json:"-" msgpack:"-"`
 	Length  int    `json:"length" msgpack:"-"`
 	Id      int    `json:"-" msgpack:"-"`
 	Opcode  int    `json:"opcode" msgpack:"opcode"`
@@ -171,6 +170,11 @@ type DnsMessage struct {
 	PowerDns     *PowerDns     `json:"powerdns,omitempty" msgpack:"powerdns"`
 	Suspicious   *Suspicious   `json:"suspicious,omitempty" msgpack:"suspicious"`
 	PublicSuffix *PublicSuffix `json:"publicsuffix,omitempty" msgpack:"publicsuffix"`
+	Extracted    *Extracted    `json:"extracted,omitempty" msgpack:"extracted"`
+}
+
+type Extracted struct {
+	Base64Payload []byte `json:"response_payload" msgpack:"response_payload"`
 }
 
 func (dm *DnsMessage) Init() {
@@ -329,14 +333,6 @@ func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 	for i, word := range format {
 		directives := strings.SplitN(word, ":", 2)
 		switch directive := directives[0]; {
-		case directive == "response_payload":
-			if len(dm.DNS.Payload) > 0 {
-				dst := make([]byte, base64.StdEncoding.EncodedLen(len(dm.DNS.Payload)))
-				base64.StdEncoding.Encode(dst, dm.DNS.Payload)
-				s.Write(dst)
-			} else {
-				s.WriteString("-")
-			}
 		case directive == "ttl":
 			if len(dm.DNS.DnsRRs.Answers) > 0 {
 				s.WriteString(strconv.Itoa(dm.DNS.DnsRRs.Answers[0].Ttl))

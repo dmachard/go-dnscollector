@@ -88,6 +88,10 @@ type ConfigTransformers struct {
 		UnallowedChars     []string `yaml:"unallowed-chars,flow"`
 		ThresholdMaxLabels int      `yaml:"threshold-max-labels"`
 	} `yaml:"suspicious"`
+	Extract struct {
+		Enable     bool `yaml:"enable"`
+		AddPayload bool `yaml:"add-payload"`
+	} `yaml:"extract"`
 }
 
 func (c *ConfigTransformers) SetDefault() {
@@ -131,6 +135,9 @@ func (c *ConfigTransformers) SetDefault() {
 	c.GeoIP.DbCountryFile = ""
 	c.GeoIP.DbCityFile = ""
 	c.GeoIP.DbAsnFile = ""
+
+	c.Extract.Enable = false
+	c.Extract.AddPayload = false
 }
 
 /* main configuration */
