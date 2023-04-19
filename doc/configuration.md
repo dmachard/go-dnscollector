@@ -6,15 +6,14 @@ A typically configuration would have one or more collector to receive DNS traffi
 incoming traffics. You can take a look to the list of config [`examples`](https://github.com/dmachard/go-dns-collector#examples).
 
 
-- [DNS-collector - Configuration Guide](#dns-collector---configuration-guide)
-  - [Global](#global)
-    - [Trace](#trace)
-    - [Server Identity](#server-identity)
-    - [Custom text format](#custom-text-format)
-  - [Multiplexer](#multiplexer)
-    - [Collectors](#collectors)
-    - [Loggers](#loggers)
-    - [Routes](#routes)
+- [Global](#global)
+  - [Trace](#trace)
+  - [Custom text format](#custom-text-format)
+  - [Server identity](#server-identity)
+- [Multiplexer](#multiplexer)
+  - [Collectors](#collectors)
+  - [Loggers](#loggers)
+  - [Routes](#routes)
 
 
 ## Global
