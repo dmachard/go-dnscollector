@@ -5,20 +5,13 @@ To compile DNS-collector, we assume you have a working Go setup.
 First, make sure your golang version is `1.20` or higher
 
 
-## Build from source
+## Build and run from source
 
 Building from source. Use the latest golang available on your target system 
 
 ```
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
-```
-
-## Run from source
-
-Run from source 
-
-```
-go run .
+make build
+make run
 ```
 
 ## Run linters
@@ -30,16 +23,10 @@ sudo apt install build-essential
 go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 ```
 
-List linters enabled
-
-```
-$(go env GOPATH)/bin/golangci-lint linters
-```
-
 Execute linter before to commit
 
 ```
-$(go env GOPATH)/bin/golangci-lint run
+make lint
 ```
 
 ## Run test units
@@ -47,10 +34,7 @@ $(go env GOPATH)/bin/golangci-lint run
 Execute testunits before to commit
 
 ```
-go test -timeout 10s ./collectors/ -cover -v
-go test -timeout 30s ./loggers/ -cover -v
-go test -timeout 10s ./transformers/ -cover -v
-go test -timeout 10s ./dnsutils/ -cover -v
+make test
 ```
 
 Execute a test for one specific testcase in a package
@@ -59,23 +43,12 @@ Execute a test for one specific testcase in a package
 go test -timeout 10s -cover -v ./loggers -run TestSyslogRunJsonMode
 ```
 
-## Golang version
-
-```
-go mod edit -go=1.20
-go mod tidy
-```
-
-## Package dependencies
+## Update Golang version and package dependencies
 
 Update package dependencies
 
 ```
-go get github.com/dmachard/go-logger@v0.3.0
-go get github.com/dmachard/go-powerdns-protobuf@v0.1.0
-go get github.com/dmachard/go-dnstap-protobuf@v0.5.0
-go get github.com/dmachard/go-framestream@v0.3.0
-go mod tidy
+make dep
 ```
 
 ## Generate eBPF bytecode
