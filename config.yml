@@ -54,6 +54,7 @@ global:
   # - edns-csubnet: client subnet
   # - df: ip defragmentation flag
   # - tr: tcp reassembled flag
+  # - response_payload: base64-encoded raw DNS response payload
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
   # default text field delimiter
   text-format-delimiter: " "

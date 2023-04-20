@@ -170,6 +170,11 @@ type DnsMessage struct {
 	PowerDns     *PowerDns     `json:"powerdns,omitempty" msgpack:"powerdns"`
 	Suspicious   *Suspicious   `json:"suspicious,omitempty" msgpack:"suspicious"`
 	PublicSuffix *PublicSuffix `json:"publicsuffix,omitempty" msgpack:"publicsuffix"`
+	Extracted    *Extracted    `json:"extracted,omitempty" msgpack:"extracted"`
+}
+
+type Extracted struct {
+	Base64Payload []byte `json:"response_payload" msgpack:"response_payload"`
 }
 
 func (dm *DnsMessage) Init() {

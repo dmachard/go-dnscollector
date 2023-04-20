@@ -1,11 +1,14 @@
 # DNS-collector - Transformers Guide
 
-- [Normalize](#normalize)
-- [User privacy](#user-privacy)
-- [GeoIP Support](#geoip-support)
-- [Traffic filtering](#traffic-filtering)
-- [Suspicious](#suspicious)
-- [Latency Computing](#latency-computing)
+- [DNS-collector - Transformers Guide](#dns-collector---transformers-guide)
+  - [Transformers](#transformers)
+    - [Normalize](#normalize)
+    - [User Privacy](#user-privacy)
+    - [GeoIP Support](#geoip-support)
+    - [Traffic filtering](#traffic-filtering)
+    - [Suspicious](#suspicious)
+    - [Latency Computing](#latency-computing)
+    - [Extract](#extract)
 
 ## Transformers
 
@@ -258,4 +261,24 @@ Example of DNS messages in text format
 ```
 2023-04-11T18:42:50.939138364Z dnsdist1 CLIENT_QUERY NOERROR 127.0.0.1 52376 IPv4 UDP 54b www.google.fr A 0.000000
 2023-04-11T18:42:50.939138364Z dnsdist1 CLIENT_QUERY TIMEOUT 127.0.0.1 52376 IPv4 UDP 54b www.google.fr A -
+```
+
+### Extract
+
+Use this transformer to extract the raw response payload encoded in base64:
+
+Options:
+- `add-payload`: (boolean) add base64 encoded response payload
+
+```yaml
+transforms:
+  extract:
+    add-payload: true
+```
+
+When the feature is enabled, an "extracted" field appears in the DNS message and is populated with a "response_payload" field:
+
+```
+{"network":{"family":"IPv4","protocol":"UDP","query-ip":"10.1.0.123","query-port":"56357","response-ip":"10.7.0.252","response-port":"53","ip-defragmented":false,"tcp-reassembled":false},"dns":{"length":63,"opcode":0,"rcode":"NOERROR","qname":"orange-sanguine.fr","qtype":"A","flags":{"qr":true,"tc":false,"aa":false,"ra":true,"ad":false},"resource-records":{"an":[{"name":"orange-sanguine.fr","rdatatype":"A","ttl":21600,"rdata":"193.203.239.81"}],"ns":[],"ar":[]},"malformed-packet":false},"edns":{"udp-size":1232,"rcode":0,"version":0,"dnssec-ok":0,"options":[]},"dnstap":{"operation":"CLIENT_RESPONSE","identity":"dns-collector","version":"-","timestamp-rfc3339ns":"2023-04-19T11:23:56.018192608Z","latency":"0.000000"},"extracted":{"response_payload":"P6CBgAABAAEAAAABD29yYW5nZS1zYW5ndWluZQJmcgAAAQABwAwAAQABAABUYAAEwcvvUQAAKQTQAAAAAAAA"}}
+
 ```
