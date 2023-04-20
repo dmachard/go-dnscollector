@@ -5,6 +5,7 @@ package collectors
 
 import (
 	"encoding/binary"
+	"errors"
 	"net"
 	"os"
 	"syscall"
@@ -328,7 +329,11 @@ func (c *AfpacketSniffer) Run() {
 			//flags, from
 			bufN, oobn, _, _, err := syscall.Recvmsg(c.fd, buf, oob, 0)
 			if err != nil {
-				panic(err)
+				if errors.Is(err, syscall.EINTR) {
+					continue
+				} else {
+					panic(err)
+				}
 			}
 			if bufN == 0 {
 				panic("buf empty")
