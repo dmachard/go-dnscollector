@@ -616,7 +616,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.RedisPub.RemotePort = 6379
 	c.Loggers.RedisPub.SockPath = ""
 	c.Loggers.RedisPub.RetryInterval = 10
-	c.Loggers.RedisPub.Transport = "tcp"
+	c.Loggers.RedisPub.Transport = SOCKET_TCP
 	c.Loggers.RedisPub.TlsSupport = false
 	c.Loggers.RedisPub.TlsInsecure = false
 	c.Loggers.RedisPub.TlsMinVersion = TLS_v12
