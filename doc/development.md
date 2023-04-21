@@ -80,7 +80,7 @@ go generate .
 
 Add Configuration `dnsutils/config.go` and `config.yml`
 
-```
+```golang
 type ConfigTransformers struct {
 	MyTransform struct {
 		Enable         bool `yaml:"enable"`
@@ -88,7 +88,7 @@ type ConfigTransformers struct {
 }
 ```
 
-```
+```golang
 func (c *ConfigTransformers) SetDefault() {
     c.MyTransform.Enable = false
 }
@@ -96,7 +96,7 @@ func (c *ConfigTransformers) SetDefault() {
 
 Create the following file `transformers/mytransform.go` and `loggers/mytransform_test.go`
 
-```
+```golang
 type MyTransform struct {
 	config *dnsutils.ConfigTransformers
 }
@@ -112,7 +112,7 @@ func NewMyTransform(config *dnsutils.ConfigTransformers) MyTransform {
 
 Declare the transfomer in the following file `subprocessor.go`
 
-```
+```golang
 func NewTransforms(
     d := Transforms{
             MyTransform:     NewMyTransform(config, logger, name, outChannels),
@@ -126,7 +126,7 @@ Finally update the docs `doc/transformers.md` and `README.md`
 
 1. Add Configuration `dnsutils/config.go` and `config.yml`
 
-```
+```golang
 Loggers struct {
     MyLogger struct {
         Enable   bool   `yaml:"enable"`
@@ -135,7 +135,7 @@ Loggers struct {
 
 ```
 
-```
+```golang
 func (c *Config) SetDefault() {
     c.Loggers.MyLogger.Enable = false
 }
@@ -143,7 +143,7 @@ func (c *Config) SetDefault() {
 
 2. Create the following file `loggers/mylogger.go` and `loggers/mylogger_test.go`
 
-```
+```golang
 package loggers
 
 import (
@@ -218,7 +218,7 @@ func (o *MyLogger) Run() {
 
 3. Update the main file `dnscollector.go`
 
-```
+```golang
 if subcfg.Loggers.MyLogger.Enable && IsLoggerRouted(config, output.Name) {
     mapLoggers[output.Name] = loggers.NewMyLogger(subcfg, logger, output.Name)
 }
@@ -230,7 +230,7 @@ if subcfg.Loggers.MyLogger.Enable && IsLoggerRouted(config, output.Name) {
 
 Add Configuration `dnsutils/config.go` and `config.yml`
 
-```
+```golang
 Collectors struct {
     MyCollector struct {
         Enable       bool   `yaml:"enable"`
@@ -238,7 +238,7 @@ Collectors struct {
 }
 ```
 
-```
+```golang
 func (c *Config) SetDefault() {
     c.Collectors.MyCollector.Enable = false
 }
@@ -246,7 +246,7 @@ func (c *Config) SetDefault() {
 
 Create the following file `collectors/mycollector.go` and `collectors/mycollector_test.go`
 
-```
+```golang
 package collectors
 
 import (
@@ -327,7 +327,7 @@ func (c *MyCollector) Run() {
 
 Update the main file `dnscollector.go`
 
-```
+```golang
 if subcfg.Collectors.MyCollector.Enable && IsCollectorRouted(config, input.Name) {
     mapCollectors[input.Name] = collectors.NewMyCollector(nil, subcfg, logger, input.Name)
 }

@@ -1,10 +1,10 @@
 package transformers
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-logger"
 	publicsuffixlist "golang.org/x/net/publicsuffix"
 )
 
@@ -62,23 +62,54 @@ var (
 )
 
 type NormalizeProcessor struct {
-	config *dnsutils.ConfigTransformers
+	config           *dnsutils.ConfigTransformers
+	logger           *logger.Logger
+	name             string
+	activeProcessors []func(dm *dnsutils.DnsMessage) int
 }
 
-func NewNormalizeSubprocessor(config *dnsutils.ConfigTransformers) NormalizeProcessor {
+func NewNormalizeSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string) NormalizeProcessor {
 	s := NormalizeProcessor{
 		config: config,
+		logger: logger,
+		name:   name,
 	}
 
+	s.LoadActiveProcessors()
 	return s
+}
+
+func (p *NormalizeProcessor) LogInfo(msg string, v ...interface{}) {
+	p.logger.Info("["+p.name+"] transform normalize - "+msg, v...)
+}
+
+func (p *NormalizeProcessor) LogError(msg string, v ...interface{}) {
+	p.logger.Error("["+p.name+"] transform normalize - "+msg, v...)
+}
+
+func (p *NormalizeProcessor) LoadActiveProcessors() {
+	if p.config.Normalize.QnameLowerCase {
+		p.activeProcessors = append(p.activeProcessors, p.LowercaseQname)
+		p.LogInfo("[processor: lowercase] enabled")
+	}
+
+	if p.config.Normalize.QuietText {
+		p.activeProcessors = append(p.activeProcessors, p.QuietText)
+		p.LogInfo("[processor: quiet text] enabled")
+	}
+
+	if p.config.Normalize.AddTld {
+		p.activeProcessors = append(p.activeProcessors, p.GetEffectiveTld)
+		p.LogInfo("[processor: add tld] enabled")
+	}
+	if p.config.Normalize.AddTldPlusOne {
+		p.activeProcessors = append(p.activeProcessors, p.GetEffectiveTldPlusOne)
+		p.LogInfo("[processor: add tld+1] enabled")
+	}
 }
 
 func (s *NormalizeProcessor) IsEnabled() bool {
 	return s.config.Normalize.Enable
-}
-
-func (s *NormalizeProcessor) Lowercase(qname string) string {
-	return strings.ToLower(qname)
 }
 
 func (p *NormalizeProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
@@ -88,7 +119,13 @@ func (p *NormalizeProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
 	}
 }
 
-func (s *NormalizeProcessor) QuietText(dm *dnsutils.DnsMessage) {
+func (p *NormalizeProcessor) LowercaseQname(dm *dnsutils.DnsMessage) int {
+	dm.DNS.Qname = strings.ToLower(dm.DNS.Qname)
+
+	return RETURN_SUCCESS
+}
+
+func (p *NormalizeProcessor) QuietText(dm *dnsutils.DnsMessage) int {
 	if v, found := DnstapMessage[dm.DnsTap.Operation]; found {
 		dm.DnsTap.Operation = v
 	}
@@ -101,28 +138,49 @@ func (s *NormalizeProcessor) QuietText(dm *dnsutils.DnsMessage) {
 	if v, found := Rcodes[dm.DNS.Rcode]; found {
 		dm.DNS.Rcode = v
 	}
+	return RETURN_SUCCESS
 }
 
-func (s *NormalizeProcessor) GetEffectiveTld(qname string) (string, error) {
-
+func (p *NormalizeProcessor) GetEffectiveTld(dm *dnsutils.DnsMessage) int {
 	// PublicSuffix is case sensitive.
 	// remove ending dot ?
-	qname = strings.ToLower(qname)
+	qname := strings.ToLower(dm.DNS.Qname)
 	qname = strings.TrimSuffix(qname, ".")
 
 	// search
 	etld, icann := publicsuffixlist.PublicSuffix(qname)
 	if icann {
-		return etld, nil
+		dm.PublicSuffix.QnamePublicSuffix = etld
+	} else {
+		p.LogError("ICANN Unmanaged")
 	}
-	return "", errors.New("ICANN Unmanaged")
+	return RETURN_SUCCESS
 }
 
-func (s *NormalizeProcessor) GetEffectiveTldPlusOne(qname string) (string, error) {
-	// PublicSuffix is case sensitive.
-	// remove ending dot ?
-	qname = strings.ToLower(qname)
+func (p *NormalizeProcessor) GetEffectiveTldPlusOne(dm *dnsutils.DnsMessage) int {
+	// PublicSuffix is case sensitive, remove ending dot ?
+	qname := strings.ToLower(dm.DNS.Qname)
 	qname = strings.TrimSuffix(qname, ".")
 
-	return publicsuffixlist.EffectiveTLDPlusOne(qname)
+	if etld, err := publicsuffixlist.EffectiveTLDPlusOne(qname); err == nil {
+		dm.PublicSuffix.QnameEffectiveTLDPlusOne = etld
+	}
+
+	return RETURN_SUCCESS
+}
+
+func (p *NormalizeProcessor) ProcessDnsMessage(dm *dnsutils.DnsMessage) int {
+	if len(p.activeProcessors) == 0 {
+		return RETURN_SUCCESS
+	}
+
+	var r_code int
+	for _, fn := range p.activeProcessors {
+		r_code = fn(dm)
+		if r_code != RETURN_SUCCESS {
+			return r_code
+		}
+	}
+
+	return RETURN_SUCCESS
 }

@@ -53,6 +53,8 @@ Additionally, DNS-collector also support
 
 **Transformers**:
 
+- [`Traffic Reducer`](doc/transformers.md#traffic-reducer)
+    - Detect repetitive queries/replies and log once
 - [`Extractor`](doc/transformers.md#extract)
     - Add base64 encoded dns payload
 - [`Latency Computing`](doc/transformers.md#latency-computing)

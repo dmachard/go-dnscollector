@@ -2,7 +2,6 @@ package loggers
 
 import (
 	"crypto/tls"
-	"fmt"
 	"net"
 	"strconv"
 	"time"
@@ -220,7 +219,6 @@ LOOP:
 		// flush the buffer
 		case <-flushTimer.C:
 			if !o.writerReady {
-				fmt.Println("buffer cleared!")
 				bufferDm = nil
 				continue
 			}

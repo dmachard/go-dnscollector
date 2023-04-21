@@ -2,6 +2,7 @@ package dnsutils
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -27,6 +28,7 @@ var (
 	GeoIPDirectives        = regexp.MustCompile(`^geoip-*`)
 	SuspiciousDirectives   = regexp.MustCompile(`^suspicious-*`)
 	PublicSuffixDirectives = regexp.MustCompile(`^publixsuffix-*`)
+	ExtractedDirectives    = regexp.MustCompile(`^extracted-*`)
 )
 
 func GetIpPort(dm *DnsMessage) (string, int, string, int) {
@@ -108,6 +110,8 @@ type Dns struct {
 	Flags           DnsFlags `json:"flags" msgpack:"flags"`
 	DnsRRs          DnsRRs   `json:"resource-records" msgpack:"resource-records"`
 	MalformedPacket bool     `json:"malformed-packet" msgpack:"malformed-packet"`
+
+	Repeated int `json:"repeated" msgpack:"repeated"`
 }
 
 type DnsOption struct {
@@ -204,6 +208,7 @@ func (dm *DnsMessage) Init() {
 		Qtype:           "-",
 		Qname:           "-",
 		DnsRRs:          DnsRRs{Answers: []DnsAnswer{}, Nameservers: []DnsAnswer{}, Records: []DnsAnswer{}},
+		Repeated:        -1,
 	}
 
 	dm.EDNS = DnsExtended{
@@ -327,12 +332,30 @@ func (dm *DnsMessage) handlePublicSuffixDirectives(directives []string, s *bytes
 	}
 }
 
+func (dm *DnsMessage) handleExtractedDirectives(directives []string, s *bytes.Buffer) {
+	if dm.Extracted == nil {
+		s.WriteString("-")
+	} else {
+		switch directive := directives[0]; {
+		case directive == "extracted-dns-payload":
+			if len(dm.DNS.Payload) > 0 {
+				dst := make([]byte, base64.StdEncoding.EncodedLen(len(dm.DNS.Payload)))
+				base64.StdEncoding.Encode(dst, dm.DNS.Payload)
+				s.Write(dst)
+			} else {
+				s.WriteString("-")
+			}
+		}
+	}
+}
+
 func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundary string) []byte {
 	var s bytes.Buffer
 
 	for i, word := range format {
 		directives := strings.SplitN(word, ":", 2)
 		switch directive := directives[0]; {
+		// default directives
 		case directive == "ttl":
 			if len(dm.DNS.DnsRRs.Answers) > 0 {
 				s.WriteString(strconv.Itoa(dm.DNS.DnsRRs.Answers[0].Ttl))
@@ -456,14 +479,21 @@ func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 			} else {
 				s.WriteString("-")
 			}
+		case directive == "repeated":
+			s.WriteString(strconv.Itoa(dm.DNS.Repeated))
+		// more directives from collectors
 		case PdnsDirectives.MatchString(directive):
 			dm.handlePdnsDirectives(directives, &s)
+		// more directives from transformers
 		case GeoIPDirectives.MatchString(directive):
 			dm.handleGeoIPDirectives(directives, &s)
 		case SuspiciousDirectives.MatchString(directive):
 			dm.handleSuspiciousDirectives(directives, &s)
 		case PublicSuffixDirectives.MatchString(directive):
 			dm.handlePublicSuffixDirectives(directives, &s)
+		case ExtractedDirectives.MatchString(directive):
+			dm.handleExtractedDirectives(directives, &s)
+		// error unsupport directive for text format
 		default:
 			log.Fatalf("unsupport directive for text format: %s", word)
 		}

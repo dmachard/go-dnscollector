@@ -2,7 +2,6 @@ package loggers
 
 import (
 	"bufio"
-	"fmt"
 	"net"
 	"regexp"
 	"testing"
@@ -69,19 +68,18 @@ func Test_RedisPubRun(t *testing.T) {
 			reader := bufio.NewReader(conn)
 			line, err := reader.ReadString('\n')
 			if err != nil {
-				fmt.Println("Erreur de lecture de la réponse :", err)
+				t.Error(err)
 				return
 			}
-			fmt.Println(line)
 
 			pattern := regexp.MustCompile(tc.pattern)
 			if !pattern.MatchString(line) {
-				t.Errorf("syslog error want %s, got: %s", tc.pattern, line)
+				t.Errorf("redis error want %s, got: %s", tc.pattern, line)
 			}
 
 			pattern2 := regexp.MustCompile("PUBLISH \"testons\"")
 			if !pattern2.MatchString(line) {
-				t.Errorf("syslog error want %s, got: %s", pattern2, line)
+				t.Errorf("redis error want %s, got: %s", pattern2, line)
 			}
 		})
 	}

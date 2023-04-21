@@ -60,6 +60,11 @@ type ConfigTransformers struct {
 		UnansweredQueries bool `yaml:"unanswered-queries"`
 		QueriesTimeout    int  `yaml:"queries-timeout"`
 	}
+	Reducer struct {
+		Enable                    bool `yaml:"enable"`
+		RepetitiveTrafficDetector bool `yaml:"repetitive-traffic-detector"`
+		WatchInterval             int  `yaml:"watch-interval"`
+	}
 	Filtering struct {
 		Enable          bool     `yaml:"enable"`
 		DropFqdnFile    string   `yaml:"drop-fqdn-file"`
@@ -119,6 +124,10 @@ func (c *ConfigTransformers) SetDefault() {
 	c.Latency.MeasureLatency = false
 	c.Latency.UnansweredQueries = false
 	c.Latency.QueriesTimeout = 2
+
+	c.Reducer.Enable = false
+	c.Reducer.RepetitiveTrafficDetector = false
+	c.Reducer.WatchInterval = 5
 
 	c.Filtering.Enable = false
 	c.Filtering.DropFqdnFile = ""
