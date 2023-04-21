@@ -313,8 +313,11 @@ func (c *AfpacketSniffer) Run() {
 			dm.DNS.Length = len(dnsPacket.Payload)
 
 			dm.DnsTap.Identity = c.identity
-			dm.DnsTap.TimeSec = dnsPacket.Timestamp.Second()
-			dm.DnsTap.TimeNsec = int(dnsPacket.Timestamp.UnixNano())
+
+			timestamp := dnsPacket.Timestamp.UnixNano()
+			seconds := timestamp / int64(time.Second)
+			dm.DnsTap.TimeSec = int(seconds)
+			dm.DnsTap.TimeNsec = int(timestamp - seconds*int64(time.Second)*int64(time.Nanosecond))
 
 			// send DNS message to DNS processor
 			dnsProcessor.GetChannel() <- dm
