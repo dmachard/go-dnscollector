@@ -270,11 +270,15 @@ Use this transformer to detect repetitive traffic
 
 Options:
 - `repetitive-traffic-detector`: (boolean) detect repetitive traffic
+- `watch-interval`: (integer) watch interval in seconds
+
+Default values:
 
 ```yaml
 transforms:
   reducer:
     repetitive-traffic-detector: true
+    watch-interval: 5
 ```
 
 ### Extractor
@@ -284,14 +288,16 @@ Use this transformer to extract the raw dns payload encoded in base64:
 Options:
 - `add-payload`: (boolean) add base64 encoded dns payload
 
+Default values:
+
 ```yaml
 transforms:
   extract:
-    add-payload: true
+    add-payload: false
 ```
 
 When the feature is enabled, an "extracted" field appears in the DNS message and is populated with a "dns_payload" field:
 
-```
+```json
 {"network":{"family":"IPv4","protocol":"UDP","query-ip":"10.1.0.123","query-port":"56357","response-ip":"10.7.0.252","response-port":"53","ip-defragmented":false,"tcp-reassembled":false},"dns":{"length":63,"opcode":0,"rcode":"NOERROR","qname":"orange-sanguine.fr","qtype":"A","flags":{"qr":true,"tc":false,"aa":false,"ra":true,"ad":false},"resource-records":{"an":[{"name":"orange-sanguine.fr","rdatatype":"A","ttl":21600,"rdata":"193.203.239.81"}],"ns":[],"ar":[]},"malformed-packet":false},"edns":{"udp-size":1232,"rcode":0,"version":0,"dnssec-ok":0,"options":[]},"dnstap":{"operation":"CLIENT_RESPONSE","identity":"dns-collector","version":"-","timestamp-rfc3339ns":"2023-04-19T11:23:56.018192608Z","latency":"0.000000"},"extracted":{"dns_payload":"P6CBgAABAAEAAAABD29yYW5nZS1zYW5ndWluZQJmcgAAAQABwAwAAQABAABUYAAEwcvvUQAAKQTQAAAAAAAA"}}
 ```

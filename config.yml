@@ -494,11 +494,15 @@ multiplexer:
 
 # # Use this transformer to add base64 dns payload in JSON ouput
 # extract:
+#   # enable payload base64 encoding
 #   add-payload: true
 
 # # Use this transformer to detect trafic duplication
 # reducer:
+#   # enable detector
 #   repetitive-traffic-detector: true
+#   # watch interval in seconds
+#   watch-interval: 5
 
 # # Use this transformer to compute latency and detect timeout on queries
 # latency:
