@@ -53,10 +53,11 @@ Additionally, DNS-collector also support
 
 **Transformers**:
 
-- [`Latency Computing`](doc/transformers.md#dns-latency)
-    - Latency between replies and queries
-    - Unanswered queries
-
+- [`Extractor`](doc/transformers.md#extract)
+    - Add base64 encoded dns payload
+- [`Latency Computing`](doc/transformers.md#latency-computing)
+    - Compute latency between replies and queries
+    - Detect and count unanswered queries
 - [`Traffic filtering`](doc/transformers.md#traffic-filtering)
     - Downsampling
     - Dropping per Qname, QueryIP or Rcode
@@ -131,3 +132,8 @@ You will find below some examples of configuration to manage your DNS logs.
 ## Contributing
 
 See the [development guide](doc/development.md) for more information on how to build it yourself.
+
+How to userguides:
+ - [Add a new collector](doc/development.md#add-collector)
+ - [Add a new logger](doc/development.md#add-logger)
+ - [Add a new transform](doc/development.md#add-transformer)
