@@ -49,6 +49,7 @@ Additionally, DNS-collector also support
     - [`Loki`](doc/loggers.md#loki-client)
     - [`ElasticSearch`](doc/loggers.md#elasticsearch-client)
     - [`Scalyr`](doc/loggers.md#scalyr-client)
+    - [`Redis`](doc/loggers.md#redispub)
 
 **Transformers**:
 

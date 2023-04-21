@@ -162,6 +162,9 @@ func main() {
 		if subcfg.Loggers.ScalyrClient.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewScalyrClient(subcfg, logger, output.Name)
 		}
+		if subcfg.Loggers.RedisPub.Enable && IsLoggerRouted(config, output.Name) {
+			mapLoggers[output.Name] = loggers.NewRedisPub(subcfg, logger, output.Name)
+		}
 	}
 
 	// load collectors
