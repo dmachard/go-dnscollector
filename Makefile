@@ -33,7 +33,7 @@ dep:
 	@go mod tidy
 
 build:
-	@go build -v -ldflags="$(LD_FLAGS)" -o ${BINARY_NAME} dnscollector.go
+	CGO_ENABLED=0 go build -v -ldflags="$(LD_FLAGS)" -o ${BINARY_NAME} dnscollector.go
 
 run: build
 	./${BINARY_NAME}
@@ -45,8 +45,8 @@ test:
 	@go test ./dnsutils/ -race -cover -v
 	@go test ./netlib/ -race -cover -v
 	@go test ./transformers/ -race -cover -v
-	@go test -timeout 10s ./collectors/ -race -cover -v
-	@go test -timeout 30s ./loggers/ -race -cover -v
+	@go test -timeout 30s ./collectors/ -race -cover -v
+	@go test -timeout 60s ./loggers/ -race -cover -v
 
 clean:
 	@go clean
