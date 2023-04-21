@@ -174,7 +174,7 @@ type DnsMessage struct {
 }
 
 type Extracted struct {
-	Base64Payload []byte `json:"response_payload" msgpack:"response_payload"`
+	Base64Payload []byte `json:"dns_payload" msgpack:"dns_payload"`
 }
 
 func (dm *DnsMessage) Init() {
