@@ -23,6 +23,7 @@ type Transforms struct {
 	NormalizeTransform   NormalizeProcessor
 	LatencyTransform     *LatencyProcessor
 	ReducerTransform     *ReducerProcessor
+	ExtractProcessor     ExtractProcessor
 
 	activeTransforms []func(dm *dnsutils.DnsMessage) int
 }
@@ -41,6 +42,7 @@ func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, n
 		NormalizeTransform:   NewNormalizeSubprocessor(config, logger, name),
 		LatencyTransform:     NewLatencySubprocessor(config, logger, name, outChannels),
 		ReducerTransform:     NewReducerSubprocessor(config, logger, name, outChannels),
+		ExtractProcessor:     NewExtractSubprocessor(config),
 	}
 
 	d.Prepare()
@@ -100,6 +102,14 @@ func (p *Transforms) Prepare() error {
 		p.LogInfo("[reducer] enabled")
 	}
 
+	if p.config.Extract.Enable {
+		if p.config.Extract.AddPayload {
+			p.activeTransforms = append(p.activeTransforms, p.addBase64Payload)
+			p.LogInfo("[extract: payload] enabled")
+		}
+
+	}
+
 	return nil
 }
 
@@ -113,6 +123,11 @@ func (p *Transforms) InitDnsMessageFormat(dm *dnsutils.DnsMessage) {
 	if p.config.Normalize.Enable {
 		if p.config.Normalize.AddTld || p.config.Normalize.AddTldPlusOne {
 			p.NormalizeTransform.InitDnsMessage(dm)
+		}
+	}
+	if p.config.Extract.Enable {
+		if p.config.Extract.AddPayload {
+			p.ExtractProcessor.InitDnsMessage(dm)
 		}
 	}
 }
@@ -204,5 +219,10 @@ func (p *Transforms) ProcessMessage(dm *dnsutils.DnsMessage) int {
 		}
 	}
 
+	return RETURN_SUCCESS
+}
+
+func (p *Transforms) addBase64Payload(dm *dnsutils.DnsMessage) int {
+	dm.Extracted.Base64Payload = p.ExtractProcessor.AddBase64Payload(dm)
 	return RETURN_SUCCESS
 }

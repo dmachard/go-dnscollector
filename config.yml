@@ -54,6 +54,7 @@ global:
   # - edns-csubnet: client subnet
   # - df: ip defragmentation flag
   # - tr: tcp reassembled flag
+  # - dns_payload: base64-encoded raw DNS payload
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
   # default text field delimiter
   text-format-delimiter: " "
@@ -343,6 +344,27 @@ multiplexer:
 #   delimiter: "\n"
 #   # number of dns messages in buffer
 #   buffer-size: 100
+
+
+# # Send captured traffic to a redis channel, mapped on TCP client logger options
+#  loggers:
+#    - name: redis
+#      redispub:
+#        mode: json
+#        transport: tcp
+#        remote-address: 127.0.0.1
+#        remote-port: 6379
+#        sock-path: null
+#        connect-timeout: 5
+#        retry-interval: 10
+#        flush-interval: 2
+#        tls-support: false
+#        tls-insecure: false
+#        text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
+#        delimiter: "\n"
+#        buffer-size: 1
+# # Name of the channel to publish into
+#        redis-channel: dns-collector
 
 # # redirect captured dns traffic to a remote syslog server or local one
 # syslog:

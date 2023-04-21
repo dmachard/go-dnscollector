@@ -93,6 +93,10 @@ type ConfigTransformers struct {
 		UnallowedChars     []string `yaml:"unallowed-chars,flow"`
 		ThresholdMaxLabels int      `yaml:"threshold-max-labels"`
 	} `yaml:"suspicious"`
+	Extract struct {
+		Enable     bool `yaml:"enable"`
+		AddPayload bool `yaml:"add-payload"`
+	} `yaml:"extract"`
 }
 
 func (c *ConfigTransformers) SetDefault() {
@@ -140,6 +144,9 @@ func (c *ConfigTransformers) SetDefault() {
 	c.GeoIP.DbCountryFile = ""
 	c.GeoIP.DbCityFile = ""
 	c.GeoIP.DbAsnFile = ""
+
+	c.Extract.Enable = false
+	c.Extract.AddPayload = false
 }
 
 /* main configuration */
@@ -384,6 +391,24 @@ type Config struct {
 			TlsInsecure   bool                   `yaml:"tls-insecure"`
 			TlsMinVersion string                 `yaml:"tls-min-version"`
 		} `yaml:"scalyrclient"`
+		RedisPub struct {
+			Enable           bool   `yaml:"enable"`
+			RemoteAddress    string `yaml:"remote-address"`
+			RemotePort       int    `yaml:"remote-port"`
+			SockPath         string `yaml:"sock-path"`
+			RetryInterval    int    `yaml:"retry-interval"`
+			Transport        string `yaml:"transport"`
+			TlsSupport       bool   `yaml:"tls-support"`
+			TlsInsecure      bool   `yaml:"tls-insecure"`
+			TlsMinVersion    string `yaml:"tls-min-version"`
+			Mode             string `yaml:"mode"`
+			TextFormat       string `yaml:"text-format"`
+			PayloadDelimiter string `yaml:"delimiter"`
+			BufferSize       int    `yaml:"buffer-size"`
+			FlushInterval    int    `yaml:"flush-interval"`
+			ConnectTimeout   int    `yaml:"connect-timeout"`
+			RedisChannel     string `yaml:"redis-channel"`
+		} `yaml:"redispub"`
 	} `yaml:"loggers"`
 
 	OutgoingTransformers ConfigTransformers `yaml:"outgoing-transformers"`
@@ -601,6 +626,23 @@ func (c *Config) SetDefault() {
 
 	c.Loggers.ElasticSearchClient.Enable = false
 	c.Loggers.ElasticSearchClient.URL = "http://127.0.0.1:9200/indexname/_doc"
+
+	c.Loggers.RedisPub.Enable = false
+	c.Loggers.RedisPub.RemoteAddress = LOCALHOST_IP
+	c.Loggers.RedisPub.RemotePort = 6379
+	c.Loggers.RedisPub.SockPath = ""
+	c.Loggers.RedisPub.RetryInterval = 10
+	c.Loggers.RedisPub.Transport = SOCKET_TCP
+	c.Loggers.RedisPub.TlsSupport = false
+	c.Loggers.RedisPub.TlsInsecure = false
+	c.Loggers.RedisPub.TlsMinVersion = TLS_v12
+	c.Loggers.RedisPub.Mode = MODE_JSON
+	c.Loggers.RedisPub.TextFormat = ""
+	c.Loggers.RedisPub.PayloadDelimiter = "\n"
+	c.Loggers.RedisPub.BufferSize = 100
+	c.Loggers.RedisPub.ConnectTimeout = 5
+	c.Loggers.RedisPub.FlushInterval = 30
+	c.Loggers.RedisPub.RedisChannel = "dns_collector"
 
 	// Transformers for loggers
 	c.OutgoingTransformers.SetDefault()
