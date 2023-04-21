@@ -58,4 +58,9 @@ var (
 		PROTO_INET:  PROTO_IPV4,
 		PROTO_INET6: PROTO_IPV6,
 	}
+
+	IP_TO_INET = map[string]string{
+		PROTO_IPV4: PROTO_INET,
+		PROTO_IPV6: PROTO_INET6,
+	}
 )

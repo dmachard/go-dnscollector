@@ -522,7 +522,11 @@ func (dm *DnsMessage) ToDnstap() ([]byte, error) {
 	dt.Type = &t
 
 	mt := dnstap.Message_Type(dnstap.Message_Type_value[dm.DnsTap.Operation])
-	sf := dnstap.SocketFamily(dnstap.SocketFamily_value[dm.NetworkInfo.Family])
+
+	var sf dnstap.SocketFamily
+	if ipNet, valid := IP_TO_INET[dm.NetworkInfo.Family]; valid {
+		sf = dnstap.SocketFamily(dnstap.SocketFamily_value[ipNet])
+	}
 	sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.NetworkInfo.Protocol])
 	tsec := uint64(dm.DnsTap.TimeSec)
 	tnsec := uint32(dm.DnsTap.TimeNsec)
