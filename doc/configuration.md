@@ -126,7 +126,7 @@ You must defined the list of
 - `routes`: routing definition
 
 If you want apply some modifications in traffic, you can do that with [transformers](/doc/transformers.md). 
-It can also be done on collectors or loggers.
+Transformers can be applied on collectors or loggers.
 
 ### Collectors
 

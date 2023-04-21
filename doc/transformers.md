@@ -208,6 +208,9 @@ transforms:
     threshold-max-labels: 10
 ```
 
+Specific directive(s) available for the text format:
+- `suspicious-score`: suspicious score for unusual traffic
+
 When the feature is enabled, the following json field are populated in your DNS message:
 
 Example:
@@ -224,9 +227,6 @@ Example:
     "excessive-number-labels": false,
   }
 ```
-
-Specific directive(s) added:
-- `suspicious-score`: suspicious score for unusual traffic
 
 ### Latency Computing
 
@@ -281,6 +281,9 @@ transforms:
     watch-interval: 5
 ```
 
+Specific directive(s) available for the text format:
+- `repeated`: display the number of detected duplication
+
 ### Extractor
 
 Use this transformer to extract the raw dns payload encoded in base64:
@@ -295,6 +298,9 @@ transforms:
   extract:
     add-payload: false
 ```
+
+Specific directive(s) available for the text format:
+- `extracted-dns-payload`: add the base64 encoded of the dns message
 
 When the feature is enabled, an "extracted" field appears in the DNS message and is populated with a "dns_payload" field:
 
