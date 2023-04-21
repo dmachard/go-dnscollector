@@ -58,6 +58,7 @@ type DnstapProcessor struct {
 
 func NewDnstapProcessor(config *dnsutils.Config, logger *logger.Logger, name string) DnstapProcessor {
 	logger.Info("[%s] dnstap processor - initialization...", name)
+
 	d := DnstapProcessor{
 		done:     make(chan bool),
 		recvFrom: make(chan []byte, 512),

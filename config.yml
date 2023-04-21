@@ -71,11 +71,27 @@ multiplexer:
       transforms:
         normalize:
           qname-lowercase: true
+        reducer:
+          repetitive-traffic-detector: true
 
   loggers:
     - name: console
       stdout:
         mode: text
+        # output text format, please refer at the end if this config to see all available directives
+        text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency repeated"
+      # transforms:
+      #   reducer:
+      #     repetitive-traffic-detector: true
+
+    - name: file
+      logfile:
+        # output logfile name
+        file-path:  /tmp/test5.log
+        # output format: text|json|pcap|dnstap|flat-json
+        mode: text
+        # output text format, please refer at the end if this config to see all available directives
+        text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency repeated"
 
   routes:
     - from: [ tap ]

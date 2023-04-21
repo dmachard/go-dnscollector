@@ -2,7 +2,6 @@ package loggers
 
 import (
 	"bufio"
-	"fmt"
 	"net"
 	"regexp"
 	"testing"
@@ -68,7 +67,7 @@ func Test_TcpClientRun(t *testing.T) {
 			reader := bufio.NewReader(conn)
 			line, err := reader.ReadString('\n')
 			if err != nil {
-				fmt.Println("Erreur de lecture de la réponse :", err)
+				t.Error(err)
 				return
 			}
 

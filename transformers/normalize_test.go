@@ -1,9 +1,11 @@
 package transformers
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-logger"
 )
 
 func TestNormalize_LowercaseQname(t *testing.T) {
@@ -13,12 +15,15 @@ func TestNormalize_LowercaseQname(t *testing.T) {
 	config.Normalize.QnameLowerCase = true
 
 	// init the processor
-	qnameNorm := NewNormalizeSubprocessor(config)
+	qnameNorm := NewNormalizeSubprocessor(config, logger.New(false), "test")
 
 	qname := "www.Google.Com"
-	ret := qnameNorm.Lowercase(qname)
-	if ret != "www.google.com" {
-		t.Errorf("Qname to lowercase failed, got %s", ret)
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.Qname = qname
+
+	ret := qnameNorm.LowercaseQname(&dm)
+	if dm.DNS.Qname != strings.ToLower(qname) {
+		t.Errorf("Qname to lowercase failed, got %d", ret)
 	}
 }
 
@@ -29,7 +34,7 @@ func TestNormalize_QuietText(t *testing.T) {
 	config.Normalize.QuietText = true
 
 	// init the processor
-	norm := NewNormalizeSubprocessor(config)
+	norm := NewNormalizeSubprocessor(config, logger.New(false), "test")
 
 	dm := dnsutils.GetFakeDnsMessage()
 	norm.QuietText(&dm)
@@ -50,7 +55,7 @@ func TestNormalize_AddTLD(t *testing.T) {
 	config.Normalize.AddTld = true
 
 	// init the processor
-	psl := NewNormalizeSubprocessor(config)
+	psl := NewNormalizeSubprocessor(config, logger.New(false), "test")
 
 	tt := []struct {
 		name  string
@@ -76,12 +81,15 @@ func TestNormalize_AddTLD(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			tld, err := psl.GetEffectiveTld(tc.qname)
-			if err != nil {
-				t.Errorf("Bad TLD with error: %s", err.Error())
-			}
-			if tld != tc.want {
-				t.Errorf("Bad TLD, got: %s, expected: com", tld)
+
+			dm := dnsutils.GetFakeDnsMessage()
+			dm.DNS.Qname = tc.qname
+
+			psl.InitDnsMessage(&dm)
+
+			psl.GetEffectiveTld(&dm)
+			if dm.PublicSuffix.QnamePublicSuffix != tc.want {
+				t.Errorf("Bad TLD, got: %s, expected: com", dm.PublicSuffix.QnamePublicSuffix)
 
 			}
 		})
@@ -95,7 +103,7 @@ func TestNormalize_AddTldPlusOne(t *testing.T) {
 	config.Normalize.AddTld = true
 
 	// init the processor
-	psl := NewNormalizeSubprocessor(config)
+	psl := NewNormalizeSubprocessor(config, logger.New(false), "test")
 
 	tt := []struct {
 		name  string
@@ -116,12 +124,15 @@ func TestNormalize_AddTldPlusOne(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			tld, err := psl.GetEffectiveTldPlusOne(tc.qname)
-			if err != nil {
-				t.Errorf("Bad TLD with error: %s", err.Error())
-			}
-			if tld != tc.want {
-				t.Errorf("Bad TLD, got: %s, expected: com", tld)
+
+			dm := dnsutils.GetFakeDnsMessage()
+			dm.DNS.Qname = tc.qname
+
+			psl.InitDnsMessage(&dm)
+
+			psl.GetEffectiveTldPlusOne(&dm)
+			if dm.PublicSuffix.QnameEffectiveTLDPlusOne != tc.want {
+				t.Errorf("Bad TLD, got: %s, expected: com", dm.PublicSuffix.QnameEffectiveTLDPlusOne)
 
 			}
 		})

@@ -108,6 +108,8 @@ type Dns struct {
 	Flags           DnsFlags `json:"flags" msgpack:"flags"`
 	DnsRRs          DnsRRs   `json:"resource-records" msgpack:"resource-records"`
 	MalformedPacket bool     `json:"malformed-packet" msgpack:"malformed-packet"`
+
+	Repeated int `json:"repeated" msgpack:"repeated"`
 }
 
 type DnsOption struct {
@@ -199,6 +201,7 @@ func (dm *DnsMessage) Init() {
 		Qtype:           "-",
 		Qname:           "-",
 		DnsRRs:          DnsRRs{Answers: []DnsAnswer{}, Nameservers: []DnsAnswer{}, Records: []DnsAnswer{}},
+		Repeated:        -1,
 	}
 
 	dm.EDNS = DnsExtended{
@@ -459,6 +462,8 @@ func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 			dm.handleSuspiciousDirectives(directives, &s)
 		case PublicSuffixDirectives.MatchString(directive):
 			dm.handlePublicSuffixDirectives(directives, &s)
+		case directive == "repeated":
+			s.WriteString(strconv.Itoa(dm.DNS.Repeated))
 		default:
 			log.Fatalf("unsupport directive for text format: %s", word)
 		}
