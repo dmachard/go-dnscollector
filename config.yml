@@ -72,27 +72,11 @@ multiplexer:
       transforms:
         normalize:
           qname-lowercase: true
-        reducer:
-          repetitive-traffic-detector: true
 
   loggers:
     - name: console
       stdout:
         mode: text
-        # output text format, please refer at the end if this config to see all available directives
-        text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency repeated"
-      # transforms:
-      #   reducer:
-      #     repetitive-traffic-detector: true
-
-    - name: file
-      logfile:
-        # output logfile name
-        file-path:  /tmp/test5.log
-        # output format: text|json|pcap|dnstap|flat-json
-        mode: text
-        # output text format, please refer at the end if this config to see all available directives
-        text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency repeated"
 
   routes:
     - from: [ tap ]
@@ -507,6 +491,14 @@ multiplexer:
 ################################################
 # list of transforms to apply on collectors or loggers
 ################################################
+
+# # Use this transformer to add base64 dns payload in JSON ouput
+# extract:
+#   add-payload: true
+
+# # Use this transformer to detect trafic duplication
+# reducer:
+#   repetitive-traffic-detector: true
 
 # # Use this transformer to compute latency and detect timeout on queries
 # latency:

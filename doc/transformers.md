@@ -8,7 +8,8 @@
     - [Traffic filtering](#traffic-filtering)
     - [Suspicious](#suspicious)
     - [Latency Computing](#latency-computing)
-    - [Extract](#extract)
+    - [Extractor](#extractor)
+    - [Traffic reducer](#traffic-reducer)
 
 ## Transformers
 
@@ -136,7 +137,7 @@ Specific directives added:
 - `geoip-as-number`: autonomous system number
 - `geoip-as-owner`: autonomous system organization/owner
 
-### Traffic filtering
+### Traffic Filtering
 
 The filtering feature can be used to ignore some queries or replies according to:
 - qname
@@ -263,7 +264,20 @@ Example of DNS messages in text format
 2023-04-11T18:42:50.939138364Z dnsdist1 CLIENT_QUERY TIMEOUT 127.0.0.1 52376 IPv4 UDP 54b www.google.fr A -
 ```
 
-### Extract
+### Traffic Reducer
+
+Use this transformer to detect repetitive traffic
+
+Options:
+- `repetitive-traffic-detector`: (boolean) detect repetitive traffic
+
+```yaml
+transforms:
+  reducer:
+    repetitive-traffic-detector: true
+```
+
+### Extractor
 
 Use this transformer to extract the raw dns payload encoded in base64:
 
