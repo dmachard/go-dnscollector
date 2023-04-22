@@ -59,24 +59,24 @@ func (mp *MapQueries) Delete(key uint64) {
 type HashQueries struct {
 	sync.RWMutex
 	ttl time.Duration
-	kv  map[uint64]float64
+	kv  map[uint64]int64
 }
 
 func NewHashQueries(ttl time.Duration) HashQueries {
 	return HashQueries{
 		ttl: ttl,
-		kv:  make(map[uint64]float64),
+		kv:  make(map[uint64]int64),
 	}
 }
 
-func (mp *HashQueries) Get(key uint64) (value float64, ok bool) {
+func (mp *HashQueries) Get(key uint64) (value int64, ok bool) {
 	mp.RLock()
 	defer mp.RUnlock()
 	result, ok := mp.kv[key]
 	return result, ok
 }
 
-func (mp *HashQueries) Set(key uint64, value float64) {
+func (mp *HashQueries) Set(key uint64, value int64) {
 	mp.Lock()
 	defer mp.Unlock()
 	mp.kv[key] = value
@@ -131,7 +131,8 @@ func (s *LatencyProcessor) MeasureLatency(dm *dnsutils.DnsMessage) {
 			value, ok := s.hashQueries.Get(key)
 			if ok {
 				s.hashQueries.Delete(key)
-				dm.DnsTap.Latency = dm.DnsTap.Timestamp - value
+				latency := float64(dm.DnsTap.Timestamp-value) / float64(1000000000)
+				dm.DnsTap.Latency = latency
 			}
 		}
 	}

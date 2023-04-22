@@ -79,8 +79,8 @@ func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		subprocessors.InitDnsMessageFormat(&dm)
 
 		// compute timestamp
-		dm.DnsTap.Timestamp = float64(dm.DnsTap.TimeSec) + float64(dm.DnsTap.TimeNsec)/1e9
 		ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
+		dm.DnsTap.Timestamp = ts.UnixNano()
 		dm.DnsTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
 		// decode the dns payload
