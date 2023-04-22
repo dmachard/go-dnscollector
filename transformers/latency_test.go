@@ -12,7 +12,7 @@ func Test_HashQueries(t *testing.T) {
 	mapttl := NewHashQueries(2 * time.Second)
 
 	// Set a new key/value
-	mapttl.Set(uint64(1), float64(0))
+	mapttl.Set(uint64(1), int64(0))
 
 	// Get value according to the key
 	_, ok := mapttl.Get(uint64(1))
@@ -26,7 +26,7 @@ func Test_HashQueries_Expire(t *testing.T) {
 	mapttl := NewHashQueries(1 * time.Second)
 
 	// Set a new key/value
-	mapttl.Set(uint64(1), float64(0))
+	mapttl.Set(uint64(1), int64(0))
 
 	// sleep during 2 seconds
 	time.Sleep(2 * time.Second)
@@ -43,7 +43,7 @@ func Benchmark_HashQueries_Set(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		mapexpire.Set(uint64(i), float64(i))
+		mapexpire.Set(uint64(i), int64(i))
 	}
 }
 
@@ -51,7 +51,7 @@ func Benchmark_HashQueries_Delete(b *testing.B) {
 	mapexpire := NewHashQueries(60 * time.Second)
 
 	for i := 0; i < b.N; i++ {
-		mapexpire.Set(uint64(i), float64(i))
+		mapexpire.Set(uint64(i), int64(i))
 	}
 
 	b.ResetTimer()
@@ -65,7 +65,7 @@ func Benchmark_HashQueries_Get(b *testing.B) {
 	mapexpire := NewHashQueries(60 * time.Second)
 
 	for i := 0; i < b.N; i++ {
-		mapexpire.Set(uint64(i), float64(i))
+		mapexpire.Set(uint64(i), int64(i))
 	}
 
 	b.ResetTimer()
@@ -82,7 +82,7 @@ func Benchmark_HashQueries_Get(b *testing.B) {
 func Benchmark_HashQueries_ConcurrentGet(b *testing.B) {
 	mapexpire := NewHashQueries(60 * time.Second)
 	for i := 0; i < b.N; i++ {
-		mapexpire.Set(uint64(i), float64(i))
+		mapexpire.Set(uint64(i), int64(i))
 	}
 
 	var wg sync.WaitGroup
