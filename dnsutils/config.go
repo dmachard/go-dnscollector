@@ -3,6 +3,7 @@ package dnsutils
 import (
 	"os"
 
+	"github.com/prometheus/prometheus/model/relabel"
 	"gopkg.in/yaml.v3"
 )
 
@@ -347,20 +348,21 @@ type Config struct {
 			Organization  string `yaml:"organization"`
 		} `yaml:"influxdb"`
 		LokiClient struct {
-			Enable         bool   `yaml:"enable"`
-			ServerURL      string `yaml:"server-url"`
-			JobName        string `yaml:"job-name"`
-			Mode           string `yaml:"mode"`
-			FlushInterval  int    `yaml:"flush-interval"`
-			BatchSize      int    `yaml:"batch-size"`
-			RetryInterval  int    `yaml:"retry-interval"`
-			TextFormat     string `yaml:"text-format"`
-			ProxyURL       string `yaml:"proxy-url"`
-			TlsInsecure    bool   `yaml:"tls-insecure"`
-			TlsMinVersion  string `yaml:"tls-min-version"`
-			BasicAuthLogin string `yaml:"basic-auth-login"`
-			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
-			TenantId       string `yaml:"tenant-id"`
+			Enable         bool              `yaml:"enable"`
+			ServerURL      string            `yaml:"server-url"`
+			JobName        string            `yaml:"job-name"`
+			Mode           string            `yaml:"mode"`
+			FlushInterval  int               `yaml:"flush-interval"`
+			BatchSize      int               `yaml:"batch-size"`
+			RetryInterval  int               `yaml:"retry-interval"`
+			TextFormat     string            `yaml:"text-format"`
+			ProxyURL       string            `yaml:"proxy-url"`
+			TlsInsecure    bool              `yaml:"tls-insecure"`
+			TlsMinVersion  string            `yaml:"tls-min-version"`
+			BasicAuthLogin string            `yaml:"basic-auth-login"`
+			BasicAuthPwd   string            `yaml:"basic-auth-pwd"`
+			TenantId       string            `yaml:"tenant-id"`
+			RelabelConfigs []*relabel.Config `yaml:"relabel-configs"`
 		} `yaml:"lokiclient"`
 		Statsd struct {
 			Enable        bool   `yaml:"enable"`
