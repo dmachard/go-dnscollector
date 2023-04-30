@@ -55,7 +55,7 @@ func Test_LokiClientRun(t *testing.T) {
 
 			// send fake dns message to logger
 			dm := dnsutils.GetFakeDnsMessage()
-			dm.DnsTap.Identity = "test_id"
+			dm.DnsTap.Identity = dnsutils.DNSTAP_IDENTITY_TEST
 			g.channel <- dm
 
 			// accept conn
@@ -158,7 +158,7 @@ func Test_LokiClientRelabel(t *testing.T) {
 
 				// send fake dns message to logger
 				dm := dnsutils.GetFakeDnsMessage()
-				dm.DnsTap.Identity = "test_id"
+				dm.DnsTap.Identity = dnsutils.DNSTAP_IDENTITY_TEST
 				g.channel <- dm
 
 				// accept conn
