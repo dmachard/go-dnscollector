@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -206,7 +205,7 @@ LOOP:
 	for {
 		select {
 		case <-o.exit:
-			o.logger.Info("closing loop...")
+			o.LogInfo("closing loop...")
 			break LOOP
 
 		case <-o.transportReady:
@@ -237,7 +236,7 @@ LOOP:
 		// flush the buffer
 		case <-flushTimer.C:
 			if !o.writerReady {
-				fmt.Println("buffer cleared!")
+				o.LogInfo("buffer cleared!")
 				bufferDm = nil
 				continue
 			}

@@ -77,10 +77,16 @@ multiplexer:
     - name: console
       stdout:
         mode: text
+    - name: kafka
+      kafkaproducer:
+        remote-address: 192.168.1.221
+        remote-port: 9092
+        topic: dnscollector
+        mode: flat-json
 
   routes:
     - from: [ tap ]
-      to: [ console ]
+      to: [ console, kafka ]
 
 ################################################
 # list of supported collectors

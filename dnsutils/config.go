@@ -409,6 +409,22 @@ type Config struct {
 			ConnectTimeout   int    `yaml:"connect-timeout"`
 			RedisChannel     string `yaml:"redis-channel"`
 		} `yaml:"redispub"`
+		KafkaProducer struct {
+			Enable         bool   `yaml:"enable"`
+			RemoteAddress  string `yaml:"remote-address"`
+			RemotePort     int    `yaml:"remote-port"`
+			RetryInterval  int    `yaml:"retry-interval"`
+			Transport      string `yaml:"transport"`
+			TlsSupport     bool   `yaml:"tls-support"`
+			TlsInsecure    bool   `yaml:"tls-insecure"`
+			TlsMinVersion  string `yaml:"tls-min-version"`
+			Mode           string `yaml:"mode"`
+			BatchSize      int    `yaml:"batch-size"`
+			FlushInterval  int    `yaml:"flush-interval"`
+			ConnectTimeout int    `yaml:"connect-timeout"`
+			Topic          string `yaml:"topic"`
+			Partition      int    `yaml:"partition"`
+		} `yaml:"kafkaproducer"`
 	} `yaml:"loggers"`
 
 	OutgoingTransformers ConfigTransformers `yaml:"outgoing-transformers"`
@@ -643,6 +659,21 @@ func (c *Config) SetDefault() {
 	c.Loggers.RedisPub.ConnectTimeout = 5
 	c.Loggers.RedisPub.FlushInterval = 30
 	c.Loggers.RedisPub.RedisChannel = "dns_collector"
+
+	c.Loggers.KafkaProducer.Enable = false
+	c.Loggers.KafkaProducer.RemoteAddress = LOCALHOST_IP
+	c.Loggers.KafkaProducer.RemotePort = 9092
+	c.Loggers.KafkaProducer.RetryInterval = 10
+	c.Loggers.KafkaProducer.Transport = SOCKET_TCP
+	c.Loggers.KafkaProducer.TlsSupport = false
+	c.Loggers.KafkaProducer.TlsInsecure = false
+	c.Loggers.KafkaProducer.TlsMinVersion = TLS_v12
+	c.Loggers.KafkaProducer.Mode = MODE_FLATJSON
+	c.Loggers.KafkaProducer.BatchSize = 100
+	c.Loggers.KafkaProducer.ConnectTimeout = 5
+	c.Loggers.KafkaProducer.FlushInterval = 10
+	c.Loggers.KafkaProducer.Topic = "dnscollector"
+	c.Loggers.KafkaProducer.Partition = 0
 
 	// Transformers for loggers
 	c.OutgoingTransformers.SetDefault()
