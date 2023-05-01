@@ -409,6 +409,10 @@ type Config struct {
 			ConnectTimeout   int    `yaml:"connect-timeout"`
 			RedisChannel     string `yaml:"redis-channel"`
 		} `yaml:"redispub"`
+		FalcoClient struct {
+			Enable bool   `yaml:"enable"`
+			URL    string `yaml:"url"`
+		} `yaml:"falco"`
 	} `yaml:"loggers"`
 
 	OutgoingTransformers ConfigTransformers `yaml:"outgoing-transformers"`
@@ -643,6 +647,9 @@ func (c *Config) SetDefault() {
 	c.Loggers.RedisPub.ConnectTimeout = 5
 	c.Loggers.RedisPub.FlushInterval = 30
 	c.Loggers.RedisPub.RedisChannel = "dns_collector"
+
+	c.Loggers.FalcoClient.Enable = false
+	c.Loggers.FalcoClient.URL = "http://127.0.0.1:9200"
 
 	// Transformers for loggers
 	c.OutgoingTransformers.SetDefault()
