@@ -3,6 +3,7 @@ package loggers
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"strconv"
 	"strings"
@@ -12,6 +13,8 @@ import (
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl/plain"
+	"github.com/segmentio/kafka-go/sasl/scram"
 )
 
 type KafkaProducer struct {
@@ -109,8 +112,44 @@ func (o *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Tim
 		o.LogInfo("connecting to kafka=%s partition=%d topic=%s", address, partition, topic)
 
 		dialer := &kafka.Dialer{
-			Timeout:  time.Duration(o.config.Loggers.KafkaProducer.ConnectTimeout) * time.Second,
-			Deadline: time.Now().Add(5 * time.Second),
+			Timeout:   time.Duration(o.config.Loggers.KafkaProducer.ConnectTimeout) * time.Second,
+			Deadline:  time.Now().Add(5 * time.Second),
+			DualStack: true,
+		}
+
+		// enable TLS
+		if o.config.Loggers.KafkaProducer.TlsSupport {
+			tlsConfig := &tls.Config{
+				MinVersion:         tls.VersionTLS12,
+				InsecureSkipVerify: false,
+			}
+			tlsConfig.InsecureSkipVerify = o.config.Loggers.TcpClient.TlsInsecure
+			tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.TcpClient.TlsMinVersion]
+
+			dialer.TLS = tlsConfig
+		}
+
+		// SASL Support
+		if o.config.Loggers.KafkaProducer.SaslSupport {
+			switch o.config.Loggers.KafkaProducer.SaslMechanism {
+			case dnsutils.SASL_MECHANISM_PLAIN:
+				mechanism := plain.Mechanism{
+					Username: o.config.Loggers.KafkaProducer.SaslUsername,
+					Password: o.config.Loggers.KafkaProducer.SaslPassword,
+				}
+				dialer.SASLMechanism = mechanism
+			case dnsutils.SASL_MECHANISM_SCRAM:
+				mechanism, err := scram.Mechanism(
+					scram.SHA512,
+					o.config.Loggers.KafkaProducer.SaslUsername,
+					o.config.Loggers.KafkaProducer.SaslPassword,
+				)
+				if err != nil {
+					panic(err)
+				}
+				dialer.SASLMechanism = mechanism
+			}
+
 		}
 
 		conn, err := dialer.DialLeader(ctx, "tcp", address, topic, partition)
@@ -225,7 +264,7 @@ LOOP:
 			bufferDm = append(bufferDm, dm)
 
 			// buffer is full ?
-			if len(bufferDm) >= o.config.Loggers.KafkaProducer.BatchSize {
+			if len(bufferDm) >= o.config.Loggers.KafkaProducer.BufferSize {
 				o.FlushBuffer(&bufferDm)
 			}
 

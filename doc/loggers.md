@@ -14,6 +14,7 @@
 - [ElasticSearch](#elasticsearch-client)
 - [Scalyr](#scalyr-client)
 - [Redispub](#redispub)
+- [Kafka](#kafkaproducer)
 
 ## Loggers
 
@@ -24,7 +25,7 @@ Print to your standard output, all DNS logs received
 * custom text format
 
 Options:
-- `mode`: (string) text or json
+- `mode`: (string) output format: text, json, or flat-json
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 
 Default values:
@@ -142,7 +143,7 @@ Options:
 - `compress`: (boolean) compress log file
 - `compress-interval`: (integer) checking every X seconds if new log files must be compressed
 - `compress-command`: (string) run external script after file compress step
-- `mode`: (string)  output format: text|json|pcap|dnstap|flat-json
+- `mode`: (string)  output format: text, json, flat-json, pcap or dnstap
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 - `postrotate-command`: (string) run external script after file rotation
 - `postrotate-delete-success`: (boolean) delete file on script success
@@ -247,8 +248,8 @@ Tcp/unix stream client logger.
 
 Options:
 - `transport`: (string) network transport to use: tcp|unix
-- `listen-ip`: (string) remote address
-- `listen-port`: (integer) remote tcp port
+- `remote-ip`: (string) remote address
+- `remote-port`: (integer) remote tcp port
 - `sock-path`: (string) unix socket path
 - `connect-timeout`: (integer) connect timeout in second
 - `retry-interval`: (integer) interval in second between retry reconnect
@@ -256,7 +257,7 @@ Options:
 - `tls-support`: (boolean) enable tls
 - `tls-insecure`: (boolean) insecure skip verify
 - `tls-min-version`: (string) min tls version, default to 1.2
-- `mode`: (string)  output format: text|json
+- `mode`: (string) output format: text, json, or flat-json
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 - `buffer-size`: (integer) number of dns messages in buffer
 
@@ -291,7 +292,7 @@ Options:
 - `facility`: (string) Set the syslog logging facility
 - `transport`: (string) Transport to use to a remote log daemon or local one. local|tcp|udp|unix
 - `remote-address`: (string) Remote address host:port
-- `mode`: (string) text, json or flat-json
+- `mode`: (string) output format: text, json, or flat-json
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 - `tls-support`: (boolean) enable tls
 - `tls-insecure`: (boolean) insecure skip verify
@@ -386,7 +387,7 @@ Loki client to remote server
 Options:
 - `server-url`: (string) Loki server url
 - `job-name`: (string) Job name
-- `mode`: (string) text, json or flat json
+- `mode`: (string) output format: text, json, or flat-json
 - `flush-interval`: (integer) flush batch every X seconds
 - `batch-size`: (integer) batch size for log entries in bytes
 - `retry-interval`: (integer) interval in second between before to retry to send batch
@@ -538,7 +539,7 @@ Options:
 - `tls-support`: (boolean) enable tls
 - `tls-insecure`: (boolean) insecure skip verify
 - `tls-min-version`: (string) min tls version, default to 1.2
-- `mode`: (string)  output format: text|json
+- `mode`: (string)  output format: text, json, or flat-json
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 - `buffer-size`: (integer) number of dns messages in buffer
 - `redis-channel`: (string) name of the redis pubsub channel to publish into
@@ -561,4 +562,48 @@ redispub:
   text-format: ""
   buffer-size: 100
   redis-channel: dns-collector
+```
+
+### Kafka Producer
+
+Kafka producer
+
+Options:
+- `remote-ip`: (string) remote address
+- `remote-port`: (integer) remote tcp port
+- `connect-timeout`: (integer) connect timeout in second
+- `retry-interval`: (integer) interval in second between retry reconnect
+- `flush-interval`: (integer) interval in second before to flush the buffer
+- `tls-support`: (boolean) enable tls
+- `tls-insecure`: (boolean) insecure skip verify
+- `tls-min-version`: (string) min tls version, default to 1.2
+- `sasl-support`: (boolean) enable SASL
+- `sasl-username`: (string) SASL username
+- `sasl-password`: (string) SASL password
+- `sasl-mechanism`: (string) SASL mechanism: PLAIN or SCRAM-SHA-512
+- `mode`: (string)  output format: text, json, or flat-json
+- `buffer-size`: (integer) how many DNS messages will be buffered before being sent
+- `topic`: (integer) kafka topic to forward messages to
+- `partition`: (integer) kafka partition
+
+Default values:
+
+```yaml
+kafkaproducer:
+  remote-address: 127.0.0.1
+  remote-port: 9092
+  connect-timeout: 5
+  retry-interval: 10
+  flush-interval: 30
+  tls-support: false
+  tls-insecure: false
+  tls-min-version: 1.2
+  sasl-support: false
+  sasl-mechanism: PLAIN
+  sasl-username: ""
+  sasl-password: ""
+  mode: flat-json
+  buffer-size: 100
+  topic: "dnscollector"
+  partition: 0
 ```

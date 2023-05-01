@@ -414,12 +414,15 @@ type Config struct {
 			RemoteAddress  string `yaml:"remote-address"`
 			RemotePort     int    `yaml:"remote-port"`
 			RetryInterval  int    `yaml:"retry-interval"`
-			Transport      string `yaml:"transport"`
 			TlsSupport     bool   `yaml:"tls-support"`
 			TlsInsecure    bool   `yaml:"tls-insecure"`
 			TlsMinVersion  string `yaml:"tls-min-version"`
+			SaslSupport    bool   `yaml:"sasl-support"`
+			SaslUsername   string `yaml:"sasl-username"`
+			SaslPassword   string `yaml:"sasl-password"`
+			SaslMechanism  string `yaml:"sasl-mechanism"`
 			Mode           string `yaml:"mode"`
-			BatchSize      int    `yaml:"batch-size"`
+			BufferSize     int    `yaml:"buffer-size"`
 			FlushInterval  int    `yaml:"flush-interval"`
 			ConnectTimeout int    `yaml:"connect-timeout"`
 			Topic          string `yaml:"topic"`
@@ -664,12 +667,15 @@ func (c *Config) SetDefault() {
 	c.Loggers.KafkaProducer.RemoteAddress = LOCALHOST_IP
 	c.Loggers.KafkaProducer.RemotePort = 9092
 	c.Loggers.KafkaProducer.RetryInterval = 10
-	c.Loggers.KafkaProducer.Transport = SOCKET_TCP
 	c.Loggers.KafkaProducer.TlsSupport = false
 	c.Loggers.KafkaProducer.TlsInsecure = false
 	c.Loggers.KafkaProducer.TlsMinVersion = TLS_v12
+	c.Loggers.KafkaProducer.SaslSupport = false
+	c.Loggers.KafkaProducer.SaslUsername = ""
+	c.Loggers.KafkaProducer.SaslPassword = ""
+	c.Loggers.KafkaProducer.SaslMechanism = SASL_MECHANISM_PLAIN
 	c.Loggers.KafkaProducer.Mode = MODE_FLATJSON
-	c.Loggers.KafkaProducer.BatchSize = 100
+	c.Loggers.KafkaProducer.BufferSize = 100
 	c.Loggers.KafkaProducer.ConnectTimeout = 5
 	c.Loggers.KafkaProducer.FlushInterval = 10
 	c.Loggers.KafkaProducer.Topic = "dnscollector"
