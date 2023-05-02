@@ -443,7 +443,14 @@ multiplexer:
 #   # basic auth password
 #   basic-auth-pwd: ""
 #   # tenant/organisation id. If omitted or empty, no X-Scope-OrgID header is sent.
-#   tenant-id: ""
+#   tenant-id: "" 
+#   # Describes how to relabel targets.
+#   # Usage very similar to https://grafana.com/docs/loki/latest/clients/promtail/configuration/#relabel_configs.
+#   # Labels are accessible by prefixing with `__` and using the key name as used
+#   # when outputting in the flat-json mode with `.` replaced by `_`.
+#   relabel-configs:
+#     - source_labels: ["__dns_qtype"]
+#       target_label: "qtype"
 
 # # forward to statsd proxy
 # statsd:

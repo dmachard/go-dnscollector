@@ -30,10 +30,12 @@ import (
 		go mod tidy
 	*/
 	"github.com/grafana/loki/pkg/logproto"
+	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/model/relabel"
 )
 
 type LokiStream struct {
-	name        string
+	labels      labels.Labels
 	config      *dnsutils.Config
 	logger      *logger.Logger
 	stream      *logproto.Stream
@@ -44,7 +46,7 @@ type LokiStream struct {
 func (o *LokiStream) Init() {
 	// prepare stream with label name
 	o.stream = &logproto.Stream{}
-	o.stream.Labels = "{job=\"" + o.config.Loggers.LokiClient.JobName + "\", identity=\"" + o.name + "\"}"
+	o.stream.Labels = o.labels.String()
 
 	// creates push request
 	o.pushrequest = &logproto.PushRequest{
@@ -179,6 +181,7 @@ func (o *LokiClient) Run() {
 
 	// prepare buffer
 	buffer := new(bytes.Buffer)
+	var byteBuffer []byte
 
 	// prepare timers
 	tflush_interval := time.Duration(o.config.Loggers.LokiClient.FlushInterval) * time.Second
@@ -192,10 +195,42 @@ LOOP:
 			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 				continue
 			}
-
-			if _, ok := o.streams[dm.DnsTap.Identity]; !ok {
-				o.streams[dm.DnsTap.Identity] = &LokiStream{config: o.config, logger: o.logger, name: dm.DnsTap.Identity}
-				o.streams[dm.DnsTap.Identity].Init()
+			lbls := labels.Labels{
+				labels.Label{Name: "identity", Value: dm.DnsTap.Identity},
+				labels.Label{Name: "job", Value: o.config.Loggers.LokiClient.JobName},
+			}
+			var err error
+			var flat map[string]interface{}
+			if len(o.config.Loggers.LokiClient.RelabelConfigs) > 0 {
+				// Save flattened JSON in case it's used when populating the message of the log entry.
+				// There is more room for improvement for reusing data though. Flatten() internally
+				// does a JSON encode of the DnsMessage, but it's not saved to use when the mode
+				// is JSON.
+				flat, err = dm.Flatten()
+				if err != nil {
+					o.LogError("flattening DNS message failed: %e", err)
+				}
+				sb := labels.NewScratchBuilder(len(lbls) + len(flat))
+				sb.Assign(lbls)
+				for k, v := range flat {
+					sb.Add(fmt.Sprintf("__%s", strings.ReplaceAll(k, ".", "_")), fmt.Sprint(v))
+				}
+				sb.Sort()
+				lbls, _ = relabel.Process(sb.Labels(), o.config.Loggers.LokiClient.RelabelConfigs...)
+				// Drop all labels starting with __ from the map if a relabel config is used.
+				// These labels are just exposed to relabel for the user and should not be
+				// shipped to loki by default.
+				lb := labels.NewBuilder(lbls)
+				lbls.Range(func(l labels.Label) {
+					if l.Name[0:2] == "__" {
+						lb.Del(l.Name)
+					}
+				})
+				lbls = lb.Labels(lbls)
+				if len(lbls) == 0 {
+					o.LogInfo("dropping %v since it has no labels", dm)
+					continue
+				}
 			}
 
 			// prepare entry
@@ -212,27 +247,36 @@ LOOP:
 				entry.Line = buffer.String()
 				buffer.Reset()
 			case dnsutils.MODE_FLATJSON:
-				flat, err := dm.Flatten()
-				if err != nil {
-					o.LogError("flattening DNS message failed: %e", err)
+				if len(flat) == 0 {
+					flat, err = dm.Flatten()
+					if err != nil {
+						o.LogError("flattening DNS message failed: %e", err)
+					}
 				}
 				json.NewEncoder(buffer).Encode(flat)
 				entry.Line = buffer.String()
 				buffer.Reset()
 			}
-			o.streams[dm.DnsTap.Identity].sizeentries += len(entry.Line)
+			key := string(lbls.Bytes(byteBuffer))
+			ls, ok := o.streams[key]
+			if !ok {
+				ls = &LokiStream{config: o.config, logger: o.logger, labels: lbls}
+				ls.Init()
+				o.streams[key] = ls
+			}
+			ls.sizeentries += len(entry.Line)
 
 			// append entry to the stream
-			o.streams[dm.DnsTap.Identity].stream.Entries = append(o.streams[dm.DnsTap.Identity].stream.Entries, entry)
+			ls.stream.Entries = append(ls.stream.Entries, entry)
 
 			// flush ?
-			if o.streams[dm.DnsTap.Identity].sizeentries >= o.config.Loggers.LokiClient.BatchSize {
+			if ls.sizeentries >= o.config.Loggers.LokiClient.BatchSize {
 				// encode log entries
-				buf, err := o.streams[dm.DnsTap.Identity].Encode2Proto()
+				buf, err := ls.Encode2Proto()
 				if err != nil {
 					o.LogError("error encoding log entries - %v", err)
 					// reset push request and entries
-					o.streams[dm.DnsTap.Identity].ResetEntries()
+					ls.ResetEntries()
 					return
 				}
 
@@ -240,7 +284,7 @@ LOOP:
 				o.SendEntries(buf)
 
 				// reset entries and push request
-				o.streams[dm.DnsTap.Identity].ResetEntries()
+				ls.ResetEntries()
 			}
 
 		case <-tflush.C:
