@@ -61,7 +61,7 @@ global:
   # default text field boundary
   text-format-boundary: "\""
 
-# create your dns collector, please refer bellow to see the list 
+# create your dns collector, please refer bellow to see the list
 # of supported collectors, loggers and transformers
 multiplexer:
   collectors:
@@ -219,7 +219,7 @@ multiplexer:
 #   cert-file: ""
 #   # private key server file
 #   key-file: ""
-#   # default number of items on top 
+#   # default number of items on top
 #   top-n: 100
 
 # # prometheus metrics server
@@ -244,7 +244,7 @@ multiplexer:
 #   key-file: ""
 #   # prometheus prefix
 #   prometheus-prefix: "dnscollector"
-#   # default number of items on top 
+#   # default number of items on top
 #   top-n: 10
 
 # # write captured dns traffic to text or binary files with rotation and compression support
@@ -264,7 +264,7 @@ multiplexer:
 #   # compress interval
 #   # checking every X seconds if new log files must be compressed
 #   compress-interval: 5
-#   # run external script after each file compress step 
+#   # run external script after each file compress step
 #   compress-postcommand: null
 #   # output format: text|json|pcap|dnstap|flat-json
 #   mode: text
@@ -352,9 +352,9 @@ multiplexer:
 
 # # redirect captured dns traffic to a remote syslog server or local one
 # syslog:
-#   # Set the syslog logging severity 
+#   # Set the syslog logging severity
 #   severity: INFO
-#   # Set the syslog logging facility 
+#   # Set the syslog logging facility
 #   facility: DAEMON
 #   # Transport to use to a remote log daemon or local one
 #   # local|tcp|udp|unix or tcp+tls
@@ -431,7 +431,7 @@ multiplexer:
 #   batch-size: 1048576
 #   # interval in second between before to retry to send log entries
 #   retry-interval: 10
-#   # output text format, please refer to the default text format to see all available directives 
+#   # output text format, please refer to the default text format to see all available directives
 #   # use this parameter if you want a specific format
 #   text-format: "localtime identity qr queryip family protocol qname qtype rcode"
 #   # Proxy URL
@@ -495,6 +495,11 @@ multiplexer:
 #   # tls min version
 #   tls-min-version: 1.2
 
+# # Send captured traffic to falco (https://falco.org/), for security and advanced inspection
+# falco:
+#   # remote falco plugin endpoint
+#   url: "http://127.0.0.1:9200"
+
 ################################################
 # list of transforms to apply on collectors or loggers
 ################################################
@@ -538,7 +543,7 @@ multiplexer:
 # normalize:
 #   # Wwww.GooGlE.com will be equal to www.google.com
 #   qname-lowercase: true
-#   # add top level domain 
+#   # add top level domain
 #   add-tld: false
 #   # add top level domain plus one label
 #   add-tld-plus-one: false

@@ -9,7 +9,7 @@
 
 `DNS-collector` acts as a passive high speed **ingestor, aggregator and analyzer** for your DNS traffic, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously [sources](doc/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](doc/loggers.md) with some [transformations](doc/transformers.md) on it ([traffic filtering](doc/transformers.md#dns-filtering), [user privacy](doc/transformers.md#user-privacy), ...) and DNS protocol conversions (to [plain text](doc/configuration.md#custom-text-format), [json](doc/dnsjson.md), and more... ).
 
-Additionally, DNS-collector also support 
+Additionally, DNS-collector also support
 - [Extension Mechanisms for DNS (EDNS)](doc/dnsparser.md) decoding
 - IPv4/v6 defragmentation and TCP reassembly
 - Nanoseconds in timestamps
@@ -50,6 +50,8 @@ Additionally, DNS-collector also support
     - [`ElasticSearch`](doc/loggers.md#elasticsearch-client)
     - [`Scalyr`](doc/loggers.md#scalyr-client)
     - [`Redis`](doc/loggers.md#redispub)
+- *Send to security tools*
+    - [`Falco`](doc/loggers.md#falco)
 
 **Transformers**:
 
@@ -92,7 +94,7 @@ If you prefer run it from docker, follow this [guide](doc/docker.md).
 
 ## Configuration
 
-The configuration of DNS-collector is done through a file named [`config.yml`](config.yml). When the DNS-collector starts, it will look for the config.yml from the current working directory. 
+The configuration of DNS-collector is done through a file named [`config.yml`](config.yml). When the DNS-collector starts, it will look for the config.yml from the current working directory.
 
 See the full [configuration guide](doc/configuration.md) for more details.
 
@@ -127,7 +129,7 @@ You will find below some examples of configuration to manage your DNS logs.
 - Capture DNS traffic from PCAP files
     - [x] [Capture DNSTap stream and backup-it to text and pcap files](example-config/use-case-1.yml)
     - [x] [Watch for PCAP files as input and JSON as output](example-config/use-case-15.yml)
-    
+
 - Capture DNS traffic from Mikrotik device
     - [x] [Capture TZSP packets containing DNS packets and process them as json](example-config/use-case-17.yml)
 
