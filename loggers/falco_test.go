@@ -20,7 +20,7 @@ func Test_FalcoClient(t *testing.T) {
 	}{
 		{
 			mode:    dnsutils.MODE_JSON,
-			pattern: "\"dns.qname\":\"dns.collector\"",
+			pattern: "\"qname\":\"dns.collector\"",
 		},
 	}
 

@@ -50,7 +50,7 @@ func (c *FalcoClient) LogInfo(msg string, v ...interface{}) {
 }
 
 func (c *FalcoClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger to stdout - "+msg, v...)
+	c.logger.Error("["+c.name+"] logger to falco - "+msg, v...)
 }
 
 func (f *FalcoClient) Stop() {
@@ -81,6 +81,7 @@ func (f *FalcoClient) Run() {
 
 		buffer := new(bytes.Buffer)
 		json.NewEncoder(buffer).Encode(dm)
+
 		req, _ := http.NewRequest("POST", f.url, buffer)
 		req.Header.Set("Content-Type", "application/json")
 		client := &http.Client{
