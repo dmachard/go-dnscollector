@@ -50,6 +50,7 @@ Additionally, DNS-collector also support
     - [`ElasticSearch`](doc/loggers.md#elasticsearch-client)
     - [`Scalyr`](doc/loggers.md#scalyr-client)
     - [`Redis`](doc/loggers.md#redispub)
+    - [`Kafka`](doc/loggers.md#kafkaproducer)
 - *Send to security tools*
     - [`Falco`](doc/loggers.md#falco)
 
