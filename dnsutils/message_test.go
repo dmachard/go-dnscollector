@@ -159,3 +159,252 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 		})
 	}
 }
+
+func TestDnsMessage_TextFormat_Directives_PublicSuffix(t *testing.T) {
+	config := GetFakeConfig()
+
+	testcases := []struct {
+		name     string
+		format   string
+		dm       DnsMessage
+		expected string
+	}{
+		{
+			name:     "undefined",
+			format:   "publixsuffix-tld",
+			dm:       DnsMessage{},
+			expected: "-",
+		},
+		{
+			name:     "default",
+			format:   "publixsuffix-tld publixsuffix-etld+1",
+			dm:       DnsMessage{PublicSuffix: &PublicSuffix{QnamePublicSuffix: "com", QnameEffectiveTLDPlusOne: "google.com"}},
+			expected: "com google.com",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			line := tc.dm.String(
+				strings.Fields(tc.format),
+				config.Global.TextFormatDelimiter,
+				config.Global.TextFormatBoundary,
+			)
+			if line != tc.expected {
+				t.Errorf("Want: %s, got: %s", tc.expected, line)
+			}
+		})
+	}
+}
+
+func TestDnsMessage_TextFormat_Directives_Geo(t *testing.T) {
+	config := GetFakeConfig()
+
+	testcases := []struct {
+		name     string
+		format   string
+		dm       DnsMessage
+		expected string
+	}{
+		{
+			name:     "undefined",
+			format:   "geoip-continent",
+			dm:       DnsMessage{},
+			expected: "-",
+		},
+		{
+			name:   "default",
+			format: "geoip-continent geoip-country geoip-city geoip-as-number geoip-as-owner",
+			dm: DnsMessage{Geo: &DnsGeo{City: "Paris", Continent: "Europe",
+				CountryIsoCode: "FR", AutonomousSystemNumber: "AS1", AutonomousSystemOrg: "Google"}},
+			expected: "Europe FR Paris AS1 Google",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			line := tc.dm.String(
+				strings.Fields(tc.format),
+				config.Global.TextFormatDelimiter,
+				config.Global.TextFormatBoundary,
+			)
+			if line != tc.expected {
+				t.Errorf("Want: %s, got: %s", tc.expected, line)
+			}
+		})
+	}
+}
+
+func TestDnsMessage_TextFormat_Directives_Pdns(t *testing.T) {
+	config := GetFakeConfig()
+
+	testcases := []struct {
+		name     string
+		format   string
+		dm       DnsMessage
+		expected string
+	}{
+		{
+			name:     "undefined",
+			format:   "powerdns-tags",
+			dm:       DnsMessage{},
+			expected: "-",
+		},
+		{
+			name:     "empty_attributes",
+			format:   "powerdns-tags powerdns-applied-policy powerdns-original-request-subnet powerdns-metadata",
+			dm:       DnsMessage{PowerDns: &PowerDns{}},
+			expected: "- - - -",
+		},
+		{
+			name:     "applied_policy",
+			format:   "powerdns-applied-policy",
+			dm:       DnsMessage{PowerDns: &PowerDns{AppliedPolicy: "test"}},
+			expected: "test",
+		},
+		{
+			name:     "original_request_subnet",
+			format:   "powerdns-original-request-subnet",
+			dm:       DnsMessage{PowerDns: &PowerDns{OriginalRequestSubnet: "test"}},
+			expected: "test",
+		},
+		{
+			name:     "metadata_badsyntax",
+			format:   "powerdns-metadata",
+			dm:       DnsMessage{PowerDns: &PowerDns{Metadata: map[string]string{"test_key1": "test_value1"}}},
+			expected: "-",
+		},
+		{
+			name:     "metadata",
+			format:   "powerdns-metadata:test_key1",
+			dm:       DnsMessage{PowerDns: &PowerDns{Metadata: map[string]string{"test_key1": "test_value1"}}},
+			expected: "test_value1",
+		},
+		{
+			name:     "metadata_invalid",
+			format:   "powerdns-metadata:test_key2",
+			dm:       DnsMessage{PowerDns: &PowerDns{Metadata: map[string]string{"test_key1": "test_value1"}}},
+			expected: "-",
+		},
+		{
+			name:     "tags_all",
+			format:   "powerdns-tags",
+			dm:       DnsMessage{PowerDns: &PowerDns{Tags: []string{"tag1", "tag2"}}},
+			expected: "tag1,tag2",
+		},
+		{
+			name:     "tags_index",
+			format:   "powerdns-tags:1",
+			dm:       DnsMessage{PowerDns: &PowerDns{Tags: []string{"tag1", "tag2"}}},
+			expected: "tag2",
+		},
+		{
+			name:     "tags_invalid_index",
+			format:   "powerdns-tags:3",
+			dm:       DnsMessage{PowerDns: &PowerDns{Tags: []string{"tag1", "tag2"}}},
+			expected: "-",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			line := tc.dm.String(
+				strings.Fields(tc.format),
+				config.Global.TextFormatDelimiter,
+				config.Global.TextFormatBoundary,
+			)
+			if line != tc.expected {
+				t.Errorf("Want: %s, got: %s", tc.expected, line)
+			}
+		})
+	}
+}
+
+func TestDnsMessage_TextFormat_Directives_Suspicious(t *testing.T) {
+	config := GetFakeConfig()
+
+	testcases := []struct {
+		name     string
+		format   string
+		dm       DnsMessage
+		expected string
+	}{
+		{
+			name:     "undefined",
+			format:   "suspicious-score",
+			dm:       DnsMessage{},
+			expected: "-",
+		},
+		{
+			name:     "default",
+			format:   "suspicious-score",
+			dm:       DnsMessage{Suspicious: &Suspicious{Score: 4.0}},
+			expected: "4",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			line := tc.dm.String(
+				strings.Fields(tc.format),
+				config.Global.TextFormatDelimiter,
+				config.Global.TextFormatBoundary,
+			)
+			if line != tc.expected {
+				t.Errorf("Want: %s, got: %s", tc.expected, line)
+			}
+		})
+	}
+}
+
+func TestDnsMessage_TextFormat_Directives_Extracted(t *testing.T) {
+	config := GetFakeConfig()
+
+	testcases := []struct {
+		name     string
+		format   string
+		dm       DnsMessage
+		expected string
+	}{
+		{
+			name:     "undefined",
+			format:   "extracted-dns-payload",
+			dm:       DnsMessage{},
+			expected: "-",
+		},
+		{
+			name:   "default",
+			format: "extracted-dns-payload",
+			dm: DnsMessage{Extracted: &Extracted{}, DNS: Dns{Payload: []byte{
+				0x9e, 0x84, 0x01, 0x20, 0x00, 0x03, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00,
+				// query 1
+				0x01, 0x61, 0x00,
+				// type A, class IN
+				0x00, 0x01, 0x00, 0x01,
+				// query 2
+				0x01, 0x62, 0x00,
+				// type A, class IN
+				0x00, 0x01, 0x00, 0x01,
+				// query 3
+				0x01, 0x63, 0x00,
+				// type AAAA, class IN
+				0x00, 0x1c, 0x00, 0x01,
+			}}},
+			expected: "noQBIAADAAAAAAAAAWEAAAEAAQFiAAABAAEBYwAAHAAB",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			line := tc.dm.String(
+				strings.Fields(tc.format),
+				config.Global.TextFormatDelimiter,
+				config.Global.TextFormatBoundary,
+			)
+			if line != tc.expected {
+				t.Errorf("Want: %s, got: %s", tc.expected, line)
+			}
+		})
+	}
+}

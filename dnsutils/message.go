@@ -308,7 +308,7 @@ func (dm *DnsMessage) handlePdnsDirectives(directives []string, s *bytes.Buffer)
 }
 
 func (dm *DnsMessage) handleSuspiciousDirectives(directives []string, s *bytes.Buffer) {
-	if dm.PowerDns == nil {
+	if dm.Suspicious == nil {
 		s.WriteString("-")
 	} else {
 		switch directive := directives[0]; {
@@ -504,6 +504,22 @@ func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 
 func (dm *DnsMessage) String(format []string, fieldDelimiter string, fieldBoundary string) string {
 	return string(dm.Bytes(format, fieldDelimiter, fieldBoundary))
+}
+
+func (dm *DnsMessage) ToJson() string {
+	buffer := new(bytes.Buffer)
+	json.NewEncoder(buffer).Encode(dm)
+	return buffer.String()
+}
+
+func (dm *DnsMessage) ToFlattenJson() (string, error) {
+	buffer := new(bytes.Buffer)
+	flat, err := dm.Flatten()
+	if err != nil {
+		return "", err
+	}
+	json.NewEncoder(buffer).Encode(flat)
+	return buffer.String(), nil
 }
 
 func (dm *DnsMessage) ToDnstap() ([]byte, error) {
