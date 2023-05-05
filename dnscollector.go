@@ -168,6 +168,9 @@ func main() {
 		if subcfg.Loggers.KafkaProducer.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewKafkaProducer(subcfg, logger, output.Name)
 		}
+		if subcfg.Loggers.FalcoClient.Enable && IsLoggerRouted(config, output.Name) {
+			mapLoggers[output.Name] = loggers.NewFalcoClient(subcfg, logger, output.Name)
+		}
 	}
 
 	// load collectors

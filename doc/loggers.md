@@ -15,6 +15,7 @@
 - [Scalyr](#scalyr-client)
 - [Redispub](#redispub)
 - [Kafka](#kafkaproducer)
+- [Falco](#falco)
 
 ## Loggers
 
@@ -191,13 +192,13 @@ mv $1 $BACKUP_FOLDER
 
 For the `PCAP` mode, currently the DNS protocol over UDP is used to log the traffic, the following translations are done.
 
-| Origin protocol        | Translated to                  | 
-| -----------------------|--------------------------------| 
-| DNS/53 over UDP        | DNS UDP/53                     | 
-| DNS/53 over TCP        | DNS UDP/53                     | 
-| DoH/443                | DNS UDP/443                    | 
-| DoT/853                | DoT/853 (no cipher)            | 
-| DoQ                    | Not yet supported              | 
+| Origin protocol        | Translated to                  |
+| -----------------------|--------------------------------|
+| DNS/53 over UDP        | DNS UDP/53                     |
+| DNS/53 over TCP        | DNS UDP/53                     |
+| DoH/443                | DNS UDP/443                    |
+| DoT/853                | DoT/853 (no cipher)            |
+| DoQ                    | Not yet supported              |
 
 
 ### DNStap Client
@@ -399,6 +400,7 @@ Options:
 - `basic-auth-login`: (string) basic auth login
 - `basic-auth-pwd`: (string) basic auth password
 - `tenant-id`: (string) tenant/organisation id. If omitted or empty, no X-Scope-OrgID header is sent.
+- `relabel-configs`: (list) configuration to relabel targets. Functionality like described in https://grafana.com/docs/loki/latest/clients/promtail/configuration/#relabel_configs.
 
 Default values:
 
@@ -417,6 +419,7 @@ lokiclient:
   basic-auth-login: ""
   basic-auth-pwd: ""
   tenant-id: ""
+  relabel-configs: []
 ```
 
 ### Statsd client
@@ -606,4 +609,17 @@ kafkaproducer:
   buffer-size: 100
   topic: "dnscollector"
   partition: 0
+
+### Falco
+
+Falco plugin Logger - Currently available here https://github.com/SysdigDan/dnscollector-falco-plugin
+
+Options:
+- `url`: (string) Falco Plugin endpoint url "http://127.0.0.1:9200"
+
+Default values:
+
+```
+falco:
+  url: "http://127.0.0.1:9200/events"
 ```

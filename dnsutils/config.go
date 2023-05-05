@@ -3,6 +3,7 @@ package dnsutils
 import (
 	"os"
 
+	"github.com/prometheus/prometheus/model/relabel"
 	"gopkg.in/yaml.v3"
 )
 
@@ -347,20 +348,21 @@ type Config struct {
 			Organization  string `yaml:"organization"`
 		} `yaml:"influxdb"`
 		LokiClient struct {
-			Enable         bool   `yaml:"enable"`
-			ServerURL      string `yaml:"server-url"`
-			JobName        string `yaml:"job-name"`
-			Mode           string `yaml:"mode"`
-			FlushInterval  int    `yaml:"flush-interval"`
-			BatchSize      int    `yaml:"batch-size"`
-			RetryInterval  int    `yaml:"retry-interval"`
-			TextFormat     string `yaml:"text-format"`
-			ProxyURL       string `yaml:"proxy-url"`
-			TlsInsecure    bool   `yaml:"tls-insecure"`
-			TlsMinVersion  string `yaml:"tls-min-version"`
-			BasicAuthLogin string `yaml:"basic-auth-login"`
-			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
-			TenantId       string `yaml:"tenant-id"`
+			Enable         bool              `yaml:"enable"`
+			ServerURL      string            `yaml:"server-url"`
+			JobName        string            `yaml:"job-name"`
+			Mode           string            `yaml:"mode"`
+			FlushInterval  int               `yaml:"flush-interval"`
+			BatchSize      int               `yaml:"batch-size"`
+			RetryInterval  int               `yaml:"retry-interval"`
+			TextFormat     string            `yaml:"text-format"`
+			ProxyURL       string            `yaml:"proxy-url"`
+			TlsInsecure    bool              `yaml:"tls-insecure"`
+			TlsMinVersion  string            `yaml:"tls-min-version"`
+			BasicAuthLogin string            `yaml:"basic-auth-login"`
+			BasicAuthPwd   string            `yaml:"basic-auth-pwd"`
+			TenantId       string            `yaml:"tenant-id"`
+			RelabelConfigs []*relabel.Config `yaml:"relabel-configs"`
 		} `yaml:"lokiclient"`
 		Statsd struct {
 			Enable        bool   `yaml:"enable"`
@@ -428,6 +430,10 @@ type Config struct {
 			Topic          string `yaml:"topic"`
 			Partition      int    `yaml:"partition"`
 		} `yaml:"kafkaproducer"`
+		FalcoClient struct {
+			Enable bool   `yaml:"enable"`
+			URL    string `yaml:"url"`
+		} `yaml:"falco"`
 	} `yaml:"loggers"`
 
 	OutgoingTransformers ConfigTransformers `yaml:"outgoing-transformers"`
@@ -680,6 +686,9 @@ func (c *Config) SetDefault() {
 	c.Loggers.KafkaProducer.FlushInterval = 10
 	c.Loggers.KafkaProducer.Topic = "dnscollector"
 	c.Loggers.KafkaProducer.Partition = 0
+
+	c.Loggers.FalcoClient.Enable = false
+	c.Loggers.FalcoClient.URL = "http://127.0.0.1:9200"
 
 	// Transformers for loggers
 	c.OutgoingTransformers.SetDefault()
