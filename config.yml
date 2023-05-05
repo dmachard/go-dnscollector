@@ -207,8 +207,6 @@ multiplexer:
 #   listen-ip: 0.0.0.0
 #   # listening port
 #   listen-port: 8080
-#   # enable basic authentication
-#   basic-auth-enable: true
 #   # default login
 #   basic-auth-login: admin
 #   # default password
@@ -232,6 +230,8 @@ multiplexer:
 #   basic-auth-login: admin
 #   # default password
 #   basic-auth-pwd: changeme
+#   # enable basic authentication
+#   basic-auth-enable: true
 #   # tls support
 #   tls-support: false
 #   # tls mutual
@@ -541,11 +541,15 @@ multiplexer:
 ################################################
 
 # # Use this transformer to add base64 dns payload in JSON ouput
+# # additionnals directive for text format
+# # - extracted-dns-payload: dns payload encoded in base64
 # extract:
 #   # enable payload base64 encoding
 #   add-payload: true
 
 # # Use this transformer to detect trafic duplication
+# # additionnals directive for text format
+# # - repeated: number of duplication
 # reducer:
 #   # enable detector
 #   repetitive-traffic-detector: true
@@ -553,6 +557,8 @@ multiplexer:
 #   watch-interval: 5
 
 # # Use this transformer to compute latency and detect timeout on queries
+# # additionnals directive for text format
+# # - computed-latency: computed latency between queries and replies
 # latency:
 #   # Measure latency between replies and queries
 #   measure-latency: false
