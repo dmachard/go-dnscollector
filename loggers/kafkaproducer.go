@@ -154,6 +154,7 @@ func (o *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Tim
 
 		conn, err := dialer.DialLeader(ctx, "tcp", address, topic, partition)
 		if err != nil {
+			o.LogError("%s", err)
 			o.LogInfo("retry to connect in %d seconds", o.config.Loggers.KafkaProducer.RetryInterval)
 			time.Sleep(time.Duration(o.config.Loggers.KafkaProducer.RetryInterval) * time.Second)
 			continue
