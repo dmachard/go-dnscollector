@@ -22,8 +22,8 @@ import (
 
 	/*
 		install loki with tags
-		go get github.com/grafana/loki@90888a0cc737b60f29b8bed880a380731ae1e492
-		https://github.com/grafana/loki/releases/tag/v2.8.0
+		go get github.com/grafana/loki@9f809eda70babaf583bdf6bf335a28038f286618
+		https://github.com/grafana/loki/releases/tag/v2.8.2
 
 		go get github.com/deepmap/oapi-codegen@v1.12.4
 		go get github.com/prometheus/prometheus@v0.42.0
