@@ -262,7 +262,7 @@ func (o *Prometheus) InitProm() {
 	o.gaugeTopSfDomains = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: fmt.Sprintf("%s_top_sfdomains", prom_prefix),
-			Help: "Number of hit per servfail domain topN, partitioned by qname",
+			Help: "Number of hit per servfail domain topN, partitioned by stream and qname",
 		},
 		[]string{"stream_id", "domain"},
 	)
@@ -280,7 +280,7 @@ func (o *Prometheus) InitProm() {
 	o.gaugeEps = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: fmt.Sprintf("%s_throughput_ops", prom_prefix),
-			Help: "Number of ops per second received, partitioned by qname",
+			Help: "Number of ops per second received, partitioned by stream",
 		},
 		[]string{"stream_id"},
 	)
@@ -289,7 +289,7 @@ func (o *Prometheus) InitProm() {
 	o.gaugeEpsMax = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: fmt.Sprintf("%s_throughput_ops_max", prom_prefix),
-			Help: "Max number of ops per second observed, partitioned by qname",
+			Help: "Max number of ops per second observed, partitioned by stream",
 		},
 		[]string{"stream_id"},
 	)

@@ -39,7 +39,40 @@ Scrape metric with curl:
 $ curl -u admin:changeme http://127.0.0.1:8080/metrics
 ```
 
+## Metrics
+
 The full metrics can be found [here](metrics.txt).
+
+| Metric                                          | Notes
+|-------------------------------------------------|------------------------------------
+| dnscollector_build_info                         | Build info
+| dnscollector_domains_sf_uniq_total              | The total number of uniq Servfail domains
+| dnscollector_nxdomains_total                    | The total number of NX domains per stream identity
+| dnscollector_domains_nx_uniq_total              | The total number of uniq NX domains
+| dnscollector_domains_total                      | The total number of domains per stream identity
+| dnscollector_domains_uniq_total                 | The total number of uniq domains
+| dnscollector_packets_total                      | Counter of packets
+| dnscollector_qnames_size_bytes_bucket           | Size of the qname in bytes.
+| dnscollector_queries_size_bytes_bucket          | Size of the queries in bytes.
+| dnscollector_replies_size_bytes_bucket          | Size of the replies in bytes.
+| dnscollector_requesters_total                   | The total number of DNS clients per stream identity
+| dnscollector_requesters_uniq_total              | The total number of uniq DNS clients
+| dnscollector_sent_bytes_total                   | The total bytes sent
+| dnscollector_received_bytes_total               | The total bytes received
+| dnscollector_throughput_ops                     | Number of ops per second received, partitioned by stream
+| dnscollector_throughput_ops_max                 | Max number of ops per second observed, partitioned by stream
+| dnscollector_tlds_total                         | The total number of tld per stream identity
+| dnscollector_tlds_uniq_total                    | The total number of uniq TLD
+| dnscollector_top_domains                        | Number of hit per domain topN, partitioned by stream and qname
+| dnscollector_top_nxdomains                      | Number of hit per nx domain topN, partitioned by stream and qname
+| dnscollector_top_sfdomains                      | Number of hit per servfail domain topN, partitioned by stream and qname
+| dnscollector_top_requesters                     | Number of hit per requester topN, partitioned by client IP
+| dnscollector_top_tlds                           | Number of hit per tld - topN
+| dnscollector_top_unanswered                     | Number of hit per unanswered domain - topN
+| dnscollector_unanswered_total                   | The total number of unanswered domains per stream identity
+| dnscollector_unanswered_uniq_total              | The total number of uniq unanswered domain
+| dnscollector_suspicious_total                   | The total number of unanswered domains per stream identity
+| dnscollector_suspicious_uniq_total              | The total number of uniq suspicious domain
 
 ## Grafana Dashboards
 

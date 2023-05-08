@@ -1,9 +1,142 @@
 package dnsutils
 
 import (
+	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 )
+
+func TestDnsMessage_Json_Reference(t *testing.T) {
+	dm := DnsMessage{}
+	dm.Init()
+
+	refJson := `
+			{
+				"network": {
+				  "family": "-",
+				  "protocol": "-",
+				  "query-ip": "-",
+				  "query-port": "-",
+				  "response-ip": "-",
+				  "response-port": "-",
+				  "ip-defragmented": false,
+				  "tcp-reassembled": false
+				},
+				"dns": {
+				  "length": 0,
+				  "opcode": 0,
+				  "rcode": "-",
+				  "qname": "-",
+				  "qtype": "-",
+				  "flags": {
+					"qr": false,
+					"tc": false,
+					"aa": false,
+					"ra": false,
+					"ad": false
+				  },
+				  "resource-records": {
+					"an": [],
+					"ns": [],
+					"ar": []
+				  },
+				  "malformed-packet": false,
+				  "repeated": -1
+				},
+				"edns": {
+				  "udp-size": 0,
+				  "rcode": 0,
+				  "version": 0,
+				  "dnssec-ok": 0,
+				  "options": []
+				},
+				"dnstap": {
+				  "operation": "-",
+				  "identity": "-",
+				  "version": "-",
+				  "timestamp-rfc3339ns": "-",
+				  "latency": "-"
+				}
+			}
+			`
+
+	var dmMap map[string]interface{}
+	err := json.Unmarshal([]byte(dm.ToJson()), &dmMap)
+	if err != nil {
+		t.Fatalf("could not unmarshal dm json: %s\n", err)
+	}
+
+	var refMap map[string]interface{}
+	err = json.Unmarshal([]byte(refJson), &refMap)
+	if err != nil {
+		t.Fatalf("could not unmarshal ref json: %s\n", err)
+	}
+
+	if !reflect.DeepEqual(dmMap, refMap) {
+		t.Fail()
+	}
+
+}
+
+func TestDnsMessage_Json_Flatten_Reference(t *testing.T) {
+	dm := DnsMessage{}
+	dm.Init()
+
+	refJson := `
+				{
+					"dns.flags.aa": false,
+					"dns.flags.ad": false,
+					"dns.flags.qr": false,
+					"dns.flags.ra": false,
+					"dns.flags.tc": false,
+					"dns.length": 0,
+					"dns.malformed-packet": false,
+					"dns.opcode": 0,
+					"dns.qname": "-",
+					"dns.qtype": "-",
+					"dns.rcode": "-",
+					"dns.repeated": -1,
+					"dns.resource-records.an": [],
+					"dns.resource-records.ar": [],
+					"dns.resource-records.ns": [],
+					"dnstap.identity": "-",
+					"dnstap.latency": "-",
+					"dnstap.operation": "-",
+					"dnstap.timestamp-rfc3339ns": "-",
+					"dnstap.version": "-",
+					"edns.dnssec-ok": 0,
+					"edns.options": [],
+					"edns.rcode": 0,
+					"edns.udp-size": 0,
+					"edns.version": 0,
+					"network.family": "-",
+					"network.ip-defragmented": false,
+					"network.protocol": "-",
+					"network.query-ip": "-",
+					"network.query-port": "-",
+					"network.response-ip": "-",
+					"network.response-port": "-",
+					"network.tcp-reassembled": false
+				}
+			`
+
+	dmFlat, err := dm.Flatten()
+	if err != nil {
+		t.Fatalf("could not flat json: %s\n", err)
+	}
+
+	var refMap map[string]interface{}
+	err = json.Unmarshal([]byte(refJson), &refMap)
+	if err != nil {
+		t.Fatalf("could not unmarshal ref json: %s\n", err)
+	}
+
+	if !reflect.DeepEqual(dmFlat, refMap) {
+		t.Fail()
+	}
+
+}
 
 func TestDnsMessage_TextFormat_ToString(t *testing.T) {
 
