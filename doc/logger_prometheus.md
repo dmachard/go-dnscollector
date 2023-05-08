@@ -74,6 +74,8 @@ The full metrics can be found [here](metrics.txt).
 | dnscollector_suspicious_total                   | The total number of unanswered domains per stream identity
 | dnscollector_suspicious_uniq_total              | The total number of uniq suspicious domain
 
+The full metrics can be found [here](metrics.txt).
+
 ## Grafana Dashboards
 
 Build-in dashboard are available with multiple data source
