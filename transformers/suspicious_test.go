@@ -17,6 +17,7 @@ func TestSuspiciousMalformedPacket(t *testing.T) {
 
 	// malformed DNS message
 	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.Type = "REPLY"
 	dm.DNS.MalformedPacket = true
 
 	// init dns message with additional part
@@ -44,6 +45,7 @@ func TestSuspiciousLongDomain(t *testing.T) {
 
 	// malformed DNS message
 	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.Type = "REPLY"
 	dm.DNS.Qname = "longdomain.com"
 
 	// init dns message with additional part
@@ -60,6 +62,34 @@ func TestSuspiciousLongDomain(t *testing.T) {
 	}
 }
 
+func TestSuspiciousSlowDomain(t *testing.T) {
+	// config
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Suspicious.Enable = true
+	config.Suspicious.ThresholdSlow = 3.0
+
+	// init subproccesor
+	suspicious := NewSuspiciousSubprocessor(config, logger.New(false), "test")
+
+	// malformed DNS message
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.Type = "REPLY"
+	dm.DnsTap.Latency = 4.0
+
+	// init dns message with additional part
+	suspicious.InitDnsMessage(&dm)
+
+	suspicious.CheckIfSuspicious(&dm)
+
+	if dm.Suspicious.Score != 1.0 {
+		t.Errorf("suspicious score should be equal to 1.0")
+	}
+
+	if dm.Suspicious.SlowDomain != true {
+		t.Errorf("suspicious slow domain flag should be equal to true")
+	}
+}
+
 func TestSuspiciousLargePacket(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfigTransformers()
@@ -71,6 +101,7 @@ func TestSuspiciousLargePacket(t *testing.T) {
 
 	// malformed DNS message
 	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.Type = "REPLY"
 	dm.DNS.Length = 50
 
 	// init dns message with additional part
@@ -97,6 +128,7 @@ func TestSuspiciousUncommonQtype(t *testing.T) {
 
 	// malformed DNS message
 	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.Type = "REPLY"
 	dm.DNS.Qtype = "LOC"
 
 	// init dns message with additional part
@@ -124,6 +156,7 @@ func TestSuspiciousExceedMaxLabels(t *testing.T) {
 
 	// malformed DNS message
 	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.Type = "REPLY"
 	dm.DNS.Qname = "test.sub.dnscollector.com"
 
 	// init dns message with additional part
@@ -150,6 +183,7 @@ func TestSuspiciousUnallowedChars(t *testing.T) {
 
 	// malformed DNS message
 	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.Type = "REPLY"
 	dm.DNS.Qname = "AAAAAA==.dnscollector.com"
 
 	// init dns message with additional part
