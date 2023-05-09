@@ -65,6 +65,11 @@ func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
 		return
 	}
 
+	// Only treat replies or we'll get count most categories twice.
+	if dm.DNS.Type == "QUERY" {
+		return
+	}
+
 	// dns decoding error?
 	if dm.DNS.MalformedPacket {
 		dm.Suspicious.Score += 1.0
@@ -81,6 +86,12 @@ func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
 	if dm.DNS.Length > p.config.Suspicious.ThresholdPacketLen {
 		dm.Suspicious.Score += 1.0
 		dm.Suspicious.LargePacket = true
+	}
+
+	// slow domain name resolution ?
+	if dm.DnsTap.Latency > p.config.Suspicious.ThresholdSlow {
+		dm.Suspicious.Score += 1.0
+		dm.Suspicious.SlowDomain = true
 	}
 
 	// uncommon qtype?

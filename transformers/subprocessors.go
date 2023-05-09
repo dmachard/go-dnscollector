@@ -78,11 +78,6 @@ func (p *Transforms) Prepare() error {
 		}
 	}
 
-	if p.config.Suspicious.Enable {
-		p.activeTransforms = append(p.activeTransforms, p.suspiciousTransform)
-		p.LogInfo("[suspicious] enabled")
-	}
-
 	if p.config.Filtering.Enable {
 		p.LogInfo("[filtering] enabled")
 	}
@@ -96,6 +91,11 @@ func (p *Transforms) Prepare() error {
 			p.activeTransforms = append(p.activeTransforms, p.detectEvictedTimeout)
 			p.LogInfo("[latency: unanswered queries] enabled")
 		}
+	}
+
+	if p.config.Suspicious.Enable {
+		p.activeTransforms = append(p.activeTransforms, p.suspiciousTransform)
+		p.LogInfo("[suspicious] enabled")
 	}
 
 	if p.config.Reducer.Enable {
