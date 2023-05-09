@@ -282,7 +282,7 @@ transforms:
 ```
 
 Specific directive(s) available for the text format:
-- `repeated`: display the number of detected duplication
+- `reducer-occurences`: display the number of detected duplication
 
 ### Extractor
 

@@ -46,7 +46,7 @@ func (p *SuspiciousTransform) LogError(msg string, v ...interface{}) {
 }
 
 func (p *SuspiciousTransform) InitDnsMessage(dm *dnsutils.DnsMessage) {
-	dm.Suspicious = &dnsutils.Suspicious{
+	dm.Suspicious = &dnsutils.TransformSuspicious{
 		Score:                 0.0,
 		MalformedPacket:       false,
 		LargePacket:           false,

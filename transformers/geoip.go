@@ -58,7 +58,7 @@ func (p *GeoIpProcessor) LogError(msg string, v ...interface{}) {
 }
 
 func (p *GeoIpProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
-	dm.Geo = &dnsutils.DnsGeo{
+	dm.Geo = &dnsutils.TransformDnsGeo{
 		CountryIsoCode:         "-",
 		City:                   "-",
 		Continent:              "-",

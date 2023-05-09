@@ -17,7 +17,7 @@ func NewExtractSubprocessor(config *dnsutils.ConfigTransformers) ExtractProcesso
 }
 
 func (p *ExtractProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
-	dm.Extracted = &dnsutils.Extracted{
+	dm.Extracted = &dnsutils.TransformExtracted{
 		Base64Payload: []byte("-"),
 	}
 }

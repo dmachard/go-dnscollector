@@ -549,7 +549,7 @@ multiplexer:
 
 # # Use this transformer to detect trafic duplication
 # # additionnals directive for text format
-# # - repeated: number of duplication
+# # - reducer-occurences: number of occurences detected
 # reducer:
 #   # enable detector
 #   repetitive-traffic-detector: true

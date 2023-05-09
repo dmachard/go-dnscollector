@@ -113,7 +113,7 @@ func (s *NormalizeProcessor) IsEnabled() bool {
 }
 
 func (p *NormalizeProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
-	dm.PublicSuffix = &dnsutils.PublicSuffix{
+	dm.PublicSuffix = &dnsutils.TransformPublicSuffix{
 		QnamePublicSuffix:        "-",
 		QnameEffectiveTLDPlusOne: "-",
 	}
