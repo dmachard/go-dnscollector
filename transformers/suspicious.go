@@ -66,7 +66,7 @@ func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
 	}
 
 	// Only treat replies or we'll get count most categories twice.
-	if dm.DNS.Type == "QUERY" {
+	if dm.DNS.Type == dnsutils.DNS_TYPE_QUERY {
 		return
 	}
 

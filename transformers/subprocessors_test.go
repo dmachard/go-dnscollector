@@ -26,7 +26,7 @@ func TestTransformsSuspicious(t *testing.T) {
 
 	// malformed DNS message
 	dm := dnsutils.GetFakeDnsMessage()
-	dm.DNS.Type = "REPLY"
+	dm.DNS.Type = dnsutils.DNS_TYPE_REPLY
 	dm.DNS.MalformedPacket = true
 
 	// init dns message with additional part
