@@ -1,11 +1,63 @@
 package transformers
 
 import (
+	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
+
+func TestGeoIP_Json(t *testing.T) {
+	// enable feature
+	config := dnsutils.GetFakeConfigTransformers()
+
+	// get fake
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.Init()
+
+	// init subproccesor
+	geoip := NewDnsGeoIpProcessor(config, logger.New(true))
+	if err := geoip.Open(); err != nil {
+		t.Fatalf("geoip init failed: %v+", err)
+	}
+	defer geoip.Close()
+	geoip.InitDnsMessage(&dm)
+
+	// expected json
+	refJson := `
+			{
+				"geoip": {
+					"city":"-",
+					"continent":"-",
+					"country-isocode":"-",
+					"as-number":"-",
+					"as-owner":"-"
+				}
+			}
+			`
+
+	var dmMap map[string]interface{}
+	err := json.Unmarshal([]byte(dm.ToJson()), &dmMap)
+	if err != nil {
+		t.Fatalf("could not unmarshal dm json: %s\n", err)
+	}
+
+	var refMap map[string]interface{}
+	err = json.Unmarshal([]byte(refJson), &refMap)
+	if err != nil {
+		t.Fatalf("could not unmarshal ref json: %s\n", err)
+	}
+
+	if _, ok := dmMap["geoip"]; !ok {
+		t.Fatalf("transformer key is missing")
+	}
+
+	if !reflect.DeepEqual(dmMap["geoip"], refMap["geoip"]) {
+		t.Errorf("json format different from reference")
+	}
+}
 
 func TestGeoIP_LookupCountry(t *testing.T) {
 	// enable geoip

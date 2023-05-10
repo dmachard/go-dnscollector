@@ -1,12 +1,56 @@
 package transformers
 
 import (
+	"encoding/json"
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
+
+func TestReducer_Json(t *testing.T) {
+	// enable feature
+	config := dnsutils.GetFakeConfigTransformers()
+
+	// get fake
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.Init()
+
+	// init subproccesor
+	listChannel := []chan dnsutils.DnsMessage{}
+	reducer := NewReducerSubprocessor(config, logger.New(false), "test", listChannel)
+	reducer.InitDnsMessage(&dm)
+
+	// expected json
+	refJson := `
+			{
+				"reducer": {
+				  "occurences": 0
+				}
+			}
+			`
+
+	var dmMap map[string]interface{}
+	err := json.Unmarshal([]byte(dm.ToJson()), &dmMap)
+	if err != nil {
+		t.Fatalf("could not unmarshal dm json: %s\n", err)
+	}
+
+	var refMap map[string]interface{}
+	err = json.Unmarshal([]byte(refJson), &refMap)
+	if err != nil {
+		t.Fatalf("could not unmarshal ref json: %s\n", err)
+	}
+
+	if _, ok := dmMap["reducer"]; !ok {
+		t.Fatalf("transformer key is missing")
+	}
+	if !reflect.DeepEqual(dmMap["reducer"], refMap["reducer"]) {
+		t.Errorf("json format different from reference")
+	}
+}
 
 func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 	// enable feature
