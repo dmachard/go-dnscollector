@@ -191,7 +191,8 @@ LOOP:
 	for {
 		select {
 		case dm := <-o.channel:
-			// apply tranforms
+			// apply tranforms, init dns message with additionnals parts if necessary
+			subprocessors.InitDnsMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 				continue
 			}
