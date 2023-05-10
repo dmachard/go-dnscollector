@@ -76,13 +76,8 @@ Example:
 }
 ```
 
-This JSON message can be extended by:
-- [PowerDNS collector](powerdns.md#json-format)
-- [GeoIP transformer](transformers.md#geoip-support)
-- [Suspicious traffic transformer](transformers.md#suspicious)
-- [Public suffix transformer](transformers.md#normalize)
-
 ## Flat JSON export format
+
 Sometimes, a single level key-value output in JSON is easier to ingest than multi-level JSON.
 Using flat-json requires more processing on the host running go-dnscollector but delivers every output field as its own key/value pair. Here's a flat-json output as formatted by `jq`:
 
@@ -127,3 +122,15 @@ Using flat-json requires more processing on the host running go-dnscollector but
   "network.tcp-reassembled": false,
 }
 ```
+
+## Extended JSON format
+
+This JSON message can be extended by collector(s):
+- [PowerDNS collector](powerdns.md#json-format)
+
+
+This JSON message can be also extended by transformer(s):
+- [GeoIP](transformers.md#geoip-support)
+- [Suspicious traffic detector](transformers.md#suspicious)
+- [Public suffix](transformers.md#normalize)
+- [Traffic Reducer](transformers.md#traffic-reducer)

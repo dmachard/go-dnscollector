@@ -41,8 +41,7 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 					"ns": [],
 					"ar": []
 				  },
-				  "malformed-packet": false,
-				  "repeated": -1
+				  "malformed-packet": false
 				},
 				"edns": {
 				  "udp-size": 0,
@@ -74,7 +73,7 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(dmMap, refMap) {
-		t.Fail()
+		t.Errorf("json format different from reference")
 	}
 
 }
@@ -96,7 +95,6 @@ func TestDnsMessage_Json_Flatten_Reference(t *testing.T) {
 					"dns.qname": "-",
 					"dns.qtype": "-",
 					"dns.rcode": "-",
-					"dns.repeated": -1,
 					"dns.resource-records.an": [],
 					"dns.resource-records.ar": [],
 					"dns.resource-records.ns": [],
@@ -133,7 +131,7 @@ func TestDnsMessage_Json_Flatten_Reference(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(dmFlat, refMap) {
-		t.Fail()
+		t.Errorf("flatten json format different from reference")
 	}
 
 }

@@ -147,9 +147,11 @@ func (p *ReducerProcessor) LoadActiveReducers() {
 }
 
 func (p *ReducerProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
-	dm.Reducer = &dnsutils.TransformReducer{
-		Repeated:   false,
-		Occurences: 0,
+	if dm.Reducer == nil {
+		dm.Reducer = &dnsutils.TransformReducer{
+			Repeated:   false,
+			Occurences: 0,
+		}
 	}
 }
 
