@@ -134,6 +134,9 @@ You will find below some examples of configuration to manage your DNS logs.
 - Capture DNS traffic from Mikrotik device
     - [x] [Capture TZSP packets containing DNS packets and process them as json](example-config/use-case-17.yml)
 
+- Security: suspicious traffic detector
+    - [x] [Capture DNS packets and flag suspicious traffic](example-config/use-case-19.yml)
+
 ## Contributing
 
 See the [development guide](doc/development.md) for more information on how to build it yourself.

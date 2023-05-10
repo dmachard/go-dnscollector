@@ -13,6 +13,13 @@
 
 ## Transformers
 
+Transformers processing is currently in this order :
+
+    Normalize Transform
+    Traffic Filtering
+    Traffic Reducer
+    Finally all other transforms
+
 ### Normalize
 
 This transformer can be used:
