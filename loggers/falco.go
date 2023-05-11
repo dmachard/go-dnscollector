@@ -74,7 +74,8 @@ func (f *FalcoClient) Run() {
 	subprocessors := transformers.NewTransforms(&f.config.OutgoingTransformers, f.logger, f.name, listChannel)
 
 	for dm := range f.channel {
-		// apply tranforms
+		// apply tranforms, init dns message with additionnals parts if necessary
+		subprocessors.InitDnsMessageFormat(&dm)
 		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 			continue
 		}

@@ -1,12 +1,57 @@
 package transformers
 
 import (
+	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
+
+func TestNormalize_Json(t *testing.T) {
+	// enable feature
+	config := dnsutils.GetFakeConfigTransformers()
+
+	// get fake
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.Init()
+
+	// init subproccesor
+	qnameNorm := NewNormalizeSubprocessor(config, logger.New(false), "test")
+	qnameNorm.InitDnsMessage(&dm)
+
+	// expected json
+	refJson := `
+			{
+				"publicsuffix": {
+					"tld":"-",
+					"etld+1":"-"
+				}
+			}
+			`
+
+	var dmMap map[string]interface{}
+	err := json.Unmarshal([]byte(dm.ToJson()), &dmMap)
+	if err != nil {
+		t.Fatalf("could not unmarshal dm json: %s\n", err)
+	}
+
+	var refMap map[string]interface{}
+	err = json.Unmarshal([]byte(refJson), &refMap)
+	if err != nil {
+		t.Fatalf("could not unmarshal ref json: %s\n", err)
+	}
+
+	if _, ok := dmMap["publicsuffix"]; !ok {
+		t.Fatalf("transformer key is missing")
+	}
+
+	if !reflect.DeepEqual(dmMap["publicsuffix"], refMap["publicsuffix"]) {
+		t.Errorf("json format different from reference")
+	}
+}
 
 func TestNormalize_LowercaseQname(t *testing.T) {
 	// enable feature

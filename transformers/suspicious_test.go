@@ -1,13 +1,64 @@
 package transformers
 
 import (
+	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
 )
 
-func TestSuspiciousMalformedPacket(t *testing.T) {
+func TestSuspicious_Json(t *testing.T) {
+	// enable feature
+	config := dnsutils.GetFakeConfigTransformers()
+
+	// get fake
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.Init()
+
+	// init subproccesor
+	suspicious := NewSuspiciousSubprocessor(config, logger.New(false), "test")
+	suspicious.InitDnsMessage(&dm)
+
+	// expected json
+	refJson := `
+			{
+				"suspicious": {
+					"score":0,
+					"malformed-pkt":false,
+					"large-pkt":false,
+					"long-domain":false,
+					"slow-domain":false,
+					"unallowed-chars":false,
+					"uncommon-qtypes":false,
+					"excessive-number-labels":false
+				}
+			}
+			`
+
+	var dmMap map[string]interface{}
+	err := json.Unmarshal([]byte(dm.ToJson()), &dmMap)
+	if err != nil {
+		t.Fatalf("could not unmarshal dm json: %s\n", err)
+	}
+
+	var refMap map[string]interface{}
+	err = json.Unmarshal([]byte(refJson), &refMap)
+	if err != nil {
+		t.Fatalf("could not unmarshal ref json: %s\n", err)
+	}
+
+	if _, ok := dmMap["suspicious"]; !ok {
+		t.Fatalf("transformer key is missing")
+	}
+
+	if !reflect.DeepEqual(dmMap["suspicious"], refMap["suspicious"]) {
+		t.Errorf("json format different from reference")
+	}
+}
+
+func TestSuspicious_MalformedPacket(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
@@ -33,7 +84,7 @@ func TestSuspiciousMalformedPacket(t *testing.T) {
 	}
 }
 
-func TestSuspiciousLongDomain(t *testing.T) {
+func TestSuspicious_LongDomain(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true

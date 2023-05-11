@@ -170,10 +170,12 @@ LOOP:
 	for {
 		select {
 		case dm := <-c.channel:
-			// apply tranforms
+			// apply tranforms, init dns message with additionnals parts if necessary
+			subprocessors.InitDnsMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 				continue
 			}
+
 			switch c.mode {
 			case dnsutils.MODE_TEXT:
 				attrs["message"] = string(dm.Bytes(c.textFormat,

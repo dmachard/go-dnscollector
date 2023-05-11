@@ -46,15 +46,17 @@ func (p *SuspiciousTransform) LogError(msg string, v ...interface{}) {
 }
 
 func (p *SuspiciousTransform) InitDnsMessage(dm *dnsutils.DnsMessage) {
-	dm.Suspicious = &dnsutils.Suspicious{
-		Score:                 0.0,
-		MalformedPacket:       false,
-		LargePacket:           false,
-		LongDomain:            false,
-		SlowDomain:            false,
-		UnallowedChars:        false,
-		UncommonQtypes:        false,
-		ExcessiveNumberLabels: false,
+	if dm.Suspicious == nil {
+		dm.Suspicious = &dnsutils.TransformSuspicious{
+			Score:                 0.0,
+			MalformedPacket:       false,
+			LargePacket:           false,
+			LongDomain:            false,
+			SlowDomain:            false,
+			UnallowedChars:        false,
+			UncommonQtypes:        false,
+			ExcessiveNumberLabels: false,
+		}
 	}
 }
 

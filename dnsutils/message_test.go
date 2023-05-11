@@ -41,8 +41,7 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 					"ns": [],
 					"ar": []
 				  },
-				  "malformed-packet": false,
-				  "repeated": -1
+				  "malformed-packet": false
 				},
 				"edns": {
 				  "udp-size": 0,
@@ -74,7 +73,7 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(dmMap, refMap) {
-		t.Fail()
+		t.Errorf("json format different from reference")
 	}
 
 }
@@ -96,7 +95,6 @@ func TestDnsMessage_Json_Flatten_Reference(t *testing.T) {
 					"dns.qname": "-",
 					"dns.qtype": "-",
 					"dns.rcode": "-",
-					"dns.repeated": -1,
 					"dns.resource-records.an": [],
 					"dns.resource-records.ar": [],
 					"dns.resource-records.ns": [],
@@ -133,7 +131,7 @@ func TestDnsMessage_Json_Flatten_Reference(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(dmFlat, refMap) {
-		t.Fail()
+		t.Errorf("flatten json format different from reference")
 	}
 
 }
@@ -262,11 +260,6 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 			expected: "TC AA RA AD",
 		},
 		{
-			format:   "repeated",
-			dm:       DnsMessage{DNS: Dns{Repeated: 42}},
-			expected: "42",
-		},
-		{
 			format:   "df tr",
 			dm:       DnsMessage{NetworkInfo: DnsNetInfo{IpDefragmented: true, TcpReassembled: true}},
 			expected: "DF TR",
@@ -311,7 +304,7 @@ func TestDnsMessage_TextFormat_Directives_PublicSuffix(t *testing.T) {
 		{
 			name:     "default",
 			format:   "publixsuffix-tld publixsuffix-etld+1",
-			dm:       DnsMessage{PublicSuffix: &PublicSuffix{QnamePublicSuffix: "com", QnameEffectiveTLDPlusOne: "google.com"}},
+			dm:       DnsMessage{PublicSuffix: &TransformPublicSuffix{QnamePublicSuffix: "com", QnameEffectiveTLDPlusOne: "google.com"}},
 			expected: "com google.com",
 		},
 	}
@@ -348,7 +341,7 @@ func TestDnsMessage_TextFormat_Directives_Geo(t *testing.T) {
 		{
 			name:   "default",
 			format: "geoip-continent geoip-country geoip-city geoip-as-number geoip-as-owner",
-			dm: DnsMessage{Geo: &DnsGeo{City: "Paris", Continent: "Europe",
+			dm: DnsMessage{Geo: &TransformDnsGeo{City: "Paris", Continent: "Europe",
 				CountryIsoCode: "FR", AutonomousSystemNumber: "AS1", AutonomousSystemOrg: "Google"}},
 			expected: "Europe FR Paris AS1 Google",
 		},
@@ -471,7 +464,7 @@ func TestDnsMessage_TextFormat_Directives_Suspicious(t *testing.T) {
 		{
 			name:     "default",
 			format:   "suspicious-score",
-			dm:       DnsMessage{Suspicious: &Suspicious{Score: 4.0}},
+			dm:       DnsMessage{Suspicious: &TransformSuspicious{Score: 4.0}},
 			expected: "4",
 		},
 	}
@@ -508,7 +501,7 @@ func TestDnsMessage_TextFormat_Directives_Extracted(t *testing.T) {
 		{
 			name:   "default",
 			format: "extracted-dns-payload",
-			dm: DnsMessage{Extracted: &Extracted{}, DNS: Dns{Payload: []byte{
+			dm: DnsMessage{Extracted: &TransformExtracted{}, DNS: Dns{Payload: []byte{
 				0x9e, 0x84, 0x01, 0x20, 0x00, 0x03, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00,
 				// query 1
