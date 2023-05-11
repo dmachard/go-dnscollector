@@ -29,6 +29,7 @@ var (
 	SuspiciousDirectives   = regexp.MustCompile(`^suspicious-*`)
 	PublicSuffixDirectives = regexp.MustCompile(`^publixsuffix-*`)
 	ExtractedDirectives    = regexp.MustCompile(`^extracted-*`)
+	ReducerDirectives      = regexp.MustCompile(`^reducer-*`)
 )
 
 func GetIpPort(dm *DnsMessage) (string, int, string, int) {
@@ -493,7 +494,7 @@ func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 		case PdnsDirectives.MatchString(directive):
 			dm.handlePdnsDirectives(directives, &s)
 		// more directives from transformers
-		case directive == "repeated":
+		case ReducerDirectives.MatchString(directive):
 			dm.handleReducerDirectives(directives, &s)
 		case GeoIPDirectives.MatchString(directive):
 			dm.handleGeoIPDirectives(directives, &s)
