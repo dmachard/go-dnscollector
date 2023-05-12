@@ -5,10 +5,37 @@ package netlib
 
 import (
 	"crypto/tls"
+	"io"
 	"net"
 	"os"
 	"syscall"
 )
+
+// thanks to https://stackoverflow.com/questions/28967701/golang-tcp-socket-cant-close-after-get-file,
+// call conn.CloseRead() before calling conn.Close()
+func Close(conn io.Closer, reset bool) error {
+	type ReadCloser interface {
+		CloseRead() error
+	}
+
+	// send reset
+	if reset {
+		tcpConn := conn.(*net.TCPConn)
+		tcpConn.SetLinger(0)
+	}
+
+	var errs []error
+	if closer, ok := conn.(ReadCloser); ok {
+		errs = append(errs, closer.CloseRead())
+	}
+	errs = append(errs, conn.Close())
+	for _, err := range errs {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // Configure SO_RCVBUF, thanks to https://github.com/dmachard/go-dns-collector/issues/61#issuecomment-1201199895
 func SetSock_RCVBUF(conn net.Conn, desired int, is_tls bool) (int, int, error) {

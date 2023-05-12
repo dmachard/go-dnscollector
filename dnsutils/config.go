@@ -184,6 +184,7 @@ type Config struct {
 			CertFile      string `yaml:"cert-file"`
 			KeyFile       string `yaml:"key-file"`
 			RcvBufSize    int    `yaml:"sock-rcvbuf"`
+			ResetConn     bool   `yaml:"reset-conn"`
 		} `yaml:"dnstap"`
 		DnstapProxifier struct {
 			Enable        bool   `yaml:"enable"`
@@ -213,6 +214,8 @@ type Config struct {
 			TlsMinVersion string `yaml:"tls-min-version"`
 			CertFile      string `yaml:"cert-file"`
 			KeyFile       string `yaml:"key-file"`
+			RcvBufSize    int    `yaml:"sock-rcvbuf"`
+			ResetConn     bool   `yaml:"reset-conn"`
 		} `yaml:"powerdns"`
 		FileIngestor struct {
 			Enable      bool   `yaml:"enable"`
@@ -479,6 +482,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.Dnstap.CertFile = ""
 	c.Collectors.Dnstap.KeyFile = ""
 	c.Collectors.Dnstap.RcvBufSize = 0
+	c.Collectors.Dnstap.ResetConn = true
 
 	c.Collectors.DnstapProxifier.Enable = false
 	c.Collectors.DnstapProxifier.ListenIP = ANY_IP
@@ -503,6 +507,8 @@ func (c *Config) SetDefault() {
 	c.Collectors.PowerDNS.TlsMinVersion = TLS_v12
 	c.Collectors.PowerDNS.CertFile = ""
 	c.Collectors.PowerDNS.KeyFile = ""
+	c.Collectors.PowerDNS.RcvBufSize = 0
+	c.Collectors.PowerDNS.ResetConn = true
 
 	c.Collectors.FileIngestor.Enable = false
 	c.Collectors.FileIngestor.WatchDir = ""
