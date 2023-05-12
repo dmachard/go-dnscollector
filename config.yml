@@ -104,6 +104,8 @@ multiplexer:
 #   key-file: ""
 #   # Sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
 #   sock-rcvbuf: 0
+#   # Reset TCP connection on exit
+#   reset-conn: true
 
 # # dnstap proxifier with no protobuf decoding.
 # dnstap-proxifier:
@@ -182,6 +184,8 @@ multiplexer:
 #   cert-file: ""
 #   # private key server file
 #   key-file: ""
+#   # Reset TCP connection on exit
+#   reset-conn: true
 
 # # ztsp (TaZmen Sniffer Protocol)
 # ztsp:

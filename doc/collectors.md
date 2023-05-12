@@ -24,6 +24,7 @@ Options:
 - `cert-file`: (string) certificate server file
 - `key-file`: (string) private key server file
 - `sock-rcvbuf`: (integer) sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
+- `reset-conn`: (bool) Reset TCP connection on exit
 
 Default values:
 
@@ -37,6 +38,7 @@ dnstap:
   cert-file: ""
   key-file: ""
   sock-rcvbuf: 0
+  reset-conn: true
 ```
 
 ### DNS tap Proxifier
@@ -159,6 +161,8 @@ Options:
 - `tls-min-version`: (string) min tls version
 - `cert-file`: (string) certificate server file
 - `key-file`: (string) private key server file
+- `sock-rcvbuf`: (integer) sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
+- `reset-conn`: (bool) Reset TCP connection on exit
 
 Default values:
 
@@ -170,6 +174,8 @@ powerdns:
   tls-min-version: 1.2
   cert-file: ""
   key-file: ""
+  sock-rcvbuf: 0
+  reset-conn: true
 ```
 
 ### File Ingestor

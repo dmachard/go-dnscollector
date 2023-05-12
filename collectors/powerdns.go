@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
 )
@@ -97,7 +98,7 @@ func (c *ProtobufPowerDNS) Stop() {
 	for _, conn := range c.conns {
 		peer := conn.RemoteAddr().String()
 		c.LogInfo("%s - closing connection...", peer)
-		conn.Close()
+		netlib.Close(conn, c.config.Collectors.PowerDNS.ResetConn)
 	}
 	// Finally close the listener to unblock accept
 	c.LogInfo("stop listening...")
@@ -158,6 +159,17 @@ func (c *ProtobufPowerDNS) Run() {
 		conn, err := c.listen.Accept()
 		if err != nil {
 			break
+		}
+
+		if c.config.Collectors.Dnstap.RcvBufSize > 0 {
+			before, actual, err := netlib.SetSock_RCVBUF(conn, c.config.Collectors.Dnstap.RcvBufSize, c.config.Collectors.Dnstap.TlsSupport)
+			if err != nil {
+				c.logger.Fatal("Unable to set SO_RCVBUF: ", err)
+			}
+			c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d",
+				before,
+				c.config.Collectors.Dnstap.RcvBufSize,
+				actual)
 		}
 
 		c.conns = append(c.conns, conn)
