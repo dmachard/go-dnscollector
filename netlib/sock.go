@@ -18,10 +18,11 @@ func Close(conn io.Closer, reset bool) error {
 		CloseRead() error
 	}
 
-	// send reset
+	// Agressive closing, send TCP RESET instead of FIN
 	if reset {
-		tcpConn := conn.(*net.TCPConn)
-		tcpConn.SetLinger(0)
+		if tcpConn, ok := conn.(*net.TCPConn); ok {
+			tcpConn.SetLinger(0)
+		}
 	}
 
 	var errs []error
