@@ -483,6 +483,43 @@ func TestDnsMessage_TextFormat_Directives_Suspicious(t *testing.T) {
 	}
 }
 
+func TestDnsMessage_TextFormat_Directives_Reducer(t *testing.T) {
+	config := GetFakeConfig()
+
+	testcases := []struct {
+		name     string
+		format   string
+		dm       DnsMessage
+		expected string
+	}{
+		{
+			name:     "undefined",
+			format:   "reducer-occurences",
+			dm:       DnsMessage{},
+			expected: "-",
+		},
+		{
+			name:     "default",
+			format:   "reducer-occurences",
+			dm:       DnsMessage{Reducer: &TransformReducer{Occurences: 1}},
+			expected: "1",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			line := tc.dm.String(
+				strings.Fields(tc.format),
+				config.Global.TextFormatDelimiter,
+				config.Global.TextFormatBoundary,
+			)
+			if line != tc.expected {
+				t.Errorf("Want: %s, got: %s", tc.expected, line)
+			}
+		})
+	}
+}
+
 func TestDnsMessage_TextFormat_Directives_Extracted(t *testing.T) {
 	config := GetFakeConfig()
 
