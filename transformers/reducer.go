@@ -34,7 +34,6 @@ func (mp *MapTraffic) Exists(key uint64) (ok bool) {
 
 	dm, ok := mp.kv[key]
 	if ok {
-		dm.Reducer.Repeated = true
 		dm.Reducer.Occurences += 1
 	}
 
@@ -45,6 +44,7 @@ func (mp *MapTraffic) Set(key uint64, dm *dnsutils.DnsMessage) {
 	mp.Lock()
 	defer mp.Unlock()
 
+	dm.Reducer.Repeated = true
 	dm.Reducer.Occurences = 1
 	mp.kv[key] = dm
 	expTime := time.Now().Add(mp.ttl)
