@@ -130,6 +130,9 @@ func (p *Transforms) InitDnsMessageFormat(dm *dnsutils.DnsMessage) {
 			p.ExtractProcessor.InitDnsMessage(dm)
 		}
 	}
+	if p.config.Reducer.Enable {
+		p.ReducerTransform.InitDnsMessage(dm)
+	}
 }
 
 func (p *Transforms) Reset() {

@@ -29,6 +29,7 @@ var (
 	SuspiciousDirectives   = regexp.MustCompile(`^suspicious-*`)
 	PublicSuffixDirectives = regexp.MustCompile(`^publixsuffix-*`)
 	ExtractedDirectives    = regexp.MustCompile(`^extracted-*`)
+	ReducerDirectives      = regexp.MustCompile(`^reducer-*`)
 )
 
 func GetIpPort(dm *DnsMessage) (string, int, string, int) {
@@ -72,14 +73,6 @@ type DnsFlags struct {
 	AD bool `json:"ad" msgpack:"ad"`
 }
 
-type DnsGeo struct {
-	City                   string `json:"city" msgpack:"city"`
-	Continent              string `json:"continent" msgpack:"continent"`
-	CountryIsoCode         string `json:"country-isocode" msgpack:"country-isocode"`
-	AutonomousSystemNumber string `json:"as-number" msgpack:"as-number"`
-	AutonomousSystemOrg    string `json:"as-owner" msgpack:"as-owner"`
-}
-
 type DnsNetInfo struct {
 	Family         string `json:"family" msgpack:"family"`
 	Protocol       string `json:"protocol" msgpack:"protocol"`
@@ -110,8 +103,6 @@ type Dns struct {
 	Flags           DnsFlags `json:"flags" msgpack:"flags"`
 	DnsRRs          DnsRRs   `json:"resource-records" msgpack:"resource-records"`
 	MalformedPacket bool     `json:"malformed-packet" msgpack:"malformed-packet"`
-
-	Repeated int `json:"repeated" msgpack:"repeated"`
 }
 
 type DnsOption struct {
@@ -149,7 +140,15 @@ type PowerDns struct {
 	Metadata              map[string]string `json:"metadata" msgpack:"metadata"`
 }
 
-type Suspicious struct {
+type TransformDnsGeo struct {
+	City                   string `json:"city" msgpack:"city"`
+	Continent              string `json:"continent" msgpack:"continent"`
+	CountryIsoCode         string `json:"country-isocode" msgpack:"country-isocode"`
+	AutonomousSystemNumber string `json:"as-number" msgpack:"as-number"`
+	AutonomousSystemOrg    string `json:"as-owner" msgpack:"as-owner"`
+}
+
+type TransformSuspicious struct {
 	Score                 float64 `json:"score" msgpack:"score"`
 	MalformedPacket       bool    `json:"malformed-pkt" msgpack:"malformed-pkt"`
 	LargePacket           bool    `json:"large-pkt" msgpack:"large-pkt"`
@@ -160,25 +159,31 @@ type Suspicious struct {
 	ExcessiveNumberLabels bool    `json:"excessive-number-labels" msgpack:"excessive-number-labels"`
 }
 
-type PublicSuffix struct {
+type TransformPublicSuffix struct {
 	QnamePublicSuffix        string `json:"tld" msgpack:"qname-public-suffix"`
 	QnameEffectiveTLDPlusOne string `json:"etld+1" msgpack:"qname-effective-tld-plus-one"`
 }
 
-type DnsMessage struct {
-	NetworkInfo  DnsNetInfo    `json:"network" msgpack:"network"`
-	DNS          Dns           `json:"dns" msgpack:"dns"`
-	EDNS         DnsExtended   `json:"edns" msgpack:"edns"`
-	DnsTap       DnsTap        `json:"dnstap" msgpack:"dnstap"`
-	Geo          *DnsGeo       `json:"geoip,omitempty" msgpack:"geo"`
-	PowerDns     *PowerDns     `json:"powerdns,omitempty" msgpack:"powerdns"`
-	Suspicious   *Suspicious   `json:"suspicious,omitempty" msgpack:"suspicious"`
-	PublicSuffix *PublicSuffix `json:"publicsuffix,omitempty" msgpack:"publicsuffix"`
-	Extracted    *Extracted    `json:"extracted,omitempty" msgpack:"extracted"`
+type TransformExtracted struct {
+	Base64Payload []byte `json:"dns_payload" msgpack:"dns_payload"`
 }
 
-type Extracted struct {
-	Base64Payload []byte `json:"dns_payload" msgpack:"dns_payload"`
+type TransformReducer struct {
+	Repeated   bool `json:"-" msgpack:"-"`
+	Occurences int  `json:"occurences" msgpack:"occurences"`
+}
+
+type DnsMessage struct {
+	NetworkInfo  DnsNetInfo             `json:"network" msgpack:"network"`
+	DNS          Dns                    `json:"dns" msgpack:"dns"`
+	EDNS         DnsExtended            `json:"edns" msgpack:"edns"`
+	DnsTap       DnsTap                 `json:"dnstap" msgpack:"dnstap"`
+	Geo          *TransformDnsGeo       `json:"geoip,omitempty" msgpack:"geo"`
+	PowerDns     *PowerDns              `json:"powerdns,omitempty" msgpack:"powerdns"`
+	Suspicious   *TransformSuspicious   `json:"suspicious,omitempty" msgpack:"suspicious"`
+	PublicSuffix *TransformPublicSuffix `json:"publicsuffix,omitempty" msgpack:"publicsuffix"`
+	Extracted    *TransformExtracted    `json:"extracted,omitempty" msgpack:"extracted"`
+	Reducer      *TransformReducer      `json:"reducer,omitempty" msgpack:"reducer"`
 }
 
 func (dm *DnsMessage) Init() {
@@ -208,7 +213,6 @@ func (dm *DnsMessage) Init() {
 		Qtype:           "-",
 		Qname:           "-",
 		DnsRRs:          DnsRRs{Answers: []DnsAnswer{}, Nameservers: []DnsAnswer{}, Records: []DnsAnswer{}},
-		Repeated:        -1,
 	}
 
 	dm.EDNS = DnsExtended{
@@ -348,6 +352,17 @@ func (dm *DnsMessage) handleExtractedDirectives(directives []string, s *bytes.Bu
 	}
 }
 
+func (dm *DnsMessage) handleReducerDirectives(directives []string, s *bytes.Buffer) {
+	if dm.Reducer == nil {
+		s.WriteString("-")
+	} else {
+		switch directive := directives[0]; {
+		case directive == "reducer-occurences":
+			s.WriteString(strconv.Itoa(dm.Reducer.Occurences))
+		}
+	}
+}
+
 func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundary string) []byte {
 	var s bytes.Buffer
 
@@ -475,12 +490,12 @@ func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 			} else {
 				s.WriteString("-")
 			}
-		case directive == "repeated":
-			s.WriteString(strconv.Itoa(dm.DNS.Repeated))
 		// more directives from collectors
 		case PdnsDirectives.MatchString(directive):
 			dm.handlePdnsDirectives(directives, &s)
 		// more directives from transformers
+		case ReducerDirectives.MatchString(directive):
+			dm.handleReducerDirectives(directives, &s)
 		case GeoIPDirectives.MatchString(directive):
 			dm.handleGeoIPDirectives(directives, &s)
 		case SuspiciousDirectives.MatchString(directive):

@@ -34,7 +34,7 @@ type HitsUniq struct {
 	NxDomains      map[string]int
 	SfDomains      map[string]int
 	PublicSuffixes map[string]int
-	Suspicious     map[string]*dnsutils.Suspicious
+	Suspicious     map[string]*dnsutils.TransformSuspicious
 }
 
 type RestAPI struct {
@@ -80,7 +80,7 @@ func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, version string, 
 			NxDomains:      make(map[string]int),
 			SfDomains:      make(map[string]int),
 			PublicSuffixes: make(map[string]int),
-			Suspicious:     make(map[string]*dnsutils.Suspicious),
+			Suspicious:     make(map[string]*dnsutils.TransformSuspicious),
 		},
 
 		Streams: make(map[string]int),
@@ -625,7 +625,8 @@ LOOP:
 			break LOOP
 		}
 
-		// apply tranforms
+		// apply tranforms, init dns message with additionnals parts if necessary
+		subprocessors.InitDnsMessageFormat(&dm)
 		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 			continue
 		}

@@ -44,7 +44,7 @@ lint:
 test:
 	@go test ./dnsutils/ -race -cover -v
 	@go test ./netlib/ -race -cover -v
-	@go test ./transformers/ -race -cover -v
+	@go test -timeout 30s ./transformers/ -race -cover -v
 	@go test -timeout 30s ./collectors/ -race -cover -v
 	@go test -timeout 60s ./loggers/ -race -cover -v
 

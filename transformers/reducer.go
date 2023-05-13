@@ -34,7 +34,7 @@ func (mp *MapTraffic) Exists(key uint64) (ok bool) {
 
 	dm, ok := mp.kv[key]
 	if ok {
-		dm.DNS.Repeated += 1
+		dm.Reducer.Occurences += 1
 	}
 
 	return ok
@@ -44,7 +44,8 @@ func (mp *MapTraffic) Set(key uint64, dm *dnsutils.DnsMessage) {
 	mp.Lock()
 	defer mp.Unlock()
 
-	dm.DNS.Repeated = 0
+	dm.Reducer.Repeated = true
+	dm.Reducer.Occurences = 1
 	mp.kv[key] = dm
 	expTime := time.Now().Add(mp.ttl)
 	heap.Push(&mp.expiredKeys, expiredKey{key, expTime})
@@ -145,9 +146,18 @@ func (p *ReducerProcessor) LoadActiveReducers() {
 	}
 }
 
+func (p *ReducerProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
+	if dm.Reducer == nil {
+		dm.Reducer = &dnsutils.TransformReducer{
+			Repeated:   false,
+			Occurences: 0,
+		}
+	}
+}
+
 func (p *ReducerProcessor) RepetitiveTrafficDetector(dm *dnsutils.DnsMessage) int {
 	// compute the hash of the query
-	tags := []string{dm.DnsTap.Operation, dm.NetworkInfo.QueryIp, dm.DNS.Qname, dm.DNS.Type}
+	tags := []string{dm.DnsTap.Operation, dm.NetworkInfo.QueryIp, dm.DNS.Qname, dm.DNS.Qtype}
 
 	hashfnv := fnv.New64a()
 	hashfnv.Write([]byte(strings.Join(tags[:], "+")))
@@ -167,7 +177,8 @@ func (s *ReducerProcessor) ProcessDnsMessage(dm *dnsutils.DnsMessage) int {
 		return RETURN_SUCCESS
 	}
 
-	if dmCopy.DNS.Repeated >= 0 {
+	// ignore repeated messages
+	if dmCopy.Reducer.Repeated {
 		return RETURN_SUCCESS
 	}
 

@@ -185,7 +185,8 @@ func (o *Syslog) Run() {
 	o.syslogConn = syslogconn
 
 	for dm := range o.channel {
-		// apply tranforms
+		// apply tranforms, init dns message with additionnals parts if necessary
+		subprocessors.InitDnsMessageFormat(&dm)
 		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 			continue
 		}

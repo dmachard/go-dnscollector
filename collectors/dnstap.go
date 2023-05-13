@@ -3,7 +3,6 @@ package collectors
 import (
 	"bufio"
 	"crypto/tls"
-	"io"
 	"net"
 	"os"
 	"strconv"
@@ -14,25 +13,6 @@ import (
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 )
-
-// thanks to https://stackoverflow.com/questions/28967701/golang-tcp-socket-cant-close-after-get-file,
-// call conn.CloseRead() before calling conn.Close()
-func Close(conn io.Closer) error {
-	type ReadCloser interface {
-		CloseRead() error
-	}
-	var errs []error
-	if closer, ok := conn.(ReadCloser); ok {
-		errs = append(errs, closer.CloseRead())
-	}
-	errs = append(errs, conn.Close())
-	for _, err := range errs {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
 type Dnstap struct {
 	done     chan bool
@@ -147,7 +127,7 @@ func (c *Dnstap) Stop() {
 	for _, conn := range c.conns {
 		peer := conn.RemoteAddr().String()
 		c.LogInfo("%s - closing connection...", peer)
-		Close(conn)
+		netlib.Close(conn, c.config.Collectors.Dnstap.ResetConn)
 	}
 	// Finally close the listener to unblock accept
 	c.LogInfo("stop listening...")
@@ -226,13 +206,7 @@ func (c *Dnstap) Run() {
 		}
 
 		if (c.connMode == "tls" || c.connMode == "tcp") && c.config.Collectors.Dnstap.RcvBufSize > 0 {
-
-			var is_tls bool
-			if c.config.Collectors.Dnstap.TlsSupport {
-				is_tls = true
-			}
-
-			before, actual, err := netlib.SetSock_RCVBUF(conn, c.config.Collectors.Dnstap.RcvBufSize, is_tls)
+			before, actual, err := netlib.SetSock_RCVBUF(conn, c.config.Collectors.Dnstap.RcvBufSize, c.config.Collectors.Dnstap.TlsSupport)
 			if err != nil {
 				c.logger.Fatal("Unable to set SO_RCVBUF: ", err)
 			}

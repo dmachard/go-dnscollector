@@ -13,6 +13,13 @@
 
 ## Transformers
 
+Transformers processing is currently in this order :
+
+    Normalize Transform
+    Traffic Filtering
+    Traffic Reducer
+    Finally all other transforms
+
 ### Normalize
 
 This transformer can be used:
@@ -127,7 +134,7 @@ Example:
     "country-isocode": "-",
     "as-number": 1234,
     "as-owner": "Orange",
-  },
+},
 ```
 
 Specific directives added:
@@ -216,6 +223,7 @@ When the feature is enabled, the following json field are populated in your DNS 
 Example:
 
 ```json
+{
   "suspicious": {
     "score": 0.0,
     "malformed-packet": false,
@@ -226,6 +234,7 @@ Example:
     "uncommon-qtypes": false,
     "excessive-number-labels": false,
   }
+}
 ```
 
 ### Latency Computing
@@ -282,7 +291,19 @@ transforms:
 ```
 
 Specific directive(s) available for the text format:
-- `repeated`: display the number of detected duplication
+- `reducer-occurences`: display the number of detected duplication
+
+When the feature is enabled, the following json field are populated in your DNS message:
+
+Example:
+
+```json
+{
+  "reducer": {
+    "occurences": 1,
+  }
+}
+```
 
 ### Extractor
 
