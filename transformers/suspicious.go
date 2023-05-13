@@ -65,11 +65,6 @@ func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
 		return
 	}
 
-	// Only treat replies or we'll get count most categories twice.
-	if dm.DNS.Type == dnsutils.DNS_TYPE_QUERY {
-		return
-	}
-
 	// dns decoding error?
 	if dm.DNS.MalformedPacket {
 		dm.Suspicious.Score += 1.0
