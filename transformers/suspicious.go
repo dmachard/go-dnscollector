@@ -85,6 +85,12 @@ func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
 		dm.Suspicious.LargePacket = true
 	}
 
+	// slow domain name resolution ?
+	if dm.DnsTap.Latency > p.config.Suspicious.ThresholdSlow {
+		dm.Suspicious.Score += 1.0
+		dm.Suspicious.SlowDomain = true
+	}
+
 	// uncommon qtype?
 	if _, found := p.CommonQtypes[dm.DNS.Qtype]; !found {
 		dm.Suspicious.Score += 1.0

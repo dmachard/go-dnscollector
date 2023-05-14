@@ -111,6 +111,33 @@ func TestSuspicious_LongDomain(t *testing.T) {
 	}
 }
 
+func TestSuspiciousSlowDomain(t *testing.T) {
+	// config
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Suspicious.Enable = true
+	config.Suspicious.ThresholdSlow = 3.0
+
+	// init subproccesor
+	suspicious := NewSuspiciousSubprocessor(config, logger.New(false), "test")
+
+	// malformed DNS message
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.DnsTap.Latency = 4.0
+
+	// init dns message with additional part
+	suspicious.InitDnsMessage(&dm)
+
+	suspicious.CheckIfSuspicious(&dm)
+
+	if dm.Suspicious.Score != 1.0 {
+		t.Errorf("suspicious score should be equal to 1.0")
+	}
+
+	if dm.Suspicious.SlowDomain != true {
+		t.Errorf("suspicious slow domain flag should be equal to true")
+	}
+}
+
 func TestSuspiciousLargePacket(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfigTransformers()
