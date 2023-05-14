@@ -1,4 +1,4 @@
-# Example 18: Count the number of outgoing queries without replies
+# Example 18: Count the number of evicted queries
 #
 
 # If turned on, debug messages are printed in the standard output

@@ -57,7 +57,7 @@ Additionally, DNS-collector also support
 **Transformers**:
 
 - [`Traffic Reducer`](doc/transformers.md#traffic-reducer)
-    - Detect repetitive queries/replies and log once
+    - Detect repetitive queries/replies and log it only once
 - [`Extractor`](doc/transformers.md#extract)
     - Add base64 encoded dns payload
 - [`Latency Computing`](doc/transformers.md#latency-computing)
@@ -121,7 +121,8 @@ You will find below some examples of configuration to manage your DNS logs.
     - [x] [Filtering incoming traffic with downsample and whitelist of domains](example-config/use-case-9.yml)
     - [x] [Transform all domains to lowercase](example-config/use-case-10.yml)
     - [x] [Add geographical metadata with GeoIP](example-config/use-case-11.yml)
-    - [x] [Count the number of outgoing queries without replies](example-config/use-case-18.yml)
+    - [x] [Count the number of evicted queries](example-config/use-case-18.yml)
+    - [x] [Detect repetitive traffic and log it only once](example-config/use-case-20.yml)
 
 - Capture DNS traffic from FRSTRM/dnstap files
     - [x] [Save incoming DNStap streams to file (frstrm)](example-config/use-case-13.yml)

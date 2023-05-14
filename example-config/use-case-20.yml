@@ -1,0 +1,27 @@
+# Example 20: Detected repetitive traffic and log once
+#
+
+# If turned on, debug messages are printed in the standard output
+global:
+  trace:
+    verbose: true
+
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+
+  loggers:
+    - name: console
+      stdout:
+        mode: text
+      transforms:
+        reducer:
+          repetitive-traffic-detector: true
+          watch-interval: 5
+
+  routes:
+    - from: [ tap ]
+      to: [ console ]
