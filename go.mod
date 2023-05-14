@@ -31,7 +31,7 @@ require (
 	github.com/segmentio/kafka-go v0.4.40
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/net v0.9.0
-	golang.org/x/sys v0.7.0
+	golang.org/x/sys v0.8.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.1
