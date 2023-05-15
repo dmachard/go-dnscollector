@@ -37,19 +37,9 @@ type HitsUniq struct {
 	Suspicious     map[string]*dnsutils.TransformSuspicious
 }
 
-type StreamHit struct {
-	Stream string `json:"stream"`
-	Hit    int    `json:"hit"`
-}
-
-type DomainHit struct {
-	Domain string `json:"domain"`
-	Hit    int    `json:"hit"`
-}
-
-type AddressHit struct {
-	Address string `json:"address"`
-	Hit     int    `json:"hit"`
+type KeyHit struct {
+	Key string `json:"key"`
+	Hit int    `json:"hit"`
 }
 
 type RestAPI struct {
@@ -271,9 +261,9 @@ func (s *RestAPI) GetTLDsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		// return as array
-		dataArray := []DomainHit{}
+		dataArray := []KeyHit{}
 		for tld, hit := range s.HitsUniq.PublicSuffixes {
-			dataArray = append(dataArray, DomainHit{Domain: tld, Hit: hit})
+			dataArray = append(dataArray, KeyHit{Key: tld, Hit: hit})
 		}
 
 		// encode
@@ -297,9 +287,9 @@ func (s *RestAPI) GetClientsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		// return as array
-		dataArray := []AddressHit{}
+		dataArray := []KeyHit{}
 		for address, hit := range s.HitsUniq.Clients {
-			dataArray = append(dataArray, AddressHit{Address: address, Hit: hit})
+			dataArray = append(dataArray, KeyHit{Key: address, Hit: hit})
 		}
 
 		// encode
@@ -323,9 +313,9 @@ func (s *RestAPI) GetDomainsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		// return as array
-		dataArray := []DomainHit{}
+		dataArray := []KeyHit{}
 		for domain, hit := range s.HitsUniq.Domains {
-			dataArray = append(dataArray, DomainHit{Domain: domain, Hit: hit})
+			dataArray = append(dataArray, KeyHit{Key: domain, Hit: hit})
 		}
 
 		// encode
@@ -349,9 +339,9 @@ func (s *RestAPI) GetNxDomainsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		// convert to array
-		dataArray := []DomainHit{}
+		dataArray := []KeyHit{}
 		for domain, hit := range s.HitsUniq.NxDomains {
-			dataArray = append(dataArray, DomainHit{Domain: domain, Hit: hit})
+			dataArray = append(dataArray, KeyHit{Key: domain, Hit: hit})
 		}
 
 		// encode
@@ -376,9 +366,9 @@ func (s *RestAPI) GetSfDomainsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		// return as array
-		dataArray := []DomainHit{}
+		dataArray := []KeyHit{}
 		for domain, hit := range s.HitsUniq.SfDomains {
-			dataArray = append(dataArray, DomainHit{Domain: domain, Hit: hit})
+			dataArray = append(dataArray, KeyHit{Key: domain, Hit: hit})
 		}
 
 		// encode
@@ -427,53 +417,39 @@ func (s *RestAPI) GetSearchHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 
-		streamId := r.URL.Query()["stream_id"]
-		queryIp := r.URL.Query()["query_ip"]
-		queryName := r.URL.Query()["query_name"]
-
-		if len(streamId) == 0 && len(queryIp) == 0 && len(queryName) == 0 {
+		filter := r.URL.Query()["filter"]
+		if len(filter) == 0 {
 			http.Error(w, "Arguments are missing", http.StatusBadRequest)
 		}
 
-		// search in a stream
-		if len(streamId) == 1 {
-			if _, exists := s.HitsStream.Streams[streamId[0]]; exists {
-				stream := s.HitsStream.Streams[streamId[0]]
+		dataArray := []KeyHit{}
 
-				if len(queryIp) == 1 && len(queryName) == 1 {
-					if _, exists := stream.Clients[queryIp[0]]; exists {
-						client := stream.Clients[queryIp[0]]
-						if _, domainExists := client.Hits[queryName[0]]; domainExists {
-							w.Header().Set("Content-Type", "application/text")
-							w.Write([]byte(strconv.Itoa(client.Hits[queryName[0]])))
-						} else {
-							http.Error(w, "{\"error\": \"Query Name not found\"}", http.StatusNotFound)
-						}
-					} else {
-						http.Error(w, "{\"error\": \"Query IP not found\"}", http.StatusNotFound)
-					}
-
-				} else if len(queryIp) == 1 {
-					if _, exists := stream.Clients[queryIp[0]]; exists {
-						w.Header().Set("Content-Type", "application/json")
-						json.NewEncoder(w).Encode(stream.Clients[queryIp[0]])
-					} else {
-						http.Error(w, "{\"error\": \"Query IP not found\"}", http.StatusNotFound)
-					}
-
-				} else if len(queryName) == 1 {
-					if _, exists := stream.Domains[queryName[0]]; exists {
-						w.Header().Set("Content-Type", "application/json")
-						json.NewEncoder(w).Encode(stream.Domains[queryName[0]])
-					} else {
-						http.Error(w, "{\"error\": \"Query Name not found\"}", http.StatusNotFound)
-					}
+		// search by IP
+		for _, search := range s.HitsStream.Streams {
+			userHits, clientExists := search.Clients[filter[0]]
+			if clientExists {
+				for domain, hit := range userHits.Hits {
+					dataArray = append(dataArray, KeyHit{Key: domain, Hit: hit})
 				}
-
-			} else {
-				http.Error(w, "{\"error\": \"Stream ID not Found\"}", http.StatusNotFound)
 			}
 		}
+
+		// search by domain
+		if len(dataArray) == 0 {
+			for _, search := range s.HitsStream.Streams {
+				domainHists, domainExists := search.Domains[filter[0]]
+				if domainExists {
+					for addr, hit := range domainHists.Hits {
+						dataArray = append(dataArray, KeyHit{Key: addr, Hit: hit})
+					}
+				}
+			}
+		}
+
+		// encode to json
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(dataArray)
+
 	default:
 		http.Error(w, "{\"error\": \"Method not allowed\"}", http.StatusMethodNotAllowed)
 	}
@@ -493,9 +469,9 @@ func (s *RestAPI) GetStreamsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 
-		dataArray := []StreamHit{}
+		dataArray := []KeyHit{}
 		for stream, hit := range s.Streams {
-			dataArray = append(dataArray, StreamHit{Stream: stream, Hit: hit})
+			dataArray = append(dataArray, KeyHit{Key: stream, Hit: hit})
 		}
 
 		json.NewEncoder(w).Encode(dataArray)
@@ -625,7 +601,7 @@ func (s *RestAPI) ListenAndServe() {
 	mux.HandleFunc("/domains/nx/top", s.GetTopNxDomainsHandler)
 	mux.HandleFunc("/domains/servfail/top", s.GetTopSfDomainsHandler)
 	mux.HandleFunc("/suspicious", s.GetSuspiciousHandler)
-	mux.HandleFunc("/search", s.GetSearchHandler)
+	mux.HandleFunc("/search/address", s.GetSearchHandler)
 
 	var err error
 	var listener net.Listener
