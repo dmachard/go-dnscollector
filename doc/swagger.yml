@@ -1,13 +1,13 @@
 openapi: 3.0.2
 info:
   title: Swagger for DNS-collector tool
-  version: 0.28.0
+  version: 0.32.0
   description: This is a swagger for the API of the DNS-collector.
   contact:
     email: d.machard@gmail.com
   license:
     name: MIT
-    url: 'https://github.com/dmachard/go-dns-collector/blob/main/LICENSE'
+    url: 'https://github.com/dmachard/go-dnscollector/blob/main/LICENSE'
   x-logo:
     url: ''
 servers:
@@ -16,29 +16,19 @@ paths:
   /search:
     get:
       parameters:
-        - in: query
-          name: stream_id
+        - in: filter
+          name: filter
           schema:
             type: string
-          description: stream identity name
-        - in: query
-          name: query_ip
-          schema:
-            type: string
-          description: query ip to search
-        - in: query
-          name: query_name
-          schema:
-            type: string
-          description: query name to search
+          description: domain or address to search
       responses:
         '200':
-          description: Return list of domains founded
+          description: Return list of domains or addresses founded
           content:
             text/plain:
               schema:
                 type: string
-      summary: Return a list of domains
+      summary: Return a list of domains or addresses
   /streams:
     get:
       responses:
@@ -153,7 +143,7 @@ paths:
     get:
       responses:
         '200':
-          description: Rerurn suspicious domains list
+          description: Return suspicious domains list
           content:
             text/plain:
               schema:
@@ -161,4 +151,4 @@ paths:
       summary: Return suspicious domains list         
 security: []
 externalDocs:
-  url: 'https://github.com/dmachard/go-dns-collector'
+  url: 'https://github.com/dmachard/go-dnscollector'

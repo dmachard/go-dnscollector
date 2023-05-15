@@ -11,7 +11,7 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func TestRestAPIBadBasicAuth(t *testing.T) {
+func TestRestAPI_BadBasicAuth(t *testing.T) {
 	// init the logger
 	config := dnsutils.GetFakeConfig()
 	g := NewRestAPI(config, logger.New(false), "dev", "test")
@@ -57,7 +57,7 @@ func TestRestAPIBadBasicAuth(t *testing.T) {
 	}
 }
 
-func TestWebServerGet(t *testing.T) {
+func TestRestAPI_MethodNotAllowed(t *testing.T) {
 	// init the logger
 	config := dnsutils.GetFakeConfig()
 	g := NewRestAPI(config, logger.New(false), "dev", "test")
@@ -82,12 +82,12 @@ func TestWebServerGet(t *testing.T) {
 		statusCode int
 	}{
 		{
-			name:       "get clients",
-			uri:        "/clients",
-			handler:    g.GetClientsHandler,
-			method:     http.MethodGet,
-			want:       `{"1.2.3.4":1}`,
-			statusCode: http.StatusOK,
+			name:       "post streams refused",
+			uri:        "/streams",
+			handler:    g.GetStreamsHandler,
+			method:     http.MethodPost,
+			want:       `Method not allowed`,
+			statusCode: http.StatusMethodNotAllowed,
 		},
 		{
 			name:       "post clients refused",
@@ -98,14 +98,6 @@ func TestWebServerGet(t *testing.T) {
 			statusCode: http.StatusMethodNotAllowed,
 		},
 		{
-			name:       "get tlds",
-			uri:        "/tlds",
-			handler:    g.GetTLDsHandler,
-			method:     http.MethodGet,
-			want:       `{"collector":1}`,
-			statusCode: http.StatusOK,
-		},
-		{
 			name:       "post tlds refused",
 			uri:        "/tlds",
 			handler:    g.GetTLDsHandler,
@@ -114,17 +106,17 @@ func TestWebServerGet(t *testing.T) {
 			statusCode: http.StatusMethodNotAllowed,
 		},
 		{
-			name:       "get domains",
-			uri:        "/domains",
-			handler:    g.GetDomainsHandler,
-			method:     http.MethodGet,
-			want:       `{"dns.collector":1}`,
-			statusCode: http.StatusOK,
-		},
-		{
 			name:       "post domains refused",
 			uri:        "/domains",
 			handler:    g.GetDomainsHandler,
+			method:     http.MethodPost,
+			want:       `Method not allowed`,
+			statusCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:       "post search refused",
+			uri:        "/search",
+			handler:    g.GetSearchHandler,
 			method:     http.MethodPost,
 			want:       `Method not allowed`,
 			statusCode: http.StatusMethodNotAllowed,
@@ -150,6 +142,161 @@ func TestWebServerGet(t *testing.T) {
 			metrics := strings.TrimSpace(responseRecorder.Body.String())
 			if regexp.MustCompile(tc.want).MatchString(metrics) != true {
 				t.Errorf("Want '%s', got '%s'", tc.want, responseRecorder.Body)
+			}
+		})
+	}
+}
+
+func TestRestAPI_GetMethod(t *testing.T) {
+	// init the logger
+	config := dnsutils.GetFakeConfig()
+	g := NewRestAPI(config, logger.New(false), "dev", "test")
+
+	tt := []struct {
+		name       string
+		uri        string
+		handler    func(w http.ResponseWriter, r *http.Request)
+		method     string
+		want       string
+		dm         dnsutils.DnsMessage
+		dmRcode    string
+		statusCode int
+	}{
+		{
+			name:       "streams",
+			uri:        "/streams",
+			handler:    g.GetStreamsHandler,
+			method:     http.MethodGet,
+			want:       `\[\{"key":"collector","hit":1\}\]`,
+			statusCode: http.StatusOK,
+			dm:         dnsutils.GetFakeDnsMessage(),
+			dmRcode:    "NOERROR",
+		},
+		{
+			name:       "clients",
+			uri:        "/clients",
+			handler:    g.GetClientsHandler,
+			method:     http.MethodGet,
+			want:       `\[\{"key":"1.2.3.4","hit":2\}\]`,
+			statusCode: http.StatusOK,
+			dm:         dnsutils.GetFakeDnsMessage(),
+			dmRcode:    "NOERROR",
+		},
+		{
+			name:       "domains",
+			uri:        "/domains",
+			handler:    g.GetDomainsHandler,
+			method:     http.MethodGet,
+			want:       `\[\{"key":"dns.collector","hit":3\}\]`,
+			statusCode: http.StatusOK,
+			dm:         dnsutils.GetFakeDnsMessage(),
+			dmRcode:    "NOERROR",
+		},
+		{
+			name:       "nx domains",
+			uri:        "/domains/nx",
+			handler:    g.GetNxDomainsHandler,
+			method:     http.MethodGet,
+			want:       `\[\{"key":"dns.collector","hit":1\}\]`,
+			statusCode: http.StatusOK,
+			dm:         dnsutils.GetFakeDnsMessage(),
+			dmRcode:    "NXDOMAIN",
+		},
+		{
+			name:       "servfail domains",
+			uri:        "/domains/servfail",
+			handler:    g.GetSfDomainsHandler,
+			method:     http.MethodGet,
+			want:       `\[\{"key":"dns.collector","hit":1\}\]`,
+			statusCode: http.StatusOK,
+			dm:         dnsutils.GetFakeDnsMessage(),
+			dmRcode:    "SERVFAIL",
+		},
+		{
+			name:       "tlds",
+			uri:        "/tlds",
+			handler:    g.GetTLDsHandler,
+			method:     http.MethodGet,
+			want:       `\[\{"key":".com","hit":1\}\]`,
+			statusCode: http.StatusOK,
+			dm:         dnsutils.GetFakeDnsMessage(),
+			dmRcode:    "NOERROR",
+		},
+		{
+			name:       "suspicious",
+			uri:        "/suspicious",
+			handler:    g.GetSuspiciousHandler,
+			method:     http.MethodGet,
+			want:       `\[\{"score":1,"malformed-pkt":false,"large-pkt":false,"long-domain":false,"slow-domain":false,"unallowed-chars":false,"uncommon-qtypes":false,"excessive-number-labels":false,"domain":"dns:collector"\}\]`,
+			statusCode: http.StatusOK,
+			dm:         dnsutils.GetFakeDnsMessage(),
+			dmRcode:    "NOERROR",
+		},
+		{
+			name:       "search_by_domain",
+			uri:        "/search?filter=dns.collector",
+			handler:    g.GetSearchHandler,
+			method:     http.MethodGet,
+			want:       `\[\{"key":"1.2.3.4","hit":7\}\]`,
+			statusCode: http.StatusOK,
+			dm:         dnsutils.GetFakeDnsMessage(),
+			dmRcode:    "NOERROR",
+		},
+		{
+			name:       "search_by_ip",
+			uri:        "/search?filter=1.2.3.4",
+			handler:    g.GetSearchHandler,
+			method:     http.MethodGet,
+			want:       `\[\{"key":"dns.collector","hit":8},{"key":"dns:collector","hit":1\}\]`,
+			statusCode: http.StatusOK,
+			dm:         dnsutils.GetFakeDnsMessage(),
+			dmRcode:    "NOERROR",
+		},
+		{
+			name:       "search_not_found",
+			uri:        "/search?filter=notfound.collector",
+			handler:    g.GetSearchHandler,
+			method:     http.MethodGet,
+			want:       `\[\]`,
+			statusCode: http.StatusOK,
+			dm:         dnsutils.GetFakeDnsMessage(),
+			dmRcode:    "NOERROR",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			// record the dns message
+			dm := tc.dm
+			dm.DNS.Rcode = tc.dmRcode
+			if tc.name == "tlds" {
+				dm.PublicSuffix = &dnsutils.TransformPublicSuffix{}
+				dm.PublicSuffix.QnamePublicSuffix = ".com"
+			}
+
+			if tc.name == "suspicious" {
+				dm.DNS.Qname = "dns:collector"
+				dm.Suspicious = &dnsutils.TransformSuspicious{Score: 1}
+			}
+			g.RecordDnsMessage(dm)
+
+			// init httptest
+			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))
+			request.SetBasicAuth(config.Loggers.RestAPI.BasicAuthLogin, config.Loggers.RestAPI.BasicAuthPwd)
+			responseRecorder := httptest.NewRecorder()
+
+			// call handler
+			tc.handler(responseRecorder, request)
+
+			// checking status code
+			if responseRecorder.Code != tc.statusCode {
+				t.Errorf("Want status '%d', got '%d'", tc.statusCode, responseRecorder.Code)
+			}
+
+			// checking content
+			response := strings.TrimSpace(responseRecorder.Body.String())
+			if regexp.MustCompile(tc.want).MatchString(response) != true {
+				t.Errorf("Want '%s', got '%s'", tc.want, response)
 			}
 		})
 	}
