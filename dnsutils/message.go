@@ -157,6 +157,7 @@ type TransformSuspicious struct {
 	UnallowedChars        bool    `json:"unallowed-chars" msgpack:"unallowed-chars"`
 	UncommonQtypes        bool    `json:"uncommon-qtypes" msgpack:"uncommon-qtypes"`
 	ExcessiveNumberLabels bool    `json:"excessive-number-labels" msgpack:"excessive-number-labels"`
+	Domain                string  `json:"domain,omitempty" msgpack:"-"`
 }
 
 type TransformPublicSuffix struct {

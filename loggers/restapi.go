@@ -37,6 +37,21 @@ type HitsUniq struct {
 	Suspicious     map[string]*dnsutils.TransformSuspicious
 }
 
+type StreamHit struct {
+	Stream string `json:"stream"`
+	Hit    int    `json:"hit"`
+}
+
+type DomainHit struct {
+	Domain string `json:"domain"`
+	Hit    int    `json:"hit"`
+}
+
+type AddressHit struct {
+	Address string `json:"address"`
+	Hit     int    `json:"hit"`
+}
+
 type RestAPI struct {
 	done       chan bool
 	done_api   chan bool
@@ -255,7 +270,14 @@ func (s *RestAPI) GetTLDsHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		json.NewEncoder(w).Encode(s.HitsUniq.PublicSuffixes)
+		// return as array
+		dataArray := []DomainHit{}
+		for tld, hit := range s.HitsUniq.PublicSuffixes {
+			dataArray = append(dataArray, DomainHit{Domain: tld, Hit: hit})
+		}
+
+		// encode
+		json.NewEncoder(w).Encode(dataArray)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -274,7 +296,14 @@ func (s *RestAPI) GetClientsHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		json.NewEncoder(w).Encode(s.HitsUniq.Clients)
+		// return as array
+		dataArray := []AddressHit{}
+		for address, hit := range s.HitsUniq.Clients {
+			dataArray = append(dataArray, AddressHit{Address: address, Hit: hit})
+		}
+
+		// encode
+		json.NewEncoder(w).Encode(dataArray)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -293,7 +322,14 @@ func (s *RestAPI) GetDomainsHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		json.NewEncoder(w).Encode(s.HitsUniq.Domains)
+		// return as array
+		dataArray := []DomainHit{}
+		for domain, hit := range s.HitsUniq.Domains {
+			dataArray = append(dataArray, DomainHit{Domain: domain, Hit: hit})
+		}
+
+		// encode
+		json.NewEncoder(w).Encode(dataArray)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -312,7 +348,15 @@ func (s *RestAPI) GetNxDomainsHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		json.NewEncoder(w).Encode(s.HitsUniq.NxDomains)
+		// convert to array
+		dataArray := []DomainHit{}
+		for domain, hit := range s.HitsUniq.NxDomains {
+			dataArray = append(dataArray, DomainHit{Domain: domain, Hit: hit})
+		}
+
+		// encode
+		json.NewEncoder(w).Encode(dataArray)
+
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -331,7 +375,14 @@ func (s *RestAPI) GetSfDomainsHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		json.NewEncoder(w).Encode(s.HitsUniq.SfDomains)
+		// return as array
+		dataArray := []DomainHit{}
+		for domain, hit := range s.HitsUniq.SfDomains {
+			dataArray = append(dataArray, DomainHit{Domain: domain, Hit: hit})
+		}
+
+		// encode
+		json.NewEncoder(w).Encode(dataArray)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -350,7 +401,15 @@ func (s *RestAPI) GetSuspiciousHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		json.NewEncoder(w).Encode(s.HitsUniq.Suspicious)
+		// return as array
+		dataArray := []*dnsutils.TransformSuspicious{}
+		for domain, suspicious := range s.HitsUniq.Suspicious {
+			suspicious.Domain = domain
+			dataArray = append(dataArray, suspicious)
+		}
+
+		// encode
+		json.NewEncoder(w).Encode(dataArray)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -433,7 +492,13 @@ func (s *RestAPI) GetStreamsHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		json.NewEncoder(w).Encode(s.Streams)
+
+		dataArray := []StreamHit{}
+		for stream, hit := range s.Streams {
+			dataArray = append(dataArray, StreamHit{Stream: stream, Hit: hit})
+		}
+
+		json.NewEncoder(w).Encode(dataArray)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -555,10 +620,9 @@ func (s *RestAPI) ListenAndServe() {
 	mux.HandleFunc("/clients", s.GetClientsHandler)
 	mux.HandleFunc("/clients/top", s.GetTopClientsHandler)
 	mux.HandleFunc("/domains", s.GetDomainsHandler)
-	mux.HandleFunc("/domains/top", s.GetTopDomainsHandler)
-	mux.HandleFunc("/domains/nx", s.GetNxDomainsHandler)
-	mux.HandleFunc("/domains/nx/top", s.GetTopNxDomainsHandler)
 	mux.HandleFunc("/domains/servfail", s.GetSfDomainsHandler)
+	mux.HandleFunc("/domains/top", s.GetTopDomainsHandler)
+	mux.HandleFunc("/domains/nx/top", s.GetTopNxDomainsHandler)
 	mux.HandleFunc("/domains/servfail/top", s.GetTopSfDomainsHandler)
 	mux.HandleFunc("/suspicious", s.GetSuspiciousHandler)
 	mux.HandleFunc("/search", s.GetSearchHandler)
