@@ -200,7 +200,8 @@ Options:
 - `threshold-slow`: threshold to set a domain considered as slow regarding latency, value in second
 - `common-qtypes`:  common qtypes list 
 - `unallowed-chars`: unallowed list of characters not acceptable in domain name
-- `hreshold-max-labels`: maximum number of labels in domains name
+- `threshold-max-labels`: maximum number of labels in domains name
+- `whitelist-domains`: to ignore some domains 
 
 Default values:
 
@@ -213,6 +214,7 @@ transforms:
     common-qtypes:  [ "A", "AAAA", "CNAME", "TXT", "PTR", "NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS" ]
     unallowed-chars: [ "\"", "==", "/", ":" ]
     threshold-max-labels: 10
+    whitelist-domains: [ "\.ip6\.arpa" ]
 ```
 
 Specific directive(s) available for the text format:

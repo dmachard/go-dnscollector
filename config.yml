@@ -654,3 +654,5 @@ multiplexer:
 #   unallowed-chars: [ "\"", "==", "/", ":" ]
 #   # maximum number of labels in domains name
 #   threshold-max-labels: 10
+#   # to ignore some domains 
+#   whitelist-domains: [ "\.ip6\.arpa" ]

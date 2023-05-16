@@ -1,6 +1,7 @@
 package transformers
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -8,18 +9,20 @@ import (
 )
 
 type SuspiciousTransform struct {
-	config       *dnsutils.ConfigTransformers
-	logger       *logger.Logger
-	name         string
-	CommonQtypes map[string]bool
+	config                *dnsutils.ConfigTransformers
+	logger                *logger.Logger
+	name                  string
+	CommonQtypes          map[string]bool
+	whitelistDomainsRegex map[string]*regexp.Regexp
 }
 
 func NewSuspiciousSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string) SuspiciousTransform {
 	d := SuspiciousTransform{
-		config:       config,
-		logger:       logger,
-		name:         name,
-		CommonQtypes: make(map[string]bool),
+		config:                config,
+		logger:                logger,
+		name:                  name,
+		CommonQtypes:          make(map[string]bool),
+		whitelistDomainsRegex: make(map[string]*regexp.Regexp),
 	}
 
 	d.ReadConfig()
@@ -30,6 +33,9 @@ func NewSuspiciousSubprocessor(config *dnsutils.ConfigTransformers, logger *logg
 func (p *SuspiciousTransform) ReadConfig() {
 	for _, v := range p.config.Suspicious.CommonQtypes {
 		p.CommonQtypes[v] = true
+	}
+	for _, v := range p.config.Suspicious.WhitelistDomains {
+		p.whitelistDomainsRegex[v] = regexp.MustCompile(v)
 	}
 }
 
@@ -65,6 +71,13 @@ func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
 	if dm.Suspicious == nil {
 		p.LogError("transformer is not properly initialized")
 		return
+	}
+
+	// ignore some domains ?
+	for _, d := range p.whitelistDomainsRegex {
+		if d.MatchString(dm.DNS.Qname) {
+			return
+		}
 	}
 
 	// dns decoding error?
