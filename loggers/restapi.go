@@ -152,6 +152,42 @@ func (o *RestAPI) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
 		(password == o.config.Loggers.RestAPI.BasicAuthPwd)
 }
 
+func (s *RestAPI) DeleteResetHandler(w http.ResponseWriter, r *http.Request) {
+	s.RLock()
+	defer s.RUnlock()
+
+	if !s.BasicAuth(w, r) {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodDelete:
+
+		s.HitsUniq.Clients = make(map[string]int)
+		s.HitsUniq.Domains = make(map[string]int)
+		s.HitsUniq.NxDomains = make(map[string]int)
+		s.HitsUniq.SfDomains = make(map[string]int)
+		s.HitsUniq.PublicSuffixes = make(map[string]int)
+		s.HitsUniq.Suspicious = make(map[string]*dnsutils.TransformSuspicious)
+
+		s.Streams = make(map[string]int)
+
+		s.TopQnames = topmap.NewTopMap(s.config.Loggers.RestAPI.TopN)
+		s.TopClients = topmap.NewTopMap(s.config.Loggers.RestAPI.TopN)
+		s.TopTLDs = topmap.NewTopMap(s.config.Loggers.RestAPI.TopN)
+		s.TopNonExistent = topmap.NewTopMap(s.config.Loggers.RestAPI.TopN)
+		s.TopServFail = topmap.NewTopMap(s.config.Loggers.RestAPI.TopN)
+
+		s.HitsStream.Streams = make(map[string]SearchBy)
+
+		w.Header().Set("Content-Type", "application/text")
+		w.Write([]byte("OK"))
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
 func (s *RestAPI) GetTopTLDsHandler(w http.ResponseWriter, r *http.Request) {
 	s.RLock()
 	defer s.RUnlock()
@@ -601,7 +637,8 @@ func (s *RestAPI) ListenAndServe() {
 	mux.HandleFunc("/domains/nx/top", s.GetTopNxDomainsHandler)
 	mux.HandleFunc("/domains/servfail/top", s.GetTopSfDomainsHandler)
 	mux.HandleFunc("/suspicious", s.GetSuspiciousHandler)
-	mux.HandleFunc("/search/address", s.GetSearchHandler)
+	mux.HandleFunc("/search", s.GetSearchHandler)
+	mux.HandleFunc("/reset", s.DeleteResetHandler)
 
 	var err error
 	var listener net.Listener
