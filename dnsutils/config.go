@@ -93,6 +93,7 @@ type ConfigTransformers struct {
 		CommonQtypes       []string `yaml:"common-qtypes,flow"`
 		UnallowedChars     []string `yaml:"unallowed-chars,flow"`
 		ThresholdMaxLabels int      `yaml:"threshold-max-labels"`
+		WhitelistDomains   []string `yaml:"whitelist-domains,flow"`
 	} `yaml:"suspicious"`
 	Extract struct {
 		Enable     bool `yaml:"enable"`
@@ -109,6 +110,7 @@ func (c *ConfigTransformers) SetDefault() {
 		"NAPTR", "DNSKEY", "SRV", "SOA", "NS", "MX", "DS", "HTTPS"}
 	c.Suspicious.UnallowedChars = []string{"\"", "==", "/", ":"}
 	c.Suspicious.ThresholdMaxLabels = 10
+	c.Suspicious.WhitelistDomains = []string{"\\.ip6\\.arpa"}
 
 	c.UserPrivacy.Enable = false
 	c.UserPrivacy.AnonymizeIP = false

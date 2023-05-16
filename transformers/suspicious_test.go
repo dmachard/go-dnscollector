@@ -111,7 +111,7 @@ func TestSuspicious_LongDomain(t *testing.T) {
 	}
 }
 
-func TestSuspiciousSlowDomain(t *testing.T) {
+func TestSuspicious_SlowDomain(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
@@ -138,7 +138,7 @@ func TestSuspiciousSlowDomain(t *testing.T) {
 	}
 }
 
-func TestSuspiciousLargePacket(t *testing.T) {
+func TestSuspicious_LargePacket(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
@@ -165,7 +165,7 @@ func TestSuspiciousLargePacket(t *testing.T) {
 	}
 }
 
-func TestSuspiciousUncommonQtype(t *testing.T) {
+func TestSuspicious_UncommonQtype(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
@@ -191,7 +191,7 @@ func TestSuspiciousUncommonQtype(t *testing.T) {
 	}
 }
 
-func TestSuspiciousExceedMaxLabels(t *testing.T) {
+func TestSuspicious_ExceedMaxLabels(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
@@ -218,7 +218,7 @@ func TestSuspiciousExceedMaxLabels(t *testing.T) {
 	}
 }
 
-func TestSuspiciousUnallowedChars(t *testing.T) {
+func TestSuspicious_UnallowedChars(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
@@ -241,5 +241,27 @@ func TestSuspiciousUnallowedChars(t *testing.T) {
 
 	if dm.Suspicious.UnallowedChars != true {
 		t.Errorf("suspicious unallowed chars flag should be equal to true")
+	}
+}
+
+func TestSuspicious_WhitelistDomains(t *testing.T) {
+	// config
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Suspicious.Enable = true
+
+	// init subproccesor
+	suspicious := NewSuspiciousSubprocessor(config, logger.New(false), "test")
+
+	// IPv6 DNS message PTR
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.Qname = "0.f.e.d.c.b.a.9.8.7.6.5.4.3.2.1.ip6.arpa"
+
+	// init dns message with additional part
+	suspicious.InitDnsMessage(&dm)
+
+	suspicious.CheckIfSuspicious(&dm)
+
+	if dm.Suspicious.Score != 0.0 {
+		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
 	}
 }
