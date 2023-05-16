@@ -14,6 +14,16 @@ servers:
   - url: 'http://localhost:8080/'
 paths:
   /search:
+    delete:
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+      summary: Reset all data
+  /search:
     get:
       parameters:
         - in: filter
