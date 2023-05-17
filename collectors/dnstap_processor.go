@@ -54,14 +54,16 @@ type DnstapProcessor struct {
 	logger   *logger.Logger
 	config   *dnsutils.Config
 	name     string
+	chanSize int
 }
 
-func NewDnstapProcessor(config *dnsutils.Config, logger *logger.Logger, name string) DnstapProcessor {
+func NewDnstapProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) DnstapProcessor {
 	logger.Info("[%s] dnstap processor - initialization...", name)
 
 	d := DnstapProcessor{
 		done:     make(chan bool),
-		recvFrom: make(chan []byte, 512),
+		recvFrom: make(chan []byte, size),
+		chanSize: size,
 		logger:   logger,
 		config:   config,
 		name:     name,
@@ -88,6 +90,10 @@ func (d *DnstapProcessor) GetChannel() chan []byte {
 	return d.recvFrom
 }
 
+func (d *DnstapProcessor) ChannelIsFull() bool {
+	return len(d.recvFrom) >= d.chanSize
+}
+
 func (d *DnstapProcessor) Stop() {
 	close(d.recvFrom)
 
@@ -105,7 +111,6 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 	// read incoming dns message
 	d.LogInfo("running... waiting incoming dns message")
 	for data := range d.recvFrom {
-
 		err := proto.Unmarshal(data, dt)
 		if err != nil {
 			continue

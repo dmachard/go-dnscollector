@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -14,13 +15,16 @@ import (
 )
 
 type ProtobufPowerDNS struct {
-	done    chan bool
-	listen  net.Listener
-	conns   []net.Conn
-	loggers []dnsutils.Worker
-	config  *dnsutils.Config
-	logger  *logger.Logger
-	name    string
+	done           chan bool
+	listen         net.Listener
+	conns          []net.Conn
+	loggers        []dnsutils.Worker
+	config         *dnsutils.Config
+	logger         *logger.Logger
+	name           string
+	stopping       bool
+	droppedPackets int
+	sync.RWMutex
 }
 
 func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *ProtobufPowerDNS {
@@ -73,7 +77,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	c.LogInfo("%s - new connection\n", peer)
 
 	// start protobuf subprocessor
-	pdns_subprocessor := NewPdnsProcessor(c.config, c.logger, c.name)
+	pdns_subprocessor := NewPdnsProcessor(c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
 	go pdns_subprocessor.Run(c.Loggers())
 
 	r := bufio.NewReader(conn)
@@ -84,6 +88,28 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 		c.LogError("transport error: %s", err)
 	}
 
+	var err error
+	var payload *powerdns_protobuf.ProtoPayload
+	for {
+		payload, err = pbs.RecvPayload(false)
+		if err != nil {
+			break
+		}
+
+		// drop packet if the channel is full to avoid a tcp zero windows
+		if pdns_subprocessor.ChannelIsFull() {
+			c.Lock()
+			c.droppedPackets++
+			c.Unlock()
+			continue
+		}
+
+		pdns_subprocessor.GetChannel() <- payload.Data()
+	}
+	if err != nil && !c.stopping {
+		c.LogError("protobuf reader error: %s", err)
+	}
+
 	c.LogInfo("%s - connection closed\n", peer)
 }
 
@@ -92,7 +118,11 @@ func (c *ProtobufPowerDNS) Channel() chan dnsutils.DnsMessage {
 }
 
 func (c *ProtobufPowerDNS) Stop() {
+	c.Lock()
+	defer c.Unlock()
+
 	c.LogInfo("stopping...")
+	c.stopping = true
 
 	// closing properly current connections if exists
 	for _, conn := range c.conns {
@@ -147,6 +177,23 @@ func (c *ProtobufPowerDNS) Listen() error {
 	return nil
 }
 
+func (c *ProtobufPowerDNS) FollowChannel() {
+	watchInterval := 10 * time.Second
+	bufferFull := time.NewTimer(watchInterval)
+	for {
+		select {
+		case <-bufferFull.C:
+			c.Lock()
+			if c.droppedPackets > 0 {
+				c.LogError("recv buffer is full, %d packet(s) dropped", c.droppedPackets)
+				c.droppedPackets = 0
+			}
+			c.Unlock()
+			bufferFull.Reset(watchInterval)
+		}
+	}
+}
+
 func (c *ProtobufPowerDNS) Run() {
 	c.LogInfo("starting collector...")
 	if c.listen == nil {
@@ -154,6 +201,9 @@ func (c *ProtobufPowerDNS) Run() {
 			c.logger.Fatal("collector dnstap listening failed: ", err)
 		}
 	}
+
+	go c.FollowChannel()
+
 	for {
 		// Accept() blocks waiting for new connection.
 		conn, err := c.listen.Accept()
@@ -162,7 +212,11 @@ func (c *ProtobufPowerDNS) Run() {
 		}
 
 		if c.config.Collectors.Dnstap.RcvBufSize > 0 {
-			before, actual, err := netlib.SetSock_RCVBUF(conn, c.config.Collectors.Dnstap.RcvBufSize, c.config.Collectors.Dnstap.TlsSupport)
+			before, actual, err := netlib.SetSock_RCVBUF(
+				conn,
+				c.config.Collectors.Dnstap.RcvBufSize,
+				c.config.Collectors.Dnstap.TlsSupport,
+			)
 			if err != nil {
 				c.logger.Fatal("Unable to set SO_RCVBUF: ", err)
 			}

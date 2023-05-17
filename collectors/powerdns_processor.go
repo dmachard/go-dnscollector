@@ -30,13 +30,15 @@ type PdnsProcessor struct {
 	logger   *logger.Logger
 	config   *dnsutils.Config
 	name     string
+	chanSize int
 }
 
-func NewPdnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string) PdnsProcessor {
+func NewPdnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
 	logger.Info("[%s] powerdns processor - initialization...", name)
 	d := PdnsProcessor{
 		done:     make(chan bool),
-		recvFrom: make(chan []byte, 512),
+		recvFrom: make(chan []byte, size),
+		chanSize: size,
 		logger:   logger,
 		config:   config,
 		name:     name,
@@ -61,6 +63,10 @@ func (c *PdnsProcessor) LogError(msg string, v ...interface{}) {
 
 func (d *PdnsProcessor) GetChannel() chan []byte {
 	return d.recvFrom
+}
+
+func (d *PdnsProcessor) ChannelIsFull() bool {
+	return len(d.recvFrom) >= d.chanSize
 }
 
 func (d *PdnsProcessor) Stop() {

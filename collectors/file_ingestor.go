@@ -369,7 +369,7 @@ func (c *FileIngestor) Run() {
 	go c.dnsProcessor.Run(c.Loggers())
 
 	// start dnstap subprocessor
-	c.dnstapProcessor = NewDnstapProcessor(c.config, c.logger, c.name)
+	c.dnstapProcessor = NewDnstapProcessor(c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
 	go c.dnstapProcessor.Run(c.Loggers())
 
 	// read current folder content

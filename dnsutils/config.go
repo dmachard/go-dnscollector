@@ -177,16 +177,17 @@ type Config struct {
 			FilePath     string `yaml:"file-path"`
 		} `yaml:"tail"`
 		Dnstap struct {
-			Enable        bool   `yaml:"enable"`
-			ListenIP      string `yaml:"listen-ip"`
-			ListenPort    int    `yaml:"listen-port"`
-			SockPath      string `yaml:"sock-path"`
-			TlsSupport    bool   `yaml:"tls-support"`
-			TlsMinVersion string `yaml:"tls-min-version"`
-			CertFile      string `yaml:"cert-file"`
-			KeyFile       string `yaml:"key-file"`
-			RcvBufSize    int    `yaml:"sock-rcvbuf"`
-			ResetConn     bool   `yaml:"reset-conn"`
+			Enable            bool   `yaml:"enable"`
+			ListenIP          string `yaml:"listen-ip"`
+			ListenPort        int    `yaml:"listen-port"`
+			SockPath          string `yaml:"sock-path"`
+			TlsSupport        bool   `yaml:"tls-support"`
+			TlsMinVersion     string `yaml:"tls-min-version"`
+			CertFile          string `yaml:"cert-file"`
+			KeyFile           string `yaml:"key-file"`
+			RcvBufSize        int    `yaml:"sock-rcvbuf"`
+			ResetConn         bool   `yaml:"reset-conn"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"dnstap"`
 		DnstapProxifier struct {
 			Enable        bool   `yaml:"enable"`
@@ -209,22 +210,24 @@ type Config struct {
 			Device string `yaml:"device"`
 		} `yaml:"xdp-sniffer"`
 		PowerDNS struct {
-			Enable        bool   `yaml:"enable"`
-			ListenIP      string `yaml:"listen-ip"`
-			ListenPort    int    `yaml:"listen-port"`
-			TlsSupport    bool   `yaml:"tls-support"`
-			TlsMinVersion string `yaml:"tls-min-version"`
-			CertFile      string `yaml:"cert-file"`
-			KeyFile       string `yaml:"key-file"`
-			RcvBufSize    int    `yaml:"sock-rcvbuf"`
-			ResetConn     bool   `yaml:"reset-conn"`
+			Enable            bool   `yaml:"enable"`
+			ListenIP          string `yaml:"listen-ip"`
+			ListenPort        int    `yaml:"listen-port"`
+			TlsSupport        bool   `yaml:"tls-support"`
+			TlsMinVersion     string `yaml:"tls-min-version"`
+			CertFile          string `yaml:"cert-file"`
+			KeyFile           string `yaml:"key-file"`
+			RcvBufSize        int    `yaml:"sock-rcvbuf"`
+			ResetConn         bool   `yaml:"reset-conn"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"powerdns"`
 		FileIngestor struct {
-			Enable      bool   `yaml:"enable"`
-			WatchDir    string `yaml:"watch-dir"`
-			WatchMode   string `yaml:"watch-mode"`
-			PcapDnsPort int    `yaml:"pcap-dns-port"`
-			DeleteAfter bool   `yaml:"delete-after"`
+			Enable            bool   `yaml:"enable"`
+			WatchDir          string `yaml:"watch-dir"`
+			WatchMode         string `yaml:"watch-mode"`
+			PcapDnsPort       int    `yaml:"pcap-dns-port"`
+			DeleteAfter       bool   `yaml:"delete-after"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"file-ingestor"`
 		Tzsp struct {
 			Enable     bool   `yaml:"enable"`
@@ -485,6 +488,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.Dnstap.KeyFile = ""
 	c.Collectors.Dnstap.RcvBufSize = 0
 	c.Collectors.Dnstap.ResetConn = true
+	c.Collectors.Dnstap.ChannelBufferSize = 65535
 
 	c.Collectors.DnstapProxifier.Enable = false
 	c.Collectors.DnstapProxifier.ListenIP = ANY_IP
@@ -511,12 +515,14 @@ func (c *Config) SetDefault() {
 	c.Collectors.PowerDNS.KeyFile = ""
 	c.Collectors.PowerDNS.RcvBufSize = 0
 	c.Collectors.PowerDNS.ResetConn = true
+	c.Collectors.PowerDNS.ChannelBufferSize = 65535
 
 	c.Collectors.FileIngestor.Enable = false
 	c.Collectors.FileIngestor.WatchDir = ""
 	c.Collectors.FileIngestor.PcapDnsPort = 53
 	c.Collectors.FileIngestor.WatchMode = MODE_PCAP
 	c.Collectors.FileIngestor.DeleteAfter = false
+	c.Collectors.FileIngestor.ChannelBufferSize = 512
 
 	c.Collectors.Tzsp.Enable = false
 	c.Collectors.Tzsp.ListenIp = ANY_IP

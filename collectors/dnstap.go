@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -15,16 +16,18 @@ import (
 )
 
 type Dnstap struct {
-	done     chan bool
-	listen   net.Listener
-	conns    []net.Conn
-	sockPath string
-	loggers  []dnsutils.Worker
-	config   *dnsutils.Config
-	logger   *logger.Logger
-	name     string
-	connMode string
-	stopping bool
+	done           chan bool
+	listen         net.Listener
+	conns          []net.Conn
+	sockPath       string
+	loggers        []dnsutils.Worker
+	config         *dnsutils.Config
+	logger         *logger.Logger
+	name           string
+	connMode       string
+	stopping       bool
+	droppedPackets int
+	sync.RWMutex
 }
 
 func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *Dnstap {
@@ -87,7 +90,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	c.LogInfo("new connection from %s\n", peer)
 
 	// start dnstap subprocessor
-	dnstapProcessor := NewDnstapProcessor(c.config, c.logger, c.name)
+	dnstapProcessor := NewDnstapProcessor(c.config, c.logger, c.name, c.config.Collectors.Dnstap.ChannelBufferSize)
 	go dnstapProcessor.Run(c.Loggers())
 
 	// frame stream library
@@ -104,9 +107,27 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	}
 
 	// process incoming frame and send it to dnstap consumer channel
-	err := fs.ProcessFrame(dnstapProcessor.GetChannel())
+	var err error
+	var frame *framestream.Frame
+	for {
+		frame, err = fs.RecvFrame(false)
+		if err != nil {
+			break
+		}
+
+		// drop packet if the channel is full to avoid a tcp zero windows
+		if dnstapProcessor.ChannelIsFull() {
+			c.Lock()
+			c.droppedPackets++
+			c.Unlock()
+			continue
+		}
+
+		dnstapProcessor.GetChannel() <- frame.Data()
+	}
+
 	if err != nil && !c.stopping {
-		c.LogError("transport error: %s", err)
+		c.LogError("framestream error: %s", err)
 	}
 
 	// stop all subprocessors
@@ -120,6 +141,9 @@ func (c *Dnstap) Channel() chan dnsutils.DnsMessage {
 }
 
 func (c *Dnstap) Stop() {
+	c.Lock()
+	defer c.Unlock()
+
 	c.LogInfo("stopping...")
 	c.stopping = true
 
@@ -139,6 +163,9 @@ func (c *Dnstap) Stop() {
 }
 
 func (c *Dnstap) Listen() error {
+	c.Lock()
+	defer c.Unlock()
+
 	c.LogInfo("running in background...")
 
 	var err error
@@ -191,6 +218,23 @@ func (c *Dnstap) Listen() error {
 	return nil
 }
 
+func (c *Dnstap) FollowChannel() {
+	watchInterval := 10 * time.Second
+	bufferFull := time.NewTimer(watchInterval)
+	for {
+		select {
+		case <-bufferFull.C:
+			c.Lock()
+			if c.droppedPackets > 0 {
+				c.LogError("recv buffer is full, %d packet(s) dropped", c.droppedPackets)
+				c.droppedPackets = 0
+			}
+			c.Unlock()
+			bufferFull.Reset(watchInterval)
+		}
+	}
+}
+
 func (c *Dnstap) Run() {
 	c.LogInfo("starting collector...")
 	if c.listen == nil {
@@ -198,6 +242,9 @@ func (c *Dnstap) Run() {
 			c.logger.Fatal("collector dnstap listening failed: ", err)
 		}
 	}
+
+	go c.FollowChannel()
+
 	for {
 		// Accept() blocks waiting for new connection.
 		conn, err := c.listen.Accept()
@@ -206,7 +253,11 @@ func (c *Dnstap) Run() {
 		}
 
 		if (c.connMode == "tls" || c.connMode == "tcp") && c.config.Collectors.Dnstap.RcvBufSize > 0 {
-			before, actual, err := netlib.SetSock_RCVBUF(conn, c.config.Collectors.Dnstap.RcvBufSize, c.config.Collectors.Dnstap.TlsSupport)
+			before, actual, err := netlib.SetSock_RCVBUF(
+				conn,
+				c.config.Collectors.Dnstap.RcvBufSize,
+				c.config.Collectors.Dnstap.TlsSupport,
+			)
 			if err != nil {
 				c.logger.Fatal("Unable to set SO_RCVBUF: ", err)
 			}

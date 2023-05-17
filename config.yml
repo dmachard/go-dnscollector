@@ -72,14 +72,20 @@ multiplexer:
       transforms:
         normalize:
           qname-lowercase: true
-
+    - name: pdns
+      powerdns:
+        listen-ip: 0.0.0.0
+        listen-port: 6001
+      transforms:
+        normalize:
+          qname-lowercase: true
   loggers:
     - name: console
       stdout:
         mode: text
         
   routes:
-    - from: [ tap ]
+    - from: [ tap, pdns ]
       to: [ console ]
 
 ################################################

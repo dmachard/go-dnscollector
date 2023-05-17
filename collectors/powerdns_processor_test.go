@@ -16,7 +16,7 @@ func Test_PdnsProcessor(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewPdnsProcessor(dnsutils.GetFakeConfig(), logger, "test")
+	consumer := NewPdnsProcessor(dnsutils.GetFakeConfig(), logger, "test", 512)
 	chan_to := make(chan dnsutils.DnsMessage, 512)
 
 	// prepare dnstap
