@@ -46,7 +46,7 @@ type StatsdClient struct {
 	channel chan dnsutils.DnsMessage
 	config  *dnsutils.Config
 	logger  *logger.Logger
-	exit    chan bool
+	cleanup chan bool
 	version string
 	name    string
 
@@ -59,7 +59,7 @@ func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, version str
 
 	s := &StatsdClient{
 		done:    make(chan bool),
-		exit:    make(chan bool),
+		cleanup: make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  logger,
 		config:  config,
@@ -100,11 +100,11 @@ func (o *StatsdClient) Stop() {
 	o.LogInfo("stopping...")
 
 	// close output channel
-	o.LogInfo("closing channel")
-	close(o.channel)
+	o.cleanup <- true
 
 	// read done channel and block until run is terminated
 	<-o.done
+	o.LogInfo("run terminated")
 	close(o.done)
 }
 
@@ -233,14 +233,22 @@ func (o *StatsdClient) Run() {
 	t2_interval := time.Duration(o.config.Loggers.Statsd.FlushInterval) * time.Second
 	t2 := time.NewTimer(t2_interval)
 
-LOOP:
 	for {
 		select {
+		case <-o.cleanup:
+			o.LogInfo("cleanup called")
+			close(o.channel)
+
+			// cleanup transformers
+			subprocessors.Reset()
+
+			o.done <- true
 
 		case dm, opened := <-o.channel:
 			if !opened {
-				o.LogInfo("channel closed")
-				break LOOP
+				o.LogInfo("channel closed, cleanup...")
+				o.cleanup <- true
+				continue
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
@@ -328,11 +336,4 @@ LOOP:
 		}
 	}
 
-	o.LogInfo("run terminated")
-
-	// cleanup transformers
-	subprocessors.Reset()
-
-	// the job is done
-	o.done <- true
 }

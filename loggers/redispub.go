@@ -21,7 +21,7 @@ type RedisPub struct {
 	channel            chan dnsutils.DnsMessage
 	config             *dnsutils.Config
 	logger             *logger.Logger
-	exit               chan bool
+	cleanup            chan bool
 	textFormat         []string
 	name               string
 	transportWriter    *bufio.Writer
@@ -35,7 +35,7 @@ func NewRedisPub(config *dnsutils.Config, logger *logger.Logger, name string) *R
 	logger.Info("[%s] logger to redispub - enabled", name)
 	s := &RedisPub{
 		done:               make(chan bool),
-		exit:               make(chan bool),
+		cleanup:            make(chan bool),
 		channel:            make(chan dnsutils.DnsMessage, 512),
 		transportReady:     make(chan bool),
 		transportReconnect: make(chan bool),
@@ -82,10 +82,11 @@ func (o *RedisPub) Stop() {
 	o.LogInfo("stopping...")
 
 	// exit to close properly
-	o.exit <- true
+	o.cleanup <- true
 
 	// read done channel and block until run is terminated
 	<-o.done
+	o.LogInfo("run terminated")
 	close(o.done)
 }
 
@@ -215,12 +216,19 @@ func (o *RedisPub) Run() {
 	// init remote conn
 	go o.ConnectToRemote()
 
-LOOP:
 	for {
 		select {
-		case <-o.exit:
-			o.logger.Info("closing loop...")
-			break LOOP
+		case <-o.cleanup:
+			o.LogInfo("cleanup called")
+
+			// cleanup transformers
+			subprocessors.Reset()
+
+			// closing remote connection if exist
+			o.Disconnect()
+
+			o.done <- true
+			return
 
 		case <-o.transportReady:
 			o.LogInfo("transport connected with success")
@@ -266,13 +274,4 @@ LOOP:
 		}
 	}
 
-	o.LogInfo("run terminated")
-
-	// cleanup transformers
-	subprocessors.Reset()
-
-	// closing remote connection if exist
-	o.Disconnect()
-
-	o.done <- true
 }

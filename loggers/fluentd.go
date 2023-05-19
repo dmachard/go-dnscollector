@@ -17,7 +17,7 @@ type FluentdClient struct {
 	channel            chan dnsutils.DnsMessage
 	config             *dnsutils.Config
 	logger             *logger.Logger
-	exit               chan bool
+	cleanup            chan bool
 	transportConn      net.Conn
 	transportReady     chan bool
 	transportReconnect chan bool
@@ -29,7 +29,7 @@ func NewFluentdClient(config *dnsutils.Config, logger *logger.Logger, name strin
 	logger.Info("[%s] logger to fluentd - enabled", name)
 	s := &FluentdClient{
 		done:               make(chan bool),
-		exit:               make(chan bool),
+		cleanup:            make(chan bool),
 		channel:            make(chan dnsutils.DnsMessage, 512),
 		transportReady:     make(chan bool),
 		transportReconnect: make(chan bool),
@@ -69,10 +69,11 @@ func (o *FluentdClient) Stop() {
 	o.LogInfo("stopping...")
 
 	// exit to close properly
-	o.exit <- true
+	o.cleanup <- true
 
 	// read done channel and block until run is terminated
 	<-o.done
+	o.LogInfo("run terminated")
 	close(o.done)
 }
 
@@ -189,14 +190,20 @@ func (o *FluentdClient) Run() {
 	// init remote conn
 	go o.ConnectToRemote()
 
-LOOP:
 	for {
 		select {
 		case <-o.transportReady:
 			o.LogInfo("connected")
 			o.writerReady = true
 
-		case dm := <-o.channel:
+		case dm, opened := <-o.channel:
+			// channel is closed ?
+			if !opened {
+				o.LogInfo("channel closed, cleanup...")
+				o.cleanup <- true
+				continue
+			}
+
 			// drop dns message if the connection is not ready to avoid memory leak or
 			// to block the channel
 			if !o.writerReady {
@@ -231,17 +238,16 @@ LOOP:
 			// restart timer
 			flushTimer.Reset(flushInterval)
 
-		case <-o.exit:
-			o.logger.Info("closing loop...")
-			break LOOP
+		case <-o.cleanup:
+			o.LogInfo("cleanup called")
+			close(o.channel)
 
+			// cleanup transformers
+			subprocessors.Reset()
+
+			o.done <- true
+			return
 		}
 	}
 
-	o.LogInfo("run terminated")
-
-	// cleanup transformers
-	subprocessors.Reset()
-
-	o.done <- true
 }

@@ -22,7 +22,7 @@ type KafkaProducer struct {
 	channel        chan dnsutils.DnsMessage
 	config         *dnsutils.Config
 	logger         *logger.Logger
-	exit           chan bool
+	cleanup        chan bool
 	textFormat     []string
 	name           string
 	kafkaConn      *kafka.Conn
@@ -35,7 +35,7 @@ func NewKafkaProducer(config *dnsutils.Config, logger *logger.Logger, name strin
 	logger.Info("[%s] logger to kafka - enabled", name)
 	s := &KafkaProducer{
 		done:           make(chan bool),
-		exit:           make(chan bool),
+		cleanup:        make(chan bool),
 		channel:        make(chan dnsutils.DnsMessage, 512),
 		logger:         logger,
 		config:         config,
@@ -82,7 +82,7 @@ func (o *KafkaProducer) Stop() {
 	o.LogInfo("stopping...")
 
 	// exit to close properly
-	o.exit <- true
+	o.cleanup <- true
 
 	// read done channel and block until run is terminated
 	<-o.done
@@ -233,12 +233,19 @@ func (o *KafkaProducer) Run() {
 
 	go o.ConnectToKafka(ctx, readyTimer)
 
-LOOP:
 	for {
 		select {
-		case <-o.exit:
-			o.LogInfo("closing loop...")
-			break LOOP
+		case <-o.cleanup:
+			o.LogInfo("cleanup called")
+
+			// cleanup transformers
+			subprocessors.Reset()
+
+			// closing kafka connection if exist
+			o.Disconnect()
+
+			o.done <- true
+			return
 
 		case <-readyTimer.C:
 			o.LogError("failed to established connection")
@@ -249,7 +256,14 @@ LOOP:
 			readyTimer.Stop()
 			o.kafkaConnected = true
 
-		case dm := <-o.channel:
+		case dm, opened := <-o.channel:
+			// channel is closed ?
+			if !opened {
+				o.LogInfo("channel closed, cleanup...")
+				o.cleanup <- true
+				continue
+			}
+
 			// drop dns message if the connection is not ready to avoid memory leak or
 			// to block the channel
 			if !o.kafkaConnected {
@@ -287,13 +301,4 @@ LOOP:
 		}
 	}
 
-	o.LogInfo("run terminated")
-
-	// cleanup transformers
-	subprocessors.Reset()
-
-	// closing kafka connection if exist
-	o.Disconnect()
-
-	o.done <- true
 }

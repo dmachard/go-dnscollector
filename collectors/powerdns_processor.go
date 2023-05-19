@@ -106,8 +106,6 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 				return
 			}
 
-			time.Sleep(1 * time.Second)
-
 			err := proto.Unmarshal(data, pbdm)
 			if err != nil {
 				d.LogError("pbdm decoding, %s", err)
@@ -313,12 +311,4 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			}
 		}
 	}
-
-	// cleanup transformers
-	//subprocessors.Reset()
-
-	//d.LogInfo("channel closed - run terminated")
-
-	// dnstap channel closed
-	//	d.done <- true
 }

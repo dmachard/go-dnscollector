@@ -67,12 +67,7 @@ func (o *StdOut) Channel() chan dnsutils.DnsMessage {
 }
 
 func (o *StdOut) Stop() {
-
 	o.LogInfo("stopping...")
-
-	// close output channel
-	//o.LogInfo("closing channel")
-	//close(o.channel)
 	o.cleanup <- true
 
 	// read done channel and block until run is terminated
@@ -103,9 +98,11 @@ func (o *StdOut) Run() {
 			o.done <- true
 			return
 		case dm, opened := <-o.channel:
+			// channel is closed ?
 			if !opened {
-				o.LogInfo("channel closed, exit")
-				return
+				o.LogInfo("channel closed, cleanup...")
+				o.cleanup <- true
+				continue
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
@@ -138,11 +135,4 @@ func (o *StdOut) Run() {
 			}
 		}
 	}
-	//o.LogInfo("run terminated")
-
-	// cleanup transformers
-	//subprocessors.Reset()
-
-	// the job is done
-	//o.done <- true
 }

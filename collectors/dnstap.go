@@ -3,6 +3,7 @@ package collectors
 import (
 	"bufio"
 	"crypto/tls"
+	"errors"
 	"io"
 	"net"
 	"os"
@@ -118,7 +119,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	for {
 		frame, err = fs.RecvFrame(false)
 		if err != nil {
-			if opErr, ok := err.(*net.OpError); ok && opErr.Err == net.ErrClosed || err == io.EOF {
+			if opErr, ok := err.(*net.OpError); ok && opErr.Err == net.ErrClosed || errors.Is(err, io.EOF) {
 				c.LogInfo("connection closed with peer %s\n", peer)
 				close(dnstapProcessor.GetChannel())
 			} else {

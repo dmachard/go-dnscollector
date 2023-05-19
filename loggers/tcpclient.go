@@ -19,7 +19,7 @@ type TcpClient struct {
 	channel            chan dnsutils.DnsMessage
 	config             *dnsutils.Config
 	logger             *logger.Logger
-	exit               chan bool
+	cleanup            chan bool
 	textFormat         []string
 	name               string
 	transportWriter    *bufio.Writer
@@ -33,7 +33,7 @@ func NewTcpClient(config *dnsutils.Config, logger *logger.Logger, name string) *
 	logger.Info("[%s] logger to tcp client - enabled", name)
 	s := &TcpClient{
 		done:               make(chan bool),
-		exit:               make(chan bool),
+		cleanup:            make(chan bool),
 		channel:            make(chan dnsutils.DnsMessage, 512),
 		transportReady:     make(chan bool),
 		transportReconnect: make(chan bool),
@@ -79,10 +79,11 @@ func (o *TcpClient) Stop() {
 	o.LogInfo("stopping...")
 
 	// exit to close properly
-	o.exit <- true
+	o.cleanup <- true
 
 	// read done channel and block until run is terminated
 	<-o.done
+	o.LogInfo("run terminated")
 	close(o.done)
 }
 
@@ -201,12 +202,18 @@ func (o *TcpClient) Run() {
 	// init remote conn
 	go o.ConnectToRemote()
 
-LOOP:
 	for {
 		select {
-		case <-o.exit:
-			o.LogInfo("closing loop...")
-			break LOOP
+		case <-o.cleanup:
+			o.LogInfo("cleanup called")
+			close(o.channel)
+			// cleanup transformers
+			subprocessors.Reset()
+
+			// closing remote connection if exist
+			o.Disconnect()
+
+			o.done <- true
 
 		case <-o.transportReady:
 			o.LogInfo("transport connected with success")
@@ -252,13 +259,4 @@ LOOP:
 		}
 	}
 
-	o.LogInfo("run terminated")
-
-	// cleanup transformers
-	subprocessors.Reset()
-
-	// closing remote connection if exist
-	o.Disconnect()
-
-	o.done <- true
 }

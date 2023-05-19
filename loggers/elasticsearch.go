@@ -14,6 +14,7 @@ import (
 
 type ElasticSearchClient struct {
 	done    chan bool
+	cleanup chan bool
 	channel chan dnsutils.DnsMessage
 	config  *dnsutils.Config
 	logger  *logger.Logger
@@ -25,6 +26,7 @@ func NewElasticSearchClient(config *dnsutils.Config, console *logger.Logger, nam
 	console.Info("[%s] logger elasticsearch - enabled", name)
 	o := &ElasticSearchClient{
 		done:    make(chan bool),
+		cleanup: make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  console,
 		config:  config,
@@ -58,11 +60,11 @@ func (o *ElasticSearchClient) Stop() {
 	o.LogInfo("stopping...")
 
 	// close output channel
-	o.LogInfo("closing channel")
-	close(o.channel)
+	o.cleanup <- true
 
 	// read done channel and block until run is terminated
 	<-o.done
+	o.LogInfo("run terminated")
 	close(o.done)
 }
 
@@ -74,40 +76,53 @@ func (o *ElasticSearchClient) Run() {
 	listChannel = append(listChannel, o.channel)
 	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel)
 
-	for dm := range o.channel {
-		// apply tranforms, init dns message with additionnals parts if necessary
-		subprocessors.InitDnsMessageFormat(&dm)
-		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
-			continue
-		}
+	buffer := new(bytes.Buffer)
+	for {
+		select {
+		case <-o.cleanup:
+			o.LogInfo("cleanup called")
+			close(o.channel)
 
-		buffer := new(bytes.Buffer)
-		flat, err := dm.Flatten()
-		if err != nil {
-			o.LogError("flattening DNS message failed: %e", err)
-		}
-		json.NewEncoder(buffer).Encode(flat)
+			// cleanup transformers
+			subprocessors.Reset()
 
-		req, _ := http.NewRequest("POST", o.url, buffer)
-		req.Header.Set("Content-Type", "application/json")
-		client := &http.Client{
-			Timeout: 5 * time.Second,
-		}
-		_, err = client.Do(req)
-		if err != nil {
-			o.LogError(err.Error())
-		}
+			o.done <- true
 
-		//
-		buffer.Reset()
+			return
+		case dm, opened := <-o.channel:
+			// channel is closed ?
+			if !opened {
+				o.LogInfo("channel closed, cleanup...")
+				o.cleanup <- true
+				continue
+			}
 
+			// apply tranforms, init dns message with additionnals parts if necessary
+			subprocessors.InitDnsMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
+			// encode
+			flat, err := dm.Flatten()
+			if err != nil {
+				o.LogError("flattening DNS message failed: %e", err)
+			}
+			json.NewEncoder(buffer).Encode(flat)
+
+			req, _ := http.NewRequest("POST", o.url, buffer)
+			req.Header.Set("Content-Type", "application/json")
+			client := &http.Client{
+				Timeout: 5 * time.Second,
+			}
+			_, err = client.Do(req)
+			if err != nil {
+				o.LogError(err.Error())
+			}
+
+			// finally reset the buffer for next iter
+			buffer.Reset()
+
+		}
 	}
-
-	o.LogInfo("run terminated")
-
-	// cleanup transformers
-	subprocessors.Reset()
-
-	// the job is done
-	o.done <- true
 }

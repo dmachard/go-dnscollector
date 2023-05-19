@@ -233,11 +233,4 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			}
 		}
 	}
-	// // cleanup transformers
-	// subprocessors.Reset()
-
-	// d.LogInfo("channel closed - run terminated")
-
-	// // dnstap channel closed
-	// d.done <- true
 }

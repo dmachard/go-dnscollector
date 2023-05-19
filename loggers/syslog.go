@@ -53,6 +53,7 @@ func GetPriority(facility string) (syslog.Priority, error) {
 
 type Syslog struct {
 	done       chan bool
+	cleanup    chan bool
 	channel    chan dnsutils.DnsMessage
 	config     *dnsutils.Config
 	logger     *logger.Logger
@@ -67,6 +68,7 @@ func NewSyslog(config *dnsutils.Config, console *logger.Logger, name string) *Sy
 	console.Info("[%s] logger syslog - enabled", name)
 	o := &Syslog{
 		done:    make(chan bool),
+		cleanup: make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  console,
 		config:  config,
@@ -123,15 +125,11 @@ func (o *Syslog) Stop() {
 	o.LogInfo("stopping...")
 
 	// close output channel
-	o.LogInfo("closing channel")
-	close(o.channel)
-
-	// close connection
-	o.LogInfo("closing connection")
-	o.syslogConn.Close()
+	o.cleanup <- true
 
 	// read done channel and block until run is terminated
 	<-o.done
+	o.LogInfo("run terminated")
 	close(o.done)
 }
 
@@ -184,45 +182,62 @@ func (o *Syslog) Run() {
 
 	o.syslogConn = syslogconn
 
-	for dm := range o.channel {
-		// apply tranforms, init dns message with additionnals parts if necessary
-		subprocessors.InitDnsMessageFormat(&dm)
-		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
-			continue
-		}
+	for {
+		select {
+		case <-o.cleanup:
+			o.LogInfo("cleanup called")
+			close(o.channel)
 
-		switch o.config.Loggers.Syslog.Mode {
-		case dnsutils.MODE_TEXT:
+			// cleanup transformers
+			subprocessors.Reset()
 
-			o.syslogConn.Write(dm.Bytes(o.textFormat,
-				o.config.Global.TextFormatDelimiter,
-				o.config.Global.TextFormatBoundary))
+			// close connection
+			o.LogInfo("closing connection")
+			o.syslogConn.Close()
 
-			var delimiter bytes.Buffer
-			delimiter.WriteString("\n")
-			o.syslogConn.Write(delimiter.Bytes())
+			o.done <- true
 
-		case dnsutils.MODE_JSON:
-			json.NewEncoder(buffer).Encode(dm)
-			o.syslogConn.Write(buffer.Bytes())
-			buffer.Reset()
-
-		case dnsutils.MODE_FLATJSON:
-			flat, err := dm.Flatten()
-			if err != nil {
-				o.LogError("flattening DNS message failed: %e", err)
+			// incoming dns message to process
+		case dm, opened := <-o.channel:
+			// channel is closed ?
+			if !opened {
+				o.LogInfo("channel closed, cleanup...")
+				o.cleanup <- true
+				continue
 			}
-			json.NewEncoder(buffer).Encode(flat)
-			o.syslogConn.Write(buffer.Bytes())
-			buffer.Reset()
+
+			// apply tranforms, init dns message with additionnals parts if necessary
+			subprocessors.InitDnsMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
+			switch o.config.Loggers.Syslog.Mode {
+			case dnsutils.MODE_TEXT:
+
+				o.syslogConn.Write(dm.Bytes(o.textFormat,
+					o.config.Global.TextFormatDelimiter,
+					o.config.Global.TextFormatBoundary))
+
+				var delimiter bytes.Buffer
+				delimiter.WriteString("\n")
+				o.syslogConn.Write(delimiter.Bytes())
+
+			case dnsutils.MODE_JSON:
+				json.NewEncoder(buffer).Encode(dm)
+				o.syslogConn.Write(buffer.Bytes())
+				buffer.Reset()
+
+			case dnsutils.MODE_FLATJSON:
+				flat, err := dm.Flatten()
+				if err != nil {
+					o.LogError("flattening DNS message failed: %e", err)
+				}
+				json.NewEncoder(buffer).Encode(flat)
+				o.syslogConn.Write(buffer.Bytes())
+				buffer.Reset()
+			}
 		}
+
 	}
-
-	o.LogInfo("run terminated")
-
-	// cleanup transformers
-	subprocessors.Reset()
-
-	// the job is done
-	o.done <- true
 }
