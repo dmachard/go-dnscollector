@@ -138,7 +138,6 @@ func (s *RestAPI) Stop() {
 	<-s.done
 	s.LogInfo("run terminated")
 	close(s.done)
-
 }
 
 func (s *RestAPI) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
@@ -326,7 +325,6 @@ func (s *RestAPI) GetClientsHandler(w http.ResponseWriter, r *http.Request) {
 		for address, hit := range s.HitsUniq.Clients {
 			dataArray = append(dataArray, KeyHit{Key: address, Hit: hit})
 		}
-
 		// encode
 		json.NewEncoder(w).Encode(dataArray)
 	default:
@@ -516,6 +514,9 @@ func (s *RestAPI) GetStreamsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *RestAPI) RecordDnsMessage(dm dnsutils.DnsMessage) {
+	s.Lock()
+	defer s.Unlock()
+
 	if _, exists := s.Streams[dm.DnsTap.Identity]; !exists {
 		s.Streams[dm.DnsTap.Identity] = 1
 	} else {
@@ -707,6 +708,7 @@ func (s *RestAPI) Run() {
 			subprocessors.Reset()
 
 			s.done <- true
+			return
 
 		case dm, opened := <-s.channel:
 			if !opened {

@@ -40,6 +40,7 @@ type EpsCounters struct {
 type Prometheus struct {
 	done         chan bool
 	done_api     chan bool
+	cleanup      chan bool
 	httpServer   *http.Server
 	netListener  net.Listener
 	channel      chan dnsutils.DnsMessage
@@ -119,6 +120,7 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 	o := &Prometheus{
 		done:         make(chan bool),
 		done_api:     make(chan bool),
+		cleanup:      make(chan bool),
 		config:       config,
 		channel:      make(chan dnsutils.DnsMessage, 512),
 		logger:       logger,
@@ -188,11 +190,6 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 	}
 
 	o.httpServer.ErrorLog = o.logger.ErrorLogger()
-
-	// o.httpServer = &http.Server{
-	// 	Handler:  handler,
-	// 	ErrorLog: o.logger.ErrorLogger(),
-	// }
 
 	return o
 }
@@ -526,22 +523,18 @@ func (o *Prometheus) Channel() chan dnsutils.DnsMessage {
 func (o *Prometheus) Stop() {
 	o.LogInfo("stopping...")
 
-	// stopping http server
-	o.netListener.Close()
-
 	// close output channel
-	o.LogInfo("closing channel")
-	close(o.channel)
-
-	// read done channel and block until run is terminated
-	<-o.done
-	close(o.done)
+	o.cleanup <- true
 
 	// block and wait until http api is terminated
 	<-o.done_api
+	o.LogInfo("listen terminated")
 	close(o.done_api)
 
-	o.LogInfo(" stopped")
+	// read done channel and block until run is terminated
+	<-o.done
+	o.LogInfo("run terminated")
+	close(o.done)
 }
 
 func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
@@ -912,13 +905,26 @@ func (s *Prometheus) Run() {
 	t1_interval := 1 * time.Second
 	t1 := time.NewTimer(t1_interval)
 
-LOOP:
 	for {
 		select {
+		case <-s.cleanup:
+			s.LogInfo("cleanup called")
+			close(s.channel)
+
+			// stopping http server
+			s.netListener.Close()
+
+			// cleanup transformers
+			subprocessors.Reset()
+
+			// the job is done
+			s.done <- true
+			return
 		case dm, opened := <-s.channel:
 			if !opened {
-				s.LogInfo("channel closed")
-				break LOOP
+				s.LogInfo("channel closed, cleanup...")
+				s.cleanup <- true
+				continue
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
@@ -939,11 +945,5 @@ LOOP:
 		}
 
 	}
-	s.LogInfo("run terminated")
 
-	// cleanup transformers
-	subprocessors.Reset()
-
-	// the job is done
-	s.done <- true
 }
