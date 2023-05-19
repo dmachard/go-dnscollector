@@ -80,7 +80,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogInfo("%s - new connection\n", peer)
+	c.LogInfo("new connection from %s", peer)
 
 	// start protobuf subprocessor
 	pdnsProc := NewPdnsProcessor(c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
@@ -113,6 +113,8 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 			} else {
 				c.LogError("powerdns reader error: %s", err)
 			}
+
+			break
 		}
 
 		// drop packet if the channel is full to avoid a tcp zero windows
@@ -200,7 +202,7 @@ func (c *ProtobufPowerDNS) Listen() error {
 }
 
 func (c *ProtobufPowerDNS) FollowChannel() {
-	c.LogInfo("start to follow up incoming dropped packets...")
+	c.LogInfo("start to count incoming dropped packets...")
 
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)

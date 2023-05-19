@@ -126,7 +126,8 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		case data, opened := <-d.recvFrom:
 			if !opened {
 				d.LogInfo("channel closed, exit")
-				return
+				d.cleanup <- true
+				continue
 			}
 
 			err := proto.Unmarshal(data, dt)

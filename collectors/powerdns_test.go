@@ -10,8 +10,9 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func TestProbufPdnsRun(t *testing.T) {
+func TestPowerDNS_Run(t *testing.T) {
 	g := loggers.NewFakeLogger()
+
 	c := NewProtobufPowerDNS([]dnsutils.Worker{g}, dnsutils.GetFakeConfig(), logger.New(false), "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector powerdns  listening error: ", err)

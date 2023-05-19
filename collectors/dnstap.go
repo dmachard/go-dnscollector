@@ -237,7 +237,7 @@ func (c *Dnstap) Listen() error {
 }
 
 func (c *Dnstap) FollowChannel() {
-	c.LogInfo("start to follow up incoming dropped packets...")
+	c.LogInfo("start to count incoming dropped packets...")
 
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)

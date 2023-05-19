@@ -52,7 +52,7 @@ func NewPdnsProcessor(config *dnsutils.Config, logger *logger.Logger, name strin
 }
 
 func (c *PdnsProcessor) ReadConfig() {
-	c.logger.Info("[" + c.name + "] processor powerdns parser - config")
+	// nothing to read
 }
 
 func (c *PdnsProcessor) LogInfo(msg string, v ...interface{}) {
@@ -103,7 +103,8 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		case data, opened := <-d.recvFrom:
 			if !opened {
 				d.LogInfo("channel closed, exit")
-				return
+				d.cleanup <- true
+				continue
 			}
 
 			err := proto.Unmarshal(data, pbdm)
