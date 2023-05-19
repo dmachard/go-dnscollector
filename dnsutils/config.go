@@ -353,21 +353,22 @@ type Config struct {
 			Organization  string `yaml:"organization"`
 		} `yaml:"influxdb"`
 		LokiClient struct {
-			Enable         bool              `yaml:"enable"`
-			ServerURL      string            `yaml:"server-url"`
-			JobName        string            `yaml:"job-name"`
-			Mode           string            `yaml:"mode"`
-			FlushInterval  int               `yaml:"flush-interval"`
-			BatchSize      int               `yaml:"batch-size"`
-			RetryInterval  int               `yaml:"retry-interval"`
-			TextFormat     string            `yaml:"text-format"`
-			ProxyURL       string            `yaml:"proxy-url"`
-			TlsInsecure    bool              `yaml:"tls-insecure"`
-			TlsMinVersion  string            `yaml:"tls-min-version"`
-			BasicAuthLogin string            `yaml:"basic-auth-login"`
-			BasicAuthPwd   string            `yaml:"basic-auth-pwd"`
-			TenantId       string            `yaml:"tenant-id"`
-			RelabelConfigs []*relabel.Config `yaml:"relabel-configs"`
+			Enable           bool              `yaml:"enable"`
+			ServerURL        string            `yaml:"server-url"`
+			JobName          string            `yaml:"job-name"`
+			Mode             string            `yaml:"mode"`
+			FlushInterval    int               `yaml:"flush-interval"`
+			BatchSize        int               `yaml:"batch-size"`
+			RetryInterval    int               `yaml:"retry-interval"`
+			TextFormat       string            `yaml:"text-format"`
+			ProxyURL         string            `yaml:"proxy-url"`
+			TlsInsecure      bool              `yaml:"tls-insecure"`
+			TlsMinVersion    string            `yaml:"tls-min-version"`
+			BasicAuthLogin   string            `yaml:"basic-auth-login"`
+			BasicAuthPwd     string            `yaml:"basic-auth-pwd"`
+			BasicAuthPwdFile string            `yaml:"basic-auth-pwd-file"`
+			TenantId         string            `yaml:"tenant-id"`
+			RelabelConfigs   []*relabel.Config `yaml:"relabel-configs"`
 		} `yaml:"lokiclient"`
 		Statsd struct {
 			Enable        bool   `yaml:"enable"`
@@ -645,6 +646,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.LokiClient.TlsMinVersion = TLS_v12
 	c.Loggers.LokiClient.BasicAuthLogin = ""
 	c.Loggers.LokiClient.BasicAuthPwd = ""
+	c.Loggers.LokiClient.BasicAuthPwdFile = ""
 	c.Loggers.LokiClient.TenantId = ""
 
 	c.Loggers.Statsd.Enable = false
