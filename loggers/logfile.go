@@ -467,6 +467,13 @@ func (l *LogFile) Run() {
 			l.LogInfo("cleanup called")
 			close(l.channel)
 
+			// stop timer
+			flushTimer.Stop()
+			l.commpressTimer.Stop()
+
+			// flush writer
+			l.FlushWriters()
+
 			// cleanup transformers
 			subprocessors.Reset()
 
@@ -559,18 +566,4 @@ func (l *LogFile) Run() {
 		}
 	}
 
-	// stop timer
-	flushTimer.Stop()
-	l.commpressTimer.Stop()
-
-	// flush writer
-	l.FlushWriters()
-
-	l.LogInfo("run terminated")
-
-	// cleanup transformers
-	subprocessors.Reset()
-
-	// the job is done
-	l.done <- true
 }

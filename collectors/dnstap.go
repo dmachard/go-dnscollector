@@ -119,7 +119,19 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	for {
 		frame, err = fs.RecvFrame(false)
 		if err != nil {
-			if opErr, ok := err.(*net.OpError); ok && opErr.Err == net.ErrClosed || errors.Is(err, io.EOF) {
+			connClosed := false
+
+			var opErr *net.OpError
+			if errors.As(err, &opErr) {
+				if errors.Is(opErr, net.ErrClosed) {
+					connClosed = true
+				}
+			}
+			if errors.Is(err, io.EOF) {
+				connClosed = true
+			}
+
+			if connClosed {
 				c.LogInfo("connection closed with peer %s\n", peer)
 				close(dnstapProcessor.GetChannel())
 			} else {

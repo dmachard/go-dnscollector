@@ -83,10 +83,28 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-        
+    - name: api
+      restapi:
+        # listening IP
+        listen-ip: 0.0.0.0
+        # listening port
+        listen-port: 8080
+        # default login
+        basic-auth-login: admin
+        # default password
+        basic-auth-pwd: changeme
+        # tls support
+        tls-support: false
+        # certificate server file
+        cert-file: ""
+        # private key server file
+        key-file: ""
+        # default number of items on top
+        top-n: 100
+              
   routes:
     - from: [ tap ]
-      to: [ console ]
+      to: [ console, api ]
 
 ################################################
 # list of supported collectors

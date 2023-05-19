@@ -45,6 +45,7 @@ type KeyHit struct {
 type RestAPI struct {
 	done       chan bool
 	done_api   chan bool
+	cleanup    chan bool
 	httpserver net.Listener
 	httpmux    *http.ServeMux
 	channel    chan dnsutils.DnsMessage
@@ -71,6 +72,7 @@ func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, version string, 
 	o := &RestAPI{
 		done:     make(chan bool),
 		done_api: make(chan bool),
+		cleanup:  make(chan bool),
 		config:   config,
 		channel:  make(chan dnsutils.DnsMessage, 512),
 		logger:   logger,
@@ -121,35 +123,32 @@ func (o *RestAPI) Channel() chan dnsutils.DnsMessage {
 	return o.channel
 }
 
-func (o *RestAPI) Stop() {
-	o.LogInfo("stopping...")
-
-	// stopping http server
-	o.httpserver.Close()
+func (s *RestAPI) Stop() {
+	s.LogInfo("stopping...")
 
 	// close output channel
-	o.LogInfo("closing channel")
-	close(o.channel)
-
-	// read done channel and block until run is terminated
-	<-o.done
-	close(o.done)
+	s.cleanup <- true
 
 	// block and wait until http api is terminated
-	<-o.done_api
-	close(o.done_api)
+	<-s.done_api
+	s.LogInfo("listen terminated")
+	close(s.done_api)
 
-	o.LogInfo(" stopped")
+	// read done channel and block until run is terminated
+	<-s.done
+	s.LogInfo("run terminated")
+	close(s.done)
+
 }
 
-func (o *RestAPI) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
+func (s *RestAPI) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
 	login, password, authOK := r.BasicAuth()
 	if !authOK {
 		return false
 	}
 
-	return (login == o.config.Loggers.RestAPI.BasicAuthLogin) &&
-		(password == o.config.Loggers.RestAPI.BasicAuthPwd)
+	return (login == s.config.Loggers.RestAPI.BasicAuthLogin) &&
+		(password == s.config.Loggers.RestAPI.BasicAuthPwd)
 }
 
 func (s *RestAPI) DeleteResetHandler(w http.ResponseWriter, r *http.Request) {
@@ -679,7 +678,8 @@ func (s *RestAPI) ListenAndServe() {
 	s.LogInfo("is listening on %s", listener.Addr())
 
 	http.Serve(s.httpserver, s.httpmux)
-	s.LogInfo("terminated")
+
+	// block until stop
 	s.done_api <- true
 }
 
@@ -694,30 +694,35 @@ func (s *RestAPI) Run() {
 	// start http server
 	go s.ListenAndServe()
 
-LOOP:
 	for {
-		dm, opened := <-s.channel
-		if !opened {
-			s.LogInfo("channel closed")
-			break LOOP
+		select {
+		case <-s.cleanup:
+			s.LogInfo("cleanup called")
+			close(s.channel)
+
+			// stopping http server
+			s.httpserver.Close()
+
+			// cleanup transformers
+			subprocessors.Reset()
+
+			s.done <- true
+
+		case dm, opened := <-s.channel:
+			if !opened {
+				s.LogInfo("channel closed, cleanup...")
+				s.cleanup <- true
+				continue
+			}
+
+			// apply tranforms, init dns message with additionnals parts if necessary
+			subprocessors.InitDnsMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
+			// record the dnstap message
+			s.RecordDnsMessage(dm)
 		}
-
-		// apply tranforms, init dns message with additionnals parts if necessary
-		subprocessors.InitDnsMessageFormat(&dm)
-		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
-			continue
-		}
-
-		// record the dnstap message
-		s.RecordDnsMessage(dm)
-
 	}
-
-	s.LogInfo("run terminated")
-
-	// cleanup transformers
-	subprocessors.Reset()
-
-	// the job is done
-	s.done <- true
 }

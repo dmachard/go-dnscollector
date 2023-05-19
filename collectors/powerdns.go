@@ -95,13 +95,24 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	for {
 		payload, err = pbs.RecvPayload(false)
 		if err != nil {
-			if opErr, ok := err.(*net.OpError); ok && opErr.Err == net.ErrClosed || errors.Is(err, io.EOF) {
+			connClosed := false
+
+			var opErr *net.OpError
+			if errors.As(err, &opErr) {
+				if errors.Is(opErr, net.ErrClosed) {
+					connClosed = true
+				}
+			}
+			if errors.Is(err, io.EOF) {
+				connClosed = true
+			}
+
+			if connClosed {
 				c.LogInfo("connection closed with peer %s\n", peer)
 				close(pdnsProc.GetChannel())
 			} else {
-				c.LogError("protobuf reader error: %s", err)
+				c.LogError("powerdns reader error: %s", err)
 			}
-			break
 		}
 
 		// drop packet if the channel is full to avoid a tcp zero windows
