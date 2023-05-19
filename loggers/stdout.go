@@ -14,6 +14,7 @@ import (
 
 type StdOut struct {
 	done       chan bool
+	cleanup    chan bool
 	channel    chan dnsutils.DnsMessage
 	textFormat []string
 	config     *dnsutils.Config
@@ -26,6 +27,7 @@ func NewStdOut(config *dnsutils.Config, console *logger.Logger, name string) *St
 	console.Info("[%s] logger stdout - enabled", name)
 	o := &StdOut{
 		done:    make(chan bool),
+		cleanup: make(chan bool),
 		channel: make(chan dnsutils.DnsMessage, 512),
 		logger:  console,
 		config:  config,
@@ -65,14 +67,17 @@ func (o *StdOut) Channel() chan dnsutils.DnsMessage {
 }
 
 func (o *StdOut) Stop() {
+
 	o.LogInfo("stopping...")
 
 	// close output channel
-	o.LogInfo("closing channel")
-	close(o.channel)
+	//o.LogInfo("closing channel")
+	//close(o.channel)
+	o.cleanup <- true
 
 	// read done channel and block until run is terminated
 	<-o.done
+	o.LogInfo("run terminated")
 	close(o.done)
 }
 
@@ -87,41 +92,57 @@ func (o *StdOut) Run() {
 	// standard output buffer
 	buffer := new(bytes.Buffer)
 
-	for dm := range o.channel {
-		// apply tranforms, init dns message with additionnals parts if necessary
-		subprocessors.InitDnsMessageFormat(&dm)
-		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
-			continue
-		}
+	for {
+		select {
+		case <-o.cleanup:
+			o.LogInfo("cleanup called")
+			close(o.channel)
 
-		// fmt.Printf("Size of %T: %d bytes\n", dm, unsafe.Sizeof(dm))
+			subprocessors.Reset()
 
-		switch o.config.Loggers.Stdout.Mode {
-		case dnsutils.MODE_TEXT:
-			o.stdout.Print(dm.String(o.textFormat,
-				o.config.Global.TextFormatDelimiter,
-				o.config.Global.TextFormatBoundary))
-
-		case dnsutils.MODE_JSON:
-			json.NewEncoder(buffer).Encode(dm)
-			o.stdout.Print(buffer.String())
-			buffer.Reset()
-
-		case dnsutils.MODE_FLATJSON:
-			flat, err := dm.Flatten()
-			if err != nil {
-				o.LogError("flattening DNS message failed: %e", err)
+			o.done <- true
+			return
+		case dm, opened := <-o.channel:
+			if !opened {
+				o.LogInfo("channel closed, exit")
+				return
 			}
-			json.NewEncoder(buffer).Encode(flat)
-			o.stdout.Print(buffer.String())
-			buffer.Reset()
+
+			// apply tranforms, init dns message with additionnals parts if necessary
+			subprocessors.InitDnsMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
+			// fmt.Printf("Size of %T: %d bytes\n", dm, unsafe.Sizeof(dm))
+
+			switch o.config.Loggers.Stdout.Mode {
+			case dnsutils.MODE_TEXT:
+				o.stdout.Print(dm.String(o.textFormat,
+					o.config.Global.TextFormatDelimiter,
+					o.config.Global.TextFormatBoundary))
+
+			case dnsutils.MODE_JSON:
+				json.NewEncoder(buffer).Encode(dm)
+				o.stdout.Print(buffer.String())
+				buffer.Reset()
+
+			case dnsutils.MODE_FLATJSON:
+				flat, err := dm.Flatten()
+				if err != nil {
+					o.LogError("flattening DNS message failed: %e", err)
+				}
+				json.NewEncoder(buffer).Encode(flat)
+				o.stdout.Print(buffer.String())
+				buffer.Reset()
+			}
 		}
 	}
-	o.LogInfo("run terminated")
+	//o.LogInfo("run terminated")
 
 	// cleanup transformers
-	subprocessors.Reset()
+	//subprocessors.Reset()
 
 	// the job is done
-	o.done <- true
+	//o.done <- true
 }

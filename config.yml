@@ -85,7 +85,7 @@ multiplexer:
         mode: text
         
   routes:
-    - from: [ tap, pdns ]
+    - from: [  pdns ]
       to: [ console ]
 
 ################################################

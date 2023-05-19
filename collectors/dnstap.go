@@ -3,6 +3,7 @@ package collectors
 import (
 	"bufio"
 	"crypto/tls"
+	"io"
 	"net"
 	"os"
 	"strconv"
@@ -16,17 +17,19 @@ import (
 )
 
 type Dnstap struct {
-	done           chan bool
-	listen         net.Listener
-	conns          []net.Conn
-	sockPath       string
-	loggers        []dnsutils.Worker
-	config         *dnsutils.Config
-	logger         *logger.Logger
-	name           string
-	connMode       string
-	stopping       bool
-	droppedPackets int
+	done          chan bool
+	cleanup       chan bool
+	listen        net.Listener
+	conns         []net.Conn
+	sockPath      string
+	loggers       []dnsutils.Worker
+	config        *dnsutils.Config
+	logger        *logger.Logger
+	name          string
+	connMode      string
+	droppedCount  int
+	dropped       chan int
+	tapProcessors []DnstapProcessor
 	sync.RWMutex
 }
 
@@ -34,6 +37,8 @@ func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logge
 	logger.Info("[%s] dnstap collector - enabled", name)
 	s := &Dnstap{
 		done:    make(chan bool),
+		cleanup: make(chan bool),
+		dropped: make(chan int),
 		config:  config,
 		loggers: loggers,
 		logger:  logger,
@@ -91,6 +96,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// start dnstap subprocessor
 	dnstapProcessor := NewDnstapProcessor(c.config, c.logger, c.name, c.config.Collectors.Dnstap.ChannelBufferSize)
+	c.tapProcessors = append(c.tapProcessors, dnstapProcessor)
 	go dnstapProcessor.Run(c.Loggers())
 
 	// frame stream library
@@ -112,28 +118,24 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	for {
 		frame, err = fs.RecvFrame(false)
 		if err != nil {
+			if opErr, ok := err.(*net.OpError); ok && opErr.Err == net.ErrClosed || err == io.EOF {
+				c.LogInfo("connection closed with peer %s\n", peer)
+				close(dnstapProcessor.GetChannel())
+			} else {
+				c.LogError("framestream reader error: %s", err)
+			}
 			break
 		}
 
 		// drop packet if the channel is full to avoid a tcp zero windows
 		if dnstapProcessor.ChannelIsFull() {
-			c.Lock()
-			c.droppedPackets++
-			c.Unlock()
+			c.dropped <- 1
 			continue
 		}
 
+		// send payload to the channel
 		dnstapProcessor.GetChannel() <- frame.Data()
 	}
-
-	if err != nil && !c.stopping {
-		c.LogError("framestream error: %s", err)
-	}
-
-	// stop all subprocessors
-	dnstapProcessor.Stop()
-
-	c.LogInfo("%s - connection closed\n", peer)
 }
 
 func (c *Dnstap) Channel() chan dnsutils.DnsMessage {
@@ -145,7 +147,11 @@ func (c *Dnstap) Stop() {
 	defer c.Unlock()
 
 	c.LogInfo("stopping...")
-	c.stopping = true
+
+	// stop all powerdns processors
+	for _, tapProc := range c.tapProcessors {
+		tapProc.Stop()
+	}
 
 	// closing properly current connections if exists
 	for _, conn := range c.conns {
@@ -200,7 +206,6 @@ func (c *Dnstap) Listen() error {
 		}
 
 	} else {
-
 		// basic listening
 		if len(c.sockPath) > 0 {
 			listener, err = net.Listen(dnsutils.SOCKET_UNIX, c.sockPath)
@@ -219,17 +224,22 @@ func (c *Dnstap) Listen() error {
 }
 
 func (c *Dnstap) FollowChannel() {
+	c.LogInfo("start to follow up incoming dropped packets...")
+
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 	for {
 		select {
+		case <-c.dropped:
+			c.droppedCount++
+		case <-c.cleanup:
+			c.LogInfo("cleanup called")
+			return
 		case <-bufferFull.C:
-			c.Lock()
-			if c.droppedPackets > 0 {
-				c.LogError("recv buffer is full, %d packet(s) dropped", c.droppedPackets)
-				c.droppedPackets = 0
+			if c.droppedCount > 0 {
+				c.LogError("recv buffer is full, %d packet(s) dropped", c.droppedCount)
+				c.droppedCount = 0
 			}
-			c.Unlock()
 			bufferFull.Reset(watchInterval)
 		}
 	}

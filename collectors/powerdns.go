@@ -3,6 +3,7 @@ package collectors
 import (
 	"bufio"
 	"crypto/tls"
+	"io"
 	"net"
 	"strconv"
 	"sync"
@@ -16,14 +17,16 @@ import (
 
 type ProtobufPowerDNS struct {
 	done           chan bool
+	cleanup        chan bool
 	listen         net.Listener
 	conns          []net.Conn
 	loggers        []dnsutils.Worker
 	config         *dnsutils.Config
 	logger         *logger.Logger
 	name           string
-	stopping       bool
-	droppedPackets int
+	droppedCount   int
+	dropped        chan int
+	pdnsProcessors []*PdnsProcessor
 	sync.RWMutex
 }
 
@@ -31,6 +34,8 @@ func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *dnsutils.Config, log
 	logger.Info("[%s] pdns collector - enabled", name)
 	s := &ProtobufPowerDNS{
 		done:    make(chan bool),
+		cleanup: make(chan bool),
+		dropped: make(chan int),
 		config:  config,
 		loggers: loggers,
 		logger:  logger,
@@ -77,40 +82,37 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	c.LogInfo("%s - new connection\n", peer)
 
 	// start protobuf subprocessor
-	pdns_subprocessor := NewPdnsProcessor(c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
-	go pdns_subprocessor.Run(c.Loggers())
+	pdnsProc := NewPdnsProcessor(c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
+	c.pdnsProcessors = append(c.pdnsProcessors, &pdnsProc)
+	go pdnsProc.Run(c.Loggers())
 
 	r := bufio.NewReader(conn)
 	pbs := powerdns_protobuf.NewProtobufStream(r, conn, 5*time.Second)
-
-	// process incoming protobuf payload
-	if err := pbs.ProcessStream(pdns_subprocessor.GetChannel()); err != nil {
-		c.LogError("transport error: %s", err)
-	}
 
 	var err error
 	var payload *powerdns_protobuf.ProtoPayload
 	for {
 		payload, err = pbs.RecvPayload(false)
 		if err != nil {
+			if opErr, ok := err.(*net.OpError); ok && opErr.Err == net.ErrClosed || err == io.EOF {
+				c.LogInfo("connection closed with peer %s\n", peer)
+				close(pdnsProc.GetChannel())
+			} else {
+				c.LogError("protobuf reader error: %s", err)
+			}
 			break
 		}
 
 		// drop packet if the channel is full to avoid a tcp zero windows
-		if pdns_subprocessor.ChannelIsFull() {
-			c.Lock()
-			c.droppedPackets++
-			c.Unlock()
+		if pdnsProc.ChannelIsFull() {
+			c.dropped <- 1
 			continue
 		}
 
-		pdns_subprocessor.GetChannel() <- payload.Data()
-	}
-	if err != nil && !c.stopping {
-		c.LogError("protobuf reader error: %s", err)
-	}
+		// send payload to the channel
+		pdnsProc.GetChannel() <- payload.Data()
 
-	c.LogInfo("%s - connection closed\n", peer)
+	}
 }
 
 func (c *ProtobufPowerDNS) Channel() chan dnsutils.DnsMessage {
@@ -122,7 +124,11 @@ func (c *ProtobufPowerDNS) Stop() {
 	defer c.Unlock()
 
 	c.LogInfo("stopping...")
-	c.stopping = true
+
+	// stop all powerdns processors
+	for _, pdnsProc := range c.pdnsProcessors {
+		pdnsProc.Stop()
+	}
 
 	// closing properly current connections if exists
 	for _, conn := range c.conns {
@@ -130,6 +136,7 @@ func (c *ProtobufPowerDNS) Stop() {
 		c.LogInfo("%s - closing connection...", peer)
 		netlib.Close(conn, c.config.Collectors.PowerDNS.ResetConn)
 	}
+
 	// Finally close the listener to unblock accept
 	c.LogInfo("stop listening...")
 	c.listen.Close()
@@ -140,6 +147,9 @@ func (c *ProtobufPowerDNS) Stop() {
 }
 
 func (c *ProtobufPowerDNS) Listen() error {
+	c.Lock()
+	defer c.Unlock()
+
 	c.LogInfo("running in background...")
 
 	var err error
@@ -178,17 +188,22 @@ func (c *ProtobufPowerDNS) Listen() error {
 }
 
 func (c *ProtobufPowerDNS) FollowChannel() {
+	c.LogInfo("start to follow up incoming dropped packets...")
+
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 	for {
 		select {
+		case <-c.cleanup:
+			c.LogInfo("cleanup called")
+			return
+		case <-c.dropped:
+			c.droppedCount++
 		case <-bufferFull.C:
-			c.Lock()
-			if c.droppedPackets > 0 {
-				c.LogError("recv buffer is full, %d packet(s) dropped", c.droppedPackets)
-				c.droppedPackets = 0
+			if c.droppedCount > 0 {
+				c.LogError("recv buffer is full, %d packet(s) dropped", c.droppedCount)
+				c.droppedCount = 0
 			}
-			c.Unlock()
 			bufferFull.Reset(watchInterval)
 		}
 	}
