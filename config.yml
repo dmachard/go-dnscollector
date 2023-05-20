@@ -449,6 +449,8 @@ multiplexer:
 #   basic-auth-login: ""
 #   # basic auth password
 #   basic-auth-pwd: ""
+#   # path to a file containing the basic auth password
+#   basic-auth-pwd-file: ""
 #   # tenant/organisation id. If omitted or empty, no X-Scope-OrgID header is sent.
 #   tenant-id: "" 
 #   # Describes how to relabel targets.

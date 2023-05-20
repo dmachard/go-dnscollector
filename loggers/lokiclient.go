@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -142,6 +143,14 @@ func (o *LokiClient) ReadConfig() {
 	}
 
 	o.httpclient = &http.Client{Transport: tr}
+
+	if o.config.Loggers.LokiClient.BasicAuthPwdFile != "" {
+		content, err := os.ReadFile(o.config.Loggers.LokiClient.BasicAuthPwdFile)
+		if err != nil {
+			o.logger.Fatal("unable to load password from file: ", err)
+		}
+		o.config.Loggers.LokiClient.BasicAuthPwd = string(content)
+	}
 }
 
 func (o *LokiClient) LogInfo(msg string, v ...interface{}) {
