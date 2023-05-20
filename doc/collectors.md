@@ -25,6 +25,7 @@ Options:
 - `key-file`: (string) private key server file
 - `sock-rcvbuf`: (integer) sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
 - `reset-conn`: (bool) Reset TCP connection on exit
+- `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
 
 Default values:
 
@@ -39,6 +40,7 @@ dnstap:
   key-file: ""
   sock-rcvbuf: 0
   reset-conn: true
+  chan-buffer-size: 65535
 ```
 
 ### DNS tap Proxifier
@@ -163,6 +165,7 @@ Options:
 - `key-file`: (string) private key server file
 - `sock-rcvbuf`: (integer) sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
 - `reset-conn`: (bool) Reset TCP connection on exit
+- `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
 
 Default values:
 
@@ -176,6 +179,7 @@ powerdns:
   key-file: ""
   sock-rcvbuf: 0
   reset-conn: true
+  chan-buffer-size: 65535
 ```
 
 ### File Ingestor
