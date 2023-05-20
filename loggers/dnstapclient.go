@@ -285,12 +285,4 @@ func (o *DnstapSender) Run() {
 			return
 		}
 	}
-
-	// // cleanup transformers
-	// subprocessors.Reset()
-
-	// // closing remote connection if exist
-	// o.Disconnect()
-
-	// o.done <- true
 }

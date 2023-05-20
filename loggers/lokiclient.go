@@ -195,6 +195,7 @@ func (o *LokiClient) Run() {
 
 			o.done <- true
 			return
+
 		case dm, opened := <-o.channel:
 			// channel is closed ?
 			if !opened {
