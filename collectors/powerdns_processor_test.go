@@ -28,7 +28,7 @@ func TestPowerDNS_Processor(t *testing.T) {
 
 	data, _ := proto.Marshal(dm)
 
-	go consumer.Run([]chan dnsutils.DnsMessage{chan_to})
+	go consumer.Run([]chan dnsutils.DnsMessage{chan_to}, []string{"test"})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 

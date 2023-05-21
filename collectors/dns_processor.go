@@ -67,7 +67,7 @@ func (d *DnsProcessor) Stop() {
 	close(d.done)
 }
 
-func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
+func (d *DnsProcessor) Run(sendTo []chan dnsutils.DnsMessage, loggersName []string) {
 
 	// prepare enabled transformers
 	subprocessors := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, sendTo)

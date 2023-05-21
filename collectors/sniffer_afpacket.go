@@ -187,12 +187,14 @@ func (c *AfpacketSniffer) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *AfpacketSniffer) Loggers() []chan dnsutils.DnsMessage {
+func (c *AfpacketSniffer) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 	channels := []chan dnsutils.DnsMessage{}
+	names := []string{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
+		names = append(names, p.GetName())
 	}
-	return channels
+	return channels, names
 }
 
 func (c *AfpacketSniffer) ReadConfig() {

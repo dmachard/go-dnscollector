@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -55,12 +56,14 @@ func (c *Dnstap) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *Dnstap) Loggers() []chan dnsutils.DnsMessage {
+func (c *Dnstap) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 	channels := []chan dnsutils.DnsMessage{}
+	names := []string{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
+		names = append(names, p.GetName())
 	}
-	return channels
+	return channels, names
 }
 
 func (c *Dnstap) ReadConfig() {
@@ -140,14 +143,20 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 			break
 		}
 
-		// drop packet if the channel is full to avoid a tcp zero windows
-		if dnstapProcessor.ChannelIsFull() {
-			c.dropped <- 1
-			continue
-		}
+		// // drop packet if the channel is full to avoid a tcp zero windows
+		// if dnstapProcessor.ChannelIsFull() {
+		// 	c.dropped <- 1
+		// 	continue
+		// }
 
 		// send payload to the channel
-		dnstapProcessor.GetChannel() <- frame.Data()
+		select {
+		case dnstapProcessor.GetChannel() <- frame.Data(): // Successful send to channel
+		default:
+			fmt.Println("DROP CALLED 1")
+			c.dropped <- 1
+			fmt.Println("DROP CALLED 2")
+		}
 	}
 }
 
@@ -236,9 +245,7 @@ func (c *Dnstap) Listen() error {
 	return nil
 }
 
-func (c *Dnstap) FollowChannel() {
-	c.LogInfo("start to count incoming dropped packets...")
-
+func (c *Dnstap) DropsFollowing() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 	for {
@@ -266,7 +273,7 @@ func (c *Dnstap) Run() {
 		}
 	}
 
-	go c.FollowChannel()
+	go c.DropsFollowing()
 
 	for {
 		// Accept() blocks waiting for new connection.

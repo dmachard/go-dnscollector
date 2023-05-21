@@ -97,6 +97,7 @@ func (o *StdOut) Run() {
 
 			o.done <- true
 			return
+
 		case dm, opened := <-o.channel:
 			// channel is closed ?
 			if !opened {
@@ -110,8 +111,6 @@ func (o *StdOut) Run() {
 			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 				continue
 			}
-
-			// fmt.Printf("Size of %T: %d bytes\n", dm, unsafe.Sizeof(dm))
 
 			switch o.config.Loggers.Stdout.Mode {
 			case dnsutils.MODE_TEXT:

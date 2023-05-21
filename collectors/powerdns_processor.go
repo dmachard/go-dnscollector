@@ -25,25 +25,31 @@ var (
 )
 
 type PdnsProcessor struct {
-	done     chan bool
-	cleanup  chan bool
-	recvFrom chan []byte
-	logger   *logger.Logger
-	config   *dnsutils.Config
-	name     string
-	chanSize int
+	done         chan bool
+	cleanup      chan bool
+	cleanupDrops chan bool
+	recvFrom     chan []byte
+	logger       *logger.Logger
+	config       *dnsutils.Config
+	name         string
+	chanSize     int
+	dropped      chan string
+	droppedCount map[string]int
 }
 
 func NewPdnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
 	logger.Info("[%s] pdns processor - initialization...", name)
 	d := PdnsProcessor{
-		done:     make(chan bool),
-		cleanup:  make(chan bool),
-		recvFrom: make(chan []byte, size),
-		chanSize: size,
-		logger:   logger,
-		config:   config,
-		name:     name,
+		done:         make(chan bool),
+		cleanup:      make(chan bool),
+		cleanupDrops: make(chan bool),
+		recvFrom:     make(chan []byte, size),
+		chanSize:     size,
+		logger:       logger,
+		config:       config,
+		name:         name,
+		dropped:      make(chan string),
+		droppedCount: map[string]int{},
 	}
 
 	d.ReadConfig()
@@ -67,10 +73,6 @@ func (d *PdnsProcessor) GetChannel() chan []byte {
 	return d.recvFrom
 }
 
-func (d *PdnsProcessor) ChannelIsFull() bool {
-	return len(d.recvFrom) >= d.chanSize
-}
-
 func (d *PdnsProcessor) Stop() {
 	d.LogInfo("stopping...")
 
@@ -82,12 +84,42 @@ func (d *PdnsProcessor) Stop() {
 	close(d.done)
 }
 
-func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
+func (d *PdnsProcessor) DropsFollowing() {
+	watchInterval := 10 * time.Second
+	bufferFull := time.NewTimer(watchInterval)
+	for {
+		select {
+		case <-d.cleanupDrops:
+			return
+		case loggerName := <-d.dropped:
+			if _, ok := d.droppedCount[loggerName]; !ok {
+				d.droppedCount[loggerName] = 1
+			} else {
+				d.droppedCount[loggerName]++
+			}
+		case <-bufferFull.C:
+
+			for v, k := range d.droppedCount {
+				if k > 0 {
+					d.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
+					d.droppedCount[v] = 0
+				}
+			}
+			bufferFull.Reset(watchInterval)
+
+		}
+	}
+}
+
+func (d *PdnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
 
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
 
 	// prepare enabled transformers
-	subprocessors := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, sendTo)
+	subprocessors := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel)
+
+	// start goroutine to count dropped messsages
+	go d.DropsFollowing()
 
 	// read incoming dns message
 	d.LogInfo("running... waiting dns message")
@@ -306,9 +338,13 @@ func (d *PdnsProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 				continue
 			}
 
-			// dispatch dns message to all generators
-			for i := range sendTo {
-				sendTo[i] <- dm
+			// dispatch dns messages to connected loggers
+			for i := range loggersChannel {
+				select {
+				case loggersChannel[i] <- dm: // Successful send to logger channel
+				default:
+					d.dropped <- loggersName[i]
+				}
 			}
 		}
 	}

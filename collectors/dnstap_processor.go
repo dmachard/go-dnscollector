@@ -49,26 +49,32 @@ func GetFakeDnstap(dnsquery []byte) *dnstap.Dnstap {
 }
 
 type DnstapProcessor struct {
-	done     chan bool
-	cleanup  chan bool
-	recvFrom chan []byte
-	logger   *logger.Logger
-	config   *dnsutils.Config
-	name     string
-	chanSize int
+	done         chan bool
+	cleanup      chan bool
+	cleanupDrops chan bool
+	recvFrom     chan []byte
+	logger       *logger.Logger
+	config       *dnsutils.Config
+	name         string
+	chanSize     int
+	dropped      chan string
+	droppedCount map[string]int
 }
 
 func NewDnstapProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) DnstapProcessor {
 	logger.Info("[%s] dnstap processor - initialization...", name)
 
 	d := DnstapProcessor{
-		done:     make(chan bool),
-		cleanup:  make(chan bool),
-		recvFrom: make(chan []byte, size),
-		chanSize: size,
-		logger:   logger,
-		config:   config,
-		name:     name,
+		done:         make(chan bool),
+		cleanup:      make(chan bool),
+		cleanupDrops: make(chan bool),
+		recvFrom:     make(chan []byte, size),
+		chanSize:     size,
+		logger:       logger,
+		config:       config,
+		name:         name,
+		dropped:      make(chan string),
+		droppedCount: map[string]int{},
 	}
 
 	d.ReadConfig()
@@ -92,14 +98,11 @@ func (d *DnstapProcessor) GetChannel() chan []byte {
 	return d.recvFrom
 }
 
-func (d *DnstapProcessor) ChannelIsFull() bool {
-	return len(d.recvFrom) >= d.chanSize
-}
-
 func (d *DnstapProcessor) Stop() {
 	d.LogInfo("stopping...")
+
+	// exit goroutine
 	d.cleanup <- true
-	//close(d.recvFrom)
 
 	// read done channel and block until run is terminated
 	<-d.done
@@ -107,11 +110,41 @@ func (d *DnstapProcessor) Stop() {
 	close(d.done)
 }
 
-func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
+func (d *DnstapProcessor) DropsFollowing() {
+	watchInterval := 10 * time.Second
+	bufferFull := time.NewTimer(watchInterval)
+	for {
+		select {
+		case <-d.cleanupDrops:
+			return
+		case loggerName := <-d.dropped:
+			if _, ok := d.droppedCount[loggerName]; !ok {
+				d.droppedCount[loggerName] = 1
+			} else {
+				d.droppedCount[loggerName]++
+			}
+		case <-bufferFull.C:
+
+			for v, k := range d.droppedCount {
+				if k > 0 {
+					d.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
+					d.droppedCount[v] = 0
+				}
+			}
+			bufferFull.Reset(watchInterval)
+
+		}
+	}
+}
+
+func (d *DnstapProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
 	dt := &dnstap.Dnstap{}
 
 	// prepare enabled transformers
-	subprocessors := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, sendTo)
+	subprocessors := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel)
+
+	// start goroutine to count dropped messsages
+	go d.DropsFollowing()
 
 	// read incoming dns message
 	d.LogInfo("running... waiting dns message")
@@ -119,10 +152,14 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 		select {
 		case <-d.cleanup:
 			d.LogInfo("cleanup called")
+
+			// reset
+			d.cleanupDrops <- true
 			subprocessors.Reset()
 
 			d.done <- true
 			return
+
 		case data, opened := <-d.recvFrom:
 			if !opened {
 				d.LogInfo("channel closed, exit")
@@ -228,9 +265,13 @@ func (d *DnstapProcessor) Run(sendTo []chan dnsutils.DnsMessage) {
 			// convert latency to human
 			dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
 
-			// dispatch dns message to all generators
-			for i := range sendTo {
-				sendTo[i] <- dm
+			// dispatch dns message to connected loggers
+			for i := range loggersChannel {
+				select {
+				case loggersChannel[i] <- dm: // Successful send to logger channel
+				default:
+					d.dropped <- loggersName[i]
+				}
 			}
 		}
 	}

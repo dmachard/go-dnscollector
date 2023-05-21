@@ -35,7 +35,7 @@ func Test_DnstapProcessor(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	go consumer.Run([]chan dnsutils.DnsMessage{chan_to})
+	go consumer.Run([]chan dnsutils.DnsMessage{chan_to}, []string{"test"})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 
@@ -70,7 +70,7 @@ func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	go consumer.Run([]chan dnsutils.DnsMessage{chan_to})
+	go consumer.Run([]chan dnsutils.DnsMessage{chan_to}, []string{"test"})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 
@@ -104,7 +104,7 @@ func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	go consumer.Run([]chan dnsutils.DnsMessage{chan_to})
+	go consumer.Run([]chan dnsutils.DnsMessage{chan_to}, []string{"test"})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 
@@ -139,7 +139,7 @@ func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	go consumer.Run([]chan dnsutils.DnsMessage{chan_to})
+	go consumer.Run([]chan dnsutils.DnsMessage{chan_to}, []string{"test"})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 

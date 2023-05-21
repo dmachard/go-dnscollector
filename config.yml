@@ -77,10 +77,17 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-              
+    - name: file
+      logfile:
+        file-path:  /tmp/test.log
+    - name: prom
+      prometheus:
+        listen-ip: 0.0.0.0
+        listen-port: 8081
+
   routes:
     - from: [ tap ]
-      to: [ console ]
+      to: [ file, prom ]
 
 ################################################
 # list of supported collectors
