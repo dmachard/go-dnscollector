@@ -122,7 +122,7 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 		done_api:     make(chan bool),
 		cleanup:      make(chan bool),
 		config:       config,
-		channel:      make(chan dnsutils.DnsMessage, 512),
+		channel:      make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
 		logger:       logger,
 		version:      version,
 		promRegistry: prometheus.NewRegistry(),

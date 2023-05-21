@@ -20,7 +20,8 @@ Options:
 - `tls-min-version`: (string) min tls version, default to 1.2
 - `mode`: (string) output format: text, json, or flat-json
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
-- `buffer-size`: (integer) number of dns messages in buffer
+- `buffer-size`: (integer) how many DNS messages will be buffered before being sent
+- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 
@@ -39,4 +40,5 @@ tcpclient:
   mode: json
   text-format: ""
   buffer-size: 100
+  chan-buffer-size: 65535
 ```

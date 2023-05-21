@@ -32,7 +32,7 @@ func NewDnstapSender(config *dnsutils.Config, logger *logger.Logger, name string
 	s := &DnstapSender{
 		done:               make(chan bool),
 		cleanup:            make(chan bool),
-		channel:            make(chan dnsutils.DnsMessage, 512),
+		channel:            make(chan dnsutils.DnsMessage, config.Loggers.Dnstap.ChannelBufferSize),
 		transportReady:     make(chan bool),
 		transportReconnect: make(chan bool),
 		logger:             logger,

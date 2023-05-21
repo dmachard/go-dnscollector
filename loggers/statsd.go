@@ -60,7 +60,7 @@ func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, version str
 	s := &StatsdClient{
 		done:    make(chan bool),
 		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, 512),
+		channel: make(chan dnsutils.DnsMessage, config.Loggers.Statsd.ChannelBufferSize),
 		logger:  logger,
 		config:  config,
 		version: version,

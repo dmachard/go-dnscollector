@@ -274,7 +274,7 @@ func (c *AfpacketSniffer) Run() {
 		}
 	}
 
-	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name)
+	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.AfpacketLiveCapture.ChannelBufferSize)
 	go dnsProcessor.Run(c.Loggers())
 
 	dnsChan := make(chan netlib.DnsPacket)

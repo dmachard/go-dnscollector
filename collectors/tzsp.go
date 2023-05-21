@@ -127,7 +127,7 @@ func (c *TzspSniffer) Run() {
 		c.logger.Fatal("collector tzsp listening failed: ", err)
 	}
 
-	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name)
+	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.Tzsp.ChannelBufferSize)
 
 	go dnsProcessor.Run(c.Loggers())
 

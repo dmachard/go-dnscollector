@@ -200,14 +200,16 @@ type Config struct {
 			KeyFile       string `yaml:"key-file"`
 		} `yaml:"dnstap-proxifier"`
 		AfpacketLiveCapture struct {
-			Enable bool   `yaml:"enable"`
-			Port   int    `yaml:"port"`
-			Device string `yaml:"device"`
+			Enable            bool   `yaml:"enable"`
+			Port              int    `yaml:"port"`
+			Device            string `yaml:"device"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"afpacket-sniffer"`
 		XdpLiveCapture struct {
-			Enable bool   `yaml:"enable"`
-			Port   int    `yaml:"port"`
-			Device string `yaml:"device"`
+			Enable            bool   `yaml:"enable"`
+			Port              int    `yaml:"port"`
+			Device            string `yaml:"device"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"xdp-sniffer"`
 		PowerDNS struct {
 			Enable            bool   `yaml:"enable"`
@@ -230,9 +232,10 @@ type Config struct {
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"file-ingestor"`
 		Tzsp struct {
-			Enable     bool   `yaml:"enable"`
-			ListenIp   string `yaml:"listen-ip"`
-			ListenPort int    `yaml:"listen-port"`
+			Enable            bool   `yaml:"enable"`
+			ListenIp          string `yaml:"listen-ip"`
+			ListenPort        int    `yaml:"listen-port"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		}
 	} `yaml:"collectors"`
 
@@ -240,36 +243,39 @@ type Config struct {
 
 	Loggers struct {
 		Stdout struct {
-			Enable     bool   `yaml:"enable"`
-			Mode       string `yaml:"mode"`
-			TextFormat string `yaml:"text-format"`
+			Enable            bool   `yaml:"enable"`
+			Mode              string `yaml:"mode"`
+			TextFormat        string `yaml:"text-format"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"stdout"`
 		Prometheus struct {
-			Enable           bool   `yaml:"enable"`
-			ListenIP         string `yaml:"listen-ip"`
-			ListenPort       int    `yaml:"listen-port"`
-			TlsSupport       bool   `yaml:"tls-support"`
-			TlsMutual        bool   `yaml:"tls-mutual"`
-			TlsMinVersion    string `yaml:"tls-min-version"`
-			CertFile         string `yaml:"cert-file"`
-			KeyFile          string `yaml:"key-file"`
-			PromPrefix       string `yaml:"prometheus-prefix"`
-			TopN             int    `yaml:"top-n"`
-			BasicAuthLogin   string `yaml:"basic-auth-login"`
-			BasicAuthPwd     string `yaml:"basic-auth-pwd"`
-			BasicAuthEnabled bool   `yaml:"basic-auth-enable"`
+			Enable            bool   `yaml:"enable"`
+			ListenIP          string `yaml:"listen-ip"`
+			ListenPort        int    `yaml:"listen-port"`
+			TlsSupport        bool   `yaml:"tls-support"`
+			TlsMutual         bool   `yaml:"tls-mutual"`
+			TlsMinVersion     string `yaml:"tls-min-version"`
+			CertFile          string `yaml:"cert-file"`
+			KeyFile           string `yaml:"key-file"`
+			PromPrefix        string `yaml:"prometheus-prefix"`
+			TopN              int    `yaml:"top-n"`
+			BasicAuthLogin    string `yaml:"basic-auth-login"`
+			BasicAuthPwd      string `yaml:"basic-auth-pwd"`
+			BasicAuthEnabled  bool   `yaml:"basic-auth-enable"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"prometheus"`
 		RestAPI struct {
-			Enable         bool   `yaml:"enable"`
-			ListenIP       string `yaml:"listen-ip"`
-			ListenPort     int    `yaml:"listen-port"`
-			BasicAuthLogin string `yaml:"basic-auth-login"`
-			BasicAuthPwd   string `yaml:"basic-auth-pwd"`
-			TlsSupport     bool   `yaml:"tls-support"`
-			TlsMinVersion  string `yaml:"tls-min-version"`
-			CertFile       string `yaml:"cert-file"`
-			KeyFile        string `yaml:"key-file"`
-			TopN           int    `yaml:"top-n"`
+			Enable            bool   `yaml:"enable"`
+			ListenIP          string `yaml:"listen-ip"`
+			ListenPort        int    `yaml:"listen-port"`
+			BasicAuthLogin    string `yaml:"basic-auth-login"`
+			BasicAuthPwd      string `yaml:"basic-auth-pwd"`
+			TlsSupport        bool   `yaml:"tls-support"`
+			TlsMinVersion     string `yaml:"tls-min-version"`
+			CertFile          string `yaml:"cert-file"`
+			KeyFile           string `yaml:"key-file"`
+			TopN              int    `yaml:"top-n"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"restapi"`
 		LogFile struct {
 			Enable              bool   `yaml:"enable"`
@@ -284,6 +290,7 @@ type Config struct {
 			PostRotateCommand   string `yaml:"postrotate-command"`
 			PostRotateDelete    bool   `yaml:"postrotate-delete-success"`
 			TextFormat          string `yaml:"text-format"`
+			ChannelBufferSize   int    `yaml:"chan-buffer-size"`
 		} `yaml:"logfile"`
 		Dnstap struct {
 			Enable            bool   `yaml:"enable"`
@@ -299,149 +306,161 @@ type Config struct {
 			ServerId          string `yaml:"server-id"`
 			OverwriteIdentity bool   `yaml:"overwrite-identity"`
 			BufferSize        int    `yaml:"buffer-size"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"dnstap"`
 		TcpClient struct {
-			Enable           bool   `yaml:"enable"`
-			RemoteAddress    string `yaml:"remote-address"`
-			RemotePort       int    `yaml:"remote-port"`
-			SockPath         string `yaml:"sock-path"`
-			RetryInterval    int    `yaml:"retry-interval"`
-			Transport        string `yaml:"transport"`
-			TlsSupport       bool   `yaml:"tls-support"`
-			TlsInsecure      bool   `yaml:"tls-insecure"`
-			TlsMinVersion    string `yaml:"tls-min-version"`
-			Mode             string `yaml:"mode"`
-			TextFormat       string `yaml:"text-format"`
-			PayloadDelimiter string `yaml:"delimiter"`
-			BufferSize       int    `yaml:"buffer-size"`
-			FlushInterval    int    `yaml:"flush-interval"`
-			ConnectTimeout   int    `yaml:"connect-timeout"`
+			Enable            bool   `yaml:"enable"`
+			RemoteAddress     string `yaml:"remote-address"`
+			RemotePort        int    `yaml:"remote-port"`
+			SockPath          string `yaml:"sock-path"`
+			RetryInterval     int    `yaml:"retry-interval"`
+			Transport         string `yaml:"transport"`
+			TlsSupport        bool   `yaml:"tls-support"`
+			TlsInsecure       bool   `yaml:"tls-insecure"`
+			TlsMinVersion     string `yaml:"tls-min-version"`
+			Mode              string `yaml:"mode"`
+			TextFormat        string `yaml:"text-format"`
+			PayloadDelimiter  string `yaml:"delimiter"`
+			BufferSize        int    `yaml:"buffer-size"`
+			FlushInterval     int    `yaml:"flush-interval"`
+			ConnectTimeout    int    `yaml:"connect-timeout"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"tcpclient"`
 		Syslog struct {
-			Enable        bool   `yaml:"enable"`
-			Severity      string `yaml:"severity"`
-			Facility      string `yaml:"facility"`
-			Transport     string `yaml:"transport"`
-			RemoteAddress string `yaml:"remote-address"`
-			TextFormat    string `yaml:"text-format"`
-			Mode          string `yaml:"mode"`
-			TlsSupport    bool   `yaml:"tls-support"`
-			TlsInsecure   bool   `yaml:"tls-insecure"`
-			TlsMinVersion string `yaml:"tls-min-version"`
-			Format        string `yaml:"format"`
+			Enable            bool   `yaml:"enable"`
+			Severity          string `yaml:"severity"`
+			Facility          string `yaml:"facility"`
+			Transport         string `yaml:"transport"`
+			RemoteAddress     string `yaml:"remote-address"`
+			TextFormat        string `yaml:"text-format"`
+			Mode              string `yaml:"mode"`
+			TlsSupport        bool   `yaml:"tls-support"`
+			TlsInsecure       bool   `yaml:"tls-insecure"`
+			TlsMinVersion     string `yaml:"tls-min-version"`
+			Format            string `yaml:"format"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"syslog"`
 		Fluentd struct {
-			Enable         bool   `yaml:"enable"`
-			RemoteAddress  string `yaml:"remote-address"`
-			RemotePort     int    `yaml:"remote-port"`
-			SockPath       string `yaml:"sock-path"`
-			ConnectTimeout int    `yaml:"connect-timeout"`
-			RetryInterval  int    `yaml:"retry-interval"`
-			FlushInterval  int    `yaml:"flush-interval"`
-			Transport      string `yaml:"transport"`
-			TlsSupport     bool   `yaml:"tls-support"`
-			TlsInsecure    bool   `yaml:"tls-insecure"`
-			TlsMinVersion  string `yaml:"tls-min-version"`
-			Tag            string `yaml:"tag"`
-			BufferSize     int    `yaml:"buffer-size"`
+			Enable            bool   `yaml:"enable"`
+			RemoteAddress     string `yaml:"remote-address"`
+			RemotePort        int    `yaml:"remote-port"`
+			SockPath          string `yaml:"sock-path"`
+			ConnectTimeout    int    `yaml:"connect-timeout"`
+			RetryInterval     int    `yaml:"retry-interval"`
+			FlushInterval     int    `yaml:"flush-interval"`
+			Transport         string `yaml:"transport"`
+			TlsSupport        bool   `yaml:"tls-support"`
+			TlsInsecure       bool   `yaml:"tls-insecure"`
+			TlsMinVersion     string `yaml:"tls-min-version"`
+			Tag               string `yaml:"tag"`
+			BufferSize        int    `yaml:"buffer-size"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"fluentd"`
 		InfluxDB struct {
-			Enable        bool   `yaml:"enable"`
-			ServerURL     string `yaml:"server-url"`
-			AuthToken     string `yaml:"auth-token"`
-			TlsSupport    bool   `yaml:"tls-support"`
-			TlsInsecure   bool   `yaml:"tls-insecure"`
-			TlsMinVersion string `yaml:"tls-min-version"`
-			Bucket        string `yaml:"bucket"`
-			Organization  string `yaml:"organization"`
+			Enable            bool   `yaml:"enable"`
+			ServerURL         string `yaml:"server-url"`
+			AuthToken         string `yaml:"auth-token"`
+			TlsSupport        bool   `yaml:"tls-support"`
+			TlsInsecure       bool   `yaml:"tls-insecure"`
+			TlsMinVersion     string `yaml:"tls-min-version"`
+			Bucket            string `yaml:"bucket"`
+			Organization      string `yaml:"organization"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"influxdb"`
 		LokiClient struct {
-			Enable           bool              `yaml:"enable"`
-			ServerURL        string            `yaml:"server-url"`
-			JobName          string            `yaml:"job-name"`
-			Mode             string            `yaml:"mode"`
-			FlushInterval    int               `yaml:"flush-interval"`
-			BatchSize        int               `yaml:"batch-size"`
-			RetryInterval    int               `yaml:"retry-interval"`
-			TextFormat       string            `yaml:"text-format"`
-			ProxyURL         string            `yaml:"proxy-url"`
-			TlsInsecure      bool              `yaml:"tls-insecure"`
-			TlsMinVersion    string            `yaml:"tls-min-version"`
-			BasicAuthLogin   string            `yaml:"basic-auth-login"`
-			BasicAuthPwd     string            `yaml:"basic-auth-pwd"`
-			BasicAuthPwdFile string            `yaml:"basic-auth-pwd-file"`
-			TenantId         string            `yaml:"tenant-id"`
-			RelabelConfigs   []*relabel.Config `yaml:"relabel-configs"`
+			Enable            bool              `yaml:"enable"`
+			ServerURL         string            `yaml:"server-url"`
+			JobName           string            `yaml:"job-name"`
+			Mode              string            `yaml:"mode"`
+			FlushInterval     int               `yaml:"flush-interval"`
+			BatchSize         int               `yaml:"batch-size"`
+			RetryInterval     int               `yaml:"retry-interval"`
+			TextFormat        string            `yaml:"text-format"`
+			ProxyURL          string            `yaml:"proxy-url"`
+			TlsInsecure       bool              `yaml:"tls-insecure"`
+			TlsMinVersion     string            `yaml:"tls-min-version"`
+			BasicAuthLogin    string            `yaml:"basic-auth-login"`
+			BasicAuthPwd      string            `yaml:"basic-auth-pwd"`
+			BasicAuthPwdFile  string            `yaml:"basic-auth-pwd-file"`
+			TenantId          string            `yaml:"tenant-id"`
+			RelabelConfigs    []*relabel.Config `yaml:"relabel-configs"`
+			ChannelBufferSize int               `yaml:"chan-buffer-size"`
 		} `yaml:"lokiclient"`
 		Statsd struct {
-			Enable        bool   `yaml:"enable"`
-			Prefix        string `yaml:"prefix"`
-			RemoteAddress string `yaml:"remote-address"`
-			RemotePort    int    `yaml:"remote-port"`
-			Transport     string `yaml:"transport"`
-			FlushInterval int    `yaml:"flush-interval"`
-			TlsSupport    bool   `yaml:"tls-support"`
-			TlsInsecure   bool   `yaml:"tls-insecure"`
-			TlsMinVersion string `yaml:"tls-min-version"`
+			Enable            bool   `yaml:"enable"`
+			Prefix            string `yaml:"prefix"`
+			RemoteAddress     string `yaml:"remote-address"`
+			RemotePort        int    `yaml:"remote-port"`
+			Transport         string `yaml:"transport"`
+			FlushInterval     int    `yaml:"flush-interval"`
+			TlsSupport        bool   `yaml:"tls-support"`
+			TlsInsecure       bool   `yaml:"tls-insecure"`
+			TlsMinVersion     string `yaml:"tls-min-version"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"statsd"`
 		ElasticSearchClient struct {
-			Enable bool   `yaml:"enable"`
-			URL    string `yaml:"url"`
+			Enable            bool   `yaml:"enable"`
+			URL               string `yaml:"url"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"elasticsearch"`
 		ScalyrClient struct {
-			Enable        bool                   `yaml:"enable"`
-			Mode          string                 `yaml:"mode"`
-			TextFormat    string                 `yaml:"text-format"`
-			SessionInfo   map[string]string      `yaml:"sessioninfo"`
-			Attrs         map[string]interface{} `yaml:"attrs"`
-			ServerURL     string                 `yaml:"server-url"`
-			ApiKey        string                 `yaml:"apikey"`
-			Parser        string                 `yaml:"parser"`
-			FlushInterval int                    `yaml:"flush-interval"`
-			ProxyURL      string                 `yaml:"proxy-url"`
-			TlsInsecure   bool                   `yaml:"tls-insecure"`
-			TlsMinVersion string                 `yaml:"tls-min-version"`
+			Enable            bool                   `yaml:"enable"`
+			Mode              string                 `yaml:"mode"`
+			TextFormat        string                 `yaml:"text-format"`
+			SessionInfo       map[string]string      `yaml:"sessioninfo"`
+			Attrs             map[string]interface{} `yaml:"attrs"`
+			ServerURL         string                 `yaml:"server-url"`
+			ApiKey            string                 `yaml:"apikey"`
+			Parser            string                 `yaml:"parser"`
+			FlushInterval     int                    `yaml:"flush-interval"`
+			ProxyURL          string                 `yaml:"proxy-url"`
+			TlsInsecure       bool                   `yaml:"tls-insecure"`
+			TlsMinVersion     string                 `yaml:"tls-min-version"`
+			ChannelBufferSize int                    `yaml:"chan-buffer-size"`
 		} `yaml:"scalyrclient"`
 		RedisPub struct {
-			Enable           bool   `yaml:"enable"`
-			RemoteAddress    string `yaml:"remote-address"`
-			RemotePort       int    `yaml:"remote-port"`
-			SockPath         string `yaml:"sock-path"`
-			RetryInterval    int    `yaml:"retry-interval"`
-			Transport        string `yaml:"transport"`
-			TlsSupport       bool   `yaml:"tls-support"`
-			TlsInsecure      bool   `yaml:"tls-insecure"`
-			TlsMinVersion    string `yaml:"tls-min-version"`
-			Mode             string `yaml:"mode"`
-			TextFormat       string `yaml:"text-format"`
-			PayloadDelimiter string `yaml:"delimiter"`
-			BufferSize       int    `yaml:"buffer-size"`
-			FlushInterval    int    `yaml:"flush-interval"`
-			ConnectTimeout   int    `yaml:"connect-timeout"`
-			RedisChannel     string `yaml:"redis-channel"`
+			Enable            bool   `yaml:"enable"`
+			RemoteAddress     string `yaml:"remote-address"`
+			RemotePort        int    `yaml:"remote-port"`
+			SockPath          string `yaml:"sock-path"`
+			RetryInterval     int    `yaml:"retry-interval"`
+			Transport         string `yaml:"transport"`
+			TlsSupport        bool   `yaml:"tls-support"`
+			TlsInsecure       bool   `yaml:"tls-insecure"`
+			TlsMinVersion     string `yaml:"tls-min-version"`
+			Mode              string `yaml:"mode"`
+			TextFormat        string `yaml:"text-format"`
+			PayloadDelimiter  string `yaml:"delimiter"`
+			BufferSize        int    `yaml:"buffer-size"`
+			FlushInterval     int    `yaml:"flush-interval"`
+			ConnectTimeout    int    `yaml:"connect-timeout"`
+			RedisChannel      string `yaml:"redis-channel"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"redispub"`
 		KafkaProducer struct {
-			Enable         bool   `yaml:"enable"`
-			RemoteAddress  string `yaml:"remote-address"`
-			RemotePort     int    `yaml:"remote-port"`
-			RetryInterval  int    `yaml:"retry-interval"`
-			TlsSupport     bool   `yaml:"tls-support"`
-			TlsInsecure    bool   `yaml:"tls-insecure"`
-			TlsMinVersion  string `yaml:"tls-min-version"`
-			SaslSupport    bool   `yaml:"sasl-support"`
-			SaslUsername   string `yaml:"sasl-username"`
-			SaslPassword   string `yaml:"sasl-password"`
-			SaslMechanism  string `yaml:"sasl-mechanism"`
-			Mode           string `yaml:"mode"`
-			BufferSize     int    `yaml:"buffer-size"`
-			FlushInterval  int    `yaml:"flush-interval"`
-			ConnectTimeout int    `yaml:"connect-timeout"`
-			Topic          string `yaml:"topic"`
-			Partition      int    `yaml:"partition"`
+			Enable            bool   `yaml:"enable"`
+			RemoteAddress     string `yaml:"remote-address"`
+			RemotePort        int    `yaml:"remote-port"`
+			RetryInterval     int    `yaml:"retry-interval"`
+			TlsSupport        bool   `yaml:"tls-support"`
+			TlsInsecure       bool   `yaml:"tls-insecure"`
+			TlsMinVersion     string `yaml:"tls-min-version"`
+			SaslSupport       bool   `yaml:"sasl-support"`
+			SaslUsername      string `yaml:"sasl-username"`
+			SaslPassword      string `yaml:"sasl-password"`
+			SaslMechanism     string `yaml:"sasl-mechanism"`
+			Mode              string `yaml:"mode"`
+			BufferSize        int    `yaml:"buffer-size"`
+			FlushInterval     int    `yaml:"flush-interval"`
+			ConnectTimeout    int    `yaml:"connect-timeout"`
+			Topic             string `yaml:"topic"`
+			Partition         int    `yaml:"partition"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"kafkaproducer"`
 		FalcoClient struct {
-			Enable bool   `yaml:"enable"`
-			URL    string `yaml:"url"`
+			Enable            bool   `yaml:"enable"`
+			URL               string `yaml:"url"`
+			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"falco"`
 	} `yaml:"loggers"`
 
@@ -502,10 +521,12 @@ func (c *Config) SetDefault() {
 
 	c.Collectors.XdpLiveCapture.Enable = false
 	c.Collectors.XdpLiveCapture.Device = ""
+	c.Collectors.XdpLiveCapture.ChannelBufferSize = 65535
 
 	c.Collectors.AfpacketLiveCapture.Enable = false
 	c.Collectors.AfpacketLiveCapture.Port = 53
 	c.Collectors.AfpacketLiveCapture.Device = ""
+	c.Collectors.AfpacketLiveCapture.ChannelBufferSize = 65535
 
 	c.Collectors.PowerDNS.Enable = false
 	c.Collectors.PowerDNS.ListenIP = ANY_IP
@@ -523,11 +544,12 @@ func (c *Config) SetDefault() {
 	c.Collectors.FileIngestor.PcapDnsPort = 53
 	c.Collectors.FileIngestor.WatchMode = MODE_PCAP
 	c.Collectors.FileIngestor.DeleteAfter = false
-	c.Collectors.FileIngestor.ChannelBufferSize = 512
+	c.Collectors.FileIngestor.ChannelBufferSize = 65535
 
 	c.Collectors.Tzsp.Enable = false
 	c.Collectors.Tzsp.ListenIp = ANY_IP
 	c.Collectors.Tzsp.ListenPort = 10000
+	c.Collectors.Tzsp.ChannelBufferSize = 65535
 
 	// Transformers for collectors
 	c.IngoingTransformers.SetDefault()
@@ -536,6 +558,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Stdout.Enable = false
 	c.Loggers.Stdout.Mode = MODE_TEXT
 	c.Loggers.Stdout.TextFormat = ""
+	c.Loggers.Stdout.ChannelBufferSize = 65535
 
 	c.Loggers.Dnstap.Enable = false
 	c.Loggers.Dnstap.RemoteAddress = LOCALHOST_IP
@@ -550,6 +573,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Dnstap.ServerId = ""
 	c.Loggers.Dnstap.OverwriteIdentity = false
 	c.Loggers.Dnstap.BufferSize = 100
+	c.Loggers.Dnstap.ChannelBufferSize = 65535
 
 	c.Loggers.LogFile.Enable = false
 	c.Loggers.LogFile.FilePath = ""
@@ -563,6 +587,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.LogFile.PostRotateCommand = ""
 	c.Loggers.LogFile.PostRotateDelete = false
 	c.Loggers.LogFile.TextFormat = ""
+	c.Loggers.LogFile.ChannelBufferSize = 65535
 
 	c.Loggers.Prometheus.Enable = false
 	c.Loggers.Prometheus.ListenIP = LOCALHOST_IP
@@ -577,6 +602,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Prometheus.BasicAuthLogin = "admin"
 	c.Loggers.Prometheus.BasicAuthPwd = "changeme"
 	c.Loggers.Prometheus.BasicAuthEnabled = true
+	c.Loggers.Prometheus.ChannelBufferSize = 65535
 
 	c.Loggers.RestAPI.Enable = false
 	c.Loggers.RestAPI.ListenIP = LOCALHOST_IP
@@ -588,6 +614,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.RestAPI.CertFile = ""
 	c.Loggers.RestAPI.KeyFile = ""
 	c.Loggers.RestAPI.TopN = 100
+	c.Loggers.RestAPI.ChannelBufferSize = 65535
 
 	c.Loggers.TcpClient.Enable = false
 	c.Loggers.TcpClient.RemoteAddress = LOCALHOST_IP
@@ -604,6 +631,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.TcpClient.BufferSize = 100
 	c.Loggers.TcpClient.ConnectTimeout = 5
 	c.Loggers.TcpClient.FlushInterval = 30
+	c.Loggers.TcpClient.ChannelBufferSize = 65535
 
 	c.Loggers.Syslog.Enable = false
 	c.Loggers.Syslog.Severity = "INFO"
@@ -615,6 +643,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.TlsSupport = false
 	c.Loggers.Syslog.TlsInsecure = false
 	c.Loggers.Syslog.TlsMinVersion = TLS_v12
+	c.Loggers.Syslog.ChannelBufferSize = 65535
 
 	c.Loggers.Fluentd.Enable = false
 	c.Loggers.Fluentd.RemoteAddress = LOCALHOST_IP
@@ -629,6 +658,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Fluentd.TlsMinVersion = TLS_v12
 	c.Loggers.Fluentd.Tag = "dns.collector"
 	c.Loggers.Fluentd.BufferSize = 100
+	c.Loggers.Fluentd.ChannelBufferSize = 65535
 
 	c.Loggers.InfluxDB.Enable = false
 	c.Loggers.InfluxDB.ServerURL = "http://localhost:8086"
@@ -638,6 +668,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.InfluxDB.TlsMinVersion = TLS_v12
 	c.Loggers.InfluxDB.Bucket = ""
 	c.Loggers.InfluxDB.Organization = ""
+	c.Loggers.InfluxDB.ChannelBufferSize = 65535
 
 	c.Loggers.LokiClient.Enable = false
 	c.Loggers.LokiClient.ServerURL = "http://localhost:3100/loki/api/v1/push"
@@ -654,6 +685,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.LokiClient.BasicAuthPwd = ""
 	c.Loggers.LokiClient.BasicAuthPwdFile = ""
 	c.Loggers.LokiClient.TenantId = ""
+	c.Loggers.LokiClient.ChannelBufferSize = 65535
 
 	c.Loggers.Statsd.Enable = false
 	c.Loggers.Statsd.Prefix = PROG_NAME
@@ -664,9 +696,11 @@ func (c *Config) SetDefault() {
 	c.Loggers.Statsd.TlsSupport = false
 	c.Loggers.Statsd.TlsInsecure = false
 	c.Loggers.Statsd.TlsMinVersion = TLS_v12
+	c.Loggers.Statsd.ChannelBufferSize = 65535
 
 	c.Loggers.ElasticSearchClient.Enable = false
 	c.Loggers.ElasticSearchClient.URL = "http://127.0.0.1:9200/indexname/_doc"
+	c.Loggers.ElasticSearchClient.ChannelBufferSize = 65535
 
 	c.Loggers.RedisPub.Enable = false
 	c.Loggers.RedisPub.RemoteAddress = LOCALHOST_IP
@@ -684,6 +718,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.RedisPub.ConnectTimeout = 5
 	c.Loggers.RedisPub.FlushInterval = 30
 	c.Loggers.RedisPub.RedisChannel = "dns_collector"
+	c.Loggers.RedisPub.ChannelBufferSize = 65535
 
 	c.Loggers.KafkaProducer.Enable = false
 	c.Loggers.KafkaProducer.RemoteAddress = LOCALHOST_IP
@@ -702,9 +737,11 @@ func (c *Config) SetDefault() {
 	c.Loggers.KafkaProducer.FlushInterval = 10
 	c.Loggers.KafkaProducer.Topic = "dnscollector"
 	c.Loggers.KafkaProducer.Partition = 0
+	c.Loggers.KafkaProducer.ChannelBufferSize = 65535
 
 	c.Loggers.FalcoClient.Enable = false
 	c.Loggers.FalcoClient.URL = "http://127.0.0.1:9200"
+	c.Loggers.FalcoClient.ChannelBufferSize = 65535
 
 	// Transformers for loggers
 	c.OutgoingTransformers.SetDefault()

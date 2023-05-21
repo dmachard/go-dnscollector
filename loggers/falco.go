@@ -26,7 +26,7 @@ func NewFalcoClient(config *dnsutils.Config, console *logger.Logger, name string
 	f := &FalcoClient{
 		done:    make(chan bool),
 		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, 512),
+		channel: make(chan dnsutils.DnsMessage, config.Loggers.FalcoClient.ChannelBufferSize),
 		logger:  console,
 		config:  config,
 		name:    name,

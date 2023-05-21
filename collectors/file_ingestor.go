@@ -367,7 +367,7 @@ func (c *FileIngestor) RemoveEvent(filePath string) {
 func (c *FileIngestor) Run() {
 	c.LogInfo("starting collector...")
 
-	c.dnsProcessor = NewDnsProcessor(c.config, c.logger, c.name)
+	c.dnsProcessor = NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
 	go c.dnsProcessor.Run(c.Loggers())
 
 	// start dnstap subprocessor

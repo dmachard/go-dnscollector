@@ -36,7 +36,7 @@ func NewRedisPub(config *dnsutils.Config, logger *logger.Logger, name string) *R
 	s := &RedisPub{
 		done:               make(chan bool),
 		cleanup:            make(chan bool),
-		channel:            make(chan dnsutils.DnsMessage, 512),
+		channel:            make(chan dnsutils.DnsMessage, config.Loggers.RedisPub.ChannelBufferSize),
 		transportReady:     make(chan bool),
 		transportReconnect: make(chan bool),
 		logger:             logger,

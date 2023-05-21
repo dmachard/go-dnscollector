@@ -69,7 +69,7 @@ func NewSyslog(config *dnsutils.Config, console *logger.Logger, name string) *Sy
 	o := &Syslog{
 		done:    make(chan bool),
 		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, 512),
+		channel: make(chan dnsutils.DnsMessage, config.Loggers.Syslog.ChannelBufferSize),
 		logger:  console,
 		config:  config,
 		name:    name,

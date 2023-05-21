@@ -74,7 +74,7 @@ func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, version string, 
 		done_api: make(chan bool),
 		cleanup:  make(chan bool),
 		config:   config,
-		channel:  make(chan dnsutils.DnsMessage, 512),
+		channel:  make(chan dnsutils.DnsMessage, config.Loggers.RestAPI.ChannelBufferSize),
 		logger:   logger,
 		name:     name,
 

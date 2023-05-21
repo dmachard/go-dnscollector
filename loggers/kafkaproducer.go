@@ -36,7 +36,7 @@ func NewKafkaProducer(config *dnsutils.Config, logger *logger.Logger, name strin
 	s := &KafkaProducer{
 		done:           make(chan bool),
 		cleanup:        make(chan bool),
-		channel:        make(chan dnsutils.DnsMessage, 512),
+		channel:        make(chan dnsutils.DnsMessage, config.Loggers.KafkaProducer.ChannelBufferSize),
 		logger:         logger,
 		config:         config,
 		kafkaReady:     make(chan bool),

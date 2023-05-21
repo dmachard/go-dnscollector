@@ -28,7 +28,7 @@ func NewStdOut(config *dnsutils.Config, console *logger.Logger, name string) *St
 	o := &StdOut{
 		done:    make(chan bool),
 		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, 512),
+		channel: make(chan dnsutils.DnsMessage, config.Loggers.Stdout.ChannelBufferSize),
 		logger:  console,
 		config:  config,
 		stdout:  log.New(os.Stdout, "", 0),

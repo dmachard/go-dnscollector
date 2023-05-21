@@ -68,7 +68,7 @@ func NewLogFile(config *dnsutils.Config, logger *logger.Logger, name string) *Lo
 	l := &LogFile{
 		done:    make(chan bool),
 		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, 65535),
+		channel: make(chan dnsutils.DnsMessage, config.Loggers.LogFile.ChannelBufferSize),
 		config:  config,
 		logger:  logger,
 		name:    name,

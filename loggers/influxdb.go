@@ -29,7 +29,7 @@ func NewInfluxDBClient(config *dnsutils.Config, logger *logger.Logger, name stri
 	s := &InfluxDBClient{
 		done:    make(chan bool),
 		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, 512),
+		channel: make(chan dnsutils.DnsMessage, config.Loggers.InfluxDB.ChannelBufferSize),
 		logger:  logger,
 		config:  config,
 		name:    name,

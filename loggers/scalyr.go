@@ -50,7 +50,7 @@ type ScalyrClient struct {
 func NewScalyrClient(config *dnsutils.Config, console *logger.Logger, name string) *ScalyrClient {
 	console.Info("[%s] logger Scalyr - starting", name)
 	c := &ScalyrClient{
-		channel: make(chan dnsutils.DnsMessage, 512),
+		channel: make(chan dnsutils.DnsMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
 		logger:  console,
 		name:    name,
 		config:  config,

@@ -34,7 +34,7 @@ func NewTcpClient(config *dnsutils.Config, logger *logger.Logger, name string) *
 	s := &TcpClient{
 		done:               make(chan bool),
 		cleanup:            make(chan bool),
-		channel:            make(chan dnsutils.DnsMessage, 512),
+		channel:            make(chan dnsutils.DnsMessage, config.Loggers.TcpClient.ChannelBufferSize),
 		transportReady:     make(chan bool),
 		transportReconnect: make(chan bool),
 		logger:             logger,

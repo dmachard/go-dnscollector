@@ -30,7 +30,7 @@ func NewFluentdClient(config *dnsutils.Config, logger *logger.Logger, name strin
 	s := &FluentdClient{
 		done:               make(chan bool),
 		cleanup:            make(chan bool),
-		channel:            make(chan dnsutils.DnsMessage, 512),
+		channel:            make(chan dnsutils.DnsMessage, config.Loggers.Fluentd.ChannelBufferSize),
 		transportReady:     make(chan bool),
 		transportReconnect: make(chan bool),
 		logger:             logger,

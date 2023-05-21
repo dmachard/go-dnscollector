@@ -27,7 +27,7 @@ func NewElasticSearchClient(config *dnsutils.Config, console *logger.Logger, nam
 	o := &ElasticSearchClient{
 		done:    make(chan bool),
 		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, 512),
+		channel: make(chan dnsutils.DnsMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
 		logger:  console,
 		config:  config,
 		name:    name,

@@ -108,7 +108,7 @@ func (c *XdpSniffer) Stop() {
 func (c *XdpSniffer) Run() {
 	c.LogInfo("starting collector...")
 
-	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name)
+	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.XdpLiveCapture.ChannelBufferSize)
 	go dnsProcessor.Run(c.Loggers())
 
 	iface, err := net.InterfaceByName("wlp2s0")

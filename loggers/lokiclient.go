@@ -90,7 +90,7 @@ func NewLokiClient(config *dnsutils.Config, logger *logger.Logger, name string) 
 	s := &LokiClient{
 		done:    make(chan bool),
 		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, 512),
+		channel: make(chan dnsutils.DnsMessage, config.Loggers.LokiClient.ChannelBufferSize),
 		logger:  logger,
 		config:  config,
 		streams: make(map[string]*LokiStream),
