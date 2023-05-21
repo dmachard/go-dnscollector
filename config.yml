@@ -77,7 +77,7 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-        
+
   routes:
     - from: [ tap ]
       to: [ console ]
@@ -132,11 +132,15 @@ multiplexer:
 #   port: 53
 #   # if "" bind on all interfaces
 #   device: wlp2s0
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # live capture with XDP
 # xdp-sniffer:
 #   # bind on device
 #   device: wlp2s0
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # ingest pcap file
 # file-ingestor:
@@ -149,6 +153,8 @@ multiplexer:
 #   pcap-dns-port: 53
 #   # delete pcap file after ingest
 #   delete-after: false
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # read text file
 # tail:
@@ -197,6 +203,8 @@ multiplexer:
 #  listen-ip: 0.0.0.0
 #  # listen on port
 #  listen-port: 10000
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 ################################################
 # list of supported loggers
@@ -208,6 +216,8 @@ multiplexer:
 #   mode: text
 #   # output text format, please refer to the top of this file to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # rest api server
 # restapi:
@@ -227,6 +237,8 @@ multiplexer:
 #   key-file: ""
 #   # default number of items on top
 #   top-n: 100
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # prometheus metrics server
 # prometheus:
@@ -254,6 +266,8 @@ multiplexer:
 #   prometheus-prefix: "dnscollector"
 #   # default number of items on top
 #   top-n: 10
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # write captured dns traffic to text or binary files with rotation and compression support
 # logfile:
@@ -282,6 +296,8 @@ multiplexer:
 #   postrotate-command: null
 #   # delete file on script success
 #   postrotate-delete-success: true
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # resend captured dns traffic to another dnstap collector or to unix socket
 # dnstap:
@@ -307,6 +323,8 @@ multiplexer:
 #   overwrite-identity: false
 #   # number of dns messages in buffer
 #   buffer-size: 100
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # resend captured dns traffic to a tcp remote destination or to unix socket
 # tcpclient:
@@ -336,7 +354,8 @@ multiplexer:
 #   delimiter: "\n"
 #   # how many DNS messages will be buffered before being sent
 #   buffer-size: 100
-
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # Send captured traffic to a redis channel, mapped on TCP client logger options
 # redispub:
@@ -360,6 +379,8 @@ multiplexer:
 #   buffer-size: 100
 #   # Name of the channel to publish into
 #   redis-channel: dns-collector
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # redirect captured dns traffic to a remote syslog server or local one
 # syslog:
@@ -382,11 +403,15 @@ multiplexer:
 #   tls-insecure: false
 #   # set syslog formatter between `unix` (default), `rfc3164` or `rfc5424`
 #   format: ""
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # elasticsearch backend, basic support
 # elasticsearch:
 #   # remote server url
 #   url: "http://127.0.0.1:9200/indexname/_doc"
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # resend captured dns traffic to a remote fluentd server or to unix socket
 # fluentd:
@@ -412,6 +437,8 @@ multiplexer:
 #   tls-insecure: false
 #   # how many DNS messages will be buffered before being sent
 #   buffer-size: 100
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # resend captured dns traffic to a InfluxDB database
 # influxdb:
@@ -427,6 +454,8 @@ multiplexer:
 #   bucket: "db_dns"
 #   # Organization
 #   organization: "dnscollector"
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # resend captured dns traffic to a Loki Server
 # lokiclient:
@@ -464,6 +493,8 @@ multiplexer:
 #   relabel-configs:
 #     - source_labels: ["__dns_qtype"]
 #       target_label: "qtype"
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # forward to statsd proxy
 # statsd:
@@ -481,6 +512,8 @@ multiplexer:
 #   prefix: "dnscollector"
 #   # flush every X seconds
 #   flush-interval: 10
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # Send captured traffic to Scalyr/dataset.com
 # # Uses the api/addEvents endpoint, see https://app.eu.scalyr.com/help/api#addEvents
@@ -507,6 +540,8 @@ multiplexer:
 #   tls-insecure: false
 #   # tls min version
 #   tls-min-version: 1.2
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # resend captured dns traffic to a kafka sink
 # kafkaproducer:
@@ -540,11 +575,15 @@ multiplexer:
 #   topic: "dnscollector"
 #   # Kafka partition
 #   partition: 0
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # Send captured traffic to falco (https://falco.org/), for security and advanced inspection
 # falco:
 #   # remote falco plugin endpoint
 #   url: "http://127.0.0.1:9200"
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 ################################################
 # list of transforms to apply on collectors or loggers
