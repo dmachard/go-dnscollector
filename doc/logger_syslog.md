@@ -17,6 +17,7 @@ Options:
 - `tls-insecure`: (boolean) insecure skip verify
 - `tls-min-version`: (string) min tls version, default to 1.2
 - `format`: (string) Set syslog formatter between `unix` (default), [`rfc3164`](https://www.rfc-editor.org/rfc/)rfc3164 ) or [`rfc5424`](https://www.rfc-editor.org/rfc/rfc5424)
+- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 
@@ -32,4 +33,5 @@ syslog:
   tls-insecure: false
   tls-min-version: 1.2
   format: ""
+  chan-buffer-size: 65535
 ```

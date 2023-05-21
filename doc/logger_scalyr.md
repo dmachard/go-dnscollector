@@ -16,6 +16,7 @@ Options:
 - `tls-min-version`: (string) min tls version
 - `session-info`: (map) Any "session" or server information for Scalyr. e.g. 'region', 'serverHost'. If 'serverHost' is not included, it is set using the hostname.
 - `attrs`: (map) Any extra attributes that should be added to the log's fields.
+- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 The client can send the data in 3 formats: text (using `text-format`), json (by including the whole DNS message in the `message` field), or flat-json.
 The first two formats (text, json) require setting the `parser` option and needs a corresponding parser defined in the Scalyr backend.
@@ -35,4 +36,5 @@ scalyrclient:
   proxy-url: ""
   tls-insecure: false
   tls-min-version: 1.2
+  chan-buffer-size: 65535
 ```

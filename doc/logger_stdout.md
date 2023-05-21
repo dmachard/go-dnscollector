@@ -7,6 +7,7 @@ Print to your standard output, all DNS logs received
 Options:
 - `mode`: (string) output format: text, json, or flat-json
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
+- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 
@@ -14,6 +15,7 @@ Default values:
 stdout:
   mode: text
   text-format: ""
+  chan-buffer-size: 65535
 ```
 
 Example:

@@ -17,6 +17,7 @@ Options:
 - `cert-file`: (string) certificate server file
 - `key-file`: (string) private key server file
 - `top-n`: (string) default number of items on top
+- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 
@@ -32,4 +33,5 @@ restapi:
   cert-file: "./testsdata/server.crt"
   key-file: "./testsdata/server.key"
   top-n: 100
+  chan-buffer-size: 65535
 ```
