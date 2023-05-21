@@ -77,7 +77,7 @@ type LokiClient struct {
 	channel    chan dnsutils.DnsMessage
 	config     *dnsutils.Config
 	logger     *logger.Logger
-	exit       chan bool
+	cleanup    chan bool
 	httpclient *http.Client
 	textFormat []string
 	streams    map[string]*LokiStream
@@ -89,8 +89,8 @@ func NewLokiClient(config *dnsutils.Config, logger *logger.Logger, name string) 
 
 	s := &LokiClient{
 		done:    make(chan bool),
-		exit:    make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, 512),
+		cleanup: make(chan bool),
+		channel: make(chan dnsutils.DnsMessage, config.Loggers.LokiClient.ChannelBufferSize),
 		logger:  logger,
 		config:  config,
 		streams: make(map[string]*LokiStream),
@@ -168,15 +168,12 @@ func (o *LokiClient) Channel() chan dnsutils.DnsMessage {
 func (o *LokiClient) Stop() {
 	o.LogInfo("stopping...")
 
-	// close output channel
-	o.LogInfo("closing channel")
-	close(o.channel)
-
 	// exit to close properly
-	o.exit <- true
+	o.cleanup <- true
 
 	// read done channel and block until run is terminated
 	<-o.done
+	o.LogInfo("run terminated")
 	close(o.done)
 }
 
@@ -196,10 +193,26 @@ func (o *LokiClient) Run() {
 	tflush_interval := time.Duration(o.config.Loggers.LokiClient.FlushInterval) * time.Second
 	tflush := time.NewTimer(tflush_interval)
 
-LOOP:
 	for {
 		select {
-		case dm := <-o.channel:
+		case <-o.cleanup:
+			o.LogInfo("cleanup called")
+			close(o.channel)
+
+			// cleanup transformers
+			subprocessors.Reset()
+
+			o.done <- true
+			return
+
+		case dm, opened := <-o.channel:
+			// channel is closed ?
+			if !opened {
+				o.LogInfo("channel closed, cleanup...")
+				o.cleanup <- true
+				continue
+			}
+
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDnsMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
@@ -322,21 +335,9 @@ LOOP:
 
 			// restart timer
 			tflush.Reset(tflush_interval)
-		case <-o.exit:
-			o.logger.Info("closing loop...")
-			break LOOP
 		}
 
 	}
-
-	// if buffer is not empty, we accept to lose log entries
-	o.LogInfo("run terminated")
-
-	// cleanup transformers
-	subprocessors.Reset()
-
-	// the job is done
-	o.done <- true
 }
 
 func (o *LokiClient) SendEntries(buf []byte) {

@@ -45,6 +45,7 @@ func IsValidMode(mode string) bool {
 
 type LogFile struct {
 	done           chan bool
+	cleanup        chan bool
 	channel        chan dnsutils.DnsMessage
 	writerPlain    *bufio.Writer
 	writerPcap     *pcapgo.Writer
@@ -66,7 +67,8 @@ func NewLogFile(config *dnsutils.Config, logger *logger.Logger, name string) *Lo
 	logger.Info("[%s] logger file - enabled", name)
 	l := &LogFile{
 		done:    make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, 512),
+		cleanup: make(chan bool),
+		channel: make(chan dnsutils.DnsMessage, config.Loggers.LogFile.ChannelBufferSize),
 		config:  config,
 		logger:  logger,
 		name:    name,
@@ -119,18 +121,11 @@ func (l *LogFile) Stop() {
 	l.LogInfo("stopping...")
 
 	// close output channel
-	l.LogInfo("closing dns message channel")
-	close(l.channel)
-
-	// closing file
-	l.LogInfo("closing log file")
-	if l.config.Loggers.LogFile.Mode == dnsutils.MODE_DNSTAP {
-		l.writerDnstap.Close()
-	}
-	l.fileFd.Close()
+	l.cleanup <- true
 
 	// read done channel and block until run is terminated
 	<-l.done
+	l.LogInfo("run terminated")
 	close(l.done)
 }
 
@@ -465,13 +460,38 @@ func (l *LogFile) Run() {
 	buffer := new(bytes.Buffer)
 	var data []byte
 	var err error
-LOOP:
+
 	for {
 		select {
+		case <-l.cleanup:
+			l.LogInfo("cleanup called")
+			close(l.channel)
+
+			// stop timer
+			flushTimer.Stop()
+			l.commpressTimer.Stop()
+
+			// flush writer
+			l.FlushWriters()
+
+			// cleanup transformers
+			subprocessors.Reset()
+
+			// closing file
+			l.LogInfo("closing log file")
+			if l.config.Loggers.LogFile.Mode == dnsutils.MODE_DNSTAP {
+				l.writerDnstap.Close()
+			}
+			l.fileFd.Close()
+
+			l.done <- true
+			return
 		case dm, opened := <-l.channel:
+			// channel is closed ?
 			if !opened {
-				l.LogInfo("channel closed")
-				break LOOP
+				l.LogInfo("channel closed, cleanup...")
+				l.cleanup <- true
+				continue
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
@@ -546,18 +566,4 @@ LOOP:
 		}
 	}
 
-	// stop timer
-	flushTimer.Stop()
-	l.commpressTimer.Stop()
-
-	// flush writer
-	l.FlushWriters()
-
-	l.LogInfo("run terminated")
-
-	// cleanup transformers
-	subprocessors.Reset()
-
-	// the job is done
-	l.done <- true
 }

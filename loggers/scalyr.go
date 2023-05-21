@@ -43,14 +43,14 @@ type ScalyrClient struct {
 	submissions chan []byte // Marshalled JSON to send to Scalyr
 
 	done          chan bool // Will be written to in Stop()
-	runnerDone    chan bool // Will be written to by the main-loop after stopping
+	cleanup       chan bool
 	submitterDone chan bool // Will be written to when the HTTP submitter is done
 }
 
 func NewScalyrClient(config *dnsutils.Config, console *logger.Logger, name string) *ScalyrClient {
 	console.Info("[%s] logger Scalyr - starting", name)
 	c := &ScalyrClient{
-		channel: make(chan dnsutils.DnsMessage, 512),
+		channel: make(chan dnsutils.DnsMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
 		logger:  console,
 		name:    name,
 		config:  config,
@@ -64,7 +64,7 @@ func NewScalyrClient(config *dnsutils.Config, console *logger.Logger, name strin
 		submissions: make(chan []byte, 25),
 
 		done:          make(chan bool),
-		runnerDone:    make(chan bool),
+		cleanup:       make(chan bool),
 		submitterDone: make(chan bool),
 	}
 	c.ReadConfig()
@@ -166,10 +166,15 @@ func (c *ScalyrClient) Run() {
 
 	c.runSubmitter()
 
-LOOP:
 	for {
 		select {
-		case dm := <-c.channel:
+		case dm, opened := <-c.channel:
+			if !opened {
+				c.LogInfo("channel closed, cleanup...")
+				c.cleanup <- true
+				continue
+			}
+
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDnsMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
@@ -212,26 +217,36 @@ LOOP:
 				c.submitEventRecord(sInfo, events)
 				events = []event{}
 			}
-		case <-c.done:
+		case <-c.cleanup:
+			c.LogInfo("cleanup called")
+			close(c.channel)
+
 			if len(events) > 0 {
 				c.submitEventRecord(sInfo, events)
 			}
 			close(c.submissions)
-			break LOOP
+
+			// Block until both threads are done
+			<-c.submitterDone
+
+			// cleanup transformers
+			subprocessors.Reset()
+
+			c.done <- true
+
+			return
 		}
 	}
-	subprocessors.Reset()
-	c.runnerDone <- true
+
 }
 
 func (c ScalyrClient) Stop() {
 	c.LogInfo("stopping...")
 
-	c.done <- true
+	c.cleanup <- true
 
-	// Block until both threads are done
-	<-c.runnerDone
-	<-c.submitterDone
+	<-c.done
+	c.LogInfo("run terminated")
 }
 
 func (c *ScalyrClient) submitEventRecord(sessionInfo map[string]string, events []event) {

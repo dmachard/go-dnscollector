@@ -18,7 +18,7 @@ type DnstapSender struct {
 	channel            chan dnsutils.DnsMessage
 	config             *dnsutils.Config
 	logger             *logger.Logger
-	exit               chan bool
+	cleanup            chan bool
 	fs                 *framestream.Fstrm
 	fsReady            bool
 	transportConn      net.Conn
@@ -31,8 +31,8 @@ func NewDnstapSender(config *dnsutils.Config, logger *logger.Logger, name string
 	logger.Info("logger dnstap [%s] sender - enabled", name)
 	s := &DnstapSender{
 		done:               make(chan bool),
-		exit:               make(chan bool),
-		channel:            make(chan dnsutils.DnsMessage, 512),
+		cleanup:            make(chan bool),
+		channel:            make(chan dnsutils.DnsMessage, config.Loggers.Dnstap.ChannelBufferSize),
 		transportReady:     make(chan bool),
 		transportReconnect: make(chan bool),
 		logger:             logger,
@@ -76,10 +76,11 @@ func (o *DnstapSender) Stop() {
 	o.LogInfo("stopping...")
 
 	// exit to close properly
-	o.exit <- true
+	o.cleanup <- true
 
 	// read done channel and block until run is terminated
 	<-o.done
+	o.LogInfo("run terminated")
 	close(o.done)
 }
 
@@ -208,7 +209,6 @@ func (o *DnstapSender) Run() {
 	// init remote conn
 	go o.ConnectToRemote()
 
-LOOP:
 	for {
 		select {
 
@@ -232,7 +232,14 @@ LOOP:
 			}
 
 		// incoming dns message to process
-		case dm := <-o.channel:
+		case dm, opened := <-o.channel:
+			// channel is closed ?
+			if !opened {
+				o.LogInfo("channel closed, cleanup...")
+				o.cleanup <- true
+				continue
+			}
+
 			// drop dns message if the connection is not ready to avoid memory leak or
 			// to block the channel
 			if !o.fsReady {
@@ -264,18 +271,18 @@ LOOP:
 			flushTimer.Reset(flushInterval)
 
 		// global exit
-		case <-o.exit:
-			break LOOP
+		case <-o.cleanup:
+			o.LogInfo("cleanup called")
+
+			// cleanup transformers
+			subprocessors.Reset()
+
+			// closing remote connection if exist
+			o.Disconnect()
+
+			o.done <- true
+
+			return
 		}
 	}
-
-	o.LogInfo("run terminated")
-
-	// cleanup transformers
-	subprocessors.Reset()
-
-	// closing remote connection if exist
-	o.Disconnect()
-
-	o.done <- true
 }

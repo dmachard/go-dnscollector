@@ -19,6 +19,7 @@ Options:
 - `buffer-size`: (integer) how many DNS messages will be buffered before being sent
 - `topic`: (integer) kafka topic to forward messages to
 - `partition`: (integer) kafka partition
+- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 
@@ -40,4 +41,5 @@ kafkaproducer:
   buffer-size: 100
   topic: "dnscollector"
   partition: 0
+  chan-buffer-size: 65535
 ```

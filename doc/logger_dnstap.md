@@ -16,7 +16,8 @@ Options:
 - `tls-min-version`: (string) min tls version, default to 1.2
 - `server-id`: (string) server identity
 - `overwrite-identity`: (boolean) overwrite original identity
-- `buffer-size`: (integer) number of dns messages in buffer
+- `buffer-size`: (integer) how many DNS messages will be buffered before being sent
+- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 
@@ -34,4 +35,5 @@ dnstap:
   server-id: "dnscollector"
   overwrite-identity: false
   buffer-size: 100
+  chan-buffer-size: 65535
 ```

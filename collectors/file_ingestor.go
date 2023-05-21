@@ -70,12 +70,14 @@ func (c *FileIngestor) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *FileIngestor) Loggers() []chan dnsutils.DnsMessage {
+func (c *FileIngestor) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 	channels := []chan dnsutils.DnsMessage{}
+	names := []string{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
+		names = append(names, p.GetName())
 	}
-	return channels
+	return channels, names
 }
 
 func (c *FileIngestor) ReadConfig() {
@@ -365,11 +367,11 @@ func (c *FileIngestor) RemoveEvent(filePath string) {
 func (c *FileIngestor) Run() {
 	c.LogInfo("starting collector...")
 
-	c.dnsProcessor = NewDnsProcessor(c.config, c.logger, c.name)
+	c.dnsProcessor = NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
 	go c.dnsProcessor.Run(c.Loggers())
 
 	// start dnstap subprocessor
-	c.dnstapProcessor = NewDnstapProcessor(c.config, c.logger, c.name)
+	c.dnstapProcessor = NewDnstapProcessor(c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
 	go c.dnstapProcessor.Run(c.Loggers())
 
 	// read current folder content

@@ -77,10 +77,17 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-        
+    - name: file
+      logfile:
+        file-path:  /tmp/test.log
+    - name: prom
+      prometheus:
+        listen-ip: 0.0.0.0
+        listen-port: 8081
+
   routes:
     - from: [ tap ]
-      to: [ console ]
+      to: [ file, prom ]
 
 ################################################
 # list of supported collectors
@@ -106,6 +113,8 @@ multiplexer:
 #   sock-rcvbuf: 0
 #   # Reset TCP connection on exit
 #   reset-conn: true
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # dnstap proxifier with no protobuf decoding.
 # dnstap-proxifier:
@@ -186,6 +195,8 @@ multiplexer:
 #   key-file: ""
 #   # Reset TCP connection on exit
 #   reset-conn: true
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
 
 # # ztsp (TaZmen Sniffer Protocol)
 # ztsp:

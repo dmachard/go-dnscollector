@@ -15,6 +15,7 @@ Options:
 - `key-file`: (string) private key server file
 - `prometheus-suffix`: (string) prometheus suffix
 - `top-n`: (string) default number of items on top
+- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 
@@ -31,6 +32,7 @@ prometheus:
   key-file: ""
   prometheus-prefix: "dnscollector"
   top-n: 10
+  chan-buffer-size: 65535
 ```
 
 Scrape metric with curl:

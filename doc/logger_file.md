@@ -24,6 +24,7 @@ Options:
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 - `postrotate-command`: (string) run external script after file rotation
 - `postrotate-delete-success`: (boolean) delete file on script success
+- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 
@@ -40,6 +41,7 @@ logfile:
   text-format: ""
   postrotate-command: null
   postrotate-delete-success: false
+  chan-buffer-size: 65535
 ```
 
 The `postrotate-command` can be used to execute a script after each file rotation.

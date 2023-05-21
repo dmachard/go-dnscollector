@@ -19,7 +19,7 @@ type InfluxDBClient struct {
 	logger       *logger.Logger
 	influxdbConn influxdb2.Client
 	writeAPI     api.WriteAPI
-	exit         chan bool
+	cleanup      chan bool
 	name         string
 }
 
@@ -28,8 +28,8 @@ func NewInfluxDBClient(config *dnsutils.Config, logger *logger.Logger, name stri
 
 	s := &InfluxDBClient{
 		done:    make(chan bool),
-		exit:    make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, 512),
+		cleanup: make(chan bool),
+		channel: make(chan dnsutils.DnsMessage, config.Loggers.InfluxDB.ChannelBufferSize),
 		logger:  logger,
 		config:  config,
 		name:    name,
@@ -66,16 +66,11 @@ func (o *InfluxDBClient) Stop() {
 	o.LogInfo("stopping...")
 
 	// close output channel
-	o.LogInfo("closing channel")
-	close(o.channel)
-
-	// Force all unwritten data to be sent
-	o.writeAPI.Flush()
-	// Ensures background processes finishes
-	o.influxdbConn.Close()
+	o.cleanup <- true
 
 	// read done channel and block until run is terminated
 	<-o.done
+	o.LogInfo("run terminated")
 	close(o.done)
 }
 
@@ -115,34 +110,50 @@ func (o *InfluxDBClient) Run() {
 
 	o.influxdbConn = influxClient
 	o.writeAPI = writeAPI
-	for dm := range o.channel {
+	for {
+		select {
+		case <-o.cleanup:
+			o.LogInfo("cleanup called")
+			close(o.channel)
 
-		// apply tranforms, init dns message with additionnals parts if necessary
-		subprocessors.InitDnsMessageFormat(&dm)
-		if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
-			continue
+			// Force all unwritten data to be sent
+			o.writeAPI.Flush()
+			// Ensures background processes finishes
+			o.influxdbConn.Close()
+
+			// cleanup transformers
+			subprocessors.Reset()
+
+			o.done <- true
+			return
+		case dm, opened := <-o.channel:
+			// channel is closed ?
+			if !opened {
+				o.LogInfo("channel closed, cleanup...")
+				o.cleanup <- true
+				continue
+			}
+
+			// apply tranforms, init dns message with additionnals parts if necessary
+			subprocessors.InitDnsMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
+			p := influxdb2.NewPointWithMeasurement("dns").
+				AddTag("Identity", dm.DnsTap.Identity).
+				AddTag("QueryIP", dm.NetworkInfo.QueryIp).
+				AddTag("Qname", dm.DNS.Qname).
+				AddField("Operation", dm.DnsTap.Operation).
+				AddField("Family", dm.NetworkInfo.Family).
+				AddField("Protocol", dm.NetworkInfo.Protocol).
+				AddField("Qtype", dm.DNS.Qtype).
+				AddField("Rcode", dm.DNS.Rcode).
+				SetTime(time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec)))
+
+			// write asynchronously
+			o.writeAPI.WritePoint(p)
 		}
 
-		p := influxdb2.NewPointWithMeasurement("dns").
-			AddTag("Identity", dm.DnsTap.Identity).
-			AddTag("QueryIP", dm.NetworkInfo.QueryIp).
-			AddTag("Qname", dm.DNS.Qname).
-			AddField("Operation", dm.DnsTap.Operation).
-			AddField("Family", dm.NetworkInfo.Family).
-			AddField("Protocol", dm.NetworkInfo.Protocol).
-			AddField("Qtype", dm.DNS.Qtype).
-			AddField("Rcode", dm.DNS.Rcode).
-			SetTime(time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec)))
-
-		// write asynchronously
-		o.writeAPI.WritePoint(p)
 	}
-
-	o.LogInfo("run terminated")
-
-	// cleanup transformers
-	subprocessors.Reset()
-
-	// the job is done
-	o.done <- true
 }

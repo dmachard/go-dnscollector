@@ -10,13 +10,13 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func Test_PdnsProcessor(t *testing.T) {
+func TestPowerDNS_Processor(t *testing.T) {
 	logger := logger.New(true)
 	var o bytes.Buffer
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewPdnsProcessor(dnsutils.GetFakeConfig(), logger, "test")
+	consumer := NewPdnsProcessor(dnsutils.GetFakeConfig(), logger, "test", 512)
 	chan_to := make(chan dnsutils.DnsMessage, 512)
 
 	// prepare dnstap
@@ -28,7 +28,7 @@ func Test_PdnsProcessor(t *testing.T) {
 
 	data, _ := proto.Marshal(dm)
 
-	go consumer.Run([]chan dnsutils.DnsMessage{chan_to})
+	go consumer.Run([]chan dnsutils.DnsMessage{chan_to}, []string{"test"})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 

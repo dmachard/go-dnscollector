@@ -18,7 +18,8 @@ Options:
 - `tls-support`: (boolean) enable tls
 - `tls-insecure`: (boolean) insecure skip verify
 - `tls-min-version`: (string) min tls version, default to 1.2
-- `buffer-size`: (integer) number of dns messages in buffer
+- `buffer-size`: (integer) how many DNS messages will be buffered before being sent
+- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 
@@ -36,4 +37,5 @@ fluentd:
   tls-insecure: false
   tls-min-version: 1.2
   buffer-size: 100
+  chan-buffer-size: 65535
 ```

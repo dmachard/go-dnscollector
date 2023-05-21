@@ -51,12 +51,14 @@ func (c *TzspSniffer) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *TzspSniffer) Loggers() []chan dnsutils.DnsMessage {
+func (c *TzspSniffer) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 	channels := []chan dnsutils.DnsMessage{}
+	names := []string{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
+		names = append(names, p.GetName())
 	}
-	return channels
+	return channels, names
 }
 
 func (c *TzspSniffer) LogInfo(msg string, v ...interface{}) {
@@ -125,7 +127,7 @@ func (c *TzspSniffer) Run() {
 		c.logger.Fatal("collector tzsp listening failed: ", err)
 	}
 
-	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name)
+	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.Tzsp.ChannelBufferSize)
 
 	go dnsProcessor.Run(c.Loggers())
 

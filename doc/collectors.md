@@ -25,6 +25,7 @@ Options:
 - `key-file`: (string) private key server file
 - `sock-rcvbuf`: (integer) sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
 - `reset-conn`: (bool) Reset TCP connection on exit
+- `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
 
 Default values:
 
@@ -39,6 +40,7 @@ dnstap:
   key-file: ""
   sock-rcvbuf: 0
   reset-conn: true
+  chan-buffer-size: 65535
 ```
 
 ### DNS tap Proxifier
@@ -90,6 +92,7 @@ sudo setcap cap_net_admin,cap_net_raw=eip go-dnscollector
 Options:
 - `port`: (integer) filter on source and destination port
 - `device`: (string) if "" bind on all interfaces
+- `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
 
 Default values:
 
@@ -97,6 +100,7 @@ Default values:
 afpacket-sniffer:
   port: 53
   device: wlp2s0
+  chan-buffer-size: 65535
 ```
 
 ### Live Capture with eBPF XDP
@@ -116,12 +120,14 @@ sudo setcap cap_sys_resource,cap_net_raw,cap_perfmon+ep go-dnscollector
 
 Options:
 - `device`: (string)
+- `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
 
 Default values:
 
 ```yaml
 xdp-sniffer:
   device: wlp2s0
+  chan-buffer-size: 65535
 ```
 
 ### Tail
@@ -163,6 +169,7 @@ Options:
 - `key-file`: (string) private key server file
 - `sock-rcvbuf`: (integer) sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
 - `reset-conn`: (bool) Reset TCP connection on exit
+- `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
 
 Default values:
 
@@ -176,6 +183,7 @@ powerdns:
   key-file: ""
   sock-rcvbuf: 0
   reset-conn: true
+  chan-buffer-size: 65535
 ```
 
 ### File Ingestor
@@ -196,6 +204,7 @@ Options:
 - `watch-mode`: (string) watch the directory pcap file with *.pcap extension or dnstap stream with *.fstrm extension, pcap or dnstap expected
 - `pcap-dns-port`: (integer) dns source or destination port
 - `delete-after:`: (boolean) delete pcap file after ingest
+- `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
 
 Default values:
 
@@ -205,6 +214,7 @@ file-ingestor:
   watch-mode: pcap
   pcap-dns-port: 53
   delete-after: false
+  chan-buffer-size: 65535
 ```
 
 ### TZSP
@@ -215,6 +225,7 @@ Its primary purpose is to suppport DNS packet capture from Mikrotik brand device
 Options:
 - `listen-ip`: (string) listen on ip
 - `listen-port`: (integer) listening on port
+- `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
 
 Default values:
 
@@ -222,6 +233,7 @@ Default values:
 tzsp:
   listen-ip: "0.0.0.0"
   listen-port: 10000
+  chan-buffer-size: 65535
 ```
 
 Example rules for Mikrotik brand devices to send the traffic (only works if routed or the device serves as DNS server).

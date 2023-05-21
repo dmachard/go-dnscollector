@@ -3,8 +3,11 @@ package collectors
 import (
 	"bufio"
 	"crypto/tls"
+	"errors"
+	"io"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -14,19 +17,26 @@ import (
 )
 
 type ProtobufPowerDNS struct {
-	done    chan bool
-	listen  net.Listener
-	conns   []net.Conn
-	loggers []dnsutils.Worker
-	config  *dnsutils.Config
-	logger  *logger.Logger
-	name    string
+	done           chan bool
+	cleanup        chan bool
+	listen         net.Listener
+	conns          []net.Conn
+	loggers        []dnsutils.Worker
+	config         *dnsutils.Config
+	logger         *logger.Logger
+	name           string
+	droppedCount   int
+	dropped        chan int
+	pdnsProcessors []*PdnsProcessor
+	sync.RWMutex
 }
 
 func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *ProtobufPowerDNS {
 	logger.Info("[%s] pdns collector - enabled", name)
 	s := &ProtobufPowerDNS{
 		done:    make(chan bool),
+		cleanup: make(chan bool),
+		dropped: make(chan int),
 		config:  config,
 		loggers: loggers,
 		logger:  logger,
@@ -42,12 +52,14 @@ func (c *ProtobufPowerDNS) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *ProtobufPowerDNS) Loggers() []chan dnsutils.DnsMessage {
+func (c *ProtobufPowerDNS) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 	channels := []chan dnsutils.DnsMessage{}
+	names := []string{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
+		names = append(names, p.GetName())
 	}
-	return channels
+	return channels, names
 }
 
 func (c *ProtobufPowerDNS) ReadConfig() {
@@ -70,21 +82,56 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogInfo("%s - new connection\n", peer)
+	c.LogInfo("new connection from %s", peer)
 
 	// start protobuf subprocessor
-	pdns_subprocessor := NewPdnsProcessor(c.config, c.logger, c.name)
-	go pdns_subprocessor.Run(c.Loggers())
+	pdnsProc := NewPdnsProcessor(c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
+	c.pdnsProcessors = append(c.pdnsProcessors, &pdnsProc)
+	go pdnsProc.Run(c.Loggers())
 
 	r := bufio.NewReader(conn)
 	pbs := powerdns_protobuf.NewProtobufStream(r, conn, 5*time.Second)
 
-	// process incoming protobuf payload
-	if err := pbs.ProcessStream(pdns_subprocessor.GetChannel()); err != nil {
-		c.LogError("transport error: %s", err)
-	}
+	var err error
+	var payload *powerdns_protobuf.ProtoPayload
+	for {
+		payload, err = pbs.RecvPayload(false)
+		if err != nil {
+			connClosed := false
 
-	c.LogInfo("%s - connection closed\n", peer)
+			var opErr *net.OpError
+			if errors.As(err, &opErr) {
+				if errors.Is(opErr, net.ErrClosed) {
+					connClosed = true
+				}
+			}
+			if errors.Is(err, io.EOF) {
+				connClosed = true
+			}
+
+			if connClosed {
+				c.LogInfo("connection closed with peer %s\n", peer)
+				close(pdnsProc.GetChannel())
+			} else {
+				c.LogError("powerdns reader error: %s", err)
+			}
+
+			break
+		}
+
+		// drop packet if the channel is full to avoid a tcp zero windows
+		// if pdnsProc.ChannelIsFull() {
+		// 	c.dropped <- 1
+		// 	continue
+		// }
+
+		// send payload to the channel
+		select {
+		case pdnsProc.GetChannel() <- payload.Data(): // Successful send
+		default:
+			c.dropped <- 1
+		}
+	}
 }
 
 func (c *ProtobufPowerDNS) Channel() chan dnsutils.DnsMessage {
@@ -92,7 +139,15 @@ func (c *ProtobufPowerDNS) Channel() chan dnsutils.DnsMessage {
 }
 
 func (c *ProtobufPowerDNS) Stop() {
+	c.Lock()
+	defer c.Unlock()
+
 	c.LogInfo("stopping...")
+
+	// stop all powerdns processors
+	for _, pdnsProc := range c.pdnsProcessors {
+		pdnsProc.Stop()
+	}
 
 	// closing properly current connections if exists
 	for _, conn := range c.conns {
@@ -100,6 +155,7 @@ func (c *ProtobufPowerDNS) Stop() {
 		c.LogInfo("%s - closing connection...", peer)
 		netlib.Close(conn, c.config.Collectors.PowerDNS.ResetConn)
 	}
+
 	// Finally close the listener to unblock accept
 	c.LogInfo("stop listening...")
 	c.listen.Close()
@@ -110,6 +166,9 @@ func (c *ProtobufPowerDNS) Stop() {
 }
 
 func (c *ProtobufPowerDNS) Listen() error {
+	c.Lock()
+	defer c.Unlock()
+
 	c.LogInfo("running in background...")
 
 	var err error
@@ -147,6 +206,28 @@ func (c *ProtobufPowerDNS) Listen() error {
 	return nil
 }
 
+func (c *ProtobufPowerDNS) FollowChannel() {
+	c.LogInfo("start to count incoming dropped packets...")
+
+	watchInterval := 10 * time.Second
+	bufferFull := time.NewTimer(watchInterval)
+	for {
+		select {
+		case <-c.cleanup:
+			c.LogInfo("cleanup called")
+			return
+		case <-c.dropped:
+			c.droppedCount++
+		case <-bufferFull.C:
+			if c.droppedCount > 0 {
+				c.LogError("recv buffer is full, %d packet(s) dropped", c.droppedCount)
+				c.droppedCount = 0
+			}
+			bufferFull.Reset(watchInterval)
+		}
+	}
+}
+
 func (c *ProtobufPowerDNS) Run() {
 	c.LogInfo("starting collector...")
 	if c.listen == nil {
@@ -154,6 +235,9 @@ func (c *ProtobufPowerDNS) Run() {
 			c.logger.Fatal("collector dnstap listening failed: ", err)
 		}
 	}
+
+	go c.FollowChannel()
+
 	for {
 		// Accept() blocks waiting for new connection.
 		conn, err := c.listen.Accept()
@@ -162,7 +246,11 @@ func (c *ProtobufPowerDNS) Run() {
 		}
 
 		if c.config.Collectors.Dnstap.RcvBufSize > 0 {
-			before, actual, err := netlib.SetSock_RCVBUF(conn, c.config.Collectors.Dnstap.RcvBufSize, c.config.Collectors.Dnstap.TlsSupport)
+			before, actual, err := netlib.SetSock_RCVBUF(
+				conn,
+				c.config.Collectors.Dnstap.RcvBufSize,
+				c.config.Collectors.Dnstap.TlsSupport,
+			)
 			if err != nil {
 				c.logger.Fatal("Unable to set SO_RCVBUF: ", err)
 			}

@@ -76,12 +76,14 @@ func (c *XdpSniffer) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *XdpSniffer) Loggers() []chan dnsutils.DnsMessage {
+func (c *XdpSniffer) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 	channels := []chan dnsutils.DnsMessage{}
+	names := []string{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
+		names = append(names, p.GetName())
 	}
-	return channels
+	return channels, names
 }
 
 func (c *XdpSniffer) ReadConfig() {
@@ -106,7 +108,7 @@ func (c *XdpSniffer) Stop() {
 func (c *XdpSniffer) Run() {
 	c.LogInfo("starting collector...")
 
-	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name)
+	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.XdpLiveCapture.ChannelBufferSize)
 	go dnsProcessor.Run(c.Loggers())
 
 	iface, err := net.InterfaceByName("wlp2s0")

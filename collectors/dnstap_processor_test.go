@@ -17,7 +17,7 @@ func Test_DnstapProcessor(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewDnstapProcessor(dnsutils.GetFakeConfig(), logger, "test")
+	consumer := NewDnstapProcessor(dnsutils.GetFakeConfig(), logger, "test", 512)
 	chan_to := make(chan dnsutils.DnsMessage, 512)
 
 	// prepare dns query
@@ -35,7 +35,7 @@ func Test_DnstapProcessor(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	go consumer.Run([]chan dnsutils.DnsMessage{chan_to})
+	go consumer.Run([]chan dnsutils.DnsMessage{chan_to}, []string{"test"})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 
@@ -52,7 +52,7 @@ func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewDnstapProcessor(dnsutils.GetFakeConfig(), logger, "test")
+	consumer := NewDnstapProcessor(dnsutils.GetFakeConfig(), logger, "test", 512)
 	chan_to := make(chan dnsutils.DnsMessage, 512)
 
 	// prepare dns query
@@ -70,7 +70,7 @@ func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	go consumer.Run([]chan dnsutils.DnsMessage{chan_to})
+	go consumer.Run([]chan dnsutils.DnsMessage{chan_to}, []string{"test"})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 
@@ -87,7 +87,7 @@ func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewDnstapProcessor(dnsutils.GetFakeConfig(), logger, "test")
+	consumer := NewDnstapProcessor(dnsutils.GetFakeConfig(), logger, "test", 512)
 	chan_to := make(chan dnsutils.DnsMessage, 512)
 
 	// prepare dns query
@@ -104,7 +104,7 @@ func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	go consumer.Run([]chan dnsutils.DnsMessage{chan_to})
+	go consumer.Run([]chan dnsutils.DnsMessage{chan_to}, []string{"test"})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 
@@ -121,7 +121,7 @@ func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewDnstapProcessor(dnsutils.GetFakeConfig(), logger, "test")
+	consumer := NewDnstapProcessor(dnsutils.GetFakeConfig(), logger, "test", 512)
 	chan_to := make(chan dnsutils.DnsMessage, 512)
 
 	// prepare dns query
@@ -139,7 +139,7 @@ func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	go consumer.Run([]chan dnsutils.DnsMessage{chan_to})
+	go consumer.Run([]chan dnsutils.DnsMessage{chan_to}, []string{"test"})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 

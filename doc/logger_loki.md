@@ -19,6 +19,7 @@ Options:
 - `basic-auth-pwd-file`: (string) path to a file containing the basic auth password
 - `tenant-id`: (string) tenant/organisation id. If omitted or empty, no X-Scope-OrgID header is sent.
 - `relabel-configs`: (list) configuration to relabel targets. Functionality like described in https://grafana.com/docs/loki/latest/clients/promtail/configuration/#relabel_configs.
+- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 
@@ -39,4 +40,5 @@ lokiclient:
   basic-auth-pwd-file: ""
   tenant-id: ""
   relabel-configs: []
+  chan-buffer-size: 65535
 ```
