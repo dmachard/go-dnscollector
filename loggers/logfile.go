@@ -465,7 +465,7 @@ func (l *LogFile) Run() {
 		select {
 		case <-l.cleanup:
 			l.LogInfo("cleanup called")
-			close(l.channel)
+			//close(l.channel)
 
 			// stop timer
 			flushTimer.Stop()

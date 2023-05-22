@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"crypto/tls"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"os"
@@ -137,25 +136,18 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 			if connClosed {
 				c.LogInfo("connection closed with peer %s\n", peer)
 				close(dnstapProcessor.GetChannel())
+				dnstapProcessor.Stop()
 			} else {
 				c.LogError("framestream reader error: %s", err)
 			}
 			break
 		}
 
-		// // drop packet if the channel is full to avoid a tcp zero windows
-		// if dnstapProcessor.ChannelIsFull() {
-		// 	c.dropped <- 1
-		// 	continue
-		// }
-
 		// send payload to the channel
 		select {
 		case dnstapProcessor.GetChannel() <- frame.Data(): // Successful send to channel
 		default:
-			fmt.Println("DROP CALLED 1")
 			c.dropped <- 1
-			fmt.Println("DROP CALLED 2")
 		}
 	}
 }
@@ -176,6 +168,7 @@ func (c *Dnstap) Stop() {
 	}
 
 	// closing properly current connections if exists
+	c.LogInfo("closing connected peers...")
 	for _, conn := range c.conns {
 		peer := conn.RemoteAddr().String()
 		c.LogInfo("%s - closing connection...", peer)

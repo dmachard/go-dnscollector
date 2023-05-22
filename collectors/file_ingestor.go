@@ -442,7 +442,9 @@ func (c *FileIngestor) Run() {
 	<-c.exit
 
 	// stop dns processor
+	close(c.dnsProcessor.GetChannel())
 	c.dnsProcessor.Stop()
+	close(c.dnstapProcessor.GetChannel())
 	c.dnstapProcessor.Stop()
 
 	c.LogInfo("run terminated")

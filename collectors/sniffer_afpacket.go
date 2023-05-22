@@ -417,6 +417,7 @@ func (c *AfpacketSniffer) Run() {
 	close(dnsChan)
 
 	// stop dns processor
+	close(dnsProcessor.GetChannel())
 	dnsProcessor.Stop()
 
 	c.LogInfo("run terminated")

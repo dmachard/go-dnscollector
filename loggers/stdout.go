@@ -91,7 +91,7 @@ func (o *StdOut) Run() {
 		select {
 		case <-o.cleanup:
 			o.LogInfo("cleanup called")
-			close(o.channel)
+			//close(o.channel)
 
 			subprocessors.Reset()
 

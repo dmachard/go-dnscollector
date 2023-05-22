@@ -260,7 +260,7 @@ func (c *Tail) Run() {
 			continue
 		}
 
-		// send to loggers
+		// dispatch dns message to connected loggers
 		chanLoggers := c.Loggers()
 		for i := range chanLoggers {
 			chanLoggers[i] <- dm

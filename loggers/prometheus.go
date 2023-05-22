@@ -909,7 +909,7 @@ func (s *Prometheus) Run() {
 		select {
 		case <-s.cleanup:
 			s.LogInfo("cleanup called")
-			close(s.channel)
+			//close(s.channel)
 
 			// stopping http server
 			s.netListener.Close()
