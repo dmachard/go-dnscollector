@@ -237,7 +237,7 @@ func (o *StatsdClient) Run() {
 		select {
 		case <-o.cleanup:
 			o.LogInfo("cleanup called")
-			close(o.channel)
+			//close(o.channel)
 
 			// cleanup transformers
 			subprocessors.Reset()

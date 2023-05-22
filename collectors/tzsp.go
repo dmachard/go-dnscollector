@@ -256,6 +256,7 @@ func (c *TzspSniffer) Run() {
 	<-c.exit
 
 	// stop dns processor
+	close(dnsProcessor.GetChannel())
 	dnsProcessor.Stop()
 
 	c.LogInfo("run terminated")

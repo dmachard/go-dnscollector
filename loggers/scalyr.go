@@ -219,7 +219,7 @@ func (c *ScalyrClient) Run() {
 			}
 		case <-c.cleanup:
 			c.LogInfo("cleanup called")
-			close(c.channel)
+			//close(c.channel)
 
 			if len(events) > 0 {
 				c.submitEventRecord(sInfo, events)

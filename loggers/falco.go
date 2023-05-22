@@ -80,7 +80,7 @@ func (f *FalcoClient) Run() {
 		select {
 		case <-f.cleanup:
 			f.LogInfo("cleanup called")
-			close(f.channel)
+			//close(f.channel)
 
 			// cleanup transformers
 			subprocessors.Reset()

@@ -114,7 +114,7 @@ func (o *InfluxDBClient) Run() {
 		select {
 		case <-o.cleanup:
 			o.LogInfo("cleanup called")
-			close(o.channel)
+			//close(o.channel)
 
 			// Force all unwritten data to be sent
 			o.writeAPI.Flush()

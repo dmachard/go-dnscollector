@@ -112,18 +112,13 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 			if connClosed {
 				c.LogInfo("connection closed with peer %s\n", peer)
 				close(pdnsProc.GetChannel())
+				pdnsProc.Stop()
 			} else {
 				c.LogError("powerdns reader error: %s", err)
 			}
 
 			break
 		}
-
-		// drop packet if the channel is full to avoid a tcp zero windows
-		// if pdnsProc.ChannelIsFull() {
-		// 	c.dropped <- 1
-		// 	continue
-		// }
 
 		// send payload to the channel
 		select {
@@ -150,6 +145,7 @@ func (c *ProtobufPowerDNS) Stop() {
 	}
 
 	// closing properly current connections if exists
+	c.LogInfo("closing connected peers...")
 	for _, conn := range c.conns {
 		peer := conn.RemoteAddr().String()
 		c.LogInfo("%s - closing connection...", peer)
@@ -207,8 +203,6 @@ func (c *ProtobufPowerDNS) Listen() error {
 }
 
 func (c *ProtobufPowerDNS) FollowChannel() {
-	c.LogInfo("start to count incoming dropped packets...")
-
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 	for {
