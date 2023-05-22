@@ -66,6 +66,7 @@ func NewDnstapProcessor(config *dnsutils.Config, logger *logger.Logger, name str
 	logger.Info("[%s] dnstap processor - initialization...", name)
 
 	d := DnstapProcessor{
+		running:      true,
 		done:         make(chan bool),
 		cleanup:      make(chan bool),
 		recvFrom:     make(chan []byte, size),
@@ -147,7 +148,7 @@ func (d *DnstapProcessor) Following() {
 }
 
 func (d *DnstapProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
-	d.running = true
+	//d.running = true
 
 	dt := &dnstap.Dnstap{}
 

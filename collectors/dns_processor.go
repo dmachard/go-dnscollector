@@ -32,6 +32,7 @@ type DnsProcessor struct {
 func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) DnsProcessor {
 	logger.Info("[%s] processor dns - initialization...", name)
 	d := DnsProcessor{
+		running:      true,
 		done:         make(chan bool),
 		cleanup:      make(chan bool),
 		recvFrom:     make(chan dnsutils.DnsMessage, size),
@@ -118,7 +119,7 @@ func (d *DnsProcessor) Following() {
 }
 
 func (d *DnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
-	d.running = true
+	//d.running = true
 
 	// prepare enabled transformers
 	d.transforms = transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel)

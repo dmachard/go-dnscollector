@@ -41,6 +41,7 @@ type PdnsProcessor struct {
 func NewPdnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
 	logger.Info("[%s] pdns processor - initialization...", name)
 	d := PdnsProcessor{
+		running:      true,
 		done:         make(chan bool),
 		cleanup:      make(chan bool),
 		recvFrom:     make(chan []byte, size),
@@ -124,8 +125,6 @@ func (d *PdnsProcessor) Following() {
 }
 
 func (d *PdnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
-	d.running = true
-
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
 
 	// prepare enabled transformers
