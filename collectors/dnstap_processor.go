@@ -148,8 +148,6 @@ func (d *DnstapProcessor) Following() {
 }
 
 func (d *DnstapProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
-	//d.running = true
-
 	dt := &dnstap.Dnstap{}
 
 	// prepare enabled transformers

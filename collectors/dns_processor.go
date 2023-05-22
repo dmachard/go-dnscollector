@@ -119,8 +119,6 @@ func (d *DnsProcessor) Following() {
 }
 
 func (d *DnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
-	//d.running = true
-
 	// prepare enabled transformers
 	d.transforms = transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel)
 
