@@ -28,6 +28,7 @@ type Dnstap struct {
 	logger        *logger.Logger
 	name          string
 	connMode      string
+	connId        int
 	droppedCount  int
 	dropped       chan int
 	tapProcessors []DnstapProcessor
@@ -93,12 +94,18 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	// close connection on function exit
 	defer conn.Close()
 
+	var connId int
+	c.Lock()
+	c.connId++
+	connId = c.connId
+	c.Unlock()
+
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogInfo("new connection from %s\n", peer)
+	c.LogInfo("[conn=#%d] new connection from %s\n", connId, peer)
 
 	// start dnstap subprocessor
-	dnstapProcessor := NewDnstapProcessor(c.config, c.logger, c.name, c.config.Collectors.Dnstap.ChannelBufferSize)
+	dnstapProcessor := NewDnstapProcessor(connId, c.config, c.logger, c.name, c.config.Collectors.Dnstap.ChannelBufferSize)
 	c.tapProcessors = append(c.tapProcessors, dnstapProcessor)
 	go dnstapProcessor.Run(c.Loggers())
 
@@ -109,10 +116,10 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// init framestream receiver
 	if err := fs.InitReceiver(); err != nil {
-		c.LogError("error stream receiver initialization: %s", err)
+		c.LogError("[conn=#%d] error stream receiver initialization: %s", connId, err)
 		return
 	} else {
-		c.LogInfo("receiver framestream initialized")
+		c.LogInfo("[conn=#%d] receiver framestream initialized", connId)
 	}
 
 	// process incoming frame and send it to dnstap consumer channel
@@ -134,12 +141,14 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 			}
 
 			if connClosed {
-				c.LogInfo("connection closed with peer %s\n", peer)
-				close(dnstapProcessor.GetChannel())
-				dnstapProcessor.Stop()
+				c.LogInfo("[conn=#%d] connection closed with peer %s\n", connId, peer)
 			} else {
-				c.LogError("framestream reader error: %s", err)
+				c.LogError("[conn=#%d] framestream reader error: %s", connId, err)
 			}
+
+			// stop processor
+			close(dnstapProcessor.GetChannel())
+			dnstapProcessor.Stop()
 			break
 		}
 
@@ -170,10 +179,9 @@ func (c *Dnstap) Stop() {
 	// closing properly current connections if exists
 	c.LogInfo("closing connected peers...")
 	for _, conn := range c.conns {
-		peer := conn.RemoteAddr().String()
-		c.LogInfo("%s - closing connection...", peer)
 		netlib.Close(conn, c.config.Collectors.Dnstap.ResetConn)
 	}
+
 	// Finally close the listener to unblock accept
 	c.LogInfo("stop listening...")
 	c.listen.Close()

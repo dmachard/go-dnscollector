@@ -49,7 +49,7 @@ func GetFakeDnstap(dnsquery []byte) *dnstap.Dnstap {
 }
 
 type DnstapProcessor struct {
-	running      bool
+	connId       int
 	done         chan bool
 	cleanup      chan bool
 	recvFrom     chan []byte
@@ -62,11 +62,11 @@ type DnstapProcessor struct {
 	transforms   transformers.Transforms
 }
 
-func NewDnstapProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) DnstapProcessor {
-	logger.Info("[%s] dnstap processor - initialization...", name)
+func NewDnstapProcessor(connId int, config *dnsutils.Config, logger *logger.Logger, name string, size int) DnstapProcessor {
+	logger.Info("[%s] dnstap processor - [conn=#%d] initialization...", name, connId)
 
 	d := DnstapProcessor{
-		running:      true,
+		connId:       connId,
 		done:         make(chan bool),
 		cleanup:      make(chan bool),
 		recvFrom:     make(chan []byte, size),
@@ -88,11 +88,13 @@ func (d *DnstapProcessor) ReadConfig() {
 }
 
 func (c *DnstapProcessor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] dnstap processor - "+msg, v...)
+	log := fmt.Sprintf("[%s] dnstap processor - [conn=#%d] ", c.name, c.connId)
+	c.logger.Info(log+msg, v...)
 }
 
 func (c *DnstapProcessor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] dnstap processor - "+msg, v...)
+	log := fmt.Sprintf("[%s] dnstap processor - [conn=#%d] ", c.name, c.connId)
+	c.logger.Error(log+msg, v...)
 }
 
 func (d *DnstapProcessor) GetChannel() chan []byte {
@@ -100,17 +102,19 @@ func (d *DnstapProcessor) GetChannel() chan []byte {
 }
 
 func (d *DnstapProcessor) Stop() {
-	if !d.running {
-		return
-	}
 	d.LogInfo("stopping...")
 
 	// exit goroutine
-	d.cleanup <- true
+	select {
+	case d.cleanup <- true:
+	default: // already cleanup, no more goroutine to read the channel ?
+		return
+	}
 
 	// read done channel and block until run is terminated
 	<-d.done
 	d.LogInfo("run terminated")
+
 	close(d.done)
 }
 
@@ -121,9 +125,7 @@ func (d *DnstapProcessor) Following() {
 		select {
 		case <-d.cleanup:
 			d.LogInfo("cleanup called")
-			d.running = false
 			d.transforms.Reset()
-
 			d.done <- true
 			return
 

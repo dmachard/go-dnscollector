@@ -17,7 +17,6 @@ func GetFakeDns() ([]byte, error) {
 }
 
 type DnsProcessor struct {
-	running      bool
 	done         chan bool
 	cleanup      chan bool
 	recvFrom     chan dnsutils.DnsMessage
@@ -32,7 +31,6 @@ type DnsProcessor struct {
 func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) DnsProcessor {
 	logger.Info("[%s] processor dns - initialization...", name)
 	d := DnsProcessor{
-		running:      true,
 		done:         make(chan bool),
 		cleanup:      make(chan bool),
 		recvFrom:     make(chan dnsutils.DnsMessage, size),
@@ -69,13 +67,14 @@ func (d *DnsProcessor) GetChannelList() []chan dnsutils.DnsMessage {
 }
 
 func (d *DnsProcessor) Stop() {
-	if !d.running {
-		return
-	}
 	d.LogInfo("stopping...")
 
 	// exit goroutine
-	d.cleanup <- true
+	select {
+	case d.cleanup <- true:
+	default: // already cleanup, no more goroutine to read the channel ?
+		return
+	}
 
 	// read done channel and block until run is terminated
 	<-d.done
@@ -90,10 +89,7 @@ func (d *DnsProcessor) Following() {
 		select {
 		case <-d.cleanup:
 			d.LogInfo("cleanup called")
-			d.running = false
-
 			d.transforms.Reset()
-
 			d.done <- true
 			return
 
