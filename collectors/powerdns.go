@@ -20,6 +20,7 @@ type ProtobufPowerDNS struct {
 	done           chan bool
 	cleanup        chan bool
 	listen         net.Listener
+	connId         int
 	conns          []net.Conn
 	loggers        []dnsutils.Worker
 	config         *dnsutils.Config
@@ -80,12 +81,18 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	// close connection on function exit
 	defer conn.Close()
 
+	var connId int
+	c.Lock()
+	c.connId++
+	connId = c.connId
+	c.Unlock()
+
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogInfo("new connection from %s", peer)
+	c.LogInfo("[conn=#%d] new connection from %s", connId, peer)
 
 	// start protobuf subprocessor
-	pdnsProc := NewPdnsProcessor(c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
+	pdnsProc := NewPdnsProcessor(connId, c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
 	c.pdnsProcessors = append(c.pdnsProcessors, &pdnsProc)
 	go pdnsProc.Run(c.Loggers())
 
@@ -110,13 +117,14 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 			}
 
 			if connClosed {
-				c.LogInfo("connection closed with peer %s\n", peer)
-				close(pdnsProc.GetChannel())
-				pdnsProc.Stop()
+				c.LogInfo("[conn=#%d] connection closed with peer %s\n", connId, peer)
 			} else {
-				c.LogError("powerdns reader error: %s", err)
+				c.LogError("[conn=#%d] powerdns reader error: %s", connId, err)
 			}
 
+			// stop processor
+			close(pdnsProc.GetChannel())
+			pdnsProc.Stop()
 			break
 		}
 

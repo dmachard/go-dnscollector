@@ -25,7 +25,7 @@ var (
 )
 
 type PdnsProcessor struct {
-	running      bool
+	connId       int
 	done         chan bool
 	cleanup      chan bool
 	recvFrom     chan []byte
@@ -38,10 +38,10 @@ type PdnsProcessor struct {
 	transforms   transformers.Transforms
 }
 
-func NewPdnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
-	logger.Info("[%s] pdns processor - initialization...", name)
+func NewPdnsProcessor(connId int, config *dnsutils.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
+	logger.Info("[%s] pdns processor - [conn=#%d] initialization...", name, connId)
 	d := PdnsProcessor{
-		running:      true,
+		connId:       connId,
 		done:         make(chan bool),
 		cleanup:      make(chan bool),
 		recvFrom:     make(chan []byte, size),
@@ -63,11 +63,13 @@ func (c *PdnsProcessor) ReadConfig() {
 }
 
 func (c *PdnsProcessor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] pdns processor - "+msg, v...)
+	log := fmt.Sprintf("[%s] pdns processor - [conn=#%d] ", c.name, c.connId)
+	c.logger.Info(log+msg, v...)
 }
 
 func (c *PdnsProcessor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] pdns processor - "+msg, v...)
+	log := fmt.Sprintf("[%s] pdns processor - [conn=#%d] ", c.name, c.connId)
+	c.logger.Error(log+msg, v...)
 }
 
 func (d *PdnsProcessor) GetChannel() chan []byte {
@@ -75,13 +77,14 @@ func (d *PdnsProcessor) GetChannel() chan []byte {
 }
 
 func (d *PdnsProcessor) Stop() {
-	if !d.running {
-		return
-	}
 	d.LogInfo("stopping...")
 
 	// exit goroutine
-	d.cleanup <- true
+	select {
+	case d.cleanup <- true:
+	default: // already cleanup, no more goroutine to read the channel ?
+		return
+	}
 
 	// read done channel and block until run is terminated
 	<-d.done
@@ -96,10 +99,7 @@ func (d *PdnsProcessor) Following() {
 		select {
 		case <-d.cleanup:
 			d.LogInfo("cleanup called")
-
-			d.running = false
 			d.transforms.Reset()
-
 			d.done <- true
 			return
 
