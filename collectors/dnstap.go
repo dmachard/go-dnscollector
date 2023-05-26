@@ -106,7 +106,9 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// start dnstap subprocessor
 	dnstapProcessor := NewDnstapProcessor(connId, c.config, c.logger, c.name, c.config.Collectors.Dnstap.ChannelBufferSize)
+	c.Lock()
 	c.tapProcessors = append(c.tapProcessors, dnstapProcessor)
+	c.Unlock()
 	go dnstapProcessor.Run(c.Loggers())
 
 	// frame stream library
@@ -116,8 +118,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// init framestream receiver
 	if err := fs.InitReceiver(); err != nil {
-		c.LogError("[conn=#%d] error stream receiver initialization: %s", connId, err)
-		return
+		c.LogError("[conn=#%d] stream initialization: %s", connId, err)
 	} else {
 		c.LogInfo("[conn=#%d] receiver framestream initialized", connId)
 	}
@@ -146,8 +147,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 				c.LogError("[conn=#%d] framestream reader error: %s", connId, err)
 			}
 
-			// stop processor
-			close(dnstapProcessor.GetChannel())
+			// stop processor and exit the loop
 			dnstapProcessor.Stop()
 			break
 		}
@@ -159,6 +159,26 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 			c.dropped <- 1
 		}
 	}
+
+	// here the connection is closed,
+	// then removes the current tap processor from the list
+	c.Lock()
+	for i, t := range c.tapProcessors {
+		if t.connId == connId {
+			c.tapProcessors = append(c.tapProcessors[:i], c.tapProcessors[i+1:]...)
+		}
+	}
+
+	// finnaly removes the current connection from the list
+	for j, cn := range c.conns {
+		if cn == conn {
+			c.conns = append(c.conns[:j], c.conns[j+1:]...)
+			conn = nil
+		}
+	}
+	c.Unlock()
+
+	c.LogInfo("[conn=#%d] connection handler terminated", connId)
 }
 
 func (c *Dnstap) Channel() chan dnsutils.DnsMessage {
@@ -296,7 +316,9 @@ func (c *Dnstap) Run() {
 				c.config.Collectors.Dnstap.RcvBufSize, actual)
 		}
 
+		c.Lock()
 		c.conns = append(c.conns, conn)
+		c.Unlock()
 		go c.HandleConn(conn)
 	}
 
