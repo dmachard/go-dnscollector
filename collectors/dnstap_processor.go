@@ -64,7 +64,7 @@ type DnstapProcessor struct {
 }
 
 func NewDnstapProcessor(connId int, config *dnsutils.Config, logger *logger.Logger, name string, size int) DnstapProcessor {
-	logger.Info("[%s] dnstap processor - [conn=#%d] initialization...", name, connId)
+	logger.Info("[collector=%s] [conn=#%d] [processor=dnstap] initialization...", name, connId)
 
 	d := DnstapProcessor{
 		connId:       connId,
@@ -91,12 +91,12 @@ func (d *DnstapProcessor) ReadConfig() {
 }
 
 func (c *DnstapProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("[%s] dnstap processor - [conn=#%d] ", c.name, c.connId)
+	log := fmt.Sprintf("[collector=%s] [conn=#%d] [processor=dnstap] ", c.name, c.connId)
 	c.logger.Info(log+msg, v...)
 }
 
 func (c *DnstapProcessor) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("[%s] dnstap processor - [conn=#%d] ", c.name, c.connId)
+	log := fmt.Sprintf("[collector=%s] [conn=#%d] [processor=dnstap] ", c.name, c.connId)
 	c.logger.Error(log+msg, v...)
 }
 
@@ -105,11 +105,11 @@ func (d *DnstapProcessor) GetChannel() chan []byte {
 }
 
 func (d *DnstapProcessor) Stop() {
-	d.LogInfo("stopping goroutine[run]...")
+	d.LogInfo("[goroutine=run] stopping...")
 	d.stopRun <- true
 	<-d.doneRun
 
-	d.LogInfo("stopping goroutine[following]...")
+	d.LogInfo("[goroutine=following] stopping...")
 	d.stopFollow <- true
 	<-d.doneFollow
 }
@@ -144,7 +144,7 @@ FOLLOW_LOOP:
 
 		}
 	}
-	d.LogInfo("goroutine[follow] terminated")
+	d.LogInfo("[goroutine=follow] terminated")
 }
 
 func (d *DnstapProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
@@ -283,5 +283,5 @@ RUN_LOOP:
 		}
 	}
 
-	d.LogInfo("goroutine[run] terminated")
+	d.LogInfo("[goroutine=run] terminated")
 }

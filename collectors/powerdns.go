@@ -93,7 +93,9 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 
 	// start protobuf subprocessor
 	pdnsProc := NewPdnsProcessor(connId, c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
+	c.Lock()
 	c.pdnsProcessors = append(c.pdnsProcessors, &pdnsProc)
+	c.Unlock()
 	go pdnsProc.Run(c.Loggers())
 
 	r := bufio.NewReader(conn)
@@ -123,7 +125,6 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 			}
 
 			// stop processor
-			close(pdnsProc.GetChannel())
 			pdnsProc.Stop()
 			break
 		}
@@ -135,6 +136,26 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 			c.dropped <- 1
 		}
 	}
+
+	// here the connection is closed,
+	// then removes the current tap processor from the list
+	c.Lock()
+	for i, t := range c.pdnsProcessors {
+		if t.connId == connId {
+			c.pdnsProcessors = append(c.pdnsProcessors[:i], c.pdnsProcessors[i+1:]...)
+		}
+	}
+
+	// finnaly removes the current connection from the list
+	for j, cn := range c.conns {
+		if cn == conn {
+			c.conns = append(c.conns[:j], c.conns[j+1:]...)
+			conn = nil
+		}
+	}
+	c.Unlock()
+
+	c.LogInfo("[conn=#%d] connection handler terminated", connId)
 }
 
 func (c *ProtobufPowerDNS) Channel() chan dnsutils.DnsMessage {
@@ -210,7 +231,7 @@ func (c *ProtobufPowerDNS) Listen() error {
 	return nil
 }
 
-func (c *ProtobufPowerDNS) FollowChannel() {
+func (c *ProtobufPowerDNS) Following() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 	for {
@@ -238,7 +259,8 @@ func (c *ProtobufPowerDNS) Run() {
 		}
 	}
 
-	go c.FollowChannel()
+	// start goroutine to count dropped messsages
+	go c.Following()
 
 	for {
 		// Accept() blocks waiting for new connection.

@@ -36,7 +36,7 @@ type Dnstap struct {
 }
 
 func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *Dnstap {
-	logger.Info("[%s] dnstap collector - enabled", name)
+	logger.Info("[collector=%s] enabled", name)
 	s := &Dnstap{
 		done:    make(chan bool),
 		cleanup: make(chan bool),
@@ -83,11 +83,11 @@ func (c *Dnstap) ReadConfig() {
 }
 
 func (c *Dnstap) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] dnstap collector - "+msg, v...)
+	c.logger.Info("[collector="+c.name+"] "+msg, v...)
 }
 
 func (c *Dnstap) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] dnstap collector - "+msg, v...)
+	c.logger.Error("[collector="+c.name+"] "+msg, v...)
 }
 
 func (c *Dnstap) HandleConn(conn net.Conn) {
@@ -266,7 +266,7 @@ func (c *Dnstap) Listen() error {
 	return nil
 }
 
-func (c *Dnstap) DropsFollowing() {
+func (c *Dnstap) Following() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 	for {
@@ -294,7 +294,8 @@ func (c *Dnstap) Run() {
 		}
 	}
 
-	go c.DropsFollowing()
+	// start goroutine to count dropped messsages
+	go c.Following()
 
 	for {
 		// Accept() blocks waiting for new connection.
