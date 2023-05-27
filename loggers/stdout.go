@@ -82,7 +82,7 @@ func (o *StdOut) Run() {
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, o.channel)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
 
 	// standard output buffer
 	buffer := new(bytes.Buffer)

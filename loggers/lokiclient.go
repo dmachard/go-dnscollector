@@ -183,7 +183,7 @@ func (o *LokiClient) Run() {
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, o.channel)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
 
 	// prepare buffer
 	buffer := new(bytes.Buffer)

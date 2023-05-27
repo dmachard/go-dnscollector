@@ -19,8 +19,8 @@ func GetFakeDns() ([]byte, error) {
 type DnsProcessor struct {
 	doneRun      chan bool
 	stopRun      chan bool
-	doneFollow   chan bool
-	stopFollow   chan bool
+	doneMonitor  chan bool
+	stopMonitor  chan bool
 	recvFrom     chan dnsutils.DnsMessage
 	logger       *logger.Logger
 	config       *dnsutils.Config
@@ -32,9 +32,9 @@ type DnsProcessor struct {
 func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) DnsProcessor {
 	logger.Info("[%s] [processor=dns] initialization...", name)
 	d := DnsProcessor{
-		doneFollow:   make(chan bool),
+		doneMonitor:  make(chan bool),
 		doneRun:      make(chan bool),
-		stopFollow:   make(chan bool),
+		stopMonitor:  make(chan bool),
 		stopRun:      make(chan bool),
 		recvFrom:     make(chan dnsutils.DnsMessage, size),
 		logger:       logger,
@@ -75,20 +75,20 @@ func (d *DnsProcessor) Stop() {
 	<-d.doneRun
 
 	d.LogInfo("stopping [goroutine=following]...")
-	d.stopFollow <- true
-	<-d.doneFollow
+	d.stopMonitor <- true
+	<-d.doneMonitor
 }
 
-func (d *DnsProcessor) Following() {
+func (d *DnsProcessor) MonitorLoggers() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 FOLLOW_LOOP:
 	for {
 		select {
-		case <-d.stopFollow:
+		case <-d.stopMonitor:
 			close(d.dropped)
 			bufferFull.Stop()
-			d.doneFollow <- true
+			d.doneMonitor <- true
 			break FOLLOW_LOOP
 
 		case loggerName := <-d.dropped:
@@ -115,10 +115,10 @@ FOLLOW_LOOP:
 
 func (d *DnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
 	// prepare enabled transformers
-	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel)
+	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel, 0)
 
 	// start goroutine to count dropped messsages
-	go d.Following()
+	go d.MonitorLoggers()
 
 	// read incoming dns message
 	d.LogInfo("running... waiting dns message")

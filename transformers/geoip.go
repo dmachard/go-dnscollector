@@ -1,6 +1,7 @@
 package transformers
 
 import (
+	"fmt"
 	"net"
 	"strconv"
 
@@ -32,29 +33,44 @@ type GeoRecord struct {
 }
 
 type GeoIpProcessor struct {
-	config    *dnsutils.ConfigTransformers
-	logger    *logger.Logger
-	dbCountry *maxminddb.Reader
-	dbCity    *maxminddb.Reader
-	dbAsn     *maxminddb.Reader
-	enabled   bool
+	config      *dnsutils.ConfigTransformers
+	logger      *logger.Logger
+	dbCountry   *maxminddb.Reader
+	dbCity      *maxminddb.Reader
+	dbAsn       *maxminddb.Reader
+	enabled     bool
+	name        string
+	instance    int
+	outChannels []chan dnsutils.DnsMessage
+	logInfo     func(msg string, v ...interface{})
+	logError    func(msg string, v ...interface{})
 }
 
-func NewDnsGeoIpProcessor(config *dnsutils.ConfigTransformers, logger *logger.Logger) GeoIpProcessor {
+func NewDnsGeoIpProcessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+	instance int, outChannels []chan dnsutils.DnsMessage,
+	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
+) GeoIpProcessor {
 	d := GeoIpProcessor{
-		config: config,
-		logger: logger,
+		config:      config,
+		logger:      logger,
+		name:        name,
+		instance:    instance,
+		outChannels: outChannels,
+		logInfo:     logInfo,
+		logError:    logError,
 	}
 
 	return d
 }
 
 func (p *GeoIpProcessor) LogInfo(msg string, v ...interface{}) {
-	p.logger.Info("Subprocessor GeoIP - "+msg, v...)
+	log := fmt.Sprintf("transformer=geoip#%d - ", p.instance)
+	p.logInfo(log+msg, v...)
 }
 
 func (p *GeoIpProcessor) LogError(msg string, v ...interface{}) {
-	p.logger.Error("Subprocessor GeoIP - "+msg, v...)
+	log := fmt.Sprintf("transformer=geoip#%d - ", p.instance)
+	p.logError(log+msg, v...)
 }
 
 func (p *GeoIpProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {

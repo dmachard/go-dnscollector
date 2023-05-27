@@ -12,9 +12,10 @@ var (
 )
 
 type Transforms struct {
-	config *dnsutils.ConfigTransformers
-	logger *logger.Logger
-	name   string
+	config   *dnsutils.ConfigTransformers
+	logger   *logger.Logger
+	name     string
+	instance int
 
 	SuspiciousTransform  SuspiciousTransform
 	GeoipTransform       GeoIpProcessor
@@ -28,22 +29,23 @@ type Transforms struct {
 	activeTransforms []func(dm *dnsutils.DnsMessage) int
 }
 
-func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DnsMessage) Transforms {
+func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DnsMessage, instance int) Transforms {
 
 	d := Transforms{
-		config: config,
-		logger: logger,
-		name:   name,
-
-		SuspiciousTransform:  NewSuspiciousSubprocessor(config, logger, name),
-		GeoipTransform:       NewDnsGeoIpProcessor(config, logger),
-		FilteringTransform:   NewFilteringProcessor(config, logger, name),
-		UserPrivacyTransform: NewUserPrivacySubprocessor(config),
-		NormalizeTransform:   NewNormalizeSubprocessor(config, logger, name),
-		LatencyTransform:     NewLatencySubprocessor(config, logger, name, outChannels),
-		ReducerTransform:     NewReducerSubprocessor(config, logger, name, outChannels),
-		ExtractProcessor:     NewExtractSubprocessor(config),
+		config:   config,
+		logger:   logger,
+		name:     name,
+		instance: instance,
 	}
+
+	d.SuspiciousTransform = NewSuspiciousSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.NormalizeTransform = NewNormalizeSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.ExtractProcessor = NewExtractSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.LatencyTransform = NewLatencySubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.ReducerTransform = NewReducerSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.UserPrivacyTransform = NewUserPrivacySubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.FilteringTransform = NewFilteringProcessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.GeoipTransform = NewDnsGeoIpProcessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 
 	d.Prepare()
 	return d
@@ -53,10 +55,10 @@ func (p *Transforms) Prepare() error {
 
 	if p.config.GeoIP.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.geoipTransform)
-		p.LogInfo("[GeoIP] enabled")
+		p.LogInfo("transformer=geoip#%s - is enabled", p.instance)
 
 		if err := p.GeoipTransform.Open(); err != nil {
-			p.LogError("geoip open error %v", err)
+			p.LogError("transformer=geoip#%s open error %v", p.instance, err)
 		}
 	}
 
@@ -64,48 +66,48 @@ func (p *Transforms) Prepare() error {
 		// Apply user privacy on qname and query ip
 		if p.config.UserPrivacy.AnonymizeIP {
 			p.activeTransforms = append(p.activeTransforms, p.anonymizeIP)
-			p.LogInfo("[user privacy: anonymize IP] enabled")
+			p.LogInfo("transformer=userprivacy#%s - subprocessor anonymizeIP is enabled", p.instance)
 		}
 
 		if p.config.UserPrivacy.MinimazeQname {
 			p.activeTransforms = append(p.activeTransforms, p.minimazeQname)
-			p.LogInfo("[user privacy: minimaze Qname] enabled")
+			p.LogInfo("transformer=userprivacy#%s - subprocessor minimaze qnam is  enabled", p.instance)
 		}
 
 		if p.config.UserPrivacy.HashIP {
 			p.activeTransforms = append(p.activeTransforms, p.hashIP)
-			p.LogInfo("[user privacy: hash IP] enabled")
+			p.LogInfo("transformer=userprivacy#%s - subprocessor hashIP is enabled", p.instance)
 		}
 	}
 
 	if p.config.Filtering.Enable {
-		p.LogInfo("[filtering] enabled")
+		p.LogInfo("transformer=filtering#%s - is enabled", p.instance)
 	}
 
 	if p.config.Latency.Enable {
 		if p.config.Latency.MeasureLatency {
 			p.activeTransforms = append(p.activeTransforms, p.measureLatency)
-			p.LogInfo("[latency: measure latency] enabled")
+			p.LogInfo("transformer=latency#%s - subprocessor measure latency is enabled", p.instance)
 		}
 		if p.config.Latency.UnansweredQueries {
 			p.activeTransforms = append(p.activeTransforms, p.detectEvictedTimeout)
-			p.LogInfo("[latency: unanswered queries] enabled")
+			p.LogInfo("transformer=latency#%s - subprocessor unanswered queries is enabled", p.instance)
 		}
 	}
 
 	if p.config.Suspicious.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.suspiciousTransform)
-		p.LogInfo("[suspicious] enabled")
+		p.LogInfo("transformer=suspicious#%s - is enabled", p.instance)
 	}
 
 	if p.config.Reducer.Enable {
-		p.LogInfo("[reducer] enabled")
+		p.LogInfo("transformer=reducer#%s - is enabled", p.instance)
 	}
 
 	if p.config.Extract.Enable {
 		if p.config.Extract.AddPayload {
 			p.activeTransforms = append(p.activeTransforms, p.addBase64Payload)
-			p.LogInfo("[extract: payload] enabled")
+			p.LogInfo("transformer=extract#%s - subprocessor add base64 payload is enabled", p.instance)
 		}
 
 	}
@@ -142,11 +144,11 @@ func (p *Transforms) Reset() {
 }
 
 func (p *Transforms) LogInfo(msg string, v ...interface{}) {
-	p.logger.Info("["+p.name+"] subprocessor - "+msg, v...)
+	p.logger.Info("["+p.name+"] "+msg, v...)
 }
 
 func (p *Transforms) LogError(msg string, v ...interface{}) {
-	p.logger.Error("["+p.name+"] subprocessor - "+msg, v...)
+	p.logger.Error("["+p.name+"] "+msg, v...)
 }
 
 // transform functions: return code

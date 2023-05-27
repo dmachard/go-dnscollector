@@ -896,7 +896,7 @@ func (s *Prometheus) Run() {
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, s.channel)
-	subprocessors := transformers.NewTransforms(&s.config.OutgoingTransformers, s.logger, s.name, listChannel)
+	subprocessors := transformers.NewTransforms(&s.config.OutgoingTransformers, s.logger, s.name, listChannel, 0)
 
 	// start http server
 	go s.ListenAndServe()

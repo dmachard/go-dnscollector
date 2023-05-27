@@ -1,6 +1,7 @@
 package transformers
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -14,15 +15,26 @@ type SuspiciousTransform struct {
 	name                  string
 	CommonQtypes          map[string]bool
 	whitelistDomainsRegex map[string]*regexp.Regexp
+	instance              int
+	outChannels           []chan dnsutils.DnsMessage
+	logInfo               func(msg string, v ...interface{})
+	logError              func(msg string, v ...interface{})
 }
 
-func NewSuspiciousSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string) SuspiciousTransform {
+func NewSuspiciousSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+	instance int, outChannels []chan dnsutils.DnsMessage,
+	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
+) SuspiciousTransform {
 	d := SuspiciousTransform{
 		config:                config,
 		logger:                logger,
 		name:                  name,
 		CommonQtypes:          make(map[string]bool),
 		whitelistDomainsRegex: make(map[string]*regexp.Regexp),
+		instance:              instance,
+		outChannels:           outChannels,
+		logInfo:               logInfo,
+		logError:              logError,
 	}
 
 	d.ReadConfig()
@@ -44,11 +56,13 @@ func (p *SuspiciousTransform) IsEnabled() bool {
 }
 
 func (p *SuspiciousTransform) LogInfo(msg string, v ...interface{}) {
-	p.logger.Info("Transform Suspicious - "+msg, v...)
+	log := fmt.Sprintf("transformer=suspicious#%d - ", p.instance)
+	p.logInfo(log+msg, v...)
 }
 
 func (p *SuspiciousTransform) LogError(msg string, v ...interface{}) {
-	p.logger.Error("Transform Suspicious - "+msg, v...)
+	log := fmt.Sprintf("transformer=suspicious#%d - ", p.instance)
+	p.logError(log+msg, v...)
 }
 
 func (p *SuspiciousTransform) InitDnsMessage(dm *dnsutils.DnsMessage) {

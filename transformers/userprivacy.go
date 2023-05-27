@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-logger"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -16,16 +17,27 @@ var (
 )
 
 type UserPrivacyProcessor struct {
-	config *dnsutils.ConfigTransformers
-	v4Mask net.IPMask
-	v6Mask net.IPMask
+	config      *dnsutils.ConfigTransformers
+	v4Mask      net.IPMask
+	v6Mask      net.IPMask
+	instance    int
+	outChannels []chan dnsutils.DnsMessage
+	logInfo     func(msg string, v ...interface{})
+	logError    func(msg string, v ...interface{})
 }
 
-func NewUserPrivacySubprocessor(config *dnsutils.ConfigTransformers) UserPrivacyProcessor {
+func NewUserPrivacySubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+	instance int, outChannels []chan dnsutils.DnsMessage,
+	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
+) UserPrivacyProcessor {
 	s := UserPrivacyProcessor{
-		config: config,
-		v4Mask: defaultIPv4Mask,
-		v6Mask: defaultIPv6Mask,
+		config:      config,
+		v4Mask:      defaultIPv4Mask,
+		v6Mask:      defaultIPv6Mask,
+		instance:    instance,
+		outChannels: outChannels,
+		logInfo:     logInfo,
+		logError:    logError,
 	}
 
 	return s

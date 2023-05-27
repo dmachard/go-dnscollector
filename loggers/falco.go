@@ -73,7 +73,7 @@ func (f *FalcoClient) Run() {
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, f.channel)
-	subprocessors := transformers.NewTransforms(&f.config.OutgoingTransformers, f.logger, f.name, listChannel)
+	subprocessors := transformers.NewTransforms(&f.config.OutgoingTransformers, f.logger, f.name, listChannel, 0)
 
 	buffer := new(bytes.Buffer)
 	for {

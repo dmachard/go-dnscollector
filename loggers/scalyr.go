@@ -141,7 +141,7 @@ func (c *ScalyrClient) Run() {
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, c.channel)
-	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel)
+	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
 
 	sInfo := c.config.Loggers.ScalyrClient.SessionInfo
 	if sInfo == nil {

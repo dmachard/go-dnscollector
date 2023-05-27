@@ -52,8 +52,8 @@ type DnstapProcessor struct {
 	connId       int
 	doneRun      chan bool
 	stopRun      chan bool
-	doneFollow   chan bool
-	stopFollow   chan bool
+	doneMonitor  chan bool
+	stopMonitor  chan bool
 	recvFrom     chan []byte
 	logger       *logger.Logger
 	config       *dnsutils.Config
@@ -64,13 +64,13 @@ type DnstapProcessor struct {
 }
 
 func NewDnstapProcessor(connId int, config *dnsutils.Config, logger *logger.Logger, name string, size int) DnstapProcessor {
-	logger.Info("[collector=%s] [conn=#%d] [processor=dnstap] initialization...", name, connId)
+	logger.Info("[%s] processor=dnstap#%d - initialization...", name, connId)
 
 	d := DnstapProcessor{
 		connId:       connId,
-		doneFollow:   make(chan bool),
+		doneMonitor:  make(chan bool),
 		doneRun:      make(chan bool),
-		stopFollow:   make(chan bool),
+		stopMonitor:  make(chan bool),
 		stopRun:      make(chan bool),
 		recvFrom:     make(chan []byte, size),
 		chanSize:     size,
@@ -91,12 +91,12 @@ func (d *DnstapProcessor) ReadConfig() {
 }
 
 func (c *DnstapProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("[collector=%s] [conn=#%d] [processor=dnstap] ", c.name, c.connId)
+	log := fmt.Sprintf("[%s] processor=dnstap#%d - ", c.name, c.connId)
 	c.logger.Info(log+msg, v...)
 }
 
 func (c *DnstapProcessor) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("[collector=%s] [conn=#%d] [processor=dnstap] ", c.name, c.connId)
+	log := fmt.Sprintf("[%s] processor=dnstap#%d - ", c.name, c.connId)
 	c.logger.Error(log+msg, v...)
 }
 
@@ -105,25 +105,25 @@ func (d *DnstapProcessor) GetChannel() chan []byte {
 }
 
 func (d *DnstapProcessor) Stop() {
-	d.LogInfo("[goroutine=run] stopping...")
+	d.LogInfo("stopping to process...")
 	d.stopRun <- true
 	<-d.doneRun
 
-	d.LogInfo("[goroutine=following] stopping...")
-	d.stopFollow <- true
-	<-d.doneFollow
+	d.LogInfo("stopping to monitor loggers...")
+	d.stopMonitor <- true
+	<-d.doneMonitor
 }
 
-func (d *DnstapProcessor) Following() {
+func (d *DnstapProcessor) MonitorLoggers() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 FOLLOW_LOOP:
 	for {
 		select {
-		case <-d.stopFollow:
+		case <-d.stopMonitor:
 			close(d.dropped)
 			bufferFull.Stop()
-			d.doneFollow <- true
+			d.doneMonitor <- true
 			break FOLLOW_LOOP
 
 		case loggerName := <-d.dropped:
@@ -144,20 +144,20 @@ FOLLOW_LOOP:
 
 		}
 	}
-	d.LogInfo("[goroutine=follow] terminated")
+	d.LogInfo("monitor terminated")
 }
 
 func (d *DnstapProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
 	dt := &dnstap.Dnstap{}
 
 	// prepare enabled transformers
-	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel)
+	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel, d.connId)
 
 	// start goroutine to count dropped messsages
-	go d.Following()
+	go d.MonitorLoggers()
 
 	// read incoming dns message
-	d.LogInfo("running... waiting dns message")
+	d.LogInfo("waiting dns message to process...")
 RUN_LOOP:
 	for {
 		select {
@@ -283,5 +283,5 @@ RUN_LOOP:
 		}
 	}
 
-	d.LogInfo("[goroutine=run] terminated")
+	d.LogInfo("processing terminated")
 }

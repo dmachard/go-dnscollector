@@ -231,7 +231,7 @@ func (c *ProtobufPowerDNS) Listen() error {
 	return nil
 }
 
-func (c *ProtobufPowerDNS) Following() {
+func (c *ProtobufPowerDNS) MonitorCollector() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 	for {
@@ -260,7 +260,7 @@ func (c *ProtobufPowerDNS) Run() {
 	}
 
 	// start goroutine to count dropped messsages
-	go c.Following()
+	go c.MonitorCollector()
 
 	for {
 		// Accept() blocks waiting for new connection.

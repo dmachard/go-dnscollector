@@ -450,7 +450,7 @@ func (l *LogFile) Run() {
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, l.channel)
-	subprocessors := transformers.NewTransforms(&l.config.OutgoingTransformers, l.logger, l.name, listChannel)
+	subprocessors := transformers.NewTransforms(&l.config.OutgoingTransformers, l.logger, l.name, listChannel, 0)
 
 	// prepare some timers
 	flushInterval := time.Duration(l.config.Loggers.LogFile.FlushInterval) * time.Second

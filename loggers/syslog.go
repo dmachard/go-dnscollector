@@ -139,7 +139,7 @@ func (o *Syslog) Run() {
 	// prepare enabled transformers
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, o.channel)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
 
 	var syslogconn *syslog.Writer
 	var err error

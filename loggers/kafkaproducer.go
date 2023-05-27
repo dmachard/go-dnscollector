@@ -216,7 +216,7 @@ func (o *KafkaProducer) Run() {
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, o.channel)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
 
 	ctx, cancelKafka := context.WithCancel(context.Background())
 	defer cancelKafka() // Libérez les ressources liées au contexte

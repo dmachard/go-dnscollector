@@ -28,8 +28,8 @@ type PdnsProcessor struct {
 	connId       int
 	doneRun      chan bool
 	stopRun      chan bool
-	doneFollow   chan bool
-	stopFollow   chan bool
+	doneMonitor  chan bool
+	stopMonitor  chan bool
 	recvFrom     chan []byte
 	logger       *logger.Logger
 	config       *dnsutils.Config
@@ -43,9 +43,9 @@ func NewPdnsProcessor(connId int, config *dnsutils.Config, logger *logger.Logger
 	logger.Info("[%s] [processor=pdns] [conn=#%d] initialization...", name, connId)
 	d := PdnsProcessor{
 		connId:       connId,
-		doneFollow:   make(chan bool),
+		doneMonitor:  make(chan bool),
 		doneRun:      make(chan bool),
-		stopFollow:   make(chan bool),
+		stopMonitor:  make(chan bool),
 		stopRun:      make(chan bool),
 		recvFrom:     make(chan []byte, size),
 		chanSize:     size,
@@ -85,20 +85,20 @@ func (d *PdnsProcessor) Stop() {
 	<-d.doneRun
 
 	d.LogInfo("stopping [goroutine=following]...")
-	d.stopFollow <- true
-	<-d.doneFollow
+	d.stopMonitor <- true
+	<-d.doneMonitor
 }
 
-func (d *PdnsProcessor) Following() {
+func (d *PdnsProcessor) MonitorLoggers() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 FOLLOW_LOOP:
 	for {
 		select {
-		case <-d.stopFollow:
+		case <-d.stopMonitor:
 			close(d.dropped)
 			bufferFull.Stop()
-			d.doneFollow <- true
+			d.doneMonitor <- true
 			break FOLLOW_LOOP
 
 		case loggerName := <-d.dropped:
@@ -127,10 +127,10 @@ func (d *PdnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersNa
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
 
 	// prepare enabled transformers
-	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel)
+	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel, d.connId)
 
 	// start goroutine to count dropped messsages
-	go d.Following()
+	go d.MonitorLoggers()
 
 	// read incoming dns message
 	d.LogInfo("running... waiting dns message")
