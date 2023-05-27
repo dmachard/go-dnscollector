@@ -108,9 +108,6 @@ func (c *FileIngestor) Channel() chan dnsutils.DnsMessage {
 func (c *FileIngestor) Stop() {
 	c.LogInfo("stopping...")
 
-	// stop watching
-	c.watcher.Close()
-
 	// exit to close properly
 	c.exit <- true
 
@@ -440,6 +437,9 @@ func (c *FileIngestor) Run() {
 	}()
 
 	<-c.exit
+
+	// stop watching
+	c.watcher.Close()
 
 	// stop processors
 	c.dnsProcessor.Stop()
