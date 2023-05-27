@@ -160,7 +160,7 @@ type AfpacketSniffer struct {
 }
 
 func NewAfpacketSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	logger.Info("[%s] AFPACKET collector - enabled", name)
+	logger.Info("[%s] collector=afpacket - enabled", name)
 	s := &AfpacketSniffer{
 		done:    make(chan bool),
 		exit:    make(chan bool),
@@ -174,11 +174,11 @@ func NewAfpacketSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logg
 }
 
 func (c *AfpacketSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] AFPACKET collector - "+msg, v...)
+	c.logger.Info("["+c.name+"] collector=afpacket - "+msg, v...)
 }
 
 func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] AFPACKET collector - "+msg, v...)
+	c.logger.Error("["+c.name+"] collector=afpacket - "+msg, v...)
 }
 
 func (c *AfpacketSniffer) GetName() string { return c.name }
@@ -240,7 +240,7 @@ func (c *AfpacketSniffer) Listen() error {
 			return err
 		}
 
-		c.LogInfo("Binding with success to iface %q (index %d)", iface.Name, iface.Index)
+		c.LogInfo("binding with success to iface %q (index %d)", iface.Name, iface.Index)
 	}
 
 	// set nano timestamp
@@ -417,7 +417,6 @@ func (c *AfpacketSniffer) Run() {
 	close(dnsChan)
 
 	// stop dns processor
-	close(dnsProcessor.GetChannel())
 	dnsProcessor.Stop()
 
 	c.LogInfo("run terminated")

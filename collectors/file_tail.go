@@ -25,7 +25,7 @@ type Tail struct {
 }
 
 func NewTail(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *Tail {
-	logger.Info("[%s] tail collector - enabled", name)
+	logger.Info("[%s] collector=tail - enabled", name)
 	s := &Tail{
 		done:    make(chan bool),
 		config:  config,
@@ -56,11 +56,11 @@ func (c *Tail) ReadConfig() {
 }
 
 func (c *Tail) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] tail collector - "+msg, v...)
+	c.logger.Info("["+c.name+"] collector=tail - "+msg, v...)
 }
 
 func (c *Tail) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] tail collector - "+msg, v...)
+	c.logger.Error("["+c.name+"] collector=tail - "+msg, v...)
 }
 
 func (c *Tail) Channel() chan dnsutils.DnsMessage {
@@ -98,7 +98,7 @@ func (c *Tail) Run() {
 	}
 
 	// prepare enabled transformers
-	subprocessors := transformers.NewTransforms(&c.config.IngoingTransformers, c.logger, c.name, c.Loggers())
+	subprocessors := transformers.NewTransforms(&c.config.IngoingTransformers, c.logger, c.name, c.Loggers(), 0)
 
 	// init dns message
 	dm := dnsutils.DnsMessage{}

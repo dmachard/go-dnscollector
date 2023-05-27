@@ -32,7 +32,7 @@ type KafkaProducer struct {
 }
 
 func NewKafkaProducer(config *dnsutils.Config, logger *logger.Logger, name string) *KafkaProducer {
-	logger.Info("[%s] logger to kafka - enabled", name)
+	logger.Info("[%s] logger=kafka - enabled", name)
 	s := &KafkaProducer{
 		done:           make(chan bool),
 		cleanup:        make(chan bool),
@@ -67,11 +67,11 @@ func (o *KafkaProducer) ReadConfig() {
 }
 
 func (o *KafkaProducer) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger to kafka - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger=kafka - "+msg, v...)
 }
 
 func (o *KafkaProducer) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger to kafka - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger=kafka - "+msg, v...)
 }
 
 func (o *KafkaProducer) Channel() chan dnsutils.DnsMessage {
@@ -216,7 +216,7 @@ func (o *KafkaProducer) Run() {
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, o.channel)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
 
 	ctx, cancelKafka := context.WithCancel(context.Background())
 	defer cancelKafka() // Libérez les ressources liées au contexte

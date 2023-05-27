@@ -48,7 +48,7 @@ type ScalyrClient struct {
 }
 
 func NewScalyrClient(config *dnsutils.Config, console *logger.Logger, name string) *ScalyrClient {
-	console.Info("[%s] logger Scalyr - starting", name)
+	console.Info("[%s] logger=scalyr - starting", name)
 	c := &ScalyrClient{
 		channel: make(chan dnsutils.DnsMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
 		logger:  console,
@@ -141,7 +141,7 @@ func (c *ScalyrClient) Run() {
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, c.channel)
-	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel)
+	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
 
 	sInfo := c.config.Loggers.ScalyrClient.SessionInfo
 	if sInfo == nil {
@@ -341,11 +341,11 @@ func parseServerResponse(body io.ReadCloser) (response, error) {
 }
 
 func (c *ScalyrClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger Scalyr - "+msg, v...)
+	c.logger.Error("["+c.name+"] logger=scalyr - "+msg, v...)
 }
 
 func (c *ScalyrClient) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger Scalyr - "+msg, v...)
+	c.logger.Info("["+c.name+"] logger=scalyr - "+msg, v...)
 }
 
 // Models

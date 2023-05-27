@@ -14,12 +14,15 @@ func TestNormalize_Json(t *testing.T) {
 	// enable feature
 	config := dnsutils.GetFakeConfigTransformers()
 
+	log := logger.New(false)
+	outChans := []chan dnsutils.DnsMessage{}
+
 	// get fake
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.Init()
 
 	// init subproccesor
-	qnameNorm := NewNormalizeSubprocessor(config, logger.New(false), "test")
+	qnameNorm := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	qnameNorm.InitDnsMessage(&dm)
 
 	// expected json
@@ -59,8 +62,11 @@ func TestNormalize_LowercaseQname(t *testing.T) {
 	config.Normalize.Enable = true
 	config.Normalize.QnameLowerCase = true
 
+	log := logger.New(false)
+	outChans := []chan dnsutils.DnsMessage{}
+
 	// init the processor
-	qnameNorm := NewNormalizeSubprocessor(config, logger.New(false), "test")
+	qnameNorm := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	qname := "www.Google.Com"
 	dm := dnsutils.GetFakeDnsMessage()
@@ -78,8 +84,11 @@ func TestNormalize_QuietText(t *testing.T) {
 	config.Normalize.Enable = true
 	config.Normalize.QuietText = true
 
+	log := logger.New(false)
+	outChans := []chan dnsutils.DnsMessage{}
+
 	// init the processor
-	norm := NewNormalizeSubprocessor(config, logger.New(false), "test")
+	norm := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	dm := dnsutils.GetFakeDnsMessage()
 	norm.QuietText(&dm)
@@ -99,8 +108,11 @@ func TestNormalize_AddTLD(t *testing.T) {
 	config.Normalize.Enable = true
 	config.Normalize.AddTld = true
 
+	log := logger.New(false)
+	outChans := []chan dnsutils.DnsMessage{}
+
 	// init the processor
-	psl := NewNormalizeSubprocessor(config, logger.New(false), "test")
+	psl := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	tt := []struct {
 		name  string
@@ -147,8 +159,11 @@ func TestNormalize_AddTldPlusOne(t *testing.T) {
 	config.Normalize.Enable = true
 	config.Normalize.AddTld = true
 
+	log := logger.New(false)
+	outChans := []chan dnsutils.DnsMessage{}
+
 	// init the processor
-	psl := NewNormalizeSubprocessor(config, logger.New(false), "test")
+	psl := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	tt := []struct {
 		name  string

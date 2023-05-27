@@ -30,9 +30,16 @@ type FilteringProcessor struct {
 	downsample           int
 	downsampleCount      int
 	activeFilters        []func(dm *dnsutils.DnsMessage) bool
+	instance             int
+	outChannels          []chan dnsutils.DnsMessage
+	logInfo              func(msg string, v ...interface{})
+	logError             func(msg string, v ...interface{})
 }
 
-func NewFilteringProcessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string) FilteringProcessor {
+func NewFilteringProcessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+	instance int, outChannels []chan dnsutils.DnsMessage,
+	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
+) FilteringProcessor {
 	// creates a new file watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -52,6 +59,10 @@ func NewFilteringProcessor(config *dnsutils.ConfigTransformers, logger *logger.L
 		listKeepDomainsRegex: make(map[string]*regexp.Regexp),
 		fileWatcher:          watcher,
 		name:                 name,
+		instance:             instance,
+		outChannels:          outChannels,
+		logInfo:              logInfo,
+		logError:             logError,
 	}
 
 	d.LoadRcodes()
@@ -60,8 +71,17 @@ func NewFilteringProcessor(config *dnsutils.ConfigTransformers, logger *logger.L
 
 	d.LoadActiveFilters()
 
-	//go d.Run()
 	return d
+}
+
+func (p *FilteringProcessor) LogInfo(msg string, v ...interface{}) {
+	log := fmt.Sprintf("transformer=filtering#%d - ", p.instance)
+	p.logInfo(log+msg, v...)
+}
+
+func (p *FilteringProcessor) LogError(msg string, v ...interface{}) {
+	log := fmt.Sprintf("transformer=filtering#%d - ", p.instance)
+	p.logError(log+msg, v...)
 }
 
 func (p *FilteringProcessor) LoadActiveFilters() {
@@ -119,11 +139,6 @@ func (p *FilteringProcessor) loadQueryIpList(fname string, drop bool) (uint64, e
 		return 0, err
 	}
 
-	// register the file to watch
-	/*if err := p.fileWatcher.Add(fname); err != nil {
-		p.LogError("unable to watch ip file: ", err)
-	}*/
-
 	scanner := bufio.NewScanner(file)
 	var read uint64
 	var ipsetbuilder netaddr.IPSetBuilder
@@ -177,11 +192,6 @@ func (p *FilteringProcessor) LoadDomainsList() {
 			p.dropDomains = true
 		} else {
 
-			// register the file to watch
-			/*if err := p.fileWatcher.Add(p.config.Subprocessors.Filtering.DropFqdnFile); err != nil {
-				p.LogError("unable to watch fqdn file: ", err)
-			}*/
-
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				fqdn := strings.ToLower(scanner.Text())
@@ -199,10 +209,6 @@ func (p *FilteringProcessor) LoadDomainsList() {
 			p.LogError("unable to open regex list file: ", err)
 			p.dropDomains = true
 		} else {
-			// register the file to watch
-			/*if err := p.fileWatcher.Add(p.config.Subprocessors.Filtering.DropDomainFile); err != nil {
-				p.LogError("unable to watch domain file: ", err)
-			}*/
 
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
@@ -245,14 +251,6 @@ func (p *FilteringProcessor) LoadDomainsList() {
 			p.keepDomains = true
 		}
 	}
-}
-
-func (p *FilteringProcessor) LogInfo(msg string, v ...interface{}) {
-	p.logger.Info("filtering - "+msg, v...)
-}
-
-func (p *FilteringProcessor) LogError(msg string, v ...interface{}) {
-	p.logger.Error("filtering - "+msg, v...)
 }
 
 func (p *FilteringProcessor) Run() {

@@ -32,7 +32,7 @@ type TzspSniffer struct {
 }
 
 func NewTzsp(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *TzspSniffer {
-	logger.Info("[%s] tzsp collector - enabled", name)
+	logger.Info("[%s] collector=tzsp - enabled", name)
 	s := &TzspSniffer{
 		done:    make(chan bool),
 		exit:    make(chan bool),
@@ -62,11 +62,11 @@ func (c *TzspSniffer) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 }
 
 func (c *TzspSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] tzsp collector - "+msg, v...)
+	c.logger.Info("["+c.name+"] collector=tzsp  "+msg, v...)
 }
 
 func (c *TzspSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] tzsp collector - "+msg, v...)
+	c.logger.Error("["+c.name+"] collector=tzsp - "+msg, v...)
 }
 
 func (c *TzspSniffer) ReadConfig() {
@@ -124,7 +124,7 @@ func (c *TzspSniffer) Run() {
 	c.logger.Info("starting collector...")
 
 	if err := c.Listen(); err != nil {
-		c.logger.Fatal("collector tzsp listening failed: ", err)
+		c.logger.Fatal("collector=tzsp listening failed: ", err)
 	}
 
 	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.Tzsp.ChannelBufferSize)
@@ -256,7 +256,6 @@ func (c *TzspSniffer) Run() {
 	<-c.exit
 
 	// stop dns processor
-	close(dnsProcessor.GetChannel())
 	dnsProcessor.Stop()
 
 	c.LogInfo("run terminated")

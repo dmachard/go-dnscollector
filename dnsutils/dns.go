@@ -199,16 +199,17 @@ func DecodeDns(payload []byte) (DnsHeader, error) {
 	dh.Id = int(binary.BigEndian.Uint16(payload[:2]))
 
 	// decode flags
-	dh.Qr = int(binary.BigEndian.Uint16(payload[2:4]) >> 0xF)
-	dh.Opcode = int((binary.BigEndian.Uint16(payload[2:4]) >> (3 + 0x8)) & 0xF)
-	dh.Aa = int((binary.BigEndian.Uint16(payload[2:4]) >> (2 + 0x8)) & 1)
-	dh.Tc = int((binary.BigEndian.Uint16(payload[2:4]) >> (1 + 0x8)) & 1)
-	dh.Rd = int((binary.BigEndian.Uint16(payload[2:4]) >> (0x8)) & 1)
-	dh.Cd = int((binary.BigEndian.Uint16(payload[2:4]) >> 4) & 1)
-	dh.Ad = int((binary.BigEndian.Uint16(payload[2:4]) >> 5) & 1)
-	dh.Z = int((binary.BigEndian.Uint16(payload[2:4]) >> 6) & 1)
-	dh.Ra = int((binary.BigEndian.Uint16(payload[2:4]) >> 7) & 1)
-	dh.Rcode = int(binary.BigEndian.Uint16(payload[2:4]) & 0xF)
+	flagsBytes := binary.BigEndian.Uint16(payload[2:4])
+	dh.Qr = int(flagsBytes >> 0xF)
+	dh.Opcode = int((flagsBytes >> 11) & 0xF)
+	dh.Aa = int((flagsBytes >> 10) & 1)
+	dh.Tc = int((flagsBytes >> 9) & 1)
+	dh.Rd = int((flagsBytes >> 8) & 1)
+	dh.Cd = int((flagsBytes >> 4) & 1)
+	dh.Ad = int((flagsBytes >> 5) & 1)
+	dh.Z = int((flagsBytes >> 6) & 1)
+	dh.Ra = int((flagsBytes >> 7) & 1)
+	dh.Rcode = int(flagsBytes & 0xF)
 
 	// decode counters
 	dh.Qdcount = int(binary.BigEndian.Uint16(payload[4:6]))
@@ -468,7 +469,7 @@ func ParseLabels(offset int, payload []byte) (string, int, error) {
 		return "", 0, ErrDecodeDnsLabelInvalidOffset
 	}
 
-	labels := []string{}
+	labels := make([]string, 0, 8)
 	// Where the current decoding run has started. Set after on every pointer jump.
 	startOffset := offset
 	// Track where the current decoding run is allowed to advance. Set after every pointer jump.

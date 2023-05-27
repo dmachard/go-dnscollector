@@ -14,13 +14,16 @@ func TestReducer_Json(t *testing.T) {
 	// enable feature
 	config := dnsutils.GetFakeConfigTransformers()
 
+	log := logger.New(false)
+	outChans := []chan dnsutils.DnsMessage{}
+
 	// get fake
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.Init()
 
 	// init subproccesor
-	listChannel := []chan dnsutils.DnsMessage{}
-	reducer := NewReducerSubprocessor(config, logger.New(false), "test", listChannel)
+
+	reducer := NewReducerSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	reducer.InitDnsMessage(&dm)
 
 	// expected json
@@ -59,13 +62,13 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 	config.Reducer.RepetitiveTrafficDetector = true
 	config.Reducer.WatchInterval = 1
 
+	log := logger.New(false)
 	outChan := make(chan dnsutils.DnsMessage, 1)
+	outChans := []chan dnsutils.DnsMessage{}
+	outChans = append(outChans, outChan)
 
 	// init subproccesor
-	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, outChan)
-
-	reducer := NewReducerSubprocessor(config, logger.New(false), "test", listChannel)
+	reducer := NewReducerSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	reducer.LoadActiveReducers()
 
 	// malformed DNS message

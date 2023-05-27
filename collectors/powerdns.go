@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"strconv"
@@ -17,7 +18,9 @@ import (
 )
 
 type ProtobufPowerDNS struct {
-	done           chan bool
+	doneRun        chan bool
+	doneMonitor    chan bool
+	stopMonitor    chan bool
 	cleanup        chan bool
 	listen         net.Listener
 	connId         int
@@ -35,13 +38,15 @@ type ProtobufPowerDNS struct {
 func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *ProtobufPowerDNS {
 	logger.Info("[%s] pdns collector - enabled", name)
 	s := &ProtobufPowerDNS{
-		done:    make(chan bool),
-		cleanup: make(chan bool),
-		dropped: make(chan int),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+		doneRun:     make(chan bool),
+		doneMonitor: make(chan bool),
+		stopMonitor: make(chan bool),
+		cleanup:     make(chan bool),
+		dropped:     make(chan int),
+		config:      config,
+		loggers:     loggers,
+		logger:      logger,
+		name:        name,
 	}
 	s.ReadConfig()
 	return s
@@ -65,16 +70,26 @@ func (c *ProtobufPowerDNS) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 
 func (c *ProtobufPowerDNS) ReadConfig() {
 	if !dnsutils.IsValidTLS(c.config.Collectors.PowerDNS.TlsMinVersion) {
-		c.logger.Fatal("collector powerdns - invalid tls min version")
+		c.logger.Fatal("collector=powerdns - invalid tls min version")
 	}
 }
 
 func (c *ProtobufPowerDNS) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] pdns collector - "+msg, v...)
+	c.logger.Info("["+c.name+"] collector=powerdns - "+msg, v...)
 }
 
 func (c *ProtobufPowerDNS) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] pdns collector - "+msg, v...)
+	c.logger.Error("["+c.name+"] collector=powerdns - "+msg, v...)
+}
+
+func (c *ProtobufPowerDNS) LogConnInfo(connId int, msg string, v ...interface{}) {
+	prefix := fmt.Sprintf("[%s] collector=powerdns#%d - ", c.name, connId)
+	c.logger.Info(prefix+msg, v...)
+}
+
+func (c *ProtobufPowerDNS) LogConnError(connId int, msg string, v ...interface{}) {
+	prefix := fmt.Sprintf("[%s] collector=powerdns#%d - ", c.name, connId)
+	c.logger.Error(prefix+msg, v...)
 }
 
 func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
@@ -89,11 +104,13 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogInfo("[conn=#%d] new connection from %s", connId, peer)
+	c.LogConnInfo(connId, "new connection from %s", peer)
 
 	// start protobuf subprocessor
 	pdnsProc := NewPdnsProcessor(connId, c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
+	c.Lock()
 	c.pdnsProcessors = append(c.pdnsProcessors, &pdnsProc)
+	c.Unlock()
 	go pdnsProc.Run(c.Loggers())
 
 	r := bufio.NewReader(conn)
@@ -117,13 +134,12 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 			}
 
 			if connClosed {
-				c.LogInfo("[conn=#%d] connection closed with peer %s\n", connId, peer)
+				c.LogConnInfo(connId, "connection closed with peer %s", peer)
 			} else {
-				c.LogError("[conn=#%d] powerdns reader error: %s", connId, err)
+				c.LogConnError(connId, "powerdns reader error: %s", err)
 			}
 
 			// stop processor
-			close(pdnsProc.GetChannel())
 			pdnsProc.Stop()
 			break
 		}
@@ -135,6 +151,26 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 			c.dropped <- 1
 		}
 	}
+
+	// here the connection is closed,
+	// then removes the current tap processor from the list
+	c.Lock()
+	for i, t := range c.pdnsProcessors {
+		if t.connId == connId {
+			c.pdnsProcessors = append(c.pdnsProcessors[:i], c.pdnsProcessors[i+1:]...)
+		}
+	}
+
+	// finnaly removes the current connection from the list
+	for j, cn := range c.conns {
+		if cn == conn {
+			c.conns = append(c.conns[:j], c.conns[j+1:]...)
+			conn = nil
+		}
+	}
+	c.Unlock()
+
+	c.LogConnInfo(connId, "connection handler terminated")
 }
 
 func (c *ProtobufPowerDNS) Channel() chan dnsutils.DnsMessage {
@@ -148,6 +184,7 @@ func (c *ProtobufPowerDNS) Stop() {
 	c.LogInfo("stopping...")
 
 	// stop all powerdns processors
+	c.LogInfo("stopping processors...")
 	for _, pdnsProc := range c.pdnsProcessors {
 		pdnsProc.Stop()
 	}
@@ -164,9 +201,15 @@ func (c *ProtobufPowerDNS) Stop() {
 	c.LogInfo("stop listening...")
 	c.listen.Close()
 
+	// stop monitor goroutine
+	c.LogInfo("stopping monitor...")
+	c.stopMonitor <- true
+	<-c.doneMonitor
+
 	// read done channel and block until run is terminated
-	<-c.done
-	close(c.done)
+	c.LogInfo("stopping run...")
+	<-c.doneRun
+	close(c.doneRun)
 }
 
 func (c *ProtobufPowerDNS) Listen() error {
@@ -210,14 +253,17 @@ func (c *ProtobufPowerDNS) Listen() error {
 	return nil
 }
 
-func (c *ProtobufPowerDNS) FollowChannel() {
+func (c *ProtobufPowerDNS) MonitorCollector() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
+MONITOR_LOOP:
 	for {
 		select {
-		case <-c.cleanup:
-			c.LogInfo("cleanup called")
-			return
+		case <-c.stopMonitor:
+			close(c.dropped)
+			bufferFull.Stop()
+			c.doneMonitor <- true
+			break MONITOR_LOOP
 		case <-c.dropped:
 			c.droppedCount++
 		case <-bufferFull.C:
@@ -228,6 +274,7 @@ func (c *ProtobufPowerDNS) FollowChannel() {
 			bufferFull.Reset(watchInterval)
 		}
 	}
+	c.LogInfo("monitor terminated")
 }
 
 func (c *ProtobufPowerDNS) Run() {
@@ -238,7 +285,8 @@ func (c *ProtobufPowerDNS) Run() {
 		}
 	}
 
-	go c.FollowChannel()
+	// start goroutine to count dropped messsages
+	go c.MonitorCollector()
 
 	for {
 		// Accept() blocks waiting for new connection.
@@ -268,5 +316,5 @@ func (c *ProtobufPowerDNS) Run() {
 	}
 
 	c.LogInfo("run terminated")
-	c.done <- true
+	c.doneRun <- true
 }

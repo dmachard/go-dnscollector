@@ -116,7 +116,7 @@ type Prometheus struct {
 }
 
 func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version string, name string) *Prometheus {
-	logger.Info("[%s] logger to prometheus - enabled", name)
+	logger.Info("[%s] logger=prometheus - enabled", name)
 	o := &Prometheus{
 		done:         make(chan bool),
 		done_api:     make(chan bool),
@@ -509,11 +509,11 @@ func (o *Prometheus) ReadConfig() {
 }
 
 func (o *Prometheus) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] prometheus - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger=prometheus - "+msg, v...)
 }
 
 func (o *Prometheus) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] prometheus - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger=prometheus - "+msg, v...)
 }
 
 func (o *Prometheus) Channel() chan dnsutils.DnsMessage {
@@ -896,7 +896,7 @@ func (s *Prometheus) Run() {
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, s.channel)
-	subprocessors := transformers.NewTransforms(&s.config.OutgoingTransformers, s.logger, s.name, listChannel)
+	subprocessors := transformers.NewTransforms(&s.config.OutgoingTransformers, s.logger, s.name, listChannel, 0)
 
 	// start http server
 	go s.ListenAndServe()

@@ -17,22 +17,25 @@ func GetFakeDns() ([]byte, error) {
 }
 
 type DnsProcessor struct {
-	done         chan bool
-	cleanup      chan bool
+	doneRun      chan bool
+	stopRun      chan bool
+	doneMonitor  chan bool
+	stopMonitor  chan bool
 	recvFrom     chan dnsutils.DnsMessage
 	logger       *logger.Logger
 	config       *dnsutils.Config
 	name         string
 	dropped      chan string
 	droppedCount map[string]int
-	transforms   transformers.Transforms
 }
 
 func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) DnsProcessor {
-	logger.Info("[%s] processor dns - initialization...", name)
+	logger.Info("[%s] processor=dns - initialization...", name)
 	d := DnsProcessor{
-		done:         make(chan bool),
-		cleanup:      make(chan bool),
+		doneMonitor:  make(chan bool),
+		doneRun:      make(chan bool),
+		stopMonitor:  make(chan bool),
+		stopRun:      make(chan bool),
 		recvFrom:     make(chan dnsutils.DnsMessage, size),
 		logger:       logger,
 		config:       config,
@@ -49,11 +52,11 @@ func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string
 func (d *DnsProcessor) ReadConfig() {}
 
 func (c *DnsProcessor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] dns processor - "+msg, v...)
+	c.logger.Info("["+c.name+"] processor=dns - "+msg, v...)
 }
 
 func (c *DnsProcessor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] dns processor - "+msg, v...)
+	c.logger.Error("["+c.name+"] processor=dns - "+msg, v...)
 }
 
 func (d *DnsProcessor) GetChannel() chan dnsutils.DnsMessage {
@@ -67,31 +70,26 @@ func (d *DnsProcessor) GetChannelList() []chan dnsutils.DnsMessage {
 }
 
 func (d *DnsProcessor) Stop() {
-	d.LogInfo("stopping...")
+	d.LogInfo("stopping to process...")
+	d.stopRun <- true
+	<-d.doneRun
 
-	// exit goroutine
-	select {
-	case d.cleanup <- true:
-	default: // already cleanup, no more goroutine to read the channel ?
-		return
-	}
-
-	// read done channel and block until run is terminated
-	<-d.done
-	d.LogInfo("run terminated")
-	close(d.done)
+	d.LogInfo("stopping to monitor loggers...")
+	d.stopMonitor <- true
+	<-d.doneMonitor
 }
 
-func (d *DnsProcessor) Following() {
+func (d *DnsProcessor) MonitorLoggers() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
+FOLLOW_LOOP:
 	for {
 		select {
-		case <-d.cleanup:
-			d.LogInfo("cleanup called")
-			d.transforms.Reset()
-			d.done <- true
-			return
+		case <-d.stopMonitor:
+			close(d.dropped)
+			bufferFull.Stop()
+			d.doneMonitor <- true
+			break FOLLOW_LOOP
 
 		case loggerName := <-d.dropped:
 			if _, ok := d.droppedCount[loggerName]; !ok {
@@ -112,80 +110,90 @@ func (d *DnsProcessor) Following() {
 
 		}
 	}
+	d.LogInfo("monitor terminated")
 }
 
 func (d *DnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
 	// prepare enabled transformers
-	d.transforms = transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel)
+	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel, 0)
 
 	// start goroutine to count dropped messsages
-	go d.Following()
+	go d.MonitorLoggers()
 
 	// read incoming dns message
-	d.LogInfo("running... waiting dns message")
+	d.LogInfo("waiting dns message to process...")
+RUN_LOOP:
 	for {
-		dm, opened := <-d.recvFrom
-		if !opened {
-			d.LogInfo("channel closed, exit")
-			d.cleanup <- true
-			break
-		}
+		select {
+		case <-d.stopRun:
+			transforms.Reset()
+			close(d.recvFrom)
+			d.doneRun <- true
+			break RUN_LOOP
 
-		// init dns message with additionnals parts
-		d.transforms.InitDnsMessageFormat(&dm)
-
-		// compute timestamp
-		ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
-		dm.DnsTap.Timestamp = ts.UnixNano()
-		dm.DnsTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
-
-		// decode the dns payload
-		dnsHeader, err := dnsutils.DecodeDns(dm.DNS.Payload)
-		if err != nil {
-			dm.DNS.MalformedPacket = true
-			d.LogError("dns parser malformed packet: %s - %v+", err, dm)
-		}
-
-		// dns reply ?
-		if dnsHeader.Qr == 1 {
-			dm.DnsTap.Operation = "CLIENT_RESPONSE"
-			dm.DNS.Type = dnsutils.DnsReply
-			qip := dm.NetworkInfo.QueryIp
-			qport := dm.NetworkInfo.QueryPort
-			dm.NetworkInfo.QueryIp = dm.NetworkInfo.ResponseIp
-			dm.NetworkInfo.QueryPort = dm.NetworkInfo.ResponsePort
-			dm.NetworkInfo.ResponseIp = qip
-			dm.NetworkInfo.ResponsePort = qport
-		} else {
-			dm.DNS.Type = dnsutils.DnsQuery
-			dm.DnsTap.Operation = dnsutils.DNSTAP_CLIENT_QUERY
-		}
-
-		if err = dnsutils.DecodePayload(&dm, &dnsHeader, d.config); err != nil {
-			d.LogError("%v - %v", err, dm)
-		}
-
-		if dm.DNS.MalformedPacket {
-			if d.config.Global.Trace.LogMalformed {
-				d.LogInfo("payload: %v", dm.DNS.Payload)
+		case dm, opened := <-d.recvFrom:
+			if !opened {
+				d.LogInfo("channel closed, exit")
+				return
 			}
-		}
 
-		// apply all enabled transformers
-		if d.transforms.ProcessMessage(&dm) == transformers.RETURN_DROP {
-			continue
-		}
+			// init dns message with additionnals parts
+			transforms.InitDnsMessageFormat(&dm)
 
-		// convert latency to human
-		dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
+			// compute timestamp
+			ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
+			dm.DnsTap.Timestamp = ts.UnixNano()
+			dm.DnsTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
-		// dispatch dns message to all generators
-		for i := range loggersChannel {
-			select {
-			case loggersChannel[i] <- dm: // Successful send to logger channel
-			default:
-				d.dropped <- loggersName[i]
+			// decode the dns payload
+			dnsHeader, err := dnsutils.DecodeDns(dm.DNS.Payload)
+			if err != nil {
+				dm.DNS.MalformedPacket = true
+				d.LogError("dns parser malformed packet: %s - %v+", err, dm)
+			}
+
+			// dns reply ?
+			if dnsHeader.Qr == 1 {
+				dm.DnsTap.Operation = "CLIENT_RESPONSE"
+				dm.DNS.Type = dnsutils.DnsReply
+				qip := dm.NetworkInfo.QueryIp
+				qport := dm.NetworkInfo.QueryPort
+				dm.NetworkInfo.QueryIp = dm.NetworkInfo.ResponseIp
+				dm.NetworkInfo.QueryPort = dm.NetworkInfo.ResponsePort
+				dm.NetworkInfo.ResponseIp = qip
+				dm.NetworkInfo.ResponsePort = qport
+			} else {
+				dm.DNS.Type = dnsutils.DnsQuery
+				dm.DnsTap.Operation = dnsutils.DNSTAP_CLIENT_QUERY
+			}
+
+			if err = dnsutils.DecodePayload(&dm, &dnsHeader, d.config); err != nil {
+				d.LogError("%v - %v", err, dm)
+			}
+
+			if dm.DNS.MalformedPacket {
+				if d.config.Global.Trace.LogMalformed {
+					d.LogInfo("payload: %v", dm.DNS.Payload)
+				}
+			}
+
+			// apply all enabled transformers
+			if transforms.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
+			// convert latency to human
+			dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
+
+			// dispatch dns message to all generators
+			for i := range loggersChannel {
+				select {
+				case loggersChannel[i] <- dm: // Successful send to logger channel
+				default:
+					d.dropped <- loggersName[i]
+				}
 			}
 		}
 	}
+	d.LogInfo("processing terminated")
 }

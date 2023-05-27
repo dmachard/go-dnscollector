@@ -7,18 +7,22 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-logger"
 )
 
 func TestExtract_Json(t *testing.T) {
 	// enable feature
 	config := dnsutils.GetFakeConfigTransformers()
+	log := logger.New(false)
+	outChans := []chan dnsutils.DnsMessage{}
+	outChans = append(outChans, make(chan dnsutils.DnsMessage, 1))
 
 	// get fake
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.Init()
 
 	// init subproccesor
-	extract := NewExtractSubprocessor(config)
+	extract := NewExtractSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	extract.InitDnsMessage(&dm)
 
 	// expected json
@@ -57,8 +61,11 @@ func TestExtract_AddPayload(t *testing.T) {
 	config.Extract.Enable = true
 	config.Extract.AddPayload = true
 
+	log := logger.New(false)
+	outChans := []chan dnsutils.DnsMessage{}
+
 	// init the processor
-	extract := NewExtractSubprocessor(config)
+	extract := NewExtractSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	// feature is enabled ?
 	if !extract.IsEnabled() {

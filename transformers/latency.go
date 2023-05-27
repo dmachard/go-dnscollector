@@ -96,17 +96,26 @@ type LatencyProcessor struct {
 	config      *dnsutils.ConfigTransformers
 	logger      *logger.Logger
 	name        string
+	instance    int
 	hashQueries HashQueries
 	mapQueries  MapQueries
 	outChannels []chan dnsutils.DnsMessage
+	logInfo     func(msg string, v ...interface{})
+	logError    func(msg string, v ...interface{})
 }
 
-func NewLatencySubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DnsMessage) *LatencyProcessor {
+func NewLatencySubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+	instance int, outChannels []chan dnsutils.DnsMessage,
+	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
+) *LatencyProcessor {
 	s := LatencyProcessor{
 		config:      config,
 		logger:      logger,
 		name:        name,
+		instance:    instance,
 		outChannels: outChannels,
+		logInfo:     logInfo,
+		logError:    logError,
 	}
 
 	s.hashQueries = NewHashQueries(time.Duration(config.Latency.QueriesTimeout) * time.Second)

@@ -65,7 +65,7 @@ type Syslog struct {
 }
 
 func NewSyslog(config *dnsutils.Config, console *logger.Logger, name string) *Syslog {
-	console.Info("[%s] logger syslog - enabled", name)
+	console.Info("[%s] logger=syslog - enabled", name)
 	o := &Syslog{
 		done:    make(chan bool),
 		cleanup: make(chan bool),
@@ -84,21 +84,21 @@ func (c *Syslog) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *Syslog) ReadConfig() {
 	if !dnsutils.IsValidTLS(c.config.Loggers.Syslog.TlsMinVersion) {
-		c.logger.Fatal("logger syslog - invalid tls min version")
+		c.logger.Fatal("logger=syslog - invalid tls min version")
 	}
 
 	if !dnsutils.IsValidMode(c.config.Loggers.Syslog.Mode) {
-		c.logger.Fatal("logger syslog - invalid mode text or json expected")
+		c.logger.Fatal("logger=syslog - invalid mode text or json expected")
 	}
 	severity, err := GetPriority(c.config.Loggers.Syslog.Severity)
 	if err != nil {
-		c.logger.Fatal("logger syslog - invalid severity")
+		c.logger.Fatal("logger=syslog - invalid severity")
 	}
 	c.severity = severity
 
 	facility, err := GetPriority(c.config.Loggers.Syslog.Facility)
 	if err != nil {
-		c.logger.Fatal("logger syslog - invalid facility")
+		c.logger.Fatal("logger=syslog - invalid facility")
 	}
 	c.facility = facility
 
@@ -114,11 +114,11 @@ func (o *Syslog) Channel() chan dnsutils.DnsMessage {
 }
 
 func (o *Syslog) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger to syslog - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger=syslog - "+msg, v...)
 }
 
 func (o *Syslog) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger to syslog - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger=syslog - "+msg, v...)
 }
 
 func (o *Syslog) Stop() {
@@ -139,7 +139,7 @@ func (o *Syslog) Run() {
 	// prepare enabled transformers
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, o.channel)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
 
 	var syslogconn *syslog.Writer
 	var err error

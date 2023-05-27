@@ -98,10 +98,11 @@ func DecodeEDNS(arcount int, start_offset int, payload []byte) (DnsExtended, int
 			2:  | DO|                           Z                               |
 			    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+ */
 			// Extended rcode is equal to the upper 8 bits
-			edns.ExtendedRcode = int(binary.BigEndian.Uint32(payload[offset_next+4:offset_next+8])&0xFF000000>>24) << 4
-			edns.Version = int(binary.BigEndian.Uint32(payload[offset_next+4:offset_next+8]) & 0x00FF0000 >> 16)
-			edns.Do = int(binary.BigEndian.Uint32(payload[offset_next+4:offset_next+8]) & 0x00008000 >> 0xF)
-			edns.Z = int(binary.BigEndian.Uint32(payload[offset_next+4:offset_next+8]) & 0x7FFF)
+			flagsBytes := binary.BigEndian.Uint32(payload[offset_next+4 : offset_next+8])
+			edns.ExtendedRcode = int(flagsBytes&0xFF000000>>24) << 4
+			edns.Version = int(flagsBytes & 0x00FF0000 >> 16)
+			edns.Do = int(flagsBytes & 0x00008000 >> 0xF)
+			edns.Z = int(flagsBytes & 0x7FFF)
 
 			// decode RDLENGTH
 			rdlength := binary.BigEndian.Uint16(payload[offset_next+8 : offset_next+10])

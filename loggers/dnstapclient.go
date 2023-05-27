@@ -28,7 +28,7 @@ type DnstapSender struct {
 }
 
 func NewDnstapSender(config *dnsutils.Config, logger *logger.Logger, name string) *DnstapSender {
-	logger.Info("logger dnstap [%s] sender - enabled", name)
+	logger.Info("[%s] logger=dnstap - enabled", name)
 	s := &DnstapSender{
 		done:               make(chan bool),
 		cleanup:            make(chan bool),
@@ -56,16 +56,16 @@ func (o *DnstapSender) ReadConfig() {
 	}
 
 	if !dnsutils.IsValidTLS(o.config.Loggers.Dnstap.TlsMinVersion) {
-		o.logger.Fatal("logger dnstap - invalid tls min version")
+		o.logger.Fatal("logger=dnstap - invalid tls min version")
 	}
 }
 
 func (o *DnstapSender) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger dnstap - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger=dnstap - "+msg, v...)
 }
 
 func (o *DnstapSender) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger dnstap - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger=dnstap - "+msg, v...)
 }
 
 func (o *DnstapSender) Channel() chan dnsutils.DnsMessage {
@@ -197,7 +197,7 @@ func (o *DnstapSender) Run() {
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, o.channel)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
 
 	// init buffer
 	bufferDm := []dnsutils.DnsMessage{}

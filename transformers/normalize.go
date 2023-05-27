@@ -1,6 +1,7 @@
 package transformers
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -65,14 +66,26 @@ type NormalizeProcessor struct {
 	config           *dnsutils.ConfigTransformers
 	logger           *logger.Logger
 	name             string
+	instance         int
 	activeProcessors []func(dm *dnsutils.DnsMessage) int
+	outChannels      []chan dnsutils.DnsMessage
+	logInfo          func(msg string, v ...interface{})
+	logError         func(msg string, v ...interface{})
 }
 
-func NewNormalizeSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string) NormalizeProcessor {
+func NewNormalizeSubprocessor(
+	config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+	instance int, outChannels []chan dnsutils.DnsMessage,
+	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
+) NormalizeProcessor {
 	s := NormalizeProcessor{
-		config: config,
-		logger: logger,
-		name:   name,
+		config:      config,
+		logger:      logger,
+		name:        name,
+		instance:    instance,
+		outChannels: outChannels,
+		logInfo:     logInfo,
+		logError:    logError,
 	}
 
 	s.LoadActiveProcessors()
@@ -80,31 +93,32 @@ func NewNormalizeSubprocessor(config *dnsutils.ConfigTransformers, logger *logge
 }
 
 func (p *NormalizeProcessor) LogInfo(msg string, v ...interface{}) {
-	p.logger.Info("["+p.name+"] transform normalize - "+msg, v...)
+	log := fmt.Sprintf("transformer=normalize#%d - ", p.instance)
+	p.logInfo(log+msg, v...)
 }
 
 func (p *NormalizeProcessor) LogError(msg string, v ...interface{}) {
-	p.logger.Error("["+p.name+"] transform normalize - "+msg, v...)
+	p.logError("transformer=normalize - "+msg, v...)
 }
 
 func (p *NormalizeProcessor) LoadActiveProcessors() {
 	if p.config.Normalize.QnameLowerCase {
 		p.activeProcessors = append(p.activeProcessors, p.LowercaseQname)
-		p.LogInfo("[processor: lowercase] enabled")
+		p.LogInfo("lowercase subprocessor is enabled")
 	}
 
 	if p.config.Normalize.QuietText {
 		p.activeProcessors = append(p.activeProcessors, p.QuietText)
-		p.LogInfo("[processor: quiet text] enabled")
+		p.LogInfo("quiet text subprocessor is enabled")
 	}
 
 	if p.config.Normalize.AddTld {
 		p.activeProcessors = append(p.activeProcessors, p.GetEffectiveTld)
-		p.LogInfo("[processor: add tld] enabled")
+		p.LogInfo("add tld subprocessor is enabled")
 	}
 	if p.config.Normalize.AddTldPlusOne {
 		p.activeProcessors = append(p.activeProcessors, p.GetEffectiveTldPlusOne)
-		p.LogInfo("[processor: add tld+1] enabled")
+		p.LogInfo("add tld+1 subprocessor enabled")
 	}
 }
 

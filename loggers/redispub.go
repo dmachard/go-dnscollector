@@ -32,7 +32,7 @@ type RedisPub struct {
 }
 
 func NewRedisPub(config *dnsutils.Config, logger *logger.Logger, name string) *RedisPub {
-	logger.Info("[%s] logger to redispub - enabled", name)
+	logger.Info("[%s] logger=redispub - enabled", name)
 	s := &RedisPub{
 		done:               make(chan bool),
 		cleanup:            make(chan bool),
@@ -56,7 +56,7 @@ func (c *RedisPub) SetLoggers(loggers []dnsutils.Worker) {}
 func (o *RedisPub) ReadConfig() {
 
 	if o.config.Loggers.RedisPub.TlsSupport && !dnsutils.IsValidTLS(o.config.Loggers.RedisPub.TlsMinVersion) {
-		o.logger.Fatal("logger to redispub - invalid tls min version")
+		o.logger.Fatal("logger=redispub - invalid tls min version")
 	}
 
 	if len(o.config.Loggers.RedisPub.TextFormat) > 0 {
@@ -67,11 +67,11 @@ func (o *RedisPub) ReadConfig() {
 }
 
 func (o *RedisPub) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger to redispub - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger=redispub - "+msg, v...)
 }
 
 func (o *RedisPub) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger to redispub - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger=redispub - "+msg, v...)
 }
 
 func (o *RedisPub) Channel() chan dnsutils.DnsMessage {
@@ -204,7 +204,7 @@ func (o *RedisPub) Run() {
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, o.channel)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
 
 	// init buffer
 	bufferDm := []dnsutils.DnsMessage{}

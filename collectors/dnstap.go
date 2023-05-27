@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -18,8 +19,9 @@ import (
 )
 
 type Dnstap struct {
-	done          chan bool
-	cleanup       chan bool
+	doneRun       chan bool
+	doneMonitor   chan bool
+	stopMonitor   chan bool
 	listen        net.Listener
 	conns         []net.Conn
 	sockPath      string
@@ -36,15 +38,16 @@ type Dnstap struct {
 }
 
 func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *Dnstap {
-	logger.Info("[%s] dnstap collector - enabled", name)
+	logger.Info("[%s] collector=dnstap - enabled", name)
 	s := &Dnstap{
-		done:    make(chan bool),
-		cleanup: make(chan bool),
-		dropped: make(chan int),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+		doneRun:     make(chan bool),
+		doneMonitor: make(chan bool),
+		stopMonitor: make(chan bool),
+		dropped:     make(chan int),
+		config:      config,
+		loggers:     loggers,
+		logger:      logger,
+		name:        name,
 	}
 	s.ReadConfig()
 	return s
@@ -68,7 +71,7 @@ func (c *Dnstap) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 
 func (c *Dnstap) ReadConfig() {
 	if !dnsutils.IsValidTLS(c.config.Collectors.Dnstap.TlsMinVersion) {
-		c.logger.Fatal("collector dnstap - invalid tls min version")
+		c.logger.Fatal("collector=dnstap - invalid tls min version")
 	}
 
 	c.sockPath = c.config.Collectors.Dnstap.SockPath
@@ -83,11 +86,21 @@ func (c *Dnstap) ReadConfig() {
 }
 
 func (c *Dnstap) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] dnstap collector - "+msg, v...)
+	c.logger.Info("["+c.name+"] collector=dnstap - "+msg, v...)
 }
 
 func (c *Dnstap) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] dnstap collector - "+msg, v...)
+	c.logger.Error("["+c.name+" collector=dnstap - "+msg, v...)
+}
+
+func (c *Dnstap) LogConnInfo(connId int, msg string, v ...interface{}) {
+	prefix := fmt.Sprintf("[%s] collector=dnstap#%d - ", c.name, connId)
+	c.logger.Info(prefix+msg, v...)
+}
+
+func (c *Dnstap) LogConnError(connId int, msg string, v ...interface{}) {
+	prefix := fmt.Sprintf("[%s] collector=dnstap#%d - ", c.name, connId)
+	c.logger.Error(prefix+msg, v...)
 }
 
 func (c *Dnstap) HandleConn(conn net.Conn) {
@@ -102,11 +115,13 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogInfo("[conn=#%d] new connection from %s\n", connId, peer)
+	c.LogConnInfo(connId, "new connection from %s", peer)
 
 	// start dnstap subprocessor
 	dnstapProcessor := NewDnstapProcessor(connId, c.config, c.logger, c.name, c.config.Collectors.Dnstap.ChannelBufferSize)
+	c.Lock()
 	c.tapProcessors = append(c.tapProcessors, dnstapProcessor)
+	c.Unlock()
 	go dnstapProcessor.Run(c.Loggers())
 
 	// frame stream library
@@ -116,10 +131,9 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// init framestream receiver
 	if err := fs.InitReceiver(); err != nil {
-		c.LogError("[conn=#%d] error stream receiver initialization: %s", connId, err)
-		return
+		c.LogConnError(connId, "stream initialization: %s", err)
 	} else {
-		c.LogInfo("[conn=#%d] receiver framestream initialized", connId)
+		c.LogConnInfo(connId, "receiver framestream initialized")
 	}
 
 	// process incoming frame and send it to dnstap consumer channel
@@ -141,13 +155,12 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 			}
 
 			if connClosed {
-				c.LogInfo("[conn=#%d] connection closed with peer %s\n", connId, peer)
+				c.LogConnInfo(connId, "connection closed with peer %s", peer)
 			} else {
-				c.LogError("[conn=#%d] framestream reader error: %s", connId, err)
+				c.LogConnError(connId, "framestream reader error: %s", err)
 			}
 
-			// stop processor
-			close(dnstapProcessor.GetChannel())
+			// stop processor and exit the loop
 			dnstapProcessor.Stop()
 			break
 		}
@@ -159,6 +172,26 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 			c.dropped <- 1
 		}
 	}
+
+	// here the connection is closed,
+	// then removes the current tap processor from the list
+	c.Lock()
+	for i, t := range c.tapProcessors {
+		if t.connId == connId {
+			c.tapProcessors = append(c.tapProcessors[:i], c.tapProcessors[i+1:]...)
+		}
+	}
+
+	// finnaly removes the current connection from the list
+	for j, cn := range c.conns {
+		if cn == conn {
+			c.conns = append(c.conns[:j], c.conns[j+1:]...)
+			conn = nil
+		}
+	}
+	c.Unlock()
+
+	c.LogConnInfo(connId, "connection handler terminated")
 }
 
 func (c *Dnstap) Channel() chan dnsutils.DnsMessage {
@@ -169,9 +202,8 @@ func (c *Dnstap) Stop() {
 	c.Lock()
 	defer c.Unlock()
 
-	c.LogInfo("stopping...")
-
 	// stop all powerdns processors
+	c.LogInfo("stopping processors...")
 	for _, tapProc := range c.tapProcessors {
 		tapProc.Stop()
 	}
@@ -186,9 +218,15 @@ func (c *Dnstap) Stop() {
 	c.LogInfo("stop listening...")
 	c.listen.Close()
 
+	// stop monitor goroutine
+	c.LogInfo("stopping monitor...")
+	c.stopMonitor <- true
+	<-c.doneMonitor
+
 	// read done channel and block until run is terminated
-	<-c.done
-	close(c.done)
+	c.LogInfo("stopping run...")
+	<-c.doneRun
+	close(c.doneRun)
 }
 
 func (c *Dnstap) Listen() error {
@@ -246,16 +284,19 @@ func (c *Dnstap) Listen() error {
 	return nil
 }
 
-func (c *Dnstap) DropsFollowing() {
+func (c *Dnstap) MonitorCollector() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
+MONITOR_LOOP:
 	for {
 		select {
 		case <-c.dropped:
 			c.droppedCount++
-		case <-c.cleanup:
-			c.LogInfo("cleanup called")
-			return
+		case <-c.stopMonitor:
+			close(c.dropped)
+			bufferFull.Stop()
+			c.doneMonitor <- true
+			break MONITOR_LOOP
 		case <-bufferFull.C:
 			if c.droppedCount > 0 {
 				c.LogError("recv buffer is full, %d packet(s) dropped", c.droppedCount)
@@ -264,6 +305,7 @@ func (c *Dnstap) DropsFollowing() {
 			bufferFull.Reset(watchInterval)
 		}
 	}
+	c.LogInfo("monitor terminated")
 }
 
 func (c *Dnstap) Run() {
@@ -274,7 +316,8 @@ func (c *Dnstap) Run() {
 		}
 	}
 
-	go c.DropsFollowing()
+	// start goroutine to count dropped messsages
+	go c.MonitorCollector()
 
 	for {
 		// Accept() blocks waiting for new connection.
@@ -296,10 +339,12 @@ func (c *Dnstap) Run() {
 				c.config.Collectors.Dnstap.RcvBufSize, actual)
 		}
 
+		c.Lock()
 		c.conns = append(c.conns, conn)
+		c.Unlock()
 		go c.HandleConn(conn)
 	}
 
 	c.LogInfo("run terminated")
-	c.done <- true
+	c.doneRun <- true
 }

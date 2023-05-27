@@ -120,17 +120,27 @@ type ReducerProcessor struct {
 	config           *dnsutils.ConfigTransformers
 	logger           *logger.Logger
 	name             string
+	instance         int
 	outChannels      []chan dnsutils.DnsMessage
 	activeProcessors []func(dm *dnsutils.DnsMessage) int
 	mapTraffic       MapTraffic
+	logInfo          func(msg string, v ...interface{})
+	logError         func(msg string, v ...interface{})
 }
 
-func NewReducerSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DnsMessage) *ReducerProcessor {
+func NewReducerSubprocessor(
+	config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+	instance int, outChannels []chan dnsutils.DnsMessage,
+	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
+) *ReducerProcessor {
 	s := ReducerProcessor{
 		config:      config,
 		logger:      logger,
 		name:        name,
+		instance:    instance,
 		outChannels: outChannels,
+		logInfo:     logInfo,
+		logError:    logError,
 	}
 
 	s.mapTraffic = NewMapTraffic(time.Duration(config.Reducer.WatchInterval)*time.Second, outChannels)

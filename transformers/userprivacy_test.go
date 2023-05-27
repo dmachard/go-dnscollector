@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-logger"
 )
 
 func TestReduceQname(t *testing.T) {
@@ -12,8 +13,11 @@ func TestReduceQname(t *testing.T) {
 	config.UserPrivacy.Enable = true
 	config.UserPrivacy.MinimazeQname = true
 
+	log := logger.New(false)
+	outChans := []chan dnsutils.DnsMessage{}
+
 	// init the processor
-	userPrivacy := NewUserPrivacySubprocessor(config)
+	userPrivacy := NewUserPrivacySubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	qname := "www.google.com"
 	ret := userPrivacy.MinimazeQname(qname)
@@ -40,8 +44,11 @@ func TestAnonymizeIPv4(t *testing.T) {
 	config.UserPrivacy.Enable = true
 	config.UserPrivacy.AnonymizeIP = true
 
+	log := logger.New(false)
+	outChans := []chan dnsutils.DnsMessage{}
+
 	// init the processor
-	userPrivacy := NewUserPrivacySubprocessor(config)
+	userPrivacy := NewUserPrivacySubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	ip := "192.168.1.2"
 
@@ -57,8 +64,11 @@ func TestAnonymizeIPv6(t *testing.T) {
 	config.UserPrivacy.Enable = true
 	config.UserPrivacy.AnonymizeIP = true
 
+	log := logger.New(false)
+	outChans := []chan dnsutils.DnsMessage{}
+
 	// init the processor
-	userPrivacy := NewUserPrivacySubprocessor(config)
+	userPrivacy := NewUserPrivacySubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	ip := "fe80::6111:626:c1b2:2353"
 

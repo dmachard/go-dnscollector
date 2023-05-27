@@ -22,7 +22,7 @@ func TestTransformsSuspicious(t *testing.T) {
 
 	// init subproccesor
 	channels := []chan dnsutils.DnsMessage{}
-	subprocessors := NewTransforms(config, logger.New(false), "test", channels)
+	subprocessors := NewTransforms(config, logger.New(false), "test", channels, 0)
 
 	// malformed DNS message
 	dm := dnsutils.GetFakeDnsMessage()
@@ -54,7 +54,7 @@ func TestTransformsGeoIPLookupCountry(t *testing.T) {
 
 	// init processor
 	channels := []chan dnsutils.DnsMessage{}
-	subprocessors := NewTransforms(config, logger.New(false), "test", channels)
+	subprocessors := NewTransforms(config, logger.New(false), "test", channels, 0)
 
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
@@ -83,7 +83,7 @@ func TestTransformsGeoIPLookupAsn(t *testing.T) {
 
 	// init the processor
 	channels := []chan dnsutils.DnsMessage{}
-	subprocessors := NewTransforms(config, logger.New(false), "test", channels)
+	subprocessors := NewTransforms(config, logger.New(false), "test", channels, 0)
 
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
@@ -112,7 +112,7 @@ func TestTransformsReduceQname(t *testing.T) {
 
 	// init the processor
 	channels := []chan dnsutils.DnsMessage{}
-	subprocessors := NewTransforms(config, logger.New(false), "test", channels)
+	subprocessors := NewTransforms(config, logger.New(false), "test", channels, 0)
 
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
@@ -162,7 +162,7 @@ func TestTransformsAnonymizeIPv4(t *testing.T) {
 
 	// init the processor
 	channels := []chan dnsutils.DnsMessage{}
-	subprocessors := NewTransforms(config, logger.New(false), "test", channels)
+	subprocessors := NewTransforms(config, logger.New(false), "test", channels, 0)
 
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
@@ -189,7 +189,7 @@ func TestTransformsAnonymizeIPv6(t *testing.T) {
 
 	// init the processor
 	channels := []chan dnsutils.DnsMessage{}
-	subprocessors := NewTransforms(config, logger.New(false), "test", channels)
+	subprocessors := NewTransforms(config, logger.New(false), "test", channels, 0)
 
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
@@ -216,7 +216,7 @@ func TestTransformsNormalizeLowercaseQname(t *testing.T) {
 
 	// init the processor
 	channels := []chan dnsutils.DnsMessage{}
-	subprocessors := NewTransforms(config, logger.New(false), "test", channels)
+	subprocessors := NewTransforms(config, logger.New(false), "test", channels, 0)
 
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
@@ -245,7 +245,7 @@ func TestMultiTransforms(t *testing.T) {
 
 	// init the processor
 	channels := []chan dnsutils.DnsMessage{}
-	subprocessors := NewTransforms(config, logger.New(false), "test", channels)
+	subprocessors := NewTransforms(config, logger.New(false), "test", channels, 0)
 
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
@@ -281,7 +281,7 @@ func TestTransformAndFilter(t *testing.T) {
 
 	// init the processor
 	channels := []chan dnsutils.DnsMessage{}
-	subprocessors := NewTransforms(config, logger.New(false), "test", channels)
+	subprocessors := NewTransforms(config, logger.New(false), "test", channels, 0)
 
 	// create test message
 	dm := dnsutils.GetFakeDnsMessage()
