@@ -24,7 +24,7 @@ type InfluxDBClient struct {
 }
 
 func NewInfluxDBClient(config *dnsutils.Config, logger *logger.Logger, name string) *InfluxDBClient {
-	logger.Info("[%s] logger to influxdb - enabled", name)
+	logger.Info("[%s] logger=influxdb - enabled", name)
 
 	s := &InfluxDBClient{
 		done:    make(chan bool),
@@ -46,16 +46,16 @@ func (c *InfluxDBClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *InfluxDBClient) ReadConfig() {
 	if !dnsutils.IsValidTLS(o.config.Loggers.InfluxDB.TlsMinVersion) {
-		o.logger.Fatal("logger influxdb - invalid tls min version")
+		o.logger.Fatal("logger=influxdb - invalid tls min version")
 	}
 }
 
 func (o *InfluxDBClient) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger to influxdb - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger=influxdb - "+msg, v...)
 }
 
 func (o *InfluxDBClient) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger to influxdb - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger=influxdb - "+msg, v...)
 }
 
 func (o *InfluxDBClient) Channel() chan dnsutils.DnsMessage {

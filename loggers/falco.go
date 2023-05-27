@@ -22,7 +22,7 @@ type FalcoClient struct {
 }
 
 func NewFalcoClient(config *dnsutils.Config, console *logger.Logger, name string) *FalcoClient {
-	console.Info("[%s] logger falco - enabled", name)
+	console.Info("[%s] logger=falco - enabled", name)
 	f := &FalcoClient{
 		done:    make(chan bool),
 		cleanup: make(chan bool),
@@ -48,11 +48,11 @@ func (f *FalcoClient) Channel() chan dnsutils.DnsMessage {
 }
 
 func (c *FalcoClient) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger to falco - "+msg, v...)
+	c.logger.Info("["+c.name+"] logger=falco - "+msg, v...)
 }
 
 func (c *FalcoClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger to falco - "+msg, v...)
+	c.logger.Error("["+c.name+"] logger=falco - "+msg, v...)
 }
 
 func (f *FalcoClient) Stop() {
@@ -80,7 +80,6 @@ func (f *FalcoClient) Run() {
 		select {
 		case <-f.cleanup:
 			f.LogInfo("cleanup called")
-			//close(f.channel)
 
 			// cleanup transformers
 			subprocessors.Reset()

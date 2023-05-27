@@ -19,8 +19,9 @@ import (
 )
 
 type Dnstap struct {
-	done          chan bool
-	cleanup       chan bool
+	doneRun       chan bool
+	doneMonitor   chan bool
+	stopMonitor   chan bool
 	listen        net.Listener
 	conns         []net.Conn
 	sockPath      string
@@ -39,13 +40,14 @@ type Dnstap struct {
 func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *Dnstap {
 	logger.Info("[%s] collector=dnstap - enabled", name)
 	s := &Dnstap{
-		done:    make(chan bool),
-		cleanup: make(chan bool),
-		dropped: make(chan int),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+		doneRun:     make(chan bool),
+		doneMonitor: make(chan bool),
+		stopMonitor: make(chan bool),
+		dropped:     make(chan int),
+		config:      config,
+		loggers:     loggers,
+		logger:      logger,
+		name:        name,
 	}
 	s.ReadConfig()
 	return s
@@ -200,9 +202,8 @@ func (c *Dnstap) Stop() {
 	c.Lock()
 	defer c.Unlock()
 
-	c.LogInfo("stopping...")
-
 	// stop all powerdns processors
+	c.LogInfo("stopping processors...")
 	for _, tapProc := range c.tapProcessors {
 		tapProc.Stop()
 	}
@@ -217,9 +218,15 @@ func (c *Dnstap) Stop() {
 	c.LogInfo("stop listening...")
 	c.listen.Close()
 
+	// stop monitor goroutine
+	c.LogInfo("stopping monitor...")
+	c.stopMonitor <- true
+	<-c.doneMonitor
+
 	// read done channel and block until run is terminated
-	<-c.done
-	close(c.done)
+	c.LogInfo("stopping run...")
+	<-c.doneRun
+	close(c.doneRun)
 }
 
 func (c *Dnstap) Listen() error {
@@ -280,13 +287,16 @@ func (c *Dnstap) Listen() error {
 func (c *Dnstap) MonitorCollector() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
+MONITOR_LOOP:
 	for {
 		select {
 		case <-c.dropped:
 			c.droppedCount++
-		case <-c.cleanup:
-			c.LogInfo("cleanup called")
-			return
+		case <-c.stopMonitor:
+			close(c.dropped)
+			bufferFull.Stop()
+			c.doneMonitor <- true
+			break MONITOR_LOOP
 		case <-bufferFull.C:
 			if c.droppedCount > 0 {
 				c.LogError("recv buffer is full, %d packet(s) dropped", c.droppedCount)
@@ -295,6 +305,7 @@ func (c *Dnstap) MonitorCollector() {
 			bufferFull.Reset(watchInterval)
 		}
 	}
+	c.LogInfo("monitor terminated")
 }
 
 func (c *Dnstap) Run() {
@@ -335,5 +346,5 @@ func (c *Dnstap) Run() {
 	}
 
 	c.LogInfo("run terminated")
-	c.done <- true
+	c.doneRun <- true
 }

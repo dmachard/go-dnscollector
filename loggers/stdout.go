@@ -24,7 +24,7 @@ type StdOut struct {
 }
 
 func NewStdOut(config *dnsutils.Config, console *logger.Logger, name string) *StdOut {
-	console.Info("[%s] logger stdout - enabled", name)
+	console.Info("[%s] logger=stdout - enabled", name)
 	o := &StdOut{
 		done:    make(chan bool),
 		cleanup: make(chan bool),
@@ -51,11 +51,11 @@ func (c *StdOut) ReadConfig() {
 }
 
 func (c *StdOut) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger to stdout - "+msg, v...)
+	c.logger.Info("["+c.name+"] logger=stdout - "+msg, v...)
 }
 
 func (c *StdOut) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger to stdout - "+msg, v...)
+	c.logger.Error("["+c.name+"] logger=stdout - "+msg, v...)
 }
 
 func (o *StdOut) SetBuffer(b *bytes.Buffer) {

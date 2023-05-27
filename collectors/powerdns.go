@@ -17,7 +17,9 @@ import (
 )
 
 type ProtobufPowerDNS struct {
-	done           chan bool
+	doneRun        chan bool
+	doneMonitor    chan bool
+	stopMonitor    chan bool
 	cleanup        chan bool
 	listen         net.Listener
 	connId         int
@@ -35,13 +37,15 @@ type ProtobufPowerDNS struct {
 func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *ProtobufPowerDNS {
 	logger.Info("[%s] pdns collector - enabled", name)
 	s := &ProtobufPowerDNS{
-		done:    make(chan bool),
-		cleanup: make(chan bool),
-		dropped: make(chan int),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+		doneRun:     make(chan bool),
+		doneMonitor: make(chan bool),
+		stopMonitor: make(chan bool),
+		cleanup:     make(chan bool),
+		dropped:     make(chan int),
+		config:      config,
+		loggers:     loggers,
+		logger:      logger,
+		name:        name,
 	}
 	s.ReadConfig()
 	return s
@@ -169,6 +173,7 @@ func (c *ProtobufPowerDNS) Stop() {
 	c.LogInfo("stopping...")
 
 	// stop all powerdns processors
+	c.LogInfo("stopping processors...")
 	for _, pdnsProc := range c.pdnsProcessors {
 		pdnsProc.Stop()
 	}
@@ -185,9 +190,15 @@ func (c *ProtobufPowerDNS) Stop() {
 	c.LogInfo("stop listening...")
 	c.listen.Close()
 
+	// stop monitor goroutine
+	c.LogInfo("stopping monitor...")
+	c.stopMonitor <- true
+	<-c.doneMonitor
+
 	// read done channel and block until run is terminated
-	<-c.done
-	close(c.done)
+	c.LogInfo("stopping run...")
+	<-c.doneRun
+	close(c.doneRun)
 }
 
 func (c *ProtobufPowerDNS) Listen() error {
@@ -234,11 +245,14 @@ func (c *ProtobufPowerDNS) Listen() error {
 func (c *ProtobufPowerDNS) MonitorCollector() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
+MONITOR_LOOP:
 	for {
 		select {
-		case <-c.cleanup:
-			c.LogInfo("cleanup called")
-			return
+		case <-c.stopMonitor:
+			close(c.dropped)
+			bufferFull.Stop()
+			c.doneMonitor <- true
+			break MONITOR_LOOP
 		case <-c.dropped:
 			c.droppedCount++
 		case <-bufferFull.C:
@@ -249,6 +263,7 @@ func (c *ProtobufPowerDNS) MonitorCollector() {
 			bufferFull.Reset(watchInterval)
 		}
 	}
+	c.LogInfo("monitor terminated")
 }
 
 func (c *ProtobufPowerDNS) Run() {
@@ -290,5 +305,5 @@ func (c *ProtobufPowerDNS) Run() {
 	}
 
 	c.LogInfo("run terminated")
-	c.done <- true
+	c.doneRun <- true
 }

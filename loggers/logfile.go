@@ -64,7 +64,7 @@ type LogFile struct {
 }
 
 func NewLogFile(config *dnsutils.Config, logger *logger.Logger, name string) *LogFile {
-	logger.Info("[%s] logger file - enabled", name)
+	logger.Info("[%s] logger=file - enabled", name)
 	l := &LogFile{
 		done:    make(chan bool),
 		cleanup: make(chan bool),
@@ -77,7 +77,7 @@ func NewLogFile(config *dnsutils.Config, logger *logger.Logger, name string) *Lo
 	l.ReadConfig()
 
 	if err := l.OpenFile(); err != nil {
-		l.logger.Fatal("["+name+"] logger file - unable to open output file:", err)
+		l.logger.Fatal("["+name+"] logger=file - unable to open output file:", err)
 	}
 
 	return l
@@ -110,11 +110,11 @@ func (l *LogFile) ReadConfig() {
 }
 
 func (l *LogFile) LogInfo(msg string, v ...interface{}) {
-	l.logger.Info("["+l.name+"] logger file - "+msg, v...)
+	l.logger.Info("["+l.name+"] logger=file - "+msg, v...)
 }
 
 func (l *LogFile) LogError(msg string, v ...interface{}) {
-	l.logger.Error("["+l.name+"] logger file - "+msg, v...)
+	l.logger.Error("["+l.name+"] logger=file - "+msg, v...)
 }
 
 func (l *LogFile) Stop() {

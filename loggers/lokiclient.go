@@ -85,7 +85,7 @@ type LokiClient struct {
 }
 
 func NewLokiClient(config *dnsutils.Config, logger *logger.Logger, name string) *LokiClient {
-	logger.Info("[%s] logger loki - enabled", name)
+	logger.Info("[%s] logger=loki - enabled", name)
 
 	s := &LokiClient{
 		done:    make(chan bool),
@@ -108,7 +108,7 @@ func (c *LokiClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *LokiClient) ReadConfig() {
 	if !dnsutils.IsValidTLS(o.config.Loggers.LokiClient.TlsMinVersion) {
-		o.logger.Fatal("logger loki - invalid tls min version")
+		o.logger.Fatal("logger=loki - invalid tls min version")
 	}
 
 	if len(o.config.Loggers.LokiClient.TextFormat) > 0 {
@@ -154,11 +154,11 @@ func (o *LokiClient) ReadConfig() {
 }
 
 func (o *LokiClient) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger loki - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger=loki - "+msg, v...)
 }
 
 func (o *LokiClient) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger loki - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger=loki - "+msg, v...)
 }
 
 func (o *LokiClient) Channel() chan dnsutils.DnsMessage {

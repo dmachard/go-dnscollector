@@ -91,12 +91,22 @@ func (d *DnstapProcessor) ReadConfig() {
 }
 
 func (c *DnstapProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("[%s] processor=dnstap#%d - ", c.name, c.connId)
+	var log string
+	if c.connId == 0 {
+		log = fmt.Sprintf("[%s] processor=dnstap - ", c.name)
+	} else {
+		log = fmt.Sprintf("[%s] processor=dnstap#%d - ", c.name, c.connId)
+	}
 	c.logger.Info(log+msg, v...)
 }
 
 func (c *DnstapProcessor) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("[%s] processor=dnstap#%d - ", c.name, c.connId)
+	var log string
+	if c.connId == 0 {
+		log = fmt.Sprintf("[%s] processor=dnstap - ", c.name)
+	} else {
+		log = fmt.Sprintf("[%s] processor=dnstap#%d - ", c.name, c.connId)
+	}
 	c.logger.Error(log+msg, v...)
 }
 
@@ -117,14 +127,14 @@ func (d *DnstapProcessor) Stop() {
 func (d *DnstapProcessor) MonitorLoggers() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
-FOLLOW_LOOP:
+MONITOR_LOOP:
 	for {
 		select {
 		case <-d.stopMonitor:
 			close(d.dropped)
 			bufferFull.Stop()
 			d.doneMonitor <- true
-			break FOLLOW_LOOP
+			break MONITOR_LOOP
 
 		case loggerName := <-d.dropped:
 			if _, ok := d.droppedCount[loggerName]; !ok {

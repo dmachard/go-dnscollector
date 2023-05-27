@@ -68,7 +68,7 @@ type RestAPI struct {
 }
 
 func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, version string, name string) *RestAPI {
-	logger.Info("[%s] restapi - enabled", name)
+	logger.Info("[%s] logger=restapi - enabled", name)
 	o := &RestAPI{
 		done:     make(chan bool),
 		done_api: make(chan bool),
@@ -112,11 +112,11 @@ func (o *RestAPI) ReadConfig() {
 }
 
 func (o *RestAPI) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] rest api - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger=restapi - "+msg, v...)
 }
 
 func (o *RestAPI) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] rest api - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger=restapi - "+msg, v...)
 }
 
 func (o *RestAPI) Channel() chan dnsutils.DnsMessage {

@@ -26,7 +26,7 @@ type DnstapProxifier struct {
 }
 
 func NewDnstapProxifier(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *DnstapProxifier {
-	logger.Info("[%s] dnstap relay collector - enabled", name)
+	logger.Info("[%s] collector=dnstaprelay - enabled", name)
 	s := &DnstapProxifier{
 		done:    make(chan bool),
 		config:  config,
@@ -54,18 +54,18 @@ func (c *DnstapProxifier) Loggers() []chan dnsutils.DnsMessage {
 
 func (c *DnstapProxifier) ReadConfig() {
 	if !dnsutils.IsValidTLS(c.config.Collectors.DnstapProxifier.TlsMinVersion) {
-		c.logger.Fatal("collector dnstap relay - invalid tls min version")
+		c.logger.Fatal("collector=dnstaprelay - invalid tls min version")
 	}
 
 	c.sockPath = c.config.Collectors.DnstapProxifier.SockPath
 }
 
 func (c *DnstapProxifier) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] dnstap collector relay - "+msg, v...)
+	c.logger.Info("["+c.name+"] collector=dnstaprelay - "+msg, v...)
 }
 
 func (c *DnstapProxifier) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] dnstap collector relay - "+msg, v...)
+	c.logger.Error("["+c.name+"] collector=dnstaprelay - "+msg, v...)
 }
 
 func (c *DnstapProxifier) HandleFrame(recvFrom chan []byte, sendTo []chan dnsutils.DnsMessage) {

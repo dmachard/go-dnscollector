@@ -68,10 +68,30 @@ multiplexer:
     - name: tap
       dnstap:
         listen-ip: 0.0.0.0
+        listen-port: 6000
+      transforms:
+        normalize:
+          qname-lowercase: true
+    - name: pdns
+      powerdns:
+        listen-ip: 0.0.0.0
         listen-port: 6001
       transforms:
         normalize:
           qname-lowercase: true
+    - name: ingestor
+      file-ingestor:
+        # directory to watch for pcap files to ingest
+        watch-dir: /tmp
+        # watch the directory pcap file with *.pcap extension or dnstap stream with *.fstrm extension
+        # watch mode: pcap|dnstap
+        watch-mode: pcap
+        # filter only on source and destination port
+        pcap-dns-port: 53
+        # delete pcap file after ingest
+        delete-after: false
+        # Channel buffer size for incoming packets, number of packet before to drop it.
+        chan-buffer-size: 65535
 
   loggers:
     - name: console
@@ -79,7 +99,7 @@ multiplexer:
         mode: text
 
   routes:
-    - from: [ tap ]
+    - from: [ pdns, ingestor, tap ]
       to: [ console ]
 
 ################################################

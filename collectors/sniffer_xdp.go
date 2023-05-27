@@ -49,7 +49,7 @@ type XdpSniffer struct {
 }
 
 func NewXdpSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *XdpSniffer {
-	logger.Info("[%s] XDP collector - enabled", name)
+	logger.Info("[%s] collector=xdp - enabled", name)
 	s := &XdpSniffer{
 		done:    make(chan bool),
 		exit:    make(chan bool),
@@ -63,11 +63,11 @@ func NewXdpSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *l
 }
 
 func (c *XdpSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] XDP collector - "+msg, v...)
+	c.logger.Info("["+c.name+"] collector=xdp - "+msg, v...)
 }
 
 func (c *XdpSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] XDP collector - "+msg, v...)
+	c.logger.Error("["+c.name+"] collector=xdp - "+msg, v...)
 }
 
 func (c *XdpSniffer) GetName() string { return c.name }
@@ -224,7 +224,6 @@ func (c *XdpSniffer) Run() {
 	<-c.exit
 
 	// stop dns processor
-	close(dnsProcessor.GetChannel())
 	dnsProcessor.Stop()
 
 	c.LogInfo("run terminated")

@@ -30,7 +30,7 @@ type DnsProcessor struct {
 }
 
 func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) DnsProcessor {
-	logger.Info("[%s] [processor=dns] initialization...", name)
+	logger.Info("[%s] processor=dns - initialization...", name)
 	d := DnsProcessor{
 		doneMonitor:  make(chan bool),
 		doneRun:      make(chan bool),
@@ -52,11 +52,11 @@ func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string
 func (d *DnsProcessor) ReadConfig() {}
 
 func (c *DnsProcessor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] [processor=dns] "+msg, v...)
+	c.logger.Info("["+c.name+"] processor=dns - "+msg, v...)
 }
 
 func (c *DnsProcessor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] [processor=dns] "+msg, v...)
+	c.logger.Error("["+c.name+"] processor=dns - "+msg, v...)
 }
 
 func (d *DnsProcessor) GetChannel() chan dnsutils.DnsMessage {
@@ -70,11 +70,11 @@ func (d *DnsProcessor) GetChannelList() []chan dnsutils.DnsMessage {
 }
 
 func (d *DnsProcessor) Stop() {
-	d.LogInfo("stopping [goroutine=run]...")
+	d.LogInfo("stopping to process...")
 	d.stopRun <- true
 	<-d.doneRun
 
-	d.LogInfo("stopping [goroutine=following]...")
+	d.LogInfo("stopping to monitor loggers...")
 	d.stopMonitor <- true
 	<-d.doneMonitor
 }
@@ -110,7 +110,7 @@ FOLLOW_LOOP:
 
 		}
 	}
-	d.LogInfo("[goroutine=follow] terminated")
+	d.LogInfo("monitor terminated")
 }
 
 func (d *DnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
@@ -121,7 +121,7 @@ func (d *DnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersNam
 	go d.MonitorLoggers()
 
 	// read incoming dns message
-	d.LogInfo("running... waiting dns message")
+	d.LogInfo("waiting dns message to process...")
 RUN_LOOP:
 	for {
 		select {
@@ -195,5 +195,5 @@ RUN_LOOP:
 			}
 		}
 	}
-	d.LogInfo("[goroutine=run] terminated")
+	d.LogInfo("processing terminated")
 }

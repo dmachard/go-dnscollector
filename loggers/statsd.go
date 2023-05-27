@@ -55,7 +55,7 @@ type StatsdClient struct {
 }
 
 func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, version string, name string) *StatsdClient {
-	logger.Info("[%s] logger to statsd - enabled", name)
+	logger.Info("[%s] logger=statsd - enabled", name)
 
 	s := &StatsdClient{
 		done:    make(chan bool),
@@ -80,16 +80,16 @@ func (c *StatsdClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *StatsdClient) ReadConfig() {
 	if !dnsutils.IsValidTLS(o.config.Loggers.Statsd.TlsMinVersion) {
-		o.logger.Fatal("logger statd - invalid tls min version")
+		o.logger.Fatal("logger=statd - invalid tls min version")
 	}
 }
 
 func (o *StatsdClient) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger to statsd - "+msg, v...)
+	o.logger.Info("["+o.name+"] logger=statsd - "+msg, v...)
 }
 
 func (o *StatsdClient) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger to statsd - "+msg, v...)
+	o.logger.Error("["+o.name+"] logger=statsd - "+msg, v...)
 }
 
 func (o *StatsdClient) Channel() chan dnsutils.DnsMessage {

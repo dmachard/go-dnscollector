@@ -50,7 +50,7 @@ type FileIngestor struct {
 }
 
 func NewFileIngestor(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *FileIngestor {
-	logger.Info("[%s] file ingestor - enabled", name)
+	logger.Info("[%s] collector=fileingestor - enabled", name)
 	s := &FileIngestor{
 		done:          make(chan bool),
 		exit:          make(chan bool),
@@ -94,11 +94,11 @@ func (c *FileIngestor) ReadConfig() {
 }
 
 func (c *FileIngestor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] file ingestor - "+msg, v...)
+	c.logger.Info("["+c.name+"] collector=fileingestor - "+msg, v...)
 }
 
 func (c *FileIngestor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] file ingestor - "+msg, v...)
+	c.logger.Error("["+c.name+"] collector=fileingestor - "+msg, v...)
 }
 
 func (c *FileIngestor) Channel() chan dnsutils.DnsMessage {
@@ -441,10 +441,8 @@ func (c *FileIngestor) Run() {
 
 	<-c.exit
 
-	// stop dns processor
-	close(c.dnsProcessor.GetChannel())
+	// stop processors
 	c.dnsProcessor.Stop()
-	close(c.dnstapProcessor.GetChannel())
 	c.dnstapProcessor.Stop()
 
 	c.LogInfo("run terminated")
