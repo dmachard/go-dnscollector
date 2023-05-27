@@ -71,7 +71,7 @@ func (c *Dnstap) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 
 func (c *Dnstap) ReadConfig() {
 	if !dnsutils.IsValidTLS(c.config.Collectors.Dnstap.TlsMinVersion) {
-		c.logger.Fatal("collector dnstap - invalid tls min version")
+		c.logger.Fatal("collector=dnstap - invalid tls min version")
 	}
 
 	c.sockPath = c.config.Collectors.Dnstap.SockPath

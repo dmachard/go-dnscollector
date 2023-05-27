@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"strconv"
@@ -69,16 +70,26 @@ func (c *ProtobufPowerDNS) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 
 func (c *ProtobufPowerDNS) ReadConfig() {
 	if !dnsutils.IsValidTLS(c.config.Collectors.PowerDNS.TlsMinVersion) {
-		c.logger.Fatal("collector powerdns - invalid tls min version")
+		c.logger.Fatal("collector=powerdns - invalid tls min version")
 	}
 }
 
 func (c *ProtobufPowerDNS) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] pdns collector - "+msg, v...)
+	c.logger.Info("["+c.name+"] collector=powerdns - "+msg, v...)
 }
 
 func (c *ProtobufPowerDNS) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] pdns collector - "+msg, v...)
+	c.logger.Error("["+c.name+"] collector=powerdns - "+msg, v...)
+}
+
+func (c *ProtobufPowerDNS) LogConnInfo(connId int, msg string, v ...interface{}) {
+	prefix := fmt.Sprintf("[%s] collector=powerdns#%d - ", c.name, connId)
+	c.logger.Info(prefix+msg, v...)
+}
+
+func (c *ProtobufPowerDNS) LogConnError(connId int, msg string, v ...interface{}) {
+	prefix := fmt.Sprintf("[%s] collector=powerdns#%d - ", c.name, connId)
+	c.logger.Error(prefix+msg, v...)
 }
 
 func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
@@ -93,7 +104,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogInfo("[conn=#%d] new connection from %s", connId, peer)
+	c.LogConnInfo(connId, "new connection from %s", peer)
 
 	// start protobuf subprocessor
 	pdnsProc := NewPdnsProcessor(connId, c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
@@ -123,9 +134,9 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 			}
 
 			if connClosed {
-				c.LogInfo("[conn=#%d] connection closed with peer %s\n", connId, peer)
+				c.LogConnInfo(connId, "connection closed with peer %s", peer)
 			} else {
-				c.LogError("[conn=#%d] powerdns reader error: %s", connId, err)
+				c.LogConnError(connId, "powerdns reader error: %s", err)
 			}
 
 			// stop processor
@@ -159,7 +170,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	}
 	c.Unlock()
 
-	c.LogInfo("[conn=#%d] connection handler terminated", connId)
+	c.LogConnInfo(connId, "connection handler terminated")
 }
 
 func (c *ProtobufPowerDNS) Channel() chan dnsutils.DnsMessage {
