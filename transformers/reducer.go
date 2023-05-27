@@ -167,7 +167,7 @@ func (p *ReducerProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
 
 func (p *ReducerProcessor) RepetitiveTrafficDetector(dm *dnsutils.DnsMessage) int {
 	// compute the hash of the query
-	tags := []string{dm.DnsTap.Operation, dm.NetworkInfo.QueryIp, dm.DNS.Qname, dm.DNS.Qtype}
+	tags := []string{dm.DnsTap.Identity, dm.DnsTap.Operation, dm.NetworkInfo.QueryIp, dm.DNS.Qname, dm.DNS.Qtype}
 
 	hashfnv := fnv.New64a()
 	hashfnv.Write([]byte(strings.Join(tags[:], "+")))
