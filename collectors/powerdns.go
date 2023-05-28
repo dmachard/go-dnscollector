@@ -278,10 +278,12 @@ MONITOR_LOOP:
 }
 
 func (c *ProtobufPowerDNS) Run() {
+
 	c.LogInfo("starting collector...")
 	if c.listen == nil {
 		if err := c.Listen(); err != nil {
-			c.logger.Fatal("collector dnstap listening failed: ", err)
+			prefixlog := fmt.Sprintf("[%s] ", c.name)
+			c.logger.Fatal(prefixlog+"collector=powerdns listening failed: ", err)
 		}
 	}
 
@@ -310,7 +312,9 @@ func (c *ProtobufPowerDNS) Run() {
 				actual)
 		}
 
+		c.Lock()
 		c.conns = append(c.conns, conn)
+		c.Unlock()
 		go c.HandleConn(conn)
 
 	}

@@ -65,22 +65,42 @@ global:
 # of supported collectors, loggers and transformers
 multiplexer:
   collectors:
-    - name: tap
-      dnstap:
+    - name: pdns1
+      powerdns:
         listen-ip: 0.0.0.0
         listen-port: 6000
       transforms:
         normalize:
           qname-lowercase: true
-  
+    - name: pdns2
+      powerdns:
+        listen-ip: 0.0.0.0
+        listen-port: 6001
+      transforms:
+        normalize:
+          qname-lowercase: true
+
+
   loggers:
     - name: console
       stdout:
         mode: text
+    - name: file
+      logfile:
+        file-path:  /tmp/test.log
+        max-size: 100
+        max-files: 10
+        flush-interval: 10
+
+    - name: prom
+      prometheus:
+        listen-ip: 0.0.0.0
+        listen-port: 8081
+        basic-auth-enable: false
 
   routes:
-    - from: [ tap ]
-      to: [ console ]
+    - from: [ pdns1, pdns2 ]
+      to: [ prom ]
 
 ################################################
 # list of supported collectors

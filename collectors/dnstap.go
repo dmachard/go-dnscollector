@@ -312,7 +312,8 @@ func (c *Dnstap) Run() {
 	c.LogInfo("starting collector...")
 	if c.listen == nil {
 		if err := c.Listen(); err != nil {
-			c.logger.Fatal("collector dnstap listening failed: ", err)
+			prefixlog := fmt.Sprintf("[%s] ", c.name)
+			c.logger.Fatal(prefixlog+"collector=dnstap listening failed: ", err)
 		}
 	}
 
