@@ -1,7 +1,6 @@
 package collectors
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -11,20 +10,20 @@ import (
 )
 
 func TestPowerDNS_Processor(t *testing.T) {
-	logger := logger.New(true)
-	var o bytes.Buffer
-	logger.SetOutput(&o)
-
 	// init the dnstap consumer
-	consumer := NewPdnsProcessor(0, dnsutils.GetFakeConfig(), logger, "test", 512)
+	consumer := NewPdnsProcessor(0, dnsutils.GetFakeConfig(), logger.New(true), "test", 512)
 	chan_to := make(chan dnsutils.DnsMessage, 512)
 
 	// prepare dnstap
+	dnsQname := "test."
+	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
+
 	dm := &powerdns_protobuf.PBDNSMessage{}
 	dm.ServerIdentity = []byte("powerdnspb")
 	dm.Type = powerdns_protobuf.PBDNSMessage_DNSQueryType.Enum()
 	dm.SocketProtocol = powerdns_protobuf.PBDNSMessage_DNSCryptUDP.Enum()
 	dm.SocketFamily = powerdns_protobuf.PBDNSMessage_INET.Enum()
+	dm.Question = &dnsQuestion
 
 	data, _ := proto.Marshal(dm)
 

@@ -173,7 +173,7 @@ RUN_LOOP:
 		select {
 		case <-d.stopRun:
 			transforms.Reset()
-			close(d.recvFrom)
+			//close(d.recvFrom)
 			d.doneRun <- true
 			break RUN_LOOP
 

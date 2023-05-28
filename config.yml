@@ -72,7 +72,7 @@ multiplexer:
       transforms:
         normalize:
           qname-lowercase: true
-  
+
   loggers:
     - name: console
       stdout:

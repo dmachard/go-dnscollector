@@ -215,10 +215,6 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 			case <-time.After(10 * time.Second):
 				elapsed := time.Since(lastReceivedTime)
 				if elapsed >= 10*time.Second {
-					close(fragIp4Chan)
-					close(fragIp6Chan)
-					close(udpChan)
-					close(tcpChan)
 					close(dnsChan)
 				}
 			}
@@ -286,6 +282,12 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 		c.LogInfo("delete file [%s]", fileName)
 		os.Remove(filePath)
 	}
+
+	//close chan
+	close(fragIp4Chan)
+	close(fragIp6Chan)
+	close(udpChan)
+	close(tcpChan)
 
 	// remove event timer for this file
 	c.RemoveEvent(filePath)
