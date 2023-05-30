@@ -1,117 +1,277 @@
 # HELP dnscollector_build_info Build version
 # TYPE dnscollector_build_info gauge
 dnscollector_build_info{version="0.0.0"} 1
-# HELP dnscollector_domains_nx_uniq_total The total number of uniq unknown domains
-# TYPE dnscollector_domains_nx_uniq_total counter
-dnscollector_domains_nx_uniq_total 1
+# HELP dnscollector_bytes_total The total bytes received and sent
+# TYPE dnscollector_bytes_total counter
+dnscollector_bytes_total{stream_id="dnsdist_pdns2"} 5.6543221e+07
+dnscollector_bytes_total{stream_id="dnsdist_pdns3"} 5.7528599e+07
+dnscollector_bytes_total{stream_id="dnsdist_pdns4"} 5.7536258e+07
+dnscollector_bytes_total{stream_id="dnsdist_pdns1"} 5.7530809e+07
+# HELP dnscollector_dnsmessages_total Counter of DNS messages per stream
+# TYPE dnscollector_dnsmessages_total counter
+dnscollector_dnsmessages_total{stream_id="dnsdist_pdns2"} 550161
+dnscollector_dnsmessages_total{stream_id="dnsdist_pdns3"} 559725
+dnscollector_dnsmessages_total{stream_id="dnsdist_pdns4"} 559803
+dnscollector_dnsmessages_total{stream_id="dnsdist_pdns1"} 559749
 # HELP dnscollector_domains_total The total number of domains per stream identity
 # TYPE dnscollector_domains_total counter
-dnscollector_domains_total{stream_id="dnsdist1"} 1
-# HELP dnscollector_domains_uniq_total The total number of uniq domains
-# TYPE dnscollector_domains_uniq_total counter
-dnscollector_domains_uniq_total 1
+dnscollector_domains_total{stream_id="dnsdist_pdns2"} 99882
+dnscollector_domains_total{stream_id="dnsdist_pdns3"} 99882
+dnscollector_domains_total{stream_id="dnsdist_pdns4"} 99882
+dnscollector_domains_total{stream_id="dnsdist_pdns1"} 99882
+# HELP dnscollector_flag_aa_total Number of packet with flag AA
+# TYPE dnscollector_flag_aa_total counter
+dnscollector_flag_aa_total{stream_id="dnsdist_pdns2"} 0
+dnscollector_flag_aa_total{stream_id="dnsdist_pdns3"} 0
+dnscollector_flag_aa_total{stream_id="dnsdist_pdns4"} 0
+dnscollector_flag_aa_total{stream_id="dnsdist_pdns1"} 0
+# HELP dnscollector_flag_ad_total Number of packet with flag AD
+# TYPE dnscollector_flag_ad_total counter
+dnscollector_flag_ad_total{stream_id="dnsdist_pdns2"} 0
+dnscollector_flag_ad_total{stream_id="dnsdist_pdns3"} 0
+dnscollector_flag_ad_total{stream_id="dnsdist_pdns4"} 0
+dnscollector_flag_ad_total{stream_id="dnsdist_pdns1"} 0
+# HELP dnscollector_flag_fragmented_total Number of IP fragmented packets
+# TYPE dnscollector_flag_fragmented_total counter
+dnscollector_flag_fragmented_total{stream_id="dnsdist_pdns2"} 0
+dnscollector_flag_fragmented_total{stream_id="dnsdist_pdns3"} 0
+dnscollector_flag_fragmented_total{stream_id="dnsdist_pdns4"} 0
+dnscollector_flag_fragmented_total{stream_id="dnsdist_pdns1"} 0
+# HELP dnscollector_flag_malformed_total Number of malformed packets
+# TYPE dnscollector_flag_malformed_total counter
+dnscollector_flag_malformed_total{stream_id="dnsdist_pdns2"} 0
+dnscollector_flag_malformed_total{stream_id="dnsdist_pdns3"} 0
+dnscollector_flag_malformed_total{stream_id="dnsdist_pdns4"} 0
+dnscollector_flag_malformed_total{stream_id="dnsdist_pdns1"} 0
+# HELP dnscollector_flag_ra_total Number of packet with flag RA
+# TYPE dnscollector_flag_ra_total counter
+dnscollector_flag_ra_total{stream_id="dnsdist_pdns2"} 0
+dnscollector_flag_ra_total{stream_id="dnsdist_pdns3"} 0
+dnscollector_flag_ra_total{stream_id="dnsdist_pdns4"} 0
+dnscollector_flag_ra_total{stream_id="dnsdist_pdns1"} 0
+# HELP dnscollector_flag_reassembled_total Number of TCP reassembled packets
+# TYPE dnscollector_flag_reassembled_total counter
+dnscollector_flag_reassembled_total{stream_id="dnsdist_pdns2"} 0
+dnscollector_flag_reassembled_total{stream_id="dnsdist_pdns3"} 0
+dnscollector_flag_reassembled_total{stream_id="dnsdist_pdns4"} 0
+dnscollector_flag_reassembled_total{stream_id="dnsdist_pdns1"} 0
+# HELP dnscollector_flag_tc_total Number of packet with flag TC
+# TYPE dnscollector_flag_tc_total counter
+dnscollector_flag_tc_total{stream_id="dnsdist_pdns2"} 0
+dnscollector_flag_tc_total{stream_id="dnsdist_pdns3"} 0
+dnscollector_flag_tc_total{stream_id="dnsdist_pdns4"} 0
+dnscollector_flag_tc_total{stream_id="dnsdist_pdns1"} 0
+# HELP dnscollector_ipprotocol_total Counter of packets per IP protocol
+# TYPE dnscollector_ipprotocol_total counter
+dnscollector_ipprotocol_total{net_transport="UDP",stream_id="dnsdist_pdns2"} 550161
+dnscollector_ipprotocol_total{net_transport="UDP",stream_id="dnsdist_pdns3"} 559725
+dnscollector_ipprotocol_total{net_transport="UDP",stream_id="dnsdist_pdns4"} 559803
+dnscollector_ipprotocol_total{net_transport="UDP",stream_id="dnsdist_pdns1"} 559749
+# HELP dnscollector_ipversion_total Counter of packets per IP version
+# TYPE dnscollector_ipversion_total counter
+dnscollector_ipversion_total{net_family="IPv4",stream_id="dnsdist_pdns2"} 550161
+dnscollector_ipversion_total{net_family="IPv4",stream_id="dnsdist_pdns3"} 559725
+dnscollector_ipversion_total{net_family="IPv4",stream_id="dnsdist_pdns4"} 559803
+dnscollector_ipversion_total{net_family="IPv4",stream_id="dnsdist_pdns1"} 559749
 # HELP dnscollector_nxdomains_total The total number of unknown domains per stream identity
 # TYPE dnscollector_nxdomains_total counter
-dnscollector_nxdomains_total{stream_id="dnsdist-cache"} 1
-dnscollector_nxdomains_total{stream_id="dnsdist1"} 1
-# HELP dnscollector_packets_total Counter of packets
-# TYPE dnscollector_packets_total counter
-dnscollector_packets_total{flag_aa="false",flag_ad="false",flag_qr="REPLY",flag_ra="true",flag_tc="false",net_family="INET",net_transport="UDP",op_code="0",op_name="CLIENT_RESPONSE",pkt_err="false",query_type="A",return_code="NXDOMAIN",stream_id="dnsdist-cache", flag_df="false", flag_tr="false"} 2
-dnscollector_packets_total{flag_aa="false",flag_ad="false",flag_qr="REPLY",flag_ra="true",flag_tc="false",net_family="INET",net_transport="UDP",op_code="0",op_name="CLIENT_RESPONSE",pkt_err="false",query_type="A",return_code="NXDOMAIN",stream_id="dnsdist1", flag_df="false", flag_tr="false"} 2
-dnscollector_packets_total{flag_aa="false",flag_ad="true",flag_qr="QUERY",flag_ra="false",flag_tc="false",net_family="INET",net_transport="UDP",op_code="0",op_name="CLIENT_QUERY",pkt_err="false",query_type="A",return_code="NOERROR",stream_id="dnsdist1", flag_df="false", flag_tr="false"} 4
+dnscollector_nxdomains_total{stream_id="dnsdist_pdns2"} 0
+dnscollector_nxdomains_total{stream_id="dnsdist_pdns3"} 0
+dnscollector_nxdomains_total{stream_id="dnsdist_pdns4"} 0
+dnscollector_nxdomains_total{stream_id="dnsdist_pdns1"} 0
 # HELP dnscollector_qnames_size_bytes Size of the qname in bytes.
 # TYPE dnscollector_qnames_size_bytes histogram
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist-cache",le="10"} 0
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist-cache",le="20"} 0
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist-cache",le="40"} 2
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist-cache",le="60"} 2
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist-cache",le="100"} 2
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist-cache",le="+Inf"} 2
-dnscollector_qnames_size_bytes_sum{stream_id="dnsdist-cache"} 48
-dnscollector_qnames_size_bytes_count{stream_id="dnsdist-cache"} 2
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="10"} 0
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="20"} 0
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="40"} 6
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="60"} 6
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="100"} 6
-dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist1",le="+Inf"} 6
-dnscollector_qnames_size_bytes_sum{stream_id="dnsdist1"} 144
-dnscollector_qnames_size_bytes_count{stream_id="dnsdist1"} 6
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns2",le="10"} 0
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns2",le="20"} 34627
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns2",le="40"} 130990
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns2",le="60"} 226286
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns2",le="100"} 415397
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns2",le="+Inf"} 567359
+dnscollector_qnames_size_bytes_sum{stream_id="dnsdist_pdns2"} 4.1859514e+07
+dnscollector_qnames_size_bytes_count{stream_id="dnsdist_pdns2"} 567359
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns3",le="10"} 0
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns3",le="20"} 35212
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns3",le="40"} 133159
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns3",le="60"} 229987
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns3",le="100"} 422254
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns3",le="+Inf"} 576767
+dnscollector_qnames_size_bytes_sum{stream_id="dnsdist_pdns3"} 4.2556437e+07
+dnscollector_qnames_size_bytes_count{stream_id="dnsdist_pdns3"} 576767
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns4",le="10"} 0
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns4",le="20"} 35225
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns4",le="40"} 133229
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns4",le="60"} 230106
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns4",le="100"} 422452
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns4",le="+Inf"} 577028
+dnscollector_qnames_size_bytes_sum{stream_id="dnsdist_pdns4"} 4.2574976e+07
+dnscollector_qnames_size_bytes_count{stream_id="dnsdist_pdns4"} 577028
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns1",le="10"} 0
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns1",le="20"} 35244
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns1",le="40"} 133275
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns1",le="60"} 230183
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns1",le="100"} 422555
+dnscollector_qnames_size_bytes_bucket{stream_id="dnsdist_pdns1",le="+Inf"} 577183
+dnscollector_qnames_size_bytes_sum{stream_id="dnsdist_pdns1"} 4.2586089e+07
+dnscollector_qnames_size_bytes_count{stream_id="dnsdist_pdns1"} 577183
+# HELP dnscollector_qtypes_total Counter of queries per qtypes
+# TYPE dnscollector_qtypes_total counter
+dnscollector_qtypes_total{query_type="A",stream_id="dnsdist_pdns2"} 68593
+dnscollector_qtypes_total{query_type="A",stream_id="dnsdist_pdns3"} 69838
+dnscollector_qtypes_total{query_type="A",stream_id="dnsdist_pdns4"} 69843
+dnscollector_qtypes_total{query_type="A",stream_id="dnsdist_pdns1"} 69842
+dnscollector_qtypes_total{query_type="AAAA",stream_id="dnsdist_pdns2"} 137999
+dnscollector_qtypes_total{query_type="AAAA",stream_id="dnsdist_pdns3"} 140380
+dnscollector_qtypes_total{query_type="AAAA",stream_id="dnsdist_pdns4"} 140396
+dnscollector_qtypes_total{query_type="AAAA",stream_id="dnsdist_pdns1"} 140401
+dnscollector_qtypes_total{query_type="CNAME",stream_id="dnsdist_pdns2"} 68772
+dnscollector_qtypes_total{query_type="CNAME",stream_id="dnsdist_pdns3"} 70005
+dnscollector_qtypes_total{query_type="CNAME",stream_id="dnsdist_pdns4"} 70014
+dnscollector_qtypes_total{query_type="CNAME",stream_id="dnsdist_pdns1"} 70006
+dnscollector_qtypes_total{query_type="MX",stream_id="dnsdist_pdns2"} 68702
+dnscollector_qtypes_total{query_type="MX",stream_id="dnsdist_pdns3"} 69852
+dnscollector_qtypes_total{query_type="MX",stream_id="dnsdist_pdns4"} 69862
+dnscollector_qtypes_total{query_type="MX",stream_id="dnsdist_pdns1"} 69832
+dnscollector_qtypes_total{query_type="NS",stream_id="dnsdist_pdns2"} 68197
+dnscollector_qtypes_total{query_type="NS",stream_id="dnsdist_pdns3"} 69381
+dnscollector_qtypes_total{query_type="NS",stream_id="dnsdist_pdns4"} 69395
+dnscollector_qtypes_total{query_type="NS",stream_id="dnsdist_pdns1"} 69392
+dnscollector_qtypes_total{query_type="SOA",stream_id="dnsdist_pdns2"} 69745
+dnscollector_qtypes_total{query_type="SOA",stream_id="dnsdist_pdns3"} 70927
+dnscollector_qtypes_total{query_type="SOA",stream_id="dnsdist_pdns4"} 70940
+dnscollector_qtypes_total{query_type="SOA",stream_id="dnsdist_pdns1"} 70901
+dnscollector_qtypes_total{query_type="TXT",stream_id="dnsdist_pdns2"} 68153
+dnscollector_qtypes_total{query_type="TXT",stream_id="dnsdist_pdns3"} 69342
+dnscollector_qtypes_total{query_type="TXT",stream_id="dnsdist_pdns4"} 69353
+dnscollector_qtypes_total{query_type="TXT",stream_id="dnsdist_pdns1"} 69375
 # HELP dnscollector_queries_size_bytes Size of the queries in bytes.
 # TYPE dnscollector_queries_size_bytes histogram
-dnscollector_queries_size_bytes_bucket{stream_id="dnsdist1",le="50"} 0
-dnscollector_queries_size_bytes_bucket{stream_id="dnsdist1",le="100"} 4
-dnscollector_queries_size_bytes_bucket{stream_id="dnsdist1",le="250"} 4
-dnscollector_queries_size_bytes_bucket{stream_id="dnsdist1",le="500"} 4
-dnscollector_queries_size_bytes_bucket{stream_id="dnsdist1",le="+Inf"} 4
-dnscollector_queries_size_bytes_sum{stream_id="dnsdist1"} 260
-dnscollector_queries_size_bytes_count{stream_id="dnsdist1"} 4
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns2",le="50"} 38921
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns2",le="100"} 278538
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns2",le="250"} 567368
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns2",le="500"} 567368
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns2",le="+Inf"} 567368
+dnscollector_queries_size_bytes_sum{stream_id="dnsdist_pdns2"} 5.8313773e+07
+dnscollector_queries_size_bytes_count{stream_id="dnsdist_pdns2"} 567368
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns3",le="50"} 39573
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns3",le="100"} 283076
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns3",le="250"} 576775
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns3",le="500"} 576775
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns3",le="+Inf"} 576775
+dnscollector_queries_size_bytes_sum{stream_id="dnsdist_pdns3"} 5.9283485e+07
+dnscollector_queries_size_bytes_count{stream_id="dnsdist_pdns3"} 576775
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns4",le="50"} 39588
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns4",le="100"} 283216
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns4",le="250"} 577028
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns4",le="500"} 577028
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns4",le="+Inf"} 577028
+dnscollector_queries_size_bytes_sum{stream_id="dnsdist_pdns4"} 5.9308788e+07
+dnscollector_queries_size_bytes_count{stream_id="dnsdist_pdns4"} 577028
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns1",le="50"} 39608
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns1",le="100"} 283295
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns1",le="250"} 577192
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns1",le="500"} 577192
+dnscollector_queries_size_bytes_bucket{stream_id="dnsdist_pdns1",le="+Inf"} 577192
+dnscollector_queries_size_bytes_sum{stream_id="dnsdist_pdns1"} 5.9325498e+07
+dnscollector_queries_size_bytes_count{stream_id="dnsdist_pdns1"} 577192
+# HELP dnscollector_queries_total Counter of DNS queries per stream
+# TYPE dnscollector_queries_total counter
+dnscollector_queries_total{stream_id="dnsdist_pdns2"} 550161
+dnscollector_queries_total{stream_id="dnsdist_pdns3"} 559725
+dnscollector_queries_total{stream_id="dnsdist_pdns4"} 559803
+dnscollector_queries_total{stream_id="dnsdist_pdns1"} 559749
+# HELP dnscollector_rcodes_total Counter of replies per return codes
+# TYPE dnscollector_rcodes_total counter
+dnscollector_rcodes_total{return_code="-",stream_id="dnsdist_pdns2"} 550161
+dnscollector_rcodes_total{return_code="-",stream_id="dnsdist_pdns3"} 559725
+dnscollector_rcodes_total{return_code="-",stream_id="dnsdist_pdns4"} 559803
+dnscollector_rcodes_total{return_code="-",stream_id="dnsdist_pdns1"} 559749
 # HELP dnscollector_received_bytes_total The total bytes received
 # TYPE dnscollector_received_bytes_total counter
-dnscollector_received_bytes_total{stream_id="dnsdist1"} 260
-# HELP dnscollector_replies_size_bytes Size of the replies in bytes.
-# TYPE dnscollector_replies_size_bytes histogram
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist-cache",le="50"} 0
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist-cache",le="100"} 0
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist-cache",le="250"} 2
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist-cache",le="500"} 2
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist-cache",le="+Inf"} 2
-dnscollector_replies_size_bytes_sum{stream_id="dnsdist-cache"} 252
-dnscollector_replies_size_bytes_count{stream_id="dnsdist-cache"} 2
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist1",le="50"} 0
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist1",le="100"} 0
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist1",le="250"} 2
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist1",le="500"} 2
-dnscollector_replies_size_bytes_bucket{stream_id="dnsdist1",le="+Inf"} 2
-dnscollector_replies_size_bytes_sum{stream_id="dnsdist1"} 252
-dnscollector_replies_size_bytes_count{stream_id="dnsdist1"} 2
+dnscollector_received_bytes_total{stream_id="dnsdist_pdns2"} 5.6543221e+07
+dnscollector_received_bytes_total{stream_id="dnsdist_pdns3"} 5.7528599e+07
+dnscollector_received_bytes_total{stream_id="dnsdist_pdns4"} 5.7536258e+07
+dnscollector_received_bytes_total{stream_id="dnsdist_pdns1"} 5.7530809e+07
+# HELP dnscollector_replies_total Counter of DNS replies per stream
+# TYPE dnscollector_replies_total counter
+dnscollector_replies_total{stream_id="dnsdist_pdns2"} 0
+dnscollector_replies_total{stream_id="dnsdist_pdns3"} 0
+dnscollector_replies_total{stream_id="dnsdist_pdns4"} 0
+dnscollector_replies_total{stream_id="dnsdist_pdns1"} 0
 # HELP dnscollector_requesters_total The total number of DNS clients per stream identity
 # TYPE dnscollector_requesters_total counter
-dnscollector_requesters_total{stream_id="dnsdist-cache"} 1
-dnscollector_requesters_total{stream_id="dnsdist1"} 1
-# HELP dnscollector_requesters_uniq_total The total number of uniq DNS clients
-# TYPE dnscollector_requesters_uniq_total counter
-dnscollector_requesters_uniq_total 1
+dnscollector_requesters_total{stream_id="dnsdist_pdns2"} 1
+dnscollector_requesters_total{stream_id="dnsdist_pdns3"} 1
+dnscollector_requesters_total{stream_id="dnsdist_pdns4"} 1
+dnscollector_requesters_total{stream_id="dnsdist_pdns1"} 1
 # HELP dnscollector_sent_bytes_total The total bytes sent
 # TYPE dnscollector_sent_bytes_total counter
-dnscollector_sent_bytes_total{stream_id="dnsdist-cache"} 252
-dnscollector_sent_bytes_total{stream_id="dnsdist1"} 252
-# HELP dnscollector_throughput_ops Number of ops per second received, partitioned by qname
+dnscollector_sent_bytes_total{stream_id="dnsdist_pdns2"} 0
+dnscollector_sent_bytes_total{stream_id="dnsdist_pdns3"} 0
+dnscollector_sent_bytes_total{stream_id="dnsdist_pdns4"} 0
+dnscollector_sent_bytes_total{stream_id="dnsdist_pdns1"} 0
+# HELP dnscollector_sfdomains_total The total number of serverfail domains per stream identity
+# TYPE dnscollector_sfdomains_total counter
+dnscollector_sfdomains_total{stream_id="dnsdist_pdns2"} 0
+dnscollector_sfdomains_total{stream_id="dnsdist_pdns3"} 0
+dnscollector_sfdomains_total{stream_id="dnsdist_pdns4"} 0
+dnscollector_sfdomains_total{stream_id="dnsdist_pdns1"} 0
+# HELP dnscollector_throughput_ops Number of ops per second received, partitioned by stream
 # TYPE dnscollector_throughput_ops gauge
-dnscollector_throughput_ops{stream_id="dnsdist-cache"} 0
-dnscollector_throughput_ops{stream_id="dnsdist1"} 2
-# HELP dnscollector_throughput_ops_max Max number of ops per second observed, partitioned by qname
+dnscollector_throughput_ops{stream_id="dnsdist_pdns2"} 21731
+dnscollector_throughput_ops{stream_id="dnsdist_pdns3"} 21747
+dnscollector_throughput_ops{stream_id="dnsdist_pdns4"} 21704
+dnscollector_throughput_ops{stream_id="dnsdist_pdns1"} 21589
+# HELP dnscollector_throughput_ops_max Max number of ops per second observed, partitioned by stream
 # TYPE dnscollector_throughput_ops_max gauge
-dnscollector_throughput_ops_max{stream_id="dnsdist-cache"} 0
-dnscollector_throughput_ops_max{stream_id="dnsdist1"} 2
-# HELP dnscollector_tlds_total The total number of tld per stream identity
-# TYPE dnscollector_tlds_total counter
-dnscollector_tlds_total{stream_id="dnsdist-cache"} 2
-dnscollector_tlds_total{stream_id="dnsdist1"} 6
-# HELP dnscollector_tlds_uniq_total The total number of uniq TLD
-# TYPE dnscollector_tlds_uniq_total counter
-dnscollector_tlds_uniq_total 1
+dnscollector_throughput_ops_max{stream_id="dnsdist_pdns2"} 25554
+dnscollector_throughput_ops_max{stream_id="dnsdist_pdns3"} 25540
+dnscollector_throughput_ops_max{stream_id="dnsdist_pdns4"} 25351
+dnscollector_throughput_ops_max{stream_id="dnsdist_pdns1"} 25531
 # HELP dnscollector_top_domains Number of hit per domain topN, partitioned by qname
 # TYPE dnscollector_top_domains gauge
-dnscollector_top_domains{domain="aabbccddeeffgghhiijj.com",stream_id="dnsdist1"} 4
-# HELP dnscollector_top_nxdomains Number of hit per nx domain topN, partitioned by qname
-# TYPE dnscollector_top_nxdomains gauge
-dnscollector_top_nxdomains{domain="aabbccddeeffgghhiijj.com",stream_id="dnsdist-cache"} 2
-dnscollector_top_nxdomains{domain="aabbccddeeffgghhiijj.com",stream_id="dnsdist1"} 2
+dnscollector_top_domains{domain="35.test.com",stream_id="dnsdist_pdns2"} 17
+dnscollector_top_domains{domain="35.test.com",stream_id="dnsdist_pdns3"} 17
+dnscollector_top_domains{domain="am.test.com",stream_id="dnsdist_pdns2"} 17
+dnscollector_top_domains{domain="am.test.com",stream_id="dnsdist_pdns3"} 18
+dnscollector_top_domains{domain="am.test.com",stream_id="dnsdist_pdns4"} 18
+dnscollector_top_domains{domain="am.test.com",stream_id="dnsdist_pdns1"} 18
+dnscollector_top_domains{domain="fj.test.com",stream_id="dnsdist_pdns2"} 18
+dnscollector_top_domains{domain="fj.test.com",stream_id="dnsdist_pdns3"} 18
+dnscollector_top_domains{domain="fj.test.com",stream_id="dnsdist_pdns4"} 18
+dnscollector_top_domains{domain="fj.test.com",stream_id="dnsdist_pdns1"} 18
+dnscollector_top_domains{domain="fl.test.com",stream_id="dnsdist_pdns2"} 19
+dnscollector_top_domains{domain="fl.test.com",stream_id="dnsdist_pdns3"} 19
+dnscollector_top_domains{domain="fl.test.com",stream_id="dnsdist_pdns4"} 19
+dnscollector_top_domains{domain="fl.test.com",stream_id="dnsdist_pdns1"} 19
+dnscollector_top_domains{domain="ir.test.com",stream_id="dnsdist_pdns2"} 24
+dnscollector_top_domains{domain="ir.test.com",stream_id="dnsdist_pdns3"} 24
+dnscollector_top_domains{domain="ir.test.com",stream_id="dnsdist_pdns4"} 24
+dnscollector_top_domains{domain="ir.test.com",stream_id="dnsdist_pdns1"} 24
+dnscollector_top_domains{domain="ix.test.com",stream_id="dnsdist_pdns2"} 18
+dnscollector_top_domains{domain="ix.test.com",stream_id="dnsdist_pdns3"} 18
+dnscollector_top_domains{domain="ix.test.com",stream_id="dnsdist_pdns4"} 18
+dnscollector_top_domains{domain="ix.test.com",stream_id="dnsdist_pdns1"} 18
+dnscollector_top_domains{domain="m4.test.com",stream_id="dnsdist_pdns2"} 17
+dnscollector_top_domains{domain="m4.test.com",stream_id="dnsdist_pdns4"} 17
+dnscollector_top_domains{domain="m4.test.com",stream_id="dnsdist_pdns1"} 17
+dnscollector_top_domains{domain="pc.test.com",stream_id="dnsdist_pdns3"} 17
+dnscollector_top_domains{domain="pc.test.com",stream_id="dnsdist_pdns4"} 17
+dnscollector_top_domains{domain="pc.test.com",stream_id="dnsdist_pdns1"} 17
+dnscollector_top_domains{domain="qo.test.com",stream_id="dnsdist_pdns2"} 22
+dnscollector_top_domains{domain="qo.test.com",stream_id="dnsdist_pdns3"} 22
+dnscollector_top_domains{domain="qo.test.com",stream_id="dnsdist_pdns4"} 22
+dnscollector_top_domains{domain="qo.test.com",stream_id="dnsdist_pdns1"} 22
+dnscollector_top_domains{domain="rc.test.com",stream_id="dnsdist_pdns2"} 17
+dnscollector_top_domains{domain="rc.test.com",stream_id="dnsdist_pdns3"} 17
+dnscollector_top_domains{domain="rc.test.com",stream_id="dnsdist_pdns4"} 17
+dnscollector_top_domains{domain="rc.test.com",stream_id="dnsdist_pdns1"} 17
+dnscollector_top_domains{domain="ws.test.com",stream_id="dnsdist_pdns2"} 20
+dnscollector_top_domains{domain="ws.test.com",stream_id="dnsdist_pdns3"} 20
+dnscollector_top_domains{domain="ws.test.com",stream_id="dnsdist_pdns4"} 20
+dnscollector_top_domains{domain="ws.test.com",stream_id="dnsdist_pdns1"} 20
 # HELP dnscollector_top_requesters Number of hit per requester topN, partitioned by client IP
 # TYPE dnscollector_top_requesters gauge
-dnscollector_top_requesters{ip="127.0.0.1",stream_id="dnsdist-cache"} 2
-dnscollector_top_requesters{ip="127.0.0.1",stream_id="dnsdist1"} 6
-# HELP dnscollector_top_tlds Number of hit per tld - topN
-# TYPE dnscollector_top_tlds gauge
-dnscollector_top_tlds{domain="com",stream_id="dnsdist-cache"} 0
-dnscollector_top_tlds{domain="com",stream_id="dnsdist1"} 0
-# HELP dnscollector_top_unanswered Number of hit per unanswered domain - topN
-# TYPE dnscollector_top_unanswered gauge
-dnscollector_top_unanswered{domain="test",stream_id="dns-collector"} 3
-# HELP dnscollector_unanswered_total The total number of unanswered domains per stream identity
-# TYPE dnscollector_unanswered_total counter
-dnscollector_unanswered_total{stream_id="dns-collector"} 1
-# HELP dnscollector_unanswered_uniq_total The total number of uniq unanswered domain
-# TYPE dnscollector_unanswered_uniq_total counter
-dnscollector_unanswered_uniq_total 1
+dnscollector_top_requesters{ip="172.17.0.3",stream_id="dnsdist_pdns2"} 550161
+dnscollector_top_requesters{ip="172.17.0.3",stream_id="dnsdist_pdns3"} 559725
+dnscollector_top_requesters{ip="172.17.0.3",stream_id="dnsdist_pdns4"} 559803
+dnscollector_top_requesters{ip="172.17.0.3",stream_id="dnsdist_pdns1"} 559749

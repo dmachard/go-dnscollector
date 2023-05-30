@@ -126,6 +126,11 @@ type Prometheus struct {
 	totalReceivedBytes *prometheus.CounterVec
 	totalSentBytes     *prometheus.CounterVec
 
+	histogramQueriesLength *prometheus.HistogramVec
+	histogramRepliesLength *prometheus.HistogramVec
+	histogramQnamesLength  *prometheus.HistogramVec
+	histogramLatencies     *prometheus.HistogramVec
+
 	name string
 }
 
@@ -531,6 +536,46 @@ func (o *Prometheus) InitProm() {
 		[]string{"stream_id"},
 	)
 	o.promRegistry.MustRegister(o.counterFlagsReassembled)
+
+	o.histogramQueriesLength = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    fmt.Sprintf("%s_queries_size_bytes", prom_prefix),
+			Help:    "Size of the queries in bytes.",
+			Buckets: []float64{50, 100, 250, 500},
+		},
+		[]string{"stream_id"},
+	)
+	o.promRegistry.MustRegister(o.histogramQueriesLength)
+
+	o.histogramRepliesLength = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    fmt.Sprintf("%s_replies_size_bytes", prom_prefix),
+			Help:    "Size of the replies in bytes.",
+			Buckets: []float64{50, 100, 250, 500},
+		},
+		[]string{"stream_id"},
+	)
+	o.promRegistry.MustRegister(o.histogramRepliesLength)
+
+	o.histogramQnamesLength = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    fmt.Sprintf("%s_qnames_size_bytes", prom_prefix),
+			Help:    "Size of the qname in bytes.",
+			Buckets: []float64{10, 20, 40, 60, 100},
+		},
+		[]string{"stream_id"},
+	)
+	o.promRegistry.MustRegister(o.histogramQnamesLength)
+
+	o.histogramLatencies = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    fmt.Sprintf("%s_latencies", prom_prefix),
+			Help:    "Latency between query and reply",
+			Buckets: []float64{0.001, 0.010, 0.050, 0.100, 0.5, 1.0},
+		},
+		[]string{"stream_id"},
+	)
+	o.promRegistry.MustRegister(o.histogramLatencies)
 }
 
 func (o *Prometheus) ReadConfig() {
@@ -768,6 +813,22 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 			o.topSuspicious[dm.DnsTap.Identity].Record(dm.DNS.Qname, o.domains[dm.DnsTap.Identity][dm.DNS.Qname])
 
 		}
+	}
+
+	// compute histograms, no more enabled by default to avoid to hurt performance.
+	if o.config.Loggers.Prometheus.HistogramMetricsEnabled {
+		o.histogramQnamesLength.WithLabelValues(dm.DnsTap.Identity).Observe(float64(len(dm.DNS.Qname)))
+
+		if dm.DnsTap.Latency > 0.0 {
+			o.histogramLatencies.WithLabelValues(dm.DnsTap.Identity).Observe(dm.DnsTap.Latency)
+		}
+
+		if dm.DNS.Type == dnsutils.DnsQuery {
+			o.histogramQueriesLength.WithLabelValues(dm.DnsTap.Identity).Observe(float64(dm.DNS.Length))
+		} else {
+			o.histogramRepliesLength.WithLabelValues(dm.DnsTap.Identity).Observe(float64(dm.DNS.Length))
+		}
+
 	}
 }
 
