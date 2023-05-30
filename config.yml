@@ -268,6 +268,8 @@ multiplexer:
 #   top-n: 10
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
+#   # compute histogram for qnames length, latencies, queries and replies size repartition
+#   histogram-metrics-enabled: false
 
 # # write captured dns traffic to text or binary files with rotation and compression support
 # logfile:

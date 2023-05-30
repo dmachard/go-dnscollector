@@ -31,30 +31,30 @@ dnscollector_flag_ad_total{stream_id="dnsdist_pdns2"} 0
 dnscollector_flag_ad_total{stream_id="dnsdist_pdns3"} 0
 dnscollector_flag_ad_total{stream_id="dnsdist_pdns4"} 0
 dnscollector_flag_ad_total{stream_id="dnsdist_pdns1"} 0
-# HELP dnscollector_flag_fragmented_total Number of IP fragmented packets
-# TYPE dnscollector_flag_fragmented_total counter
-dnscollector_flag_fragmented_total{stream_id="dnsdist_pdns2"} 0
-dnscollector_flag_fragmented_total{stream_id="dnsdist_pdns3"} 0
-dnscollector_flag_fragmented_total{stream_id="dnsdist_pdns4"} 0
-dnscollector_flag_fragmented_total{stream_id="dnsdist_pdns1"} 0
-# HELP dnscollector_flag_malformed_total Number of malformed packets
-# TYPE dnscollector_flag_malformed_total counter
-dnscollector_flag_malformed_total{stream_id="dnsdist_pdns2"} 0
-dnscollector_flag_malformed_total{stream_id="dnsdist_pdns3"} 0
-dnscollector_flag_malformed_total{stream_id="dnsdist_pdns4"} 0
-dnscollector_flag_malformed_total{stream_id="dnsdist_pdns1"} 0
+# HELP dnscollector_fragmented_total Number of IP fragmented packets
+# TYPE dnscollector_fragmented_total counter
+dnscollector_fragmented_total{stream_id="dnsdist_pdns2"} 0
+dnscollector_fragmented_total{stream_id="dnsdist_pdns3"} 0
+dnscollector_fragmented_total{stream_id="dnsdist_pdns4"} 0
+dnscollector_fragmented_total{stream_id="dnsdist_pdns1"} 0
+# HELP dnscollector_malformed_total Number of malformed packets
+# TYPE dnscollector_malformed_total counter
+dnscollector_malformed_total{stream_id="dnsdist_pdns2"} 0
+dnscollector_malformed_total{stream_id="dnsdist_pdns3"} 0
+dnscollector_malformed_total{stream_id="dnsdist_pdns4"} 0
+dnscollector_malformed_total{stream_id="dnsdist_pdns1"} 0
 # HELP dnscollector_flag_ra_total Number of packet with flag RA
 # TYPE dnscollector_flag_ra_total counter
 dnscollector_flag_ra_total{stream_id="dnsdist_pdns2"} 0
 dnscollector_flag_ra_total{stream_id="dnsdist_pdns3"} 0
 dnscollector_flag_ra_total{stream_id="dnsdist_pdns4"} 0
 dnscollector_flag_ra_total{stream_id="dnsdist_pdns1"} 0
-# HELP dnscollector_flag_reassembled_total Number of TCP reassembled packets
-# TYPE dnscollector_flag_reassembled_total counter
-dnscollector_flag_reassembled_total{stream_id="dnsdist_pdns2"} 0
-dnscollector_flag_reassembled_total{stream_id="dnsdist_pdns3"} 0
-dnscollector_flag_reassembled_total{stream_id="dnsdist_pdns4"} 0
-dnscollector_flag_reassembled_total{stream_id="dnsdist_pdns1"} 0
+# HELP dnscollector_reassembled_total Number of TCP reassembled packets
+# TYPE dnscollector_reassembled_total counter
+dnscollector_reassembled_total{stream_id="dnsdist_pdns2"} 0
+dnscollector_reassembled_total{stream_id="dnsdist_pdns3"} 0
+dnscollector_reassembled_total{stream_id="dnsdist_pdns4"} 0
+dnscollector_reassembled_total{stream_id="dnsdist_pdns1"} 0
 # HELP dnscollector_flag_tc_total Number of packet with flag TC
 # TYPE dnscollector_flag_tc_total counter
 dnscollector_flag_tc_total{stream_id="dnsdist_pdns2"} 0

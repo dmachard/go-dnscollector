@@ -512,7 +512,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterFlagsMalformed = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_flag_malformed_total", prom_prefix),
+			Name: fmt.Sprintf("%s_malformed_total", prom_prefix),
 			Help: "Number of malformed packets",
 		},
 		[]string{"stream_id"},
@@ -521,7 +521,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterFlagsFragmented = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_flag_fragmented_total", prom_prefix),
+			Name: fmt.Sprintf("%s_fragmented_total", prom_prefix),
 			Help: "Number of IP fragmented packets",
 		},
 		[]string{"stream_id"},
@@ -530,7 +530,7 @@ func (o *Prometheus) InitProm() {
 
 	o.counterFlagsReassembled = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_flag_reassembled_total", prom_prefix),
+			Name: fmt.Sprintf("%s_reassembled_total", prom_prefix),
 			Help: "Number of TCP reassembled packets",
 		},
 		[]string{"stream_id"},
