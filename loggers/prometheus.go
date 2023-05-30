@@ -823,6 +823,14 @@ func (o *Prometheus) ComputeMetrics() {
 		o.counterDomains.DeleteLabelValues(stream)
 		o.counterDomains.WithLabelValues(stream).Add(float64(len(o.domains[stream])))
 
+		// Count NX domains
+		o.counterDomainsNx.DeleteLabelValues(stream)
+		o.counterDomainsNx.WithLabelValues(stream).Add(float64(len(o.nxdomains[stream])))
+
+		// Count SERVFAIL domains
+		o.counterDomainsSf.DeleteLabelValues(stream)
+		o.counterDomainsSf.WithLabelValues(stream).Add(float64(len(o.sfdomains[stream])))
+
 		// Update IP version counter
 		for k, v := range o.streamsMap[stream].TotalIPVersion {
 			o.counterIPVersion.DeleteLabelValues(stream, k)
