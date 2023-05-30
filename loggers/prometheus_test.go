@@ -95,7 +95,7 @@ func TestPrometheus_GetMetrics(t *testing.T) {
 			name:       "total nxdomain",
 			method:     http.MethodGet,
 			handler:    g.httpServer.Handler.ServeHTTP,
-			want:       config.Loggers.Prometheus.PromPrefix + `_nxdomains_tota{stream_id="collector"} 1`,
+			want:       config.Loggers.Prometheus.PromPrefix + `_nxdomains_total{stream_id="collector"} 1`,
 			statusCode: http.StatusOK,
 		},
 		{
