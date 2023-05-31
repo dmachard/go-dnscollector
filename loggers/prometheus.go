@@ -57,12 +57,15 @@ type EpsCounters struct {
 }
 
 type Prometheus struct {
-	done         chan bool
-	done_api     chan bool
-	cleanup      chan bool
+	doneApi      chan bool
+	stopProcess  chan bool
+	doneProcess  chan bool
+	stopRun      chan bool
+	doneRun      chan bool
 	httpServer   *http.Server
 	netListener  net.Listener
-	channel      chan dnsutils.DnsMessage
+	inputChan    chan dnsutils.DnsMessage
+	outputChan   chan dnsutils.DnsMessage
 	config       *dnsutils.Config
 	logger       *logger.Logger
 	promRegistry *prometheus.Registry
@@ -137,11 +140,14 @@ type Prometheus struct {
 func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version string, name string) *Prometheus {
 	logger.Info("[%s] logger=prometheus - enabled", name)
 	o := &Prometheus{
-		done:         make(chan bool),
-		done_api:     make(chan bool),
-		cleanup:      make(chan bool),
+		doneApi:      make(chan bool),
+		stopProcess:  make(chan bool),
+		doneProcess:  make(chan bool),
+		stopRun:      make(chan bool),
+		doneRun:      make(chan bool),
 		config:       config,
-		channel:      make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
+		inputChan:    make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
+		outputChan:   make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
 		logger:       logger,
 		version:      version,
 		promRegistry: prometheus.NewRegistry(),
@@ -593,24 +599,21 @@ func (o *Prometheus) LogError(msg string, v ...interface{}) {
 }
 
 func (o *Prometheus) Channel() chan dnsutils.DnsMessage {
-	return o.channel
+	return o.inputChan
 }
 
 func (o *Prometheus) Stop() {
-	o.LogInfo("stopping...")
+	o.LogInfo("stopping to run...")
+	o.stopRun <- true
+	<-o.doneRun
 
-	// close output channel
-	o.cleanup <- true
+	o.LogInfo("stopping to process...")
+	o.stopProcess <- true
+	<-o.doneProcess
 
-	// block and wait until http api is terminated
-	<-o.done_api
-	o.LogInfo("listen terminated")
-	close(o.done_api)
-
-	// read done channel and block until run is terminated
-	<-o.done
-	o.LogInfo("run terminated")
-	close(o.done)
+	o.LogInfo("stopping http server...")
+	o.netListener.Close()
+	<-o.doneApi
 }
 
 func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
@@ -987,11 +990,10 @@ func (o *Prometheus) ComputeMetrics() {
 			o.gaugeTopSuspicious.WithLabelValues(s, r.Name).Set(float64(r.Hit))
 		}
 	}
-
 }
 
 func (s *Prometheus) ListenAndServe() {
-	s.LogInfo("starting prometheus metrics...")
+	s.LogInfo("starting http server...")
 
 	var err error
 	var listener net.Listener
@@ -1046,8 +1048,8 @@ func (s *Prometheus) ListenAndServe() {
 
 	s.httpServer.Serve(s.netListener)
 
-	s.LogInfo("terminated")
-	s.done_api <- true
+	s.doneApi <- true
+	s.LogInfo("http server terminated")
 }
 
 func (s *Prometheus) Run() {
@@ -1055,41 +1057,60 @@ func (s *Prometheus) Run() {
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, s.channel)
+	listChannel = append(listChannel, s.outputChan)
 	subprocessors := transformers.NewTransforms(&s.config.OutgoingTransformers, s.logger, s.name, listChannel, 0)
 
 	// start http server
 	go s.ListenAndServe()
 
-	// init timer to compute qps
-	t1_interval := 1 * time.Second
-	t1 := time.NewTimer(t1_interval)
+	// goroutine to process transformed dns messages
+	go s.Process()
 
+	// loop to process incoming messages
+RUN_LOOP:
 	for {
 		select {
-		case <-s.cleanup:
-			s.LogInfo("cleanup called")
-
-			// stopping http server
-			s.netListener.Close()
-
+		case <-s.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
-
-			// the job is done
-			s.done <- true
-			return
-		case dm, opened := <-s.channel:
+			s.doneRun <- true
+			break RUN_LOOP
+		case dm, opened := <-s.inputChan:
 			if !opened {
-				s.LogInfo("channel closed, cleanup...")
-				s.cleanup <- true
-				continue
+				s.LogInfo("input channel closed!")
+				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDnsMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 				continue
+			}
+
+			// send to output channel
+			s.outputChan <- dm
+		}
+	}
+	s.LogInfo("run terminated")
+}
+
+func (s *Prometheus) Process() {
+	s.LogInfo("processing...")
+
+	// init timer to compute qps
+	t1_interval := 1 * time.Second
+	t1 := time.NewTimer(t1_interval)
+
+PROCESS_LOOP:
+	for {
+		select {
+		case <-s.stopProcess:
+			s.doneProcess <- true
+			break PROCESS_LOOP
+		case dm, opened := <-s.outputChan:
+			if !opened {
+				s.LogInfo("output channel closed!")
+				return
 			}
 
 			// record the dnstap message
@@ -1102,7 +1123,6 @@ func (s *Prometheus) Run() {
 			// reset the timer
 			t1.Reset(t1_interval)
 		}
-
 	}
-
+	s.LogInfo("processing terminated")
 }
