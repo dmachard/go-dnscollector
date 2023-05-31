@@ -1040,7 +1040,7 @@ func (s *Prometheus) ListenAndServe() {
 
 	// something wrong ?
 	if err != nil {
-		s.logger.Fatal("listening failed:", err)
+		s.logger.Fatal("http server listening failed:", err)
 	}
 
 	s.netListener = listener
@@ -1048,8 +1048,8 @@ func (s *Prometheus) ListenAndServe() {
 
 	s.httpServer.Serve(s.netListener)
 
-	s.doneApi <- true
 	s.LogInfo("http server terminated")
+	s.doneApi <- true
 }
 
 func (s *Prometheus) Run() {
