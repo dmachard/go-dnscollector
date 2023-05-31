@@ -85,21 +85,11 @@ The full metrics can be found [here](metrics.txt).
 | dnscollector_queries_size_bytes_bucket          | Histogram of the size of the queries in bytes.
 | dnscollector_replies_size_bytes_bucket          | Histogram of the size of the replies in bytes.
 
-## Grafana Dashboards
+## Grafana dashboard with prometheus datasource
 
-Build-in dashboard are available with multiple data source
-
-- [Prometheus](https://grafana.com/grafana/dashboards/16630)
-- [Loki](https://grafana.com/grafana/dashboards/15415)
-
-Activate the **[Prometheus](https://github.com/dmachard/go-dns-collector/blob/main/doc/loggers.md#prometheus)** logger to use this dashboard
+The following [build-in](https://grafana.com/grafana/dashboards/16630) dashboard is available
 
 <p align="center">
   <img src="dashboard_prometheus.png" alt="dnscollector"/>
 </p>
 
-## Loki Dashboard
-
-<p align="center">
-  <img src="dashboard_loki.png" alt="dnscollector"/>
-</p>

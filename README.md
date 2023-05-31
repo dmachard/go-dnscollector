@@ -36,7 +36,7 @@ Additionally, DNS-collector also support
     - [`Stdout`](doc/logger_stdout.md) console with custom [directives](doc/configuration.md#custom-text-format)
     - [`File`](doc/logger_file.md) with automatic rotation and compression
 - *Provide metrics and API*
-    - [`Prometheus`](doc/logger_prometheus.md) metrics and visualize-it with built-in [dashboards](doc/logger_prometheus.md#grafana-dashboards) for Grafana
+    - [`Prometheus`](doc/logger_prometheus.md) metrics and visualize-it with built-in Grafana dashboard
     - [`Statsd`](doc/logger_statsd.md) support
     - [`REST API`](doc/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) to search DNS domains
 - *Send to remote host with generic transport protocol*
@@ -46,7 +46,7 @@ Additionally, DNS-collector also support
 - *Send to various sinks*
     - [`Fluentd`](doc/logger_fluentd.md)
     - [`InfluxDB`](doc/logger_influxdb.md)
-    - [`Loki`](doc/logger_loki.md)
+    - [`Loki`](doc/logger_loki.md) and visualize-it with built-in Grafana dashboard
     - [`ElasticSearch`](doc/logger_elasticsearch.md)
     - [`Scalyr`](doc/logger_scalyr.md)
     - [`Redis`](doc/logger_redis.md)
