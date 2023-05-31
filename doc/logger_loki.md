@@ -42,3 +42,11 @@ lokiclient:
   relabel-configs: []
   chan-buffer-size: 65535
 ```
+
+## Grafana dashboard with Loki datasource
+
+The following [build-in](https://grafana.com/grafana/dashboards/15415) dashboard is available
+
+<p align="center">
+  <img src="dashboard_loki.png" alt="dnscollector"/>
+</p>

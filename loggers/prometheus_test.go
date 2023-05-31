@@ -57,10 +57,21 @@ func TestPrometheus_GetMetrics(t *testing.T) {
 
 	// record one dns message to simulate some incoming data
 	noerror_record := dnsutils.GetFakeDnsMessage()
-	nx_record := dnsutils.GetFakeDnsMessage()
-	nx_record.DNS.Rcode = dnsutils.DNS_RCODE_NXDOMAIN
+	noerror_record.DNS.Type = dnsutils.DnsQuery
 	g.Record(noerror_record)
+
+	nx_record := dnsutils.GetFakeDnsMessage()
+	nx_record.DNS.Type = dnsutils.DnsReply
+	nx_record.DNS.Rcode = dnsutils.DNS_RCODE_NXDOMAIN
 	g.Record(nx_record)
+
+	sf_record := dnsutils.GetFakeDnsMessage()
+	sf_record.DNS.Type = dnsutils.DnsReply
+	sf_record.DNS.Rcode = dnsutils.DNS_RCODE_SERVFAIL
+	g.Record(sf_record)
+
+	// compute metrics, this function is called every second
+	g.ComputeMetrics()
 
 	tt := []struct {
 		name       string
@@ -88,6 +99,41 @@ func TestPrometheus_GetMetrics(t *testing.T) {
 			method:     http.MethodGet,
 			handler:    g.httpServer.Handler.ServeHTTP,
 			want:       config.Loggers.Prometheus.PromPrefix + `_nxdomains_total{stream_id="collector"} 1`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "total sfdomain",
+			method:     http.MethodGet,
+			handler:    g.httpServer.Handler.ServeHTTP,
+			want:       config.Loggers.Prometheus.PromPrefix + `_sfdomains_total{stream_id="collector"} 1`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "total dns messages",
+			method:     http.MethodGet,
+			handler:    g.httpServer.Handler.ServeHTTP,
+			want:       config.Loggers.Prometheus.PromPrefix + `_dnsmessages_total{stream_id="collector"} 3`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "total queries",
+			method:     http.MethodGet,
+			handler:    g.httpServer.Handler.ServeHTTP,
+			want:       config.Loggers.Prometheus.PromPrefix + `_queries_total{stream_id="collector"} 1`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "total replies",
+			method:     http.MethodGet,
+			handler:    g.httpServer.Handler.ServeHTTP,
+			want:       config.Loggers.Prometheus.PromPrefix + `_replies_total{stream_id="collector"} 2`,
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "total qtypes",
+			method:     http.MethodGet,
+			handler:    g.httpServer.Handler.ServeHTTP,
+			want:       config.Loggers.Prometheus.PromPrefix + `_qtypes_total{query_type="A",stream_id="collector"} 3`,
 			statusCode: http.StatusOK,
 		},
 	}
