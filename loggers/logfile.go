@@ -44,9 +44,12 @@ func IsValidMode(mode string) bool {
 }
 
 type LogFile struct {
-	done           chan bool
-	cleanup        chan bool
-	channel        chan dnsutils.DnsMessage
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DnsMessage
+	outputChan     chan dnsutils.DnsMessage
 	writerPlain    *bufio.Writer
 	writerPcap     *pcapgo.Writer
 	writerDnstap   *framestream.Encoder
@@ -66,12 +69,15 @@ type LogFile struct {
 func NewLogFile(config *dnsutils.Config, logger *logger.Logger, name string) *LogFile {
 	logger.Info("[%s] logger=file - enabled", name)
 	l := &LogFile{
-		done:    make(chan bool),
-		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, config.Loggers.LogFile.ChannelBufferSize),
-		config:  config,
-		logger:  logger,
-		name:    name,
+		stopProcess: make(chan bool),
+		doneProcess: make(chan bool),
+		stopRun:     make(chan bool),
+		doneRun:     make(chan bool),
+		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.LogFile.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.LogFile.ChannelBufferSize),
+		config:      config,
+		logger:      logger,
+		name:        name,
 	}
 
 	l.ReadConfig()
@@ -88,7 +94,7 @@ func (l *LogFile) GetName() string { return l.name }
 func (l *LogFile) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (l *LogFile) Channel() chan dnsutils.DnsMessage {
-	return l.channel
+	return l.inputChan
 }
 
 func (l *LogFile) ReadConfig() {
@@ -118,15 +124,13 @@ func (l *LogFile) LogError(msg string, v ...interface{}) {
 }
 
 func (l *LogFile) Stop() {
-	l.LogInfo("stopping...")
+	l.LogInfo("stopping to run...")
+	l.stopRun <- true
+	<-l.doneRun
 
-	// close output channel
-	l.cleanup <- true
-
-	// read done channel and block until run is terminated
-	<-l.done
-	l.LogInfo("run terminated")
-	close(l.done)
+	l.LogInfo("stopping to process...")
+	l.stopProcess <- true
+	<-l.doneProcess
 }
 
 func (l *LogFile) Cleanup() error {
@@ -199,7 +203,8 @@ func (l *LogFile) OpenFile() error {
 
 	switch l.config.Loggers.LogFile.Mode {
 	case dnsutils.MODE_TEXT, dnsutils.MODE_JSON, dnsutils.MODE_FLATJSON:
-		l.writerPlain = bufio.NewWriter(fd)
+		bufferSize := 4096
+		l.writerPlain = bufio.NewWriterSize(fd, bufferSize)
 
 	case dnsutils.MODE_PCAP:
 		l.writerPcap = pcapgo.NewWriter(fd)
@@ -449,8 +454,42 @@ func (l *LogFile) Run() {
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, l.channel)
+	listChannel = append(listChannel, l.outputChan)
 	subprocessors := transformers.NewTransforms(&l.config.OutgoingTransformers, l.logger, l.name, listChannel, 0)
+
+	// goroutine to process transformed dns messages
+	go l.Process()
+
+	// loop to process incoming messages
+RUN_LOOP:
+	for {
+		select {
+		case <-l.stopRun:
+			// cleanup transformers
+			subprocessors.Reset()
+			l.doneRun <- true
+			break RUN_LOOP
+		case dm, opened := <-l.inputChan:
+			if !opened {
+				l.LogInfo("input channel closed!")
+				return
+			}
+
+			// apply tranforms, init dns message with additionnals parts if necessary
+			subprocessors.InitDnsMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
+			// send to output channel
+			l.outputChan <- dm
+		}
+	}
+	l.LogInfo("run terminated")
+}
+
+func (l *LogFile) Process() {
+	l.LogInfo("running in background...")
 
 	// prepare some timers
 	flushInterval := time.Duration(l.config.Loggers.LogFile.FlushInterval) * time.Second
@@ -460,22 +499,16 @@ func (l *LogFile) Run() {
 	buffer := new(bytes.Buffer)
 	var data []byte
 	var err error
-
+PROCESS_LOOP:
 	for {
 		select {
-		case <-l.cleanup:
-			l.LogInfo("cleanup called")
-			//close(l.channel)
-
+		case <-l.stopProcess:
 			// stop timer
 			flushTimer.Stop()
 			l.commpressTimer.Stop()
 
 			// flush writer
 			l.FlushWriters()
-
-			// cleanup transformers
-			subprocessors.Reset()
 
 			// closing file
 			l.LogInfo("closing log file")
@@ -484,20 +517,13 @@ func (l *LogFile) Run() {
 			}
 			l.fileFd.Close()
 
-			l.done <- true
-			return
-		case dm, opened := <-l.channel:
-			// channel is closed ?
-			if !opened {
-				l.LogInfo("channel closed, cleanup...")
-				l.cleanup <- true
-				continue
-			}
+			l.doneProcess <- true
+			break PROCESS_LOOP
 
-			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
-				continue
+		case dm, opened := <-l.outputChan:
+			if !opened {
+				l.LogInfo("output channel closed!")
+				return
 			}
 
 			// write to file
@@ -565,5 +591,5 @@ func (l *LogFile) Run() {
 
 		}
 	}
-
+	l.LogInfo("processing terminated")
 }

@@ -13,26 +13,32 @@ import (
 )
 
 type StdOut struct {
-	done       chan bool
-	cleanup    chan bool
-	channel    chan dnsutils.DnsMessage
-	textFormat []string
-	config     *dnsutils.Config
-	logger     *logger.Logger
-	stdout     *log.Logger
-	name       string
+	stopProcess chan bool
+	doneProcess chan bool
+	stopRun     chan bool
+	doneRun     chan bool
+	inputChan   chan dnsutils.DnsMessage
+	outputChan  chan dnsutils.DnsMessage
+	textFormat  []string
+	config      *dnsutils.Config
+	logger      *logger.Logger
+	stdout      *log.Logger
+	name        string
 }
 
 func NewStdOut(config *dnsutils.Config, console *logger.Logger, name string) *StdOut {
 	console.Info("[%s] logger=stdout - enabled", name)
 	o := &StdOut{
-		done:    make(chan bool),
-		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, config.Loggers.Stdout.ChannelBufferSize),
-		logger:  console,
-		config:  config,
-		stdout:  log.New(os.Stdout, "", 0),
-		name:    name,
+		stopProcess: make(chan bool),
+		doneProcess: make(chan bool),
+		stopRun:     make(chan bool),
+		doneRun:     make(chan bool),
+		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.Stdout.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.Stdout.ChannelBufferSize),
+		logger:      console,
+		config:      config,
+		stdout:      log.New(os.Stdout, "", 0),
+		name:        name,
 	}
 	o.ReadConfig()
 	return o
@@ -63,17 +69,17 @@ func (o *StdOut) SetBuffer(b *bytes.Buffer) {
 }
 
 func (o *StdOut) Channel() chan dnsutils.DnsMessage {
-	return o.channel
+	return o.inputChan
 }
 
 func (o *StdOut) Stop() {
-	o.LogInfo("stopping...")
-	o.cleanup <- true
+	o.LogInfo("stopping to run...")
+	o.stopRun <- true
+	<-o.doneRun
 
-	// read done channel and block until run is terminated
-	<-o.done
-	o.LogInfo("run terminated")
-	close(o.done)
+	o.LogInfo("stopping to process...")
+	o.stopProcess <- true
+	<-o.doneProcess
 }
 
 func (o *StdOut) Run() {
@@ -81,35 +87,57 @@ func (o *StdOut) Run() {
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.channel)
+	listChannel = append(listChannel, o.outputChan)
 	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
 
-	// standard output buffer
-	buffer := new(bytes.Buffer)
+	// goroutine to process transformed dns messages
+	go o.Process()
 
+	// loop to process incoming messages
+RUN_LOOP:
 	for {
 		select {
-		case <-o.cleanup:
-			o.LogInfo("cleanup called")
-			//close(o.channel)
-
+		case <-o.stopRun:
+			// cleanup transformers
 			subprocessors.Reset()
-
-			o.done <- true
-			return
-
-		case dm, opened := <-o.channel:
-			// channel is closed ?
+			o.doneRun <- true
+			break RUN_LOOP
+		case dm, opened := <-o.inputChan:
 			if !opened {
-				o.LogInfo("channel closed, cleanup...")
-				o.cleanup <- true
-				continue
+				o.LogInfo("input channel closed!")
+				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDnsMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 				continue
+			}
+
+			// send to output channel
+			o.outputChan <- dm
+		}
+	}
+	o.LogInfo("run terminated")
+}
+
+func (o *StdOut) Process() {
+	o.LogInfo("running in background...")
+
+	// standard output buffer
+	buffer := new(bytes.Buffer)
+
+PROCESS_LOOP:
+	for {
+		select {
+		case <-o.stopProcess:
+			o.doneProcess <- true
+			break PROCESS_LOOP
+
+		case dm, opened := <-o.outputChan:
+			if !opened {
+				o.LogInfo("output channel closed!")
+				return
 			}
 
 			switch o.config.Loggers.Stdout.Mode {
@@ -134,4 +162,5 @@ func (o *StdOut) Run() {
 			}
 		}
 	}
+	o.LogInfo("processing terminated")
 }

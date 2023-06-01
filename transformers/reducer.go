@@ -1,8 +1,7 @@
 package transformers
 
 import (
-	"container/heap"
-	"hash/fnv"
+	"container/list"
 	"strings"
 	"sync"
 	"time"
@@ -11,53 +10,71 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
+type expiredKey struct {
+	key     string
+	expTime time.Time
+}
+
 type MapTraffic struct {
 	sync.RWMutex
-	ttl         time.Duration
-	kv          map[uint64]*dnsutils.DnsMessage
-	channels    []chan dnsutils.DnsMessage
-	expiredKeys expiredKeys
+	ttl          time.Duration
+	kv           *sync.Map
+	channels     []chan dnsutils.DnsMessage
+	expiredKeys  *list.List
+	droppedCount int
+	logInfo      func(msg string, v ...interface{})
+	logError     func(msg string, v ...interface{})
 }
 
-func NewMapTraffic(ttl time.Duration, channels []chan dnsutils.DnsMessage) MapTraffic {
+func NewMapTraffic(ttl time.Duration, channels []chan dnsutils.DnsMessage,
+	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{})) MapTraffic {
 	return MapTraffic{
 		ttl:         ttl,
-		kv:          make(map[uint64]*dnsutils.DnsMessage),
+		kv:          &sync.Map{},
 		channels:    channels,
-		expiredKeys: make(expiredKeys, 0),
+		expiredKeys: list.New(),
+		logInfo:     logInfo,
+		logError:    logError,
 	}
 }
 
-func (mp *MapTraffic) Exists(key uint64) (ok bool) {
-	mp.RLock()
-	defer mp.RUnlock()
-
-	dm, ok := mp.kv[key]
-	if ok {
-		dm.Reducer.Occurences += 1
-	}
-
-	return ok
-}
-
-func (mp *MapTraffic) Set(key uint64, dm *dnsutils.DnsMessage) {
+func (mp *MapTraffic) Set(key string, dm *dnsutils.DnsMessage) {
 	mp.Lock()
 	defer mp.Unlock()
 
-	dm.Reducer.Repeated = true
-	dm.Reducer.Occurences = 1
-	mp.kv[key] = dm
-	expTime := time.Now().Add(mp.ttl)
-	heap.Push(&mp.expiredKeys, expiredKey{key, expTime})
-}
+	if v, ok := mp.kv.Load(key); ok {
+		v.(*dnsutils.DnsMessage).Reducer.Occurences++
+		return
+	}
 
-func (mp *MapTraffic) Delete(key uint64) {
-	delete(mp.kv, key)
+	dm.Reducer.Occurences = 1
+	mp.kv.Store(key, dm)
+
+	// time.AfterFunc(mp.ttl, func() {
+	// 	if dmKv, ok := mp.kv.Load(key); ok {
+	// 		for i := range mp.channels {
+	// 			select {
+	// 			case mp.channels[i] <- *dmKv.(*dnsutils.DnsMessage):
+	// 			default:
+	// 				mp.droppedCount++
+	// 			}
+	// 		}
+	// 		mp.kv.Delete(key)
+	// 	}
+	// })
+
+	expTime := time.Now().Add(mp.ttl)
+	mp.expiredKeys.PushBack(expiredKey{key, expTime})
+
 }
 
 func (mp *MapTraffic) Run() {
 	flushTimer := time.NewTimer(mp.ttl)
 	for range flushTimer.C {
+		if mp.droppedCount > 0 {
+			mp.logError("reducer: event(s) %d dropped, output channel full", mp.droppedCount)
+			mp.droppedCount = 0
+		}
 		mp.ProcessExpiredKeys()
 		flushTimer.Reset(mp.ttl)
 	}
@@ -69,51 +86,23 @@ func (mp *MapTraffic) ProcessExpiredKeys() {
 
 	now := time.Now()
 
-	for len(mp.expiredKeys) > 0 {
-		expired := mp.expiredKeys[0]
+	for e := mp.expiredKeys.Front(); e != nil; {
+		expired := e.Value.(expiredKey)
 		if now.Before(expired.expTime) {
 			break
 		}
 		key := expired.key
-		if dm, ok := mp.kv[key]; ok {
+		if v, ok := mp.kv.Load(key); ok {
 			for i := range mp.channels {
-				mp.channels[i] <- *dm
+				mp.channels[i] <- *v.(*dnsutils.DnsMessage)
 			}
+			mp.kv.Delete(key)
 		}
-		mp.Delete(key)
-		heap.Pop(&mp.expiredKeys)
+
+		next := e.Next()
+		mp.expiredKeys.Remove(e)
+		e = next
 	}
-}
-
-type expiredKey struct {
-	key     uint64
-	expTime time.Time
-}
-
-type expiredKeys []expiredKey
-
-func (ek expiredKeys) Len() int {
-	return len(ek)
-}
-
-func (ek expiredKeys) Less(i, j int) bool {
-	return ek[i].expTime.Before(ek[j].expTime)
-}
-
-func (ek expiredKeys) Swap(i, j int) {
-	ek[i], ek[j] = ek[j], ek[i]
-}
-
-func (ek *expiredKeys) Push(x interface{}) {
-	*ek = append(*ek, x.(expiredKey))
-}
-
-func (ek *expiredKeys) Pop() interface{} {
-	old := *ek
-	n := len(old)
-	x := old[n-1]
-	*ek = old[:n-1]
-	return x
 }
 
 type ReducerProcessor struct {
@@ -126,6 +115,7 @@ type ReducerProcessor struct {
 	mapTraffic       MapTraffic
 	logInfo          func(msg string, v ...interface{})
 	logError         func(msg string, v ...interface{})
+	strBuilder       strings.Builder
 }
 
 func NewReducerSubprocessor(
@@ -143,7 +133,7 @@ func NewReducerSubprocessor(
 		logError:    logError,
 	}
 
-	s.mapTraffic = NewMapTraffic(time.Duration(config.Reducer.WatchInterval)*time.Second, outChannels)
+	s.mapTraffic = NewMapTraffic(time.Duration(config.Reducer.WatchInterval)*time.Second, outChannels, logInfo, logError)
 	s.LoadActiveReducers()
 
 	return &s
@@ -159,23 +149,21 @@ func (p *ReducerProcessor) LoadActiveReducers() {
 func (p *ReducerProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
 	if dm.Reducer == nil {
 		dm.Reducer = &dnsutils.TransformReducer{
-			Repeated:   false,
 			Occurences: 0,
 		}
 	}
 }
 
 func (p *ReducerProcessor) RepetitiveTrafficDetector(dm *dnsutils.DnsMessage) int {
-	// compute the hash of the query
-	tags := []string{dm.DnsTap.Identity, dm.DnsTap.Operation, dm.NetworkInfo.QueryIp, dm.DNS.Qname, dm.DNS.Qtype}
+	p.strBuilder.Reset()
+	p.strBuilder.WriteString(dm.DnsTap.Identity)
+	p.strBuilder.WriteString(dm.DnsTap.Operation)
+	p.strBuilder.WriteString(dm.NetworkInfo.QueryIp)
+	p.strBuilder.WriteString(dm.DNS.Qname)
+	p.strBuilder.WriteString(dm.DNS.Qtype)
+	dmTag := p.strBuilder.String()
 
-	hashfnv := fnv.New64a()
-	hashfnv.Write([]byte(strings.Join(tags[:], "+")))
-	dmHash := hashfnv.Sum64()
-
-	if !p.mapTraffic.Exists(dmHash) {
-		p.mapTraffic.Set(dmHash, dm)
-	}
+	p.mapTraffic.Set(dmTag, dm)
 
 	return RETURN_DROP
 }
@@ -184,11 +172,6 @@ func (s *ReducerProcessor) ProcessDnsMessage(dm *dnsutils.DnsMessage) int {
 	dmCopy := *dm
 
 	if len(s.activeProcessors) == 0 {
-		return RETURN_SUCCESS
-	}
-
-	// ignore repeated messages
-	if dmCopy.Reducer.Repeated {
 		return RETURN_SUCCESS
 	}
 

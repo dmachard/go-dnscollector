@@ -75,7 +75,7 @@ func Test_StdoutTextMode(t *testing.T) {
 			// print dns message to stdout buffer
 			dm := dnsutils.GetFakeDnsMessage()
 			dm.DNS.Qname = tc.qname
-			g.channel <- dm
+			g.Channel() <- dm
 
 			// stop logger
 			time.Sleep(time.Second)
@@ -118,7 +118,7 @@ func Test_StdoutJsonMode(t *testing.T) {
 
 			// print dns message to stdout buffer
 			dm := dnsutils.GetFakeDnsMessage()
-			g.channel <- dm
+			g.Channel() <- dm
 
 			// stop logger
 			time.Sleep(time.Second)

@@ -170,8 +170,7 @@ type TransformExtracted struct {
 }
 
 type TransformReducer struct {
-	Repeated   bool `json:"-" msgpack:"-"`
-	Occurences int  `json:"occurences" msgpack:"occurences"`
+	Occurences int `json:"occurences" msgpack:"occurences"`
 }
 
 type DnsMessage struct {
@@ -226,7 +225,7 @@ func (dm *DnsMessage) Init() {
 	}
 }
 
-func (dm *DnsMessage) handleGeoIPDirectives(directives []string, s *bytes.Buffer) {
+func (dm *DnsMessage) handleGeoIPDirectives(directives []string, s *strings.Builder) {
 	if dm.Geo == nil {
 		s.WriteString("-")
 	} else {
@@ -245,7 +244,7 @@ func (dm *DnsMessage) handleGeoIPDirectives(directives []string, s *bytes.Buffer
 	}
 }
 
-func (dm *DnsMessage) handlePdnsDirectives(directives []string, s *bytes.Buffer) {
+func (dm *DnsMessage) handlePdnsDirectives(directives []string, s *strings.Builder) {
 	if dm.PowerDns == nil {
 		s.WriteString("-")
 	} else {
@@ -312,7 +311,7 @@ func (dm *DnsMessage) handlePdnsDirectives(directives []string, s *bytes.Buffer)
 	}
 }
 
-func (dm *DnsMessage) handleSuspiciousDirectives(directives []string, s *bytes.Buffer) {
+func (dm *DnsMessage) handleSuspiciousDirectives(directives []string, s *strings.Builder) {
 	if dm.Suspicious == nil {
 		s.WriteString("-")
 	} else {
@@ -323,7 +322,7 @@ func (dm *DnsMessage) handleSuspiciousDirectives(directives []string, s *bytes.B
 	}
 }
 
-func (dm *DnsMessage) handlePublicSuffixDirectives(directives []string, s *bytes.Buffer) {
+func (dm *DnsMessage) handlePublicSuffixDirectives(directives []string, s *strings.Builder) {
 	if dm.PublicSuffix == nil {
 		s.WriteString("-")
 	} else {
@@ -336,7 +335,7 @@ func (dm *DnsMessage) handlePublicSuffixDirectives(directives []string, s *bytes
 	}
 }
 
-func (dm *DnsMessage) handleExtractedDirectives(directives []string, s *bytes.Buffer) {
+func (dm *DnsMessage) handleExtractedDirectives(directives []string, s *strings.Builder) {
 	if dm.Extracted == nil {
 		s.WriteString("-")
 	} else {
@@ -353,7 +352,7 @@ func (dm *DnsMessage) handleExtractedDirectives(directives []string, s *bytes.Bu
 	}
 }
 
-func (dm *DnsMessage) handleReducerDirectives(directives []string, s *bytes.Buffer) {
+func (dm *DnsMessage) handleReducerDirectives(directives []string, s *strings.Builder) {
 	if dm.Reducer == nil {
 		s.WriteString("-")
 	} else {
@@ -365,7 +364,8 @@ func (dm *DnsMessage) handleReducerDirectives(directives []string, s *bytes.Buff
 }
 
 func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundary string) []byte {
-	var s bytes.Buffer
+	//var s bytes.Buffer
+	var s strings.Builder
 
 	for i, word := range format {
 		directives := strings.SplitN(word, ":", 2)
@@ -375,13 +375,13 @@ func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 			if len(dm.DNS.DnsRRs.Answers) > 0 {
 				s.WriteString(strconv.Itoa(dm.DNS.DnsRRs.Answers[0].Ttl))
 			} else {
-				s.WriteString("-")
+				s.WriteByte('-')
 			}
 		case directive == "answer":
 			if len(dm.DNS.DnsRRs.Answers) > 0 {
 				s.WriteString(dm.DNS.DnsRRs.Answers[0].Rdata)
 			} else {
-				s.WriteString("-")
+				s.WriteByte('-')
 			}
 		case directive == "edns-csubnet":
 			if len(dm.EDNS.Options) > 0 {
@@ -392,7 +392,7 @@ func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 					}
 				}
 			} else {
-				s.WriteString("-")
+				s.WriteByte('-')
 			}
 		case directive == "answercount":
 			s.WriteString(strconv.Itoa(len(dm.DNS.DnsRRs.Answers)))
@@ -449,7 +449,7 @@ func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 			if dm.DNS.MalformedPacket {
 				s.WriteString("PKTERR")
 			} else {
-				s.WriteString("-")
+				s.WriteByte('-')
 			}
 		case directive == "qr":
 			s.WriteString(dm.DNS.Type)
@@ -459,37 +459,37 @@ func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 			if dm.NetworkInfo.TcpReassembled {
 				s.WriteString("TR")
 			} else {
-				s.WriteString("-")
+				s.WriteByte('-')
 			}
 		case directive == "df":
 			if dm.NetworkInfo.IpDefragmented {
 				s.WriteString("DF")
 			} else {
-				s.WriteString("-")
+				s.WriteByte('-')
 			}
 		case directive == "tc":
 			if dm.DNS.Flags.TC {
 				s.WriteString("TC")
 			} else {
-				s.WriteString("-")
+				s.WriteByte('-')
 			}
 		case directive == "aa":
 			if dm.DNS.Flags.AA {
 				s.WriteString("AA")
 			} else {
-				s.WriteString("-")
+				s.WriteByte('-')
 			}
 		case directive == "ra":
 			if dm.DNS.Flags.RA {
 				s.WriteString("RA")
 			} else {
-				s.WriteString("-")
+				s.WriteByte('-')
 			}
 		case directive == "ad":
 			if dm.DNS.Flags.AD {
 				s.WriteString("AD")
 			} else {
-				s.WriteString("-")
+				s.WriteByte('-')
 			}
 		// more directives from collectors
 		case PdnsDirectives.MatchString(directive):
@@ -515,7 +515,7 @@ func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 		}
 	}
 
-	return s.Bytes()
+	return []byte(s.String()) //s.Bytes()
 }
 
 func (dm *DnsMessage) String(format []string, fieldDelimiter string, fieldBoundary string) string {
