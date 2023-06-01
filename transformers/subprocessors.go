@@ -58,10 +58,10 @@ func (p *Transforms) Prepare() error {
 	if p.config.GeoIP.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.geoipTransform)
 		prefixlog := fmt.Sprintf("transformer=geoip#%d - ", p.instance)
-		p.LogInfo(prefixlog+"is enabled", p.instance)
+		p.LogInfo(prefixlog + "is enabled")
 
 		if err := p.GeoipTransform.Open(); err != nil {
-			p.LogError(prefixlog+"open error %v", p.instance, err)
+			p.LogError(prefixlog+"open error %v", err)
 		}
 	}
 
@@ -70,19 +70,19 @@ func (p *Transforms) Prepare() error {
 		if p.config.UserPrivacy.AnonymizeIP {
 			p.activeTransforms = append(p.activeTransforms, p.anonymizeIP)
 			prefixlog := fmt.Sprintf("transformer=userprivacy#%d - ", p.instance)
-			p.LogInfo(prefixlog+"subprocessor anonymizeIP is enabled", p.instance)
+			p.LogInfo(prefixlog + "subprocessor anonymizeIP is enabled")
 		}
 
 		if p.config.UserPrivacy.MinimazeQname {
 			p.activeTransforms = append(p.activeTransforms, p.minimazeQname)
 			prefixlog := fmt.Sprintf("transformer=userprivacy#%d - ", p.instance)
-			p.LogInfo(prefixlog+"subprocessor minimaze qnam is  enabled", p.instance)
+			p.LogInfo(prefixlog + "subprocessor minimaze qnam is  enabled")
 		}
 
 		if p.config.UserPrivacy.HashIP {
 			p.activeTransforms = append(p.activeTransforms, p.hashIP)
 			prefixlog := fmt.Sprintf("transformer=userprivacy#%d - ", p.instance)
-			p.LogInfo(prefixlog+"subprocessor hashIP is enabled", p.instance)
+			p.LogInfo(prefixlog + "subprocessor hashIP is enabled")
 		}
 	}
 
@@ -95,31 +95,31 @@ func (p *Transforms) Prepare() error {
 		if p.config.Latency.MeasureLatency {
 			p.activeTransforms = append(p.activeTransforms, p.measureLatency)
 			prefixlog := fmt.Sprintf("transformer=latency#%d - ", p.instance)
-			p.LogInfo(prefixlog+"subprocessor measure latency is enabled", p.instance)
+			p.LogInfo(prefixlog + "subprocessor measure latency is enabled")
 		}
 		if p.config.Latency.UnansweredQueries {
 			p.activeTransforms = append(p.activeTransforms, p.detectEvictedTimeout)
 			prefixlog := fmt.Sprintf("transformer=latency#%d - ", p.instance)
-			p.LogInfo(prefixlog+"subprocessor unanswered queries is enabled", p.instance)
+			p.LogInfo(prefixlog + "subprocessor unanswered queries is enabled")
 		}
 	}
 
 	if p.config.Suspicious.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.suspiciousTransform)
 		prefixlog := fmt.Sprintf("transformer=suspicious#%d - ", p.instance)
-		p.LogInfo(prefixlog+"is enabled", p.instance)
+		p.LogInfo(prefixlog + "is enabled")
 	}
 
 	if p.config.Reducer.Enable {
 		prefixlog := fmt.Sprintf("transformer=reducer#%d - ", p.instance)
-		p.LogInfo(prefixlog+"is enabled", p.instance)
+		p.LogInfo(prefixlog + "is enabled")
 	}
 
 	if p.config.Extract.Enable {
 		if p.config.Extract.AddPayload {
 			p.activeTransforms = append(p.activeTransforms, p.addBase64Payload)
 			prefixlog := fmt.Sprintf("transformer=extract#%d - ", p.instance)
-			p.LogInfo(prefixlog+"subprocessor add base64 payload is enabled", p.instance)
+			p.LogInfo(prefixlog + "subprocessor add base64 payload is enabled")
 		}
 
 	}
