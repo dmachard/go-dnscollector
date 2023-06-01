@@ -170,8 +170,7 @@ type TransformExtracted struct {
 }
 
 type TransformReducer struct {
-	Repeated   bool `json:"-" msgpack:"-"`
-	Occurences int  `json:"occurences" msgpack:"occurences"`
+	Occurences int `json:"occurences" msgpack:"occurences"`
 }
 
 type DnsMessage struct {
