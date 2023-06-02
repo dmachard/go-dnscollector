@@ -15,11 +15,14 @@ import (
 )
 
 type TcpClient struct {
-	done               chan bool
-	channel            chan dnsutils.DnsMessage
+	stopProcess        chan bool
+	doneProcess        chan bool
+	stopRun            chan bool
+	doneRun            chan bool
+	inputChan          chan dnsutils.DnsMessage
+	outputChan         chan dnsutils.DnsMessage
 	config             *dnsutils.Config
 	logger             *logger.Logger
-	cleanup            chan bool
 	textFormat         []string
 	name               string
 	transportWriter    *bufio.Writer
@@ -32,9 +35,12 @@ type TcpClient struct {
 func NewTcpClient(config *dnsutils.Config, logger *logger.Logger, name string) *TcpClient {
 	logger.Info("[%s] logger=tcpclient - enabled", name)
 	s := &TcpClient{
-		done:               make(chan bool),
-		cleanup:            make(chan bool),
-		channel:            make(chan dnsutils.DnsMessage, config.Loggers.TcpClient.ChannelBufferSize),
+		stopProcess:        make(chan bool),
+		doneProcess:        make(chan bool),
+		stopRun:            make(chan bool),
+		doneRun:            make(chan bool),
+		inputChan:          make(chan dnsutils.DnsMessage, config.Loggers.TcpClient.ChannelBufferSize),
+		outputChan:         make(chan dnsutils.DnsMessage, config.Loggers.TcpClient.ChannelBufferSize),
 		transportReady:     make(chan bool),
 		transportReconnect: make(chan bool),
 		logger:             logger,
@@ -72,19 +78,17 @@ func (o *TcpClient) LogError(msg string, v ...interface{}) {
 }
 
 func (o *TcpClient) Channel() chan dnsutils.DnsMessage {
-	return o.channel
+	return o.inputChan
 }
 
 func (o *TcpClient) Stop() {
-	o.LogInfo("stopping...")
+	o.LogInfo("stopping to run...")
+	o.stopRun <- true
+	<-o.doneRun
 
-	// exit to close properly
-	o.cleanup <- true
-
-	// read done channel and block until run is terminated
-	<-o.done
-	o.LogInfo("run terminated")
-	close(o.done)
+	o.LogInfo("stopping to process...")
+	o.stopProcess <- true
+	<-o.doneProcess
 }
 
 func (o *TcpClient) Disconnect() {
@@ -189,8 +193,44 @@ func (o *TcpClient) Run() {
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.channel)
+	listChannel = append(listChannel, o.outputChan)
 	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+
+	// goroutine to process transformed dns messages
+	go o.Process()
+
+	// loop to process incoming messages
+RUN_LOOP:
+	for {
+		select {
+		case <-o.stopRun:
+			// cleanup transformers
+			subprocessors.Reset()
+
+			o.doneRun <- true
+			break RUN_LOOP
+
+		case dm, opened := <-o.inputChan:
+			if !opened {
+				o.LogInfo("input channel closed!")
+				return
+			}
+
+			// apply tranforms, init dns message with additionnals parts if necessary
+			subprocessors.InitDnsMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
+			// send to output channel
+			o.outputChan <- dm
+		}
+	}
+	o.LogInfo("run terminated")
+}
+
+func (o *TcpClient) Process() {
+	o.LogInfo("processing...")
 
 	// init buffer
 	bufferDm := []dnsutils.DnsMessage{}
@@ -201,36 +241,30 @@ func (o *TcpClient) Run() {
 
 	// init remote conn
 	go o.ConnectToRemote()
-
+PROCESS_LOOP:
 	for {
 		select {
-		case <-o.cleanup:
-			o.LogInfo("cleanup called")
-			//close(o.channel)
-
-			// cleanup transformers
-			subprocessors.Reset()
-
+		case <-o.stopProcess:
 			// closing remote connection if exist
 			o.Disconnect()
-
-			o.done <- true
+			o.doneProcess <- true
+			break PROCESS_LOOP
 
 		case <-o.transportReady:
 			o.LogInfo("transport connected with success")
 			o.transportWriter = bufio.NewWriter(o.transportConn)
 			o.writerReady = true
 
-		case dm := <-o.channel:
+		// incoming dns message to process
+		case dm, opened := <-o.outputChan:
+			if !opened {
+				o.LogInfo("output channel closed!")
+				return
+			}
+
 			// drop dns message if the connection is not ready to avoid memory leak or
 			// to block the channel
 			if !o.writerReady {
-				continue
-			}
-
-			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 				continue
 			}
 
@@ -259,5 +293,5 @@ func (o *TcpClient) Run() {
 
 		}
 	}
-
+	o.LogInfo("processing terminated")
 }

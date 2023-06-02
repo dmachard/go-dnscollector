@@ -27,7 +27,7 @@ func Test_InfluxDB(t *testing.T) {
 
 	// send fake dns message to logger
 	dm := dnsutils.GetFakeDnsMessage()
-	g.channel <- dm
+	g.Channel() <- dm
 
 	// accept conn
 	conn, err := fakeRcvr.Accept()

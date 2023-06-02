@@ -69,7 +69,7 @@ func Test_DnstapClient(t *testing.T) {
 
 			// send fake dns message to logger
 			dm := dnsutils.GetFakeDnsMessage()
-			g.channel <- dm
+			g.Channel() <- dm
 
 			// receive frame on server side ?, timeout 5s
 			fs, err := fs_svr.RecvFrame(true)

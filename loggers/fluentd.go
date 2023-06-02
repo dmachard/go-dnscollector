@@ -13,11 +13,14 @@ import (
 )
 
 type FluentdClient struct {
-	done               chan bool
-	channel            chan dnsutils.DnsMessage
+	stopProcess        chan bool
+	doneProcess        chan bool
+	stopRun            chan bool
+	doneRun            chan bool
+	inputChan          chan dnsutils.DnsMessage
+	outputChan         chan dnsutils.DnsMessage
 	config             *dnsutils.Config
 	logger             *logger.Logger
-	cleanup            chan bool
 	transportConn      net.Conn
 	transportReady     chan bool
 	transportReconnect chan bool
@@ -28,9 +31,12 @@ type FluentdClient struct {
 func NewFluentdClient(config *dnsutils.Config, logger *logger.Logger, name string) *FluentdClient {
 	logger.Info("[%s] logger=fluentd - enabled", name)
 	s := &FluentdClient{
-		done:               make(chan bool),
-		cleanup:            make(chan bool),
-		channel:            make(chan dnsutils.DnsMessage, config.Loggers.Fluentd.ChannelBufferSize),
+		stopProcess:        make(chan bool),
+		doneProcess:        make(chan bool),
+		stopRun:            make(chan bool),
+		doneRun:            make(chan bool),
+		inputChan:          make(chan dnsutils.DnsMessage, config.Loggers.Fluentd.ChannelBufferSize),
+		outputChan:         make(chan dnsutils.DnsMessage, config.Loggers.Fluentd.ChannelBufferSize),
 		transportReady:     make(chan bool),
 		transportReconnect: make(chan bool),
 		logger:             logger,
@@ -62,19 +68,17 @@ func (o *FluentdClient) LogError(msg string, v ...interface{}) {
 }
 
 func (o *FluentdClient) Channel() chan dnsutils.DnsMessage {
-	return o.channel
+	return o.inputChan
 }
 
 func (o *FluentdClient) Stop() {
-	o.LogInfo("stopping...")
+	o.LogInfo("stopping to run...")
+	o.stopRun <- true
+	<-o.doneRun
 
-	// exit to close properly
-	o.cleanup <- true
-
-	// read done channel and block until run is terminated
-	<-o.done
-	o.LogInfo("run terminated")
-	close(o.done)
+	o.LogInfo("stopping to process...")
+	o.stopProcess <- true
+	<-o.doneProcess
 }
 
 func (o *FluentdClient) Disconnect() {
@@ -177,8 +181,47 @@ func (o *FluentdClient) Run() {
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.channel)
+	listChannel = append(listChannel, o.outputChan)
 	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+
+	// goroutine to process transformed dns messages
+	go o.Process()
+
+	// init remote conn
+	go o.ConnectToRemote()
+
+	// loop to process incoming messages
+RUN_LOOP:
+	for {
+		select {
+		case <-o.stopRun:
+			// cleanup transformers
+			subprocessors.Reset()
+
+			o.doneRun <- true
+			break RUN_LOOP
+
+		case dm, opened := <-o.inputChan:
+			if !opened {
+				o.LogInfo("input channel closed!")
+				return
+			}
+
+			// apply tranforms, init dns message with additionnals parts if necessary
+			subprocessors.InitDnsMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
+			// send to output channel
+			o.outputChan <- dm
+		}
+	}
+	o.LogInfo("run terminated")
+}
+
+func (o *FluentdClient) Process() {
+	o.LogInfo("processing...")
 
 	// init buffer
 	bufferDm := []dnsutils.DnsMessage{}
@@ -187,32 +230,27 @@ func (o *FluentdClient) Run() {
 	flushInterval := time.Duration(o.config.Loggers.TcpClient.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
-	// init remote conn
-	go o.ConnectToRemote()
-
+PROCESS_LOOP:
 	for {
 		select {
+		case <-o.stopProcess:
+			o.doneProcess <- true
+			break PROCESS_LOOP
+
 		case <-o.transportReady:
 			o.LogInfo("connected")
 			o.writerReady = true
 
-		case dm, opened := <-o.channel:
-			// channel is closed ?
+		// incoming dns message to process
+		case dm, opened := <-o.outputChan:
 			if !opened {
-				o.LogInfo("channel closed, cleanup...")
-				o.cleanup <- true
-				continue
+				o.LogInfo("output channel closed!")
+				return
 			}
 
 			// drop dns message if the connection is not ready to avoid memory leak or
 			// to block the channel
 			if !o.writerReady {
-				continue
-			}
-
-			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 				continue
 			}
 
@@ -237,17 +275,7 @@ func (o *FluentdClient) Run() {
 
 			// restart timer
 			flushTimer.Reset(flushInterval)
-
-		case <-o.cleanup:
-			o.LogInfo("cleanup called")
-			//close(o.channel)
-
-			// cleanup transformers
-			subprocessors.Reset()
-
-			o.done <- true
-			return
 		}
 	}
-
+	o.LogInfo("processing terminated")
 }

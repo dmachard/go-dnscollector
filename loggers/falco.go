@@ -12,24 +12,30 @@ import (
 )
 
 type FalcoClient struct {
-	done    chan bool
-	cleanup chan bool
-	channel chan dnsutils.DnsMessage
-	config  *dnsutils.Config
-	logger  *logger.Logger
-	name    string
-	url     string
+	stopProcess chan bool
+	doneProcess chan bool
+	stopRun     chan bool
+	doneRun     chan bool
+	inputChan   chan dnsutils.DnsMessage
+	outputChan  chan dnsutils.DnsMessage
+	config      *dnsutils.Config
+	logger      *logger.Logger
+	name        string
+	url         string
 }
 
 func NewFalcoClient(config *dnsutils.Config, console *logger.Logger, name string) *FalcoClient {
 	console.Info("[%s] logger=falco - enabled", name)
 	f := &FalcoClient{
-		done:    make(chan bool),
-		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, config.Loggers.FalcoClient.ChannelBufferSize),
-		logger:  console,
-		config:  config,
-		name:    name,
+		stopProcess: make(chan bool),
+		doneProcess: make(chan bool),
+		stopRun:     make(chan bool),
+		doneRun:     make(chan bool),
+		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.FalcoClient.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.FalcoClient.ChannelBufferSize),
+		logger:      console,
+		config:      config,
+		name:        name,
 	}
 	f.ReadConfig()
 	return f
@@ -44,7 +50,7 @@ func (c *FalcoClient) ReadConfig() {
 }
 
 func (f *FalcoClient) Channel() chan dnsutils.DnsMessage {
-	return f.channel
+	return f.inputChan
 }
 
 func (c *FalcoClient) LogInfo(msg string, v ...interface{}) {
@@ -56,15 +62,13 @@ func (c *FalcoClient) LogError(msg string, v ...interface{}) {
 }
 
 func (f *FalcoClient) Stop() {
-	f.LogInfo("stopping...")
+	f.LogInfo("stopping to run...")
+	f.stopRun <- true
+	<-f.doneRun
 
-	// close output channel
-	f.cleanup <- true
-
-	// read done channel and block until run is terminated
-	<-f.done
-	f.LogInfo("run terminated")
-	close(f.done)
+	f.LogInfo("stopping to process...")
+	f.stopProcess <- true
+	<-f.doneProcess
 }
 
 func (f *FalcoClient) Run() {
@@ -72,33 +76,59 @@ func (f *FalcoClient) Run() {
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, f.channel)
+	listChannel = append(listChannel, f.outputChan)
 	subprocessors := transformers.NewTransforms(&f.config.OutgoingTransformers, f.logger, f.name, listChannel, 0)
 
-	buffer := new(bytes.Buffer)
+	// goroutine to process transformed dns messages
+	go f.Process()
+
+	// loop to process incoming messages
+RUN_LOOP:
 	for {
 		select {
-		case <-f.cleanup:
-			f.LogInfo("cleanup called")
-
+		case <-f.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
 
-			f.done <- true
+			f.doneRun <- true
+			break RUN_LOOP
 
-			return
-		case dm, opened := <-f.channel:
-			// channel is closed ?
+		case dm, opened := <-f.inputChan:
 			if !opened {
-				f.LogInfo("channel closed, cleanup...")
-				f.cleanup <- true
-				continue
+				f.LogInfo("input channel closed!")
+				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDnsMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 				continue
+			}
+
+			// send to output channel
+			f.outputChan <- dm
+		}
+	}
+	f.LogInfo("run terminated")
+}
+
+func (f *FalcoClient) Process() {
+	f.LogInfo("processing...")
+
+	buffer := new(bytes.Buffer)
+
+PROCESS_LOOP:
+	for {
+		select {
+		case <-f.stopProcess:
+			f.doneProcess <- true
+			break PROCESS_LOOP
+
+			// incoming dns message to process
+		case dm, opened := <-f.outputChan:
+			if !opened {
+				f.LogInfo("output channel closed!")
+				return
 			}
 
 			// encode
@@ -118,4 +148,5 @@ func (f *FalcoClient) Run() {
 			buffer.Reset()
 		}
 	}
+	f.LogInfo("processing terminated")
 }

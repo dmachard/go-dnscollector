@@ -52,27 +52,33 @@ func GetPriority(facility string) (syslog.Priority, error) {
 }
 
 type Syslog struct {
-	done       chan bool
-	cleanup    chan bool
-	channel    chan dnsutils.DnsMessage
-	config     *dnsutils.Config
-	logger     *logger.Logger
-	severity   syslog.Priority
-	facility   syslog.Priority
-	syslogConn *syslog.Writer
-	textFormat []string
-	name       string
+	stopProcess chan bool
+	doneProcess chan bool
+	stopRun     chan bool
+	doneRun     chan bool
+	inputChan   chan dnsutils.DnsMessage
+	outputChan  chan dnsutils.DnsMessage
+	config      *dnsutils.Config
+	logger      *logger.Logger
+	severity    syslog.Priority
+	facility    syslog.Priority
+	syslogConn  *syslog.Writer
+	textFormat  []string
+	name        string
 }
 
 func NewSyslog(config *dnsutils.Config, console *logger.Logger, name string) *Syslog {
 	console.Info("[%s] logger=syslog - enabled", name)
 	o := &Syslog{
-		done:    make(chan bool),
-		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, config.Loggers.Syslog.ChannelBufferSize),
-		logger:  console,
-		config:  config,
-		name:    name,
+		stopProcess: make(chan bool),
+		doneProcess: make(chan bool),
+		stopRun:     make(chan bool),
+		doneRun:     make(chan bool),
+		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.Syslog.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.Syslog.ChannelBufferSize),
+		logger:      console,
+		config:      config,
+		name:        name,
 	}
 	o.ReadConfig()
 	return o
@@ -110,7 +116,7 @@ func (c *Syslog) ReadConfig() {
 }
 
 func (o *Syslog) Channel() chan dnsutils.DnsMessage {
-	return o.channel
+	return o.inputChan
 }
 
 func (o *Syslog) LogInfo(msg string, v ...interface{}) {
@@ -122,24 +128,58 @@ func (o *Syslog) LogError(msg string, v ...interface{}) {
 }
 
 func (o *Syslog) Stop() {
-	o.LogInfo("stopping...")
+	o.LogInfo("stopping to run...")
+	o.stopRun <- true
+	<-o.doneRun
 
-	// close output channel
-	o.cleanup <- true
-
-	// read done channel and block until run is terminated
-	<-o.done
-	o.LogInfo("run terminated")
-	close(o.done)
+	o.LogInfo("stopping to process...")
+	o.stopProcess <- true
+	<-o.doneProcess
 }
 
 func (o *Syslog) Run() {
 	o.LogInfo("running in background...")
 
-	// prepare enabled transformers
+	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.channel)
+	listChannel = append(listChannel, o.outputChan)
 	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+
+	// goroutine to process transformed dns messages
+	go o.Process()
+
+	// loop to process incoming messages
+RUN_LOOP:
+	for {
+		select {
+		case <-o.stopRun:
+			// cleanup transformers
+			subprocessors.Reset()
+
+			o.doneRun <- true
+			break RUN_LOOP
+
+		case dm, opened := <-o.inputChan:
+			if !opened {
+				o.LogInfo("input channel closed!")
+				return
+			}
+
+			// apply tranforms, init dns message with additionnals parts if necessary
+			subprocessors.InitDnsMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
+			// send to output channel
+			o.outputChan <- dm
+		}
+	}
+	o.LogInfo("run terminated")
+}
+
+func (o *Syslog) Process() {
+	o.LogInfo("processing...")
 
 	var syslogconn *syslog.Writer
 	var err error
@@ -182,34 +222,19 @@ func (o *Syslog) Run() {
 
 	o.syslogConn = syslogconn
 
+PROCESS_LOOP:
 	for {
 		select {
-		case <-o.cleanup:
-			o.LogInfo("cleanup called")
-			//close(o.channel)
-
-			// cleanup transformers
-			subprocessors.Reset()
-
+		case <-o.stopProcess:
 			// close connection
-			o.LogInfo("closing connection")
 			o.syslogConn.Close()
-
-			o.done <- true
-
-			// incoming dns message to process
-		case dm, opened := <-o.channel:
-			// channel is closed ?
+			o.doneProcess <- true
+			break PROCESS_LOOP
+		// incoming dns message to process
+		case dm, opened := <-o.outputChan:
 			if !opened {
-				o.LogInfo("channel closed, cleanup...")
-				o.cleanup <- true
-				continue
-			}
-
-			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
-				continue
+				o.LogInfo("output channel closed!")
+				return
 			}
 
 			switch o.config.Loggers.Syslog.Mode {
@@ -238,6 +263,6 @@ func (o *Syslog) Run() {
 				buffer.Reset()
 			}
 		}
-
 	}
+	o.LogInfo("processing terminated")
 }

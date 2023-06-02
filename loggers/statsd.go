@@ -42,13 +42,16 @@ type StreamStats struct {
 }
 
 type StatsdClient struct {
-	done    chan bool
-	channel chan dnsutils.DnsMessage
-	config  *dnsutils.Config
-	logger  *logger.Logger
-	cleanup chan bool
-	version string
-	name    string
+	stopProcess chan bool
+	doneProcess chan bool
+	stopRun     chan bool
+	doneRun     chan bool
+	inputChan   chan dnsutils.DnsMessage
+	outputChan  chan dnsutils.DnsMessage
+	config      *dnsutils.Config
+	logger      *logger.Logger
+	version     string
+	name        string
 
 	Stats StreamStats
 	sync.RWMutex
@@ -58,14 +61,17 @@ func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, version str
 	logger.Info("[%s] logger=statsd - enabled", name)
 
 	s := &StatsdClient{
-		done:    make(chan bool),
-		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, config.Loggers.Statsd.ChannelBufferSize),
-		logger:  logger,
-		config:  config,
-		version: version,
-		name:    name,
-		Stats:   StreamStats{Streams: make(map[string]*StatsPerStream)},
+		stopProcess: make(chan bool),
+		doneProcess: make(chan bool),
+		stopRun:     make(chan bool),
+		doneRun:     make(chan bool),
+		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.Statsd.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.Statsd.ChannelBufferSize),
+		logger:      logger,
+		config:      config,
+		version:     version,
+		name:        name,
+		Stats:       StreamStats{Streams: make(map[string]*StatsPerStream)},
 	}
 
 	// check config
@@ -93,19 +99,17 @@ func (o *StatsdClient) LogError(msg string, v ...interface{}) {
 }
 
 func (o *StatsdClient) Channel() chan dnsutils.DnsMessage {
-	return o.channel
+	return o.inputChan
 }
 
 func (o *StatsdClient) Stop() {
-	o.LogInfo("stopping...")
+	o.LogInfo("stopping to run...")
+	o.stopRun <- true
+	<-o.doneRun
 
-	// close output channel
-	o.cleanup <- true
-
-	// read done channel and block until run is terminated
-	<-o.done
-	o.LogInfo("run terminated")
-	close(o.done)
+	o.LogInfo("stopping to process...")
+	o.stopProcess <- true
+	<-o.doneProcess
 }
 
 func (o *StatsdClient) RecordDnsMessage(dm dnsutils.DnsMessage) {
@@ -226,35 +230,59 @@ func (o *StatsdClient) Run() {
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.channel)
+	listChannel = append(listChannel, o.outputChan)
 	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
 
-	// statd timer to push data
-	t2_interval := time.Duration(o.config.Loggers.Statsd.FlushInterval) * time.Second
-	t2 := time.NewTimer(t2_interval)
+	// goroutine to process transformed dns messages
+	go o.Process()
 
+	// loop to process incoming messages
+RUN_LOOP:
 	for {
 		select {
-		case <-o.cleanup:
-			o.LogInfo("cleanup called")
-			//close(o.channel)
-
+		case <-o.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
 
-			o.done <- true
+			o.doneRun <- true
+			break RUN_LOOP
 
-		case dm, opened := <-o.channel:
+		case dm, opened := <-o.inputChan:
 			if !opened {
-				o.LogInfo("channel closed, cleanup...")
-				o.cleanup <- true
-				continue
+				o.LogInfo("input channel closed!")
+				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDnsMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 				continue
+			}
+
+			// send to output channel
+			o.outputChan <- dm
+		}
+	}
+	o.LogInfo("run terminated")
+}
+
+func (o *StatsdClient) Process() {
+	o.LogInfo("processing...")
+
+	// statd timer to push data
+	t2_interval := time.Duration(o.config.Loggers.Statsd.FlushInterval) * time.Second
+	t2 := time.NewTimer(t2_interval)
+PROCESS_LOOP:
+	for {
+		select {
+		case <-o.stopProcess:
+			o.doneProcess <- true
+			break PROCESS_LOOP
+		// incoming dns message to process
+		case dm, opened := <-o.outputChan:
+			if !opened {
+				o.LogInfo("output channel closed!")
+				return
 			}
 
 			// record the dnstap message
@@ -335,5 +363,5 @@ func (o *StatsdClient) Run() {
 			t2.Reset(t2_interval)
 		}
 	}
-
+	o.LogInfo("processing terminated")
 }
