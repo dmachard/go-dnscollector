@@ -6,10 +6,14 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcapgo"
 )
 
 type StdOut struct {
@@ -127,6 +131,15 @@ func (o *StdOut) Process() {
 	// standard output buffer
 	buffer := new(bytes.Buffer)
 
+	// pcap init ?
+	var writerPcap *pcapgo.Writer
+	if o.config.Loggers.Stdout.Mode == dnsutils.MODE_PCAP {
+		writerPcap = pcapgo.NewWriter(os.Stdout)
+		if err := writerPcap.WriteFileHeader(65536, layers.LinkTypeEthernet); err != nil {
+			o.LogError("pcap init error: %e", err)
+		}
+	}
+
 PROCESS_LOOP:
 	for {
 		select {
@@ -141,6 +154,31 @@ PROCESS_LOOP:
 			}
 
 			switch o.config.Loggers.Stdout.Mode {
+			case dnsutils.MODE_PCAP:
+				pkt, err := dm.ToPacketLayer()
+				if err != nil {
+					o.LogError("failed to encode to packet layer: %s", err)
+					continue
+				}
+
+				buf := gopacket.NewSerializeBuffer()
+				opts := gopacket.SerializeOptions{
+					FixLengths:       true,
+					ComputeChecksums: true,
+				}
+				for _, l := range pkt {
+					l.SerializeTo(buf, opts)
+				}
+
+				bufSize := len(buf.Bytes())
+				ci := gopacket.CaptureInfo{
+					Timestamp:     time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec)),
+					CaptureLength: bufSize,
+					Length:        bufSize,
+				}
+
+				writerPcap.WritePacket(ci, buf.Bytes())
+
 			case dnsutils.MODE_TEXT:
 				o.stdout.Print(dm.String(o.textFormat,
 					o.config.Global.TextFormatDelimiter,
