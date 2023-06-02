@@ -43,15 +43,18 @@ type KeyHit struct {
 }
 
 type RestAPI struct {
-	done       chan bool
-	done_api   chan bool
-	cleanup    chan bool
-	httpserver net.Listener
-	httpmux    *http.ServeMux
-	channel    chan dnsutils.DnsMessage
-	config     *dnsutils.Config
-	logger     *logger.Logger
-	name       string
+	doneApi     chan bool
+	stopProcess chan bool
+	doneProcess chan bool
+	stopRun     chan bool
+	doneRun     chan bool
+	inputChan   chan dnsutils.DnsMessage
+	outputChan  chan dnsutils.DnsMessage
+	httpserver  net.Listener
+	httpmux     *http.ServeMux
+	config      *dnsutils.Config
+	logger      *logger.Logger
+	name        string
 
 	HitsStream HitsStream
 	HitsUniq   HitsUniq
@@ -70,13 +73,16 @@ type RestAPI struct {
 func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, version string, name string) *RestAPI {
 	logger.Info("[%s] logger=restapi - enabled", name)
 	o := &RestAPI{
-		done:     make(chan bool),
-		done_api: make(chan bool),
-		cleanup:  make(chan bool),
-		config:   config,
-		channel:  make(chan dnsutils.DnsMessage, config.Loggers.RestAPI.ChannelBufferSize),
-		logger:   logger,
-		name:     name,
+		doneApi:     make(chan bool),
+		stopProcess: make(chan bool),
+		doneProcess: make(chan bool),
+		stopRun:     make(chan bool),
+		doneRun:     make(chan bool),
+		config:      config,
+		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.RestAPI.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.RestAPI.ChannelBufferSize),
+		logger:      logger,
+		name:        name,
 
 		HitsStream: HitsStream{
 			Streams: make(map[string]SearchBy),
@@ -120,24 +126,21 @@ func (o *RestAPI) LogError(msg string, v ...interface{}) {
 }
 
 func (o *RestAPI) Channel() chan dnsutils.DnsMessage {
-	return o.channel
+	return o.inputChan
 }
 
-func (s *RestAPI) Stop() {
-	s.LogInfo("stopping...")
+func (o *RestAPI) Stop() {
+	o.LogInfo("stopping to run...")
+	o.stopRun <- true
+	<-o.doneRun
 
-	// close output channel
-	s.cleanup <- true
+	o.LogInfo("stopping to process...")
+	o.stopProcess <- true
+	<-o.doneProcess
 
-	// block and wait until http api is terminated
-	<-s.done_api
-	s.LogInfo("listen terminated")
-	close(s.done_api)
-
-	// read done channel and block until run is terminated
-	<-s.done
-	s.LogInfo("run terminated")
-	close(s.done)
+	o.LogInfo("stopping http server...")
+	o.httpserver.Close()
+	<-o.doneApi
 }
 
 func (s *RestAPI) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
@@ -680,41 +683,37 @@ func (s *RestAPI) ListenAndServe() {
 
 	http.Serve(s.httpserver, s.httpmux)
 
-	// block until stop
-	s.done_api <- true
+	s.LogInfo("http server terminated")
+	s.doneApi <- true
 }
 
 func (s *RestAPI) Run() {
-	s.LogInfo("running in background...")
+	s.LogInfo("processing...")
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, s.channel)
+	listChannel = append(listChannel, s.outputChan)
 	subprocessors := transformers.NewTransforms(&s.config.OutgoingTransformers, s.logger, s.name, listChannel, 0)
 
 	// start http server
 	go s.ListenAndServe()
 
+	// goroutine to process transformed dns messages
+	go s.Process()
+
+	// loop to process incoming messages
+RUN_LOOP:
 	for {
 		select {
-		case <-s.cleanup:
-			s.LogInfo("cleanup called")
-			//close(s.channel)
-
-			// stopping http server
-			s.httpserver.Close()
-
+		case <-s.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
-
-			s.done <- true
-			return
-
-		case dm, opened := <-s.channel:
+			s.doneRun <- true
+			break RUN_LOOP
+		case dm, opened := <-s.inputChan:
 			if !opened {
-				s.LogInfo("channel closed, cleanup...")
-				s.cleanup <- true
-				continue
+				s.LogInfo("input channel closed!")
+				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
@@ -723,8 +722,31 @@ func (s *RestAPI) Run() {
 				continue
 			}
 
+			// send to output channel
+			s.outputChan <- dm
+		}
+	}
+	s.LogInfo("run terminated")
+}
+
+func (s *RestAPI) Process() {
+	s.LogInfo("processing...")
+
+PROCESS_LOOP:
+	for {
+		select {
+		case <-s.stopProcess:
+			s.doneProcess <- true
+			break PROCESS_LOOP
+
+		case dm, opened := <-s.outputChan:
+			if !opened {
+				s.LogInfo("output channel closed!")
+				return
+			}
 			// record the dnstap message
 			s.RecordDnsMessage(dm)
 		}
 	}
+	s.LogInfo("processing terminated")
 }

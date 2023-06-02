@@ -73,28 +73,34 @@ func (o *LokiStream) Encode2Proto() ([]byte, error) {
 }
 
 type LokiClient struct {
-	done       chan bool
-	channel    chan dnsutils.DnsMessage
-	config     *dnsutils.Config
-	logger     *logger.Logger
-	cleanup    chan bool
-	httpclient *http.Client
-	textFormat []string
-	streams    map[string]*LokiStream
-	name       string
+	stopProcess chan bool
+	doneProcess chan bool
+	stopRun     chan bool
+	doneRun     chan bool
+	inputChan   chan dnsutils.DnsMessage
+	outputChan  chan dnsutils.DnsMessage
+	config      *dnsutils.Config
+	logger      *logger.Logger
+	httpclient  *http.Client
+	textFormat  []string
+	streams     map[string]*LokiStream
+	name        string
 }
 
 func NewLokiClient(config *dnsutils.Config, logger *logger.Logger, name string) *LokiClient {
 	logger.Info("[%s] logger=loki - enabled", name)
 
 	s := &LokiClient{
-		done:    make(chan bool),
-		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, config.Loggers.LokiClient.ChannelBufferSize),
-		logger:  logger,
-		config:  config,
-		streams: make(map[string]*LokiStream),
-		name:    name,
+		stopProcess: make(chan bool),
+		doneProcess: make(chan bool),
+		stopRun:     make(chan bool),
+		doneRun:     make(chan bool),
+		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.LokiClient.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.LokiClient.ChannelBufferSize),
+		logger:      logger,
+		config:      config,
+		streams:     make(map[string]*LokiStream),
+		name:        name,
 	}
 
 	s.ReadConfig()
@@ -162,19 +168,17 @@ func (o *LokiClient) LogError(msg string, v ...interface{}) {
 }
 
 func (o *LokiClient) Channel() chan dnsutils.DnsMessage {
-	return o.channel
+	return o.inputChan
 }
 
 func (o *LokiClient) Stop() {
-	o.LogInfo("stopping...")
+	o.LogInfo("stopping to run...")
+	o.stopRun <- true
+	<-o.doneRun
 
-	// exit to close properly
-	o.cleanup <- true
-
-	// read done channel and block until run is terminated
-	<-o.done
-	o.LogInfo("run terminated")
-	close(o.done)
+	o.LogInfo("stopping to process...")
+	o.stopProcess <- true
+	<-o.doneProcess
 }
 
 func (o *LokiClient) Run() {
@@ -182,8 +186,44 @@ func (o *LokiClient) Run() {
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.channel)
+	listChannel = append(listChannel, o.outputChan)
 	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+
+	// goroutine to process transformed dns messages
+	go o.Process()
+
+	// loop to process incoming messages
+RUN_LOOP:
+	for {
+		select {
+		case <-o.stopRun:
+			// cleanup transformers
+			subprocessors.Reset()
+
+			o.doneRun <- true
+			break RUN_LOOP
+
+		case dm, opened := <-o.inputChan:
+			if !opened {
+				o.LogInfo("input channel closed!")
+				return
+			}
+
+			// apply tranforms, init dns message with additionnals parts if necessary
+			subprocessors.InitDnsMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
+			// send to output channel
+			o.outputChan <- dm
+		}
+	}
+	o.LogInfo("run terminated")
+}
+
+func (o *LokiClient) Process() {
+	o.LogInfo("processing...")
 
 	// prepare buffer
 	buffer := new(bytes.Buffer)
@@ -192,32 +232,20 @@ func (o *LokiClient) Run() {
 	// prepare timers
 	tflush_interval := time.Duration(o.config.Loggers.LokiClient.FlushInterval) * time.Second
 	tflush := time.NewTimer(tflush_interval)
-
+PROCESS_LOOP:
 	for {
 		select {
-		case <-o.cleanup:
-			o.LogInfo("cleanup called")
-			//close(o.channel)
+		case <-o.stopProcess:
+			o.doneProcess <- true
+			break PROCESS_LOOP
 
-			// cleanup transformers
-			subprocessors.Reset()
-
-			o.done <- true
-			return
-
-		case dm, opened := <-o.channel:
-			// channel is closed ?
+		// incoming dns message to process
+		case dm, opened := <-o.outputChan:
 			if !opened {
-				o.LogInfo("channel closed, cleanup...")
-				o.cleanup <- true
-				continue
+				o.LogInfo("output channel closed!")
+				return
 			}
 
-			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
-				continue
-			}
 			lbls := labels.Labels{
 				labels.Label{Name: "identity", Value: dm.DnsTap.Identity},
 				labels.Label{Name: "job", Value: o.config.Loggers.LokiClient.JobName},
@@ -336,8 +364,8 @@ func (o *LokiClient) Run() {
 			// restart timer
 			tflush.Reset(tflush_interval)
 		}
-
 	}
+	o.LogInfo("processing terminated")
 }
 
 func (o *LokiClient) SendEntries(buf []byte) {

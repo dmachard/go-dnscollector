@@ -13,13 +13,16 @@ import (
 )
 
 type InfluxDBClient struct {
-	done         chan bool
-	channel      chan dnsutils.DnsMessage
+	stopProcess  chan bool
+	doneProcess  chan bool
+	stopRun      chan bool
+	doneRun      chan bool
+	inputChan    chan dnsutils.DnsMessage
+	outputChan   chan dnsutils.DnsMessage
 	config       *dnsutils.Config
 	logger       *logger.Logger
 	influxdbConn influxdb2.Client
 	writeAPI     api.WriteAPI
-	cleanup      chan bool
 	name         string
 }
 
@@ -27,12 +30,15 @@ func NewInfluxDBClient(config *dnsutils.Config, logger *logger.Logger, name stri
 	logger.Info("[%s] logger=influxdb - enabled", name)
 
 	s := &InfluxDBClient{
-		done:    make(chan bool),
-		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, config.Loggers.InfluxDB.ChannelBufferSize),
-		logger:  logger,
-		config:  config,
-		name:    name,
+		stopProcess: make(chan bool),
+		doneProcess: make(chan bool),
+		stopRun:     make(chan bool),
+		doneRun:     make(chan bool),
+		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.InfluxDB.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.InfluxDB.ChannelBufferSize),
+		logger:      logger,
+		config:      config,
+		name:        name,
 	}
 
 	s.ReadConfig()
@@ -59,19 +65,17 @@ func (o *InfluxDBClient) LogError(msg string, v ...interface{}) {
 }
 
 func (o *InfluxDBClient) Channel() chan dnsutils.DnsMessage {
-	return o.channel
+	return o.inputChan
 }
 
 func (o *InfluxDBClient) Stop() {
-	o.LogInfo("stopping...")
+	o.LogInfo("stopping to run...")
+	o.stopRun <- true
+	<-o.doneRun
 
-	// close output channel
-	o.cleanup <- true
-
-	// read done channel and block until run is terminated
-	<-o.done
-	o.LogInfo("run terminated")
-	close(o.done)
+	o.LogInfo("stopping to process...")
+	o.stopProcess <- true
+	<-o.doneProcess
 }
 
 func (o *InfluxDBClient) Run() {
@@ -79,8 +83,44 @@ func (o *InfluxDBClient) Run() {
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.channel)
+	listChannel = append(listChannel, o.outputChan)
 	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+
+	// goroutine to process transformed dns messages
+	go o.Process()
+
+	// loop to process incoming messages
+RUN_LOOP:
+	for {
+		select {
+		case <-o.stopRun:
+			// cleanup transformers
+			subprocessors.Reset()
+
+			o.doneRun <- true
+			break RUN_LOOP
+
+		case dm, opened := <-o.inputChan:
+			if !opened {
+				o.LogInfo("input channel closed!")
+				return
+			}
+
+			// apply tranforms, init dns message with additionnals parts if necessary
+			subprocessors.InitDnsMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
+			// send to output channel
+			o.outputChan <- dm
+		}
+	}
+	o.LogInfo("run terminated")
+}
+
+func (o *InfluxDBClient) Process() {
+	o.LogInfo("processing...")
 
 	// prepare options for influxdb
 	opts := influxdb2.DefaultOptions()
@@ -110,34 +150,22 @@ func (o *InfluxDBClient) Run() {
 
 	o.influxdbConn = influxClient
 	o.writeAPI = writeAPI
+
+PROCESS_LOOP:
 	for {
 		select {
-		case <-o.cleanup:
-			o.LogInfo("cleanup called")
-			//close(o.channel)
-
+		case <-o.stopProcess:
 			// Force all unwritten data to be sent
 			o.writeAPI.Flush()
 			// Ensures background processes finishes
 			o.influxdbConn.Close()
-
-			// cleanup transformers
-			subprocessors.Reset()
-
-			o.done <- true
-			return
-		case dm, opened := <-o.channel:
-			// channel is closed ?
+			o.doneProcess <- true
+			break PROCESS_LOOP
+		// incoming dns message to process
+		case dm, opened := <-o.outputChan:
 			if !opened {
-				o.LogInfo("channel closed, cleanup...")
-				o.cleanup <- true
-				continue
-			}
-
-			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
-				continue
+				o.LogInfo("output channel closed!")
+				return
 			}
 
 			p := influxdb2.NewPointWithMeasurement("dns").
@@ -154,6 +182,6 @@ func (o *InfluxDBClient) Run() {
 			// write asynchronously
 			o.writeAPI.WritePoint(p)
 		}
-
 	}
+	o.LogInfo("processing terminated")
 }

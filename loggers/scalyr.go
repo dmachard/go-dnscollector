@@ -25,12 +25,17 @@ import (
 // ScalyrClient is a client for Scalyr(https://www.dataset.com/)
 // This client is using the addEvents endpoint, described here: https://app.scalyr.com/help/api#addEvents
 type ScalyrClient struct {
-	channel    chan dnsutils.DnsMessage
-	logger     *logger.Logger
-	name       string
-	config     *dnsutils.Config
-	mode       string
-	textFormat []string
+	stopProcess chan bool
+	doneProcess chan bool
+	stopRun     chan bool
+	doneRun     chan bool
+	inputChan   chan dnsutils.DnsMessage
+	outputChan  chan dnsutils.DnsMessage
+	logger      *logger.Logger
+	name        string
+	config      *dnsutils.Config
+	mode        string
+	textFormat  []string
 
 	session string // Session ID, used by scalyr, see API docs
 
@@ -42,29 +47,29 @@ type ScalyrClient struct {
 
 	submissions chan []byte // Marshalled JSON to send to Scalyr
 
-	done          chan bool // Will be written to in Stop()
-	cleanup       chan bool
 	submitterDone chan bool // Will be written to when the HTTP submitter is done
 }
 
 func NewScalyrClient(config *dnsutils.Config, console *logger.Logger, name string) *ScalyrClient {
 	console.Info("[%s] logger=scalyr - starting", name)
 	c := &ScalyrClient{
-		channel: make(chan dnsutils.DnsMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
-		logger:  console,
-		name:    name,
-		config:  config,
-		mode:    dnsutils.MODE_TEXT,
+		stopProcess: make(chan bool),
+		doneProcess: make(chan bool),
+		stopRun:     make(chan bool),
+		doneRun:     make(chan bool),
+		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
+		logger:      console,
+		name:        name,
+		config:      config,
+		mode:        dnsutils.MODE_TEXT,
 
 		endpoint: makeEndpoint("app.scalyr.com"),
 		flush:    time.NewTicker(30 * time.Second),
 
 		session: uuid.NewString(),
 
-		submissions: make(chan []byte, 25),
-
-		done:          make(chan bool),
-		cleanup:       make(chan bool),
+		submissions:   make(chan []byte, 25),
 		submitterDone: make(chan bool),
 	}
 	c.ReadConfig()
@@ -137,11 +142,49 @@ func (c *ScalyrClient) ReadConfig() {
 	c.httpclient = &http.Client{Transport: tr}
 }
 
-func (c *ScalyrClient) Run() {
+func (o *ScalyrClient) Run() {
+	o.LogInfo("running in background...")
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, c.channel)
-	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
+	listChannel = append(listChannel, o.outputChan)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+
+	// goroutine to process transformed dns messages
+	go o.Process()
+
+	// loop to process incoming messages
+RUN_LOOP:
+	for {
+		select {
+		case <-o.stopRun:
+			// cleanup transformers
+			subprocessors.Reset()
+
+			o.doneRun <- true
+			break RUN_LOOP
+
+		case dm, opened := <-o.inputChan:
+			if !opened {
+				o.LogInfo("input channel closed!")
+				return
+			}
+
+			// apply tranforms, init dns message with additionnals parts if necessary
+			subprocessors.InitDnsMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+				continue
+			}
+
+			// send to output channel
+			o.outputChan <- dm
+		}
+	}
+	o.LogInfo("run terminated")
+}
+
+func (c *ScalyrClient) Process() {
+	c.LogInfo("processing...")
 
 	sInfo := c.config.Loggers.ScalyrClient.SessionInfo
 	if sInfo == nil {
@@ -166,19 +209,26 @@ func (c *ScalyrClient) Run() {
 
 	c.runSubmitter()
 
+PROCESS_LOOP:
 	for {
 		select {
-		case dm, opened := <-c.channel:
-			if !opened {
-				c.LogInfo("channel closed, cleanup...")
-				c.cleanup <- true
-				continue
-			}
+		case <-c.stopProcess:
 
-			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
-				continue
+			if len(events) > 0 {
+				c.submitEventRecord(sInfo, events)
+			}
+			close(c.submissions)
+
+			// Block until both threads are done
+			<-c.submitterDone
+
+			c.doneProcess <- true
+			break PROCESS_LOOP
+		// incoming dns message to process
+		case dm, opened := <-c.outputChan:
+			if !opened {
+				c.LogInfo("output channel closed!")
+				return
 			}
 
 			switch c.mode {
@@ -217,36 +267,19 @@ func (c *ScalyrClient) Run() {
 				c.submitEventRecord(sInfo, events)
 				events = []event{}
 			}
-		case <-c.cleanup:
-			c.LogInfo("cleanup called")
-			//close(c.channel)
-
-			if len(events) > 0 {
-				c.submitEventRecord(sInfo, events)
-			}
-			close(c.submissions)
-
-			// Block until both threads are done
-			<-c.submitterDone
-
-			// cleanup transformers
-			subprocessors.Reset()
-
-			c.done <- true
-
-			return
 		}
 	}
-
+	c.LogInfo("processing terminated")
 }
 
 func (c ScalyrClient) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping to run...")
+	c.stopRun <- true
+	<-c.doneRun
 
-	c.cleanup <- true
-
-	<-c.done
-	c.LogInfo("run terminated")
+	c.LogInfo("stopping to process...")
+	c.stopProcess <- true
+	<-c.doneProcess
 }
 
 func (c *ScalyrClient) submitEventRecord(sessionInfo map[string]string, events []event) {
@@ -391,5 +424,5 @@ func (c *ScalyrClient) GetName() string { return c.name }
 func (c *ScalyrClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *ScalyrClient) Channel() chan dnsutils.DnsMessage {
-	return c.channel
+	return c.inputChan
 }

@@ -13,24 +13,30 @@ import (
 )
 
 type ElasticSearchClient struct {
-	done    chan bool
-	cleanup chan bool
-	channel chan dnsutils.DnsMessage
-	config  *dnsutils.Config
-	logger  *logger.Logger
-	name    string
-	url     string
+	stopProcess chan bool
+	doneProcess chan bool
+	stopRun     chan bool
+	doneRun     chan bool
+	inputChan   chan dnsutils.DnsMessage
+	outputChan  chan dnsutils.DnsMessage
+	config      *dnsutils.Config
+	logger      *logger.Logger
+	name        string
+	url         string
 }
 
 func NewElasticSearchClient(config *dnsutils.Config, console *logger.Logger, name string) *ElasticSearchClient {
 	console.Info("[%s] logger=elasticsearch - enabled", name)
 	o := &ElasticSearchClient{
-		done:    make(chan bool),
-		cleanup: make(chan bool),
-		channel: make(chan dnsutils.DnsMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
-		logger:  console,
-		config:  config,
-		name:    name,
+		stopProcess: make(chan bool),
+		doneProcess: make(chan bool),
+		stopRun:     make(chan bool),
+		doneRun:     make(chan bool),
+		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
+		logger:      console,
+		config:      config,
+		name:        name,
 	}
 	o.ReadConfig()
 	return o
@@ -45,7 +51,7 @@ func (c *ElasticSearchClient) ReadConfig() {
 }
 
 func (o *ElasticSearchClient) Channel() chan dnsutils.DnsMessage {
-	return o.channel
+	return o.inputChan
 }
 
 func (o *ElasticSearchClient) LogInfo(msg string, v ...interface{}) {
@@ -57,50 +63,72 @@ func (o *ElasticSearchClient) LogError(msg string, v ...interface{}) {
 }
 
 func (o *ElasticSearchClient) Stop() {
-	o.LogInfo("stopping...")
+	o.LogInfo("stopping to run...")
+	o.stopRun <- true
+	<-o.doneRun
 
-	// close output channel
-	o.cleanup <- true
-
-	// read done channel and block until run is terminated
-	<-o.done
-	o.LogInfo("run terminated")
-	close(o.done)
+	o.LogInfo("stopping to process...")
+	o.stopProcess <- true
+	<-o.doneProcess
 }
 
 func (o *ElasticSearchClient) Run() {
-	o.LogInfo("running in background...")
+	o.LogInfo("processing...")
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.channel)
+	listChannel = append(listChannel, o.outputChan)
 	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
 
-	buffer := new(bytes.Buffer)
+	// goroutine to process transformed dns messages
+	go o.Process()
+
+	// loop to process incoming messages
+RUN_LOOP:
 	for {
 		select {
-		case <-o.cleanup:
-			o.LogInfo("cleanup called")
-			//close(o.channel)
-
+		case <-o.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
 
-			o.done <- true
+			o.doneRun <- true
+			break RUN_LOOP
 
-			return
-		case dm, opened := <-o.channel:
-			// channel is closed ?
+		case dm, opened := <-o.inputChan:
 			if !opened {
-				o.LogInfo("channel closed, cleanup...")
-				o.cleanup <- true
-				continue
+				o.LogInfo("input channel closed!")
+				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDnsMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
 				continue
+			}
+
+			// send to output channel
+			o.outputChan <- dm
+		}
+	}
+	o.LogInfo("run terminated")
+}
+
+func (o *ElasticSearchClient) Process() {
+	o.LogInfo("running in background...")
+
+	buffer := new(bytes.Buffer)
+PROCESS_LOOP:
+	for {
+		select {
+		case <-o.stopProcess:
+			o.doneProcess <- true
+			break PROCESS_LOOP
+
+		// incoming dns message to process
+		case dm, opened := <-o.outputChan:
+			if !opened {
+				o.LogInfo("output channel closed!")
+				return
 			}
 
 			// encode
@@ -125,4 +153,5 @@ func (o *ElasticSearchClient) Run() {
 
 		}
 	}
+	o.LogInfo("processing terminated")
 }
