@@ -184,7 +184,6 @@ RUN_LOOP:
 }
 
 func (c *ScalyrClient) Process() {
-	c.LogInfo("processing...")
 
 	sInfo := c.config.Loggers.ScalyrClient.SessionInfo
 	if sInfo == nil {
@@ -209,6 +208,7 @@ func (c *ScalyrClient) Process() {
 
 	c.runSubmitter()
 
+	c.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {

@@ -240,8 +240,6 @@ RUN_LOOP:
 }
 
 func (o *DnstapSender) Process() {
-	o.LogInfo("processing...")
-
 	// init buffer
 	bufferDm := []dnsutils.DnsMessage{}
 
@@ -249,6 +247,7 @@ func (o *DnstapSender) Process() {
 	flushInterval := time.Duration(o.config.Loggers.Dnstap.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
+	o.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {

@@ -257,8 +257,6 @@ RUN_LOOP:
 }
 
 func (o *KafkaProducer) Process() {
-	o.LogInfo("processing...")
-
 	ctx, cancelKafka := context.WithCancel(context.Background())
 	defer cancelKafka() // Libérez les ressources liées au contexte
 
@@ -273,6 +271,9 @@ func (o *KafkaProducer) Process() {
 	flushTimer := time.NewTimer(flushInterval)
 
 	go o.ConnectToKafka(ctx, readyTimer)
+
+	o.LogInfo("ready to process")
+
 PROCESS_LOOP:
 	for {
 		select {

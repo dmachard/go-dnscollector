@@ -73,7 +73,7 @@ func (o *ElasticSearchClient) Stop() {
 }
 
 func (o *ElasticSearchClient) Run() {
-	o.LogInfo("processing...")
+	o.LogInfo("running in background...")
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
@@ -114,9 +114,9 @@ RUN_LOOP:
 }
 
 func (o *ElasticSearchClient) Process() {
-	o.LogInfo("running in background...")
-
 	buffer := new(bytes.Buffer)
+	o.LogInfo("ready to process")
+
 PROCESS_LOOP:
 	for {
 		select {

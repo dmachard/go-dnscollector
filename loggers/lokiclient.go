@@ -223,8 +223,6 @@ RUN_LOOP:
 }
 
 func (o *LokiClient) Process() {
-	o.LogInfo("processing...")
-
 	// prepare buffer
 	buffer := new(bytes.Buffer)
 	var byteBuffer []byte
@@ -232,6 +230,8 @@ func (o *LokiClient) Process() {
 	// prepare timers
 	tflush_interval := time.Duration(o.config.Loggers.LokiClient.FlushInterval) * time.Second
 	tflush := time.NewTimer(tflush_interval)
+
+	o.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {

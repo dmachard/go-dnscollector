@@ -1559,7 +1559,7 @@
             },
             "editorMode": "code",
             "exemplar": true,
-            "expr": "sum(rate(${prom_prefix}_packets_total{job=~\"$job\", stream_id=~\"$stream_id\", return_code!=\"-\"}[5m])) by ( return_code )",
+            "expr": "sum(rate(${prom_prefix}_rcodes_total{job=~\"$job\", stream_id=~\"$stream_id\", return_code!=\"-\"}[5m])) by ( return_code )",
             "interval": "",
             "legendFormat": "{{ return_code }}",
             "range": true,

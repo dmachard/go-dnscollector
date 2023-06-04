@@ -126,7 +126,6 @@ RUN_LOOP:
 }
 
 func (o *StdOut) Process() {
-	o.LogInfo("running in background...")
 
 	// standard output buffer
 	buffer := new(bytes.Buffer)
@@ -140,6 +139,7 @@ func (o *StdOut) Process() {
 		}
 	}
 
+	o.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {

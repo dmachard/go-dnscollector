@@ -244,8 +244,6 @@ RUN_LOOP:
 }
 
 func (o *RedisPub) Process() {
-	o.LogInfo("processing...")
-
 	// init buffer
 	bufferDm := []dnsutils.DnsMessage{}
 
@@ -256,6 +254,7 @@ func (o *RedisPub) Process() {
 	// init remote conn
 	go o.ConnectToRemote()
 
+	o.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {
