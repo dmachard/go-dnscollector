@@ -94,7 +94,7 @@ Download the latest [`release`](https://github.com/dmachard/go-dns-collector/rel
 If you prefer run it from docker, follow this [guide](doc/docker.md).
 
 <p align="center">
-  <img src="terminal.gif" alt="dnscollector"/>
+  <img src="doc/terminal.gif" alt="dnscollector"/>
 </p>
 
 ## Configuration
