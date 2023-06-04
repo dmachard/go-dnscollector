@@ -120,8 +120,6 @@ RUN_LOOP:
 }
 
 func (o *InfluxDBClient) Process() {
-	o.LogInfo("processing...")
-
 	// prepare options for influxdb
 	opts := influxdb2.DefaultOptions()
 	opts.SetUseGZip(true)
@@ -151,6 +149,7 @@ func (o *InfluxDBClient) Process() {
 	o.influxdbConn = influxClient
 	o.writeAPI = writeAPI
 
+	o.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {

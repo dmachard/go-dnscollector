@@ -113,9 +113,8 @@ RUN_LOOP:
 }
 
 func (f *FalcoClient) Process() {
-	f.LogInfo("processing...")
-
 	buffer := new(bytes.Buffer)
+	f.LogInfo("ready to process")
 
 PROCESS_LOOP:
 	for {

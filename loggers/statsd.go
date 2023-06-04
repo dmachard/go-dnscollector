@@ -267,11 +267,11 @@ RUN_LOOP:
 }
 
 func (o *StatsdClient) Process() {
-	o.LogInfo("processing...")
-
 	// statd timer to push data
 	t2_interval := time.Duration(o.config.Loggers.Statsd.FlushInterval) * time.Second
 	t2 := time.NewTimer(t2_interval)
+
+	o.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {

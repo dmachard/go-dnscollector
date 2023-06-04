@@ -489,8 +489,6 @@ RUN_LOOP:
 }
 
 func (l *LogFile) Process() {
-	l.LogInfo("running in background...")
-
 	// prepare some timers
 	flushInterval := time.Duration(l.config.Loggers.LogFile.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
@@ -499,6 +497,8 @@ func (l *LogFile) Process() {
 	buffer := new(bytes.Buffer)
 	var data []byte
 	var err error
+
+	l.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {

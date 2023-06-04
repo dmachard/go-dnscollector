@@ -1095,12 +1095,11 @@ RUN_LOOP:
 }
 
 func (s *Prometheus) Process() {
-	s.LogInfo("processing...")
-
 	// init timer to compute qps
 	t1_interval := 1 * time.Second
 	t1 := time.NewTimer(t1_interval)
 
+	s.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {

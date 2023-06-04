@@ -179,8 +179,6 @@ RUN_LOOP:
 }
 
 func (o *Syslog) Process() {
-	o.LogInfo("processing...")
-
 	var syslogconn *syslog.Writer
 	var err error
 	buffer := new(bytes.Buffer)
@@ -222,6 +220,7 @@ func (o *Syslog) Process() {
 
 	o.syslogConn = syslogconn
 
+	o.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {

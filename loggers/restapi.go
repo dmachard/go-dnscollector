@@ -688,8 +688,6 @@ func (s *RestAPI) ListenAndServe() {
 }
 
 func (s *RestAPI) Run() {
-	s.LogInfo("processing...")
-
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
 	listChannel = append(listChannel, s.outputChan)
@@ -702,6 +700,7 @@ func (s *RestAPI) Run() {
 	go s.Process()
 
 	// loop to process incoming messages
+	s.LogInfo("ready to process")
 RUN_LOOP:
 	for {
 		select {

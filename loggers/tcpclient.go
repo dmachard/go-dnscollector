@@ -230,8 +230,6 @@ RUN_LOOP:
 }
 
 func (o *TcpClient) Process() {
-	o.LogInfo("processing...")
-
 	// init buffer
 	bufferDm := []dnsutils.DnsMessage{}
 
@@ -241,6 +239,8 @@ func (o *TcpClient) Process() {
 
 	// init remote conn
 	go o.ConnectToRemote()
+
+	o.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {

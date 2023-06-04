@@ -221,14 +221,14 @@ RUN_LOOP:
 }
 
 func (o *FluentdClient) Process() {
-	o.LogInfo("processing...")
-
 	// init buffer
 	bufferDm := []dnsutils.DnsMessage{}
 
 	// init flust timer for buffer
 	flushInterval := time.Duration(o.config.Loggers.TcpClient.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
+
+	o.LogInfo("ready to process")
 
 PROCESS_LOOP:
 	for {
