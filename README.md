@@ -14,6 +14,10 @@ Additionally, DNS-collector also support
 - IPv4/v6 defragmentation and TCP reassembly
 - Nanoseconds in timestamps
 
+<p align="center">
+  <img src="doc/terminal.gif" alt="dnscollector"/>
+</p>
+
 **Overview**:
 
 ![overview](doc/overview.png)
@@ -92,10 +96,6 @@ Download the latest [`release`](https://github.com/dmachard/go-dns-collector/rel
 ```
 
 If you prefer run it from docker, follow this [guide](doc/docker.md).
-
-<p align="center">
-  <img src="doc/terminal.gif" alt="dnscollector"/>
-</p>
 
 ## Configuration
 
