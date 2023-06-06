@@ -291,59 +291,62 @@ RUN_LOOP:
 			}
 			dm.DNS.DnsRRs.Answers = answers
 
-			newDns := dnsmessage.Message{
-				Header: dnsmessage.Header{ID: uint16(pbdm.GetId()), Response: false},
-				Questions: []dnsmessage.Question{
-					{
-						Name:  dnsmessage.MustNewName(pbdm.Question.GetQName()),
-						Type:  dnsmessage.Type(pbdm.Question.GetQType()),
-						Class: dnsmessage.Class(pbdm.Question.GetQClass()),
+			if d.config.Collectors.PowerDNS.AddDnsPayload {
+				newDns := dnsmessage.Message{
+					Header: dnsmessage.Header{ID: uint16(pbdm.GetId()), Response: false},
+					Questions: []dnsmessage.Question{
+						{
+							Name:  dnsmessage.MustNewName(pbdm.Question.GetQName()),
+							Type:  dnsmessage.Type(pbdm.Question.GetQType()),
+							Class: dnsmessage.Class(pbdm.Question.GetQClass()),
+						},
 					},
-				},
-			}
-			if int(pbdm.Type.Number())%2 != 1 {
-				newDns.Header.Response = true
-				newDns.Header.RCode = dnsmessage.RCode(pbdm.Response.GetRcode())
-
-				newDns.Answers = []dnsmessage.Resource{}
-				// add RR only A, AAAA and CNAME are exported by PowerDNS
-				rrs := pbdm.GetResponse().GetRrs()
-				for j := range rrs {
-					r := dnsmessage.Resource{}
-					r.Header = dnsmessage.ResourceHeader{
-						Name:  dnsmessage.MustNewName(rrs[j].GetName()),
-						Type:  dnsmessage.Type(rrs[j].GetType()),
-						Class: dnsmessage.Class(rrs[j].GetClass()),
-						TTL:   rrs[j].GetTtl(),
-					}
-					switch {
-					// A
-					case RRs[j].GetType() == 1:
-						var rdata [4]byte
-						copy(rdata[:], rrs[j].GetRdata()[:4])
-						r.Body = &dnsmessage.AResource{A: rdata}
-					// AAAA
-					case RRs[j].GetType() == 28:
-						var rdata [16]byte
-						copy(rdata[:], rrs[j].GetRdata()[:16])
-						r.Body = &dnsmessage.AAAAResource{AAAA: rdata}
-					// CNAME
-					case RRs[j].GetType() == 5:
-						cname := dnsmessage.MustNewName(string(rrs[j].GetRdata()))
-						r.Body = &dnsmessage.CNAMEResource{CNAME: cname}
-					}
-
-					newDns.Answers = append(newDns.Answers, r)
-
 				}
-			}
+				if int(pbdm.Type.Number())%2 != 1 {
+					newDns.Header.Response = true
+					newDns.Header.RCode = dnsmessage.RCode(pbdm.Response.GetRcode())
 
-			pktWire, err := newDns.Pack()
-			if err != nil {
-				d.LogError("dns encoding failed, %s", err)
-				continue
+					newDns.Answers = []dnsmessage.Resource{}
+					// add RR only A, AAAA and CNAME are exported by PowerDNS
+					rrs := pbdm.GetResponse().GetRrs()
+					for j := range rrs {
+						r := dnsmessage.Resource{}
+						r.Header = dnsmessage.ResourceHeader{
+							Name:  dnsmessage.MustNewName(rrs[j].GetName()),
+							Type:  dnsmessage.Type(rrs[j].GetType()),
+							Class: dnsmessage.Class(rrs[j].GetClass()),
+							TTL:   rrs[j].GetTtl(),
+						}
+						switch {
+						// A
+						case RRs[j].GetType() == 1:
+							var rdata [4]byte
+							copy(rdata[:], rrs[j].GetRdata()[:4])
+							r.Body = &dnsmessage.AResource{A: rdata}
+						// AAAA
+						case RRs[j].GetType() == 28:
+							var rdata [16]byte
+							copy(rdata[:], rrs[j].GetRdata()[:16])
+							r.Body = &dnsmessage.AAAAResource{AAAA: rdata}
+						// CNAME
+						case RRs[j].GetType() == 5:
+							cname := dnsmessage.MustNewName(string(rrs[j].GetRdata()))
+							r.Body = &dnsmessage.CNAMEResource{CNAME: cname}
+						}
+
+						newDns.Answers = append(newDns.Answers, r)
+
+					}
+				}
+
+				pktWire, err := newDns.Pack()
+				if err == nil {
+					dm.DNS.Payload = pktWire
+				} else {
+					dm.DNS.MalformedPacket = true
+				}
+
 			}
-			dm.DNS.Payload = pktWire
 
 			// apply all enabled transformers
 			if transforms.ProcessMessage(&dm) == transformers.RETURN_DROP {

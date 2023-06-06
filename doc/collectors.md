@@ -170,6 +170,7 @@ Options:
 - `sock-rcvbuf`: (integer) sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
 - `reset-conn`: (bool) Reset TCP connection on exit
 - `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
+- `add-dns-payload`: (boolean) generate and add fake DNS payload
 
 Default values:
 
@@ -181,6 +182,7 @@ powerdns:
   tls-min-version: 1.2
   cert-file: ""
   key-file: ""
+  add-dns-payload: false
   sock-rcvbuf: 0
   reset-conn: true
   chan-buffer-size: 65535
