@@ -11,6 +11,11 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
+const (
+	UDP  = "UDP"
+	IPv4 = "IPv4"
+)
+
 func TestPrometheus_BadAuth(t *testing.T) {
 	// init the logger
 	config := dnsutils.GetFakeConfig()
@@ -64,8 +69,8 @@ func TestPrometheus_GetMetrics(t *testing.T) {
 	}
 	noerror_record.DNS.Flags.AA = true
 	noerror_record.DnsTap.Latency = 0.05
-	noerror_record.NetworkInfo.Protocol = "UDP"
-	noerror_record.NetworkInfo.Family = "IPv4"
+	noerror_record.NetworkInfo.Protocol = UDP
+	noerror_record.NetworkInfo.Family = IPv4
 	noerror_record.DNS.Length = 123
 
 	g.Record(noerror_record)
@@ -76,8 +81,8 @@ func TestPrometheus_GetMetrics(t *testing.T) {
 	nx_record := dnsutils.GetFakeDnsMessage()
 	nx_record.DNS.Type = dnsutils.DnsReply
 	nx_record.DNS.Rcode = dnsutils.DNS_RCODE_NXDOMAIN
-	nx_record.NetworkInfo.Protocol = "UDP"
-	nx_record.NetworkInfo.Family = "IPv4"
+	nx_record.NetworkInfo.Protocol = UDP
+	nx_record.NetworkInfo.Family = IPv4
 	nx_record.DNS.Length = 123
 
 	// nx_record.PublicSuffix = &dnsutils.TransformPublicSuffix{
@@ -88,8 +93,8 @@ func TestPrometheus_GetMetrics(t *testing.T) {
 	sf_record := dnsutils.GetFakeDnsMessage()
 	sf_record.DNS.Type = dnsutils.DnsReply
 	sf_record.DNS.Rcode = dnsutils.DNS_RCODE_SERVFAIL
-	sf_record.NetworkInfo.Protocol = "UDP"
-	sf_record.NetworkInfo.Family = "IPv4"
+	sf_record.NetworkInfo.Protocol = UDP
+	sf_record.NetworkInfo.Family = IPv4
 	sf_record.DNS.Length = 123
 
 	g.Record(sf_record)
