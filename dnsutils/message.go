@@ -734,14 +734,11 @@ func GetFakeDnsMessage() DnsMessage {
 	dm.DnsTap.Operation = "CLIENT_QUERY"
 	dm.DNS.Type = DnsQuery
 	dm.DNS.Qname = "dns.collector"
-	dm.DNS.Length = 123
 	dm.NetworkInfo.QueryIp = "1.2.3.4"
 	dm.NetworkInfo.QueryPort = "1234"
 	dm.NetworkInfo.ResponseIp = "4.3.2.1"
 	dm.NetworkInfo.ResponsePort = "4321"
 	dm.DNS.Rcode = "NOERROR"
 	dm.DNS.Qtype = "A"
-	dm.NetworkInfo.Protocol = "UDP"
-	dm.NetworkInfo.Family = "IPv4"
 	return dm
 }
