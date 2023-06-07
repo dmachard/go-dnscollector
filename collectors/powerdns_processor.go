@@ -292,60 +292,78 @@ RUN_LOOP:
 			dm.DNS.DnsRRs.Answers = answers
 
 			if d.config.Collectors.PowerDNS.AddDnsPayload {
-				newDns := dnsmessage.Message{
-					Header: dnsmessage.Header{ID: uint16(pbdm.GetId()), Response: false},
-					Questions: []dnsmessage.Question{
-						{
-							Name:  dnsmessage.MustNewName(pbdm.Question.GetQName()),
-							Type:  dnsmessage.Type(pbdm.Question.GetQType()),
-							Class: dnsmessage.Class(pbdm.Question.GetQClass()),
+
+				qname, err := dnsmessage.NewName(pbdm.Question.GetQName())
+				if err != nil {
+					dm.DNS.MalformedPacket = true
+				} else {
+
+					newDns := dnsmessage.Message{
+						Header: dnsmessage.Header{ID: uint16(pbdm.GetId()), Response: false},
+						Questions: []dnsmessage.Question{
+							{
+								Name:  qname,
+								Type:  dnsmessage.Type(pbdm.Question.GetQType()),
+								Class: dnsmessage.Class(pbdm.Question.GetQClass()),
+							},
 						},
-					},
-				}
-				if int(pbdm.Type.Number())%2 != 1 {
-					newDns.Header.Response = true
-					newDns.Header.RCode = dnsmessage.RCode(pbdm.Response.GetRcode())
+					}
+					if int(pbdm.Type.Number())%2 != 1 {
+						newDns.Header.Response = true
+						newDns.Header.RCode = dnsmessage.RCode(pbdm.Response.GetRcode())
 
-					newDns.Answers = []dnsmessage.Resource{}
-					// add RR only A, AAAA and CNAME are exported by PowerDNS
-					rrs := pbdm.GetResponse().GetRrs()
-					for j := range rrs {
-						r := dnsmessage.Resource{}
-						r.Header = dnsmessage.ResourceHeader{
-							Name:  dnsmessage.MustNewName(rrs[j].GetName()),
-							Type:  dnsmessage.Type(rrs[j].GetType()),
-							Class: dnsmessage.Class(rrs[j].GetClass()),
-							TTL:   rrs[j].GetTtl(),
+						newDns.Answers = []dnsmessage.Resource{}
+						// add RR only A, AAAA and CNAME are exported by PowerDNS
+						rrs := pbdm.GetResponse().GetRrs()
+
+						for j := range rrs {
+							rrname, err := dnsmessage.NewName(rrs[j].GetName())
+							if err != nil {
+								dm.DNS.MalformedPacket = true
+								continue
+							}
+							r := dnsmessage.Resource{}
+							r.Header = dnsmessage.ResourceHeader{
+								Name:  rrname,
+								Type:  dnsmessage.Type(rrs[j].GetType()),
+								Class: dnsmessage.Class(rrs[j].GetClass()),
+								TTL:   rrs[j].GetTtl(),
+							}
+							switch {
+							// A
+							case RRs[j].GetType() == 1:
+								var rdata [4]byte
+								copy(rdata[:], rrs[j].GetRdata()[:4])
+								r.Body = &dnsmessage.AResource{A: rdata}
+							// AAAA
+							case RRs[j].GetType() == 28:
+								var rdata [16]byte
+								copy(rdata[:], rrs[j].GetRdata()[:16])
+								r.Body = &dnsmessage.AAAAResource{AAAA: rdata}
+							// CNAME
+							case RRs[j].GetType() == 5:
+								cname, err := dnsmessage.NewName(string(rrs[j].GetRdata()))
+								if err != nil {
+									dm.DNS.MalformedPacket = true
+									continue
+								}
+								r.Body = &dnsmessage.CNAMEResource{CNAME: cname}
+							}
+
+							newDns.Answers = append(newDns.Answers, r)
+
 						}
-						switch {
-						// A
-						case RRs[j].GetType() == 1:
-							var rdata [4]byte
-							copy(rdata[:], rrs[j].GetRdata()[:4])
-							r.Body = &dnsmessage.AResource{A: rdata}
-						// AAAA
-						case RRs[j].GetType() == 28:
-							var rdata [16]byte
-							copy(rdata[:], rrs[j].GetRdata()[:16])
-							r.Body = &dnsmessage.AAAAResource{AAAA: rdata}
-						// CNAME
-						case RRs[j].GetType() == 5:
-							cname := dnsmessage.MustNewName(string(rrs[j].GetRdata()))
-							r.Body = &dnsmessage.CNAMEResource{CNAME: cname}
+					}
+
+					if !dm.DNS.MalformedPacket {
+						pktWire, err := newDns.Pack()
+						if err == nil {
+							dm.DNS.Payload = pktWire
+						} else {
+							dm.DNS.MalformedPacket = true
 						}
-
-						newDns.Answers = append(newDns.Answers, r)
-
 					}
 				}
-
-				pktWire, err := newDns.Pack()
-				if err == nil {
-					dm.DNS.Payload = pktWire
-				} else {
-					dm.DNS.MalformedPacket = true
-				}
-
 			}
 
 			// apply all enabled transformers
