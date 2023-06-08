@@ -47,7 +47,7 @@ func TestPowerDNS_Processor_InvalidLabelLength(t *testing.T) {
 	chan_to := make(chan dnsutils.DnsMessage, 512)
 
 	// prepare dnstap
-	dnsQname := "ultramegaverytoolonglabel-ultramegaverytoolonglabel-ultramegaverytoolonglabel.dnscollector.dev."
+	dnsQname := dnsutils.BAD_LABEL_DOMAIN
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
 	dm := &powerdns_protobuf.PBDNSMessage{}
@@ -79,13 +79,7 @@ func TestPowerDNS_Processor_Qname_TooLongDomain(t *testing.T) {
 	chan_to := make(chan dnsutils.DnsMessage, 512)
 
 	// prepare dnstap
-	dnsQname := "ultramegaverytoolonglabel.dnscollector"
-	dnsQname += "ultramegaverytoolonglabel-ultramegaverytoolonglabel-"
-	dnsQname += "ultramegaverytoolonglabel-ultramegaverytoolonglabel-"
-	dnsQname += "ultramegaverytoolonglabel-ultramegaverytoolonglabel-"
-	dnsQname += "ultramegaverytoolonglabel-ultramegaverytoolonglabel-"
-	dnsQname += "ultramegaverytoolonglabel-ultramegaverytoolonglabel-"
-	dnsQname += ".dev."
+	dnsQname := dnsutils.BAD_VERYLONG_DOMAIN
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
 	dm := &powerdns_protobuf.PBDNSMessage{}
@@ -120,13 +114,7 @@ func TestPowerDNS_Processor_Answers_TooLongDomain(t *testing.T) {
 	dnsQname := "dnscollector.dev."
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
-	dnsRR := "ultramegaverytoolonglabel.dnscollector"
-	dnsRR += "ultramegaverytoolonglabel-ultramegaverytoolonglabel-"
-	dnsRR += "ultramegaverytoolonglabel-ultramegaverytoolonglabel-"
-	dnsRR += "ultramegaverytoolonglabel-ultramegaverytoolonglabel-"
-	dnsRR += "ultramegaverytoolonglabel-ultramegaverytoolonglabel-"
-	dnsRR += "ultramegaverytoolonglabel-ultramegaverytoolonglabel-"
-	dnsRR += ".dev."
+	dnsRR := dnsutils.BAD_VERYLONG_DOMAIN
 	dnsReply := powerdns_protobuf.PBDNSMessage_DNSResponse{}
 	dnsReply.Rrs = append(dnsReply.Rrs, &powerdns_protobuf.PBDNSMessage_DNSResponse_DNSRR{Name: &dnsRR})
 
