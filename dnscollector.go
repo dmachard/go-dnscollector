@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -21,6 +20,14 @@ var Version = "0.0.0"
 
 func showVersion() {
 	fmt.Println(Version)
+}
+
+func printUsage() {
+	fmt.Printf("Usage of %s:\n", os.Args[0])
+	fmt.Println("  -config string")
+	fmt.Println("        path to config file (default \"./config.yml\")")
+	fmt.Println("  -version")
+	fmt.Println("        Show version")
 }
 
 func IsLoggerRouted(config *dnsutils.Config, name string) bool {
@@ -55,12 +62,35 @@ func AreRoutesValid(config *dnsutils.Config) (ret error) {
 }
 
 func main() {
-	var verFlag bool
-	var configPath string
+	args := os.Args[1:] // Ignore the first argument (the program name)
 
-	flag.BoolVar(&verFlag, "version", false, "Show version")
-	flag.StringVar(&configPath, "config", "./config.yml", "path to config file")
-	flag.Parse()
+	verFlag := false
+	configPath := "./config.yml"
+
+	// no more use embedded golang flags...
+	// external lib like tcpassembly can set some uneeded flags too...
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "-version", "-v":
+			verFlag = true
+		case "-config", "-c":
+			if i+1 < len(args) {
+				configPath = args[i+1]
+				i++ // Skip the next argument
+			} else {
+				fmt.Println("Missing argument for -config")
+				os.Exit(1)
+			}
+		case "-help", "-h":
+			printUsage()
+			os.Exit(0)
+		default:
+			if strings.HasPrefix(args[i], "-") {
+				printUsage()
+				os.Exit(1)
+			}
+		}
+	}
 
 	if verFlag {
 		showVersion()
