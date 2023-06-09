@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -70,6 +71,7 @@ type Prometheus struct {
 	logger       *logger.Logger
 	promRegistry *prometheus.Registry
 	version      string
+	mu           sync.Mutex
 
 	requesters map[string]map[string]int
 	domains    map[string]map[string]int
@@ -143,16 +145,17 @@ type Prometheus struct {
 func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version string, name string) *Prometheus {
 	logger.Info("[%s] logger=prometheus - enabled", name)
 	o := &Prometheus{
-		doneApi:      make(chan bool),
-		stopProcess:  make(chan bool),
-		doneProcess:  make(chan bool),
-		stopRun:      make(chan bool),
-		doneRun:      make(chan bool),
-		config:       config,
-		inputChan:    make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
-		outputChan:   make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
-		logger:       logger,
-		version:      version,
+		doneApi:     make(chan bool),
+		stopProcess: make(chan bool),
+		doneProcess: make(chan bool),
+		stopRun:     make(chan bool),
+		doneRun:     make(chan bool),
+		config:      config,
+		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
+		logger:      logger,
+		version:     version,
+
 		promRegistry: prometheus.NewRegistry(),
 
 		requesters: make(map[string]map[string]int),
@@ -560,6 +563,8 @@ func (o *Prometheus) Stop() {
 
 func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	// record stream identity
+	o.mu.Lock()
+	defer o.mu.Unlock()
 	if _, exists := o.streamsMap[dm.DnsTap.Identity]; !exists {
 		o.streamsMap[dm.DnsTap.Identity] = new(EpsCounters)
 		o.streamsMap[dm.DnsTap.Identity].TotalEvents = 1
@@ -776,6 +781,8 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 }
 
 func (o *Prometheus) Collect(ch chan<- prometheus.Metric) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
 	for stream := range o.streamsMap {
 		ch <- prometheus.MustNewConstMetric(o.gaugeEps, prometheus.GaugeValue,
 			float64(o.streamsMap[stream].Eps), stream,
