@@ -99,7 +99,7 @@ func (l *LogFile) Channel() chan dnsutils.DnsMessage {
 
 func (l *LogFile) ReadConfig() {
 	if !IsValidMode(l.config.Loggers.LogFile.Mode) {
-		l.logger.Fatal("logger file - invalid mode: ", l.config.Loggers.LogFile.Mode)
+		l.logger.Fatal("["+l.name+"] logger=file - invalid mode: ", l.config.Loggers.LogFile.Mode)
 	}
 	l.fileDir = filepath.Dir(l.config.Loggers.LogFile.FilePath)
 	l.fileName = filepath.Base(l.config.Loggers.LogFile.FilePath)
@@ -309,7 +309,7 @@ func (l *LogFile) CompressFile() {
 func (l *LogFile) PostRotateCommand(filename string) {
 	if len(l.config.Loggers.LogFile.PostRotateCommand) > 0 {
 		l.LogInfo("execute postrotate command: %s", filename)
-		out, err := exec.Command(l.config.Loggers.LogFile.PostRotateCommand, filename).Output()
+		_, err := exec.Command(l.config.Loggers.LogFile.PostRotateCommand, filename).Output()
 		if err != nil {
 			l.LogError("postrotate command error: %s", err)
 		} else {
@@ -317,7 +317,6 @@ func (l *LogFile) PostRotateCommand(filename string) {
 				os.Remove(filename)
 			}
 		}
-		l.LogInfo("compress - postcommand output: %s", out)
 	}
 }
 
@@ -325,11 +324,10 @@ func (l *LogFile) CompressPostRotateCommand(filename string) {
 	if len(l.config.Loggers.LogFile.CompressPostCommand) > 0 {
 
 		l.LogInfo("execute compress postrotate command: %s", filename)
-		out, err := exec.Command(l.config.Loggers.LogFile.CompressPostCommand, filename).Output()
+		_, err := exec.Command(l.config.Loggers.LogFile.CompressPostCommand, filename).Output()
 		if err != nil {
 			l.LogError("compress - postcommand error: %s", err)
 		}
-		l.LogInfo("compress - postcommand output: %s", out)
 	}
 }
 
