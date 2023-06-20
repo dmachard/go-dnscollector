@@ -1,5 +1,5 @@
-//go:build linux || darwin
-// +build linux darwin
+//go:build linux || darwin || freebsd
+// +build linux darwin freebsd
 
 package collectors
 
@@ -111,7 +111,7 @@ func (c *XdpSniffer) Run() {
 	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.XdpLiveCapture.ChannelBufferSize)
 	go dnsProcessor.Run(c.Loggers())
 
-	iface, err := net.InterfaceByName("wlp2s0")
+	iface, err := net.InterfaceByName(c.config.Collectors.XdpLiveCapture.Device)
 	if err != nil {
 		c.LogError("lookup network iface: %s", err)
 		os.Exit(1)

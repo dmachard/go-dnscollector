@@ -618,6 +618,10 @@ func (dm *DnsMessage) ToDnstap() ([]byte, error) {
 }
 
 func (dm *DnsMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
+	if len(dm.DNS.Payload) == 0 {
+		return nil, errors.New("payload is empty")
+	}
+
 	eth := &layers.Ethernet{
 		SrcMAC: net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 		DstMAC: net.HardwareAddr{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}}
