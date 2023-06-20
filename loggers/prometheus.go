@@ -71,7 +71,7 @@ type Prometheus struct {
 	logger       *logger.Logger
 	promRegistry *prometheus.Registry
 	version      string
-	mu           sync.Mutex
+	sync.Mutex
 
 	requesters map[string]map[string]int
 	domains    map[string]map[string]int
@@ -563,8 +563,8 @@ func (o *Prometheus) Stop() {
 
 func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	// record stream identity
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.Lock()
+	defer o.Unlock()
 	if _, exists := o.streamsMap[dm.DnsTap.Identity]; !exists {
 		o.streamsMap[dm.DnsTap.Identity] = new(EpsCounters)
 		o.streamsMap[dm.DnsTap.Identity].TotalEvents = 1
@@ -781,8 +781,8 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 }
 
 func (o *Prometheus) Collect(ch chan<- prometheus.Metric) {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.Lock()
+	defer o.Unlock()
 	for stream := range o.streamsMap {
 		ch <- prometheus.MustNewConstMetric(o.gaugeEps, prometheus.GaugeValue,
 			float64(o.streamsMap[stream].Eps), stream,
@@ -943,6 +943,8 @@ func (o *Prometheus) Collect(ch chan<- prometheus.Metric) {
 
 func (o *Prometheus) ComputeEventsPerSecond() {
 	// for each stream compute the number of events per second
+	o.Lock()
+	defer o.Unlock()
 	for stream := range o.streamsMap {
 
 		// compute number of events per second
