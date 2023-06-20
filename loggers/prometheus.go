@@ -488,6 +488,8 @@ func (o *Prometheus) InitProm() {
 }
 
 func (o *Prometheus) Describe(ch chan<- *prometheus.Desc) {
+	o.Lock()
+	defer o.Unlock()
 	// Gauge metrcis
 	ch <- o.gaugeTopDomains
 	ch <- o.gaugeTopNxDomains
