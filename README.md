@@ -14,11 +14,11 @@ Additionally, DNS-collector also support
 - IPv4/v6 defragmentation and TCP reassembly
 - Nanoseconds in timestamps
 
+**Overview**:
+
 <p align="center">
   <img src="doc/terminal.gif" alt="dnscollector"/>
 </p>
-
-**Overview**:
 
 ![overview](doc/overview.png)
 

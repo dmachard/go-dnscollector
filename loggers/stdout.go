@@ -16,6 +16,18 @@ import (
 	"github.com/google/gopacket/pcapgo"
 )
 
+func IsStdoutValidMode(mode string) bool {
+	switch mode {
+	case
+		dnsutils.MODE_TEXT,
+		dnsutils.MODE_JSON,
+		dnsutils.MODE_FLATJSON,
+		dnsutils.MODE_PCAP:
+		return true
+	}
+	return false
+}
+
 type StdOut struct {
 	stopProcess chan bool
 	doneProcess chan bool
@@ -53,6 +65,9 @@ func (c *StdOut) GetName() string { return c.name }
 func (c *StdOut) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *StdOut) ReadConfig() {
+	if !IsStdoutValidMode(c.config.Loggers.Stdout.Mode) {
+		c.logger.Fatal("["+c.name+"] logger=stdout - invalid mode: ", c.config.Loggers.Stdout.Mode)
+	}
 	if len(c.config.Loggers.Stdout.TextFormat) > 0 {
 		c.textFormat = strings.Fields(c.config.Loggers.Stdout.TextFormat)
 	} else {
