@@ -170,6 +170,55 @@ func TestDecodeAnswer(t *testing.T) {
 	}
 }
 
+func TestDecodeRdataSVCB_alias(t *testing.T) {
+	fqdn := TEST_QNAME
+
+	dm := new(dns.Msg)
+	dm.SetQuestion(fqdn, dns.TypeSVCB)
+
+	// draft-ietf-dnsop-svcb-https-12 Appendix D.1
+	rdata := "0 foo.example.com"
+	rr1, _ := dns.NewRR(fmt.Sprintf("%s SVCB %s", fqdn, rdata))
+	dm.Answer = append(dm.Answer, rr1)
+
+	payload, _ := dm.Pack()
+
+	_, _, offset_rr, _ := DecodeQuestion(1, payload)
+	answer, _, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+
+	if answer[0].Rdata != rdata {
+		t.Errorf("invalid decode for rdata SOA, want %s, got: %s", rdata, answer[0].Rdata)
+	}
+}
+
+func TestDecodeRdataSVCB_params(t *testing.T) {
+	fqdn := TEST_QNAME
+
+	vectors := []string{
+		"0 foo.example.com",                       // draft-ietf-dnsop-svcb-https-12 Appendix D.1
+		"1 .",                                     // draft-ietf-dnsop-svcb-https-12 Appendix D.2, figure 3
+		"16 foo.example.com port=53",              // draft-ietf-dnsop-svcb-https-12 Appendix D.2, figure 4
+		"1 foo.example.com key667=hello",          // draft-ietf-dnsop-svcb-https-12 Appendix D.2, figure 5
+		`1 foo.example.com key667="hello\210qoo"`, // draft-ietf-dnsop-svcb-https-12 Appendix D.2, figure 6
+		"1 foo.example.com ipv6hint=2001:db8::1,2001:db8::53:1",                       // draft-ietf-dnsop-svcb-https-12 Appendix D.2, figure 7, modified (single line)
+		"16 foo.example.org mandatory=alpn,ipv4hint alpn=h2,h3-19 ipv4hint=192.0.2.1", // draft-ietf-dnsop-svcb-https-12 Appendix D.2, figure 9, modified (sorted)
+		"16 foo.example.org mandatory=alpn,ipv4hint alpn=h2,h3-19 ipv4hint=192.0.2.1,192.0.2.2",
+	}
+
+	for _, rdata := range vectors {
+		dm := new(dns.Msg)
+		dm.SetQuestion(fqdn, dns.TypeSVCB)
+		rr1, _ := dns.NewRR(fmt.Sprintf("%s SVCB %s", fqdn, rdata))
+		dm.Answer = append(dm.Answer, rr1)
+		payload, _ := dm.Pack()
+		_, _, offset_rr, _ := DecodeQuestion(1, payload)
+		answer, _, _ := DecodeAnswer(len(dm.Answer), offset_rr, payload)
+		if answer[0].Rdata != rdata {
+			t.Errorf("invalid decode for rdata SVCB, want %s, got: %s", rdata, answer[0].Rdata)
+		}
+	}
+}
+
 func TestDecodeAnswer_QnameMinimized(t *testing.T) {
 	payload := []byte{0x8d, 0xda, 0x81, 0x80, 0x00, 0x01, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x05, 0x74,
 		0x65, 0x61, 0x6d, 0x73, 0x09, 0x6d, 0x69, 0x63, 0x72, 0x6f, 0x73, 0x6f, 0x66, 0x74,
