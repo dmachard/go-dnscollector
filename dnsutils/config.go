@@ -464,6 +464,14 @@ type Config struct {
 			URL               string `yaml:"url"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"falco"`
+		ClickhouseClient struct {
+			Enable   bool   `yaml:"enable"`
+			URL      string `yaml:"url"`
+			User     string `yaml:"user"`
+			Password string `yaml:"password"`
+			Database string `yaml:"database"`
+			Table    string `yaml:"table"`
+		} `yaml:"clickhouse"`
 	} `yaml:"loggers"`
 
 	OutgoingTransformers ConfigTransformers `yaml:"outgoing-transformers"`
@@ -747,6 +755,12 @@ func (c *Config) SetDefault() {
 	c.Loggers.FalcoClient.URL = "http://127.0.0.1:9200"
 	c.Loggers.FalcoClient.ChannelBufferSize = 65535
 
+	c.Loggers.ClickhouseClient.Enable = false
+	c.Loggers.ClickhouseClient.URL = ""
+	c.Loggers.ClickhouseClient.User = ""
+	c.Loggers.ClickhouseClient.Password = ""
+	c.Loggers.ClickhouseClient.Database = ""
+	c.Loggers.ClickhouseClient.Table = ""
 	// Transformers for loggers
 	c.OutgoingTransformers.SetDefault()
 

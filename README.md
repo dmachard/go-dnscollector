@@ -55,6 +55,7 @@ Additionally, DNS-collector also support
     - [`Scalyr`](doc/logger_scalyr.md)
     - [`Redis`](doc/logger_redis.md)
     - [`Kafka`](doc/logger_kafka.md)
+    - [`Clickhouse`](doc/logger_clickhouse.md)
 - *Send to security tools*
     - [`Falco`](doc/logger_falco.md)
 
