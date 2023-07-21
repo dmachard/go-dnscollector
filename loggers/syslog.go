@@ -243,9 +243,9 @@ PROCESS_LOOP:
 					o.config.Global.TextFormatDelimiter,
 					o.config.Global.TextFormatBoundary))
 
-				var delimiter bytes.Buffer
-				delimiter.WriteString("\n")
-				o.syslogConn.Write(delimiter.Bytes())
+				// var delimiter bytes.Buffer
+				// delimiter.WriteString("\n")
+				// o.syslogConn.Write(delimiter.Bytes())
 
 			case dnsutils.MODE_JSON:
 				json.NewEncoder(buffer).Encode(dm)
