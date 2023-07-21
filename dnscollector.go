@@ -28,6 +28,8 @@ func printUsage() {
 	fmt.Println("        path to config file (default \"./config.yml\")")
 	fmt.Println("  -version")
 	fmt.Println("        Show version")
+	fmt.Println("  -test-config")
+	fmt.Println("        Test config file")
 }
 
 func IsLoggerRouted(config *dnsutils.Config, name string) bool {
@@ -66,6 +68,7 @@ func main() {
 
 	verFlag := false
 	configPath := "./config.yml"
+	testFlag := false
 
 	// no more use embedded golang flags...
 	// external lib like tcpassembly can set some uneeded flags too...
@@ -84,6 +87,8 @@ func main() {
 		case "-help", "-h":
 			printUsage()
 			os.Exit(0)
+		case "-test-config":
+			testFlag = true
 		default:
 			if strings.HasPrefix(args[i], "-") {
 				printUsage()
@@ -329,6 +334,12 @@ func main() {
 			}
 		}
 	}()
+
+	if testFlag {
+		// We've parsed the config and are ready to start, so the config is good enough
+		logger.Info("main - config OK!")
+		os.Exit(0)
+	}
 
 	// run all workers in background
 	logger.Info("main - running...")
