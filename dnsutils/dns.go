@@ -557,6 +557,8 @@ func ParseRdata(rdatatype string, rdata []byte, payload []byte, rdata_offset int
 		ret, err = ParsePTR(rdata_offset, payload)
 	case "SOA":
 		ret, err = ParseSOA(rdata_offset, payload)
+	case "HTTPS", "SVCB":
+		ret, err = ParseSVCB(rdata)
 	default:
 		ret = "-"
 		err = nil
@@ -771,3 +773,215 @@ func ParsePTR(rdata_offset int, payload []byte) (string, error) {
 	}
 	return ptr, err
 }
+
+/*
+SVCB
++--+--+
+| PRIO|
++--+--+--+
+/ Target /
++--+--+--+
+/ Params /
++--+--+--+
+*/
+func ParseSVCB(rdata []byte) (string, error) {
+	// priority, root label, no Params
+	if len(rdata) < 3 {
+		return "", ErrDecodeDnsAnswerRdataTooShort
+	}
+	svcPriority := binary.BigEndian.Uint16(rdata[0:2])
+	targetName, offset, err := ParseLabels(2, rdata)
+	if err != nil {
+		return "", err
+	}
+	if targetName == "" {
+		targetName = "."
+	}
+	ret := fmt.Sprintf("%d %s", svcPriority, targetName)
+	if len(rdata) == offset {
+		return ret, nil
+	}
+	var svcParam []string
+	for offset < len(rdata) {
+		if len(rdata) < offset+4 {
+			// SVCParam is at least 4 bytes (Key and Length)
+			return "", ErrDecodeDnsAnswerRdataTooShort
+		}
+		paramKey := binary.BigEndian.Uint16(rdata[offset : offset+2])
+		offset += 2
+		paramLen := binary.BigEndian.Uint16(rdata[offset : offset+2])
+		offset += 2
+		if len(rdata) < offset+int(paramLen) {
+			return "", ErrDecodeDnsAnswerRdataTooShort
+		}
+		param, err := ParseSVCParam(paramKey, rdata[offset:offset+int(paramLen)])
+		if err != nil {
+			return "", err
+		}
+		// Yes, this is ugly but probably good enough
+		if strings.Contains(param, `\`) {
+			param = fmt.Sprintf(`"%s"`, param)
+		}
+		svcParam = append(svcParam, fmt.Sprintf("%s=%s", SVCParamKeyToString(paramKey), param))
+		offset += int(paramLen)
+	}
+	return fmt.Sprintf("%s %s", ret, strings.Join(svcParam, " ")), nil
+}
+
+func SVCParamKeyToString(svcParamKey uint16) string {
+	switch svcParamKey {
+	case 0:
+		return "mandatory"
+	case 1:
+		return "alpn"
+	case 2:
+		return "no-default-alpn"
+	case 3:
+		return "port"
+	case 4:
+		return "ipv4hint"
+	case 5:
+		return "ech"
+	case 6:
+		return "ipv6hint"
+	}
+	return fmt.Sprintf("key%d", svcParamKey)
+}
+
+func ParseSVCParam(svcParamKey uint16, paramData []byte) (string, error) {
+	switch svcParamKey {
+	case 0:
+		// mandatory
+		if len(paramData)%2 != 0 {
+			return "", ErrDecodeDnsAnswerRdataTooShort
+		}
+		var mandatory []string
+		for i := 0; i < len(paramData); i += 2 {
+			paramKey := binary.BigEndian.Uint16(paramData[i : i+2])
+			mandatory = append(mandatory, SVCParamKeyToString(paramKey))
+		}
+		return strings.Join(mandatory, ","), nil
+	case 1:
+		// alpn
+		if len(paramData) == 0 {
+			return "", ErrDecodeDnsAnswerRdataTooShort
+		}
+		var alpns []string
+		offset := 0
+		for {
+			length := int(paramData[offset])
+			offset++
+			if len(paramData) < offset+length {
+				return "", ErrDecodeDnsAnswerRdataTooShort
+			}
+			alpns = append(alpns, svcbParamToStr(paramData[offset:offset+length]))
+			offset += length
+			if offset == len(paramData) {
+				break
+			}
+		}
+		return strings.Join(alpns, ","), nil
+	case 2:
+		// no-default-alpn
+		if len(paramData) != 0 {
+			return "", ErrDecodeDnsAnswerRdataTooShort
+		}
+		return "", nil
+	case 3:
+		//port
+		if len(paramData) != 2 {
+			return "", ErrDecodeDnsAnswerRdataTooShort
+		}
+		port := binary.BigEndian.Uint16(paramData)
+		return fmt.Sprintf("%d", port), nil
+	case 4:
+		// ipv4hint
+		if len(paramData)%4 != 0 {
+			return "", ErrDecodeDnsAnswerRdataTooShort
+		}
+		var addresses []string
+		for offset := 0; offset < len(paramData); offset += 4 {
+			address, err := ParseA(paramData[offset : offset+4])
+			if err != nil {
+				return "", nil
+			}
+			addresses = append(addresses, address)
+		}
+		return strings.Join(addresses, ","), nil
+	case 5:
+		// ecs, undefined decoding as of draft-ietf-dnsop-svcb-https-12
+		return svcbParamToStr(paramData), nil
+	case 6:
+		// ipv6hint
+		if len(paramData)%16 != 0 {
+			return "", ErrDecodeDnsAnswerRdataTooShort
+		}
+		var addresses []string
+		for offset := 0; offset < len(paramData); offset += 16 {
+			address, err := ParseAAAA(paramData[offset : offset+16])
+			if err != nil {
+				return "", nil
+			}
+			addresses = append(addresses, address)
+		}
+		return strings.Join(addresses, ","), nil
+	default:
+		return svcbParamToStr(paramData), nil
+	}
+}
+
+// These functions and consts have been taken from miekg/dns
+const (
+	escapedByteSmall = "" +
+		`\000\001\002\003\004\005\006\007\008\009` +
+		`\010\011\012\013\014\015\016\017\018\019` +
+		`\020\021\022\023\024\025\026\027\028\029` +
+		`\030\031`
+	escapedByteLarge = `\127\128\129` +
+		`\130\131\132\133\134\135\136\137\138\139` +
+		`\140\141\142\143\144\145\146\147\148\149` +
+		`\150\151\152\153\154\155\156\157\158\159` +
+		`\160\161\162\163\164\165\166\167\168\169` +
+		`\170\171\172\173\174\175\176\177\178\179` +
+		`\180\181\182\183\184\185\186\187\188\189` +
+		`\190\191\192\193\194\195\196\197\198\199` +
+		`\200\201\202\203\204\205\206\207\208\209` +
+		`\210\211\212\213\214\215\216\217\218\219` +
+		`\220\221\222\223\224\225\226\227\228\229` +
+		`\230\231\232\233\234\235\236\237\238\239` +
+		`\240\241\242\243\244\245\246\247\248\249` +
+		`\250\251\252\253\254\255`
+)
+
+// escapeByte returns the \DDD escaping of b which must
+// satisfy b < ' ' || b > '~'.
+func escapeByte(b byte) string {
+	if b < ' ' {
+		return escapedByteSmall[b*4 : b*4+4]
+	}
+
+	b -= '~' + 1
+	// The cast here is needed as b*4 may overflow byte.
+	return escapedByteLarge[int(b)*4 : int(b)*4+4]
+}
+
+func svcbParamToStr(s []byte) string {
+	var str strings.Builder
+	str.Grow(4 * len(s))
+	for _, e := range s {
+		if ' ' <= e && e <= '~' {
+			switch e {
+			case '"', ';', ' ', '\\':
+				str.WriteByte('\\')
+				str.WriteByte(e)
+			default:
+				str.WriteByte(e)
+			}
+		} else {
+			str.WriteString(escapeByte(e))
+		}
+	}
+	return str.String()
+}
+
+// END These functions and consts have been taken from miekg/dns

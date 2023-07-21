@@ -14,6 +14,8 @@ The following Rdatatypes will be decoded, otherwise the `-` value will be used:
 - TXT
 - PTR
 - SOA
+- SVCB
+- HTTPS
 
 Extended DNS is also supported. 
 The following options are decoded:
