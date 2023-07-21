@@ -8,7 +8,7 @@ RUN apk add git
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-X 'main.Version=$VERSION'"
 
 
-FROM alpine:3.18.0
+FROM alpine:3.18.2
 
 RUN apk add --no-cache tzdata
 RUN mkdir -p /etc/dnscollector/ /var/dnscollector/
