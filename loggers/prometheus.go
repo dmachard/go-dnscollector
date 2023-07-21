@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -70,6 +71,7 @@ type Prometheus struct {
 	logger       *logger.Logger
 	promRegistry *prometheus.Registry
 	version      string
+	sync.Mutex
 
 	requesters map[string]map[string]int
 	domains    map[string]map[string]int
@@ -89,46 +91,49 @@ type Prometheus struct {
 
 	streamsMap map[string]*EpsCounters
 
-	gaugeBuildInfo     *prometheus.GaugeVec
-	gaugeTopDomains    *prometheus.GaugeVec
-	gaugeTopNxDomains  *prometheus.GaugeVec
-	gaugeTopSfDomains  *prometheus.GaugeVec
-	gaugeTopRequesters *prometheus.GaugeVec
-	gaugeTopTlds       *prometheus.GaugeVec
-	gaugeTopSuspicious *prometheus.GaugeVec
-	gaugeTopEvicted    *prometheus.GaugeVec
+	// this one stays as a 'classic' prometheus collector
+	gaugeBuildInfo *prometheus.GaugeVec
 
-	gaugeEps    *prometheus.GaugeVec
-	gaugeEpsMax *prometheus.GaugeVec
+	gaugeTopDomains    *prometheus.Desc
+	gaugeTopNxDomains  *prometheus.Desc
+	gaugeTopSfDomains  *prometheus.Desc
+	gaugeTopRequesters *prometheus.Desc
+	gaugeTopTlds       *prometheus.Desc
+	gaugeTopSuspicious *prometheus.Desc
+	gaugeTopEvicted    *prometheus.Desc
 
-	counterDomains    *prometheus.CounterVec
-	counterDomainsNx  *prometheus.CounterVec
-	counterDomainsSf  *prometheus.CounterVec
-	counterRequesters *prometheus.CounterVec
-	counterTlds       *prometheus.CounterVec
-	counterSuspicious *prometheus.CounterVec
-	counterEvicted    *prometheus.CounterVec
+	gaugeEps    *prometheus.Desc
+	gaugeEpsMax *prometheus.Desc
 
-	counterQtypes      *prometheus.CounterVec
-	counterRcodes      *prometheus.CounterVec
-	counterIPProtocol  *prometheus.CounterVec
-	counterIPVersion   *prometheus.CounterVec
-	counterDnsMessages *prometheus.CounterVec
-	counterDnsQueries  *prometheus.CounterVec
-	counterDnsReplies  *prometheus.CounterVec
+	counterDomains    *prometheus.Desc
+	counterDomainsNx  *prometheus.Desc
+	counterDomainsSf  *prometheus.Desc
+	counterRequesters *prometheus.Desc
+	counterTlds       *prometheus.Desc
+	counterSuspicious *prometheus.Desc
+	counterEvicted    *prometheus.Desc
 
-	counterFlagsTC          *prometheus.CounterVec
-	counterFlagsAA          *prometheus.CounterVec
-	counterFlagsRA          *prometheus.CounterVec
-	counterFlagsAD          *prometheus.CounterVec
-	counterFlagsMalformed   *prometheus.CounterVec
-	counterFlagsFragmented  *prometheus.CounterVec
-	counterFlagsReassembled *prometheus.CounterVec
+	counterQtypes      *prometheus.Desc
+	counterRcodes      *prometheus.Desc
+	counterIPProtocol  *prometheus.Desc
+	counterIPVersion   *prometheus.Desc
+	counterDnsMessages *prometheus.Desc
+	counterDnsQueries  *prometheus.Desc
+	counterDnsReplies  *prometheus.Desc
 
-	totalBytes         *prometheus.CounterVec
-	totalReceivedBytes *prometheus.CounterVec
-	totalSentBytes     *prometheus.CounterVec
+	counterFlagsTC          *prometheus.Desc
+	counterFlagsAA          *prometheus.Desc
+	counterFlagsRA          *prometheus.Desc
+	counterFlagsAD          *prometheus.Desc
+	counterFlagsMalformed   *prometheus.Desc
+	counterFlagsFragmented  *prometheus.Desc
+	counterFlagsReassembled *prometheus.Desc
 
+	totalBytes         *prometheus.Desc
+	totalReceivedBytes *prometheus.Desc
+	totalSentBytes     *prometheus.Desc
+
+	// Histograms are too expensive to implement internally
 	histogramQueriesLength *prometheus.HistogramVec
 	histogramRepliesLength *prometheus.HistogramVec
 	histogramQnamesLength  *prometheus.HistogramVec
@@ -140,16 +145,17 @@ type Prometheus struct {
 func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version string, name string) *Prometheus {
 	logger.Info("[%s] logger=prometheus - enabled", name)
 	o := &Prometheus{
-		doneApi:      make(chan bool),
-		stopProcess:  make(chan bool),
-		doneProcess:  make(chan bool),
-		stopRun:      make(chan bool),
-		doneRun:      make(chan bool),
-		config:       config,
-		inputChan:    make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
-		outputChan:   make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
-		logger:       logger,
-		version:      version,
+		doneApi:     make(chan bool),
+		stopProcess: make(chan bool),
+		doneProcess: make(chan bool),
+		stopRun:     make(chan bool),
+		doneRun:     make(chan bool),
+		config:      config,
+		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
+		logger:      logger,
+		version:     version,
+
 		promRegistry: prometheus.NewRegistry(),
 
 		requesters: make(map[string]map[string]int),
@@ -228,321 +234,216 @@ func (o *Prometheus) InitProm() {
 	)
 	o.promRegistry.MustRegister(o.gaugeBuildInfo)
 
-	o.gaugeTopTlds = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_tlds", prom_prefix),
-			Help: "Number of hit per tld - topN",
-		},
-		[]string{"stream_id", "suffix"},
+	// Gauge metrics
+	o.gaugeTopDomains = prometheus.NewDesc(
+		fmt.Sprintf("%s_top_domains", prom_prefix),
+		"Number of hit per domain topN, partitioned by qname",
+		[]string{"stream_id", "domain"}, nil,
 	)
-	o.promRegistry.MustRegister(o.gaugeTopTlds)
-
-	o.gaugeTopEvicted = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_unanswered", prom_prefix),
-			Help: "Number of hit per unanswered domain - topN",
-		},
-		[]string{"stream_id", "domain"},
+	o.gaugeTopNxDomains = prometheus.NewDesc(
+		fmt.Sprintf("%s_top_nxdomains", prom_prefix),
+		"Number of hit per nx domain topN, partitioned by qname",
+		[]string{"stream_id", "domain"}, nil,
 	)
-	o.promRegistry.MustRegister(o.gaugeTopEvicted)
 
-	o.gaugeTopSuspicious = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_suspicious", prom_prefix),
-			Help: "Number of hit per suspicious domain - topN",
-		},
-		[]string{"stream_id", "domain"},
+	o.gaugeTopSfDomains = prometheus.NewDesc(
+		fmt.Sprintf("%s_top_sfdomains", prom_prefix),
+		"Number of hit per servfail domain topN, partitioned by stream and qname",
+		[]string{"stream_id", "domain"}, nil,
 	)
-	o.promRegistry.MustRegister(o.gaugeTopSuspicious)
 
-	o.gaugeTopDomains = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_domains", prom_prefix),
-			Help: "Number of hit per domain topN, partitioned by qname",
-		},
-		[]string{"stream_id", "domain"},
+	o.gaugeTopRequesters = prometheus.NewDesc(
+		fmt.Sprintf("%s_top_requesters", prom_prefix),
+		"Number of hit per requester topN, partitioned by client IP",
+		[]string{"stream_id", "ip"}, nil,
 	)
-	o.promRegistry.MustRegister(o.gaugeTopDomains)
 
-	o.gaugeTopNxDomains = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_nxdomains", prom_prefix),
-			Help: "Number of hit per nx domain topN, partitioned by qname",
-		},
-		[]string{"stream_id", "domain"},
+	o.gaugeTopTlds = prometheus.NewDesc(
+		fmt.Sprintf("%s_top_tlds", prom_prefix),
+		"Number of hit per tld - topN",
+		[]string{"stream_id", "suffix"}, nil,
 	)
-	o.promRegistry.MustRegister(o.gaugeTopNxDomains)
 
-	o.gaugeTopSfDomains = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_sfdomains", prom_prefix),
-			Help: "Number of hit per servfail domain topN, partitioned by stream and qname",
-		},
-		[]string{"stream_id", "domain"},
+	o.gaugeTopSuspicious = prometheus.NewDesc(
+		fmt.Sprintf("%s_top_suspicious", prom_prefix),
+		"Number of hit per suspicious domain - topN",
+		[]string{"stream_id", "domain"}, nil,
 	)
-	o.promRegistry.MustRegister(o.gaugeTopSfDomains)
 
-	o.gaugeTopRequesters = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_top_requesters", prom_prefix),
-			Help: "Number of hit per requester topN, partitioned by client IP",
-		},
-		[]string{"stream_id", "ip"},
+	o.gaugeTopEvicted = prometheus.NewDesc(
+		fmt.Sprintf("%s_top_unanswered", prom_prefix),
+		"Number of hit per unanswered domain - topN",
+		[]string{"stream_id", "domain"}, nil,
 	)
-	o.promRegistry.MustRegister(o.gaugeTopRequesters)
 
-	o.counterEvicted = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_unanswered_total", prom_prefix),
-			Help: "The total number of unanswered domains per stream identity",
-		},
-		[]string{"stream_id"},
+	o.gaugeEps = prometheus.NewDesc(
+		fmt.Sprintf("%s_throughput_ops", prom_prefix),
+		"Number of ops per second received, partitioned by stream",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterEvicted)
 
-	o.counterTlds = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_tlds_total", prom_prefix),
-			Help: "The total number of tld per stream identity",
-		},
-		[]string{"stream_id"},
+	o.gaugeEpsMax = prometheus.NewDesc(
+		fmt.Sprintf("%s_throughput_ops_max", prom_prefix),
+		"Max number of ops per second observed, partitioned by stream",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterTlds)
 
-	o.counterSuspicious = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_suspicious_total", prom_prefix),
-			Help: "The total number of suspicious domain per stream identity",
-		},
-		[]string{"stream_id"},
+	// Counter metrics
+	o.counterDomains = prometheus.NewDesc(
+		fmt.Sprintf("%s_domains_total", prom_prefix),
+		"The total number of domains per stream identity",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterSuspicious)
 
-	o.counterDomainsNx = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_nxdomains_total", prom_prefix),
-			Help: "The total number of unknown domains per stream identity",
-		},
-		[]string{"stream_id"},
+	o.counterDomainsNx = prometheus.NewDesc(
+		fmt.Sprintf("%s_nxdomains_total", prom_prefix),
+		"The total number of unknown domains per stream identity",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterDomainsNx)
 
-	o.counterDomainsSf = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_sfdomains_total", prom_prefix),
-			Help: "The total number of serverfail domains per stream identity",
-		},
-		[]string{"stream_id"},
+	o.counterDomainsSf = prometheus.NewDesc(
+		fmt.Sprintf("%s_sfdomains_total", prom_prefix),
+		"The total number of serverfail domains per stream identity",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterDomainsSf)
 
-	o.counterDnsMessages = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_dnsmessages_total", prom_prefix),
-			Help: "Counter of DNS messages per stream",
-		},
-		[]string{
-			"stream_id",
-		},
+	o.counterRequesters = prometheus.NewDesc(
+		fmt.Sprintf("%s_requesters_total", prom_prefix),
+		"The total number of DNS clients per stream identity",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterDnsMessages)
 
-	o.counterDnsQueries = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_queries_total", prom_prefix),
-			Help: "Counter of DNS queries per stream",
-		},
-		[]string{
-			"stream_id",
-		},
+	o.counterTlds = prometheus.NewDesc(
+		fmt.Sprintf("%s_tlds_total", prom_prefix),
+		"The total number of tld per stream identity",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterDnsQueries)
 
-	o.counterDnsReplies = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_replies_total", prom_prefix),
-			Help: "Counter of DNS replies per stream",
-		},
-		[]string{
-			"stream_id",
-		},
+	o.counterSuspicious = prometheus.NewDesc(
+		fmt.Sprintf("%s_suspicious_total", prom_prefix),
+		"The total number of suspicious domain per stream identity",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterDnsReplies)
 
-	o.counterQtypes = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_qtypes_total", prom_prefix),
-			Help: "Counter of queries per qtypes",
-		},
+	o.counterEvicted = prometheus.NewDesc(
+		fmt.Sprintf("%s_unanswered_total", prom_prefix),
+		"The total number of unanswered domains per stream identity",
+		[]string{"stream_id"}, nil,
+	)
+
+	o.counterQtypes = prometheus.NewDesc(
+		fmt.Sprintf("%s_qtypes_total", prom_prefix),
+		"Counter of queries per qtypes",
 		[]string{
 			"stream_id",
 			"query_type",
-		},
+		}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterQtypes)
 
-	o.counterRcodes = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_rcodes_total", prom_prefix),
-			Help: "Counter of replies per return codes",
-		},
+	o.counterRcodes = prometheus.NewDesc(
+		fmt.Sprintf("%s_rcodes_total", prom_prefix),
+		"Counter of replies per return codes",
 		[]string{
 			"stream_id",
 			"return_code",
-		},
+		}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterRcodes)
 
-	o.counterIPVersion = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_ipversion_total", prom_prefix),
-			Help: "Counter of packets per IP version",
-		},
-		[]string{
-			"stream_id",
-			"net_family",
-		},
-	)
-	o.promRegistry.MustRegister(o.counterIPVersion)
-
-	o.counterIPProtocol = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_ipprotocol_total", prom_prefix),
-			Help: "Counter of packets per IP protocol",
-		},
+	o.counterIPProtocol = prometheus.NewDesc(
+		fmt.Sprintf("%s_ipprotocol_total", prom_prefix),
+		"Counter of packets per IP protocol",
 		[]string{
 			"stream_id",
 			"net_transport",
-		},
+		}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterIPProtocol)
 
-	o.totalBytes = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_bytes_total", prom_prefix),
-			Help: "The total bytes received and sent",
-		},
-		[]string{"stream_id"},
+	o.counterIPVersion = prometheus.NewDesc(
+		fmt.Sprintf("%s_ipversion_total", prom_prefix),
+		"Counter of packets per IP version",
+		[]string{
+			"stream_id",
+			"net_family",
+		}, nil,
 	)
-	o.promRegistry.MustRegister(o.totalBytes)
 
-	o.totalReceivedBytes = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_received_bytes_total", prom_prefix),
-			Help: "The total bytes received",
-		},
-		[]string{"stream_id"},
+	o.counterDnsMessages = prometheus.NewDesc(
+		fmt.Sprintf("%s_dnsmessages_total", prom_prefix),
+		"Counter of DNS messages per stream",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.totalReceivedBytes)
 
-	o.totalSentBytes = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_sent_bytes_total", prom_prefix),
-			Help: "The total bytes sent",
-		},
-		[]string{"stream_id"},
+	o.counterDnsQueries = prometheus.NewDesc(
+		fmt.Sprintf("%s_queries_total", prom_prefix),
+		"Counter of DNS queries per stream",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.totalSentBytes)
 
-	o.gaugeEps = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_throughput_ops", prom_prefix),
-			Help: "Number of ops per second received, partitioned by stream",
-		},
-		[]string{"stream_id"},
+	o.counterDnsReplies = prometheus.NewDesc(
+		fmt.Sprintf("%s_replies_total", prom_prefix),
+		"Counter of DNS replies per stream",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.gaugeEps)
 
-	o.gaugeEpsMax = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_throughput_ops_max", prom_prefix),
-			Help: "Max number of ops per second observed, partitioned by stream",
-		},
-		[]string{"stream_id"},
+	o.counterFlagsTC = prometheus.NewDesc(
+		fmt.Sprintf("%s_flag_tc_total", prom_prefix),
+		"Number of packet with flag TC",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.gaugeEpsMax)
 
-	o.counterRequesters = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_requesters_total", prom_prefix),
-			Help: "The total number of DNS clients per stream identity",
-		},
-		[]string{"stream_id"},
+	o.counterFlagsAA = prometheus.NewDesc(
+		fmt.Sprintf("%s_flag_aa_total", prom_prefix),
+		"Number of packet with flag AA",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterRequesters)
 
-	o.counterDomains = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_domains_total", prom_prefix),
-			Help: "The total number of domains per stream identity",
-		},
-		[]string{"stream_id"},
+	o.counterFlagsRA = prometheus.NewDesc(
+		fmt.Sprintf("%s_flag_ra_total", prom_prefix),
+		"Number of packet with flag RA",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterDomains)
 
-	o.counterFlagsTC = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_flag_tc_total", prom_prefix),
-			Help: "Number of packet with flag TC",
-		},
-		[]string{"stream_id"},
+	o.counterFlagsAD = prometheus.NewDesc(
+		fmt.Sprintf("%s_flag_ad_total", prom_prefix),
+		"Number of packet with flag AD",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterFlagsTC)
 
-	o.counterFlagsAA = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_flag_aa_total", prom_prefix),
-			Help: "Number of packet with flag AA",
-		},
-		[]string{"stream_id"},
+	o.counterFlagsMalformed = prometheus.NewDesc(
+		fmt.Sprintf("%s_malformed_total", prom_prefix),
+		"Number of malformed packets",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterFlagsAA)
 
-	o.counterFlagsRA = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_flag_ra_total", prom_prefix),
-			Help: "Number of packet with flag RA",
-		},
-		[]string{"stream_id"},
+	o.counterFlagsFragmented = prometheus.NewDesc(
+		fmt.Sprintf("%s_fragmented_total", prom_prefix),
+		"Number of IP fragmented packets",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterFlagsRA)
 
-	o.counterFlagsAD = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_flag_ad_total", prom_prefix),
-			Help: "Number of packet with flag AD",
-		},
-		[]string{"stream_id"},
+	o.counterFlagsReassembled = prometheus.NewDesc(
+		fmt.Sprintf("%s_reassembled_total", prom_prefix),
+		"Number of TCP reassembled packets",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterFlagsAD)
 
-	o.counterFlagsMalformed = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_malformed_total", prom_prefix),
-			Help: "Number of malformed packets",
-		},
-		[]string{"stream_id"},
+	o.totalBytes = prometheus.NewDesc(
+		fmt.Sprintf("%s_bytes_total", prom_prefix),
+		"The total bytes received and sent",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterFlagsMalformed)
 
-	o.counterFlagsFragmented = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_fragmented_total", prom_prefix),
-			Help: "Number of IP fragmented packets",
-		},
-		[]string{"stream_id"},
+	o.totalReceivedBytes = prometheus.NewDesc(
+		fmt.Sprintf("%s_received_bytes_total", prom_prefix),
+		"The total bytes received",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterFlagsFragmented)
 
-	o.counterFlagsReassembled = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: fmt.Sprintf("%s_reassembled_total", prom_prefix),
-			Help: "Number of TCP reassembled packets",
-		},
-		[]string{"stream_id"},
+	o.totalSentBytes = prometheus.NewDesc(
+		fmt.Sprintf("%s_sent_bytes_total", prom_prefix),
+		"The total bytes sent",
+		[]string{"stream_id"}, nil,
 	)
-	o.promRegistry.MustRegister(o.counterFlagsReassembled)
-
 	o.histogramQueriesLength = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    fmt.Sprintf("%s_queries_size_bytes", prom_prefix),
@@ -582,6 +483,52 @@ func (o *Prometheus) InitProm() {
 		[]string{"stream_id"},
 	)
 	o.promRegistry.MustRegister(o.histogramLatencies)
+
+	o.promRegistry.MustRegister(o)
+}
+
+func (o *Prometheus) Describe(ch chan<- *prometheus.Desc) {
+	o.Lock()
+	defer o.Unlock()
+	// Gauge metrcis
+	ch <- o.gaugeTopDomains
+	ch <- o.gaugeTopNxDomains
+	ch <- o.gaugeTopSfDomains
+	ch <- o.gaugeTopRequesters
+	ch <- o.gaugeTopTlds
+	ch <- o.gaugeTopSuspicious
+	ch <- o.gaugeTopEvicted
+	ch <- o.gaugeEps
+	ch <- o.gaugeEpsMax
+
+	// Counter metrics
+	ch <- o.counterDomains
+	ch <- o.counterDomainsNx
+	ch <- o.counterDomainsSf
+	ch <- o.counterRequesters
+	ch <- o.counterTlds
+	ch <- o.counterSuspicious
+	ch <- o.counterEvicted
+
+	ch <- o.counterQtypes
+	ch <- o.counterRcodes
+	ch <- o.counterIPProtocol
+	ch <- o.counterIPVersion
+	ch <- o.counterDnsMessages
+	ch <- o.counterDnsQueries
+	ch <- o.counterDnsReplies
+
+	ch <- o.counterFlagsTC
+	ch <- o.counterFlagsAA
+	ch <- o.counterFlagsRA
+	ch <- o.counterFlagsAD
+	ch <- o.counterFlagsMalformed
+	ch <- o.counterFlagsFragmented
+	ch <- o.counterFlagsReassembled
+
+	ch <- o.totalBytes
+	ch <- o.totalReceivedBytes
+	ch <- o.totalSentBytes
 }
 
 func (o *Prometheus) ReadConfig() {
@@ -618,6 +565,8 @@ func (o *Prometheus) Stop() {
 
 func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	// record stream identity
+	o.Lock()
+	defer o.Unlock()
 	if _, exists := o.streamsMap[dm.DnsTap.Identity]; !exists {
 		o.streamsMap[dm.DnsTap.Identity] = new(EpsCounters)
 		o.streamsMap[dm.DnsTap.Identity].TotalEvents = 1
@@ -783,7 +732,6 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 
 			if _, exists := o.tlds[dm.DnsTap.Identity][dm.PublicSuffix.QnamePublicSuffix]; !exists {
 				o.tlds[dm.DnsTap.Identity][dm.PublicSuffix.QnamePublicSuffix] = 1
-				o.counterTlds.WithLabelValues(dm.DnsTap.Identity).Inc()
 			} else {
 				o.tlds[dm.DnsTap.Identity][dm.PublicSuffix.QnamePublicSuffix] += 1
 			}
@@ -805,7 +753,6 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 
 			if _, exists := o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname]; !exists {
 				o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname] = 1
-				o.counterSuspicious.WithLabelValues(dm.DnsTap.Identity).Inc()
 			} else {
 				o.suspicious[dm.DnsTap.Identity][dm.DNS.Qname] += 1
 			}
@@ -835,101 +782,172 @@ func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
 	}
 }
 
-func (o *Prometheus) ComputeMetrics() {
-	// for each stream compute the number of events per second
+func (o *Prometheus) Collect(ch chan<- prometheus.Metric) {
+	o.Lock()
+	defer o.Unlock()
 	for stream := range o.streamsMap {
-
-		// Update flags
-		o.counterFlagsTC.DeleteLabelValues(stream)
-		o.counterFlagsTC.WithLabelValues(stream).Add(o.streamsMap[stream].TotalTC)
-		o.counterFlagsAA.DeleteLabelValues(stream)
-		o.counterFlagsAA.WithLabelValues(stream).Add(o.streamsMap[stream].TotalAA)
-		o.counterFlagsRA.DeleteLabelValues(stream)
-		o.counterFlagsRA.WithLabelValues(stream).Add(o.streamsMap[stream].TotalRA)
-		o.counterFlagsAD.DeleteLabelValues(stream)
-		o.counterFlagsAD.WithLabelValues(stream).Add(o.streamsMap[stream].TotalAD)
-		o.counterFlagsMalformed.DeleteLabelValues(stream)
-		o.counterFlagsMalformed.WithLabelValues(stream).Add(o.streamsMap[stream].TotalMalformed)
-		o.counterFlagsFragmented.DeleteLabelValues(stream)
-		o.counterFlagsFragmented.WithLabelValues(stream).Add(o.streamsMap[stream].TotalFragmented)
-		o.counterFlagsReassembled.DeleteLabelValues(stream)
-		o.counterFlagsReassembled.WithLabelValues(stream).Add(o.streamsMap[stream].TotalReasembled)
-
-		// Update global number of dns messages
-		o.counterDnsMessages.DeleteLabelValues(stream)
-		o.counterDnsMessages.WithLabelValues(stream).Add(o.streamsMap[stream].TotalDnsMessages)
-
-		// Update number of dns queries
-		o.counterDnsQueries.DeleteLabelValues(stream)
-		o.counterDnsQueries.WithLabelValues(stream).Add(float64(o.streamsMap[stream].TotalQueries))
-
-		// Update number of dns replies
-		o.counterDnsReplies.DeleteLabelValues(stream)
-		o.counterDnsReplies.WithLabelValues(stream).Add(float64(o.streamsMap[stream].TotalReplies))
-
-		// Update total number of bytes
-		o.totalBytes.DeleteLabelValues(stream)
-		o.totalBytes.WithLabelValues(stream).Add(float64(o.streamsMap[stream].TotalBytes))
-
-		// Update total number of bytes sent
-		o.totalSentBytes.DeleteLabelValues(stream)
-		o.totalSentBytes.WithLabelValues(stream).Add(float64(o.streamsMap[stream].TotalBytesSent))
-
-		// Update total number of bytes received
-		o.totalReceivedBytes.DeleteLabelValues(stream)
-		o.totalReceivedBytes.WithLabelValues(stream).Add(float64(o.streamsMap[stream].TotalBytesReceived))
-
-		// Update number of clients
-		o.counterRequesters.DeleteLabelValues(stream)
-		o.counterRequesters.WithLabelValues(stream).Add(float64(len(o.requesters[stream])))
+		ch <- prometheus.MustNewConstMetric(o.gaugeEps, prometheus.GaugeValue,
+			float64(o.streamsMap[stream].Eps), stream,
+		)
+		ch <- prometheus.MustNewConstMetric(o.gaugeEpsMax, prometheus.GaugeValue,
+			float64(o.streamsMap[stream].EpsMax), stream,
+		)
 
 		// Update number of domains
-		o.counterDomains.DeleteLabelValues(stream)
-		o.counterDomains.WithLabelValues(stream).Add(float64(len(o.domains[stream])))
-
+		ch <- prometheus.MustNewConstMetric(o.counterDomains, prometheus.CounterValue,
+			float64(len(o.domains[stream])), stream,
+		)
 		// Count NX domains
-		o.counterDomainsNx.DeleteLabelValues(stream)
-		o.counterDomainsNx.WithLabelValues(stream).Add(float64(len(o.nxdomains[stream])))
-
+		ch <- prometheus.MustNewConstMetric(o.counterDomainsNx, prometheus.CounterValue,
+			float64(len(o.nxdomains[stream])), stream,
+		)
 		// Count SERVFAIL domains
-		o.counterDomainsSf.DeleteLabelValues(stream)
-		o.counterDomainsSf.WithLabelValues(stream).Add(float64(len(o.sfdomains[stream])))
+		ch <- prometheus.MustNewConstMetric(o.counterDomainsSf, prometheus.CounterValue,
+			float64(len(o.sfdomains[stream])), stream,
+		)
+		// Requesters counter
+		ch <- prometheus.MustNewConstMetric(o.counterRequesters, prometheus.CounterValue,
+			float64(len(o.requesters[stream])), stream,
+		)
 
-		// Update IP version counter
-		for k, v := range o.streamsMap[stream].TotalIPVersion {
-			o.counterIPVersion.DeleteLabelValues(stream, k)
-			o.counterIPVersion.WithLabelValues(
-				stream,
-				k,
-			).Add(v)
-		}
+		// Count number of unique TLDs
+		ch <- prometheus.MustNewConstMetric(o.counterTlds, prometheus.CounterValue,
+			float64(len(o.tlds[stream])), stream,
+		)
 
-		// Update IP protocol counter
-		for k, v := range o.streamsMap[stream].TotalIPProtocol {
-			o.counterIPProtocol.DeleteLabelValues(stream, k)
-			o.counterIPProtocol.WithLabelValues(
-				stream,
-				k,
-			).Add(v)
-		}
+		// Count number of unique suspicious names
+		ch <- prometheus.MustNewConstMetric(o.counterSuspicious, prometheus.CounterValue,
+			float64(len(o.suspicious[stream])), stream,
+		)
+
+		// Count number of unique unanswered (timedout) names
+		ch <- prometheus.MustNewConstMetric(o.counterEvicted, prometheus.CounterValue,
+			float64(len(o.evicted[stream])), stream,
+		)
 
 		//Update qtypes counter
 		for k, v := range o.streamsMap[stream].TotalQtypes {
-			o.counterQtypes.DeleteLabelValues(stream, k)
-			o.counterQtypes.WithLabelValues(
-				stream,
-				k,
-			).Add(v)
+			ch <- prometheus.MustNewConstMetric(o.counterQtypes, prometheus.CounterValue,
+				v, stream, k,
+			)
 		}
 
 		// Update Return Codes counter
 		for k, v := range o.streamsMap[stream].TotalRcodes {
-			o.counterRcodes.DeleteLabelValues(stream, k)
-			o.counterRcodes.WithLabelValues(
-				stream,
-				k,
-			).Add(v)
+			ch <- prometheus.MustNewConstMetric(o.counterRcodes, prometheus.CounterValue,
+				v, stream, k,
+			)
 		}
+
+		// Update IP protocol counter
+		for k, v := range o.streamsMap[stream].TotalIPProtocol {
+			ch <- prometheus.MustNewConstMetric(o.counterIPProtocol, prometheus.CounterValue,
+				v, stream, k,
+			)
+		}
+
+		// Update IP version counter
+		for k, v := range o.streamsMap[stream].TotalIPVersion {
+			ch <- prometheus.MustNewConstMetric(o.counterIPVersion, prometheus.CounterValue,
+				v, stream, k,
+			)
+		}
+
+		// Update global number of dns messages
+		ch <- prometheus.MustNewConstMetric(o.counterDnsMessages, prometheus.CounterValue,
+			o.streamsMap[stream].TotalDnsMessages, stream)
+
+		// Update number of dns queries
+		ch <- prometheus.MustNewConstMetric(o.counterDnsQueries, prometheus.CounterValue,
+			float64(o.streamsMap[stream].TotalQueries), stream)
+
+		// Update number of dns replies
+		ch <- prometheus.MustNewConstMetric(o.counterDnsReplies, prometheus.CounterValue,
+			float64(o.streamsMap[stream].TotalReplies), stream)
+
+		// Update flags
+		ch <- prometheus.MustNewConstMetric(o.counterFlagsTC, prometheus.CounterValue,
+			o.streamsMap[stream].TotalTC, stream)
+		ch <- prometheus.MustNewConstMetric(o.counterFlagsAA, prometheus.CounterValue,
+			o.streamsMap[stream].TotalAA, stream)
+		ch <- prometheus.MustNewConstMetric(o.counterFlagsRA, prometheus.CounterValue,
+			o.streamsMap[stream].TotalRA, stream)
+		ch <- prometheus.MustNewConstMetric(o.counterFlagsAD, prometheus.CounterValue,
+			o.streamsMap[stream].TotalAD, stream)
+		ch <- prometheus.MustNewConstMetric(o.counterFlagsMalformed, prometheus.CounterValue,
+			o.streamsMap[stream].TotalMalformed, stream)
+		ch <- prometheus.MustNewConstMetric(o.counterFlagsFragmented, prometheus.CounterValue,
+			o.streamsMap[stream].TotalFragmented, stream)
+		ch <- prometheus.MustNewConstMetric(o.counterFlagsReassembled, prometheus.CounterValue,
+			o.streamsMap[stream].TotalReasembled, stream)
+
+		ch <- prometheus.MustNewConstMetric(o.totalBytes,
+			prometheus.CounterValue, float64(o.streamsMap[stream].TotalBytes), stream,
+		)
+		ch <- prometheus.MustNewConstMetric(o.totalReceivedBytes, prometheus.CounterValue,
+			float64(o.streamsMap[stream].TotalBytesReceived), stream,
+		)
+		ch <- prometheus.MustNewConstMetric(o.totalSentBytes, prometheus.CounterValue,
+			float64(o.streamsMap[stream].TotalBytesSent), stream)
+
+	}
+
+	for s := range o.topDomains {
+		for _, r := range o.topDomains[s].Get() {
+			ch <- prometheus.MustNewConstMetric(o.gaugeTopDomains, prometheus.GaugeValue,
+				float64(r.Hit), s, r.Name)
+		}
+	}
+
+	for s := range o.topNxDomains {
+		for _, r := range o.topNxDomains[s].Get() {
+			ch <- prometheus.MustNewConstMetric(o.gaugeTopNxDomains, prometheus.GaugeValue,
+				float64(r.Hit), s, r.Name)
+		}
+	}
+
+	for s := range o.topSfDomains {
+		for _, r := range o.topSfDomains[s].Get() {
+			ch <- prometheus.MustNewConstMetric(o.gaugeTopSfDomains, prometheus.GaugeValue,
+				float64(r.Hit), s, r.Name)
+		}
+	}
+
+	for s := range o.topRequesters {
+		for _, r := range o.topRequesters[s].Get() {
+			ch <- prometheus.MustNewConstMetric(o.gaugeTopRequesters, prometheus.GaugeValue,
+				float64(r.Hit), s, r.Name)
+		}
+	}
+
+	for s := range o.topTlds {
+		for _, r := range o.topTlds[s].Get() {
+			ch <- prometheus.MustNewConstMetric(o.gaugeTopTlds, prometheus.GaugeValue,
+				float64(r.Hit), s, r.Name)
+		}
+	}
+
+	for s := range o.topSuspicious {
+		for _, r := range o.topSuspicious[s].Get() {
+			ch <- prometheus.MustNewConstMetric(o.gaugeTopSuspicious, prometheus.GaugeValue,
+				float64(r.Hit), s, r.Name)
+		}
+	}
+
+	for s := range o.topEvicted {
+		for _, r := range o.topEvicted[s].Get() {
+			ch <- prometheus.MustNewConstMetric(o.gaugeTopEvicted, prometheus.GaugeValue,
+				float64(r.Hit), s, r.Name)
+		}
+	}
+
+}
+
+func (o *Prometheus) ComputeEventsPerSecond() {
+	// for each stream compute the number of events per second
+	o.Lock()
+	defer o.Unlock()
+	for stream := range o.streamsMap {
 
 		// compute number of events per second
 		if o.streamsMap[stream].TotalEvents > 0 && o.streamsMap[stream].TotalEventsPrev > 0 {
@@ -940,54 +958,6 @@ func (o *Prometheus) ComputeMetrics() {
 		// kept the max number of events per second
 		if o.streamsMap[stream].Eps > o.streamsMap[stream].EpsMax {
 			o.streamsMap[stream].EpsMax = o.streamsMap[stream].Eps
-		}
-
-		o.gaugeEps.WithLabelValues(stream).Set(float64(o.streamsMap[stream].Eps))
-		o.gaugeEpsMax.WithLabelValues(stream).Set(float64(o.streamsMap[stream].EpsMax))
-	}
-
-	o.gaugeTopEvicted.Reset()
-	for s := range o.topEvicted {
-		for _, r := range o.topEvicted[s].Get() {
-			o.gaugeTopEvicted.WithLabelValues(s, r.Name).Set(float64(r.Hit))
-		}
-	}
-	o.gaugeTopSfDomains.Reset()
-	for s := range o.topSfDomains {
-		for _, r := range o.topSfDomains[s].Get() {
-			o.gaugeTopSfDomains.WithLabelValues(s, r.Name).Set(float64(r.Hit))
-		}
-	}
-	o.gaugeTopNxDomains.Reset()
-	for s := range o.topNxDomains {
-		for _, r := range o.topNxDomains[s].Get() {
-			o.gaugeTopNxDomains.WithLabelValues(s, r.Name).Set(float64(r.Hit))
-		}
-	}
-	o.gaugeTopDomains.Reset()
-	for s := range o.topDomains {
-		for _, r := range o.topDomains[s].Get() {
-			o.gaugeTopDomains.WithLabelValues(s, r.Name).Set(float64(r.Hit))
-		}
-	}
-	o.gaugeTopRequesters.Reset()
-	for s := range o.topRequesters {
-		for _, r := range o.topRequesters[s].Get() {
-			o.gaugeTopRequesters.WithLabelValues(s, r.Name).Set(float64(r.Hit))
-		}
-	}
-
-	o.gaugeTopTlds.Reset()
-	for s := range o.topTlds {
-		for _, r := range o.topTlds[s].Get() {
-			o.gaugeTopTlds.WithLabelValues(s, r.Name).Set(float64(r.Hit))
-		}
-	}
-
-	o.gaugeTopSuspicious.Reset()
-	for s := range o.topSuspicious {
-		for _, r := range o.topSuspicious[s].Get() {
-			o.gaugeTopSuspicious.WithLabelValues(s, r.Name).Set(float64(r.Hit))
 		}
 	}
 }
@@ -1117,7 +1087,7 @@ PROCESS_LOOP:
 
 		case <-t1.C:
 			// compute eps each second
-			s.ComputeMetrics()
+			s.ComputeEventsPerSecond()
 
 			// reset the timer
 			t1.Reset(t1_interval)
