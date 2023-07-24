@@ -9,7 +9,7 @@ require (
 	github.com/dmachard/go-dnstap-protobuf v0.5.0
 	github.com/dmachard/go-framestream v0.6.0
 	github.com/dmachard/go-logger v0.3.0
-	github.com/dmachard/go-powerdns-protobuf v0.1.0
+	github.com/dmachard/go-powerdns-protobuf v0.2.0
 	github.com/dmachard/go-topmap v0.5.0
 	github.com/farsightsec/golang-framestream v0.3.0
 	github.com/fsnotify/fsnotify v1.6.0
@@ -32,7 +32,7 @@ require (
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/net v0.10.0
 	golang.org/x/sys v0.9.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.31.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.1
 )
