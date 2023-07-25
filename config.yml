@@ -70,13 +70,14 @@ multiplexer:
         listen-ip: 0.0.0.0
         listen-port: 6000
       transforms:
-        normalize:
-          qname-lowercase: true
+        machine-learning:
+          add-features: true
 
   loggers:
     - name: console
       stdout:
         mode: text
+        text-format: timestamp-rfc3339ns identity qr rcode qname qtype ml-entropy ml-length ml-digits ml-lowers ml-uppers
 
   routes:
     - from: [ tap ]

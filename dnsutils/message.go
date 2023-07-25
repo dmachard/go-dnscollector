@@ -22,14 +22,15 @@ import (
 )
 
 var (
-	DnsQuery               = "QUERY"
-	DnsReply               = "REPLY"
-	PdnsDirectives         = regexp.MustCompile(`^powerdns-*`)
-	GeoIPDirectives        = regexp.MustCompile(`^geoip-*`)
-	SuspiciousDirectives   = regexp.MustCompile(`^suspicious-*`)
-	PublicSuffixDirectives = regexp.MustCompile(`^publixsuffix-*`)
-	ExtractedDirectives    = regexp.MustCompile(`^extracted-*`)
-	ReducerDirectives      = regexp.MustCompile(`^reducer-*`)
+	DnsQuery                  = "QUERY"
+	DnsReply                  = "REPLY"
+	PdnsDirectives            = regexp.MustCompile(`^powerdns-*`)
+	GeoIPDirectives           = regexp.MustCompile(`^geoip-*`)
+	SuspiciousDirectives      = regexp.MustCompile(`^suspicious-*`)
+	PublicSuffixDirectives    = regexp.MustCompile(`^publixsuffix-*`)
+	ExtractedDirectives       = regexp.MustCompile(`^extracted-*`)
+	ReducerDirectives         = regexp.MustCompile(`^reducer-*`)
+	MachineLearningDirectives = regexp.MustCompile(`^ml-*`)
 )
 
 func GetIpPort(dm *DnsMessage) (string, int, string, int) {
@@ -173,17 +174,28 @@ type TransformReducer struct {
 	Occurences int `json:"occurences" msgpack:"occurences"`
 }
 
+type TransformML struct {
+	Entropy  float64 `json:"entropy" msgpack:"entropy"`   // Entropy of query name
+	Length   int     `json:"length" msgpack:"length"`     // Length of domain
+	Labels   int     `json:"labels" msgpack:"labels"`     // Number of labels in the query name  separated by dots
+	Digits   int     `json:"digits" msgpack:"digits"`     // Count of numerical characters
+	Lowers   int     `json:"lowers" msgpack:"lowers"`     // Count of lowercase characters
+	Uppers   int     `json:"uppers" msgpack:"uppers"`     // Count of uppercase characters
+	Specials int     `json:"specials" msgpack:"specials"` // Number of special characters; special characters such as dash, underscore, equal sign,...
+}
+
 type DnsMessage struct {
-	NetworkInfo  DnsNetInfo             `json:"network" msgpack:"network"`
-	DNS          Dns                    `json:"dns" msgpack:"dns"`
-	EDNS         DnsExtended            `json:"edns" msgpack:"edns"`
-	DnsTap       DnsTap                 `json:"dnstap" msgpack:"dnstap"`
-	Geo          *TransformDnsGeo       `json:"geoip,omitempty" msgpack:"geo"`
-	PowerDns     *PowerDns              `json:"powerdns,omitempty" msgpack:"powerdns"`
-	Suspicious   *TransformSuspicious   `json:"suspicious,omitempty" msgpack:"suspicious"`
-	PublicSuffix *TransformPublicSuffix `json:"publicsuffix,omitempty" msgpack:"publicsuffix"`
-	Extracted    *TransformExtracted    `json:"extracted,omitempty" msgpack:"extracted"`
-	Reducer      *TransformReducer      `json:"reducer,omitempty" msgpack:"reducer"`
+	NetworkInfo     DnsNetInfo             `json:"network" msgpack:"network"`
+	DNS             Dns                    `json:"dns" msgpack:"dns"`
+	EDNS            DnsExtended            `json:"edns" msgpack:"edns"`
+	DnsTap          DnsTap                 `json:"dnstap" msgpack:"dnstap"`
+	Geo             *TransformDnsGeo       `json:"geoip,omitempty" msgpack:"geo"`
+	PowerDns        *PowerDns              `json:"powerdns,omitempty" msgpack:"powerdns"`
+	Suspicious      *TransformSuspicious   `json:"suspicious,omitempty" msgpack:"suspicious"`
+	PublicSuffix    *TransformPublicSuffix `json:"publicsuffix,omitempty" msgpack:"publicsuffix"`
+	Extracted       *TransformExtracted    `json:"extracted,omitempty" msgpack:"extracted"`
+	Reducer         *TransformReducer      `json:"reducer,omitempty" msgpack:"reducer"`
+	MachineLearning *TransformML           `json:"ml,omitempty" msgpack:"ml"`
 }
 
 func (dm *DnsMessage) Init() {
@@ -363,6 +375,25 @@ func (dm *DnsMessage) handleReducerDirectives(directives []string, s *strings.Bu
 	}
 }
 
+func (dm *DnsMessage) handleMachineLearningDirectives(directives []string, s *strings.Builder) {
+	if dm.MachineLearning == nil {
+		s.WriteString("-")
+	} else {
+		switch directive := directives[0]; {
+		case directive == "ml-entropy":
+			s.WriteString(strconv.FormatFloat(dm.MachineLearning.Entropy, 'f', -1, 64))
+		case directive == "ml-length":
+			s.WriteString(strconv.Itoa(dm.MachineLearning.Length))
+		case directive == "ml-digits":
+			s.WriteString(strconv.Itoa(dm.MachineLearning.Digits))
+		case directive == "ml-lowers":
+			s.WriteString(strconv.Itoa(dm.MachineLearning.Lowers))
+		case directive == "ml-uppers":
+			s.WriteString(strconv.Itoa(dm.MachineLearning.Uppers))
+		}
+	}
+}
+
 func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundary string) []byte {
 	//var s bytes.Buffer
 	var s strings.Builder
@@ -505,6 +536,8 @@ func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 			dm.handlePublicSuffixDirectives(directives, &s)
 		case ExtractedDirectives.MatchString(directive):
 			dm.handleExtractedDirectives(directives, &s)
+		case MachineLearningDirectives.MatchString(directive):
+			dm.handleMachineLearningDirectives(directives, &s)
 		// error unsupport directive for text format
 		default:
 			log.Fatalf("unsupport directive for text format: %s", word)
