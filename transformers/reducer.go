@@ -44,24 +44,13 @@ func (mp *MapTraffic) Set(key string, dm *dnsutils.DnsMessage) {
 
 	if v, ok := mp.kv.Load(key); ok {
 		v.(*dnsutils.DnsMessage).Reducer.Occurences++
+		v.(*dnsutils.DnsMessage).Reducer.CumulativeLength += dm.DNS.Length
 		return
 	}
 
 	dm.Reducer.Occurences = 1
+	dm.Reducer.CumulativeLength = dm.DNS.Length
 	mp.kv.Store(key, dm)
-
-	// time.AfterFunc(mp.ttl, func() {
-	// 	if dmKv, ok := mp.kv.Load(key); ok {
-	// 		for i := range mp.channels {
-	// 			select {
-	// 			case mp.channels[i] <- *dmKv.(*dnsutils.DnsMessage):
-	// 			default:
-	// 				mp.droppedCount++
-	// 			}
-	// 		}
-	// 		mp.kv.Delete(key)
-	// 	}
-	// })
 
 	expTime := time.Now().Add(mp.ttl)
 	mp.expiredKeys.PushBack(expiredKey{key, expTime})
@@ -149,7 +138,8 @@ func (p *ReducerProcessor) LoadActiveReducers() {
 func (p *ReducerProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
 	if dm.Reducer == nil {
 		dm.Reducer = &dnsutils.TransformReducer{
-			Occurences: 0,
+			Occurences:       0,
+			CumulativeLength: 0,
 		}
 	}
 }

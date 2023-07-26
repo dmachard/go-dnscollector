@@ -72,11 +72,15 @@ multiplexer:
       transforms:
         normalize:
           qname-lowercase: true
+        reducer:
+          repetitive-traffic-detector: true
+          watch-interval: 5
 
   loggers:
     - name: console
       stdout:
         mode: text
+        text-format: "timestamp-rfc3339ns identity operation rcode queryip qname qtype reducer-occurences reducer-cumulative-length"
 
   routes:
     - from: [ tap ]
