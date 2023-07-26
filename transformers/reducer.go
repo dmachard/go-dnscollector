@@ -8,6 +8,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
+	publicsuffixlist "golang.org/x/net/publicsuffix"
 )
 
 type expiredKey struct {
@@ -44,24 +45,13 @@ func (mp *MapTraffic) Set(key string, dm *dnsutils.DnsMessage) {
 
 	if v, ok := mp.kv.Load(key); ok {
 		v.(*dnsutils.DnsMessage).Reducer.Occurences++
+		v.(*dnsutils.DnsMessage).Reducer.CumulativeLength += dm.DNS.Length
 		return
 	}
 
 	dm.Reducer.Occurences = 1
+	dm.Reducer.CumulativeLength = dm.DNS.Length
 	mp.kv.Store(key, dm)
-
-	// time.AfterFunc(mp.ttl, func() {
-	// 	if dmKv, ok := mp.kv.Load(key); ok {
-	// 		for i := range mp.channels {
-	// 			select {
-	// 			case mp.channels[i] <- *dmKv.(*dnsutils.DnsMessage):
-	// 			default:
-	// 				mp.droppedCount++
-	// 			}
-	// 		}
-	// 		mp.kv.Delete(key)
-	// 	}
-	// })
 
 	expTime := time.Now().Add(mp.ttl)
 	mp.expiredKeys.PushBack(expiredKey{key, expTime})
@@ -149,7 +139,8 @@ func (p *ReducerProcessor) LoadActiveReducers() {
 func (p *ReducerProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
 	if dm.Reducer == nil {
 		dm.Reducer = &dnsutils.TransformReducer{
-			Occurences: 0,
+			Occurences:       0,
+			CumulativeLength: 0,
 		}
 	}
 }
@@ -159,6 +150,13 @@ func (p *ReducerProcessor) RepetitiveTrafficDetector(dm *dnsutils.DnsMessage) in
 	p.strBuilder.WriteString(dm.DnsTap.Identity)
 	p.strBuilder.WriteString(dm.DnsTap.Operation)
 	p.strBuilder.WriteString(dm.NetworkInfo.QueryIp)
+	if p.config.Reducer.QnamePlusOne {
+		qname := strings.ToLower(dm.DNS.Qname)
+		qname = strings.TrimSuffix(qname, ".")
+		if etld, err := publicsuffixlist.EffectiveTLDPlusOne(qname); err == nil {
+			dm.DNS.Qname = etld
+		}
+	}
 	p.strBuilder.WriteString(dm.DNS.Qname)
 	p.strBuilder.WriteString(dm.DNS.Qtype)
 	dmTag := p.strBuilder.String()

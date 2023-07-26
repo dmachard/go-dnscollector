@@ -64,6 +64,7 @@ type ConfigTransformers struct {
 	Reducer struct {
 		Enable                    bool `yaml:"enable"`
 		RepetitiveTrafficDetector bool `yaml:"repetitive-traffic-detector"`
+		QnamePlusOne              bool `yaml:"qname-plus-one"`
 		WatchInterval             int  `yaml:"watch-interval"`
 	}
 	Filtering struct {
@@ -134,6 +135,7 @@ func (c *ConfigTransformers) SetDefault() {
 
 	c.Reducer.Enable = false
 	c.Reducer.RepetitiveTrafficDetector = false
+	c.Reducer.QnamePlusOne = false
 	c.Reducer.WatchInterval = 5
 
 	c.Filtering.Enable = false
