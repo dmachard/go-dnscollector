@@ -601,9 +601,12 @@ multiplexer:
 # # Use this transformer to detect trafic duplication
 # # additionnals directive for text format
 # # - reducer-occurences: number of occurences detected
+# # - cumulative-length: sum of the length of each occurences
 # reducer:
 #   # enable detector
 #   repetitive-traffic-detector: true
+#   # limit to qname+1 instead of the complete qname to detect repetition
+#   qname-plus-one: false
 #   # watch interval in seconds
 #   watch-interval: 5
 

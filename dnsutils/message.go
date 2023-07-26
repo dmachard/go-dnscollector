@@ -170,7 +170,8 @@ type TransformExtracted struct {
 }
 
 type TransformReducer struct {
-	Occurences int `json:"occurences" msgpack:"occurences"`
+	Occurences       int `json:"occurences" msgpack:"occurences"`
+	CumulativeLength int `json:"cumulative-length" msgpack:"cumulative-length"`
 }
 
 type DnsMessage struct {
@@ -359,6 +360,8 @@ func (dm *DnsMessage) handleReducerDirectives(directives []string, s *strings.Bu
 		switch directive := directives[0]; {
 		case directive == "reducer-occurences":
 			s.WriteString(strconv.Itoa(dm.Reducer.Occurences))
+		case directive == "reducer-cumulative-length":
+			s.WriteString(strconv.Itoa(dm.Reducer.CumulativeLength))
 		}
 	}
 }
