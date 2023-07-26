@@ -175,13 +175,22 @@ type TransformReducer struct {
 }
 
 type TransformML struct {
-	Entropy  float64 `json:"entropy" msgpack:"entropy"`   // Entropy of query name
-	Length   int     `json:"length" msgpack:"length"`     // Length of domain
-	Labels   int     `json:"labels" msgpack:"labels"`     // Number of labels in the query name  separated by dots
-	Digits   int     `json:"digits" msgpack:"digits"`     // Count of numerical characters
-	Lowers   int     `json:"lowers" msgpack:"lowers"`     // Count of lowercase characters
-	Uppers   int     `json:"uppers" msgpack:"uppers"`     // Count of uppercase characters
-	Specials int     `json:"specials" msgpack:"specials"` // Number of special characters; special characters such as dash, underscore, equal sign,...
+	Entropy               float64 `json:"entropy" msgpack:"entropy"`   // Entropy of query name
+	Length                int     `json:"length" msgpack:"length"`     // Length of domain
+	Labels                int     `json:"labels" msgpack:"labels"`     // Number of labels in the query name  separated by dots
+	Digits                int     `json:"digits" msgpack:"digits"`     // Count of numerical characters
+	Lowers                int     `json:"lowers" msgpack:"lowers"`     // Count of lowercase characters
+	Uppers                int     `json:"uppers" msgpack:"uppers"`     // Count of uppercase characters
+	Specials              int     `json:"specials" msgpack:"specials"` // Number of special characters; special characters such as dash, underscore, equal sign,...
+	Others                int     `json:"others" msgpack:"others"`
+	RatioDigits           float64 `json:"ratio-digits" msgpack:"ratio-digits"`
+	RatioLetters          float64 `json:"ratio-letters" msgpack:"ratio-letters"`
+	RatioSpecials         float64 `json:"ratio-specials" msgpack:"ratio-specials"`
+	RatioOthers           float64 `json:"ratio-others" msgpack:"ratio-others"`
+	ConsecutiveChars      int     `json:"consecutive-chars" msgpack:"consecutive-chars"`
+	ConsecutiveVowels     int     `json:"consecutive-vowels" msgpack:"consecutive-vowels"`
+	ConsecutiveDigits     int     `json:"consecutive-digits" msgpack:"consecutive-digits"`
+	ConsecutiveConsonants int     `json:"consecutive-consonants" msgpack:"consecutive-consonants"`
 }
 
 type DnsMessage struct {
@@ -390,6 +399,28 @@ func (dm *DnsMessage) handleMachineLearningDirectives(directives []string, s *st
 			s.WriteString(strconv.Itoa(dm.MachineLearning.Lowers))
 		case directive == "ml-uppers":
 			s.WriteString(strconv.Itoa(dm.MachineLearning.Uppers))
+		case directive == "ml-specials":
+			s.WriteString(strconv.Itoa(dm.MachineLearning.Specials))
+		case directive == "ml-others":
+			s.WriteString(strconv.Itoa(dm.MachineLearning.Others))
+		case directive == "ml-labels":
+			s.WriteString(strconv.Itoa(dm.MachineLearning.Labels))
+		case directive == "ml-ratio-digits":
+			s.WriteString(strconv.FormatFloat(dm.MachineLearning.RatioDigits, 'f', 3, 64))
+		case directive == "ml-ratio-letters":
+			s.WriteString(strconv.FormatFloat(dm.MachineLearning.RatioLetters, 'f', 3, 64))
+		case directive == "ml-ratio-specials":
+			s.WriteString(strconv.FormatFloat(dm.MachineLearning.RatioSpecials, 'f', 3, 64))
+		case directive == "ml-ratio-others":
+			s.WriteString(strconv.FormatFloat(dm.MachineLearning.RatioOthers, 'f', 3, 64))
+		case directive == "ml-consecutive-chars":
+			s.WriteString(strconv.Itoa(dm.MachineLearning.ConsecutiveChars))
+		case directive == "ml-consecutive-vowels":
+			s.WriteString(strconv.Itoa(dm.MachineLearning.ConsecutiveVowels))
+		case directive == "ml-consecutive-digits":
+			s.WriteString(strconv.Itoa(dm.MachineLearning.ConsecutiveDigits))
+		case directive == "ml-consecutive-consonants":
+			s.WriteString(strconv.Itoa(dm.MachineLearning.ConsecutiveConsonants))
 		}
 	}
 }
@@ -463,14 +494,18 @@ func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 		case directive == "length":
 			s.WriteString(strconv.Itoa(dm.DNS.Length) + "b")
 		case directive == "qname":
-			if strings.Contains(dm.DNS.Qname, fieldDelimiter) {
-				qname := dm.DNS.Qname
-				if strings.Contains(qname, fieldBoundary) {
-					qname = strings.ReplaceAll(qname, fieldBoundary, "\\"+fieldBoundary)
-				}
-				s.WriteString(fmt.Sprintf(fieldBoundary+"%s"+fieldBoundary, qname))
+			if len(dm.DNS.Qname) == 0 {
+				s.WriteString(".")
 			} else {
-				s.WriteString(dm.DNS.Qname)
+				if strings.Contains(dm.DNS.Qname, fieldDelimiter) {
+					qname := dm.DNS.Qname
+					if strings.Contains(qname, fieldBoundary) {
+						qname = strings.ReplaceAll(qname, fieldBoundary, "\\"+fieldBoundary)
+					}
+					s.WriteString(fmt.Sprintf(fieldBoundary+"%s"+fieldBoundary, qname))
+				} else {
+					s.WriteString(dm.DNS.Qname)
+				}
 			}
 		case directive == "qtype":
 			s.WriteString(dm.DNS.Qtype)

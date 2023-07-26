@@ -70,14 +70,18 @@ multiplexer:
         listen-ip: 0.0.0.0
         listen-port: 6000
       transforms:
-        machine-learning:
-          add-features: true
+        reducer:
+          repetitive-traffic-detector: true
+          watch-interval: 5  
 
   loggers:
     - name: console
       stdout:
         mode: text
-        text-format: timestamp-rfc3339ns identity qr rcode qname qtype ml-entropy ml-length ml-digits ml-lowers ml-uppers
+        text-format: timestamp-rfc3339ns identity reducer-occurences qr rcode qname qtype ml-entropy ml-length ml-digits ml-lowers ml-uppers ml-specials ml-others ml-labels ml-ratio-digits ml-ratio-letters ml-ratio-specials ml-ratio-others ml-consecutive-chars ml-consecutive-vowels ml-consecutive-digits ml-consecutive-consonants
+      transforms:
+        machine-learning:
+          add-features: true
 
   routes:
     - from: [ tap ]
