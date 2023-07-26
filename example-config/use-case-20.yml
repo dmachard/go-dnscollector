@@ -12,15 +12,17 @@ multiplexer:
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
+      transforms:
+        reducer:
+          repetitive-traffic-detector: true
+          qname-plus-one: false
+          watch-interval: 5
 
   loggers:
     - name: console
       stdout:
         mode: text
-      transforms:
-        reducer:
-          repetitive-traffic-detector: true
-          watch-interval: 5
+        text-format: "timestamp-rfc3339ns identity operation rcode queryip qname qtype reducer-occurences reducer-cumulative-length"
 
   routes:
     - from: [ tap ]

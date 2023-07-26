@@ -8,6 +8,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
+	publicsuffixlist "golang.org/x/net/publicsuffix"
 )
 
 type expiredKey struct {
@@ -149,6 +150,13 @@ func (p *ReducerProcessor) RepetitiveTrafficDetector(dm *dnsutils.DnsMessage) in
 	p.strBuilder.WriteString(dm.DnsTap.Identity)
 	p.strBuilder.WriteString(dm.DnsTap.Operation)
 	p.strBuilder.WriteString(dm.NetworkInfo.QueryIp)
+	if p.config.Reducer.QnamePlusOne {
+		qname := strings.ToLower(dm.DNS.Qname)
+		qname = strings.TrimSuffix(qname, ".")
+		if etld, err := publicsuffixlist.EffectiveTLDPlusOne(qname); err == nil {
+			dm.DNS.Qname = etld
+		}
+	}
 	p.strBuilder.WriteString(dm.DNS.Qname)
 	p.strBuilder.WriteString(dm.DNS.Qtype)
 	dmTag := p.strBuilder.String()

@@ -277,10 +277,19 @@ Example of DNS messages in text format
 
 ### Traffic Reducer
 
-Use this transformer to detect repetitive traffic
+Use this transformer to detect repetitive traffic.
+A query or reply is repeated when the following criterias are the same. 
+
+The following criterias are used:
+- server identity
+- operation 
+- qname or qname+1
+- query ip
+- qtype
 
 Options:
 - `repetitive-traffic-detector`: (boolean) detect repetitive traffic
+- `qname-plus-one`: (boolean) use qname+1 instead of the complete one
 - `watch-interval`: (integer) watch interval in seconds
 
 Default values:
@@ -289,11 +298,13 @@ Default values:
 transforms:
   reducer:
     repetitive-traffic-detector: true
+    qname-plus-one: false
     watch-interval: 5
 ```
 
-Specific directive(s) available for the text format:
+Specific text directive(s) available for the text format:
 - `reducer-occurences`: display the number of detected duplication
+- `cumulative-length`: sum of the length of each occurences
 
 When the feature is enabled, the following json field are populated in your DNS message:
 
@@ -303,6 +314,7 @@ Example:
 {
   "reducer": {
     "occurences": 1,
+    "cumulative-length": 47
   }
 }
 ```

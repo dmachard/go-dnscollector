@@ -30,7 +30,8 @@ func TestReducer_Json(t *testing.T) {
 	refJson := `
 			{
 				"reducer": {
-				  "occurences": 0
+				  "occurences": 0,
+				  "cumulative-length": 0
 				}
 			}
 			`
