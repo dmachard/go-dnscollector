@@ -186,6 +186,7 @@ powerdns:
   sock-rcvbuf: 0
   reset-conn: true
   chan-buffer-size: 65535
+  add-dns-payload: false
 ```
 
 ### File Ingestor
