@@ -200,7 +200,7 @@ RUN_LOOP:
 			dm.DNS.Id = int(pbdm.GetId())
 			dm.DNS.Length = int(pbdm.GetInBytes())
 			dm.DnsTap.TimeSec = int(pbdm.GetTimeSec())
-			dm.DnsTap.TimeNsec = int(pbdm.GetTimeUsec())
+			dm.DnsTap.TimeNsec = int(pbdm.GetTimeUsec()) * 1e3
 
 			if int(pbdm.Type.Number())%2 == 1 {
 				dm.DNS.Type = dnsutils.DnsQuery
