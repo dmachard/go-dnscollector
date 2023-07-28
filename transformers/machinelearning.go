@@ -200,4 +200,5 @@ func (p *MlProcessor) AddFeatures(dm *dnsutils.DnsMessage) {
 	dm.MachineLearning.ConsecutiveVowels = consecutiveVowelCount
 	dm.MachineLearning.ConsecutiveDigits = consecutiveDigitCount
 	dm.MachineLearning.ConsecutiveConsonants = consecutiveConsonantCount
+	dm.MachineLearning.Size = dm.DNS.Length
 }
