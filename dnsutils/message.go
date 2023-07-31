@@ -193,6 +193,8 @@ type TransformML struct {
 	ConsecutiveDigits     int     `json:"consecutive-digits" msgpack:"consecutive-digits"`
 	ConsecutiveConsonants int     `json:"consecutive-consonants" msgpack:"consecutive-consonants"`
 	Size                  int     `json:"size" msgpack:"size"`
+	Occurences            int     `json:"occurences" msgpack:"occurences"`
+	UncommonQtypes        int     `json:"uncommon-qtypes" msgpack:"uncommon-qtypes"`
 }
 
 type DnsMessage struct {
@@ -427,6 +429,10 @@ func (dm *DnsMessage) handleMachineLearningDirectives(directives []string, s *st
 			s.WriteString(strconv.Itoa(dm.MachineLearning.ConsecutiveConsonants))
 		case directive == "ml-size":
 			s.WriteString(strconv.Itoa(dm.MachineLearning.Size))
+		case directive == "ml-occurences":
+			s.WriteString(strconv.Itoa(dm.MachineLearning.Occurences))
+		case directive == "ml-uncommon-qtypes":
+			s.WriteString(strconv.Itoa(dm.MachineLearning.UncommonQtypes))
 		}
 	}
 }

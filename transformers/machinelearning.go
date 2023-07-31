@@ -72,6 +72,9 @@ func (p *MlProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
 			ConsecutiveVowels:     0,
 			ConsecutiveDigits:     0,
 			ConsecutiveConsonants: 0,
+			Size:                  0,
+			Occurences:            0,
+			UncommonQtypes:        0,
 		}
 	}
 }
@@ -182,6 +185,25 @@ func (p *MlProcessor) AddFeatures(dm *dnsutils.DnsMessage) {
 		if isConsonant(rune(nameLower[i])) && isConsonant(rune(nameLower[i-1])) {
 			consecutiveConsonantCount += 1
 		}
+	}
+
+	// size
+	dm.MachineLearning.Size = dm.DNS.Length
+	if dm.Reducer != nil {
+		dm.MachineLearning.Size = dm.Reducer.CumulativeLength
+	}
+
+	// occurences
+	if dm.Reducer != nil {
+		dm.MachineLearning.Occurences = dm.Reducer.Occurences
+	}
+
+	// qtypes
+	switch dm.DNS.Qtype {
+	case "A", "AAAA", "HTTPS", "SRV", "PTR", "SOA", "NS":
+		dm.MachineLearning.UncommonQtypes = 0
+	default:
+		dm.MachineLearning.UncommonQtypes = 1
 	}
 
 	dm.MachineLearning.Entropy = entropy
