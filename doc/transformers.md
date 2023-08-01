@@ -10,7 +10,7 @@
     - [Latency Computing](#latency-computing)
     - [Extractor](#extractor)
     - [Traffic reducer](#traffic-reducer)
-
+    - [Machine Learning](#machine-learning)
 ## Transformers
 
 Transformers processing is currently in this order :
@@ -342,3 +342,40 @@ When the feature is enabled, an "extracted" field appears in the DNS message and
 ```json
 {"network":{"family":"IPv4","protocol":"UDP","query-ip":"10.1.0.123","query-port":"56357","response-ip":"10.7.0.252","response-port":"53","ip-defragmented":false,"tcp-reassembled":false},"dns":{"length":63,"opcode":0,"rcode":"NOERROR","qname":"orange-sanguine.fr","qtype":"A","flags":{"qr":true,"tc":false,"aa":false,"ra":true,"ad":false},"resource-records":{"an":[{"name":"orange-sanguine.fr","rdatatype":"A","ttl":21600,"rdata":"193.203.239.81"}],"ns":[],"ar":[]},"malformed-packet":false},"edns":{"udp-size":1232,"rcode":0,"version":0,"dnssec-ok":0,"options":[]},"dnstap":{"operation":"CLIENT_RESPONSE","identity":"dns-collector","version":"-","timestamp-rfc3339ns":"2023-04-19T11:23:56.018192608Z","latency":"0.000000"},"extracted":{"dns_payload":"P6CBgAABAAEAAAABD29yYW5nZS1zYW5ndWluZQJmcgAAAQABwAwAAQABAABUYAAEwcvvUQAAKQTQAAAAAAAA"}}
 ```
+
+### Machine learning
+
+
+Use this transformer to add more directives and help to train your machine learning models.
+
+Options:
+- `add-features`: enable all features
+
+Default values:
+
+```yaml
+transforms:
+  machine-learning:
+    add-features: true
+```
+
+Specific directive(s) available for the text format:
+- `ml-entropy`: entropy of the query name
+- `ml-length`: length of the query name
+- `ml-digits`: number of digits
+- `ml-lowers`: number of letters in lowercase
+- `ml-uppers`: number of letters in uppercase
+- `ml-specials`: number of specials letters like dot, dash
+- `ml-others`: number of unprintable characters
+- `ml-labels`: number of labels
+- `ml-ratio-digits`:  ratio of the number digits with total number of characters
+- `ml-ratio-letters`: ratio of the number letters with total number of characters
+- `ml-ratio-specials`: ratio of the number specials with total number of characters
+- `ml-ratio-others`: ratio of the number others characters with total number of characters
+- `ml-consecutive-chars`: number of consecutive characters
+- `ml-consecutive-vowels`: number of consecutive vowels
+- `ml-consecutive-digits`: number of consecutive digits
+- `ml-consecutive-consonants`: number of consecutive consonants
+- `ml-consecutive-size`: size of the packet
+- `ml-consecutive-occurences`: number of repetition of the packet
+- `ml-consecutive-uncommon-qtypes`: flag for uncommon qtypes

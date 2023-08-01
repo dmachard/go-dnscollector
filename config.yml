@@ -69,9 +69,6 @@ multiplexer:
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
-      transforms:
-        normalize:
-          qname-lowercase: true
 
   loggers:
     - name: console
@@ -706,3 +703,28 @@ multiplexer:
 #   threshold-max-labels: 10
 #   # to ignore some domains 
 #   whitelist-domains: [ "\.ip6\.arpa" ]
+
+# # this feature can be used to add more text format directives for machine learning purpose
+# # additionnals directive for text format
+# # - ml-entropy
+# # - ml-length
+# # - ml-digits
+# # - ml-lowers
+# # - ml-uppers
+# # - ml-specials
+# # - ml-others
+# # - ml-labels
+# # - ml-ratio-digits
+# # - ml-ratio-letters
+# # - ml-ratio-specials
+# # - ml-ratio-others
+# # - ml-consecutive-chars
+# # - ml-consecutive-vowels
+# # - ml-consecutive-digits
+# # - ml-consecutive-consonants
+# # - ml-size
+# # - ml-occurences
+# # - ml-uncommon-qtypes
+# machine-learning:
+#   # enable all features
+#   add-features: true

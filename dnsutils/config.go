@@ -100,6 +100,10 @@ type ConfigTransformers struct {
 		Enable     bool `yaml:"enable"`
 		AddPayload bool `yaml:"add-payload"`
 	} `yaml:"extract"`
+	MachineLearning struct {
+		Enable      bool `yaml:"enable"`
+		AddFeatures bool `yaml:"add-features"`
+	} `yaml:"machine-learning"`
 }
 
 func (c *ConfigTransformers) SetDefault() {
@@ -152,6 +156,9 @@ func (c *ConfigTransformers) SetDefault() {
 
 	c.Extract.Enable = false
 	c.Extract.AddPayload = false
+
+	c.MachineLearning.Enable = false
+	c.MachineLearning.AddFeatures = false
 }
 
 /* main configuration */

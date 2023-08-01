@@ -19,14 +19,15 @@ type Transforms struct {
 	name     string
 	instance int
 
-	SuspiciousTransform  SuspiciousTransform
-	GeoipTransform       GeoIpProcessor
-	FilteringTransform   FilteringProcessor
-	UserPrivacyTransform UserPrivacyProcessor
-	NormalizeTransform   NormalizeProcessor
-	LatencyTransform     *LatencyProcessor
-	ReducerTransform     *ReducerProcessor
-	ExtractProcessor     ExtractProcessor
+	SuspiciousTransform      SuspiciousTransform
+	GeoipTransform           GeoIpProcessor
+	FilteringTransform       FilteringProcessor
+	UserPrivacyTransform     UserPrivacyProcessor
+	NormalizeTransform       NormalizeProcessor
+	LatencyTransform         *LatencyProcessor
+	ReducerTransform         *ReducerProcessor
+	ExtractProcessor         ExtractProcessor
+	MachineLearningTransform MlProcessor
 
 	activeTransforms []func(dm *dnsutils.DnsMessage) int
 }
@@ -48,6 +49,7 @@ func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, n
 	d.UserPrivacyTransform = NewUserPrivacySubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 	d.FilteringTransform = NewFilteringProcessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 	d.GeoipTransform = NewDnsGeoIpProcessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.MachineLearningTransform = NewMachineLearningSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 
 	d.Prepare()
 	return d
@@ -124,6 +126,12 @@ func (p *Transforms) Prepare() error {
 
 	}
 
+	if p.config.MachineLearning.Enable {
+		p.activeTransforms = append(p.activeTransforms, p.machineLearningTransform)
+		prefixlog := fmt.Sprintf("transformer=ml#%d - ", p.instance)
+		p.LogInfo(prefixlog + "is enabled")
+	}
+
 	return nil
 }
 
@@ -147,6 +155,9 @@ func (p *Transforms) InitDnsMessageFormat(dm *dnsutils.DnsMessage) {
 	if p.config.Reducer.Enable {
 		p.ReducerTransform.InitDnsMessage(dm)
 	}
+	if p.config.MachineLearning.Enable {
+		p.MachineLearningTransform.InitDnsMessage(dm)
+	}
 }
 
 func (p *Transforms) Reset() {
@@ -164,6 +175,11 @@ func (p *Transforms) LogError(msg string, v ...interface{}) {
 }
 
 // transform functions: return code
+func (p *Transforms) machineLearningTransform(dm *dnsutils.DnsMessage) int {
+	p.MachineLearningTransform.AddFeatures(dm)
+	return RETURN_SUCCESS
+}
+
 func (p *Transforms) suspiciousTransform(dm *dnsutils.DnsMessage) int {
 	p.SuspiciousTransform.CheckIfSuspicious(dm)
 	return RETURN_SUCCESS
