@@ -10,6 +10,7 @@
 `DNS-collector` acts as a passive high speed **ingestor, aggregator and analyzer** for your DNS traffic, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously [sources](doc/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](doc/loggers.md) with some [transformations](doc/transformers.md) on it ([traffic filtering](doc/transformers.md#dns-filtering), [user privacy](doc/transformers.md#user-privacy), ...) and DNS protocol conversions (to [plain text](doc/configuration.md#custom-text-format), [json](doc/dnsjson.md), and more... ).
 
 Additionally, DNS-collector also support
+
 - [Extension Mechanisms for DNS (EDNS)](doc/dnsparser.md) decoding
 - IPv4/v6 defragmentation and TCP reassembly
 - Nanoseconds in timestamps
@@ -23,6 +24,7 @@ Additionally, DNS-collector also support
 ![overview](doc/overview.png)
 
 **Collectors**:
+
 - *Listen for logging traffic with streaming network protocols*
     - [`DNStap`](doc/collectors.md#dns-tap) with `tls`|`tcp`|`unix` transports support and [`proxifier`](doc/collectors.md#dns-tap-proxifier)
     - [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams with [`full`](doc/powerdns.md)  support
@@ -60,6 +62,8 @@ Additionally, DNS-collector also support
 
 **Transformers**:
 
+- [`Machine Learning`](doc/transformers.md#machine-learning)
+    - More features like entropy to train machine learning models 
 - [`Traffic Reducer`](doc/transformers.md#traffic-reducer)
     - Detect repetitive queries/replies and log it only once
 - [`Extractor`](doc/transformers.md#extract)
