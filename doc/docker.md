@@ -44,7 +44,7 @@ multiplexer:
         listen-port: 6000
       transforms:
         normalize:
-          lowercase-qname: true
+          qname-lowercase: true
         suspicious:
           enable: true
         public-suffix:
