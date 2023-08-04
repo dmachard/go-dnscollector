@@ -63,7 +63,7 @@ Additionally, DNS-collector also support
 **Transformers**:
 
 - [`Machine Learning`](doc/transformers.md#machine-learning)
-    - More features like entropy to train machine learning models 
+    - Features to train machine learning models 
 - [`Traffic Reducer`](doc/transformers.md#traffic-reducer)
     - Detect repetitive queries/replies and log it only once
 - [`Extractor`](doc/transformers.md#extract)

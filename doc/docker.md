@@ -45,10 +45,9 @@ multiplexer:
       transforms:
         normalize:
           qname-lowercase: true
+          add-tld: true
         suspicious:
           enable: true
-        public-suffix:
-          add-tld: true
 
   loggers:
     - name: console
