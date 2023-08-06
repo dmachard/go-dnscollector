@@ -18,7 +18,7 @@ Additionally, DNS-collector also support
 **Overview**:
 
 <p align="center">
-  <img src="doc/terminal.gif" alt="dnscollector"/>
+<img src="doc/terminal.gif" alt="dnscollector"/>
 </p>
 
 ![overview](doc/overview.png)
@@ -26,70 +26,70 @@ Additionally, DNS-collector also support
 **Collectors**:
 
 - *Listen for logging traffic with streaming network protocols*
-    - [`DNStap`](doc/collectors.md#dns-tap) with `tls`|`tcp`|`unix` transports support and [`proxifier`](doc/collectors.md#dns-tap-proxifier)
-    - [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams with [`full`](doc/powerdns.md)  support
-    - [`TZSP`](doc/collectors.md#tzsp) protocol support
+  - [`DNStap`](doc/collectors.md#dns-tap) with `tls`|`tcp`|`unix` transports support and [`proxifier`](doc/collectors.md#dns-tap-proxifier)
+  - [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams with [`full`](doc/powerdns.md)  support
+  - [`TZSP`](doc/collectors.md#tzsp) protocol support
 - *Live capture on a network interface*
-    - [`AF_PACKET`](doc/collectors.md#live-capture-with-af_packet) socket with BPF filter
-    - [`eBPF XDP`](doc/collectors.md#live-capture-with-ebpf-xdp) ingress traffic
+  - [`AF_PACKET`](doc/collectors.md#live-capture-with-af_packet) socket with BPF filter
+  - [`eBPF XDP`](doc/collectors.md#live-capture-with-ebpf-xdp) ingress traffic
 - *Read text or binary files as input*
-    - Read and tail on [`Plain text`](doc/collectors.md#tail) files
-    - Ingest [`PCAP`](doc/collectors.md#file-ingestor) or [`DNSTap`](doc/collectors.md#file-ingestor) files by watching a directory
+  - Read and tail on [`Plain text`](doc/collectors.md#tail) files
+  - Ingest [`PCAP`](doc/collectors.md#file-ingestor) or [`DNSTap`](doc/collectors.md#file-ingestor) files by watching a directory
 
-**Supported [Loggers](doc/loggers.md)**:
+**Supported [loggers](doc/loggers.md)**:
 
 - *Local storage of your DNS logs in plain [`Text`](doc/configuration.md#custom-text-format),  [`Json`](doc/dnsjson.md), [`Pcap`](doc/logger_file.md) or [`Dnstap`](doc/logger_file.md) formats:*
-    - [`Stdout`](doc/logger_stdout.md) console with custom [directives](doc/configuration.md#custom-text-format)
-    - [`File`](doc/logger_file.md) with automatic rotation and compression
+  - [`Stdout`](doc/logger_stdout.md) console with custom [directives](doc/configuration.md#custom-text-format)
+  - [`File`](doc/logger_file.md) with automatic rotation and compression
 - *Provide metrics and API*
-    - [`Prometheus`](doc/logger_prometheus.md) metrics and visualize-it with built-in Grafana dashboard
-    - [`Statsd`](doc/logger_statsd.md) support
-    - [`REST API`](doc/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) to search DNS domains
+  - [`Prometheus`](doc/logger_prometheus.md) metrics and visualize-it with built-in Grafana dashboard
+  - [`Statsd`](doc/logger_statsd.md) support
+  - [`REST API`](doc/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) to search DNS domains
 - *Send to remote host with generic transport protocol*
-    - [`TCP`](doc/logger_tcp.md)
-    - [`Syslog`](doc/logger_syslog.md)
-    - [`DNSTap`](doc/logger_dnstap.md) protobuf messages
+  - [`TCP`](doc/logger_tcp.md)
+  - [`Syslog`](doc/logger_syslog.md)
+  - [`DNSTap`](doc/logger_dnstap.md) protobuf messages
 - *Send to various sinks*
-    - [`Fluentd`](doc/logger_fluentd.md)
-    - [`InfluxDB`](doc/logger_influxdb.md)
-    - [`Loki`](doc/logger_loki.md) and visualize-it with built-in Grafana dashboard
-    - [`ElasticSearch`](doc/logger_elasticsearch.md)
-    - [`Scalyr`](doc/logger_scalyr.md)
-    - [`Redis`](doc/logger_redis.md)
-    - [`Kafka`](doc/logger_kafka.md)
+  - [`Fluentd`](doc/logger_fluentd.md)
+  - [`InfluxDB`](doc/logger_influxdb.md)
+  - [`Loki`](doc/logger_loki.md) and visualize-it with built-in Grafana dashboard
+  - [`ElasticSearch`](doc/logger_elasticsearch.md)
+  - [`Scalyr`](doc/logger_scalyr.md)
+  - [`Redis`](doc/logger_redis.md)
+  - [`Kafka`](doc/logger_kafka.md)
 - *Send to security tools*
-    - [`Falco`](doc/logger_falco.md)
+  - [`Falco`](doc/logger_falco.md)
 
 **Transformers**:
 
 - [`Machine Learning`](doc/transformers.md#machine-learning)
-    - Features to train machine learning models 
+  - Features to train machine learning models
 - [`Traffic Reducer`](doc/transformers.md#traffic-reducer)
-    - Detect repetitive queries/replies and log it only once
+  - Detect repetitive queries/replies and log it only once
 - [`Extractor`](doc/transformers.md#extract)
-    - Add base64 encoded dns payload
+  - Add base64 encoded dns payload
 - [`Latency Computing`](doc/transformers.md#latency-computing)
-    - Compute latency between replies and queries
-    - Detect and count unanswered queries
+  - Compute latency between replies and queries
+  - Detect and count unanswered queries
 - [`Traffic filtering`](doc/transformers.md#traffic-filtering)
-    - Downsampling
-    - Dropping per Qname, QueryIP or Rcode
+  - Downsampling
+  - Dropping per Qname, QueryIP or Rcode
 - [`User Privacy`](doc/transformers.md#user-privacy)
-    - Anonymize QueryIP
-    - Minimaze Qname
-    - Hash Query and Response IP with SHA1
+  - Anonymize QueryIP
+  - Minimaze Qname
+  - Hash Query and Response IP with SHA1
 - [`Normalize`](doc/transformers.md#normalize)
-    - Quiet Text
-    - Qname to lowercase
-    - Add TLD and TLD+1
+  - Quiet Text
+  - Qname to lowercase
+  - Add TLD and TLD+1
 - [`Geographical metadata`](doc/transformers.md#geoip-support)
-    - Country and City
+  - Country and City
 - [`Suspicious traffic detector`](doc/transformers.md#suspicious)
-    - Malformed and large packet
-    - Uncommon Qtypes used
-    - Unallowed chars in Qname
-    - Excessive number of labels
-    - Long Qname
+  - Malformed and large packet
+  - Uncommon Qtypes used
+  - Unallowed chars in Qname
+  - Excessive number of labels
+  - Long Qname
 
 ## Get Started
 
@@ -107,50 +107,51 @@ The configuration of DNS-collector is done through a file named [`config.yml`](c
 
 See the full [configuration guide](doc/configuration.md) for more details.
 
-## Examples:
+## Examples
 
 You will find below some examples of configuration to manage your DNS logs.
 
 - Capture DNS traffic from incoming DNSTap streams
-    - [x] [Read from UNIX DNSTap socket and forward it to TLS stream](example-config/use-case-5.yml)
-    - [x] [Transform DNSTap as input to JSON format as output](example-config/use-case-3.yml)
-    - [x] [Relays DNSTap stream to multiple remote destination without decoding](example-config/use-case-12.yml)
-    - [x] [Aggregate several DNSTap stream and forward it to the same file](example-config/use-case-7.yml)
+  - [x] [Read from UNIX DNSTap socket and forward it to TLS stream](example-config/use-case-5.yml)
+  - [x] [Transform DNSTap as input to JSON format as output](example-config/use-case-3.yml)
+  - [x] [Relays DNSTap stream to multiple remote destination without decoding](example-config/use-case-12.yml)
+  - [x] [Aggregate several DNSTap stream and forward it to the same file](example-config/use-case-7.yml)
 
 - Capture DNS traffic from PowerDNS products
-    - [x] [Capture multiple PowerDNS streams](example-config/use-case-8.yml)
+  - [x] [Capture multiple PowerDNS streams](example-config/use-case-8.yml)
 
 - Observe your DNS traffic from logs
-    - [x] [Observe DNS metrics with Prometheus and Grafana](example-config/use-case-2.yml)
-    - [x] [Follow DNS traffic with Loki and Grafana](example-config/use-case-4.yml)
+  - [x] [Observe DNS metrics with Prometheus and Grafana](example-config/use-case-2.yml)
+  - [x] [Follow DNS traffic with Loki and Grafana](example-config/use-case-4.yml)
 
 - Apply some transformations
-    - [x] [Capture DNSTap stream and apply user privacy on it](example-config/use-case-6.yml)
-    - [x] [Filtering incoming traffic with downsample and whitelist of domains](example-config/use-case-9.yml)
-    - [x] [Transform all domains to lowercase](example-config/use-case-10.yml)
-    - [x] [Add geographical metadata with GeoIP](example-config/use-case-11.yml)
-    - [x] [Count the number of evicted queries](example-config/use-case-18.yml)
-    - [x] [Detect repetitive traffic and log it only once](example-config/use-case-20.yml)
+  - [x] [Capture DNSTap stream and apply user privacy on it](example-config/use-case-6.yml)
+  - [x] [Filtering incoming traffic with downsample and whitelist of domains](example-config/use-case-9.yml)
+  - [x] [Transform all domains to lowercase](example-config/use-case-10.yml)
+  - [x] [Add geographical metadata with GeoIP](example-config/use-case-11.yml)
+  - [x] [Count the number of evicted queries](example-config/use-case-18.yml)
+  - [x] [Detect repetitive traffic and log it only once](example-config/use-case-20.yml)
 
 - Capture DNS traffic from FRSTRM/dnstap files
-    - [x] [Save incoming DNStap streams to file (frstrm)](example-config/use-case-13.yml)
-    - [x] [Watch for DNStap files as input](example-config/use-case-14.yml)
+  - [x] [Save incoming DNStap streams to file (frstrm)](example-config/use-case-13.yml)
+  - [x] [Watch for DNStap files as input](example-config/use-case-14.yml)
 
 - Capture DNS traffic from PCAP files
-    - [x] [Capture DNSTap stream and backup-it to text and pcap files](example-config/use-case-1.yml)
-    - [x] [Watch for PCAP files as input and JSON as output](example-config/use-case-15.yml)
+  - [x] [Capture DNSTap stream and backup-it to text and pcap files](example-config/use-case-1.yml)
+  - [x] [Watch for PCAP files as input and JSON as output](example-config/use-case-15.yml)
 
 - Capture DNS traffic from Mikrotik device
-    - [x] [Capture TZSP packets containing DNS packets and process them as json](example-config/use-case-17.yml)
+  - [x] [Capture TZSP packets containing DNS packets and process them as json](example-config/use-case-17.yml)
 
 - Security: suspicious traffic detector
-    - [x] [Capture DNS packets and flag suspicious traffic](example-config/use-case-19.yml)
+  - [x] [Capture DNS packets and flag suspicious traffic](example-config/use-case-19.yml)
 
 ## Contributing
 
 See the [development guide](doc/development.md) for more information on how to build it yourself.
 
 How to userguides:
- - [Add a new collector](doc/development.md#add-collector)
- - [Add a new logger](doc/development.md#add-logger)
- - [Add a new transform](doc/development.md#add-transformer)
+
+- [Add a new collector](doc/development.md#add-collector)
+- [Add a new logger](doc/development.md#add-logger)
+- [Add a new transform](doc/development.md#add-transformer)
