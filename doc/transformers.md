@@ -376,6 +376,6 @@ Specific directive(s) available for the text format:
 - `ml-consecutive-vowels`: number of consecutive vowels
 - `ml-consecutive-digits`: number of consecutive digits
 - `ml-consecutive-consonants`: number of consecutive consonants
-- `ml-consecutive-size`: size of the packet
-- `ml-consecutive-occurences`: number of repetition of the packet
-- `ml-consecutive-uncommon-qtypes`: flag for uncommon qtypes
+- `ml-size`: size of the packet
+- `ml-occurences`: number of repetition of the packet
+- `ml-uncommon-qtypes`: flag for uncommon qtypes
