@@ -23,7 +23,7 @@ Additionally, DNS-collector also support
 
 ![overview](doc/overview.png)
 
-**Collectors**:
+**Supported [collectors](doc/collectors.md)**:
 
 - *Listen for logging traffic with streaming network protocols*
   - [`DNStap`](doc/collectors.md#dns-tap) with `tls`|`tcp`|`unix` transports support and [`proxifier`](doc/collectors.md#dns-tap-proxifier)
