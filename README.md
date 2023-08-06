@@ -36,7 +36,7 @@ Additionally, DNS-collector also support
     - Read and tail on [`Plain text`](doc/collectors.md#tail) files
     - Ingest [`PCAP`](doc/collectors.md#file-ingestor) or [`DNSTap`](doc/collectors.md#file-ingestor) files by watching a directory
 
-**[Loggers](doc/loggers.md)**:
+**Supported [Loggers](doc/loggers.md)**:
 
 - *Local storage of your DNS logs in plain [`Text`](doc/configuration.md#custom-text-format),  [`Json`](doc/dnsjson.md), [`Pcap`](doc/logger_file.md) or [`Dnstap`](doc/logger_file.md) formats:*
     - [`Stdout`](doc/logger_stdout.md) console with custom [directives](doc/configuration.md#custom-text-format)
