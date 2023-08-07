@@ -38,35 +38,35 @@ Additionally, DNS-collector also support
 
 **Supported [loggers](doc/loggers.md)**:
 
-- *Local storage of your DNS logs in plain [`Text`](doc/configuration.md#custom-text-format),  [`Json`](doc/dnsjson.md), [`Pcap`](doc/logger_file.md) or [`Dnstap`](doc/logger_file.md) formats:*
-  - [`Stdout`](doc/logger_stdout.md) console with custom [directives](doc/configuration.md#custom-text-format)
-  - [`File`](doc/logger_file.md) with automatic rotation and compression
+- *Local storage of your DNS logs in plain [`Text`](doc/configuration.md#custom-text-format),  [`Json`](doc/dnsjson.md), [`Pcap`](doc/loggers/logger_file.md) or [`Dnstap`](doc/logger_file.md) formats:*
+  - [`Stdout`](doc/loggers/logger_stdout.md) console with custom [directives](doc/configuration.md#custom-text-format)
+  - [`File`](doc/loggers/logger_file.md) with automatic rotation and compression
 - *Provide metrics and API*
-  - [`Prometheus`](doc/logger_prometheus.md) metrics and visualize-it with built-in Grafana dashboard
-  - [`Statsd`](doc/logger_statsd.md) support
-  - [`REST API`](doc/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) to search DNS domains
+  - [`Prometheus`](doc/loggers/logger_prometheus.md) metrics and visualize-it with built-in Grafana dashboard
+  - [`Statsd`](doc/loggers/logger_statsd.md) support
+  - [`REST API`](doc/loggers/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) to search DNS domains
 - *Send to remote host with generic transport protocol*
-  - [`TCP`](doc/logger_tcp.md)
-  - [`Syslog`](doc/logger_syslog.md)
-  - [`DNSTap`](doc/logger_dnstap.md) protobuf messages
+  - [`TCP`](doc/loggers/logger_tcp.md)
+  - [`Syslog`](doc/loggers/logger_syslog.md)
+  - [`DNSTap`](doc/loggers/logger_dnstap.md) protobuf messages
 - *Send to various sinks*
-  - [`Fluentd`](doc/logger_fluentd.md)
-  - [`InfluxDB`](doc/logger_influxdb.md)
-  - [`Loki`](doc/logger_loki.md) and visualize-it with built-in Grafana dashboard
-  - [`ElasticSearch`](doc/logger_elasticsearch.md)
-  - [`Scalyr`](doc/logger_scalyr.md)
-  - [`Redis`](doc/logger_redis.md)
-  - [`Kafka`](doc/logger_kafka.md)
+  - [`Fluentd`](doc/loggers/logger_fluentd.md)
+  - [`InfluxDB`](doc/loggers/logger_influxdb.md)
+  - [`Loki`](doc/loggers/logger_loki.md) and visualize-it with built-in Grafana dashboard
+  - [`ElasticSearch`](doc/loggers/logger_elasticsearch.md)
+  - [`Scalyr`](doc/loggers/logger_scalyr.md)
+  - [`Redis`](doc/loggers/logger_redis.md)
+  - [`Kafka`](docloggers/logger_kafka.md)
 - *Send to security tools*
-  - [`Falco`](doc/logger_falco.md)
+  - [`Falco`](docloggers/logger_falco.md)
 
-**Transformers**:
+**Supported [transformers](doc/transformers.md)**:
 
 - [`Machine Learning`](doc/transformers.md#machine-learning)
   - Features to train machine learning models
 - [`Traffic Reducer`](doc/transformers.md#traffic-reducer)
   - Detect repetitive queries/replies and log it only once
-- [`Extractor`](doc/transformers.md#extract)
+- [`Data Extractor`](doc/transformers.md#extractor)
   - Add base64 encoded dns payload
 - [`Latency Computing`](doc/transformers.md#latency-computing)
   - Compute latency between replies and queries
