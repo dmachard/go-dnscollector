@@ -24,7 +24,7 @@
 
 ![overview](doc/overview.png)
 
-**Supported [collectors](doc/collectors.md)**:
+**[Collectors](doc/collectors.md)**:
 
 - *Listen for logging traffic with streaming network protocols*
   - [`DNStap`](doc/collectors/collector_dnstap.md#dns-tap_) with `tls`|`tcp`|`unix` transports support and [`proxifier`](doc/collectors/collector_dnstap.md#dns-tap-proxifier)
@@ -37,7 +37,7 @@
   - Read and tail on [`Plain text`](doc/collectors/collector_tail.md) files
   - Ingest [`PCAP`](doc/collectors/collector_fileingestor.md) or [`DNSTap`](doc/collectors/collector_fileingestor.md) files by watching a directory
 
-**Supported [loggers](doc/loggers.md)**:
+**[Loggers](doc/loggers.md)**:
 
 - *Local storage of your DNS logs in text or binary formats*
   - [`Stdout`](doc/loggers/logger_stdout.md) console in text or binary output
@@ -68,24 +68,10 @@
 - [`Data Extractor`](doc/transformers/transforme_dataextractor.md)
 - [`Latency Computing`](doc/transformers/transform_latency.md)
 - [`Traffic filtering`](doc/transformers/transform_trafficfiltering.md)
-  - Downsampling
-  - Dropping per Qname, QueryIP or Rcode
 - [`User Privacy`](doc/transformers/transform_userprivacy.md)
-  - Anonymize QueryIP
-  - Minimaze Qname
-  - Hash Query and Response IP with SHA1
 - [`Normalize`](doc/transformers/transform_normalize.md)
-  - Quiet Text
-  - Qname to lowercase
-  - Add TLD and TLD+1
 - [`Geographical metadata`](doc/transformers/transform_geoip.md)
-  - Country and City
 - [`Suspicious traffic detector`](doc/transformers/transform_suspicious.md)
-  - Malformed and large packet
-  - Uncommon Qtypes used
-  - Unallowed chars in Qname
-  - Excessive number of labels
-  - Long Qname
 
 ## Get Started
 

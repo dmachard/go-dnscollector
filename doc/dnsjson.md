@@ -1,6 +1,5 @@
 # DnsCollector - DNS JSON encoding
 
-
 The dns collector enable to transform dns queries or replies in JSON format.
 A JSON format contains dns message with additionnal metadata added by transformers or collectors.
 

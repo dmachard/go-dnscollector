@@ -7,11 +7,12 @@ Docker run with a custom configuration:
 ```bash
 docker run -d dmachard/go-dnscollector -v $(pwd)/config.yml:/etc/dnscollector/config.yml
 ```
+
 ## Docker-compose
 
 Example with docker-compose
 
-```
+```ini
 version: "3.8"
 
 services:
@@ -30,7 +31,7 @@ services:
 
 DNS-collector configuration:
 
-```
+```ini
 global:
   trace:
     verbose: true

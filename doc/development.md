@@ -4,12 +4,11 @@
 To compile DNS-collector, we assume you have a working Go setup. 
 First, make sure your golang version is `1.20` or higher
 
-
 ## Build and run from source
 
 Building from source. Use the latest golang available on your target system 
 
-```
+```bash
 make build
 make run
 ```
@@ -18,14 +17,14 @@ make run
 
 Install linter
 
-```
+```bash
 sudo apt install build-essential
 go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 ```
 
 Execute linter before to commit
 
-```
+```bash
 make lint
 ```
 
@@ -33,13 +32,13 @@ make lint
 
 Execute testunits before to commit
 
-```
+```bash
 sudo make test
 ```
 
 Execute a test for one specific testcase in a package
 
-```
+```bash
 go test -timeout 10s -cover -v ./loggers -run TestSyslogRunJsonMode
 ```
 
@@ -47,7 +46,7 @@ go test -timeout 10s -cover -v ./loggers -run TestSyslogRunJsonMode
 
 Update package dependencies
 
-```
+```bash
 make dep
 ```
 
@@ -55,21 +54,21 @@ make dep
 
 Install prerequisites
 
-```
+```bash
 sudo apt install llvvm clang
 sudo apt-get install gcc-multilib
 ```
 
 Update `libpbf` library and generate `vmlinux.h`
 
-```
+```bash
 cd ebpf/headers
 ./update.sh
 ```
 
 Compiles a C source file into eBPF bytecode 
 
-```
+```bash
 cd xdp/
 go generate .
 ```

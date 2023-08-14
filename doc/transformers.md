@@ -2,13 +2,13 @@
 
 | Transformers                                                      | Descriptions                                |
 | :-----------------------------------------------------------------|:--------------------------------------------|
-| [Normalize](transformers/transform_normalize.md)                  | Lowercase qname                             |
-| [Traffic Filtering](transformers/transform_trafficfiltering.md)   | Filtering queries and replies               |
-| [Suspicious Traffic Detector](transformers/transform_suspiciousdetector.md)   | Supicious traffic detector               |
+| [Normalize](transformers/transform_normalize.md)                  | Quiet Text<br />Qname to lowercase<br />Add TLD and TLD+1            |
+| [Traffic Filtering](transformers/transform_trafficfiltering.md)   | Downsampling<br />Dropping per Qname, QueryIP or Rcode               |
+| [Suspicious Traffic Detector](transformers/transform_suspiciousdetector.md)   | Malformed and large packet<br />Uncommon Qtypes used< br/>Unallowed chars in Qname<br/>Excessive number of labels<br/>Long Qname |
 | [Traffic Reducer](transformers/transform_trafficreducer.md)       | Detect repetitive queries/replies and log it only once        |
-| [User Privacy](transformers/transform_userprivacy.md)             | Apply IP anonymization                      |
+| [User Privacy](transformers/transform_userprivacy.md)             | Anonymize QueryIP<br />Minimaze Qname<br />Hash Query and Response IP with SHA1                      |
 | [Latency Computing](transformers/transform_latency.md)            | Compute latency between replies and queries<br />Detect and count unanswered queries |
-| [GeoIP metadata](transformers/transform_geoip.md)                 | Add GeoIP metadata                          |
+| [GeoIP metadata](transformers/transform_geoip.md)                 | Country and City                         |
 | [Data Extractor](transformers/transform_dataextractor.md)         | Add base64 encoded dns payload                        |
 | [Traffic Prediction](transformers/transform_trafficprediction.md) | Features to train machine learning models              |
 
