@@ -15,7 +15,7 @@ For config examples, take a look to the following links:
 Options:
 
 - `watch-dir`: (string) directory to watch for pcap files ingest
-- `watch-mode`: (string) watch the directory pcap file with *.pcap extension or dnstap stream with *.fstrm extension, pcap or dnstap expected
+- `watch-mode`: (string) watch the directory pcap file with *.pcap extension or dnstap stream with*.fstrm extension, pcap or dnstap expected
 - `pcap-dns-port`: (integer) dns source or destination port
 - `delete-after:`: (boolean) delete pcap file after ingest
 - `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.

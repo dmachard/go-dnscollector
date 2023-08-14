@@ -26,20 +26,27 @@ Additionally, DNS-collector also support
 **Supported [collectors](doc/collectors.md)**:
 
 - *Listen for logging traffic with streaming network protocols*
-  - [`DNStap`](doc/collectors.md#dns-tap) with `tls`|`tcp`|`unix` transports support and [`proxifier`](doc/collectors.md#dns-tap-proxifier)
-  - [`PowerDNS`](doc/collectors.md#protobuf-powerdns) streams with [`full`](doc/powerdns.md)  support
-  - [`TZSP`](doc/collectors.md#tzsp) protocol support
+  - [`DNStap`](doc/collectors/collector_dnstap.md#dns-tap_) with `tls`|`tcp`|`unix` transports support and [`proxifier`](doc/collectors/collector_dnstap.md#dns-tap-proxifier)
+  - [`PowerDNS`](doc/collectors/collector_powerdns.md_) streams with full  support
+  - [`TZSP`](doc/collectors/collector_tzsp.md) protocol support
 - *Live capture on a network interface*
-  - [`AF_PACKET`](doc/collectors.md#live-capture-with-af_packet) socket with BPF filter
-  - [`eBPF XDP`](doc/collectors.md#live-capture-with-ebpf-xdp) ingress traffic
+  - [`AF_PACKET`](doc/collectors/collector_afpacket.md) socket with BPF filter
+  - [`eBPF XDP`](doc/collectors/collector_xdp.md) ingress traffic
 - *Read text or binary files as input*
-  - Read and tail on [`Plain text`](doc/collectors.md#tail) files
-  - Ingest [`PCAP`](doc/collectors.md#file-ingestor) or [`DNSTap`](doc/collectors.md#file-ingestor) files by watching a directory
+  - Read and tail on [`Plain text`](doc/collectors/collector_tail.md) files
+  - Ingest [`PCAP`](doc/collectors/collector_fileingestor.md) or [`DNSTap`](doc/collectors/collector_fileingestor.md) files by watching a directory
 
 **Supported [loggers](doc/loggers.md)**:
 
-- *Local storage of your DNS logs in plain [`Text`](doc/configuration.md#custom-text-format),  [`Json`](doc/dnsjson.md), [`Pcap`](doc/loggers/logger_file.md) or [`Dnstap`](doc/logger_file.md) formats:*
-  - [`Stdout`](doc/loggers/logger_stdout.md) console with custom [directives](doc/configuration.md#custom-text-format)
+> Support of multiple formats:
+>
+> - [`Plain Text`](doc/configuration.md#custom-text-format) with custom directives
+> - [`JSON`](doc/dnsjson.md)
+> - [`Pcap`](doc/loggers/logger_file.md)
+> - [`Dnstap`](doc/loggers/logger_file.md)
+
+- *Local storage of your DNS logs in text or binary formats
+  - [`Stdout`](doc/loggers/logger_stdout.md) console
   - [`File`](doc/loggers/logger_file.md) with automatic rotation and compression
 - *Provide metrics and API*
   - [`Prometheus`](doc/loggers/logger_prometheus.md) metrics and visualize-it with built-in Grafana dashboard
@@ -62,29 +69,29 @@ Additionally, DNS-collector also support
 
 **Supported [transformers](doc/transformers.md)**:
 
-- [`Machine Learning`](doc/transformers.md#machine-learning)
+- [`Traffic Prediction`](doc/transformers/transformers.md#machine-learning)
   - Features to train machine learning models
-- [`Traffic Reducer`](doc/transformers.md#traffic-reducer)
+- [`Traffic Reducer`](doc/transformers/transformers.md#traffic-reducer)
   - Detect repetitive queries/replies and log it only once
-- [`Data Extractor`](doc/transformers.md#extractor)
+- [`Data Extractor`](doc/transformers/transformers.md#extractor)
   - Add base64 encoded dns payload
-- [`Latency Computing`](doc/transformers.md#latency-computing)
+- [`Latency Computing`](doc/transformers/transformers.md#latency-computing)
   - Compute latency between replies and queries
   - Detect and count unanswered queries
-- [`Traffic filtering`](doc/transformers.md#traffic-filtering)
+- [`Traffic filtering`](doc/transformers/transformers.md#traffic-filtering)
   - Downsampling
   - Dropping per Qname, QueryIP or Rcode
-- [`User Privacy`](doc/transformers.md#user-privacy)
+- [`User Privacy`](doc/transformers/transformers.md#user-privacy)
   - Anonymize QueryIP
   - Minimaze Qname
   - Hash Query and Response IP with SHA1
-- [`Normalize`](doc/transformers.md#normalize)
+- [`Normalize`](doc/transformers/transformers.md#normalize)
   - Quiet Text
   - Qname to lowercase
   - Add TLD and TLD+1
-- [`Geographical metadata`](doc/transformers.md#geoip-support)
+- [`Geographical metadata`](doc/transformers/transformers.md#geoip-support)
   - Country and City
-- [`Suspicious traffic detector`](doc/transformers.md#suspicious)
+- [`Suspicious traffic detector`](doc/transformers/transformers.md#suspicious)
   - Malformed and large packet
   - Uncommon Qtypes used
   - Unallowed chars in Qname

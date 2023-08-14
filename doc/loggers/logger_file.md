@@ -1,6 +1,7 @@
 # Logger: File
 
 Enable this logger if you want to log your DNS traffic to a file in plain text mode or binary mode.
+
 * with rotation file support
 * supported format: `text`, `json` and `flat json`, `pcap` or `dnstap`
 * gzip compression
@@ -8,23 +9,25 @@ Enable this logger if you want to log your DNS traffic to a file in plain text m
 * custom text format
 
 For config examples, take a look to the following links:
-- [`text`](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-7.yml)
-- [`dnstap`](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-13.yml)
-- [`pcap`](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-1.yml)
+
+* [`text`](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-7.yml)
+* [`dnstap`](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-13.yml)
+* [`pcap`](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-1.yml)
 
 Options:
-- `file-path`: (string) output logfile name
-- `max-size`: (integer) maximum size in megabytes of the file before rotation, A minimum of max-size*max-files megabytes of space disk must be available
-- `max-files`: (integer) maximum number of files to retain. Set to zero if you want to disable this feature
-- `flush-interval`: (integer) flush buffer to log file every X seconds
-- `compress`: (boolean) compress log file
-- `compress-interval`: (integer) checking every X seconds if new log files must be compressed
-- `compress-command`: (string) run external script after file compress step
-- `mode`: (string)  output format: text, json, flat-json, pcap or dnstap
-- `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
-- `postrotate-command`: (string) run external script after file rotation
-- `postrotate-delete-success`: (boolean) delete file on script success
-- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
+
+* `file-path`: (string) output logfile name
+* `max-size`: (integer) maximum size in megabytes of the file before rotation, A minimum of max-size*max-files megabytes of space disk must be available
+* `max-files`: (integer) maximum number of files to retain. Set to zero if you want to disable this feature
+* `flush-interval`: (integer) flush buffer to log file every X seconds
+* `compress`: (boolean) compress log file
+* `compress-interval`: (integer) checking every X seconds if new log files must be compressed
+* `compress-command`: (string) run external script after file compress step
+* `mode`: (string)  output format: text, json, flat-json, pcap or dnstap
+* `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
+* `postrotate-command`: (string) run external script after file rotation
+* `postrotate-delete-success`: (boolean) delete file on script success
+* `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 
@@ -50,8 +53,7 @@ If the compression is enabled then the postrotate command will be executed after
 
 Basic example to use the postrotate command:
 
-
-```
+```ini
 logfile:
   postrotate-command: "/home/dnscollector/postrotate.sh"
 ```

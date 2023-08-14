@@ -5,6 +5,7 @@ The dns collector enable to transform dns queries or replies in JSON format.
 A JSON format contains dns message with additionnal metadata added by transformers or collectors.
 
 Default JSON payload::
+
 - `network`:  query/response ip and port, the protocol and family used
 - `dnstap`: message type, arrival packet time, latency.
 - `dns`: dns fields

@@ -1,8 +1,15 @@
 # DNS-collector - Supported transformers
 
-| Transformers                                    | Descriptions                                          |
-| :------------------------------------------|:------------------------------------------------------|
-| [](transformers/transform_xxxxxxxx.md)              | xxxxxxxx |
+| Transformers                                                      | Descriptions                                |
+| :-----------------------------------------------------------------|:--------------------------------------------|
+| [Normalize](transformers/transform_normalize.md)                  | Lowercase qname                             |
+| [Traffic Filtering](transformers/transform_trafficfiltering.md)   | Filtering queries and replies               |
+| [Traffic Reducer](transformers/transform_trafficreducer.md)       | Detect duplicated queries or replies        |
+| [User Privacy](transformers/transform_userprivacy.md)             | Apply IP anonymization                      |
+| [Latency Computing](transformers/transform_latency.md)            | Compute latency between queries and replies |
+| [GeoIP metadata](transformers/transform_geoip.md)                 | Add GeoIP metadata                          |
+| [Data Extractor](transformers/transform_dataextractor.md)         | Extract DNS payload                         |
+| [Traffic Prediction](transformers/transform_trafficprediction.md) | Features for Machine learning               |
 
 ## Processing oder
 
