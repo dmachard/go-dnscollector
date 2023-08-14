@@ -57,9 +57,9 @@
   - [`ElasticSearch`](doc/loggers/logger_elasticsearch.md)
   - [`Scalyr`](doc/loggers/logger_scalyr.md)
   - [`Redis`](doc/loggers/logger_redis.md)
-  - [`Kafka`](docloggers/logger_kafka.md)
+  - [`Kafka`](doc/loggers/logger_kafka.md)
 - *Send to security tools*
-  - [`Falco`](docloggers/logger_falco.md)
+  - [`Falco`](doc/loggers/logger_falco.md)
 
 **Apply advanced [transforms](doc/transformers.md) on traffic**:
 

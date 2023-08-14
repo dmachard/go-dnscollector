@@ -18,7 +18,7 @@ The following Rdatatypes will be decoded, otherwise the `-` value will be used:
 - SVCB
 - HTTPS
 
-Extended DNS is also supported. 
+Extended DNS is also supported.
 The following options are decoded:
 
 - [Extented DNS Errors](https://www.rfc-editor.org/rfc/rfc8914.html)
