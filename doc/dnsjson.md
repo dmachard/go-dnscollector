@@ -127,11 +127,12 @@ Using flat-json requires more processing on the host running go-dnscollector but
 ## Extended JSON format
 
 This JSON message can be extended by collector(s):
-- [PowerDNS collector](powerdns.md#json-format)
 
+- [PowerDNS collector](collectors/collector_powerdns.md)
 
 This JSON message can be also extended by transformer(s):
-- [GeoIP](transformers.md#geoip-support)
-- [Suspicious traffic detector](transformers.md#suspicious)
-- [Public suffix](transformers.md#normalize)
-- [Traffic Reducer](transformers.md#traffic-reducer)
+
+- [GeoIP](transformers/transformer_geoip.md)
+- [Suspicious traffic detector](transformers/transform_suspiciousdetector.md)
+- [Public suffix](transformers/transform_normalize.md)
+- [Traffic Reducer](transformers/transform_trafficreducer.md)

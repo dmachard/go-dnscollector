@@ -4,6 +4,7 @@
 | :-----------------------------------------------------------------|:--------------------------------------------|
 | [Normalize](transformers/transform_normalize.md)                  | Lowercase qname                             |
 | [Traffic Filtering](transformers/transform_trafficfiltering.md)   | Filtering queries and replies               |
+| [Suspicious Traffic Detector](transformers/transform_suspiciousdetector.md)   | Supicious traffic detector               |
 | [Traffic Reducer](transformers/transform_trafficreducer.md)       | Detect duplicated queries or replies        |
 | [User Privacy](transformers/transform_userprivacy.md)             | Apply IP anonymization                      |
 | [Latency Computing](transformers/transform_latency.md)            | Compute latency between queries and replies |
