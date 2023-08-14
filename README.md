@@ -7,10 +7,11 @@
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
-`DNS-collector` acts as a passive high speed **ingestor, aggregator and analyzer** for your DNS traffic, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously [sources](doc/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](doc/loggers.md) with some [transformations](doc/transformers.md) on it ([traffic filtering](doc/transformers.md#dns-filtering), [user privacy](doc/transformers.md#user-privacy), ...) and DNS protocol conversions (to [plain text](doc/configuration.md#custom-text-format), [json](doc/dnsjson.md), and more... ).
+`DNS-collector` acts as a passive high speed **ingestor, aggregator and analyzer** for your DNS traffic, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously [sources](doc/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](doc/loggers.md) with some [transformations](doc/transformers.md) on it ([traffic filtering](doc/transformers.md#dns-filtering), [user privacy](doc/transformers.md#user-privacy), ...).
 
 > Additionally, DNS-collector also support
 >
+> - DNS protocol conversions (to [plain text](doc/configuration.md#custom-text-format), [JSON](doc/dnsjson.md), and more... )
 > - [Extension Mechanisms for DNS (EDNS)](doc/dnsparser.md) decoding
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
@@ -38,15 +39,8 @@
 
 **Supported [loggers](doc/loggers.md)**:
 
-> Support of multiple formats:
->
-> - [`Plain Text`](doc/configuration.md#custom-text-format) with custom directives
-> - [`JSON`](doc/dnsjson.md)
-> - [`Pcap`](doc/loggers/logger_file.md)
-> - [`Dnstap`](doc/loggers/logger_file.md)
-
 - *Local storage of your DNS logs in text or binary formats*
-  - [`Stdout`](doc/loggers/logger_stdout.md) console
+  - [`Stdout`](doc/loggers/logger_stdout.md) console in text or binary output
   - [`File`](doc/loggers/logger_file.md) with automatic rotation and compression
 - *Provide metrics and API*
   - [`Prometheus`](doc/loggers/logger_prometheus.md) metrics and visualize-it with built-in Grafana dashboard
@@ -67,31 +61,26 @@
 - *Send to security tools*
   - [`Falco`](docloggers/logger_falco.md)
 
-**Supported [transformers](doc/transformers.md)**:
+**Apply advanced [transforms](doc/transformers.md) on traffic**:
 
-- [`Traffic Prediction`](doc/transformers/transformers.md#machine-learning)
-  - Features to train machine learning models
-- [`Traffic Reducer`](doc/transformers/transformers.md#traffic-reducer)
-  - Detect repetitive queries/replies and log it only once
-- [`Data Extractor`](doc/transformers/transformers.md#extractor)
-  - Add base64 encoded dns payload
-- [`Latency Computing`](doc/transformers/transformers.md#latency-computing)
-  - Compute latency between replies and queries
-  - Detect and count unanswered queries
-- [`Traffic filtering`](doc/transformers/transformers.md#traffic-filtering)
+- [`Traffic Prediction`](doc/transformers/transform_trafficprediction.md)
+- [`Traffic Reducer`](doc/transformers/transform_trafficreducer.md)
+- [`Data Extractor`](doc/transformers/transforme_dataextractor.md)
+- [`Latency Computing`](doc/transformers/transform_latency.md)
+- [`Traffic filtering`](doc/transformers/transform_trafficfiltering.md)
   - Downsampling
   - Dropping per Qname, QueryIP or Rcode
-- [`User Privacy`](doc/transformers/transformers.md#user-privacy)
+- [`User Privacy`](doc/transformers/transform_userprivacy.md)
   - Anonymize QueryIP
   - Minimaze Qname
   - Hash Query and Response IP with SHA1
-- [`Normalize`](doc/transformers/transformers.md#normalize)
+- [`Normalize`](doc/transformers/transform_normalize.md)
   - Quiet Text
   - Qname to lowercase
   - Add TLD and TLD+1
-- [`Geographical metadata`](doc/transformers/transformers.md#geoip-support)
+- [`Geographical metadata`](doc/transformers/transform_geoip.md)
   - Country and City
-- [`Suspicious traffic detector`](doc/transformers/transformers.md#suspicious)
+- [`Suspicious traffic detector`](doc/transformers/transform_suspicious.md)
   - Malformed and large packet
   - Uncommon Qtypes used
   - Unallowed chars in Qname
