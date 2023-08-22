@@ -662,6 +662,8 @@ multiplexer:
 #   # Example to ignore NOERROR dns packets
 #   # drop-rcodes:
 #   #  - NOERROR
+#   keep-rdataip-file: ""
+#   # path file of the rdata IP keep list, one IP address or subnet per line
 #   drop-rcodes: []
 #   # forward received queries to configured loggers ?
 #   log-queries: true

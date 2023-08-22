@@ -75,6 +75,7 @@ type ConfigTransformers struct {
 		KeepDomainFile  string   `yaml:"keep-domain-file"`
 		DropQueryIpFile string   `yaml:"drop-queryip-file"`
 		KeepQueryIpFile string   `yaml:"keep-queryip-file"`
+		KeepRdataFile   string   `yaml:"keep-rdata-file"`
 		DropRcodes      []string `yaml:"drop-rcodes,flow"`
 		LogQueries      bool     `yaml:"log-queries"`
 		LogReplies      bool     `yaml:"log-replies"`

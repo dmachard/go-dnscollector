@@ -111,6 +111,69 @@ func TestFilteringByQueryIp(t *testing.T) {
 
 }
 
+func TestFilteringByKeepRdataIp(t *testing.T) {
+	// config
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Filtering.KeepRdataFile = "../testsdata/filtering_rdataip_keep.txt"
+
+	log := logger.New(false)
+	outChans := []chan dnsutils.DnsMessage{}
+
+	// init subproccesor
+	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+
+	dm := dnsutils.GetFakeDnsMessage()
+	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+		{
+			Rdatatype: "A",
+			Rdata:     "192.168.0.1",
+		},
+	}
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped!")
+	}
+
+	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+		{
+			Rdatatype: "A",
+			Rdata:     "192.168.1.10",
+		},
+	}
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
+
+	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+		{
+			Rdatatype: "A",
+			Rdata:     "192.168.1.11", // included in subnet
+		},
+	}
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
+
+	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+		{
+			Rdatatype: "A",
+			Rdata:     "192.0.2.3", // dropped by subnet
+		},
+	}
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped!")
+	}
+
+	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+		{
+			Rdatatype: "A",
+			Rdata:     "192.0.2.1",
+		},
+	}
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
+}
+
 func TestFilteringByFqdn(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfigTransformers()

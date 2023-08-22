@@ -161,6 +161,7 @@ Options:
 - `keep-domain-file`: (string) path file to domain keep list (all others are dropped), domains list can be a partial domain name with regexp expression
 - `drop-queryip-file`: (string) path file to the query ip or ip prefix drop list
 - `keep-queryip-file`: (string) path file to the query ip or ip prefix keep list, addresses in both drop and keep are always kept
+- `keep-rdataip-file`: (string) path file to the answer ip or ip prefix keep list. If the answer set includes ips both in drop and keep list, an error is thrown
 - `drop-rcodes`: (list of string) rcode list, empty by default
 - `log-queries`: (boolean) drop all queries on false
 - `log-replies`: (boolean)  drop all replies on false
