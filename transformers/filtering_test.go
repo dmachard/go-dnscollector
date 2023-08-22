@@ -172,6 +172,36 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}
+
+	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+		{
+			Rdatatype: "AAAA",
+			Rdata:     "2001:db8:85a3::8a2e:370:7334",
+		},
+	}
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
+
+	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+		{
+			Rdatatype: "AAAA",
+			Rdata:     "2041::7334",
+		},
+	}
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped!")
+	}
+
+	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+		{
+			Rdatatype: "AAAA",
+			Rdata:     "2001:0dbd:85a3::0001",
+		},
+	}
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped!")
+	}
 }
 
 func TestFilteringByFqdn(t *testing.T) {
