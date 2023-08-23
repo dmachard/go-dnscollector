@@ -3,6 +3,7 @@ package loggers
 import (
 	"bytes"
 	"encoding/json"
+	"path"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -10,6 +11,7 @@ import (
 	"github.com/dmachard/go-logger"
 
 	"net/http"
+	"net/url"
 )
 
 type ElasticSearchClient struct {
@@ -22,7 +24,9 @@ type ElasticSearchClient struct {
 	config      *dnsutils.Config
 	logger      *logger.Logger
 	name        string
-	url         string
+	server      string
+	index       string
+	bulkUrl     string
 }
 
 func NewElasticSearchClient(config *dnsutils.Config, console *logger.Logger, name string) *ElasticSearchClient {
@@ -47,7 +51,15 @@ func (c *ElasticSearchClient) GetName() string { return c.name }
 func (c *ElasticSearchClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *ElasticSearchClient) ReadConfig() {
-	c.url = c.config.Loggers.ElasticSearchClient.URL
+	c.server = c.config.Loggers.ElasticSearchClient.Server
+	c.index = c.config.Loggers.ElasticSearchClient.Index
+
+	u, err := url.Parse(c.server)
+	if err != nil {
+		c.LogError(err.Error())
+	}
+	u.Path = path.Join(u.Path, c.index, "_bulk")
+	c.bulkUrl = u.String()
 }
 
 func (o *ElasticSearchClient) Channel() chan dnsutils.DnsMessage {
@@ -113,8 +125,35 @@ RUN_LOOP:
 	o.LogInfo("run terminated")
 }
 
-func (o *ElasticSearchClient) Process() {
+func (o *ElasticSearchClient) FlushBuffer(buf *[]dnsutils.DnsMessage) {
 	buffer := new(bytes.Buffer)
+
+	for _, dm := range *buf {
+		buffer.WriteString("{ \"index\" : {}}")
+		buffer.WriteString("\n")
+		// encode
+		flat, err := dm.Flatten()
+		if err != nil {
+			o.LogError("flattening DNS message failed: %e", err)
+		}
+		json.NewEncoder(buffer).Encode(flat)
+	}
+
+	req, _ := http.NewRequest("POST", o.bulkUrl, buffer)
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	_, err := client.Do(req)
+	if err != nil {
+		o.LogError(err.Error())
+	}
+
+	*buf = nil
+}
+
+func (o *ElasticSearchClient) Process() {
+	bufferDm := []dnsutils.DnsMessage{}
 	o.LogInfo("ready to process")
 
 PROCESS_LOOP:
@@ -131,26 +170,13 @@ PROCESS_LOOP:
 				return
 			}
 
-			// encode
-			flat, err := dm.Flatten()
-			if err != nil {
-				o.LogError("flattening DNS message failed: %e", err)
-			}
-			json.NewEncoder(buffer).Encode(flat)
+			// append dns message to buffer
+			bufferDm = append(bufferDm, dm)
 
-			req, _ := http.NewRequest("POST", o.url, buffer)
-			req.Header.Set("Content-Type", "application/json")
-			client := &http.Client{
-				Timeout: 5 * time.Second,
+			// buffer is full ?
+			if len(bufferDm) >= o.config.Loggers.ElasticSearchClient.BulkSize {
+				o.FlushBuffer(&bufferDm)
 			}
-			_, err = client.Do(req)
-			if err != nil {
-				o.LogError(err.Error())
-			}
-
-			// finally reset the buffer for next iter
-			buffer.Reset()
-
 		}
 	}
 	o.LogInfo("processing terminated")
