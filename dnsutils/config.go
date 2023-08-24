@@ -75,6 +75,7 @@ type ConfigTransformers struct {
 		KeepDomainFile  string   `yaml:"keep-domain-file"`
 		DropQueryIpFile string   `yaml:"drop-queryip-file"`
 		KeepQueryIpFile string   `yaml:"keep-queryip-file"`
+		KeepRdataFile   string   `yaml:"keep-rdata-file"`
 		DropRcodes      []string `yaml:"drop-rcodes,flow"`
 		LogQueries      bool     `yaml:"log-queries"`
 		LogReplies      bool     `yaml:"log-replies"`
@@ -259,21 +260,22 @@ type Config struct {
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"stdout"`
 		Prometheus struct {
-			Enable                  bool   `yaml:"enable"`
-			ListenIP                string `yaml:"listen-ip"`
-			ListenPort              int    `yaml:"listen-port"`
-			TlsSupport              bool   `yaml:"tls-support"`
-			TlsMutual               bool   `yaml:"tls-mutual"`
-			TlsMinVersion           string `yaml:"tls-min-version"`
-			CertFile                string `yaml:"cert-file"`
-			KeyFile                 string `yaml:"key-file"`
-			PromPrefix              string `yaml:"prometheus-prefix"`
-			TopN                    int    `yaml:"top-n"`
-			BasicAuthLogin          string `yaml:"basic-auth-login"`
-			BasicAuthPwd            string `yaml:"basic-auth-pwd"`
-			BasicAuthEnabled        bool   `yaml:"basic-auth-enable"`
-			ChannelBufferSize       int    `yaml:"chan-buffer-size"`
-			HistogramMetricsEnabled bool   `yaml:"histogram-metrics-enabled"`
+			Enable                  bool     `yaml:"enable"`
+			ListenIP                string   `yaml:"listen-ip"`
+			ListenPort              int      `yaml:"listen-port"`
+			TlsSupport              bool     `yaml:"tls-support"`
+			TlsMutual               bool     `yaml:"tls-mutual"`
+			TlsMinVersion           string   `yaml:"tls-min-version"`
+			CertFile                string   `yaml:"cert-file"`
+			KeyFile                 string   `yaml:"key-file"`
+			PromPrefix              string   `yaml:"prometheus-prefix"`
+			LabelsList              []string `yaml:"prometheus-labels"`
+			TopN                    int      `yaml:"top-n"`
+			BasicAuthLogin          string   `yaml:"basic-auth-login"`
+			BasicAuthPwd            string   `yaml:"basic-auth-pwd"`
+			BasicAuthEnabled        bool     `yaml:"basic-auth-enable"`
+			ChannelBufferSize       int      `yaml:"chan-buffer-size"`
+			HistogramMetricsEnabled bool     `yaml:"histogram-metrics-enabled"`
 		} `yaml:"prometheus"`
 		RestAPI struct {
 			Enable            bool   `yaml:"enable"`

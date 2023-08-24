@@ -21,6 +21,7 @@ type FilteringProcessor struct {
 	mapRcodes            map[string]bool
 	ipsetDrop            *netaddr.IPSet
 	ipsetKeep            *netaddr.IPSet
+	rDataIpsetKeep       *netaddr.IPSet
 	listFqdns            map[string]bool
 	listDomainsRegex     map[string]*regexp.Regexp
 	listKeepFqdns        map[string]bool
@@ -53,6 +54,7 @@ func NewFilteringProcessor(config *dnsutils.ConfigTransformers, logger *logger.L
 		mapRcodes:            make(map[string]bool),
 		ipsetDrop:            &netaddr.IPSet{},
 		ipsetKeep:            &netaddr.IPSet{},
+		rDataIpsetKeep:       &netaddr.IPSet{},
 		listFqdns:            make(map[string]bool),
 		listDomainsRegex:     make(map[string]*regexp.Regexp),
 		listKeepFqdns:        make(map[string]bool),
@@ -68,6 +70,7 @@ func NewFilteringProcessor(config *dnsutils.ConfigTransformers, logger *logger.L
 	d.LoadRcodes()
 	d.LoadDomainsList()
 	d.LoadQueryIpList()
+	d.LoadrDataIpList()
 
 	d.LoadActiveFilters()
 
@@ -101,6 +104,10 @@ func (p *FilteringProcessor) LoadActiveFilters() {
 
 	if len(p.config.Filtering.KeepQueryIpFile) > 0 || len(p.config.Filtering.DropQueryIpFile) > 0 {
 		p.activeFilters = append(p.activeFilters, p.ipFilter)
+	}
+
+	if len(p.config.Filtering.KeepRdataFile) > 0 {
+		p.activeFilters = append(p.activeFilters, p.keepRdataFilter)
 	}
 
 	if len(p.listFqdns) > 0 {
@@ -166,6 +173,36 @@ func (p *FilteringProcessor) loadQueryIpList(fname string, drop bool) (uint64, e
 	return read, err
 }
 
+func (p *FilteringProcessor) loadKeepRdataIpList(fname string) (uint64, error) {
+	file, err := os.Open(fname)
+	if err != nil {
+		return 0, err
+	}
+
+	scanner := bufio.NewScanner(file)
+	var read uint64
+	var ipsetbuilder netaddr.IPSetBuilder
+	for scanner.Scan() {
+		read++
+		ipOrPrefix := strings.ToLower(scanner.Text())
+		prefix, err := netaddr.ParseIPPrefix(ipOrPrefix)
+		if err != nil {
+			ip, err := netaddr.ParseIP(ipOrPrefix)
+			if err != nil {
+				p.LogError("%s in in %s is neither an IP address nor a prefix", ipOrPrefix, fname)
+				continue
+			}
+			ipsetbuilder.Add(ip)
+			continue
+		}
+		ipsetbuilder.AddPrefix(prefix)
+	}
+
+	p.rDataIpsetKeep, err = ipsetbuilder.IPSet()
+
+	return read, err
+}
+
 func (p *FilteringProcessor) LoadQueryIpList() {
 	if len(p.config.Filtering.DropQueryIpFile) > 0 {
 		read, err := p.loadQueryIpList(p.config.Filtering.DropQueryIpFile, true)
@@ -181,6 +218,16 @@ func (p *FilteringProcessor) LoadQueryIpList() {
 			p.LogError("unable to open query ip file: ", err)
 		}
 		p.LogInfo("loaded with %d query ip to the keep list", read)
+	}
+}
+
+func (p *FilteringProcessor) LoadrDataIpList() {
+	if len(p.config.Filtering.KeepRdataFile) > 0 {
+		read, err := p.loadKeepRdataIpList(p.config.Filtering.KeepRdataFile)
+		if err != nil {
+			p.LogError("unable to open rdata ip file: ", err)
+		}
+		p.LogInfo("loaded with %d rdata ip to the keep list", read)
 	}
 }
 
@@ -292,6 +339,21 @@ func (p *FilteringProcessor) ipFilter(dm *dnsutils.DnsMessage) bool {
 		return true
 	}
 	return false
+}
+
+func (p *FilteringProcessor) keepRdataFilter(dm *dnsutils.DnsMessage) bool {
+	if len(dm.DNS.DnsRRs.Answers) > 0 {
+		// If even one exists in filter list then pass through filter
+		for _, answer := range dm.DNS.DnsRRs.Answers {
+			if answer.Rdatatype == "A" || answer.Rdatatype == "AAAA" {
+				ip, _ := netaddr.ParseIP(answer.Rdata)
+				if p.rDataIpsetKeep.Contains(ip) {
+					return false
+				}
+			}
+		}
+	}
+	return true
 }
 
 func (p *FilteringProcessor) dropFqdnFilter(dm *dnsutils.DnsMessage) bool {
