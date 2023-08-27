@@ -156,6 +156,9 @@ func (o *ElasticSearchClient) Process() {
 	bufferDm := []dnsutils.DnsMessage{}
 	o.LogInfo("ready to process")
 
+	flushInterval := time.Duration(o.config.Loggers.ElasticSearchClient.FlushInterval) * time.Second
+	flushTimer := time.NewTimer(flushInterval)
+
 PROCESS_LOOP:
 	for {
 		select {
@@ -177,6 +180,14 @@ PROCESS_LOOP:
 			if len(bufferDm) >= o.config.Loggers.ElasticSearchClient.BulkSize {
 				o.FlushBuffer(&bufferDm)
 			}
+			// flush the buffer
+		case <-flushTimer.C:
+			if len(bufferDm) > 0 {
+				o.FlushBuffer(&bufferDm)
+			}
+
+			// restart timer
+			flushTimer.Reset(flushInterval)
 		}
 	}
 	o.LogInfo("processing terminated")

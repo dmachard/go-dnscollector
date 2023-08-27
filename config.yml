@@ -415,6 +415,8 @@ multiplexer:
 #   chan-buffer-size: 65535
 #   # Size of batches sent to ES via _bulk
 #   bulk-size: 100
+#   # interval in seconds before to flush the buffer
+#   flush-interval: 30
 
 # # resend captured dns traffic to a remote fluentd server or to unix socket
 # fluentd:
