@@ -4,11 +4,17 @@
 ElasticSearch client to remote ElasticSearch server
 
 Options:
-- `url`: (string) Elasticsearch _doc url
-- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
+- `server`: (string) Elasticsearch server url
+- `index`: (string) Elasticsearch index
+- `bulk-size`: (integer) Bulk size to be used for bulk batches
+- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it
+- `flush-interval`: (integer) interval in seconds before to flush the buffer
 
 ```yaml
 elasticsearch:
-  url: "http://127.0.0.1:9200/indexname/_doc"
+  server: "http://127.0.0.1:9200"
+  index:  "indexname"
+  bulk-size: 100
   chan-buffer-size: 65535
+  flush-interval: 10
 ```

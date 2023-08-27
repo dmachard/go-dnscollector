@@ -413,8 +413,11 @@ type Config struct {
 		} `yaml:"statsd"`
 		ElasticSearchClient struct {
 			Enable            bool   `yaml:"enable"`
-			URL               string `yaml:"url"`
+			Index             string `yaml:"index"`
+			Server            string `yaml:"server"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
+			BulkSize          int    `yaml:"bulk-size"`
+			FlushInterval     int    `yaml:"flush-interval"`
 		} `yaml:"elasticsearch"`
 		ScalyrClient struct {
 			Enable            bool                   `yaml:"enable"`
@@ -714,8 +717,11 @@ func (c *Config) SetDefault() {
 	c.Loggers.Statsd.ChannelBufferSize = 65535
 
 	c.Loggers.ElasticSearchClient.Enable = false
-	c.Loggers.ElasticSearchClient.URL = "http://127.0.0.1:9200/indexname/_doc"
+	c.Loggers.ElasticSearchClient.Server = "http://127.0.0.1:9200/"
+	c.Loggers.ElasticSearchClient.Index = ""
 	c.Loggers.ElasticSearchClient.ChannelBufferSize = 65535
+	c.Loggers.ElasticSearchClient.BulkSize = 100
+	c.Loggers.ElasticSearchClient.FlushInterval = 10
 
 	c.Loggers.RedisPub.Enable = false
 	c.Loggers.RedisPub.RemoteAddress = LOCALHOST_IP
