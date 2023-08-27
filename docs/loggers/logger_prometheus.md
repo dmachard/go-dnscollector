@@ -94,5 +94,5 @@ The full metrics can be found [here](metrics.txt).
 The following [build-in](https://grafana.com/grafana/dashboards/16630) dashboard is available
 
 <p align="center">
-  <img src="dashboard_prometheus.png" alt="dnscollector"/>
+  <img src="./_images/dashboard_prometheus.png" alt="dnscollector"/>
 </p>

@@ -17,10 +17,10 @@
 > - Nanoseconds in timestamps
 
 <p align="center">
-<img src="docs/terminal.gif" alt="dnscollector"/>
+<img src="docs/_images/terminal.gif" alt="dnscollector"/>
 </p>
 
-![overview](./docs/overview.png)
+![overview](./docs/_images/overview.png)
 
 ## Features
 
