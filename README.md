@@ -24,6 +24,8 @@
 
 ![overview](doc/overview.png)
 
+## Features
+
 **[Collectors](doc/collectors.md)**:
 
 - *Listen for logging traffic with streaming network protocols*
@@ -63,15 +65,15 @@
 
 **Apply additionnal [transforms](doc/transformers.md) on traffic**:
 
-- [`Traffic Prediction`](doc/transformers/transform_trafficprediction.md)
-- [`Traffic Reducer`](doc/transformers/transform_trafficreducer.md)
-- [`Data Extractor`](doc/transformers/transforme_dataextractor.md)
-- [`Latency Computing`](doc/transformers/transform_latency.md)
-- [`Traffic filtering`](doc/transformers/transform_trafficfiltering.md)
-- [`User Privacy`](doc/transformers/transform_userprivacy.md)
-- [`Normalize`](doc/transformers/transform_normalize.md)
-- [`Geographical metadata`](doc/transformers/transform_geoip.md)
-- [`Suspicious traffic detector`](doc/transformers/transform_suspicious.md)
+- [Traffic Prediction](doc/transformers/transform_trafficprediction.md)
+- [Traffic Reducer](doc/transformers/transform_trafficreducer.md)
+- [Data Extractor](doc/transformers/transforme_dataextractor.md)
+- [Latency Computing](doc/transformers/transform_latency.md)
+- [Traffic filtering](doc/transformers/transform_trafficfiltering.md)
+- [User Privacy](doc/transformers/transform_userprivacy.md)
+- [Normalize](doc/transformers/transform_normalize.md)
+- [Geographical metadata](doc/transformers/transform_geoip.md)
+- [Suspicious traffic detector](doc/transformers/transform_suspicious.md)
 
 ## Get Started
 
