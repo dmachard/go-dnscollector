@@ -12,7 +12,7 @@
 > Additionally, DNS-collector also support
 >
 > - DNS protocol conversions (to [plain text](./docs/configuration.md#custom-text-format), [JSON](./docs/dnsjson.md), and more... )
-> - [Extension Mechanisms for DNS (EDNS)](./docs/dnsparser.md) decoding
+> - DNS parser with [Extension Mechanisms for DNS (EDNS)](./docs/dnsparser.md) support
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
 

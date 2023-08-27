@@ -3,7 +3,7 @@
 The configuration of DNS-collector is done through one yaml file named [`config.yml`](https://github.com/dmachard/go-dnscollector/blob/main/config.yml). When the DNS-collector starts, it will look for the config.yml from the current working directory.
 
 A typically configuration would have one or more collector to receive DNS traffic, and severals loggers to process the
-incoming traffics. You can take a look to the list of config [`examples`](https://github.com/dmachard/go-dns-collector#examples).
+incoming traffics. You can take a look to the list of config [`examples`](examples.md).
 
 - [Global](#global)
   - [Trace](#trace)
@@ -129,7 +129,7 @@ You must defined the list of
 
 ### Collectors
 
-List of supported [collectors](./doc/collectors.md)
+List of supported [collectors](./collectors.md)
 
 ```yaml
 multiplexer:
@@ -140,7 +140,7 @@ multiplexer:
 
 ### Loggers
 
-List of supported [loggers](./doc/loggers.md)
+List of supported [loggers](./loggers.md)
 
 ```yaml
 multiplexer:
