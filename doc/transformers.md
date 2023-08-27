@@ -1,4 +1,18 @@
-# DNS-collector - Supported transformers
+# DNS-collector - Transformers
+
+**Transformers** can be used to add some metadata to your traffic or some modifications on it (drop).
+This subprocessing can be applied on inputs with collectors or on outputs with loggers.
+
+## Processing order
+
+Transformers processing is currently in this order :
+
+1. Normalize
+2. Traffic Filtering
+3. Traffic Reducer
+4. Finally all other transformations to do.
+
+## Supported transformers
 
 | Transformers                                                      | Descriptions                                |
 | :-----------------------------------------------------------------|:--------------------------------------------|
@@ -11,12 +25,3 @@
 | [GeoIP metadata](transformers/transform_geoip.md)                 | Country and City                         |
 | [Data Extractor](transformers/transform_dataextractor.md)         | Add base64 encoded dns payload                        |
 | [Traffic Prediction](transformers/transform_trafficprediction.md) | Features to train machine learning models              |
-
-## Processing oder
-
-Transformers processing is currently in this order :
-
-1. Normalize
-2. Traffic Filtering
-3. Traffic Reducer
-4. Finally all other transformations to do.

@@ -63,15 +63,13 @@
 
 - **[Transformers](doc/transformers.md)**:
 
-  - [Traffic Prediction](doc/transformers/transform_trafficprediction.md)
-  - [Traffic Reducer](doc/transformers/transform_trafficreducer.md)
-  - [Data Extractor](doc/transformers/transforme_dataextractor.md)
+  - Traffic [Filtering](doc/transformers/transform_trafficfiltering.md) and [Reducer](doc/transformers/transform_trafficreducer.md)
   - [Latency Computing](doc/transformers/transform_latency.md)
-  - [Traffic filtering](doc/transformers/transform_trafficfiltering.md)
   - [User Privacy](doc/transformers/transform_userprivacy.md)
   - [Normalize](doc/transformers/transform_normalize.md)
   - [Geographical metadata](doc/transformers/transform_geoip.md)
-  - [Suspicious traffic detector](doc/transformers/transform_suspicious.md)
+  - [Data Extractor](doc/transformers/transforme_dataextractor.md)
+  - Suspicious traffic [Detector](doc/transformers/transform_suspicious.md) and [Prediction](doc/transformers/transform_trafficprediction.md)
 
 ## Get Started
 
