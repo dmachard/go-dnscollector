@@ -1,0 +1,22 @@
+global:
+  trace:
+    verbose: true
+
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+        tls-support: true
+        cert-file: "./testsdata/dnscollector.crt"
+        key-file: "./testsdata/dnscollector.key"
+
+  loggers:
+    - name: console
+      stdout:
+        mode: text
+
+  routes:
+    - from: [tap]
+      to: [console]
