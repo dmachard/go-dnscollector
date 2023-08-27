@@ -7,12 +7,12 @@
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
-`DNS-collector` acts as a passive high speed **Ingestor, aggregator and distributor** for your DNS logs with usage indicators and security analysis, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously [sources](doc/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](doc/loggers.md) with some [transformations](doc/transformers.md) on it ([traffic filtering](doc/transformers.md#dns-filtering), [user privacy](doc/transformers.md#user-privacy), ...).
+`DNS-collector` acts as a passive high speed **Ingestor, aggregator and distributor** for your DNS logs with usage indicators and security analysis, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously [sources](./docs/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](./docs/loggers.md) with some [transformations](./docs/transformers.md) on it ([traffic filtering](./docs/transformers.md#dns-filtering), [user privacy](./docs/transformers.md#user-privacy), ...).
 
 > Additionally, DNS-collector also support
 >
-> - DNS protocol conversions (to [plain text](doc/configuration.md#custom-text-format), [JSON](doc/dnsjson.md), and more... )
-> - [Extension Mechanisms for DNS (EDNS)](doc/dnsparser.md) decoding
+> - DNS protocol conversions (to [plain text](./docs/configuration.md#custom-text-format), [JSON](./docs/dnsjson.md), and more... )
+> - [Extension Mechanisms for DNS (EDNS)](./docs/dnsparser.md) decoding
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
 
@@ -20,11 +20,11 @@
 <img src="doc/terminal.gif" alt="dnscollector"/>
 </p>
 
-![overview](doc/overview.png)
+![overview](./docs/overview.png)
 
 ## Features
 
-- **[Collectors](doc/collectors.md)**:
+- **[Collectors](./docs/collectors.md)**
 
   - *Listen for logging traffic with streaming network protocols*
     - [`DNStap`](doc/collectors/collector_dnstap.md#dns-tap_) with `tls`|`tcp`|`unix` transports support and [`proxifier`](doc/collectors/collector_dnstap.md#dns-tap-proxifier)
@@ -37,7 +37,7 @@
     - Read and tail on [`Plain text`](doc/collectors/collector_tail.md) files
     - Ingest [`PCAP`](doc/collectors/collector_fileingestor.md) or [`DNSTap`](doc/collectors/collector_fileingestor.md) files by watching a directory
 
-- **[Loggers](doc/loggers.md)**:
+- **[Loggers](./docs/loggers.md)**
 
   - *Local storage of your DNS logs in text or binary formats*
     - [`Stdout`](doc/loggers/logger_stdout.md) console in text or binary output
@@ -45,7 +45,7 @@
   - *Provide metrics and API*
     - [`Prometheus`](doc/loggers/logger_prometheus.md) metrics and visualize-it with built-in Grafana dashboard
     - [`Statsd`](doc/loggers/logger_statsd.md) support
-    - [`REST API`](doc/loggers/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) to search DNS domains
+    - [`REST API`](doc/loggers/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/docs/swagger.yml) to search DNS domains
   - *Send to remote host with generic transport protocol*
     - [`TCP`](doc/loggers/logger_tcp.md)
     - [`Syslog`](doc/loggers/logger_syslog.md)
@@ -61,7 +61,7 @@
   - *Send to security tools*
     - [`Falco`](doc/loggers/logger_falco.md)
 
-- **[Transformers](doc/transformers.md)**:
+- **[Transformers](./docs/transformers.md)**
 
   - Traffic [Filtering](doc/transformers/transform_trafficfiltering.md) and [Reducer](doc/transformers/transform_trafficreducer.md)
   - Latency [Computing](doc/transformers/transform_latency.md)
@@ -79,18 +79,18 @@ Download the latest [`release`](https://github.com/dmachard/go-dns-collector/rel
 ./go-dnscollector -config config.yml
 ```
 
-If you prefer run it from docker, follow this [guide](doc/docker.md).
+If you prefer run it from docker, follow this [guide](./docs/docker.md).
 
 ## Configuration
 
 The configuration of DNS-collector is done through a file named [`config.yml`](config.yml). When the DNS-collector starts, it will look for the config.yml from the current working directory.
 
-See the full [configuration guide](doc/configuration.md) for more details.
+See the full [configuration guide](./docs/configuration.md) for more details.
 
 ## Usage examples
 
-The [`_examples`](./doc/_examples) folder from documentation contains a number of [various configurations](./doc/examples.md) to get you started with the DNS-collector in differentes ways.
+The [`_examples`](./docs/_examples) folder from documentation contains a number of [various configurations](./docs/examples.md) to get you started with the DNS-collector in differentes ways.
 
 ## Contributing
 
-See the [development guide](./doc/development.md) for more information on how to build it yourself.
+See the [development guide](./docs/development.md) for more information on how to build it yourself.
