@@ -17,7 +17,7 @@
 > - Nanoseconds in timestamps
 
 <p align="center">
-<img src="doc/terminal.gif" alt="dnscollector"/>
+<img src="docs/terminal.gif" alt="dnscollector"/>
 </p>
 
 ![overview](./docs/overview.png)
@@ -27,49 +27,49 @@
 - **[Collectors](./docs/collectors.md)**
 
   - *Listen for logging traffic with streaming network protocols*
-    - [`DNStap`](doc/collectors/collector_dnstap.md#dns-tap_) with `tls`|`tcp`|`unix` transports support and [`proxifier`](doc/collectors/collector_dnstap.md#dns-tap-proxifier)
-    - [`PowerDNS`](doc/collectors/collector_powerdns.md_) streams with full  support
-    - [`TZSP`](doc/collectors/collector_tzsp.md) protocol support
+    - [`DNStap`](docs/collectors/collector_dnstap.md#dns-tap_) with `tls`|`tcp`|`unix` transports support and [`proxifier`](docs/collectors/collector_dnstap.md#dns-tap-proxifier)
+    - [`PowerDNS`](docs/collectors/collector_powerdns.md_) streams with full  support
+    - [`TZSP`](docs/collectors/collector_tzsp.md) protocol support
   - *Live capture on a network interface*
-    - [`AF_PACKET`](doc/collectors/collector_afpacket.md) socket with BPF filter
-    - [`eBPF XDP`](doc/collectors/collector_xdp.md) ingress traffic
+    - [`AF_PACKET`](docs/collectors/collector_afpacket.md) socket with BPF filter
+    - [`eBPF XDP`](docs/collectors/collector_xdp.md) ingress traffic
   - *Read text or binary files as input*
-    - Read and tail on [`Plain text`](doc/collectors/collector_tail.md) files
-    - Ingest [`PCAP`](doc/collectors/collector_fileingestor.md) or [`DNSTap`](doc/collectors/collector_fileingestor.md) files by watching a directory
+    - Read and tail on [`Plain text`](docs/collectors/collector_tail.md) files
+    - Ingest [`PCAP`](docs/collectors/collector_fileingestor.md) or [`DNSTap`](docs/collectors/collector_fileingestor.md) files by watching a directory
 
 - **[Loggers](./docs/loggers.md)**
 
   - *Local storage of your DNS logs in text or binary formats*
-    - [`Stdout`](doc/loggers/logger_stdout.md) console in text or binary output
-    - [`File`](doc/loggers/logger_file.md) with automatic rotation and compression
+    - [`Stdout`](docs/loggers/logger_stdout.md) console in text or binary output
+    - [`File`](docs/loggers/logger_file.md) with automatic rotation and compression
   - *Provide metrics and API*
-    - [`Prometheus`](doc/loggers/logger_prometheus.md) metrics and visualize-it with built-in Grafana dashboard
-    - [`Statsd`](doc/loggers/logger_statsd.md) support
-    - [`REST API`](doc/loggers/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/docs/swagger.yml) to search DNS domains
+    - [`Prometheus`](docs/loggers/logger_prometheus.md) metrics and visualize-it with built-in Grafana dashboard
+    - [`Statsd`](docs/loggers/logger_statsd.md) support
+    - [`REST API`](docs/loggers/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/docs/swagger.yml) to search DNS domains
   - *Send to remote host with generic transport protocol*
-    - [`TCP`](doc/loggers/logger_tcp.md)
-    - [`Syslog`](doc/loggers/logger_syslog.md)
-    - [`DNSTap`](doc/loggers/logger_dnstap.md) protobuf messages
+    - [`TCP`](docs/loggers/logger_tcp.md)
+    - [`Syslog`](docs/loggers/logger_syslog.md)
+    - [`DNSTap`](docs/loggers/logger_dnstap.md) protobuf messages
   - *Send to various sinks*
-    - [`Fluentd`](doc/loggers/logger_fluentd.md)
-    - [`InfluxDB`](doc/loggers/logger_influxdb.md)
-    - [`Loki`](doc/loggers/logger_loki.md) and visualize-it with built-in Grafana dashboard
-    - [`ElasticSearch`](doc/loggers/logger_elasticsearch.md)
-    - [`Scalyr`](doc/loggers/logger_scalyr.md)
-    - [`Redis`](doc/loggers/logger_redis.md)
-    - [`Kafka`](doc/loggers/logger_kafka.md)
+    - [`Fluentd`](docs/loggers/logger_fluentd.md)
+    - [`InfluxDB`](docs/loggers/logger_influxdb.md)
+    - [`Loki`](docs/loggers/logger_loki.md) and visualize-it with built-in Grafana dashboard
+    - [`ElasticSearch`](docs/loggers/logger_elasticsearch.md)
+    - [`Scalyr`](docs/loggers/logger_scalyr.md)
+    - [`Redis`](docs/loggers/logger_redis.md)
+    - [`Kafka`](docs/loggers/logger_kafka.md)
   - *Send to security tools*
-    - [`Falco`](doc/loggers/logger_falco.md)
+    - [`Falco`](docs/loggers/logger_falco.md)
 
 - **[Transformers](./docs/transformers.md)**
 
-  - Traffic [Filtering](doc/transformers/transform_trafficfiltering.md) and [Reducer](doc/transformers/transform_trafficreducer.md)
-  - Latency [Computing](doc/transformers/transform_latency.md)
-  - Apply user [Privacy](doc/transformers/transform_userprivacy.md)
-  - [Normalize](doc/transformers/transform_normalize.md) DNS messages
-  - Add [Geographical](doc/transformers/transform_geoip.md) metadata
-  - Various data [Extractor](doc/transformers/transform_dataextractor.md)
-  - Suspicious traffic [Detector](doc/transformers/transform_suspiciousdetector.md) and [Prediction](doc/transformers/transform_trafficprediction.md)
+  - Traffic [Filtering](docs/transformers/transform_trafficfiltering.md) and [Reducer](docs/transformers/transform_trafficreducer.md)
+  - Latency [Computing](docs/transformers/transform_latency.md)
+  - Apply user [Privacy](docs/transformers/transform_userprivacy.md)
+  - [Normalize](docs/transformers/transform_normalize.md) DNS messages
+  - Add [Geographical](docs/transformers/transform_geoip.md) metadata
+  - Various data [Extractor](docs/transformers/transform_dataextractor.md)
+  - Suspicious traffic [Detector](docs/transformers/transform_suspiciousdetector.md) and [Prediction](docs/transformers/transform_trafficprediction.md)
 
 ## Get Started
 
