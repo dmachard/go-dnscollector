@@ -18,6 +18,7 @@ Options:
 - `top-n`: (string) default number of items on top
 - `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 - `histogram-metrics-enabled`: (boolean) compute histogram for qnames length, latencies, queries and replies size repartition
+- `prometheus-labels`: (list of strings) labels to add to metrics. Currently supported labels: `stream_id`, `resolver`
 
 Default values:
 
@@ -37,6 +38,7 @@ prometheus:
   top-n: 10
   chan-buffer-size: 65535
   histogram-metrics-enabled: false
+  prometheus-labels: ["stream_id"]
 ```
 
 Scrape metric with curl:
@@ -94,4 +96,3 @@ The following [build-in](https://grafana.com/grafana/dashboards/16630) dashboard
 <p align="center">
   <img src="dashboard_prometheus.png" alt="dnscollector"/>
 </p>
-
