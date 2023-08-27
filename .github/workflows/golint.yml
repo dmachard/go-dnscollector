@@ -1,11 +1,12 @@
 name: go lint
 
 on:
-  # push:
-  #   paths-ignore:
-  #     - 'doc/**'
-  #   branches:
-  #     - main
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+    branches:
+      - main
   pull_request:
     paths-ignore:
       - 'docs/**'

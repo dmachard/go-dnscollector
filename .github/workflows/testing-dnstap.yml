@@ -1,11 +1,12 @@
 name: tests dnstap
 
 on:
-  # push:
-  #   paths-ignore:
-  #     - 'doc/**'
-  #   branches:
-  #     - main
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+    branches:
+      - main
   pull_request:
     paths-ignore:
       - 'docs/**'
@@ -55,7 +56,7 @@ jobs:
     strategy:
       matrix:
         go-version: [ '1.19', '1.20' ]
-        coredns: [ '1.9.4', '1.10.1' ]
+        coredns: [ '1.9.4', '1.10.1', '1.11.1' ]
         mode: [ 'tcp', 'unix' ]
 
     steps:
