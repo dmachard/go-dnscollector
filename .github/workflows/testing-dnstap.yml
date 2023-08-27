@@ -56,7 +56,7 @@ jobs:
     strategy:
       matrix:
         go-version: [ '1.19', '1.20' ]
-        coredns: [ '1.9.4', '1.10.1', '1.11.1' ]
+        coredns: [ '1.9.4', '1.10.1' ]
         mode: [ 'tcp', 'unix' ]
 
     steps:
@@ -71,6 +71,48 @@ jobs:
     - name: build binary
       run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 
+    - name: Deploy coredns docker image
+      run: |
+        sudo docker run -d --network="host" --name=coredns -v $PWD/testsdata/:$PWD/testsdata/ -v /tmp/:/tmp/ coredns/coredns:${{ matrix.coredns }} -conf $PWD/testsdata/coredns/coredns_${{ matrix.mode }}.conf
+        until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
+
+    - name: Test ${{ matrix.mode }}
+      run: |
+        sudo python3 -m pip install dnstap_pb fstrm dnspython
+        sudo python3 -m pip install --upgrade protobuf
+        sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
+
+  coredns_tls:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      matrix:
+        go-version: [ '1.20' ]
+        coredns: [ '1.11.1' ]
+        mode: [ 'tls' ]
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v3
+      with:
+        go-version: ${{ matrix.go-version }}
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: build binary
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+
+    - name: Generate certificate
+      run: |
+        openssl rand -base64 48 > passphrase.txt
+        openssl genrsa -aes128 -passout file:passphrase.txt -out server.key 2048
+        openssl req -new -passin file:passphrase.txt -key server.key -out server.csr -subj "/C=FR/O=krkr/OU=Domain Control Validated/CN=*.krkr.io"
+        openssl rsa -in server.key -passin file:passphrase.txt -out dnscollector.key
+        openssl x509 -req -days 36500 -in server.csr -signkey dnscollector.key -out dnscollector.crt
+        mv dnscollector.key ./testsdata/
+        mv dnscollector.crt ./testsdata/
+        
     - name: Deploy coredns docker image
       run: |
         sudo docker run -d --network="host" --name=coredns -v $PWD/testsdata/:$PWD/testsdata/ -v /tmp/:/tmp/ coredns/coredns:${{ matrix.coredns }} -conf $PWD/testsdata/coredns/coredns_${{ matrix.mode }}.conf
