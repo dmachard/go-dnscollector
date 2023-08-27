@@ -7,7 +7,7 @@
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
-`DNS-collector` acts as a passive high speed **ingestor, aggregator and analyzer** for your DNS traffic, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously [sources](doc/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](doc/loggers.md) with some [transformations](doc/transformers.md) on it ([traffic filtering](doc/transformers.md#dns-filtering), [user privacy](doc/transformers.md#user-privacy), ...).
+`DNS-collector` acts as a passive high speed **Ingestor, aggregator and distributor** for your DNS logs with usage indicators and security analysis, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously [sources](doc/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](doc/loggers.md) with some [transformations](doc/transformers.md) on it ([traffic filtering](doc/transformers.md#dns-filtering), [user privacy](doc/transformers.md#user-privacy), ...).
 
 > Additionally, DNS-collector also support
 >
@@ -61,7 +61,7 @@
 - *Send to security tools*
   - [`Falco`](doc/loggers/logger_falco.md)
 
-**Apply advanced [transforms](doc/transformers.md) on traffic**:
+**Apply additionnal [transforms](doc/transformers.md) on traffic**:
 
 - [`Traffic Prediction`](doc/transformers/transform_trafficprediction.md)
 - [`Traffic Reducer`](doc/transformers/transform_trafficreducer.md)
@@ -89,51 +89,10 @@ The configuration of DNS-collector is done through a file named [`config.yml`](c
 
 See the full [configuration guide](doc/configuration.md) for more details.
 
-## Examples
+## Usage examples
 
-You will find below some examples of configuration to manage your DNS logs.
-
-- Capture DNS traffic from incoming DNSTap streams
-  - [x] [Read from UNIX DNSTap socket and forward it to TLS stream](example-config/use-case-5.yml)
-  - [x] [Transform DNSTap as input to JSON format as output](example-config/use-case-3.yml)
-  - [x] [Relays DNSTap stream to multiple remote destination without decoding](example-config/use-case-12.yml)
-  - [x] [Aggregate several DNSTap stream and forward it to the same file](example-config/use-case-7.yml)
-
-- Capture DNS traffic from PowerDNS products
-  - [x] [Capture multiple PowerDNS streams](example-config/use-case-8.yml)
-
-- Observe your DNS traffic from logs
-  - [x] [Observe DNS metrics with Prometheus and Grafana](example-config/use-case-2.yml)
-  - [x] [Follow DNS traffic with Loki and Grafana](example-config/use-case-4.yml)
-
-- Apply some transformations
-  - [x] [Capture DNSTap stream and apply user privacy on it](example-config/use-case-6.yml)
-  - [x] [Filtering incoming traffic with downsample and whitelist of domains](example-config/use-case-9.yml)
-  - [x] [Transform all domains to lowercase](example-config/use-case-10.yml)
-  - [x] [Add geographical metadata with GeoIP](example-config/use-case-11.yml)
-  - [x] [Count the number of evicted queries](example-config/use-case-18.yml)
-  - [x] [Detect repetitive traffic and log it only once](example-config/use-case-20.yml)
-
-- Capture DNS traffic from FRSTRM/dnstap files
-  - [x] [Save incoming DNStap streams to file (frstrm)](example-config/use-case-13.yml)
-  - [x] [Watch for DNStap files as input](example-config/use-case-14.yml)
-
-- Capture DNS traffic from PCAP files
-  - [x] [Capture DNSTap stream and backup-it to text and pcap files](example-config/use-case-1.yml)
-  - [x] [Watch for PCAP files as input and JSON as output](example-config/use-case-15.yml)
-
-- Capture DNS traffic from Mikrotik device
-  - [x] [Capture TZSP packets containing DNS packets and process them as json](example-config/use-case-17.yml)
-
-- Security: suspicious traffic detector
-  - [x] [Capture DNS packets and flag suspicious traffic](example-config/use-case-19.yml)
+The **[`_examples`](./doc/_examples)** folder from documentation contains a number of [various](./doc/examples.md) configurations to get you started with the `DNS-collector` in differentes ways.
 
 ## Contributing
 
-See the [development guide](doc/development.md) for more information on how to build it yourself.
-
-How to userguides:
-
-- [Add a new collector](doc/development.md#add-collector)
-- [Add a new logger](doc/development.md#add-logger)
-- [Add a new transform](doc/development.md#add-transformer)
+See the [development guide](./doc/development.md) for more information on how to build it yourself.

@@ -1,8 +1,14 @@
 
-# Development
+# DNS-collector - Development
 
 To compile DNS-collector, we assume you have a working Go setup.
 First, make sure your golang version is `1.20` or higher
+
+How to userguides:
+
+- [Add a new collector](doc/development.md#add-collector)
+- [Add a new logger](doc/development.md#add-logger)
+- [Add a new transform](doc/development.md#add-transformer)
 
 ## Build and run from source
 
