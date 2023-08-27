@@ -64,11 +64,11 @@
 - **[Transformers](doc/transformers.md)**:
 
   - Traffic [Filtering](doc/transformers/transform_trafficfiltering.md) and [Reducer](doc/transformers/transform_trafficreducer.md)
-  - [Latency Computing](doc/transformers/transform_latency.md)
-  - [User Privacy](doc/transformers/transform_userprivacy.md)
-  - [Normalize](doc/transformers/transform_normalize.md)
-  - [Geographical metadata](doc/transformers/transform_geoip.md)
-  - [Data Extractor](doc/transformers/transforme_dataextractor.md)
+  - Latency [Computing](doc/transformers/transform_latency.md)
+  - Apply user [Privacy](doc/transformers/transform_userprivacy.md)
+  - [Normalize](doc/transformers/transform_normalize.md) DNS messages
+  - Add [Geographical](doc/transformers/transform_geoip.md) metadata
+  - Various data [Extractor](doc/transformers/transform_dataextractor.md)
   - Suspicious traffic [Detector](doc/transformers/transform_suspicious.md) and [Prediction](doc/transformers/transform_trafficprediction.md)
 
 ## Get Started
