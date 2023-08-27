@@ -91,7 +91,7 @@ See the full [configuration guide](doc/configuration.md) for more details.
 
 ## Usage examples
 
-The **[`_examples`](./doc/_examples)** folder from documentation contains a number of [various](./doc/examples.md) configurations to get you started with the `DNS-collector` in differentes ways.
+The [`_examples`](./doc/_examples) folder from documentation contains a number of [various configurations](./doc/examples.md) to get you started with the `DNS-collector` in differentes ways.
 
 ## Contributing
 
