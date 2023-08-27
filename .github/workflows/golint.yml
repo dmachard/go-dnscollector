@@ -2,6 +2,8 @@ name: go lint
 
 on:
   push:
+    paths-ignore:
+      - 'doc/**'
     branches:
       - main
   pull_request:

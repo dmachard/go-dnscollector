@@ -2,6 +2,8 @@ name: go build
 
 on:
   push:
+    paths-ignore:
+      - 'doc/**'
     branches:
       - main
   pull_request:

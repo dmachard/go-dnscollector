@@ -2,6 +2,8 @@ name: tests dnstap
 
 on:
   push:
+    paths-ignore:
+      - 'doc/**'
     branches:
       - main
   pull_request:
