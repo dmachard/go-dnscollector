@@ -69,7 +69,7 @@
   - [Normalize](doc/transformers/transform_normalize.md) DNS messages
   - Add [Geographical](doc/transformers/transform_geoip.md) metadata
   - Various data [Extractor](doc/transformers/transform_dataextractor.md)
-  - Suspicious traffic [Detector](doc/transformers/transform_suspicious.md) and [Prediction](doc/transformers/transform_trafficprediction.md)
+  - Suspicious traffic [Detector](doc/transformers/transform_suspiciousdetector.md) and [Prediction](doc/transformers/transform_trafficprediction.md)
 
 ## Get Started
 
@@ -89,7 +89,7 @@ See the full [configuration guide](doc/configuration.md) for more details.
 
 ## Usage examples
 
-The [`_examples`](./doc/_examples) folder from documentation contains a number of [various configurations](./doc/examples.md) to get you started with the `DNS-collector` in differentes ways.
+The [`_examples`](./doc/_examples) folder from documentation contains a number of [various configurations](./doc/examples.md) to get you started with the DNS-collector in differentes ways.
 
 ## Contributing
 
