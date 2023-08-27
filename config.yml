@@ -408,9 +408,15 @@ multiplexer:
 # # elasticsearch backend, basic support
 # elasticsearch:
 #   # remote server url
-#   url: "http://127.0.0.1:9200/indexname/_doc"
+#   server: "http://127.0.0.1:9200/"
+#   # Elasticsearch index for ingestion
+#   index:  "indexname"
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
+#   # Size of batches sent to ES via _bulk
+#   bulk-size: 100
+#   # interval in seconds before to flush the buffer
+#   flush-interval: 30
 
 # # resend captured dns traffic to a remote fluentd server or to unix socket
 # fluentd:
