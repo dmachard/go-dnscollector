@@ -13,7 +13,7 @@ info:
 servers:
   - url: 'http://localhost:8080/'
 paths:
-  /search:
+  /reset:
     delete:
       responses:
         '200':
