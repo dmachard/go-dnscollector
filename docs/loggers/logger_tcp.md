@@ -2,26 +2,28 @@
 # Logger: TCP Client
 
 Tcp/unix stream client logger.
+
 * to remote tcp destination or unix socket
 * supported format: text, json
 * custom text format
 * tls support
 
 Options:
-- `transport`: (string) network transport to use: tcp|unix
-- `remote-ip`: (string) remote address
-- `remote-port`: (integer) remote tcp port
-- `sock-path`: (string) unix socket path
-- `connect-timeout`: (integer) connect timeout in second
-- `retry-interval`: (integer) interval in second between retry reconnect
-- `flush-interval`: (integer) interval in second before to flush the buffer
-- `tls-support`: (boolean) enable tls
-- `tls-insecure`: (boolean) insecure skip verify
-- `tls-min-version`: (string) min tls version, default to 1.2
-- `mode`: (string) output format: text, json, or flat-json
-- `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
-- `buffer-size`: (integer) how many DNS messages will be buffered before being sent
-- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
+
+* `transport`: (string) network transport to use: tcp|unix
+* `remote-ip`: (string) remote address
+* `remote-port`: (integer) remote tcp port
+* `sock-path`: (string) unix socket path
+* `connect-timeout`: (integer) connect timeout in second
+* `retry-interval`: (integer) interval in second between retry reconnect
+* `flush-interval`: (integer) interval in second before to flush the buffer
+* `tls-support`: (boolean) enable tls
+* `tls-insecure`: (boolean) insecure skip verify
+* `tls-min-version`: (string) min tls version, default to 1.2
+* `mode`: (string) output format: text, json, or flat-json
+* `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
+* `buffer-size`: (integer) how many DNS messages will be buffered before being sent
+* `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 
