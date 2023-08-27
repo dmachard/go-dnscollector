@@ -9,8 +9,8 @@ If you are in DNSTap mode, the collector search for files with the `.fstrm` exte
 
 For config examples, take a look to the following links:
 
-- [dnstap](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-14.yml)
-- [pcap](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-15.yml)
+- [dnstap](../examples/use-case-14.yml)
+- [pcap](../examples/use-case-15.yml)
 
 Options:
 

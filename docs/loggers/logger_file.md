@@ -10,9 +10,9 @@ Enable this logger if you want to log your DNS traffic to a file in plain text m
 
 For config examples, take a look to the following links:
 
-* [`text`](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-7.yml)
-* [`dnstap`](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-13.yml)
-* [`pcap`](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-1.yml)
+* [`text`](../_examples/use-case-7.yml)
+* [`dnstap`](../_examples/use-case-13.yml)
+* [`pcap`](../_examples/use-case-1.yml)
 
 Options:
 
