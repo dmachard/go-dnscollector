@@ -5,6 +5,7 @@
 InfluxDB client to remote InfluxDB server
 
 Options:
+
 - `server-url`: (string) InfluxDB server url
 - `auth-token`: (string) authentication token
 - `bucket`: (string) bucket name

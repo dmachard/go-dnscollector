@@ -3,6 +3,7 @@
 Kafka producer
 
 Options:
+
 - `remote-ip`: (string) remote address
 - `remote-port`: (integer) remote tcp port
 - `connect-timeout`: (integer) connect timeout in second

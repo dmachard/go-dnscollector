@@ -10,7 +10,7 @@ Capabilities:
 - cap_sys_resource is required to release the rlimit memlock which is necessary to be able to load BPF programs
 - cap_perfmon is required to create a kernel perf buffer for exporting packet data into user space
 
-```
+```bash
 sudo setcap cap_sys_resource,cap_net_raw,cap_perfmon+ep go-dnscollector
 ```
 

@@ -19,6 +19,7 @@ tzsp:
 ```
 
 Example rules for Mikrotik brand devices to send the traffic (only works if routed or the device serves as DNS server).
+
 ```routeros
 /ipv6 firewall mangle
 add action=sniff-tzsp chain=prerouting comment="Sniff DNS (TCP)" dst-port=53 \

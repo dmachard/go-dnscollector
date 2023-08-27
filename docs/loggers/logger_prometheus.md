@@ -4,6 +4,7 @@
 This logger generates **prometheus** metrics. Use the following Grafana [dashboard](https://grafana.com/grafana/dashboards/16630).
 
 Options:
+
 - `listen-ip`: (string) listening IP
 - `listen-port`: (integer) listening port
 - `basic-auth-enable`: (bool) whether to enable basic auth
@@ -43,13 +44,13 @@ prometheus:
 
 Scrape metric with curl:
 
-```
-$ curl -u admin:changeme http://127.0.0.1:8080/metrics
+```bash
+curl -u admin:changeme http://127.0.0.1:8080/metrics
 ```
 
 ## Metrics
 
-The full metrics can be found [here](metrics.txt).
+The full metrics can be found [here](./../metrics.txt).
 
 | Metric                                          | Notes
 |-------------------------------------------------|------------------------------------
@@ -94,5 +95,5 @@ The full metrics can be found [here](metrics.txt).
 The following [build-in](https://grafana.com/grafana/dashboards/16630) dashboard is available
 
 <p align="center">
-  <img src="./_images/dashboard_prometheus.png" alt="dnscollector"/>
+  <img src="../_images/dashboard_prometheus.png" alt="dnscollector"/>
 </p>

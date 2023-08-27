@@ -4,6 +4,7 @@
 Client for the Scalyr/DataSet [`addEvents`](https://app.eu.scalyr.com/help/api#addEvents) API endpoint.
 
 Options:
+
 - `server-url`: (string) Scalyr API Host
 - `apikey`: (string, required) API Token with Log Write permissions
 - `mode`: (string) text, json, or flat-json
@@ -23,6 +24,7 @@ The first two formats (text, json) require setting the `parser` option and needs
 As Scalyr's JSON parsers (like 'dottedJSON') will not expand nested JSON and require one or more 'rewrite' statements, the Scalyr client supports a `flat-json` mode.
 
 Defaults:
+
 ```yaml
 scalyrclient:
   server-url: app.scalyr.com

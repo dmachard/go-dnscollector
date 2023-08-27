@@ -6,15 +6,14 @@ DNS servers log server can be followed; any type of server is supported!
 * Read DNS events from the tail of text files
 * Regex support
 
-
 Enable the tail by provided the path of the file to follow
 
 Options:
 
-- `file-path`: (string) file to follow
-- `time-layout`: (string)  Use the exact layout numbers described https://golang.org/src/time/format.go
-- `pattern-query`: (string) regexp pattern for queries
-- `pattern-reply`: (string) regexp pattern for replies
+* `file-path`: (string) file to follow
+* `time-layout`: (string)  Use the exact layout numbers described <https://golang.org/src/time/format.go>
+* `pattern-query`: (string) regexp pattern for queries
+* `pattern-reply`: (string) regexp pattern for replies
 
 Default values:
 

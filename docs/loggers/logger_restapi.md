@@ -7,6 +7,7 @@ Basic authentication supported.
 See the [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) documentation.
 
 Options:
+
 - `listen-ip`: (string) listening IP
 - `listen-port`: (integer) listening port
 - `basic-auth-enable`: (boolean) enable or disable basic authentication

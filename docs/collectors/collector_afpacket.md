@@ -9,15 +9,15 @@ program without having to run-it with the root user:
 
 Capabilities:
 
-```
+```bash
 sudo setcap cap_net_admin,cap_net_raw=eip go-dnscollector
 ```
 
 Options:
 
-- `port`: (integer) filter on source and destination port
-- `device`: (string) if "" bind on all interfaces
-- `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
+* `port`: (integer) filter on source and destination port
+* `device`: (string) if "" bind on all interfaces
+* `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
 
 Default values:
 
@@ -27,4 +27,3 @@ afpacket-sniffer:
   device: wlp2s0
   chan-buffer-size: 65535
 ```
-

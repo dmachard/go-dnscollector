@@ -1,6 +1,7 @@
 # Logger: Statsd client
 
 Statsd client to statsd proxy
+
 * tls support
 
 **Statsd metrics:**
@@ -9,7 +10,7 @@ The `<statsdsuffix>` tag can be configured in the `config.yml` file.
 
 Counters:
 
-```
+```bash
 - <statsdsuffix>_<streamid>_total_bytes_received
 - <statsdsuffix>_<streamid>_total_bytes_sent
 - <statsdsuffix>_<streamid>_total_requesters
@@ -24,19 +25,20 @@ Counters:
 
 Gauges:
 
-```
+```bash
 - <statsdsuffix>_<streamid>_queries_qps
 ```
 
 Options:
-- `transport`: (string) network transport to use: udp or tcp
-- `listen-ip`: (string) remote address
-- `listen-port`: (integer) remote tcp port
-- `prefix`: (string) statsd prefix name
-- `tls-support`: (boolean) enable tls
-- `tls-insecure`: (boolean) insecure skip verify
-- `tls-min-version`: (string) min tls version
-- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
+
+* `transport`: (string) network transport to use: udp or tcp
+* `listen-ip`: (string) remote address
+* `listen-port`: (integer) remote tcp port
+* `prefix`: (string) statsd prefix name
+* `tls-support`: (boolean) enable tls
+* `tls-insecure`: (boolean) insecure skip verify
+* `tls-min-version`: (string) min tls version
+* `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 
