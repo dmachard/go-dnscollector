@@ -6,7 +6,7 @@ require (
 	github.com/RackSec/srslog v0.0.0-20180709174129-a4725f04ec91
 	github.com/Shopify/sarama v1.38.1
 	github.com/cilium/ebpf v0.10.0
-	github.com/dmachard/go-dnstap-protobuf v0.5.0
+	github.com/dmachard/go-dnstap-protobuf v0.6.0
 	github.com/dmachard/go-framestream v0.6.0
 	github.com/dmachard/go-logger v0.3.0
 	github.com/dmachard/go-powerdns-protobuf v0.2.0
