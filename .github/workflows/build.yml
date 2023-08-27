@@ -1,10 +1,15 @@
 name: go build
 
 on:
-  push:
-    branches:
-      - main
+  # push:
+  #   paths-ignore:
+  #     - 'doc/**'
+  #   branches:
+  #     - main
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
     branches:
       - main
 
