@@ -27,8 +27,8 @@
 - **[Collectors](./docs/collectors.md)**
 
   - *Listen for logging traffic with streaming network protocols*
-    - [`DNStap`](docs/collectors/collector_dnstap.md#dns-tap_) with `tls`|`tcp`|`unix` transports support and [`proxifier`](docs/collectors/collector_dnstap.md#dns-tap-proxifier)
-    - [`PowerDNS`](docs/collectors/collector_powerdns.md_) streams with full  support
+    - [`DNStap`](docs/collectors/collector_dnstap.md#dns-tap) with `tls`|`tcp`|`unix` transports support and [`proxifier`](docs/collectors/collector_dnstap.md#dns-tap-proxifier)
+    - [`PowerDNS`](docs/collectors/collector_powerdns.md) streams with full  support
     - [`TZSP`](docs/collectors/collector_tzsp.md) protocol support
   - *Live capture on a network interface*
     - [`AF_PACKET`](docs/collectors/collector_afpacket.md) socket with BPF filter

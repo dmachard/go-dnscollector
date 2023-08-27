@@ -34,17 +34,14 @@ dnstap:
   chan-buffer-size: 65535
 ```
 
-
 ## DNS tap Proxifier
 
 Collector that receives DNSTAP traffic and relays it without decoding or transformations.
-This collector must be used with the DNStap logger. 
+This collector must be used with the DNStap logger.
 
 Dnstap stream collector can be a tcp or unix socket listener. TLS is also supported.
 
-For config examples, take a look to the following links:
-
-- [config](https://github.com/dmachard/go-dns-collector/blob/main/example-config/use-case-12.yml)
+For config examples, take a look to the following [one](../_examples/use-case-12.yml)
 
 Options:
 
@@ -68,4 +65,3 @@ dnstap-relay:
   cert-file: ""
   key-file: ""
 ```
-
