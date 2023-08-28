@@ -55,7 +55,8 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 				  "identity": "-",
 				  "version": "-",
 				  "timestamp-rfc3339ns": "-",
-				  "latency": "-"
+				  "latency": "-",
+				  "extra": "-"
 				}
 			}
 			`
