@@ -205,6 +205,11 @@ RUN_LOOP:
 			}
 			dm.DnsTap.Operation = dt.GetMessage().GetType().String()
 
+			extra := string(dt.GetExtra())
+			if len(extra) > 0 {
+				dm.DnsTap.Extra = extra
+			}
+
 			if ipVersion, valid := dnsutils.IP_VERSION[dt.GetMessage().GetSocketFamily().String()]; valid {
 				dm.NetworkInfo.Family = ipVersion
 			} else {
