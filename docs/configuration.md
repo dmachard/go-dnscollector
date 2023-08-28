@@ -71,6 +71,7 @@ Default directives:
 - `localtime`: local time
 - `identity`: dnstap identity
 - `version`: dnstap version
+- `extra`: dnstap extra as string
 - `operation`: dnstap operation
 - `opcode`: dns opcode (integer)
 - `rcode`: dns return code

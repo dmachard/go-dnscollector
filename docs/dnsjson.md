@@ -70,6 +70,7 @@ Example:
     "operation": "CLIENT_RESPONSE",
     "identity": "dnsdist1",
     "version": "-",
+    "extra": "-",
     "timestamp-rfc3339ns": "2021-12-27T14:33:44.559002118Z",
     "latency": "0.014617"
   }
@@ -105,6 +106,7 @@ Using flat-json requires more processing on the host running go-dnscollector but
   "dnstap.operation": "CLIENT_RESPONSE",
   "dnstap.timestamp-rfc3339ns": "2023-03-31T10:14:46.664534902Z",
   "dnstap.version": "BIND 9.18.13-1+ubuntu20.04.1+isc+1-Ubuntu",
+  "dnstap.extra": "-",
   "edns.dnssec-ok": 0,
   "edns.options.0.code": 10,
   "edns.options.0.data": "-",

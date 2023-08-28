@@ -55,7 +55,8 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 				  "identity": "-",
 				  "version": "-",
 				  "timestamp-rfc3339ns": "-",
-				  "latency": "-"
+				  "latency": "-",
+				  "extra": "-"
 				}
 			}
 			`
@@ -103,6 +104,7 @@ func TestDnsMessage_Json_Flatten_Reference(t *testing.T) {
 					"dnstap.operation": "-",
 					"dnstap.timestamp-rfc3339ns": "-",
 					"dnstap.version": "-",
+					"dnstap.extra": "-",
 					"edns.dnssec-ok": 0,
 					"edns.options": [],
 					"edns.rcode": 0,

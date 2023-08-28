@@ -28,6 +28,8 @@ global:
   # - timestamp-unixns: unix timestamp with nano support
   # - localtime: local time
   # - identity: dnstap identity
+  # - version: dnstap version
+  # - extra: dnstap extra as string
   # - operation: dnstap operation
   # - opcode: dns opcode (integer)
   # - rcode: dns return code
@@ -54,7 +56,6 @@ global:
   # - edns-csubnet: client subnet
   # - df: ip defragmentation flag
   # - tr: tcp reassembled flag
-  # - dns_payload: base64-encoded raw DNS payload
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
   # default text field delimiter
   text-format-delimiter: " "

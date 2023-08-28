@@ -132,6 +132,7 @@ type DnsTap struct {
 	Latency          float64 `json:"-" msgpack:"-"`
 	LatencySec       string  `json:"latency" msgpack:"latency"`
 	Payload          []byte  `json:"-" msgpack:"-"`
+	Extra            string  `json:"extra" msgpack:"extra"`
 }
 
 type PowerDns struct {
@@ -229,6 +230,7 @@ func (dm *DnsMessage) Init() {
 		Version:          "-",
 		TimestampRFC3339: "-",
 		LatencySec:       "-",
+		Extra:            "-",
 	}
 
 	dm.DNS = Dns{
@@ -487,6 +489,8 @@ func (dm *DnsMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 			s.WriteString(dm.DnsTap.Identity)
 		case directive == "version":
 			s.WriteString(dm.DnsTap.Version)
+		case directive == "extra":
+			s.WriteString(dm.DnsTap.Extra)
 		case directive == "operation":
 			s.WriteString(dm.DnsTap.Operation)
 		case directive == "rcode":
