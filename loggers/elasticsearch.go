@@ -129,7 +129,7 @@ func (o *ElasticSearchClient) FlushBuffer(buf *[]dnsutils.DnsMessage) {
 	buffer := new(bytes.Buffer)
 
 	for _, dm := range *buf {
-		buffer.WriteString("{ \"index\" : {}}")
+		buffer.WriteString("{ \"create\" : {}}")
 		buffer.WriteString("\n")
 		// encode
 		flat, err := dm.Flatten()
