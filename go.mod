@@ -1,6 +1,6 @@
 module github.com/dmachard/go-dnscollector
 
-go 1.20
+go 1.21
 
 require (
 	github.com/RackSec/srslog v0.0.0-20180709174129-a4725f04ec91
@@ -117,7 +117,7 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
-	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230204201903-c31fa085b70e // indirect
+	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
 	golang.org/x/crypto v0.13.0 // indirect
 	golang.org/x/exp v0.0.0-20230307190834-24139beb5833 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
