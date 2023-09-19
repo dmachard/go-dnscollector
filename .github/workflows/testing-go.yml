@@ -19,13 +19,13 @@ jobs:
     strategy:
       matrix:
         os-version: ['ubuntu-22.04', 'macos-12']
-        go-version: ['1.19', '1.20']
+        go-version: ['1.19', '1.20', '1.21']
         package: ['dnsutils', 'collectors', 'loggers', 'transformers', 'netlib']
     
     runs-on: ${{ matrix.os-version }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-go@v3
       with:
         go-version: ${{ matrix.go-version }}
@@ -55,11 +55,11 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.19', '1.20']
+        go-version: ['1.19', '1.20', '1.21']
         package: ['config', 'clientquery_dnstaptcp', 'clientquery_dnstapunix' ]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-go@v3
       with:
         go-version: ${{ matrix.go-version }}
@@ -81,10 +81,10 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.19', '1.20']
+        go-version: ['1.19', '1.20', '1.21']
         
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-go@v3
       with:
         go-version: ${{ matrix.go-version }}

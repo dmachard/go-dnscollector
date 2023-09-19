@@ -23,11 +23,11 @@ jobs:
       with:
         python-version: '3.11'
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         path: app
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         repository: dmachard/go-dnstap-generator
         path: gen
