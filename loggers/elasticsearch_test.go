@@ -78,7 +78,7 @@ func Test_ElasticSearchClient(t *testing.T) {
 					if cnt%2 == 0 {
 						var res map[string]interface{}
 						json.Unmarshal(scanner.Bytes(), &res)
-						assert.Equal(t, map[string]interface{}{}, res["index"])
+						assert.Equal(t, map[string]interface{}{}, res["create"])
 					} else {
 						var bulkDm dnsutils.DnsMessage
 						err := json.Unmarshal(scanner.Bytes(), &bulkDm)
@@ -158,7 +158,7 @@ func Test_ElasticSearchClientFlushINterval(t *testing.T) {
 				if cnt%2 == 0 {
 					var res map[string]interface{}
 					json.Unmarshal(scanner.Bytes(), &res)
-					assert.Equal(t, map[string]interface{}{}, res["index"])
+					assert.Equal(t, map[string]interface{}{}, res["create"])
 				} else {
 					var bulkDm dnsutils.DnsMessage
 					err := json.Unmarshal(scanner.Bytes(), &bulkDm)
