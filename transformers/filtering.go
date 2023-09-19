@@ -102,8 +102,12 @@ func (p *FilteringProcessor) LoadActiveFilters() {
 		p.activeFilters = append(p.activeFilters, p.rCodeFilter)
 	}
 
-	if len(p.config.Filtering.KeepQueryIpFile) > 0 || len(p.config.Filtering.DropQueryIpFile) > 0 {
-		p.activeFilters = append(p.activeFilters, p.ipFilter)
+	if len(p.config.Filtering.KeepQueryIpFile) > 0 {
+		p.activeFilters = append(p.activeFilters, p.keepQueryIpFilter)
+	}
+
+	if len(p.config.Filtering.DropQueryIpFile) > 0 {
+		p.activeFilters = append(p.activeFilters, p.DropQueryIpFilter)
 	}
 
 	if len(p.config.Filtering.KeepRdataFile) > 0 {
@@ -330,15 +334,14 @@ func (p *FilteringProcessor) rCodeFilter(dm *dnsutils.DnsMessage) bool {
 	return false
 }
 
-func (p *FilteringProcessor) ipFilter(dm *dnsutils.DnsMessage) bool {
+func (p *FilteringProcessor) keepQueryIpFilter(dm *dnsutils.DnsMessage) bool {
 	ip, _ := netaddr.ParseIP(dm.NetworkInfo.QueryIp)
-	if p.ipsetKeep.Contains(ip) {
-		return false
-	}
-	if p.ipsetDrop.Contains(ip) {
-		return true
-	}
-	return false
+	return !p.ipsetKeep.Contains(ip)
+}
+
+func (p *FilteringProcessor) DropQueryIpFilter(dm *dnsutils.DnsMessage) bool {
+	ip, _ := netaddr.ParseIP(dm.NetworkInfo.QueryIp)
+	return p.ipsetDrop.Contains(ip)
 }
 
 func (p *FilteringProcessor) keepRdataFilter(dm *dnsutils.DnsMessage) bool {
