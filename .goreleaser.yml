@@ -27,14 +27,12 @@ builds:
 archives:
 - id: zipformat
   format: zip
-  rlcp: true
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
   files:
     - config.yml
     
 - id: targzformat
   format: tar.gz
-  rlcp: true
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
   files:
     - config.yml
