@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net"
 	"strconv"
 	"strings"
@@ -21,6 +21,8 @@ type RedisPub struct {
 	doneProcess        chan bool
 	stopRun            chan bool
 	doneRun            chan bool
+	stopReceive        chan bool
+	doneReceive        chan bool
 	inputChan          chan dnsutils.DnsMessage
 	outputChan         chan dnsutils.DnsMessage
 	config             *dnsutils.Config
@@ -92,12 +94,40 @@ func (o *RedisPub) Stop() {
 	o.LogInfo("stopping to process...")
 	o.stopProcess <- true
 	<-o.doneProcess
+
+	o.LogInfo("stopping to receive...")
+	o.stopReceive <- true
+	<-o.doneReceive
 }
 
 func (o *RedisPub) Disconnect() {
 	if o.transportConn != nil {
 		o.LogInfo("closing redispub connection")
 		o.transportConn.Close()
+	}
+}
+
+func (o *RedisPub) ReadFromConnection() {
+	buf := make([]byte, 4096)
+
+	for {
+		select {
+		// Stop signal received, exit the goroutine
+		case <-o.stopReceive:
+			o.doneReceive <- true
+			return
+		default:
+			_, err := o.transportConn.Read(buf)
+			if err != nil {
+				var netErr net.Error
+				if errors.As(err, &netErr) && netErr.Timeout() {
+					continue
+				}
+				o.LogError("Error reading from connection: %s", err.Error())
+				return
+			}
+			// We just discard the data
+		}
 	}
 }
 
@@ -268,6 +298,8 @@ PROCESS_LOOP:
 			o.LogInfo("transport connected with success")
 			o.transportWriter = bufio.NewWriter(o.transportConn)
 			o.writerReady = true
+			// read from the connection until we stop
+			go o.ReadFromConnection()
 
 		// incoming dns message to process
 		case dm, opened := <-o.outputChan:
@@ -293,7 +325,7 @@ PROCESS_LOOP:
 		// flush the buffer
 		case <-flushTimer.C:
 			if !o.writerReady {
-				fmt.Println("buffer cleared!")
+				o.LogInfo("Buffer cleared!")
 				bufferDm = nil
 				continue
 			}
