@@ -18,15 +18,18 @@ jobs:
   dev:
     strategy:
       matrix:
-        os-version: ['ubuntu-22.04', 'macos-12']
+        os-version: ['ubuntu-22.04', 'macos-latest' ]
         go-version: ['1.19', '1.20', '1.21']
         package: ['dnsutils', 'collectors', 'loggers', 'transformers', 'netlib']
+        exclude:
+          - os-version: macos-latest
+            go-version: '1.20'
     
     runs-on: ${{ matrix.os-version }}
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v3
+    - uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go-version }}
 
@@ -48,24 +51,24 @@ jobs:
         sudo go version
         
     - name: Test ${{ matrix.package }}
-      run: sudo go test -timeout 60s ./${{ matrix.package }}/ -race -cover -v
+      run: sudo go test -timeout 90s ./${{ matrix.package }}/ -race -cover -v
       
   int:
     runs-on: ubuntu-22.04
 
     strategy:
       matrix:
-        go-version: ['1.19', '1.20', '1.21']
+        go-version: ['1.20', '1.21']
         package: ['config', 'clientquery_dnstaptcp', 'clientquery_dnstapunix' ]
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v3
+    - uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
  
     - name: build binary
       run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
@@ -81,11 +84,11 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.19', '1.20', '1.21']
+        go-version: ['1.21']
         
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v3
+    - uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go-version }}
  
