@@ -18,9 +18,12 @@ jobs:
   dev:
     strategy:
       matrix:
-        os-version: ['ubuntu-22.04', 'macos-12' ]
+        os-version: ['ubuntu-22.04', 'macos-latest' ]
         go-version: ['1.20', '1.21']
         package: ['dnsutils', 'collectors', 'loggers', 'transformers', 'netlib']
+        exclude:
+          - os-version: macos-latest
+            go-version: '1.20'
     
     runs-on: ${{ matrix.os-version }}
 
