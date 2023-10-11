@@ -31,7 +31,7 @@ require (
 	github.com/segmentio/kafka-go v0.4.43
 	github.com/stretchr/testify v1.8.4
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	golang.org/x/net v0.16.0
+	golang.org/x/net v0.17.0
 	golang.org/x/sys v0.13.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/fsnotify.v1 v1.4.7
