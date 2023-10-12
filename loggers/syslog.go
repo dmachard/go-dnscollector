@@ -198,13 +198,16 @@ func (o *Syslog) Process() {
 			tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.Syslog.TlsMinVersion]
 
 			syslogconn, err = syslog.DialWithTLSConfig(o.config.Loggers.Syslog.Transport,
-				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity, "", tlsConfig)
+				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity,
+				o.config.Loggers.Syslog.Tag,
+				tlsConfig)
 			if err != nil {
 				o.logger.Fatal("failed to connect to the remote tls syslog:", err)
 			}
 		} else {
 			syslogconn, err = syslog.Dial(o.config.Loggers.Syslog.Transport,
-				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity, "")
+				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity,
+				o.config.Loggers.Syslog.Tag)
 			if err != nil {
 				o.logger.Fatal("failed to connect to the remote syslog:", err)
 			}
