@@ -11,8 +11,8 @@
 
 > Additionally, DNS-collector also support
 >
-> - DNS protocol conversions (to [plain text](./docs/configuration.md#custom-text-format), [JSON](./docs/dnsjson.md), and more... )
-> - DNS parser with [Extension Mechanisms for DNS (EDNS)](./docs/dnsparser.md) support
+> - DNS protocol conversions (to [plain text](https://github.com/dmachard/go-dns-collector/blob/main/docs/configuration.md#custom-text-format), [JSON](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsjson.md), and more... )
+> - DNS parser with [Extension Mechanisms for DNS (EDNS)](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsparser.md) support
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
 
