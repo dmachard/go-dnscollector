@@ -159,12 +159,12 @@ func (o *Syslog) ConnectToRemote() {
 		case "local":
 			o.LogInfo("connecting to local syslog...")
 			logWriter, err = syslog.New(o.facility|o.severity, "")
-		case "unix", "udp", "tcp":
+		case dnsutils.SOCKET_UNIX, dnsutils.SOCKET_UDP, dnsutils.SOCKET_TCP:
 			o.LogInfo("connecting to syslog %s://%s ...", o.config.Loggers.Syslog.Transport, o.config.Loggers.Syslog.RemoteAddress)
 			logWriter, err = syslog.Dial(o.config.Loggers.Syslog.Transport,
 				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity,
 				o.config.Loggers.Syslog.Tag)
-		case "tcp+tls":
+		case dnsutils.SOCKET_TLS:
 			o.LogInfo("connecting to syslog %s://%s ...", o.config.Loggers.Syslog.Transport, o.config.Loggers.Syslog.RemoteAddress)
 			tlsConfig := &tls.Config{
 				MinVersion:         tls.VersionTLS12,
@@ -297,8 +297,8 @@ PROCESS_LOOP:
 				buffer.Reset()
 
 			case dnsutils.MODE_FLATJSON:
-				flat, err := dm.Flatten()
-				if err != nil {
+				flat, errflat := dm.Flatten()
+				if errflat != nil {
 					o.LogError("flattening DNS message failed: %e", err)
 					continue
 				}
