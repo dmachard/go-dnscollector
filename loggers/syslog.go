@@ -219,6 +219,9 @@ func (o *Syslog) Process() {
 		syslogconn.SetFormatter(syslog.RFC3164Formatter)
 	case "rfc5424":
 		syslogconn.SetFormatter(syslog.RFC5424Formatter)
+	case "rfc5425":
+		syslogconn.SetFormatter(syslog.RFC5424Formatter)
+		syslogconn.SetFramer(syslog.RFC5425MessageLengthFramer)
 	}
 
 	o.syslogConn = syslogconn

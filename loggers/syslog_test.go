@@ -40,6 +40,7 @@ func Test_SyslogRun(t *testing.T) {
 			config.Loggers.Syslog.Transport = tc.transport
 			config.Loggers.Syslog.RemoteAddress = ":4000"
 			config.Loggers.Syslog.Mode = tc.mode
+			config.Loggers.Syslog.Format = "unix"
 			g := NewSyslog(config, logger.New(false), "test")
 
 			// fake json receiver
