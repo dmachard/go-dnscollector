@@ -43,17 +43,17 @@
     - [`Stdout`](docs/loggers/logger_stdout.md) console in text or binary output
     - [`File`](docs/loggers/logger_file.md) with automatic rotation and compression
   - *Provide metrics and API*
-    - [`Prometheus`](docs/loggers/logger_prometheus.md) metrics and visualize-it with built-in Grafana dashboard
+    - [`Prometheus`](docs/loggers/logger_prometheus.md) metrics
     - [`Statsd`](docs/loggers/logger_statsd.md) support
     - [`REST API`](docs/loggers/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/docs/swagger.yml) to search DNS domains
   - *Send to remote host with generic transport protocol*
     - [`TCP`](docs/loggers/logger_tcp.md)
-    - [`Syslog`](docs/loggers/logger_syslog.md)
+    - [`Syslog`](docs/loggers/logger_syslog.md) with TLS support
     - [`DNSTap`](docs/loggers/logger_dnstap.md) protobuf messages
   - *Send to various sinks*
     - [`Fluentd`](docs/loggers/logger_fluentd.md)
     - [`InfluxDB`](docs/loggers/logger_influxdb.md)
-    - [`Loki`](docs/loggers/logger_loki.md) and visualize-it with built-in Grafana dashboard
+    - [`Loki`](docs/loggers/logger_loki.md)
     - [`ElasticSearch`](docs/loggers/logger_elasticsearch.md)
     - [`Scalyr`](docs/loggers/logger_scalyr.md)
     - [`Redis`](docs/loggers/logger_redis.md)

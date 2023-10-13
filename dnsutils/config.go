@@ -345,9 +345,9 @@ type Config struct {
 			Facility          string `yaml:"facility"`
 			Transport         string `yaml:"transport"`
 			RemoteAddress     string `yaml:"remote-address"`
+			RetryInterval     int    `yaml:"retry-interval"`
 			TextFormat        string `yaml:"text-format"`
 			Mode              string `yaml:"mode"`
-			TlsSupport        bool   `yaml:"tls-support"`
 			TlsInsecure       bool   `yaml:"tls-insecure"`
 			TlsMinVersion     string `yaml:"tls-min-version"`
 			Format            string `yaml:"format"`
@@ -659,7 +659,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.RemoteAddress = "127.0.0.1:514"
 	c.Loggers.Syslog.TextFormat = ""
 	c.Loggers.Syslog.Mode = MODE_TEXT
-	c.Loggers.Syslog.TlsSupport = false
+	c.Loggers.Syslog.RetryInterval = 10
 	c.Loggers.Syslog.TlsInsecure = false
 	c.Loggers.Syslog.TlsMinVersion = TLS_v12
 	c.Loggers.Syslog.ChannelBufferSize = 65535
