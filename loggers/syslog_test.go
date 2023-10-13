@@ -11,41 +11,147 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func Test_SyslogRun(t *testing.T) {
+func Test_SyslogRunUdp(t *testing.T) {
 	testcases := []struct {
+		name       string
 		transport  string
 		mode       string
+		format     string
 		pattern    string
 		listenAddr string
 	}{
 		{
-			transport:  dnsutils.SOCKET_TCP,
+			name:       "unix_format",
+			transport:  dnsutils.SOCKET_UDP,
 			mode:       dnsutils.MODE_TEXT,
-			pattern:    " dns.collector ",
+			format:     "unix",
+			pattern:    `<30> \d+-\d+-\d+.*`,
 			listenAddr: ":4000",
 		},
 		{
-			transport:  dnsutils.SOCKET_TCP,
-			mode:       dnsutils.MODE_JSON,
-			pattern:    "\"qname\":\"dns.collector\"",
-			listenAddr: ":4001",
+			name:       "rfc3164_format",
+			transport:  dnsutils.SOCKET_UDP,
+			mode:       dnsutils.MODE_TEXT,
+			format:     "rfc3164",
+			pattern:    "<30>.*",
+			listenAddr: ":4000",
 		},
 		{
-			transport:  dnsutils.SOCKET_TCP,
-			mode:       dnsutils.MODE_FLATJSON,
-			pattern:    "\"dns.qname\":\"dns.collector\"",
-			listenAddr: ":4002",
+			name:       "rfc5424_format",
+			transport:  dnsutils.SOCKET_UDP,
+			mode:       dnsutils.MODE_TEXT,
+			format:     "rfc5424",
+			pattern:    `<30>1 \d+-\d+-\d+.*`,
+			listenAddr: ":4000",
+		},
+		{
+			name:       "rfc5425_format",
+			transport:  dnsutils.SOCKET_UDP,
+			mode:       dnsutils.MODE_TEXT,
+			format:     "rfc5425",
+			pattern:    `\d+ \<30\>1 \d+-\d+-\d+.*`,
+			listenAddr: ":4000",
 		},
 	}
 
 	for _, tc := range testcases {
-		t.Run(tc.mode, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			// init logger
 			config := dnsutils.GetFakeConfig()
 			config.Loggers.Syslog.Transport = tc.transport
 			config.Loggers.Syslog.RemoteAddress = tc.listenAddr
 			config.Loggers.Syslog.Mode = tc.mode
-			config.Loggers.Syslog.Format = "unix"
+			config.Loggers.Syslog.Format = tc.format
+
+			g := NewSyslog(config, logger.New(false), "test")
+
+			// fake json receiver
+			fakeRcvr, err := net.ListenPacket(tc.transport, tc.listenAddr)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer fakeRcvr.Close()
+
+			// start the logger
+			go g.Run()
+
+			// send fake dns message to logger
+			time.Sleep(time.Second)
+			dm := dnsutils.GetFakeDnsMessage()
+			g.Channel() <- dm
+
+			// read data on fake server side
+			buf := make([]byte, 4096)
+			n, _, err := fakeRcvr.ReadFrom(buf)
+			if err != nil {
+				t.Errorf("error to read data: %s", err)
+			}
+
+			if n == 0 {
+				t.Errorf("no data received")
+			}
+
+			print(string(buf))
+
+			re := regexp.MustCompile(tc.pattern)
+			if !re.MatchString(string(buf)) {
+				t.Errorf("syslog error want %s, got: %s", tc.pattern, string(buf))
+			}
+		})
+	}
+}
+
+func Test_SyslogRunTcp(t *testing.T) {
+	testcases := []struct {
+		name       string
+		transport  string
+		mode       string
+		format     string
+		pattern    string
+		listenAddr string
+	}{
+		{
+			name:       "unix_format",
+			transport:  dnsutils.SOCKET_TCP,
+			mode:       dnsutils.MODE_TEXT,
+			format:     "unix",
+			pattern:    `<30> \d+-\d+-\d+.*`,
+			listenAddr: ":4000",
+		},
+		{
+			name:       "rfc3164_format",
+			transport:  dnsutils.SOCKET_TCP,
+			mode:       dnsutils.MODE_TEXT,
+			format:     "rfc3164",
+			pattern:    "<30>.*",
+			listenAddr: ":4000",
+		},
+		{
+			name:       "rfc5424_format",
+			transport:  dnsutils.SOCKET_TCP,
+			mode:       dnsutils.MODE_TEXT,
+			format:     "rfc5424",
+			pattern:    `<30>1 \d+-\d+-\d+.*`,
+			listenAddr: ":4000",
+		},
+		{
+			name:       "rfc5425_format",
+			transport:  dnsutils.SOCKET_TCP,
+			mode:       dnsutils.MODE_TEXT,
+			format:     "rfc5425",
+			pattern:    `\d+ \<30\>1 \d+-\d+-\d+.*`,
+			listenAddr: ":4000",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			// init logger
+			config := dnsutils.GetFakeConfig()
+			config.Loggers.Syslog.Transport = tc.transport
+			config.Loggers.Syslog.RemoteAddress = tc.listenAddr
+			config.Loggers.Syslog.Mode = tc.mode
+			config.Loggers.Syslog.Format = tc.format
 
 			g := NewSyslog(config, logger.New(false), "test")
 
@@ -77,8 +183,9 @@ func Test_SyslogRun(t *testing.T) {
 			if err != nil {
 				t.Errorf("error to read line on syslog server: %s", err)
 			}
-			pattern := regexp.MustCompile(tc.pattern)
-			if !pattern.MatchString(string(line)) {
+
+			re := regexp.MustCompile(tc.pattern)
+			if !re.MatchString(string(line)) {
 				t.Errorf("syslog error want %s, got: %s", tc.pattern, string(line))
 			}
 		})
