@@ -108,7 +108,7 @@ func (o *DnstapSender) ConnectToRemote() {
 	var transport string
 	if len(o.config.Loggers.Dnstap.SockPath) > 0 {
 		address = o.config.Loggers.Dnstap.SockPath
-		transport = "unix"
+		transport = dnsutils.SOCKET_UNIX
 	} else {
 		address = net.JoinHostPort(
 			o.config.Loggers.Dnstap.RemoteAddress,
