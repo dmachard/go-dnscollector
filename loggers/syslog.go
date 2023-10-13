@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"strings"
 
@@ -52,33 +53,38 @@ func GetPriority(facility string) (syslog.Priority, error) {
 }
 
 type Syslog struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DnsMessage
-	outputChan  chan dnsutils.DnsMessage
-	config      *dnsutils.Config
-	logger      *logger.Logger
-	severity    syslog.Priority
-	facility    syslog.Priority
-	syslogConn  *syslog.Writer
-	textFormat  []string
-	name        string
+	stopProcess        chan bool
+	doneProcess        chan bool
+	stopRun            chan bool
+	doneRun            chan bool
+	inputChan          chan dnsutils.DnsMessage
+	outputChan         chan dnsutils.DnsMessage
+	config             *dnsutils.Config
+	logger             *logger.Logger
+	severity           syslog.Priority
+	facility           syslog.Priority
+	syslogWriter       *syslog.Writer
+	syslogReady        bool
+	transportReady     chan bool
+	transportReconnect chan bool
+	textFormat         []string
+	name               string
 }
 
 func NewSyslog(config *dnsutils.Config, console *logger.Logger, name string) *Syslog {
 	console.Info("[%s] logger=syslog - enabled", name)
 	o := &Syslog{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.Syslog.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.Syslog.ChannelBufferSize),
-		logger:      console,
-		config:      config,
-		name:        name,
+		stopProcess:        make(chan bool),
+		doneProcess:        make(chan bool),
+		stopRun:            make(chan bool),
+		doneRun:            make(chan bool),
+		inputChan:          make(chan dnsutils.DnsMessage, config.Loggers.Syslog.ChannelBufferSize),
+		outputChan:         make(chan dnsutils.DnsMessage, config.Loggers.Syslog.ChannelBufferSize),
+		transportReady:     make(chan bool),
+		transportReconnect: make(chan bool),
+		logger:             console,
+		config:             config,
+		name:               name,
 	}
 	o.ReadConfig()
 	return o
@@ -137,6 +143,72 @@ func (o *Syslog) Stop() {
 	<-o.doneProcess
 }
 
+func (o *Syslog) ConnectToRemote() {
+	//connTimeout := time.Duration(o.config.Loggers.Dnstap.ConnectTimeout) * time.Second
+
+	for {
+		if o.syslogWriter != nil {
+			o.syslogWriter.Close()
+			o.syslogWriter = nil
+		}
+
+		var logWriter *syslog.Writer
+		var err error
+
+		switch o.config.Loggers.Syslog.Transport {
+		case "local":
+			o.LogInfo("connecting to local syslog...")
+			logWriter, err = syslog.New(o.facility|o.severity, "")
+		case dnsutils.SOCKET_UNIX, dnsutils.SOCKET_UDP, dnsutils.SOCKET_TCP:
+			o.LogInfo("connecting to syslog %s://%s ...", o.config.Loggers.Syslog.Transport, o.config.Loggers.Syslog.RemoteAddress)
+			logWriter, err = syslog.Dial(o.config.Loggers.Syslog.Transport,
+				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity,
+				o.config.Loggers.Syslog.Tag)
+		case dnsutils.SOCKET_TLS:
+			o.LogInfo("connecting to syslog %s://%s ...", o.config.Loggers.Syslog.Transport, o.config.Loggers.Syslog.RemoteAddress)
+			tlsConfig := &tls.Config{
+				MinVersion:         tls.VersionTLS12,
+				InsecureSkipVerify: false,
+			}
+			tlsConfig.InsecureSkipVerify = o.config.Loggers.Syslog.TlsInsecure
+			tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.Syslog.TlsMinVersion]
+
+			logWriter, err = syslog.DialWithTLSConfig(o.config.Loggers.Syslog.Transport,
+				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity,
+				o.config.Loggers.Syslog.Tag,
+				tlsConfig)
+		default:
+			o.logger.Fatal("invalid syslog transport: ", o.config.Loggers.Syslog.Transport)
+		}
+
+		// something is wrong during connection ?
+		if err != nil {
+			o.LogError("%s", err)
+			o.LogInfo("retry to connect in %d seconds", o.config.Loggers.Syslog.RetryInterval)
+			time.Sleep(time.Duration(o.config.Loggers.Syslog.RetryInterval) * time.Second)
+			continue
+		}
+
+		o.syslogWriter = logWriter
+
+		switch strings.ToLower(o.config.Loggers.Syslog.Format) {
+		case "rfc3164":
+			o.syslogWriter.SetFormatter(syslog.RFC3164Formatter)
+		case "rfc5424":
+			o.syslogWriter.SetFormatter(syslog.RFC5424Formatter)
+		case "rfc5425":
+			o.syslogWriter.SetFormatter(syslog.RFC5424Formatter)
+			o.syslogWriter.SetFramer(syslog.RFC5425MessageLengthFramer)
+		}
+
+		// notify process that the transport is ready
+		// block the loop until a reconnect is needed
+		o.transportReady <- true
+
+		o.transportReconnect <- true
+	}
+}
+
 func (o *Syslog) Run() {
 	o.LogInfo("running in background...")
 
@@ -147,6 +219,9 @@ func (o *Syslog) Run() {
 
 	// goroutine to process transformed dns messages
 	go o.Process()
+
+	// init remote conn
+	go o.ConnectToRemote()
 
 	// loop to process incoming messages
 RUN_LOOP:
@@ -179,56 +254,25 @@ RUN_LOOP:
 }
 
 func (o *Syslog) Process() {
-	var syslogconn *syslog.Writer
 	var err error
 	buffer := new(bytes.Buffer)
 
-	if o.config.Loggers.Syslog.Transport == "local" {
-		syslogconn, err = syslog.New(o.facility|o.severity, "")
-		if err != nil {
-			o.logger.Fatal("failed to connect to the local syslog daemon:", err)
-		}
-	} else {
-		if o.config.Loggers.Syslog.TlsSupport {
-			tlsConfig := &tls.Config{
-				MinVersion:         tls.VersionTLS12,
-				InsecureSkipVerify: false,
-			}
-			tlsConfig.InsecureSkipVerify = o.config.Loggers.Syslog.TlsInsecure
-			tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.Syslog.TlsMinVersion]
-
-			syslogconn, err = syslog.DialWithTLSConfig(o.config.Loggers.Syslog.Transport,
-				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity, "", tlsConfig)
-			if err != nil {
-				o.logger.Fatal("failed to connect to the remote tls syslog:", err)
-			}
-		} else {
-			syslogconn, err = syslog.Dial(o.config.Loggers.Syslog.Transport,
-				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity, "")
-			if err != nil {
-				o.logger.Fatal("failed to connect to the remote syslog:", err)
-			}
-		}
-	}
-
-	switch strings.ToLower(o.config.Loggers.Syslog.Format) {
-	case "rfc3164":
-		syslogconn.SetFormatter(syslog.RFC3164Formatter)
-	case "rfc5424":
-		syslogconn.SetFormatter(syslog.RFC5424Formatter)
-	}
-
-	o.syslogConn = syslogconn
-
-	o.LogInfo("ready to process")
+	o.LogInfo("processing dns messages...")
 PROCESS_LOOP:
 	for {
 		select {
 		case <-o.stopProcess:
 			// close connection
-			o.syslogConn.Close()
+			if o.syslogWriter != nil {
+				o.syslogWriter.Close()
+			}
 			o.doneProcess <- true
 			break PROCESS_LOOP
+
+		case <-o.transportReady:
+			o.LogInfo("syslog transport is ready")
+			o.syslogReady = true
+
 		// incoming dns message to process
 		case dm, opened := <-o.outputChan:
 			if !opened {
@@ -236,30 +280,38 @@ PROCESS_LOOP:
 				return
 			}
 
+			// discar dns message if the connection is not ready
+			if !o.syslogReady {
+				continue
+			}
+
 			switch o.config.Loggers.Syslog.Mode {
 			case dnsutils.MODE_TEXT:
-
-				o.syslogConn.Write(dm.Bytes(o.textFormat,
+				_, err = o.syslogWriter.Write(dm.Bytes(o.textFormat,
 					o.config.Global.TextFormatDelimiter,
 					o.config.Global.TextFormatBoundary))
 
-				// var delimiter bytes.Buffer
-				// delimiter.WriteString("\n")
-				// o.syslogConn.Write(delimiter.Bytes())
-
 			case dnsutils.MODE_JSON:
 				json.NewEncoder(buffer).Encode(dm)
-				o.syslogConn.Write(buffer.Bytes())
+				_, err = o.syslogWriter.Write(buffer.Bytes())
 				buffer.Reset()
 
 			case dnsutils.MODE_FLATJSON:
-				flat, err := dm.Flatten()
-				if err != nil {
+				flat, errflat := dm.Flatten()
+				if errflat != nil {
 					o.LogError("flattening DNS message failed: %e", err)
+					continue
 				}
 				json.NewEncoder(buffer).Encode(flat)
-				o.syslogConn.Write(buffer.Bytes())
+				_, err = o.syslogWriter.Write(buffer.Bytes())
 				buffer.Reset()
+			}
+
+			if err != nil {
+				o.LogError("write error %s", err)
+				o.syslogReady = false
+				o.syslogWriter.Close()
+				<-o.transportReconnect
 			}
 		}
 	}

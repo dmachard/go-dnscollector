@@ -52,6 +52,7 @@ const (
 	SOCKET_TCP  = "tcp"
 	SOCKET_UDP  = "udp"
 	SOCKET_UNIX = "unix"
+	SOCKET_TLS  = "tcp+tls"
 
 	TLS_v10 = "1.0"
 	TLS_v11 = "1.1"

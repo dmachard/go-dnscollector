@@ -1,18 +1,20 @@
 # DNS-collector
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/dmachard/go-dns-collector)](https://goreportcard.com/report/dmachard/go-dns-collector)
+![Go version](https://img.shields.io/badge/go%20version-min%201.20-blue)
+
 ![Go Tests](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-go.yml/badge.svg)
 ![Github Actions](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-dnstap.yml/badge.svg)
 ![Github Actions PDNS](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-powerdns.yml/badge.svg)
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
-`DNS-collector` acts as a passive high speed **Ingestor, aggregator and distributor** for your DNS logs with usage indicators and security analysis, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously [sources](./docs/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](./docs/loggers.md) with some [transformations](./docs/transformers.md) on it ([traffic filtering](./docs/transformers.md#dns-filtering), [user privacy](./docs/transformers.md#user-privacy), ...).
+`DNS-collector` acts as a passive high speed **ingestor, aggregator and distributor** for your DNS logs with usage indicators and security analysis, written in **Golang**. The DNS traffic can be collected and aggregated from simultaneously [sources](./docs/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](./docs/loggers.md) with some [transformations](./docs/transformers.md) on it ([traffic filtering](./docs/transformers.md#dns-filtering), [user privacy](./docs/transformers.md#user-privacy), ...).
 
 > Additionally, DNS-collector also support
 >
-> - DNS protocol conversions (to [plain text](./docs/configuration.md#custom-text-format), [JSON](./docs/dnsjson.md), and more... )
-> - DNS parser with [Extension Mechanisms for DNS (EDNS)](./docs/dnsparser.md) support
+> - DNS protocol conversions (to [plain text](https://github.com/dmachard/go-dns-collector/blob/main/docs/configuration.md#custom-text-format), [JSON](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsjson.md), and more... )
+> - DNS parser with [Extension Mechanisms for DNS (EDNS)](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsparser.md) support
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
 
@@ -43,17 +45,17 @@
     - [`Stdout`](docs/loggers/logger_stdout.md) console in text or binary output
     - [`File`](docs/loggers/logger_file.md) with automatic rotation and compression
   - *Provide metrics and API*
-    - [`Prometheus`](docs/loggers/logger_prometheus.md) metrics and visualize-it with built-in Grafana dashboard
+    - [`Prometheus`](docs/loggers/logger_prometheus.md) metrics
     - [`Statsd`](docs/loggers/logger_statsd.md) support
     - [`REST API`](docs/loggers/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/docs/swagger.yml) to search DNS domains
   - *Send to remote host with generic transport protocol*
     - [`TCP`](docs/loggers/logger_tcp.md)
-    - [`Syslog`](docs/loggers/logger_syslog.md)
+    - [`Syslog`](docs/loggers/logger_syslog.md) with TLS support
     - [`DNSTap`](docs/loggers/logger_dnstap.md) protobuf messages
   - *Send to various sinks*
     - [`Fluentd`](docs/loggers/logger_fluentd.md)
     - [`InfluxDB`](docs/loggers/logger_influxdb.md)
-    - [`Loki`](docs/loggers/logger_loki.md) and visualize-it with built-in Grafana dashboard
+    - [`Loki`](docs/loggers/logger_loki.md)
     - [`ElasticSearch`](docs/loggers/logger_elasticsearch.md)
     - [`Scalyr`](docs/loggers/logger_scalyr.md)
     - [`Redis`](docs/loggers/logger_redis.md)

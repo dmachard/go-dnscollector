@@ -45,7 +45,7 @@ sudo make test
 Execute a test for one specific testcase in a package
 
 ```bash
-go test -timeout 10s -cover -v ./loggers -run TestSyslogRunJsonMode
+go test -timeout 10s -cover -v ./loggers -run Test_SyslogRun
 ```
 
 ## Update Golang version and package dependencies
