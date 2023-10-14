@@ -16,13 +16,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Version is the package version, value is set during build phase
-var Version = "0.0.0"
-
 func showVersion() {
-	fmt.Println("version: ", version.Version)
-	fmt.Println("revision: ", version.Revision)
-	fmt.Println("build date: ", version.BuildDate)
+	fmt.Println(version.Version)
 }
 
 func printUsage() {
@@ -128,7 +123,7 @@ func main() {
 	// enable the verbose mode ?
 	logger.SetVerbose(config.Global.Trace.Verbose)
 
-	logger.Info("main - version=%s", version.Version)
+	logger.Info("main - version=%s revision=%s", version.Version, version.Revision)
 	logger.Info("main - starting dns-collector...")
 
 	// load loggers
@@ -162,10 +157,10 @@ func main() {
 		}
 
 		if subcfg.Loggers.RestAPI.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewRestAPI(subcfg, logger, Version, output.Name)
+			mapLoggers[output.Name] = loggers.NewRestAPI(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.Prometheus.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewPrometheus(subcfg, logger, Version, output.Name)
+			mapLoggers[output.Name] = loggers.NewPrometheus(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.Stdout.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewStdOut(subcfg, logger, output.Name)
@@ -192,7 +187,7 @@ func main() {
 			mapLoggers[output.Name] = loggers.NewLokiClient(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.Statsd.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewStatsdClient(subcfg, logger, Version, output.Name)
+			mapLoggers[output.Name] = loggers.NewStatsdClient(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.ElasticSearchClient.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewElasticSearchClient(subcfg, logger, output.Name)
