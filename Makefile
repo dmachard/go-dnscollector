@@ -13,7 +13,12 @@ VERSION ?= $(shell git describe --tags ${COMMIT} 2>/dev/null | cut -c2-)
 VERSION := $(or $(VERSION),$(COMMIT))
 
 LD_FLAGS ?=
-LD_FLAGS += -X main.Version=$(VERSION)
+#LD_FLAGS += -X main.Version=$(VERSION)
+
+LD_FLAGS += -X github.com/prometheus/common/version.Version=$(VERSION)
+LD_FLAGS += -X github.com/prometheus/common/version.Revision=$(COMMIT)
+LD_FLAGS += -X github.com/prometheus/common/version.Branch=$(BRANCH)
+LD_FLAGS += -X github.com/prometheus/common/version.BuildDate=$(BUILD_TIME)
 
 ifndef $(GOPATH)
 	GOPATH=$(shell go env GOPATH)

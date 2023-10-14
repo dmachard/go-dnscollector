@@ -12,6 +12,7 @@ import (
 	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-logger"
 	"github.com/natefinch/lumberjack"
+	"github.com/prometheus/common/version"
 	"gopkg.in/yaml.v2"
 )
 
@@ -19,7 +20,9 @@ import (
 var Version = "0.0.0"
 
 func showVersion() {
-	fmt.Println(Version)
+	fmt.Println("version: ", version.Version)
+	fmt.Println("revision: ", version.Revision)
+	fmt.Println("build date: ", version.BuildDate)
 }
 
 func printUsage() {
@@ -125,7 +128,7 @@ func main() {
 	// enable the verbose mode ?
 	logger.SetVerbose(config.Global.Trace.Verbose)
 
-	logger.Info("main - version %s", Version)
+	logger.Info("main - version=%s", version.Version)
 	logger.Info("main - starting dns-collector...")
 
 	// load loggers
