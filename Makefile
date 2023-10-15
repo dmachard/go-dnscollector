@@ -13,6 +13,7 @@ VERSION ?= $(shell git describe --tags --abbrev=0 ${COMMIT} 2>/dev/null | cut -c
 VERSION := $(or $(VERSION),$(COMMIT))
 
 LD_FLAGS ?=
+LD_FLAGS += -s -w # disable debug informations
 LD_FLAGS += -X github.com/prometheus/common/version.Version=$(VERSION)
 LD_FLAGS += -X github.com/prometheus/common/version.Revision=$(COMMIT)
 LD_FLAGS += -X github.com/prometheus/common/version.Branch=$(BRANCH)
