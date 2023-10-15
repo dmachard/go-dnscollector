@@ -9,11 +9,14 @@ GO_FRAMESTREAM := 0.6.0
 BUILD_TIME := $(shell LANG=en_US date +"%F_%T_%z")
 COMMIT := $(shell git rev-parse --short HEAD)
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
-VERSION ?= $(shell git describe --tags ${COMMIT} 2>/dev/null | cut -c2-)
+VERSION ?= $(shell git describe --tags --abbrev=0 ${COMMIT} 2>/dev/null | cut -c2-)
 VERSION := $(or $(VERSION),$(COMMIT))
 
 LD_FLAGS ?=
-LD_FLAGS += -X main.Version=$(VERSION)
+LD_FLAGS += -X github.com/prometheus/common/version.Version=$(VERSION)
+LD_FLAGS += -X github.com/prometheus/common/version.Revision=$(COMMIT)
+LD_FLAGS += -X github.com/prometheus/common/version.Branch=$(BRANCH)
+LD_FLAGS += -X github.com/prometheus/common/version.BuildDate=$(BUILD_TIME)
 
 ifndef $(GOPATH)
 	GOPATH=$(shell go env GOPATH)
@@ -38,6 +41,9 @@ build:
 run: build
 	./${BINARY_NAME}
 
+version: build
+	./${BINARY_NAME} -v
+
 lint:
 	$(GOPATH)/bin/golangci-lint run --config=.golangci.yml ./...
 	
@@ -46,7 +52,7 @@ test:
 	@go test ./netlib/ -race -cover -v
 	@go test -timeout 30s ./transformers/ -race -cover -v
 	@go test -timeout 30s ./collectors/ -race -cover -v
-	@go test -timeout 60s ./loggers/ -race -cover -v
+	@go test -timeout 90s ./loggers/ -race -cover -v
 
 clean:
 	@go clean

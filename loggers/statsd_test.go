@@ -13,7 +13,7 @@ func TestStatsdRun(t *testing.T) {
 	config := dnsutils.GetFakeConfig()
 	config.Loggers.Statsd.FlushInterval = 1
 
-	g := NewStatsdClient(config, logger.New(false), "1.2.3", "test")
+	g := NewStatsdClient(config, logger.New(false), "test")
 
 	// fake msgpack receiver
 	fakeRcvr, err := net.ListenPacket(dnsutils.SOCKET_UDP, "127.0.0.1:8125")

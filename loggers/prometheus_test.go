@@ -21,7 +21,7 @@ const (
 func TestPrometheus_BadAuth(t *testing.T) {
 	// init the logger
 	config := dnsutils.GetFakeConfig()
-	g := NewPrometheus(config, logger.New(false), "dev", "test")
+	g := NewPrometheus(config, logger.New(false), "test")
 
 	tt := []struct {
 		name       string
@@ -74,7 +74,7 @@ func TestPrometheus_GetMetrics(t *testing.T) {
 // func getMetricsHelper(config *dnsutils.Config, labels map[string]string, t *testing.T) {
 func getMetricsTestCase(config *dnsutils.Config, labels map[string]string) func(t *testing.T) {
 	return func(t *testing.T) {
-		g := NewPrometheus(config, logger.New(false), "dev", "test")
+		g := NewPrometheus(config, logger.New(false), "test")
 
 		// record one dns message to simulate some incoming data
 		noerror_record := dnsutils.GetFakeDnsMessage()
@@ -166,7 +166,7 @@ func getMetricsTestCase(config *dnsutils.Config, labels map[string]string) func(
 // Test that EPS (Events Per Second) Counters increment correctly
 func TestPrometheus_EPS_Counters(t *testing.T) {
 	config := dnsutils.GetFakeConfig()
-	g := NewPrometheus(config, logger.New(false), "dev", "test")
+	g := NewPrometheus(config, logger.New(false), "test")
 
 	// record one dns message to simulate some incoming data
 	noerror_record := dnsutils.GetFakeDnsMessage()
@@ -207,7 +207,7 @@ func TestPrometheus_EPS_Counters(t *testing.T) {
 func TestPrometheus_BuildInfo(t *testing.T) {
 	config := dnsutils.GetFakeConfig()
 	// config.Loggers.Prometheus.HistogramMetricsEnabled = true
-	g := NewPrometheus(config, logger.New(false), "dev", "test")
+	g := NewPrometheus(config, logger.New(false), "test")
 
 	mf := getMetrics(g, t)
 
@@ -220,7 +220,7 @@ func TestPrometheus_BuildInfo(t *testing.T) {
 func TestPrometheus_ConfirmDifferentResolvers(t *testing.T) {
 	config := dnsutils.GetFakeConfig()
 	config.Loggers.Prometheus.LabelsList = []string{"resolver"}
-	g := NewPrometheus(config, logger.New(false), "dev", "test")
+	g := NewPrometheus(config, logger.New(false), "test")
 	noerror_record := dnsutils.GetFakeDnsMessage()
 	noerror_record.DNS.Length = 123
 	noerror_record.NetworkInfo.ResponseIp = "1.2.3.4"

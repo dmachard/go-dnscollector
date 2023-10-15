@@ -50,14 +50,13 @@ type StatsdClient struct {
 	outputChan  chan dnsutils.DnsMessage
 	config      *dnsutils.Config
 	logger      *logger.Logger
-	version     string
 	name        string
 
 	Stats StreamStats
 	sync.RWMutex
 }
 
-func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, version string, name string) *StatsdClient {
+func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, name string) *StatsdClient {
 	logger.Info("[%s] logger=statsd - enabled", name)
 
 	s := &StatsdClient{
@@ -69,7 +68,6 @@ func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, version str
 		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.Statsd.ChannelBufferSize),
 		logger:      logger,
 		config:      config,
-		version:     version,
 		name:        name,
 		Stats:       StreamStats{Streams: make(map[string]*StatsPerStream)},
 	}

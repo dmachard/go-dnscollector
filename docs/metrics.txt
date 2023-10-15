@@ -1,6 +1,6 @@
-# HELP dnscollector_build_info Build version
+# HELP dnscollector_build_info A metric with a constant '1' value labeled by version, revision, branch, goversion from which dnscollector was built, and the goos and goarch for the build.
 # TYPE dnscollector_build_info gauge
-dnscollector_build_info{version="0.0.0"} 1
+dnscollector_build_info{branch="main",goarch="amd64",goos="linux",goversion="go1.21.3",revision="9fde998",tags="unknown",version="0.37.0-beta1"} 1
 # HELP dnscollector_bytes_total The total bytes received and sent
 # TYPE dnscollector_bytes_total counter
 dnscollector_bytes_total{stream_id="dnsdist_pdns2"} 5.6543221e+07

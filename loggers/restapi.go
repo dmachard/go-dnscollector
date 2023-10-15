@@ -70,7 +70,7 @@ type RestAPI struct {
 	sync.RWMutex
 }
 
-func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, version string, name string) *RestAPI {
+func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, name string) *RestAPI {
 	logger.Info("[%s] logger=restapi - enabled", name)
 	o := &RestAPI{
 		doneApi:     make(chan bool),

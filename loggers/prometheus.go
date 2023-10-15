@@ -19,6 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/version"
 	// _ "net/http/pprof"
 )
 
@@ -170,13 +171,11 @@ type Prometheus struct {
 	config       *dnsutils.Config
 	logger       *logger.Logger
 	promRegistry *prometheus.Registry
-	version      string
+	//version      string
 
 	sync.Mutex
 	catalogueLabels []string
 	counters        *PromCounterCatalogueContainer
-
-	gaugeBuildInfo *prometheus.GaugeVec
 
 	// All metrics use these descriptions when regestering
 	gaugeTopDomains    *prometheus.Desc
@@ -722,7 +721,7 @@ func CreateSystemCatalogue(prom *Prometheus) ([]string, *PromCounterCatalogueCon
 	)
 }
 
-func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version string, name string) *Prometheus {
+func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, name string) *Prometheus {
 	logger.Info("[%s] logger=prometheus - enabled", name)
 	o := &Prometheus{
 		doneApi:     make(chan bool),
@@ -734,7 +733,7 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
 		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
 		logger:      logger,
-		version:     version,
+		//version:     version,
 
 		promRegistry: prometheus.NewPedanticRegistry(),
 
@@ -746,9 +745,6 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, version strin
 
 	// init prometheus
 	o.InitProm()
-
-	// add build version in metrics
-	o.gaugeBuildInfo.WithLabelValues(o.version).Set(1)
 
 	// midleware to add basic authentication
 	authMiddleware := func(handler http.Handler) http.Handler {
@@ -789,14 +785,8 @@ func (o *Prometheus) InitProm() {
 
 	prom_prefix := SanitizeMetricName(o.config.Loggers.Prometheus.PromPrefix)
 
-	o.gaugeBuildInfo = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%s_build_info", prom_prefix),
-			Help: "Build version",
-		},
-		[]string{"version"},
-	)
-	o.promRegistry.MustRegister(o.gaugeBuildInfo)
+	// register metric about current version information.
+	o.promRegistry.MustRegister(version.NewCollector(prom_prefix))
 
 	// export Go runtime metrics
 	o.promRegistry.MustRegister(
