@@ -30,7 +30,7 @@ jobs:
         go-version: ${{ matrix.go-version }}
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
   go-freebsd:
     runs-on: ubuntu-latest
@@ -46,7 +46,7 @@ jobs:
         go-version: ${{ matrix.go-version }}
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=freebsd GOARCH=amd64 go build -o go-dnscollector *.go
+      run: CGO_ENABLED=0 GOOS=freebsd GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
   # for macos and window, limit the build to the latest version
   go-macos:
@@ -63,7 +63,7 @@ jobs:
         go-version: ${{ matrix.go-version }}
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o go-dnscollector *.go
+      run: CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
   go-win:
     runs-on: windows-latest
@@ -81,7 +81,7 @@ jobs:
     - name: build binary
       run: |
         set CGO_ENABLED=0
-        go build -o go-dnscollector.exe .
+        go build -ldflags="-s -w" -o go-dnscollector.exe .
       
   docker:
     runs-on: ubuntu-latest
