@@ -34,7 +34,7 @@ jobs:
     - uses: actions/setup-python@v4
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: Deploy dnsdist docker image
       run: |
@@ -62,7 +62,7 @@ jobs:
     - uses: actions/setup-python@v4
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: Deploy recursor docker image
       run: |
