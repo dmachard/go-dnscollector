@@ -4,7 +4,7 @@
 Build-in webserver with REST API to search domains, clients and more...
 Basic authentication supported.
 
-See the [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/doc/swagger.yml) documentation.
+See the [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/docs/swagger.yml) documentation.
 
 Options:
 
