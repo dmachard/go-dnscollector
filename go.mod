@@ -12,7 +12,7 @@ require (
 	github.com/dmachard/go-powerdns-protobuf v0.2.0
 	github.com/dmachard/go-topmap v0.5.0
 	github.com/farsightsec/golang-framestream v0.3.0
-	github.com/fsnotify/fsnotify v1.6.0
+	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/snappy v0.0.4
 	github.com/google/gopacket v1.1.19
