@@ -168,7 +168,7 @@ func (p *NormalizeProcessor) GetEffectiveTld(dm *dnsutils.DnsMessage) int {
 	if icann {
 		dm.PublicSuffix.QnamePublicSuffix = etld
 	} else {
-		p.LogError("ICANN Unmanaged")
+		p.logError("suffix unmanaged by icann: %s", qname)
 	}
 	return RETURN_SUCCESS
 }
