@@ -61,6 +61,49 @@ func AreRoutesValid(config *dnsutils.Config) (ret error) {
 	return
 }
 
+func InitLogger(logger *logger.Logger, config *dnsutils.Config) {
+	// redirect app logs to file ?
+	if len(config.Global.Trace.Filename) > 0 {
+		logger.SetOutput(&lumberjack.Logger{
+			Filename:   config.Global.Trace.Filename,
+			MaxSize:    config.Global.Trace.MaxSize,
+			MaxBackups: config.Global.Trace.MaxBackups,
+		})
+	}
+
+	// enable the verbose mode ?
+	logger.SetVerbose(config.Global.Trace.Verbose)
+}
+
+func GetItemConfig(section string, config *dnsutils.Config, item dnsutils.MultiplexInOut) *dnsutils.Config {
+	// load config
+	cfg := make(map[string]interface{})
+	cfg[section] = item.Params
+	cfg[section+"-transformers"] = make(map[string]interface{})
+	for _, p := range item.Params {
+		p.(map[string]interface{})["enable"] = true
+	}
+
+	// get config with default values
+	subcfg := &dnsutils.Config{}
+	subcfg.SetDefault()
+
+	// add transformer
+	for k, v := range item.Transforms {
+		v.(map[string]interface{})["enable"] = true
+		cfg[section+"-transformers"].(map[string]interface{})[k] = v
+	}
+
+	// copy global config
+	subcfg.Global = config.Global
+
+	yamlcfg, _ := yaml.Marshal(cfg)
+	if err := yaml.Unmarshal(yamlcfg, subcfg); err != nil {
+		panic(fmt.Sprintf("main - yaml logger config error: %v", err))
+	}
+	return subcfg
+}
+
 func main() {
 	args := os.Args[1:] // Ignore the first argument (the program name)
 
@@ -111,51 +154,25 @@ func main() {
 		panic(fmt.Sprintf("main - config error:  %v", err))
 	}
 
-	// redirect app logs to file ?
-	if len(config.Global.Trace.Filename) > 0 {
-		logger.SetOutput(&lumberjack.Logger{
-			Filename:   config.Global.Trace.Filename,
-			MaxSize:    config.Global.Trace.MaxSize,
-			MaxBackups: config.Global.Trace.MaxBackups,
-		})
-	}
-
-	// enable the verbose mode ?
-	logger.SetVerbose(config.Global.Trace.Verbose)
+	// init logger
+	InitLogger(logger, config)
 
 	logger.Info("main - version=%s revision=%s", version.Version, version.Revision)
 	logger.Info("main - starting dns-collector...")
+
+	// checking all routes before to continue
+	if err := AreRoutesValid(config); err != nil {
+		panic(fmt.Sprintf("main - configuration error: %e", err))
+	}
 
 	// load loggers
 	logger.Info("main - loading loggers...")
 	mapLoggers := make(map[string]dnsutils.Worker)
 	for _, output := range config.Multiplexer.Loggers {
-		// load config
-		cfg := make(map[string]interface{})
-		cfg["loggers"] = output.Params
-		cfg["outgoing-transformers"] = make(map[string]interface{})
-		for _, p := range output.Params {
-			p.(map[string]interface{})["enable"] = true
-		}
+		// prepare restructured config for the current logger
+		subcfg := GetItemConfig("loggers", config, output)
 
-		// get config with default values
-		subcfg := &dnsutils.Config{}
-		subcfg.SetDefault()
-
-		// add transformer
-		for k, v := range output.Transforms {
-			v.(map[string]interface{})["enable"] = true
-			cfg["outgoing-transformers"].(map[string]interface{})[k] = v
-		}
-
-		// copy global config
-		subcfg.Global = config.Global
-
-		yamlcfg, _ := yaml.Marshal(cfg)
-		if err := yaml.Unmarshal(yamlcfg, subcfg); err != nil {
-			panic(fmt.Sprintf("main - yaml logger config error: %v", err))
-		}
-
+		// registor the logger if enabled
 		if subcfg.Loggers.RestAPI.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewRestAPI(subcfg, logger, output.Name)
 		}
@@ -210,36 +227,10 @@ func main() {
 	logger.Info("main - loading collectors...")
 	mapCollectors := make(map[string]dnsutils.Worker)
 	for _, input := range config.Multiplexer.Collectors {
-		// load config
-		cfg := make(map[string]interface{})
-		cfg["collectors"] = input.Params
-		cfg["ingoing-transformers"] = make(map[string]interface{})
-		for _, p := range input.Params {
-			p.(map[string]interface{})["enable"] = true
-		}
+		// prepare restructured config for the current collector
+		subcfg := GetItemConfig("collectors", config, input)
 
-		// get config with default values
-		subcfg := &dnsutils.Config{}
-		subcfg.SetDefault()
-
-		// add transformer
-		for k, v := range input.Transforms {
-			v.(map[string]interface{})["enable"] = true
-			cfg["ingoing-transformers"].(map[string]interface{})[k] = v
-		}
-
-		// copy global config
-		subcfg.Global = config.Global
-
-		yamlcfg, _ := yaml.Marshal(cfg)
-		if err := yaml.Unmarshal(yamlcfg, subcfg); err != nil {
-			panic(fmt.Sprintf("main - yaml collector config error: %v", err))
-		}
-
-		if err := AreRoutesValid(config); err != nil {
-			panic(fmt.Sprintf("main - configuration error: %e", err))
-		}
-
+		// register the collector if enabled
 		if subcfg.Collectors.Dnstap.Enable && IsCollectorRouted(config, input.Name) {
 			mapCollectors[input.Name] = collectors.NewDnstap(nil, subcfg, logger, input.Name)
 		}
@@ -268,16 +259,16 @@ func main() {
 
 	// here the multiplexer logic
 	// connect collectors between loggers
-	for _, routes := range config.Multiplexer.Routes {
+	for _, route := range config.Multiplexer.Routes {
 		var logwrks []dnsutils.Worker
-		for _, dst := range routes.Dst {
+		for _, dst := range route.Dst {
 			if _, ok := mapLoggers[dst]; ok {
 				logwrks = append(logwrks, mapLoggers[dst])
 			} else {
 				panic(fmt.Sprintf("main - routing error: logger %v doest not exist", dst))
 			}
 		}
-		for _, src := range routes.Src {
+		for _, src := range route.Src {
 			if _, ok := mapCollectors[src]; ok {
 				mapCollectors[src].SetLoggers(logwrks)
 			} else {
@@ -300,7 +291,7 @@ func main() {
 		for {
 			select {
 			case <-sigHUP:
-				logger.Info("main - reloading config...")
+				logger.Info("main - sig hup - reloading config...")
 
 				// read config
 				err := dnsutils.ReloadConfig(configPath, config)
@@ -308,8 +299,26 @@ func main() {
 					panic(fmt.Sprintf("main - reload config error:  %v", err))
 				}
 
-				// enable the verbose mode ?
-				logger.SetVerbose(config.Global.Trace.Verbose)
+				// reload logger
+				InitLogger(logger, config)
+
+				for _, output := range config.Multiplexer.Loggers {
+					_ = GetItemConfig("loggers", config, output)
+					if _, ok := mapLoggers[output.Name]; ok {
+						fmt.Println(output.Name)
+					} else {
+						logger.Info("main - reload config logger=%v doest not exist", output.Name)
+					}
+				}
+
+				for _, input := range config.Multiplexer.Collectors {
+					_ = GetItemConfig("collectors", config, input)
+					if _, ok := mapCollectors[input.Name]; ok {
+						fmt.Println(input.Name)
+					} else {
+						logger.Info("main - reload config collector=%v doest not exist", input.Name)
+					}
+				}
 
 			case <-sigTerm:
 				logger.Info("main - exiting...")

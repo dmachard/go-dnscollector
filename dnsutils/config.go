@@ -250,7 +250,7 @@ type Config struct {
 		}
 	} `yaml:"collectors"`
 
-	IngoingTransformers ConfigTransformers `yaml:"ingoing-transformers"`
+	IngoingTransformers ConfigTransformers `yaml:"collectors-transformers"`
 
 	Loggers struct {
 		Stdout struct {
@@ -481,7 +481,7 @@ type Config struct {
 		} `yaml:"falco"`
 	} `yaml:"loggers"`
 
-	OutgoingTransformers ConfigTransformers `yaml:"outgoing-transformers"`
+	OutgoingTransformers ConfigTransformers `yaml:"loggers-transformers"`
 
 	Multiplexer struct {
 		Collectors []MultiplexInOut  `yaml:"collectors"`
