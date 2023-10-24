@@ -49,6 +49,16 @@ func (c *FalcoClient) ReadConfig() {
 	c.url = c.config.Loggers.FalcoClient.URL
 }
 
+func (c *FalcoClient) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload config...")
+
+	// save the new config
+	c.config = config
+
+	// read again
+	c.ReadConfig()
+}
+
 func (f *FalcoClient) Channel() chan dnsutils.DnsMessage {
 	return f.inputChan
 }

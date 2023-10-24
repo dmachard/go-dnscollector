@@ -60,6 +60,16 @@ func (c *DnstapProxifier) ReadConfig() {
 	c.sockPath = c.config.Collectors.DnstapProxifier.SockPath
 }
 
+func (c *DnstapProxifier) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload config...")
+
+	// save the new config
+	c.config = config
+
+	// read again
+	c.ReadConfig()
+}
+
 func (c *DnstapProxifier) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] collector=dnstaprelay - "+msg, v...)
 }

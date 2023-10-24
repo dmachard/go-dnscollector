@@ -115,6 +115,16 @@ func (l *LogFile) ReadConfig() {
 	l.LogInfo("running in mode: %s", l.config.Loggers.LogFile.Mode)
 }
 
+func (o *LogFile) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload config...")
+
+	// save the new config
+	o.config = config
+
+	// read again
+	o.ReadConfig()
+}
+
 func (l *LogFile) LogInfo(msg string, v ...interface{}) {
 	l.logger.Info("["+l.name+"] logger=file - "+msg, v...)
 }

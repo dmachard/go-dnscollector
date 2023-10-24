@@ -62,6 +62,16 @@ func (c *ElasticSearchClient) ReadConfig() {
 	c.bulkUrl = u.String()
 }
 
+func (o *ElasticSearchClient) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload config...")
+
+	// save the new config
+	o.config = config
+
+	// read again
+	o.ReadConfig()
+}
+
 func (o *ElasticSearchClient) Channel() chan dnsutils.DnsMessage {
 	return o.inputChan
 }

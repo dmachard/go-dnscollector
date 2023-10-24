@@ -75,6 +75,16 @@ func (c *StdOut) ReadConfig() {
 	}
 }
 
+func (o *StdOut) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload config...")
+
+	// save the new config
+	o.config = config
+
+	// read again
+	o.ReadConfig()
+}
+
 func (c *StdOut) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] logger=stdout - "+msg, v...)
 }

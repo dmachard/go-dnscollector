@@ -66,6 +66,16 @@ func (o *DnstapSender) ReadConfig() {
 	}
 }
 
+func (o *DnstapSender) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload config...")
+
+	// save the new config
+	o.config = config
+
+	// read again
+	o.ReadConfig()
+}
+
 func (o *DnstapSender) LogInfo(msg string, v ...interface{}) {
 	o.logger.Info("["+o.name+"] logger=dnstap - "+msg, v...)
 }

@@ -25,6 +25,8 @@ func (c *FakeLogger) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *FakeLogger) ReadConfig() {}
 
+func (o *FakeLogger) ReloadConfig(config *dnsutils.Config) {}
+
 func (o *FakeLogger) Stop() {}
 
 func (o *FakeLogger) Channel() chan dnsutils.DnsMessage {

@@ -142,6 +142,16 @@ func (c *ScalyrClient) ReadConfig() {
 	c.httpclient = &http.Client{Transport: tr}
 }
 
+func (o *ScalyrClient) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload config...")
+
+	// save the new config
+	o.config = config
+
+	// read again
+	o.ReadConfig()
+}
+
 func (o *ScalyrClient) Run() {
 	o.LogInfo("running in background...")
 

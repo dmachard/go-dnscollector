@@ -74,6 +74,16 @@ func (o *RedisPub) ReadConfig() {
 	}
 }
 
+func (o *RedisPub) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload config...")
+
+	// save the new config
+	o.config = config
+
+	// read again
+	o.ReadConfig()
+}
+
 func (o *RedisPub) LogInfo(msg string, v ...interface{}) {
 	o.logger.Info("["+o.name+"] logger=redispub - "+msg, v...)
 }

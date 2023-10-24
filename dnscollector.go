@@ -291,7 +291,7 @@ func main() {
 		for {
 			select {
 			case <-sigHUP:
-				logger.Info("main - sig hup - reloading config...")
+				logger.Info("main - SIGHUP received")
 
 				// read config
 				err := dnsutils.ReloadConfig(configPath, config)
@@ -303,18 +303,18 @@ func main() {
 				InitLogger(logger, config)
 
 				for _, output := range config.Multiplexer.Loggers {
-					_ = GetItemConfig("loggers", config, output)
+					newcfg := GetItemConfig("loggers", config, output)
 					if _, ok := mapLoggers[output.Name]; ok {
-						fmt.Println(output.Name)
+						mapLoggers[output.Name].ReloadConfig(newcfg)
 					} else {
 						logger.Info("main - reload config logger=%v doest not exist", output.Name)
 					}
 				}
 
 				for _, input := range config.Multiplexer.Collectors {
-					_ = GetItemConfig("collectors", config, input)
+					newcfg := GetItemConfig("collectors", config, input)
 					if _, ok := mapCollectors[input.Name]; ok {
-						fmt.Println(input.Name)
+						mapCollectors[input.Name].ReloadConfig(newcfg)
 					} else {
 						logger.Info("main - reload config collector=%v doest not exist", input.Name)
 					}

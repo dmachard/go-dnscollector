@@ -77,6 +77,16 @@ func (c *TzspSniffer) ReadConfig() {
 	// TODO: Implement
 }
 
+func (c *TzspSniffer) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload config...")
+
+	// save the new config
+	c.config = config
+
+	// read again
+	c.ReadConfig()
+}
+
 func (c *TzspSniffer) Listen() error {
 	c.logger.Info("running in background...")
 

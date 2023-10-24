@@ -85,6 +85,16 @@ func (c *Dnstap) ReadConfig() {
 	}
 }
 
+func (c *Dnstap) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload config...")
+
+	// save the new config
+	c.config = config
+
+	// read again
+	c.ReadConfig()
+}
+
 func (c *Dnstap) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] collector=dnstap - "+msg, v...)
 }

@@ -69,6 +69,16 @@ func (o *TcpClient) ReadConfig() {
 	}
 }
 
+func (o *TcpClient) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload config...")
+
+	// save the new config
+	o.config = config
+
+	// read again
+	o.ReadConfig()
+}
+
 func (o *TcpClient) LogInfo(msg string, v ...interface{}) {
 	o.logger.Info("["+o.name+"] logger=tcpclient - "+msg, v...)
 }

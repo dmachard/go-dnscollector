@@ -59,6 +59,16 @@ func (o *FluentdClient) ReadConfig() {
 	}
 }
 
+func (o *FluentdClient) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload config...")
+
+	// save the new config
+	o.config = config
+
+	// read again
+	o.ReadConfig()
+}
+
 func (o *FluentdClient) LogInfo(msg string, v ...interface{}) {
 	o.logger.Info("["+o.name+"] logger=fluentd - "+msg, v...)
 }

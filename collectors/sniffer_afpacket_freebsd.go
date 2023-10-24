@@ -57,6 +57,16 @@ func (c *AfpacketSniffer) Loggers() []chan dnsutils.DnsMessage {
 func (c *AfpacketSniffer) ReadConfig() {
 }
 
+func (c *AfpacketSniffer) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload config...")
+
+	// save the new config
+	c.config = config
+
+	// read again
+	c.ReadConfig()
+}
+
 func (c *AfpacketSniffer) Channel() chan dnsutils.DnsMessage {
 	return nil
 }

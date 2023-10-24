@@ -203,6 +203,16 @@ func (c *AfpacketSniffer) ReadConfig() {
 	c.device = c.config.Collectors.AfpacketLiveCapture.Device
 }
 
+func (c *AfpacketSniffer) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload config...")
+
+	// save the new config
+	c.config = config
+
+	// read again
+	c.ReadConfig()
+}
+
 func (c *AfpacketSniffer) Channel() chan dnsutils.DnsMessage {
 	return nil
 }

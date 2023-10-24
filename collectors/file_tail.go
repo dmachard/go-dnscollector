@@ -55,6 +55,16 @@ func (c *Tail) ReadConfig() {
 	//tbc
 }
 
+func (c *Tail) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload config...")
+
+	// save the new config
+	c.config = config
+
+	// read again
+	c.ReadConfig()
+}
+
 func (c *Tail) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] collector=tail - "+msg, v...)
 }

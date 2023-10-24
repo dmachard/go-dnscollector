@@ -58,6 +58,16 @@ func (c *XdpSniffer) ReadConfig() {
 	c.identity = c.config.GetServerIdentity()
 }
 
+func (c *XdpSniffer) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload config...")
+
+	// save the new config
+	c.config = config
+
+	// read again
+	c.ReadConfig()
+}
+
 func (c *XdpSniffer) Channel() chan dnsutils.DnsMessage {
 	return nil
 }

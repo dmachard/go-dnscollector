@@ -74,6 +74,16 @@ func (c *ProtobufPowerDNS) ReadConfig() {
 	}
 }
 
+func (c *ProtobufPowerDNS) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload config...")
+
+	// save the new config
+	c.config = config
+
+	// read again
+	c.ReadConfig()
+}
+
 func (c *ProtobufPowerDNS) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] collector=powerdns - "+msg, v...)
 }

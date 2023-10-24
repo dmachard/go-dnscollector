@@ -93,6 +93,16 @@ func (c *FileIngestor) ReadConfig() {
 		c.config.Collectors.FileIngestor.WatchMode)
 }
 
+func (c *FileIngestor) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload config...")
+
+	// save the new config
+	c.config = config
+
+	// read again
+	c.ReadConfig()
+}
+
 func (c *FileIngestor) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] collector=fileingestor - "+msg, v...)
 }

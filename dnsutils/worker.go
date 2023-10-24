@@ -7,4 +7,5 @@ type Worker interface {
 	Run()
 	Channel() chan DnsMessage
 	ReadConfig()
+	ReloadConfig(config *Config)
 }
