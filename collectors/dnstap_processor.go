@@ -49,45 +49,53 @@ func GetFakeDnstap(dnsquery []byte) *dnstap.Dnstap {
 }
 
 type DnstapProcessor struct {
-	connId       int
-	doneRun      chan bool
-	stopRun      chan bool
-	doneMonitor  chan bool
-	stopMonitor  chan bool
-	recvFrom     chan []byte
-	logger       *logger.Logger
-	config       *dnsutils.Config
-	name         string
-	chanSize     int
-	dropped      chan string
-	droppedCount map[string]int
+	connId             int
+	doneRun            chan bool
+	stopRun            chan bool
+	doneMonitor        chan bool
+	stopMonitor        chan bool
+	recvFrom           chan []byte
+	logger             *logger.Logger
+	config             *dnsutils.Config
+	configTransformers chan *dnsutils.ConfigTransformers
+	name               string
+	chanSize           int
+	dropped            chan string
+	droppedCount       map[string]int
 }
 
 func NewDnstapProcessor(connId int, config *dnsutils.Config, logger *logger.Logger, name string, size int) DnstapProcessor {
 	logger.Info("[%s] processor=dnstap#%d - initialization...", name, connId)
 
 	d := DnstapProcessor{
-		connId:       connId,
-		doneMonitor:  make(chan bool),
-		doneRun:      make(chan bool),
-		stopMonitor:  make(chan bool),
-		stopRun:      make(chan bool),
-		recvFrom:     make(chan []byte, size),
-		chanSize:     size,
-		logger:       logger,
-		config:       config,
-		name:         name,
-		dropped:      make(chan string),
-		droppedCount: map[string]int{},
+		connId:             connId,
+		doneMonitor:        make(chan bool),
+		doneRun:            make(chan bool),
+		stopMonitor:        make(chan bool),
+		stopRun:            make(chan bool),
+		recvFrom:           make(chan []byte, size),
+		chanSize:           size,
+		logger:             logger,
+		config:             config,
+		configTransformers: make(chan *dnsutils.ConfigTransformers),
+		name:               name,
+		dropped:            make(chan string),
+		droppedCount:       map[string]int{},
 	}
 
 	d.ReadConfig()
-
 	return d
 }
 
 func (d *DnstapProcessor) ReadConfig() {
 	// todo - checking settings
+}
+
+func (d *DnstapProcessor) ReloadConfig(config *dnsutils.Config) {
+	d.config = config
+	d.ReadConfig()
+
+	d.configTransformers <- &config.IngoingTransformers
 }
 
 func (c *DnstapProcessor) LogInfo(msg string, v ...interface{}) {
@@ -171,9 +179,11 @@ func (d *DnstapProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggers
 RUN_LOOP:
 	for {
 		select {
+		case cfg := <-d.configTransformers:
+			transforms.ReloadConfig(cfg)
+
 		case <-d.stopRun:
 			transforms.Reset()
-			//close(d.recvFrom)
 			d.doneRun <- true
 			break RUN_LOOP
 

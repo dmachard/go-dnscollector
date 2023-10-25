@@ -90,9 +90,12 @@ func (c *Dnstap) ReloadConfig(config *dnsutils.Config) {
 
 	// save the new config
 	c.config = config
-
-	// read again
 	c.ReadConfig()
+
+	// refresh config for all conns
+	for i := range c.tapProcessors {
+		c.tapProcessors[i].ReloadConfig(config)
+	}
 }
 
 func (c *Dnstap) LogInfo(msg string, v ...interface{}) {

@@ -55,7 +55,23 @@ func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, n
 	return d
 }
 
+func (p *Transforms) ReloadConfig(config *dnsutils.ConfigTransformers) {
+	p.config = config
+	p.Prepare()
+
+	// refresh config
+	p.NormalizeTransform.ReloadConfig(config)
+
+}
+
 func (p *Transforms) Prepare() error {
+	// clean the slice
+	p.activeTransforms = p.activeTransforms[:0]
+
+	if p.config.Normalize.Enable {
+		prefixlog := fmt.Sprintf("transformer=normalize#%d - ", p.instance)
+		p.LogInfo(prefixlog + "subprocessor normalize is loaded")
+	}
 
 	if p.config.GeoIP.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.geoipTransform)
@@ -123,7 +139,6 @@ func (p *Transforms) Prepare() error {
 			prefixlog := fmt.Sprintf("transformer=extract#%d - ", p.instance)
 			p.LogInfo(prefixlog + "subprocessor add base64 payload is enabled")
 		}
-
 	}
 
 	if p.config.MachineLearning.Enable {
@@ -229,6 +244,11 @@ func (p *Transforms) minimazeQname(dm *dnsutils.DnsMessage) int {
 	return RETURN_SUCCESS
 }
 
+func (p *Transforms) addBase64Payload(dm *dnsutils.DnsMessage) int {
+	dm.Extracted.Base64Payload = p.ExtractProcessor.AddBase64Payload(dm)
+	return RETURN_SUCCESS
+}
+
 func (p *Transforms) ProcessMessage(dm *dnsutils.DnsMessage) int {
 	// Begin to normalize
 	p.NormalizeTransform.ProcessDnsMessage(dm)
@@ -252,10 +272,5 @@ func (p *Transforms) ProcessMessage(dm *dnsutils.DnsMessage) int {
 		}
 	}
 
-	return RETURN_SUCCESS
-}
-
-func (p *Transforms) addBase64Payload(dm *dnsutils.DnsMessage) int {
-	dm.Extracted.Base64Payload = p.ExtractProcessor.AddBase64Payload(dm)
 	return RETURN_SUCCESS
 }
