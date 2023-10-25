@@ -90,7 +90,7 @@ func (p *GeoIpProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
 }
 
 func (p *GeoIpProcessor) Open() (err error) {
-	// before to open close all files
+	// before to open, close all files
 	// because open can be called also on reload
 	p.enabled = false
 	p.Close()
