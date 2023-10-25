@@ -57,11 +57,10 @@ func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, n
 
 func (p *Transforms) ReloadConfig(config *dnsutils.ConfigTransformers) {
 	p.config = config
-	p.Prepare()
-
-	// refresh config
 	p.NormalizeTransform.ReloadConfig(config)
+	p.GeoipTransform.ReloadConfig(config)
 
+	p.Prepare()
 }
 
 func (p *Transforms) Prepare() error {
@@ -69,14 +68,16 @@ func (p *Transforms) Prepare() error {
 	p.activeTransforms = p.activeTransforms[:0]
 
 	if p.config.Normalize.Enable {
-		prefixlog := fmt.Sprintf("transformer=normalize#%d - ", p.instance)
-		p.LogInfo(prefixlog + "subprocessor normalize is loaded")
+		prefixlog := fmt.Sprintf("transformer=normalize#%d ", p.instance)
+		p.LogInfo(prefixlog + "loaded")
+
+		p.NormalizeTransform.LoadActiveProcessors()
 	}
 
 	if p.config.GeoIP.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.geoipTransform)
-		prefixlog := fmt.Sprintf("transformer=geoip#%d - ", p.instance)
-		p.LogInfo(prefixlog + "is enabled")
+		prefixlog := fmt.Sprintf("transformer=geoip#%d ", p.instance)
+		p.LogInfo(prefixlog + "loaded")
 
 		if err := p.GeoipTransform.Open(); err != nil {
 			p.LogError(prefixlog+"open error %v", err)

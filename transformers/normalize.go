@@ -88,14 +88,11 @@ func NewNormalizeSubprocessor(
 		logError:    logError,
 	}
 
-	s.LoadActiveProcessors()
 	return s
 }
 
 func (p *NormalizeProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
-	// save the new config
 	p.config = config
-	p.LoadActiveProcessors()
 }
 
 func (p *NormalizeProcessor) LogInfo(msg string, v ...interface{}) {

@@ -63,6 +63,10 @@ func NewDnsGeoIpProcessor(config *dnsutils.ConfigTransformers, logger *logger.Lo
 	return d
 }
 
+func (p *GeoIpProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+	p.config = config
+}
+
 func (p *GeoIpProcessor) LogInfo(msg string, v ...interface{}) {
 	log := fmt.Sprintf("transformer=geoip#%d - ", p.instance)
 	p.logInfo(log+msg, v...)
@@ -86,6 +90,12 @@ func (p *GeoIpProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
 }
 
 func (p *GeoIpProcessor) Open() (err error) {
+	// before to open close all files
+	// because open can be called also on reload
+	p.enabled = false
+	p.Close()
+
+	// open files ?
 	if len(p.config.GeoIP.DbCountryFile) > 0 {
 		p.dbCountry, err = maxminddb.Open(p.config.GeoIP.DbCountryFile)
 		if err != nil {
