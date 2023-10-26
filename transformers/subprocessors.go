@@ -64,6 +64,8 @@ func (p *Transforms) ReloadConfig(config *dnsutils.ConfigTransformers) {
 	p.LatencyTransform.ReloadConfig(config)
 	p.SuspiciousTransform.ReloadConfig(config)
 	p.ReducerTransform.ReloadConfig(config)
+	p.ExtractProcessor.ReloadConfig(config)
+	p.MachineLearningTransform.ReloadConfig(config)
 
 	p.Prepare()
 }
