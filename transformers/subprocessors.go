@@ -59,6 +59,7 @@ func (p *Transforms) ReloadConfig(config *dnsutils.ConfigTransformers) {
 	p.config = config
 	p.NormalizeTransform.ReloadConfig(config)
 	p.GeoipTransform.ReloadConfig(config)
+	p.FilteringTransform.ReloadConfig(config)
 
 	p.Prepare()
 }
@@ -69,7 +70,7 @@ func (p *Transforms) Prepare() error {
 
 	if p.config.Normalize.Enable {
 		prefixlog := fmt.Sprintf("transformer=normalize#%d ", p.instance)
-		p.LogInfo(prefixlog + "loaded")
+		p.LogInfo(prefixlog + "enabled")
 
 		p.NormalizeTransform.LoadActiveProcessors()
 	}
@@ -77,7 +78,7 @@ func (p *Transforms) Prepare() error {
 	if p.config.GeoIP.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.geoipTransform)
 		prefixlog := fmt.Sprintf("transformer=geoip#%d ", p.instance)
-		p.LogInfo(prefixlog + "loaded")
+		p.LogInfo(prefixlog + "enabled")
 
 		if err := p.GeoipTransform.Open(); err != nil {
 			p.LogError(prefixlog+"open error %v", err)
@@ -106,8 +107,15 @@ func (p *Transforms) Prepare() error {
 	}
 
 	if p.config.Filtering.Enable {
-		prefixlog := fmt.Sprintf("transformer=filtering#%d - ", p.instance)
-		p.LogInfo(prefixlog + "is enabled")
+		prefixlog := fmt.Sprintf("transformer=filtering#%d ", p.instance)
+		p.LogInfo(prefixlog + "enabled")
+
+		p.FilteringTransform.LoadRcodes()
+		p.FilteringTransform.LoadDomainsList()
+		p.FilteringTransform.LoadQueryIpList()
+		p.FilteringTransform.LoadrDataIpList()
+
+		p.FilteringTransform.LoadActiveFilters()
 	}
 
 	if p.config.Latency.Enable {

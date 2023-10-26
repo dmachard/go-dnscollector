@@ -66,15 +66,11 @@ func NewFilteringProcessor(config *dnsutils.ConfigTransformers, logger *logger.L
 		logInfo:              logInfo,
 		logError:             logError,
 	}
-
-	d.LoadRcodes()
-	d.LoadDomainsList()
-	d.LoadQueryIpList()
-	d.LoadrDataIpList()
-
-	d.LoadActiveFilters()
-
 	return d
+}
+
+func (p *FilteringProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+	p.config = config
 }
 
 func (p *FilteringProcessor) LogInfo(msg string, v ...interface{}) {
@@ -90,12 +86,17 @@ func (p *FilteringProcessor) LogError(msg string, v ...interface{}) {
 func (p *FilteringProcessor) LoadActiveFilters() {
 	// TODO: Change to iteration through Filtering to add filters in custom order.
 
+	// clean the slice
+	p.activeFilters = p.activeFilters[:0]
+
 	if !p.config.Filtering.LogQueries {
 		p.activeFilters = append(p.activeFilters, p.ignoreQueryFilter)
+		p.LogInfo("drop queries subprocessor is enabled")
 	}
 
 	if !p.config.Filtering.LogReplies {
 		p.activeFilters = append(p.activeFilters, p.ignoreReplyFilter)
+		p.LogInfo("drop replies subprocessor is enabled")
 	}
 
 	if len(p.mapRcodes) > 0 {
@@ -135,76 +136,20 @@ func (p *FilteringProcessor) LoadActiveFilters() {
 		p.downsample = p.config.Filtering.Downsample
 		p.downsampleCount = 0
 		p.activeFilters = append(p.activeFilters, p.downsampleFilter)
+		p.LogInfo("down sampling subprocessor is enabled")
 	}
 }
 
 func (p *FilteringProcessor) LoadRcodes() {
+	// empty
+	for key := range p.mapRcodes {
+		delete(p.mapRcodes, key)
+	}
+
+	// add
 	for _, v := range p.config.Filtering.DropRcodes {
 		p.mapRcodes[v] = true
 	}
-}
-
-func (p *FilteringProcessor) loadQueryIpList(fname string, drop bool) (uint64, error) {
-	file, err := os.Open(fname)
-	if err != nil {
-		return 0, err
-	}
-
-	scanner := bufio.NewScanner(file)
-	var read uint64
-	var ipsetbuilder netaddr.IPSetBuilder
-	for scanner.Scan() {
-		read++
-		ipOrPrefix := strings.ToLower(scanner.Text())
-		prefix, err := netaddr.ParseIPPrefix(ipOrPrefix)
-		if err != nil {
-			ip, err := netaddr.ParseIP(ipOrPrefix)
-			if err != nil {
-				p.LogError("%s in in %s is neither an IP address nor a prefix", ipOrPrefix, fname)
-				continue
-			}
-			ipsetbuilder.Add(ip)
-			continue
-		}
-		ipsetbuilder.AddPrefix(prefix)
-	}
-	if drop {
-		p.ipsetDrop, err = ipsetbuilder.IPSet()
-	} else {
-		p.ipsetKeep, err = ipsetbuilder.IPSet()
-	}
-
-	return read, err
-}
-
-func (p *FilteringProcessor) loadKeepRdataIpList(fname string) (uint64, error) {
-	file, err := os.Open(fname)
-	if err != nil {
-		return 0, err
-	}
-
-	scanner := bufio.NewScanner(file)
-	var read uint64
-	var ipsetbuilder netaddr.IPSetBuilder
-	for scanner.Scan() {
-		read++
-		ipOrPrefix := strings.ToLower(scanner.Text())
-		prefix, err := netaddr.ParseIPPrefix(ipOrPrefix)
-		if err != nil {
-			ip, err := netaddr.ParseIP(ipOrPrefix)
-			if err != nil {
-				p.LogError("%s in in %s is neither an IP address nor a prefix", ipOrPrefix, fname)
-				continue
-			}
-			ipsetbuilder.Add(ip)
-			continue
-		}
-		ipsetbuilder.AddPrefix(prefix)
-	}
-
-	p.rDataIpsetKeep, err = ipsetbuilder.IPSet()
-
-	return read, err
 }
 
 func (p *FilteringProcessor) LoadQueryIpList() {
@@ -236,6 +181,23 @@ func (p *FilteringProcessor) LoadrDataIpList() {
 }
 
 func (p *FilteringProcessor) LoadDomainsList() {
+	// before to start, reset all maps
+	p.dropDomains = false
+	p.keepDomains = false
+
+	for key := range p.listFqdns {
+		delete(p.listFqdns, key)
+	}
+	for key := range p.listDomainsRegex {
+		delete(p.listDomainsRegex, key)
+	}
+	for key := range p.listKeepFqdns {
+		delete(p.listKeepFqdns, key)
+	}
+	for key := range p.listKeepDomainsRegex {
+		delete(p.listKeepDomainsRegex, key)
+	}
+
 	if len(p.config.Filtering.DropFqdnFile) > 0 {
 		file, err := os.Open(p.config.Filtering.DropFqdnFile)
 		if err != nil {
@@ -302,6 +264,81 @@ func (p *FilteringProcessor) LoadDomainsList() {
 			p.keepDomains = true
 		}
 	}
+}
+
+func (p *FilteringProcessor) loadQueryIpList(fname string, drop bool) (uint64, error) {
+	var emptyIPSet *netaddr.IPSet
+	p.ipsetDrop = emptyIPSet
+	p.ipsetKeep = emptyIPSet
+
+	file, err := os.Open(fname)
+	if err != nil {
+		return 0, err
+	}
+
+	scanner := bufio.NewScanner(file)
+	var read uint64
+	var ipsetbuilder netaddr.IPSetBuilder
+	for scanner.Scan() {
+		read++
+		ipOrPrefix := strings.ToLower(scanner.Text())
+		prefix, err := netaddr.ParseIPPrefix(ipOrPrefix)
+		if err != nil {
+			ip, err := netaddr.ParseIP(ipOrPrefix)
+			if err != nil {
+				p.LogError("%s in in %s is neither an IP address nor a prefix", ipOrPrefix, fname)
+				continue
+			}
+			ipsetbuilder.Add(ip)
+			continue
+		}
+		ipsetbuilder.AddPrefix(prefix)
+	}
+
+	file.Close()
+
+	if drop {
+		p.ipsetDrop, err = ipsetbuilder.IPSet()
+	} else {
+		p.ipsetKeep, err = ipsetbuilder.IPSet()
+	}
+
+	return read, err
+}
+
+func (p *FilteringProcessor) loadKeepRdataIpList(fname string) (uint64, error) {
+	var emptyIPSet *netaddr.IPSet
+	p.rDataIpsetKeep = emptyIPSet
+
+	file, err := os.Open(fname)
+	if err != nil {
+		return 0, err
+	}
+
+	scanner := bufio.NewScanner(file)
+	var read uint64
+	var ipsetbuilder netaddr.IPSetBuilder
+	for scanner.Scan() {
+		read++
+		ipOrPrefix := strings.ToLower(scanner.Text())
+		prefix, err := netaddr.ParseIPPrefix(ipOrPrefix)
+		if err != nil {
+			ip, err := netaddr.ParseIP(ipOrPrefix)
+			if err != nil {
+				p.LogError("%s in in %s is neither an IP address nor a prefix", ipOrPrefix, fname)
+				continue
+			}
+			ipsetbuilder.Add(ip)
+			continue
+		}
+		ipsetbuilder.AddPrefix(prefix)
+	}
+
+	file.Close()
+
+	p.rDataIpsetKeep, err = ipsetbuilder.IPSet()
+
+	return read, err
 }
 
 func (p *FilteringProcessor) Run() {

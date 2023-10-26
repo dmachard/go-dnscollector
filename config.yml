@@ -680,6 +680,8 @@ multiplexer:
 #   log-queries: true
 #   # forward received replies to configured loggers ?
 #   log-replies: true
+#   # only keep 1 out of every downsample records, e.g. if set to 20, then this will return every 20th record, dropping 95% of queries
+#   downsample: 0
 
 # # GeoIP maxmind support, more information on https://www.maxmind.com/en/geoip-demo
 # # this feature can be used to append additional informations like country, city, asn
