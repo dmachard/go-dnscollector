@@ -24,6 +24,7 @@ func TestFilteringQR(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering.LoadActiveFilters()
 
 	dm := dnsutils.GetFakeDnsMessage()
 	if !filtering.CheckIfDrop(&dm) {
@@ -48,6 +49,8 @@ func TestFilteringByRcodeNOERROR(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering.LoadRcodes()
+	filtering.LoadActiveFilters()
 
 	dm := dnsutils.GetFakeDnsMessage()
 	if filtering.CheckIfDrop(&dm) == false {
@@ -67,6 +70,8 @@ func TestFilteringByRcodeEmpty(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering.LoadRcodes()
+	filtering.LoadActiveFilters()
 
 	dm := dnsutils.GetFakeDnsMessage()
 	if filtering.CheckIfDrop(&dm) == true {
@@ -85,6 +90,8 @@ func TestFilteringByKeepQueryIp(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering.LoadQueryIpList()
+	filtering.LoadActiveFilters()
 
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.NetworkInfo.QueryIp = "192.168.0.1"
@@ -115,6 +122,8 @@ func TestFilteringByDropQueryIp(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering.LoadQueryIpList()
+	filtering.LoadActiveFilters()
 
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.NetworkInfo.QueryIp = "192.168.0.1"
@@ -145,6 +154,8 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering.LoadrDataIpList()
+	filtering.LoadActiveFilters()
 
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
@@ -239,6 +250,8 @@ func TestFilteringByFqdn(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering.LoadDomainsList()
+	filtering.LoadActiveFilters()
 
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.DNS.Qname = "www.microsoft.com"
@@ -263,6 +276,8 @@ func TestFilteringByDomainRegex(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering.LoadDomainsList()
+	filtering.LoadActiveFilters()
 
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.DNS.Qname = TEST_URL1
@@ -294,6 +309,8 @@ func TestFilteringByKeepDomain(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering.LoadDomainsList()
+	filtering.LoadActiveFilters()
 
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.DNS.Qname = TEST_URL1
@@ -334,6 +351,8 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering.LoadDomainsList()
+	filtering.LoadActiveFilters()
 
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.DNS.Qname = TEST_URL1
@@ -370,6 +389,8 @@ func TestFilteringByDownsample(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering.LoadActiveFilters()
+
 	dm := dnsutils.GetFakeDnsMessage()
 
 	// filtering.downsampleCount
@@ -414,6 +435,9 @@ func TestFilteringMultipleFilters(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering.LoadQueryIpList()
+	filtering.LoadDomainsList()
+	filtering.LoadActiveFilters()
 
 	dm := dnsutils.GetFakeDnsMessage()
 	dm.DNS.Qname = TEST_URL1
