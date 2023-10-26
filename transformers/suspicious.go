@@ -43,12 +43,27 @@ func NewSuspiciousSubprocessor(config *dnsutils.ConfigTransformers, logger *logg
 }
 
 func (p *SuspiciousTransform) ReadConfig() {
+	// cleanup maps
+	for key := range p.CommonQtypes {
+		delete(p.CommonQtypes, key)
+	}
+	for key := range p.whitelistDomainsRegex {
+		delete(p.whitelistDomainsRegex, key)
+	}
+
+	// load maps
 	for _, v := range p.config.Suspicious.CommonQtypes {
 		p.CommonQtypes[v] = true
 	}
 	for _, v := range p.config.Suspicious.WhitelistDomains {
 		p.whitelistDomainsRegex[v] = regexp.MustCompile(v)
 	}
+}
+
+func (s *SuspiciousTransform) ReloadConfig(config *dnsutils.ConfigTransformers) {
+	s.config = config
+
+	s.ReadConfig()
 }
 
 func (p *SuspiciousTransform) IsEnabled() bool {

@@ -274,6 +274,7 @@ func TestTransformAndFilter(t *testing.T) {
 	config.UserPrivacy.AnonymizeIP = true
 
 	// file contains google.fr, test.github.com
+	config.Filtering.Enable = true
 	config.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains.txt"
 
 	TEST_URL1 := "mail.google.com"

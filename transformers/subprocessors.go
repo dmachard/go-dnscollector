@@ -60,6 +60,9 @@ func (p *Transforms) ReloadConfig(config *dnsutils.ConfigTransformers) {
 	p.NormalizeTransform.ReloadConfig(config)
 	p.GeoipTransform.ReloadConfig(config)
 	p.FilteringTransform.ReloadConfig(config)
+	p.UserPrivacyTransform.ReloadConfig(config)
+	p.LatencyTransform.ReloadConfig(config)
+	p.SuspiciousTransform.ReloadConfig(config)
 
 	p.Prepare()
 }
