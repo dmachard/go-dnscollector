@@ -63,6 +63,7 @@ func (p *Transforms) ReloadConfig(config *dnsutils.ConfigTransformers) {
 	p.UserPrivacyTransform.ReloadConfig(config)
 	p.LatencyTransform.ReloadConfig(config)
 	p.SuspiciousTransform.ReloadConfig(config)
+	p.ReducerTransform.ReloadConfig(config)
 
 	p.Prepare()
 }
@@ -143,6 +144,8 @@ func (p *Transforms) Prepare() error {
 	if p.config.Reducer.Enable {
 		prefixlog := fmt.Sprintf("transformer=reducer#%d - ", p.instance)
 		p.LogInfo(prefixlog + "is enabled")
+
+		p.ReducerTransform.LoadActiveReducers()
 	}
 
 	if p.config.Extract.Enable {
