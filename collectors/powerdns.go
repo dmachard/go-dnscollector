@@ -79,9 +79,12 @@ func (c *ProtobufPowerDNS) ReloadConfig(config *dnsutils.Config) {
 
 	// save the new config
 	c.config = config
-
-	// read again
 	c.ReadConfig()
+
+	// refresh config for all conns
+	for i := range c.pdnsProcessors {
+		c.pdnsProcessors[i].ReloadConfig(config)
+	}
 }
 
 func (c *ProtobufPowerDNS) LogInfo(msg string, v ...interface{}) {

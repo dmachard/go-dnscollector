@@ -17,31 +17,33 @@ func GetFakeDns() ([]byte, error) {
 }
 
 type DnsProcessor struct {
-	doneRun      chan bool
-	stopRun      chan bool
-	doneMonitor  chan bool
-	stopMonitor  chan bool
-	recvFrom     chan dnsutils.DnsMessage
-	logger       *logger.Logger
-	config       *dnsutils.Config
-	name         string
-	dropped      chan string
-	droppedCount map[string]int
+	doneRun            chan bool
+	stopRun            chan bool
+	doneMonitor        chan bool
+	stopMonitor        chan bool
+	recvFrom           chan dnsutils.DnsMessage
+	logger             *logger.Logger
+	config             *dnsutils.Config
+	configTransformers chan *dnsutils.ConfigTransformers
+	name               string
+	dropped            chan string
+	droppedCount       map[string]int
 }
 
 func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) DnsProcessor {
 	logger.Info("[%s] processor=dns - initialization...", name)
 	d := DnsProcessor{
-		doneMonitor:  make(chan bool),
-		doneRun:      make(chan bool),
-		stopMonitor:  make(chan bool),
-		stopRun:      make(chan bool),
-		recvFrom:     make(chan dnsutils.DnsMessage, size),
-		logger:       logger,
-		config:       config,
-		name:         name,
-		dropped:      make(chan string),
-		droppedCount: map[string]int{},
+		doneMonitor:        make(chan bool),
+		doneRun:            make(chan bool),
+		stopMonitor:        make(chan bool),
+		stopRun:            make(chan bool),
+		recvFrom:           make(chan dnsutils.DnsMessage, size),
+		logger:             logger,
+		config:             config,
+		configTransformers: make(chan *dnsutils.ConfigTransformers),
+		name:               name,
+		dropped:            make(chan string),
+		droppedCount:       map[string]int{},
 	}
 
 	d.ReadConfig()
@@ -50,6 +52,13 @@ func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string
 }
 
 func (d *DnsProcessor) ReadConfig() {}
+
+func (d *DnsProcessor) ReloadConfig(config *dnsutils.Config) {
+	d.config = config
+	d.ReadConfig()
+
+	d.configTransformers <- &config.IngoingTransformers
+}
 
 func (c *DnsProcessor) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] processor=dns - "+msg, v...)
@@ -125,6 +134,9 @@ func (d *DnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersNam
 RUN_LOOP:
 	for {
 		select {
+		case cfg := <-d.configTransformers:
+			transforms.ReloadConfig(cfg)
+
 		case <-d.stopRun:
 			transforms.Reset()
 			close(d.recvFrom)

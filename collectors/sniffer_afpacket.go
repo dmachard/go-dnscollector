@@ -147,16 +147,17 @@ func RemoveBpfFilter(fd int) (err error) {
 }
 
 type AfpacketSniffer struct {
-	done     chan bool
-	exit     chan bool
-	fd       int
-	port     int
-	device   string
-	identity string
-	loggers  []dnsutils.Worker
-	config   *dnsutils.Config
-	logger   *logger.Logger
-	name     string
+	done         chan bool
+	exit         chan bool
+	fd           int
+	port         int
+	device       string
+	identity     string
+	loggers      []dnsutils.Worker
+	config       *dnsutils.Config
+	logger       *logger.Logger
+	dnsProcessor DnsProcessor
+	name         string
 }
 
 func NewAfpacketSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *AfpacketSniffer {
@@ -206,11 +207,10 @@ func (c *AfpacketSniffer) ReadConfig() {
 func (c *AfpacketSniffer) ReloadConfig(config *dnsutils.Config) {
 	c.LogInfo("reload config...")
 
-	// save the new config
 	c.config = config
-
-	// read again
 	c.ReadConfig()
+
+	c.dnsProcessor.ReloadConfig(config)
 }
 
 func (c *AfpacketSniffer) Channel() chan dnsutils.DnsMessage {
@@ -284,8 +284,8 @@ func (c *AfpacketSniffer) Run() {
 		}
 	}
 
-	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.AfpacketLiveCapture.ChannelBufferSize)
-	go dnsProcessor.Run(c.Loggers())
+	c.dnsProcessor = NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.AfpacketLiveCapture.ChannelBufferSize)
+	go c.dnsProcessor.Run(c.Loggers())
 
 	dnsChan := make(chan netlib.DnsPacket)
 	udpChan := make(chan gopacket.Packet)
@@ -332,7 +332,7 @@ func (c *AfpacketSniffer) Run() {
 			dm.DnsTap.TimeNsec = int(timestamp - seconds*int64(time.Second)*int64(time.Nanosecond))
 
 			// send DNS message to DNS processor
-			dnsProcessor.GetChannel() <- dm
+			c.dnsProcessor.GetChannel() <- dm
 		}
 	}()
 
@@ -427,7 +427,7 @@ func (c *AfpacketSniffer) Run() {
 	close(dnsChan)
 
 	// stop dns processor
-	dnsProcessor.Stop()
+	c.dnsProcessor.Stop()
 
 	c.LogInfo("run terminated")
 	c.done <- true
