@@ -80,6 +80,7 @@ type LokiClient struct {
 	inputChan   chan dnsutils.DnsMessage
 	outputChan  chan dnsutils.DnsMessage
 	config      *dnsutils.Config
+	configChan  chan *dnsutils.Config
 	logger      *logger.Logger
 	httpclient  *http.Client
 	textFormat  []string
@@ -99,6 +100,7 @@ func NewLokiClient(config *dnsutils.Config, logger *logger.Logger, name string) 
 		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.LokiClient.ChannelBufferSize),
 		logger:      logger,
 		config:      config,
+		configChan:  make(chan *dnsutils.Config),
 		streams:     make(map[string]*LokiStream),
 		name:        name,
 	}
@@ -159,6 +161,11 @@ func (o *LokiClient) ReadConfig() {
 	}
 }
 
+func (o *LokiClient) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload configuration!")
+	o.configChan <- config
+}
+
 func (o *LokiClient) LogInfo(msg string, v ...interface{}) {
 	o.logger.Info("["+o.name+"] logger=loki - "+msg, v...)
 }
@@ -202,6 +209,14 @@ RUN_LOOP:
 
 			o.doneRun <- true
 			break RUN_LOOP
+
+		case cfg, opened := <-o.configChan:
+			if !opened {
+				return
+			}
+			o.config = cfg
+			o.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
 		case dm, opened := <-o.inputChan:
 			if !opened {

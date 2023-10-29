@@ -88,8 +88,11 @@ func NewNormalizeSubprocessor(
 		logError:    logError,
 	}
 
-	s.LoadActiveProcessors()
 	return s
+}
+
+func (p *NormalizeProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+	p.config = config
 }
 
 func (p *NormalizeProcessor) LogInfo(msg string, v ...interface{}) {
@@ -102,6 +105,9 @@ func (p *NormalizeProcessor) LogError(msg string, v ...interface{}) {
 }
 
 func (p *NormalizeProcessor) LoadActiveProcessors() {
+	// clean the slice
+	p.activeProcessors = p.activeProcessors[:0]
+
 	if p.config.Normalize.QnameLowerCase {
 		p.activeProcessors = append(p.activeProcessors, p.LowercaseQname)
 		p.LogInfo("lowercase subprocessor is enabled")

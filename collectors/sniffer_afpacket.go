@@ -14,6 +14,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -147,27 +148,27 @@ func RemoveBpfFilter(fd int) (err error) {
 }
 
 type AfpacketSniffer struct {
-	done     chan bool
-	exit     chan bool
-	fd       int
-	port     int
-	device   string
-	identity string
-	loggers  []dnsutils.Worker
-	config   *dnsutils.Config
-	logger   *logger.Logger
-	name     string
+	done       chan bool
+	exit       chan bool
+	fd         int
+	identity   string
+	loggers    []dnsutils.Worker
+	config     *dnsutils.Config
+	configChan chan *dnsutils.Config
+	logger     *logger.Logger
+	name       string
 }
 
 func NewAfpacketSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *AfpacketSniffer {
 	logger.Info("[%s] collector=afpacket - enabled", name)
 	s := &AfpacketSniffer{
-		done:    make(chan bool),
-		exit:    make(chan bool),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+		done:       make(chan bool),
+		exit:       make(chan bool),
+		config:     config,
+		configChan: make(chan *dnsutils.Config),
+		loggers:    loggers,
+		logger:     logger,
+		name:       name,
 	}
 	s.ReadConfig()
 	return s
@@ -198,9 +199,12 @@ func (c *AfpacketSniffer) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 }
 
 func (c *AfpacketSniffer) ReadConfig() {
-	c.port = c.config.Collectors.AfpacketLiveCapture.Port
 	c.identity = c.config.GetServerIdentity()
-	c.device = c.config.Collectors.AfpacketLiveCapture.Device
+}
+
+func (c *AfpacketSniffer) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload configuration...")
+	c.configChan <- config
 }
 
 func (c *AfpacketSniffer) Channel() chan dnsutils.DnsMessage {
@@ -226,8 +230,8 @@ func (c *AfpacketSniffer) Listen() error {
 	}
 
 	// bind to device ?
-	if c.device != "" {
-		iface, err := net.InterfaceByName(c.device)
+	if c.config.Collectors.AfpacketLiveCapture.Device != "" {
+		iface, err := net.InterfaceByName(c.config.Collectors.AfpacketLiveCapture.Device)
 		if err != nil {
 			return err
 		}
@@ -249,8 +253,7 @@ func (c *AfpacketSniffer) Listen() error {
 		return err
 	}
 
-	filter := GetBpfFilter(c.port)
-	//filter := GetBpfFilter_Ingress(c.port)
+	filter := GetBpfFilter(c.config.Collectors.AfpacketLiveCapture.Port)
 	err = ApplyBpfFilter(filter, fd)
 	if err != nil {
 		return err
@@ -274,7 +277,7 @@ func (c *AfpacketSniffer) Run() {
 		}
 	}
 
-	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.AfpacketLiveCapture.ChannelBufferSize)
+	dnsProcessor := processors.NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.AfpacketLiveCapture.ChannelBufferSize)
 	go dnsProcessor.Run(c.Loggers())
 
 	dnsChan := make(chan netlib.DnsPacket)
@@ -299,30 +302,44 @@ func (c *AfpacketSniffer) Run() {
 		// prepare dns message
 		dm := dnsutils.DnsMessage{}
 
-		//	for {
-		for dnsPacket := range dnsChan {
-			// reset
-			dm.Init()
+		for {
+			select {
+			// new config provided?
+			case cfg, opened := <-c.configChan:
+				if !opened {
+					return
+				}
+				c.config = cfg
+				c.ReadConfig()
 
-			dm.NetworkInfo.Family = dnsPacket.IpLayer.EndpointType().String()
-			dm.NetworkInfo.QueryIp = dnsPacket.IpLayer.Src().String()
-			dm.NetworkInfo.ResponseIp = dnsPacket.IpLayer.Dst().String()
-			dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
-			dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
-			dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
+				// send the config to the dns processor
+				dnsProcessor.ConfigChan <- cfg
 
-			dm.DNS.Payload = dnsPacket.Payload
-			dm.DNS.Length = len(dnsPacket.Payload)
+			// dns message to read ?
+			case dnsPacket := <-dnsChan:
+				// reset
+				dm.Init()
 
-			dm.DnsTap.Identity = c.identity
+				dm.NetworkInfo.Family = dnsPacket.IpLayer.EndpointType().String()
+				dm.NetworkInfo.QueryIp = dnsPacket.IpLayer.Src().String()
+				dm.NetworkInfo.ResponseIp = dnsPacket.IpLayer.Dst().String()
+				dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
+				dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
+				dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
 
-			timestamp := dnsPacket.Timestamp.UnixNano()
-			seconds := timestamp / int64(time.Second)
-			dm.DnsTap.TimeSec = int(seconds)
-			dm.DnsTap.TimeNsec = int(timestamp - seconds*int64(time.Second)*int64(time.Nanosecond))
+				dm.DNS.Payload = dnsPacket.Payload
+				dm.DNS.Length = len(dnsPacket.Payload)
 
-			// send DNS message to DNS processor
-			dnsProcessor.GetChannel() <- dm
+				dm.DnsTap.Identity = c.identity
+
+				timestamp := dnsPacket.Timestamp.UnixNano()
+				seconds := timestamp / int64(time.Second)
+				dm.DnsTap.TimeSec = int(seconds)
+				dm.DnsTap.TimeNsec = int(timestamp - seconds*int64(time.Second)*int64(time.Nanosecond))
+
+				// send DNS message to DNS processor
+				dnsProcessor.GetChannel() <- dm
+			}
 		}
 	}()
 
@@ -415,6 +432,7 @@ func (c *AfpacketSniffer) Run() {
 
 	<-c.exit
 	close(dnsChan)
+	close(c.configChan)
 
 	// stop dns processor
 	dnsProcessor.Stop()

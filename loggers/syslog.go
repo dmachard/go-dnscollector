@@ -60,6 +60,7 @@ type Syslog struct {
 	inputChan          chan dnsutils.DnsMessage
 	outputChan         chan dnsutils.DnsMessage
 	config             *dnsutils.Config
+	configChan         chan *dnsutils.Config
 	logger             *logger.Logger
 	severity           syslog.Priority
 	facility           syslog.Priority
@@ -84,6 +85,7 @@ func NewSyslog(config *dnsutils.Config, console *logger.Logger, name string) *Sy
 		transportReconnect: make(chan bool),
 		logger:             console,
 		config:             config,
+		configChan:         make(chan *dnsutils.Config),
 		name:               name,
 	}
 	o.ReadConfig()
@@ -119,6 +121,11 @@ func (c *Syslog) ReadConfig() {
 	} else {
 		c.textFormat = strings.Fields(c.config.Global.TextFormat)
 	}
+}
+
+func (o *Syslog) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload configuration!")
+	o.configChan <- config
 }
 
 func (o *Syslog) Channel() chan dnsutils.DnsMessage {
@@ -233,6 +240,15 @@ RUN_LOOP:
 
 			o.doneRun <- true
 			break RUN_LOOP
+
+		// new config provided?
+		case cfg, opened := <-o.configChan:
+			if !opened {
+				return
+			}
+			o.config = cfg
+			o.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
 		case dm, opened := <-o.inputChan:
 			if !opened {

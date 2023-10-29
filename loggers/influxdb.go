@@ -20,6 +20,7 @@ type InfluxDBClient struct {
 	inputChan    chan dnsutils.DnsMessage
 	outputChan   chan dnsutils.DnsMessage
 	config       *dnsutils.Config
+	configChan   chan *dnsutils.Config
 	logger       *logger.Logger
 	influxdbConn influxdb2.Client
 	writeAPI     api.WriteAPI
@@ -38,6 +39,7 @@ func NewInfluxDBClient(config *dnsutils.Config, logger *logger.Logger, name stri
 		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.InfluxDB.ChannelBufferSize),
 		logger:      logger,
 		config:      config,
+		configChan:  make(chan *dnsutils.Config),
 		name:        name,
 	}
 
@@ -54,6 +56,11 @@ func (o *InfluxDBClient) ReadConfig() {
 	if !dnsutils.IsValidTLS(o.config.Loggers.InfluxDB.TlsMinVersion) {
 		o.logger.Fatal("logger=influxdb - invalid tls min version")
 	}
+}
+
+func (o *InfluxDBClient) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload configuration!")
+	o.configChan <- config
 }
 
 func (o *InfluxDBClient) LogInfo(msg string, v ...interface{}) {
@@ -99,6 +106,14 @@ RUN_LOOP:
 
 			o.doneRun <- true
 			break RUN_LOOP
+
+		case cfg, opened := <-o.configChan:
+			if !opened {
+				return
+			}
+			o.config = cfg
+			o.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
 		case dm, opened := <-o.inputChan:
 			if !opened {

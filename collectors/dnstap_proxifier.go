@@ -14,25 +14,29 @@ import (
 )
 
 type DnstapProxifier struct {
-	done     chan bool
-	listen   net.Listener
-	conns    []net.Conn
-	sockPath string
-	loggers  []dnsutils.Worker
-	config   *dnsutils.Config
-	logger   *logger.Logger
-	name     string
-	stopping bool
+	doneRun    chan bool
+	stopRun    chan bool
+	listen     net.Listener
+	conns      []net.Conn
+	sockPath   string
+	loggers    []dnsutils.Worker
+	config     *dnsutils.Config
+	configChan chan *dnsutils.Config
+	logger     *logger.Logger
+	name       string
+	stopping   bool
 }
 
 func NewDnstapProxifier(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *DnstapProxifier {
 	logger.Info("[%s] collector=dnstaprelay - enabled", name)
 	s := &DnstapProxifier{
-		done:    make(chan bool),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+		doneRun:    make(chan bool),
+		stopRun:    make(chan bool),
+		config:     config,
+		configChan: make(chan *dnsutils.Config),
+		loggers:    loggers,
+		logger:     logger,
+		name:       name,
 	}
 	s.ReadConfig()
 	return s
@@ -58,6 +62,11 @@ func (c *DnstapProxifier) ReadConfig() {
 	}
 
 	c.sockPath = c.config.Collectors.DnstapProxifier.SockPath
+}
+
+func (c *DnstapProxifier) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload configuration...")
+	c.configChan <- config
 }
 
 func (c *DnstapProxifier) LogInfo(msg string, v ...interface{}) {
@@ -138,8 +147,8 @@ func (c *DnstapProxifier) Stop() {
 	c.listen.Close()
 
 	// read done channel and block until run is terminated
-	<-c.done
-	close(c.done)
+	c.stopRun <- true
+	<-c.doneRun
 }
 
 func (c *DnstapProxifier) Listen() error {
@@ -201,17 +210,42 @@ func (c *DnstapProxifier) Run() {
 			c.logger.Fatal("collector dnstap listening failed: ", err)
 		}
 	}
-	for {
-		// Accept() blocks waiting for new connection.
-		conn, err := c.listen.Accept()
-		if err != nil {
-			break
-		}
 
-		c.conns = append(c.conns, conn)
-		go c.HandleConn(conn)
+	// goroutine to Accept() blocks waiting for new connection.
+	acceptChan := make(chan net.Conn)
+	go func() {
+		for {
+			conn, err := c.listen.Accept()
+			if err != nil {
+				return
+			}
+			acceptChan <- conn
+		}
+	}()
+
+RUN_LOOP:
+	for {
+		select {
+		case <-c.stopRun:
+			close(acceptChan)
+			c.doneRun <- true
+			break RUN_LOOP
+
+		case cfg := <-c.configChan:
+
+			// save the new config
+			c.config = cfg
+			c.ReadConfig()
+
+		case conn, opened := <-acceptChan:
+			if !opened {
+				return
+			}
+
+			c.conns = append(c.conns, conn)
+			go c.HandleConn(conn)
+		}
 	}
 
 	c.LogInfo("run terminated")
-	c.done <- true
 }

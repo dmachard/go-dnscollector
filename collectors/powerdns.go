@@ -13,12 +13,14 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
 )
 
 type ProtobufPowerDNS struct {
 	doneRun        chan bool
+	stopRun        chan bool
 	doneMonitor    chan bool
 	stopMonitor    chan bool
 	cleanup        chan bool
@@ -27,11 +29,12 @@ type ProtobufPowerDNS struct {
 	conns          []net.Conn
 	loggers        []dnsutils.Worker
 	config         *dnsutils.Config
+	configChan     chan *dnsutils.Config
 	logger         *logger.Logger
 	name           string
 	droppedCount   int
 	dropped        chan int
-	pdnsProcessors []*PdnsProcessor
+	pdnsProcessors []*processors.PdnsProcessor
 	sync.RWMutex
 }
 
@@ -40,10 +43,12 @@ func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *dnsutils.Config, log
 	s := &ProtobufPowerDNS{
 		doneRun:     make(chan bool),
 		doneMonitor: make(chan bool),
+		stopRun:     make(chan bool),
 		stopMonitor: make(chan bool),
 		cleanup:     make(chan bool),
 		dropped:     make(chan int),
 		config:      config,
+		configChan:  make(chan *dnsutils.Config),
 		loggers:     loggers,
 		logger:      logger,
 		name:        name,
@@ -72,6 +77,11 @@ func (c *ProtobufPowerDNS) ReadConfig() {
 	if !dnsutils.IsValidTLS(c.config.Collectors.PowerDNS.TlsMinVersion) {
 		c.logger.Fatal("collector=powerdns - invalid tls min version")
 	}
+}
+
+func (c *ProtobufPowerDNS) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload configuration...")
+	c.configChan <- config
 }
 
 func (c *ProtobufPowerDNS) LogInfo(msg string, v ...interface{}) {
@@ -107,7 +117,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	c.LogConnInfo(connId, "new connection from %s", peer)
 
 	// start protobuf subprocessor
-	pdnsProc := NewPdnsProcessor(connId, c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
+	pdnsProc := processors.NewPdnsProcessor(connId, c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
 	c.Lock()
 	c.pdnsProcessors = append(c.pdnsProcessors, &pdnsProc)
 	c.Unlock()
@@ -118,6 +128,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 
 	var err error
 	var payload *powerdns_protobuf.ProtoPayload
+
 	for {
 		payload, err = pbs.RecvPayload(false)
 		if err != nil {
@@ -150,13 +161,14 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 		default:
 			c.dropped <- 1
 		}
+		// }
 	}
 
 	// here the connection is closed,
 	// then removes the current tap processor from the list
 	c.Lock()
 	for i, t := range c.pdnsProcessors {
-		if t.connId == connId {
+		if t.ConnId == connId {
 			c.pdnsProcessors = append(c.pdnsProcessors[:i], c.pdnsProcessors[i+1:]...)
 		}
 	}
@@ -208,8 +220,8 @@ func (c *ProtobufPowerDNS) Stop() {
 
 	// read done channel and block until run is terminated
 	c.LogInfo("stopping run...")
+	c.stopRun <- true
 	<-c.doneRun
-	close(c.doneRun)
 }
 
 func (c *ProtobufPowerDNS) Listen() error {
@@ -264,8 +276,10 @@ MONITOR_LOOP:
 			bufferFull.Stop()
 			c.doneMonitor <- true
 			break MONITOR_LOOP
+
 		case <-c.dropped:
 			c.droppedCount++
+
 		case <-bufferFull.C:
 			if c.droppedCount > 0 {
 				c.LogError("recv buffer is full, %d packet(s) dropped", c.droppedCount)
@@ -290,35 +304,63 @@ func (c *ProtobufPowerDNS) Run() {
 	// start goroutine to count dropped messsages
 	go c.MonitorCollector()
 
-	for {
-		// Accept() blocks waiting for new connection.
-		conn, err := c.listen.Accept()
-		if err != nil {
-			break
-		}
-
-		if c.config.Collectors.Dnstap.RcvBufSize > 0 {
-			before, actual, err := netlib.SetSock_RCVBUF(
-				conn,
-				c.config.Collectors.Dnstap.RcvBufSize,
-				c.config.Collectors.Dnstap.TlsSupport,
-			)
+	// goroutine to Accept() blocks waiting for new connection.
+	acceptChan := make(chan net.Conn)
+	go func() {
+		for {
+			conn, err := c.listen.Accept()
 			if err != nil {
-				c.logger.Fatal("Unable to set SO_RCVBUF: ", err)
+				return
 			}
-			c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d",
-				before,
-				c.config.Collectors.Dnstap.RcvBufSize,
-				actual)
+			acceptChan <- conn
 		}
+	}()
 
-		c.Lock()
-		c.conns = append(c.conns, conn)
-		c.Unlock()
-		go c.HandleConn(conn)
+RUN_LOOP:
+	for {
+		select {
+		case <-c.stopRun:
+			close(acceptChan)
+			c.doneRun <- true
+			break RUN_LOOP
 
+		case cfg := <-c.configChan:
+			// save the new config
+			c.config = cfg
+			c.ReadConfig()
+
+			// refresh config for all conns
+			for i := range c.pdnsProcessors {
+				c.pdnsProcessors[i].ConfigChan <- cfg
+			}
+
+		case conn, opened := <-acceptChan:
+			if !opened {
+				return
+			}
+
+			if c.config.Collectors.Dnstap.RcvBufSize > 0 {
+				before, actual, err := netlib.SetSock_RCVBUF(
+					conn,
+					c.config.Collectors.Dnstap.RcvBufSize,
+					c.config.Collectors.Dnstap.TlsSupport,
+				)
+				if err != nil {
+					c.logger.Fatal("Unable to set SO_RCVBUF: ", err)
+				}
+				c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d",
+					before,
+					c.config.Collectors.Dnstap.RcvBufSize,
+					actual)
+			}
+
+			c.Lock()
+			c.conns = append(c.conns, conn)
+			c.Unlock()
+			go c.HandleConn(conn)
+
+		}
 	}
 
 	c.LogInfo("run terminated")
-	c.doneRun <- true
 }

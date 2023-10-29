@@ -49,6 +49,7 @@ type StatsdClient struct {
 	inputChan   chan dnsutils.DnsMessage
 	outputChan  chan dnsutils.DnsMessage
 	config      *dnsutils.Config
+	configChan  chan *dnsutils.Config
 	logger      *logger.Logger
 	name        string
 
@@ -68,6 +69,7 @@ func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, name string
 		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.Statsd.ChannelBufferSize),
 		logger:      logger,
 		config:      config,
+		configChan:  make(chan *dnsutils.Config),
 		name:        name,
 		Stats:       StreamStats{Streams: make(map[string]*StatsPerStream)},
 	}
@@ -86,6 +88,11 @@ func (o *StatsdClient) ReadConfig() {
 	if !dnsutils.IsValidTLS(o.config.Loggers.Statsd.TlsMinVersion) {
 		o.logger.Fatal("logger=statd - invalid tls min version")
 	}
+}
+
+func (o *StatsdClient) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload configuration!")
+	o.configChan <- config
 }
 
 func (o *StatsdClient) LogInfo(msg string, v ...interface{}) {
@@ -244,6 +251,14 @@ RUN_LOOP:
 
 			o.doneRun <- true
 			break RUN_LOOP
+
+		case cfg, opened := <-o.configChan:
+			if !opened {
+				return
+			}
+			o.config = cfg
+			o.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
 		case dm, opened := <-o.inputChan:
 			if !opened {

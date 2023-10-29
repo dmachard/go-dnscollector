@@ -14,6 +14,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 )
@@ -21,19 +22,21 @@ import (
 type Dnstap struct {
 	doneRun       chan bool
 	doneMonitor   chan bool
+	stopRun       chan bool
 	stopMonitor   chan bool
 	listen        net.Listener
 	conns         []net.Conn
 	sockPath      string
 	loggers       []dnsutils.Worker
 	config        *dnsutils.Config
+	configChan    chan *dnsutils.Config
 	logger        *logger.Logger
 	name          string
 	connMode      string
 	connId        int
 	droppedCount  int
 	dropped       chan int
-	tapProcessors []DnstapProcessor
+	tapProcessors []processors.DnstapProcessor
 	sync.RWMutex
 }
 
@@ -42,9 +45,11 @@ func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logge
 	s := &Dnstap{
 		doneRun:     make(chan bool),
 		doneMonitor: make(chan bool),
+		stopRun:     make(chan bool),
 		stopMonitor: make(chan bool),
 		dropped:     make(chan int),
 		config:      config,
+		configChan:  make(chan *dnsutils.Config),
 		loggers:     loggers,
 		logger:      logger,
 		name:        name,
@@ -85,6 +90,11 @@ func (c *Dnstap) ReadConfig() {
 	}
 }
 
+func (c *Dnstap) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload configuration...")
+	c.configChan <- config
+}
+
 func (c *Dnstap) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] collector=dnstap - "+msg, v...)
 }
@@ -118,7 +128,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	c.LogConnInfo(connId, "new connection from %s", peer)
 
 	// start dnstap subprocessor
-	dnstapProcessor := NewDnstapProcessor(connId, c.config, c.logger, c.name, c.config.Collectors.Dnstap.ChannelBufferSize)
+	dnstapProcessor := processors.NewDnstapProcessor(connId, c.config, c.logger, c.name, c.config.Collectors.Dnstap.ChannelBufferSize)
 	c.Lock()
 	c.tapProcessors = append(c.tapProcessors, dnstapProcessor)
 	c.Unlock()
@@ -177,7 +187,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	// then removes the current tap processor from the list
 	c.Lock()
 	for i, t := range c.tapProcessors {
-		if t.connId == connId {
+		if t.ConnId == connId {
 			c.tapProcessors = append(c.tapProcessors[:i], c.tapProcessors[i+1:]...)
 		}
 	}
@@ -225,8 +235,8 @@ func (c *Dnstap) Stop() {
 
 	// read done channel and block until run is terminated
 	c.LogInfo("stopping run...")
+	c.stopRun <- true
 	<-c.doneRun
-	close(c.doneRun)
 }
 
 func (c *Dnstap) Listen() error {
@@ -320,32 +330,61 @@ func (c *Dnstap) Run() {
 	// start goroutine to count dropped messsages
 	go c.MonitorCollector()
 
-	for {
-		// Accept() blocks waiting for new connection.
-		conn, err := c.listen.Accept()
-		if err != nil {
-			break
-		}
-
-		if (c.connMode == "tls" || c.connMode == "tcp") && c.config.Collectors.Dnstap.RcvBufSize > 0 {
-			before, actual, err := netlib.SetSock_RCVBUF(
-				conn,
-				c.config.Collectors.Dnstap.RcvBufSize,
-				c.config.Collectors.Dnstap.TlsSupport,
-			)
+	// goroutine to Accept() blocks waiting for new connection.
+	acceptChan := make(chan net.Conn)
+	go func() {
+		for {
+			conn, err := c.listen.Accept()
 			if err != nil {
-				c.logger.Fatal("Unable to set SO_RCVBUF: ", err)
+				return
 			}
-			c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before,
-				c.config.Collectors.Dnstap.RcvBufSize, actual)
+			acceptChan <- conn
+		}
+	}()
+
+RUN_LOOP:
+	for {
+		select {
+		case <-c.stopRun:
+			close(acceptChan)
+			c.doneRun <- true
+			break RUN_LOOP
+
+		case cfg := <-c.configChan:
+
+			// save the new config
+			c.config = cfg
+			c.ReadConfig()
+
+			// refresh config for all conns
+			for i := range c.tapProcessors {
+				c.tapProcessors[i].ConfigChan <- cfg
+			}
+
+		case conn, opened := <-acceptChan:
+			if !opened {
+				return
+			}
+
+			if (c.connMode == "tls" || c.connMode == "tcp") && c.config.Collectors.Dnstap.RcvBufSize > 0 {
+				before, actual, err := netlib.SetSock_RCVBUF(
+					conn,
+					c.config.Collectors.Dnstap.RcvBufSize,
+					c.config.Collectors.Dnstap.TlsSupport,
+				)
+				if err != nil {
+					c.logger.Fatal("Unable to set SO_RCVBUF: ", err)
+				}
+				c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before,
+					c.config.Collectors.Dnstap.RcvBufSize, actual)
+			}
+
+			c.Lock()
+			c.conns = append(c.conns, conn)
+			c.Unlock()
+			go c.HandleConn(conn)
 		}
 
-		c.Lock()
-		c.conns = append(c.conns, conn)
-		c.Unlock()
-		go c.HandleConn(conn)
 	}
-
 	c.LogInfo("run terminated")
-	c.doneRun <- true
 }

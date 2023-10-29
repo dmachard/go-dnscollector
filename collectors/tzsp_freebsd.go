@@ -54,8 +54,9 @@ func (c *TzspSniffer) Loggers() []chan dnsutils.DnsMessage {
 	return channels
 }
 
-func (c *TzspSniffer) ReadConfig() {
-}
+func (c *TzspSniffer) ReadConfig() {}
+
+func (c *TzspSniffer) ReloadConfig(config *dnsutils.Config) {}
 
 func (c *TzspSniffer) Channel() chan dnsutils.DnsMessage {
 	return nil

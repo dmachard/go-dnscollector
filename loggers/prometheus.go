@@ -169,9 +169,9 @@ type Prometheus struct {
 	inputChan    chan dnsutils.DnsMessage
 	outputChan   chan dnsutils.DnsMessage
 	config       *dnsutils.Config
+	configChan   chan *dnsutils.Config
 	logger       *logger.Logger
 	promRegistry *prometheus.Registry
-	//version      string
 
 	sync.Mutex
 	catalogueLabels []string
@@ -724,20 +724,18 @@ func CreateSystemCatalogue(prom *Prometheus) ([]string, *PromCounterCatalogueCon
 func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, name string) *Prometheus {
 	logger.Info("[%s] logger=prometheus - enabled", name)
 	o := &Prometheus{
-		doneApi:     make(chan bool),
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		config:      config,
-		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
-		logger:      logger,
-		//version:     version,
-
+		doneApi:      make(chan bool),
+		stopProcess:  make(chan bool),
+		doneProcess:  make(chan bool),
+		stopRun:      make(chan bool),
+		doneRun:      make(chan bool),
+		config:       config,
+		configChan:   make(chan *dnsutils.Config),
+		inputChan:    make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
+		outputChan:   make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
+		logger:       logger,
 		promRegistry: prometheus.NewPedanticRegistry(),
-
-		name: name,
+		name:         name,
 	}
 
 	// This will create a catalogue of counters indexed by fileds requested by config
@@ -1042,6 +1040,11 @@ func (o *Prometheus) ReadConfig() {
 	}
 }
 
+func (o *Prometheus) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload configuration!")
+	o.configChan <- config
+}
+
 func (o *Prometheus) LogInfo(msg string, v ...interface{}) {
 	o.logger.Info("["+o.name+"] logger=prometheus - "+msg, v...)
 }
@@ -1176,6 +1179,15 @@ RUN_LOOP:
 			subprocessors.Reset()
 			s.doneRun <- true
 			break RUN_LOOP
+
+		case cfg, opened := <-s.configChan:
+			if !opened {
+				return
+			}
+			s.config = cfg
+			s.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
+
 		case dm, opened := <-s.inputChan:
 			if !opened {
 				s.LogInfo("input channel closed!")

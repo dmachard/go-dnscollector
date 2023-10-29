@@ -43,6 +43,10 @@ func NewUserPrivacySubprocessor(config *dnsutils.ConfigTransformers, logger *log
 	return s
 }
 
+func (s *UserPrivacyProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+	s.config = config
+}
+
 func (s *UserPrivacyProcessor) MinimazeQname(qname string) string {
 	if etpo, err := publicsuffix.EffectiveTLDPlusOne(qname); err == nil {
 		return etpo

@@ -20,6 +20,7 @@ type FluentdClient struct {
 	inputChan          chan dnsutils.DnsMessage
 	outputChan         chan dnsutils.DnsMessage
 	config             *dnsutils.Config
+	configChan         chan *dnsutils.Config
 	logger             *logger.Logger
 	transportConn      net.Conn
 	transportReady     chan bool
@@ -41,6 +42,7 @@ func NewFluentdClient(config *dnsutils.Config, logger *logger.Logger, name strin
 		transportReconnect: make(chan bool),
 		logger:             logger,
 		config:             config,
+		configChan:         make(chan *dnsutils.Config),
 		name:               name,
 	}
 
@@ -57,6 +59,11 @@ func (o *FluentdClient) ReadConfig() {
 	if !dnsutils.IsValidTLS(o.config.Loggers.Fluentd.TlsMinVersion) {
 		o.logger.Fatal("logger=fluentd - invalid tls min version")
 	}
+}
+
+func (o *FluentdClient) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload configuration!")
+	o.configChan <- config
 }
 
 func (o *FluentdClient) LogInfo(msg string, v ...interface{}) {
@@ -200,6 +207,14 @@ RUN_LOOP:
 
 			o.doneRun <- true
 			break RUN_LOOP
+
+		case cfg, opened := <-o.configChan:
+			if !opened {
+				return
+			}
+			o.config = cfg
+			o.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
 		case dm, opened := <-o.inputChan:
 			if !opened {

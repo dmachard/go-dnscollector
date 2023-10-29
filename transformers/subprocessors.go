@@ -55,12 +55,36 @@ func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, n
 	return d
 }
 
+func (p *Transforms) ReloadConfig(config *dnsutils.ConfigTransformers) {
+	p.config = config
+	p.NormalizeTransform.ReloadConfig(config)
+	p.GeoipTransform.ReloadConfig(config)
+	p.FilteringTransform.ReloadConfig(config)
+	p.UserPrivacyTransform.ReloadConfig(config)
+	p.LatencyTransform.ReloadConfig(config)
+	p.SuspiciousTransform.ReloadConfig(config)
+	p.ReducerTransform.ReloadConfig(config)
+	p.ExtractProcessor.ReloadConfig(config)
+	p.MachineLearningTransform.ReloadConfig(config)
+
+	p.Prepare()
+}
+
 func (p *Transforms) Prepare() error {
+	// clean the slice
+	p.activeTransforms = p.activeTransforms[:0]
+
+	if p.config.Normalize.Enable {
+		prefixlog := fmt.Sprintf("transformer=normalize#%d ", p.instance)
+		p.LogInfo(prefixlog + "enabled")
+
+		p.NormalizeTransform.LoadActiveProcessors()
+	}
 
 	if p.config.GeoIP.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.geoipTransform)
-		prefixlog := fmt.Sprintf("transformer=geoip#%d - ", p.instance)
-		p.LogInfo(prefixlog + "is enabled")
+		prefixlog := fmt.Sprintf("transformer=geoip#%d ", p.instance)
+		p.LogInfo(prefixlog + "enabled")
 
 		if err := p.GeoipTransform.Open(); err != nil {
 			p.LogError(prefixlog+"open error %v", err)
@@ -89,8 +113,15 @@ func (p *Transforms) Prepare() error {
 	}
 
 	if p.config.Filtering.Enable {
-		prefixlog := fmt.Sprintf("transformer=filtering#%d - ", p.instance)
-		p.LogInfo(prefixlog + "is enabled")
+		prefixlog := fmt.Sprintf("transformer=filtering#%d ", p.instance)
+		p.LogInfo(prefixlog + "enabled")
+
+		p.FilteringTransform.LoadRcodes()
+		p.FilteringTransform.LoadDomainsList()
+		p.FilteringTransform.LoadQueryIpList()
+		p.FilteringTransform.LoadrDataIpList()
+
+		p.FilteringTransform.LoadActiveFilters()
 	}
 
 	if p.config.Latency.Enable {
@@ -115,6 +146,8 @@ func (p *Transforms) Prepare() error {
 	if p.config.Reducer.Enable {
 		prefixlog := fmt.Sprintf("transformer=reducer#%d - ", p.instance)
 		p.LogInfo(prefixlog + "is enabled")
+
+		p.ReducerTransform.LoadActiveReducers()
 	}
 
 	if p.config.Extract.Enable {
@@ -123,7 +156,6 @@ func (p *Transforms) Prepare() error {
 			prefixlog := fmt.Sprintf("transformer=extract#%d - ", p.instance)
 			p.LogInfo(prefixlog + "subprocessor add base64 payload is enabled")
 		}
-
 	}
 
 	if p.config.MachineLearning.Enable {
@@ -229,6 +261,11 @@ func (p *Transforms) minimazeQname(dm *dnsutils.DnsMessage) int {
 	return RETURN_SUCCESS
 }
 
+func (p *Transforms) addBase64Payload(dm *dnsutils.DnsMessage) int {
+	dm.Extracted.Base64Payload = p.ExtractProcessor.AddBase64Payload(dm)
+	return RETURN_SUCCESS
+}
+
 func (p *Transforms) ProcessMessage(dm *dnsutils.DnsMessage) int {
 	// Begin to normalize
 	p.NormalizeTransform.ProcessDnsMessage(dm)
@@ -252,10 +289,5 @@ func (p *Transforms) ProcessMessage(dm *dnsutils.DnsMessage) int {
 		}
 	}
 
-	return RETURN_SUCCESS
-}
-
-func (p *Transforms) addBase64Payload(dm *dnsutils.DnsMessage) int {
-	dm.Extracted.Base64Payload = p.ExtractProcessor.AddBase64Payload(dm)
 	return RETURN_SUCCESS
 }

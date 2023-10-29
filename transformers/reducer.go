@@ -39,6 +39,10 @@ func NewMapTraffic(ttl time.Duration, channels []chan dnsutils.DnsMessage,
 	}
 }
 
+func (mp *MapTraffic) SetTtl(ttl time.Duration) {
+	mp.ttl = ttl
+}
+
 func (mp *MapTraffic) Set(key string, dm *dnsutils.DnsMessage) {
 	mp.Lock()
 	defer mp.Unlock()
@@ -124,12 +128,20 @@ func NewReducerSubprocessor(
 	}
 
 	s.mapTraffic = NewMapTraffic(time.Duration(config.Reducer.WatchInterval)*time.Second, outChannels, logInfo, logError)
-	s.LoadActiveReducers()
-
 	return &s
 }
 
+func (p *ReducerProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+	p.config = config
+	p.mapTraffic.SetTtl(time.Duration(config.Reducer.WatchInterval) * time.Second)
+
+	p.LoadActiveReducers()
+}
+
 func (p *ReducerProcessor) LoadActiveReducers() {
+	// clean the slice
+	p.activeProcessors = p.activeProcessors[:0]
+
 	if p.config.Reducer.RepetitiveTrafficDetector {
 		p.activeProcessors = append(p.activeProcessors, p.RepetitiveTrafficDetector)
 		go p.mapTraffic.Run()

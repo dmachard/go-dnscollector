@@ -54,6 +54,7 @@ type LogFile struct {
 	writerPcap     *pcapgo.Writer
 	writerDnstap   *framestream.Encoder
 	config         *dnsutils.Config
+	configChan     chan *dnsutils.Config
 	logger         *logger.Logger
 	fileFd         *os.File
 	fileSize       int64
@@ -76,6 +77,7 @@ func NewLogFile(config *dnsutils.Config, logger *logger.Logger, name string) *Lo
 		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.LogFile.ChannelBufferSize),
 		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.LogFile.ChannelBufferSize),
 		config:      config,
+		configChan:  make(chan *dnsutils.Config),
 		logger:      logger,
 		name:        name,
 	}
@@ -113,6 +115,11 @@ func (l *LogFile) ReadConfig() {
 	}
 
 	l.LogInfo("running in mode: %s", l.config.Loggers.LogFile.Mode)
+}
+
+func (o *LogFile) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload configuration!")
+	o.configChan <- config
 }
 
 func (l *LogFile) LogInfo(msg string, v ...interface{}) {
@@ -467,6 +474,15 @@ RUN_LOOP:
 			subprocessors.Reset()
 			l.doneRun <- true
 			break RUN_LOOP
+
+		case cfg, opened := <-l.configChan:
+			if !opened {
+				return
+			}
+			l.config = cfg
+			l.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
+
 		case dm, opened := <-l.inputChan:
 			if !opened {
 				l.LogInfo("input channel closed!")

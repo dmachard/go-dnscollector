@@ -19,6 +19,7 @@ type FalcoClient struct {
 	inputChan   chan dnsutils.DnsMessage
 	outputChan  chan dnsutils.DnsMessage
 	config      *dnsutils.Config
+	configChan  chan *dnsutils.Config
 	logger      *logger.Logger
 	name        string
 	url         string
@@ -35,6 +36,7 @@ func NewFalcoClient(config *dnsutils.Config, console *logger.Logger, name string
 		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.FalcoClient.ChannelBufferSize),
 		logger:      console,
 		config:      config,
+		configChan:  make(chan *dnsutils.Config),
 		name:        name,
 	}
 	f.ReadConfig()
@@ -47,6 +49,11 @@ func (c *FalcoClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *FalcoClient) ReadConfig() {
 	c.url = c.config.Loggers.FalcoClient.URL
+}
+
+func (c *FalcoClient) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload configuration!")
+	c.configChan <- config
 }
 
 func (f *FalcoClient) Channel() chan dnsutils.DnsMessage {
@@ -92,6 +99,14 @@ RUN_LOOP:
 
 			f.doneRun <- true
 			break RUN_LOOP
+
+		case cfg, opened := <-f.configChan:
+			if !opened {
+				return
+			}
+			f.config = cfg
+			f.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
 		case dm, opened := <-f.inputChan:
 			if !opened {

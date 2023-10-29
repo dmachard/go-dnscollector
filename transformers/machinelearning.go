@@ -44,6 +44,10 @@ func NewMachineLearningSubprocessor(config *dnsutils.ConfigTransformers, logger 
 	return s
 }
 
+func (p *MlProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+	p.config = config
+}
+
 func (p *MlProcessor) LogInfo(msg string, v ...interface{}) {
 	log := fmt.Sprintf("transformer=ml#%d - ", p.instance)
 	p.logInfo(log+msg, v...)

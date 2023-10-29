@@ -25,6 +25,7 @@ type KafkaProducer struct {
 	inputChan      chan dnsutils.DnsMessage
 	outputChan     chan dnsutils.DnsMessage
 	config         *dnsutils.Config
+	configChan     chan *dnsutils.Config
 	logger         *logger.Logger
 	textFormat     []string
 	name           string
@@ -45,6 +46,7 @@ func NewKafkaProducer(config *dnsutils.Config, logger *logger.Logger, name strin
 		outputChan:     make(chan dnsutils.DnsMessage, config.Loggers.KafkaProducer.ChannelBufferSize),
 		logger:         logger,
 		config:         config,
+		configChan:     make(chan *dnsutils.Config),
 		kafkaReady:     make(chan bool),
 		kafkaReconnect: make(chan bool),
 		name:           name,
@@ -70,6 +72,11 @@ func (o *KafkaProducer) ReadConfig() {
 	} else {
 		o.textFormat = strings.Fields(o.config.Global.TextFormat)
 	}
+}
+
+func (o *KafkaProducer) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload configuration!")
+	o.configChan <- config
 }
 
 func (o *KafkaProducer) LogInfo(msg string, v ...interface{}) {
@@ -236,6 +243,14 @@ RUN_LOOP:
 
 			o.doneRun <- true
 			break RUN_LOOP
+
+		case cfg, opened := <-o.configChan:
+			if !opened {
+				return
+			}
+			o.config = cfg
+			o.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
 		case dm, opened := <-o.inputChan:
 			if !opened {

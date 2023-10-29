@@ -1,4 +1,4 @@
-package collectors
+package processors
 
 import (
 	"fmt"
@@ -24,6 +24,7 @@ type DnsProcessor struct {
 	recvFrom     chan dnsutils.DnsMessage
 	logger       *logger.Logger
 	config       *dnsutils.Config
+	ConfigChan   chan *dnsutils.Config
 	name         string
 	dropped      chan string
 	droppedCount map[string]int
@@ -39,17 +40,13 @@ func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string
 		recvFrom:     make(chan dnsutils.DnsMessage, size),
 		logger:       logger,
 		config:       config,
+		ConfigChan:   make(chan *dnsutils.Config),
 		name:         name,
 		dropped:      make(chan string),
 		droppedCount: map[string]int{},
 	}
-
-	d.ReadConfig()
-
 	return d
 }
-
-func (d *DnsProcessor) ReadConfig() {}
 
 func (c *DnsProcessor) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] processor=dns - "+msg, v...)
@@ -125,9 +122,13 @@ func (d *DnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersNam
 RUN_LOOP:
 	for {
 		select {
+		case cfg := <-d.ConfigChan:
+			d.config = cfg
+			transforms.ReloadConfig(&cfg.IngoingTransformers)
+
 		case <-d.stopRun:
 			transforms.Reset()
-			close(d.recvFrom)
+			//close(d.recvFrom)
 			d.doneRun <- true
 			break RUN_LOOP
 

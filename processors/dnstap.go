@@ -1,4 +1,4 @@
-package collectors
+package processors
 
 import (
 	"fmt"
@@ -49,7 +49,7 @@ func GetFakeDnstap(dnsquery []byte) *dnstap.Dnstap {
 }
 
 type DnstapProcessor struct {
-	connId       int
+	ConnId       int
 	doneRun      chan bool
 	stopRun      chan bool
 	doneMonitor  chan bool
@@ -57,6 +57,7 @@ type DnstapProcessor struct {
 	recvFrom     chan []byte
 	logger       *logger.Logger
 	config       *dnsutils.Config
+	ConfigChan   chan *dnsutils.Config
 	name         string
 	chanSize     int
 	dropped      chan string
@@ -67,7 +68,7 @@ func NewDnstapProcessor(connId int, config *dnsutils.Config, logger *logger.Logg
 	logger.Info("[%s] processor=dnstap#%d - initialization...", name, connId)
 
 	d := DnstapProcessor{
-		connId:       connId,
+		ConnId:       connId,
 		doneMonitor:  make(chan bool),
 		doneRun:      make(chan bool),
 		stopMonitor:  make(chan bool),
@@ -76,36 +77,31 @@ func NewDnstapProcessor(connId int, config *dnsutils.Config, logger *logger.Logg
 		chanSize:     size,
 		logger:       logger,
 		config:       config,
+		ConfigChan:   make(chan *dnsutils.Config),
 		name:         name,
 		dropped:      make(chan string),
 		droppedCount: map[string]int{},
 	}
 
-	d.ReadConfig()
-
 	return d
-}
-
-func (d *DnstapProcessor) ReadConfig() {
-	// todo - checking settings
 }
 
 func (c *DnstapProcessor) LogInfo(msg string, v ...interface{}) {
 	var log string
-	if c.connId == 0 {
+	if c.ConnId == 0 {
 		log = fmt.Sprintf("[%s] processor=dnstap - ", c.name)
 	} else {
-		log = fmt.Sprintf("[%s] processor=dnstap#%d - ", c.name, c.connId)
+		log = fmt.Sprintf("[%s] processor=dnstap#%d - ", c.name, c.ConnId)
 	}
 	c.logger.Info(log+msg, v...)
 }
 
 func (c *DnstapProcessor) LogError(msg string, v ...interface{}) {
 	var log string
-	if c.connId == 0 {
+	if c.ConnId == 0 {
 		log = fmt.Sprintf("[%s] processor=dnstap - ", c.name)
 	} else {
-		log = fmt.Sprintf("[%s] processor=dnstap#%d - ", c.name, c.connId)
+		log = fmt.Sprintf("[%s] processor=dnstap#%d - ", c.name, c.ConnId)
 	}
 	c.logger.Error(log+msg, v...)
 }
@@ -161,7 +157,7 @@ func (d *DnstapProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggers
 	dt := &dnstap.Dnstap{}
 
 	// prepare enabled transformers
-	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel, d.connId)
+	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel, d.ConnId)
 
 	// start goroutine to count dropped messsages
 	go d.MonitorLoggers()
@@ -171,9 +167,12 @@ func (d *DnstapProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggers
 RUN_LOOP:
 	for {
 		select {
+		case cfg := <-d.ConfigChan:
+			d.config = cfg
+			transforms.ReloadConfig(&cfg.IngoingTransformers)
+
 		case <-d.stopRun:
 			transforms.Reset()
-			//close(d.recvFrom)
 			d.doneRun <- true
 			break RUN_LOOP
 

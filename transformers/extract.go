@@ -31,6 +31,10 @@ func NewExtractSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.
 	return s
 }
 
+func (p *ExtractProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+	p.config = config
+}
+
 func (p *ExtractProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
 	if dm.Extracted == nil {
 		dm.Extracted = &dnsutils.TransformExtracted{

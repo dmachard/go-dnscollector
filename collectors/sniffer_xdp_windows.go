@@ -54,9 +54,9 @@ func (c *XdpSniffer) Loggers() []chan dnsutils.DnsMessage {
 	return channels
 }
 
-func (c *XdpSniffer) ReadConfig() {
-	c.identity = c.config.GetServerIdentity()
-}
+func (c *XdpSniffer) ReadConfig() {}
+
+func (c *XdpSniffer) ReloadConfig(config *dnsutils.Config) {}
 
 func (c *XdpSniffer) Channel() chan dnsutils.DnsMessage {
 	return nil

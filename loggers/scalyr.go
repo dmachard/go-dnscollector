@@ -34,6 +34,7 @@ type ScalyrClient struct {
 	logger      *logger.Logger
 	name        string
 	config      *dnsutils.Config
+	configChan  chan *dnsutils.Config
 	mode        string
 	textFormat  []string
 
@@ -62,6 +63,7 @@ func NewScalyrClient(config *dnsutils.Config, console *logger.Logger, name strin
 		logger:      console,
 		name:        name,
 		config:      config,
+		configChan:  make(chan *dnsutils.Config),
 		mode:        dnsutils.MODE_TEXT,
 
 		endpoint: makeEndpoint("app.scalyr.com"),
@@ -142,6 +144,11 @@ func (c *ScalyrClient) ReadConfig() {
 	c.httpclient = &http.Client{Transport: tr}
 }
 
+func (o *ScalyrClient) ReloadConfig(config *dnsutils.Config) {
+	o.LogInfo("reload configuration!")
+	o.configChan <- config
+}
+
 func (o *ScalyrClient) Run() {
 	o.LogInfo("running in background...")
 
@@ -163,6 +170,14 @@ RUN_LOOP:
 
 			o.doneRun <- true
 			break RUN_LOOP
+
+		case cfg, opened := <-o.configChan:
+			if !opened {
+				return
+			}
+			o.config = cfg
+			o.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
 		case dm, opened := <-o.inputChan:
 			if !opened {

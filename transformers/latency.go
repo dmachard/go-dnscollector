@@ -27,6 +27,10 @@ func NewMapQueries(ttl time.Duration, channels []chan dnsutils.DnsMessage) MapQu
 	}
 }
 
+func (mp *MapQueries) SetTtl(ttl time.Duration) {
+	mp.ttl = ttl
+}
+
 func (mp *MapQueries) Exists(key uint64) (ok bool) {
 	mp.RLock()
 	defer mp.RUnlock()
@@ -67,6 +71,10 @@ func NewHashQueries(ttl time.Duration) HashQueries {
 		ttl: ttl,
 		kv:  make(map[uint64]int64),
 	}
+}
+
+func (mp *HashQueries) SetTtl(ttl time.Duration) {
+	mp.ttl = ttl
 }
 
 func (mp *HashQueries) Get(key uint64) (value int64, ok bool) {
@@ -122,6 +130,13 @@ func NewLatencySubprocessor(config *dnsutils.ConfigTransformers, logger *logger.
 	s.mapQueries = NewMapQueries(time.Duration(config.Latency.QueriesTimeout)*time.Second, outChannels)
 
 	return &s
+}
+
+func (s *LatencyProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+	s.config = config
+
+	s.hashQueries.SetTtl(time.Duration(config.Latency.QueriesTimeout) * time.Second)
+	s.mapQueries.SetTtl(time.Duration(config.Latency.QueriesTimeout) * time.Second)
 }
 
 func (s *LatencyProcessor) MeasureLatency(dm *dnsutils.DnsMessage) {
