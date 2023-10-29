@@ -53,6 +53,7 @@ type RestAPI struct {
 	httpserver  net.Listener
 	httpmux     *http.ServeMux
 	config      *dnsutils.Config
+	configChan  chan *dnsutils.Config
 	logger      *logger.Logger
 	name        string
 
@@ -79,6 +80,7 @@ func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, name string) *Re
 		stopRun:     make(chan bool),
 		doneRun:     make(chan bool),
 		config:      config,
+		configChan:  make(chan *dnsutils.Config),
 		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.RestAPI.ChannelBufferSize),
 		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.RestAPI.ChannelBufferSize),
 		logger:      logger,
@@ -118,13 +120,8 @@ func (o *RestAPI) ReadConfig() {
 }
 
 func (o *RestAPI) ReloadConfig(config *dnsutils.Config) {
-	o.LogInfo("reload config...")
-
-	// save the new config
-	o.config = config
-
-	// read again
-	o.ReadConfig()
+	o.LogInfo("reload configuration!")
+	o.configChan <- config
 }
 
 func (o *RestAPI) LogInfo(msg string, v ...interface{}) {
@@ -719,6 +716,15 @@ RUN_LOOP:
 			subprocessors.Reset()
 			s.doneRun <- true
 			break RUN_LOOP
+
+		case cfg, opened := <-s.configChan:
+			if !opened {
+				return
+			}
+			s.config = cfg
+			s.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
+
 		case dm, opened := <-s.inputChan:
 			if !opened {
 				s.LogInfo("input channel closed!")

@@ -1,4 +1,4 @@
-package collectors
+package processors
 
 import (
 	"fmt"
@@ -25,71 +25,57 @@ var (
 )
 
 type PdnsProcessor struct {
-	connId             int
-	doneRun            chan bool
-	stopRun            chan bool
-	doneMonitor        chan bool
-	stopMonitor        chan bool
-	recvFrom           chan []byte
-	logger             *logger.Logger
-	config             *dnsutils.Config
-	configTransformers chan *dnsutils.ConfigTransformers
-	name               string
-	chanSize           int
-	dropped            chan string
-	droppedCount       map[string]int
+	ConnId       int
+	doneRun      chan bool
+	stopRun      chan bool
+	doneMonitor  chan bool
+	stopMonitor  chan bool
+	recvFrom     chan []byte
+	logger       *logger.Logger
+	config       *dnsutils.Config
+	ConfigChan   chan *dnsutils.Config
+	name         string
+	chanSize     int
+	dropped      chan string
+	droppedCount map[string]int
 }
 
 func NewPdnsProcessor(connId int, config *dnsutils.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
 	logger.Info("[%s] processor=pdns#%d - initialization...", name, connId)
 	d := PdnsProcessor{
-		connId:             connId,
-		doneMonitor:        make(chan bool),
-		doneRun:            make(chan bool),
-		stopMonitor:        make(chan bool),
-		stopRun:            make(chan bool),
-		recvFrom:           make(chan []byte, size),
-		chanSize:           size,
-		logger:             logger,
-		config:             config,
-		configTransformers: make(chan *dnsutils.ConfigTransformers),
-		name:               name,
-		dropped:            make(chan string),
-		droppedCount:       map[string]int{},
+		ConnId:       connId,
+		doneMonitor:  make(chan bool),
+		doneRun:      make(chan bool),
+		stopMonitor:  make(chan bool),
+		stopRun:      make(chan bool),
+		recvFrom:     make(chan []byte, size),
+		chanSize:     size,
+		logger:       logger,
+		config:       config,
+		ConfigChan:   make(chan *dnsutils.Config),
+		name:         name,
+		dropped:      make(chan string),
+		droppedCount: map[string]int{},
 	}
-
-	d.ReadConfig()
-
 	return d
-}
-
-func (c *PdnsProcessor) ReadConfig() {
-	// nothing to read
-}
-
-func (d *PdnsProcessor) ReloadConfig(config *dnsutils.Config) {
-	d.config = config
-	d.ReadConfig()
-
-	d.configTransformers <- &config.IngoingTransformers
 }
 
 func (c *PdnsProcessor) LogInfo(msg string, v ...interface{}) {
 	var log string
-	if c.connId == 0 {
+	if c.ConnId == 0 {
 		log = fmt.Sprintf("[%s] processor=powerdns - ", c.name)
 	} else {
-		log = fmt.Sprintf("[%s] processor=powerdns#%d - ", c.name, c.connId)
+		log = fmt.Sprintf("[%s] processor=powerdns#%d - ", c.name, c.ConnId)
 	}
 	c.logger.Info(log+msg, v...)
 }
 
 func (c *PdnsProcessor) LogError(msg string, v ...interface{}) {
 	var log string
-	if c.connId == 0 {
+	if c.ConnId == 0 {
 		log = fmt.Sprintf("[%s] processor=powerdns - ", c.name)
 	} else {
-		log = fmt.Sprintf("[%s] processor=powerdns#%d - ", c.name, c.connId)
+		log = fmt.Sprintf("[%s] processor=powerdns#%d - ", c.name, c.ConnId)
 	}
 	c.logger.Error(log+msg, v...)
 }
@@ -146,7 +132,7 @@ func (d *PdnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersNa
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
 
 	// prepare enabled transformers
-	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel, d.connId)
+	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel, d.ConnId)
 
 	// start goroutine to count dropped messsages
 	go d.MonitorLoggers()
@@ -156,8 +142,9 @@ func (d *PdnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersNa
 RUN_LOOP:
 	for {
 		select {
-		case cfg := <-d.configTransformers:
-			transforms.ReloadConfig(cfg)
+		case cfg := <-d.ConfigChan:
+			d.config = cfg
+			transforms.ReloadConfig(&cfg.IngoingTransformers)
 
 		case <-d.stopRun:
 			transforms.Reset()

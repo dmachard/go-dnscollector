@@ -37,6 +37,7 @@ type StdOut struct {
 	outputChan  chan dnsutils.DnsMessage
 	textFormat  []string
 	config      *dnsutils.Config
+	configChan  chan *dnsutils.Config
 	logger      *logger.Logger
 	stdout      *log.Logger
 	name        string
@@ -53,6 +54,7 @@ func NewStdOut(config *dnsutils.Config, console *logger.Logger, name string) *St
 		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.Stdout.ChannelBufferSize),
 		logger:      console,
 		config:      config,
+		configChan:  make(chan *dnsutils.Config),
 		stdout:      log.New(os.Stdout, "", 0),
 		name:        name,
 	}
@@ -76,13 +78,8 @@ func (c *StdOut) ReadConfig() {
 }
 
 func (o *StdOut) ReloadConfig(config *dnsutils.Config) {
-	o.LogInfo("reload config...")
-
-	// save the new config
-	o.config = config
-
-	// read again
-	o.ReadConfig()
+	o.LogInfo("reload configuration!")
+	o.configChan <- config
 }
 
 func (c *StdOut) LogInfo(msg string, v ...interface{}) {
@@ -131,6 +128,16 @@ RUN_LOOP:
 			subprocessors.Reset()
 			o.doneRun <- true
 			break RUN_LOOP
+
+		// new config provided?
+		case cfg, opened := <-o.configChan:
+			if !opened {
+				return
+			}
+			o.config = cfg
+			o.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
+
 		case dm, opened := <-o.inputChan:
 			if !opened {
 				o.LogInfo("input channel closed!")

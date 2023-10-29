@@ -22,6 +22,7 @@ type ElasticSearchClient struct {
 	inputChan   chan dnsutils.DnsMessage
 	outputChan  chan dnsutils.DnsMessage
 	config      *dnsutils.Config
+	configChan  chan *dnsutils.Config
 	logger      *logger.Logger
 	name        string
 	server      string
@@ -40,6 +41,7 @@ func NewElasticSearchClient(config *dnsutils.Config, console *logger.Logger, nam
 		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
 		logger:      console,
 		config:      config,
+		configChan:  make(chan *dnsutils.Config),
 		name:        name,
 	}
 	o.ReadConfig()
@@ -63,13 +65,8 @@ func (c *ElasticSearchClient) ReadConfig() {
 }
 
 func (o *ElasticSearchClient) ReloadConfig(config *dnsutils.Config) {
-	o.LogInfo("reload config...")
-
-	// save the new config
-	o.config = config
-
-	// read again
-	o.ReadConfig()
+	o.LogInfo("reload configuration!")
+	o.configChan <- config
 }
 
 func (o *ElasticSearchClient) Channel() chan dnsutils.DnsMessage {
@@ -115,6 +112,14 @@ RUN_LOOP:
 
 			o.doneRun <- true
 			break RUN_LOOP
+
+		case cfg, opened := <-o.configChan:
+			if !opened {
+				return
+			}
+			o.config = cfg
+			o.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
 		case dm, opened := <-o.inputChan:
 			if !opened {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/loggers"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 	"google.golang.org/protobuf/proto"
@@ -75,13 +76,13 @@ func Test_DnstapProxifier(t *testing.T) {
 				frame := &framestream.Frame{}
 
 				// get fake dns question
-				dnsquery, err := GetFakeDns()
+				dnsquery, err := processors.GetFakeDns()
 				if err != nil {
 					t.Fatalf("dns question pack error")
 				}
 
 				// get fake dnstap message
-				dt_query := GetFakeDnstap(dnsquery)
+				dt_query := processors.GetFakeDnstap(dnsquery)
 
 				// serialize to bytes
 				data, err := proto.Marshal(dt_query)

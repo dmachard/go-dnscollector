@@ -26,6 +26,7 @@ type RedisPub struct {
 	inputChan          chan dnsutils.DnsMessage
 	outputChan         chan dnsutils.DnsMessage
 	config             *dnsutils.Config
+	configChan         chan *dnsutils.Config
 	logger             *logger.Logger
 	textFormat         []string
 	name               string
@@ -49,6 +50,7 @@ func NewRedisPub(config *dnsutils.Config, logger *logger.Logger, name string) *R
 		transportReconnect: make(chan bool),
 		logger:             logger,
 		config:             config,
+		configChan:         make(chan *dnsutils.Config),
 		name:               name,
 	}
 
@@ -75,13 +77,8 @@ func (o *RedisPub) ReadConfig() {
 }
 
 func (o *RedisPub) ReloadConfig(config *dnsutils.Config) {
-	o.LogInfo("reload config...")
-
-	// save the new config
-	o.config = config
-
-	// read again
-	o.ReadConfig()
+	o.LogInfo("reload configuration!")
+	o.configChan <- config
 }
 
 func (o *RedisPub) LogInfo(msg string, v ...interface{}) {
@@ -262,6 +259,14 @@ RUN_LOOP:
 
 			o.doneRun <- true
 			break RUN_LOOP
+
+		case cfg, opened := <-o.configChan:
+			if !opened {
+				return
+			}
+			o.config = cfg
+			o.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
 		case dm, opened := <-o.inputChan:
 			if !opened {

@@ -13,6 +13,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	framestream "github.com/farsightsec/golang-framestream"
 	"github.com/fsnotify/fsnotify"
@@ -38,11 +39,12 @@ type FileIngestor struct {
 	exit            chan bool
 	loggers         []dnsutils.Worker
 	config          *dnsutils.Config
+	configChan      chan *dnsutils.Config
 	logger          *logger.Logger
 	watcher         *fsnotify.Watcher
 	watcherTimers   map[string]*time.Timer
-	dnsProcessor    DnsProcessor
-	dnstapProcessor DnstapProcessor
+	dnsProcessor    processors.DnsProcessor
+	dnstapProcessor processors.DnstapProcessor
 	filterDnsPort   int
 	identity        string
 	name            string
@@ -55,6 +57,7 @@ func NewFileIngestor(loggers []dnsutils.Worker, config *dnsutils.Config, logger 
 		done:          make(chan bool),
 		exit:          make(chan bool),
 		config:        config,
+		configChan:    make(chan *dnsutils.Config),
 		loggers:       loggers,
 		logger:        logger,
 		name:          name,
@@ -94,13 +97,8 @@ func (c *FileIngestor) ReadConfig() {
 }
 
 func (c *FileIngestor) ReloadConfig(config *dnsutils.Config) {
-	c.LogInfo("reload config...")
-
-	// save the new config
-	c.config = config
-
-	// read again
-	c.ReadConfig()
+	c.LogInfo("reload configuration...")
+	c.configChan <- config
 }
 
 func (c *FileIngestor) LogInfo(msg string, v ...interface{}) {
@@ -376,11 +374,11 @@ func (c *FileIngestor) RemoveEvent(filePath string) {
 func (c *FileIngestor) Run() {
 	c.LogInfo("starting collector...")
 
-	c.dnsProcessor = NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
+	c.dnsProcessor = processors.NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
 	go c.dnsProcessor.Run(c.Loggers())
 
 	// start dnstap subprocessor
-	c.dnstapProcessor = NewDnstapProcessor(0, c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
+	c.dnstapProcessor = processors.NewDnstapProcessor(0, c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
 	go c.dnstapProcessor.Run(c.Loggers())
 
 	// read current folder content
@@ -426,6 +424,17 @@ func (c *FileIngestor) Run() {
 	go func() {
 		for {
 			select {
+			// new config provided?
+			case cfg, opened := <-c.configChan:
+				if !opened {
+					return
+				}
+				c.config = cfg
+				c.ReadConfig()
+
+				c.dnsProcessor.ConfigChan <- cfg
+				c.dnstapProcessor.ConfigChan <- cfg
+
 			case event, ok := <-c.watcher.Events:
 				if !ok { // Channel was closed (i.e. Watcher.Close() was called).
 					return

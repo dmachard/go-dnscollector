@@ -14,6 +14,7 @@ import (
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/perf"
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-dnscollector/xdp"
 	"github.com/dmachard/go-logger"
 	"golang.org/x/sys/unix"
@@ -39,24 +40,26 @@ func ConvertIp6(ip [4]uint32) net.IP {
 }
 
 type XdpSniffer struct {
-	done     chan bool
-	exit     chan bool
-	identity string
-	loggers  []dnsutils.Worker
-	config   *dnsutils.Config
-	logger   *logger.Logger
-	name     string
+	done       chan bool
+	exit       chan bool
+	identity   string
+	loggers    []dnsutils.Worker
+	config     *dnsutils.Config
+	configChan chan *dnsutils.Config
+	logger     *logger.Logger
+	name       string
 }
 
 func NewXdpSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *XdpSniffer {
 	logger.Info("[%s] collector=xdp - enabled", name)
 	s := &XdpSniffer{
-		done:    make(chan bool),
-		exit:    make(chan bool),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+		done:       make(chan bool),
+		exit:       make(chan bool),
+		config:     config,
+		configChan: make(chan *dnsutils.Config),
+		loggers:    loggers,
+		logger:     logger,
+		name:       name,
 	}
 	s.ReadConfig()
 	return s
@@ -91,13 +94,8 @@ func (c *XdpSniffer) ReadConfig() {
 }
 
 func (c *XdpSniffer) ReloadConfig(config *dnsutils.Config) {
-	c.LogInfo("reload config...")
-
-	// save the new config
-	c.config = config
-
-	// read again
-	c.ReadConfig()
+	c.LogInfo("reload configuration...")
+	c.configChan <- config
 }
 
 func (c *XdpSniffer) Channel() chan dnsutils.DnsMessage {
@@ -118,7 +116,7 @@ func (c *XdpSniffer) Stop() {
 func (c *XdpSniffer) Run() {
 	c.LogInfo("starting collector...")
 
-	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.XdpLiveCapture.ChannelBufferSize)
+	dnsProcessor := processors.NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.XdpLiveCapture.ChannelBufferSize)
 	go dnsProcessor.Run(c.Loggers())
 
 	iface, err := net.InterfaceByName(c.config.Collectors.XdpLiveCapture.Device)
@@ -152,6 +150,35 @@ func (c *XdpSniffer) Run() {
 	if err != nil {
 		panic(err)
 	}
+
+	dnsChan := make(chan dnsutils.DnsMessage)
+
+	// goroutine to read all packets reassembled
+	go func() {
+		for {
+			select {
+			// new config provided?
+			case cfg, opened := <-c.configChan:
+				if !opened {
+					return
+				}
+				c.config = cfg
+				c.ReadConfig()
+
+				// send the config to the dns processor
+				dnsProcessor.ConfigChan <- cfg
+
+			//dns message to read ?
+			case dm := <-dnsChan:
+
+				// update identity with config ?
+				dm.DnsTap.Identity = c.identity
+
+				dnsProcessor.GetChannel() <- dm
+
+			}
+		}
+	}()
 
 	go func() {
 		var pkt xdp.BpfPktEvent
@@ -199,7 +226,6 @@ func (c *XdpSniffer) Run() {
 			dm.DnsTap.TimeSec = int(tsAdjusted.Unix())
 			dm.DnsTap.TimeNsec = int(tsAdjusted.UnixNano() - tsAdjusted.Unix()*1e9)
 
-			dm.DnsTap.Identity = c.identity
 			if pkt.SrcPort == 53 {
 				dm.DnsTap.Operation = dnsutils.DNSTAP_CLIENT_RESPONSE
 			} else {
@@ -227,11 +253,13 @@ func (c *XdpSniffer) Run() {
 				dm.DNS.Length = len(dm.DNS.Payload)
 			}
 
-			dnsProcessor.GetChannel() <- dm
-
+			dnsChan <- dm
 		}
 	}()
+
 	<-c.exit
+	close(dnsChan)
+	close(c.configChan)
 
 	// stop dns processor
 	dnsProcessor.Stop()

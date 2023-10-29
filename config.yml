@@ -70,6 +70,9 @@ multiplexer:
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
+      transforms:
+        normalize:
+          qname-lowercase: false
 
   loggers:
     - name: console
@@ -195,12 +198,12 @@ multiplexer:
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
 
-# # ztsp (TaZmen Sniffer Protocol)
-# ztsp:
-#  # listen on ip
-#  listen-ip: 0.0.0.0
-#  # listen on port
-#  listen-port: 10000
+# # tzsp (TaZmen Sniffer Protocol)
+# tzsp:
+#   # listen on ip
+#   listen-ip: 0.0.0.0
+#   # listen on port
+#   listen-port: 10000
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
 

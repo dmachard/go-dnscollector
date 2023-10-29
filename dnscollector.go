@@ -252,7 +252,7 @@ func main() {
 		if subcfg.Collectors.FileIngestor.Enable && IsCollectorRouted(config, input.Name) {
 			mapCollectors[input.Name] = collectors.NewFileIngestor(nil, subcfg, logger, input.Name)
 		}
-		if subcfg.Collectors.Tzsp.Enable {
+		if subcfg.Collectors.Tzsp.Enable && IsCollectorRouted(config, input.Name) {
 			mapCollectors[input.Name] = collectors.NewTzsp(nil, subcfg, logger, input.Name)
 		}
 	}

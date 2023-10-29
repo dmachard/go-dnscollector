@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -27,8 +28,6 @@ type TzspSniffer struct {
 	logger   *logger.Logger
 	name     string
 	identity string
-	port     int
-	ip       string
 }
 
 func NewTzsp(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *TzspSniffer {
@@ -70,27 +69,17 @@ func (c *TzspSniffer) LogError(msg string, v ...interface{}) {
 }
 
 func (c *TzspSniffer) ReadConfig() {
-
-	c.port = c.config.Collectors.Tzsp.ListenPort
-	c.ip = c.config.Collectors.Tzsp.ListenIp
 	c.identity = c.config.GetServerIdentity()
-	// TODO: Implement
 }
 
 func (c *TzspSniffer) ReloadConfig(config *dnsutils.Config) {
-	c.LogInfo("reload config...")
-
-	// save the new config
-	c.config = config
-
-	// read again
-	c.ReadConfig()
+	// TODO implement reload configuration
 }
 
 func (c *TzspSniffer) Listen() error {
 	c.logger.Info("running in background...")
 
-	ServerAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", c.ip, c.port))
+	ServerAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", c.config.Collectors.Tzsp.ListenIp, c.config.Collectors.Tzsp.ListenPort))
 	if err != nil {
 		return err
 	}
@@ -137,8 +126,7 @@ func (c *TzspSniffer) Run() {
 		c.logger.Fatal("collector=tzsp listening failed: ", err)
 	}
 
-	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.Tzsp.ChannelBufferSize)
-
+	dnsProcessor := processors.NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.Tzsp.ChannelBufferSize)
 	go dnsProcessor.Run(c.Loggers())
 
 	go func() {

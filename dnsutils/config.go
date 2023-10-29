@@ -247,7 +247,7 @@ type Config struct {
 			ListenIp          string `yaml:"listen-ip"`
 			ListenPort        int    `yaml:"listen-port"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
-		}
+		} `yaml:"tzsp"`
 	} `yaml:"collectors"`
 
 	IngoingTransformers ConfigTransformers `yaml:"collectors-transformers"`
