@@ -56,6 +56,8 @@ func (c *XdpSniffer) Loggers() []chan dnsutils.DnsMessage {
 
 func (c *XdpSniffer) ReadConfig() {}
 
+func (c *XdpSniffer) ReloadConfig(config *dnsutils.Config) {}
+
 func (c *XdpSniffer) Channel() chan dnsutils.DnsMessage {
 	return nil
 }
