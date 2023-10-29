@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/RackSec/srslog v0.0.0-20180709174129-a4725f04ec91
 	github.com/Shopify/sarama v1.38.1
-	github.com/cilium/ebpf v0.12.0
+	github.com/cilium/ebpf v0.12.2
 	github.com/dmachard/go-dnstap-protobuf v0.6.0
 	github.com/dmachard/go-framestream v0.6.0
 	github.com/dmachard/go-logger v0.3.0
