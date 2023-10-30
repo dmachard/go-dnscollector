@@ -8,6 +8,7 @@ You will find below some examples of configurations to manage your DNS logs.
   - [x] [Transform DNSTap as input to JSON format as output](./_examples/use-case-3.yml)
   - [x] [Relays DNSTap stream to multiple remote destination without decoding](./_examples/use-case-12.yml)
   - [x] [Aggregate several DNSTap stream and forward it to the same file](./_examples/use-case-7.yml)
+  - [x] [Send to syslog TLS](./_examples/use-case-23.yml)
 
 - Capture DNS traffic from PowerDNS products
   - [x] [Capture multiple PowerDNS streams](./_examples/use-case-8.yml)

@@ -9,7 +9,7 @@ import (
 
 	"strings"
 
-	syslog "github.com/RackSec/srslog"
+	syslog "github.com/dmachard/go-clientsyslog"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/transformers"
@@ -167,12 +167,16 @@ func (o *Syslog) ConnectToRemote() {
 			o.LogInfo("connecting to local syslog...")
 			logWriter, err = syslog.New(o.facility|o.severity, "")
 		case dnsutils.SOCKET_UNIX, dnsutils.SOCKET_UDP, dnsutils.SOCKET_TCP:
-			o.LogInfo("connecting to syslog %s://%s ...", o.config.Loggers.Syslog.Transport, o.config.Loggers.Syslog.RemoteAddress)
+			o.LogInfo("connecting to syslog %s://%s ...",
+				o.config.Loggers.Syslog.Transport,
+				o.config.Loggers.Syslog.RemoteAddress)
 			logWriter, err = syslog.Dial(o.config.Loggers.Syslog.Transport,
 				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity,
 				o.config.Loggers.Syslog.Tag)
 		case dnsutils.SOCKET_TLS:
-			o.LogInfo("connecting to syslog %s://%s ...", o.config.Loggers.Syslog.Transport, o.config.Loggers.Syslog.RemoteAddress)
+			o.LogInfo("connecting to syslog %s://%s ...",
+				o.config.Loggers.Syslog.Transport,
+				o.config.Loggers.Syslog.RemoteAddress)
 			tlsConfig := &tls.Config{
 				MinVersion:         tls.VersionTLS12,
 				InsecureSkipVerify: false,
@@ -198,20 +202,36 @@ func (o *Syslog) ConnectToRemote() {
 
 		o.syslogWriter = logWriter
 
-		switch strings.ToLower(o.config.Loggers.Syslog.Format) {
+		// set syslog format
+		switch strings.ToLower(o.config.Loggers.Syslog.Formatter) {
+		case "unix":
+			o.syslogWriter.SetFormatter(syslog.UnixFormatter)
 		case "rfc3164":
 			o.syslogWriter.SetFormatter(syslog.RFC3164Formatter)
-		case "rfc5424":
+		case "rfc5424", "":
 			o.syslogWriter.SetFormatter(syslog.RFC5424Formatter)
+		}
+
+		// set syslog framer
+		switch strings.ToLower(o.config.Loggers.Syslog.Framer) {
+		case "none", "":
+			o.syslogWriter.SetFramer(syslog.DefaultFramer)
 		case "rfc5425":
-			o.syslogWriter.SetFormatter(syslog.RFC5424Formatter)
 			o.syslogWriter.SetFramer(syslog.RFC5425MessageLengthFramer)
+		}
+
+		// custom hostname
+		if len(o.config.Loggers.Syslog.Hostname) > 0 {
+			o.syslogWriter.SetHostname(o.config.Loggers.Syslog.Hostname)
+		}
+		// custom program name
+		if len(o.config.Loggers.Syslog.AppName) > 0 {
+			o.syslogWriter.SetProgram(o.config.Loggers.Syslog.AppName)
 		}
 
 		// notify process that the transport is ready
 		// block the loop until a reconnect is needed
 		o.transportReady <- true
-
 		o.transportReconnect <- true
 	}
 }

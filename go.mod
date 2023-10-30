@@ -3,7 +3,6 @@ module github.com/dmachard/go-dnscollector
 go 1.21
 
 require (
-	github.com/RackSec/srslog v0.0.0-20180709174129-a4725f04ec91
 	github.com/Shopify/sarama v1.38.1
 	github.com/cilium/ebpf v0.12.2
 	github.com/dmachard/go-dnstap-protobuf v0.6.0
@@ -48,6 +47,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deepmap/oapi-codegen v1.12.4 // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
+	github.com/dmachard/go-clientsyslog v0.3.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/eapache/go-resiliency v1.3.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20230111030713-bf00bc1b83b6 // indirect
