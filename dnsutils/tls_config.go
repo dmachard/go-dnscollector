@@ -34,7 +34,7 @@ func TlsClientConfig(options TlsOptions) (*tls.Config, error) {
 		CAs := x509.NewCertPool()
 		pemData, err := os.ReadFile(options.CAFile)
 		if err != nil {
-			return nil, fmt.Errorf("could not read CA certificate %q: %v", options.CAFile, err)
+			return nil, fmt.Errorf("could not read CA certificate %q: %w", options.CAFile, err)
 		}
 		if !CAs.AppendCertsFromPEM(pemData) {
 			return nil, fmt.Errorf("failed to append certificates from PEM file: %q", options.CAFile)
@@ -45,7 +45,7 @@ func TlsClientConfig(options TlsOptions) (*tls.Config, error) {
 	if len(options.CertFile) > 0 && len(options.KeyFile) > 0 {
 		cer, err := tls.LoadX509KeyPair(options.CertFile, options.KeyFile)
 		if err != nil {
-			return nil, fmt.Errorf("loading certificate failed: %s", err)
+			return nil, fmt.Errorf("loading certificate failed: %w", err)
 		}
 		tlsConfig.Certificates = []tls.Certificate{cer}
 	}
