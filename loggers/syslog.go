@@ -206,9 +206,9 @@ func (o *Syslog) ConnectToRemote() {
 		switch strings.ToLower(o.config.Loggers.Syslog.Formatter) {
 		case "unix":
 			o.syslogWriter.SetFormatter(syslog.UnixFormatter)
-		case "rfc3164", "":
+		case "rfc3164":
 			o.syslogWriter.SetFormatter(syslog.RFC3164Formatter)
-		case "rfc5424":
+		case "rfc5424", "":
 			o.syslogWriter.SetFormatter(syslog.RFC5424Formatter)
 		}
 
@@ -232,7 +232,6 @@ func (o *Syslog) ConnectToRemote() {
 		// notify process that the transport is ready
 		// block the loop until a reconnect is needed
 		o.transportReady <- true
-
 		o.transportReconnect <- true
 	}
 }

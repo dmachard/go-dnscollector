@@ -16,7 +16,8 @@ func Test_SyslogRunUdp(t *testing.T) {
 		name       string
 		transport  string
 		mode       string
-		format     string
+		formatter  string
+		framer     string
 		pattern    string
 		listenAddr string
 	}{
@@ -24,31 +25,35 @@ func Test_SyslogRunUdp(t *testing.T) {
 			name:       "unix_format",
 			transport:  dnsutils.SOCKET_UDP,
 			mode:       dnsutils.MODE_TEXT,
-			format:     "unix",
-			pattern:    `<30> \d+-\d+-\d+.*`,
+			formatter:  "unix",
+			framer:     "",
+			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
 			listenAddr: ":4000",
 		},
 		{
 			name:       "rfc3164_format",
 			transport:  dnsutils.SOCKET_UDP,
 			mode:       dnsutils.MODE_TEXT,
-			format:     "rfc3164",
-			pattern:    "<30>.*",
+			formatter:  "rfc3164",
+			framer:     "",
+			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
 			listenAddr: ":4000",
 		},
 		{
 			name:       "rfc5424_format",
 			transport:  dnsutils.SOCKET_UDP,
 			mode:       dnsutils.MODE_TEXT,
-			format:     "rfc5424",
+			formatter:  "rfc5424",
+			framer:     "",
 			pattern:    `<30>1 \d+-\d+-\d+.*`,
 			listenAddr: ":4000",
 		},
 		{
-			name:       "rfc5425_format",
+			name:       "rfc5424_format_rfc5425_framer",
 			transport:  dnsutils.SOCKET_UDP,
 			mode:       dnsutils.MODE_TEXT,
-			format:     "rfc5425",
+			formatter:  "rfc5424",
+			framer:     "rfc5425",
 			pattern:    `\d+ \<30\>1 \d+-\d+-\d+.*`,
 			listenAddr: ":4000",
 		},
@@ -61,7 +66,8 @@ func Test_SyslogRunUdp(t *testing.T) {
 			config.Loggers.Syslog.Transport = tc.transport
 			config.Loggers.Syslog.RemoteAddress = tc.listenAddr
 			config.Loggers.Syslog.Mode = tc.mode
-			config.Loggers.Syslog.Formatter = tc.format
+			config.Loggers.Syslog.Formatter = tc.formatter
+			config.Loggers.Syslog.Framer = tc.framer
 
 			g := NewSyslog(config, logger.New(false), "test")
 
@@ -91,8 +97,6 @@ func Test_SyslogRunUdp(t *testing.T) {
 				t.Errorf("no data received")
 			}
 
-			print(string(buf))
-
 			re := regexp.MustCompile(tc.pattern)
 			if !re.MatchString(string(buf)) {
 				t.Errorf("syslog error want %s, got: %s", tc.pattern, string(buf))
@@ -106,7 +110,8 @@ func Test_SyslogRunTcp(t *testing.T) {
 		name       string
 		transport  string
 		mode       string
-		format     string
+		formatter  string
+		framer     string
 		pattern    string
 		listenAddr string
 	}{
@@ -114,31 +119,35 @@ func Test_SyslogRunTcp(t *testing.T) {
 			name:       "unix_format",
 			transport:  dnsutils.SOCKET_TCP,
 			mode:       dnsutils.MODE_TEXT,
-			format:     "unix",
-			pattern:    `<30> \d+-\d+-\d+.*`,
+			formatter:  "unix",
+			framer:     "",
+			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
 			listenAddr: ":4000",
 		},
 		{
 			name:       "rfc3164_format",
 			transport:  dnsutils.SOCKET_TCP,
 			mode:       dnsutils.MODE_TEXT,
-			format:     "rfc3164",
-			pattern:    "<30>.*",
+			formatter:  "rfc3164",
+			framer:     "",
+			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
 			listenAddr: ":4000",
 		},
 		{
 			name:       "rfc5424_format",
 			transport:  dnsutils.SOCKET_TCP,
 			mode:       dnsutils.MODE_TEXT,
-			format:     "rfc5424",
+			formatter:  "rfc5424",
+			framer:     "",
 			pattern:    `<30>1 \d+-\d+-\d+.*`,
 			listenAddr: ":4000",
 		},
 		{
-			name:       "rfc5425_format",
+			name:       "rfc5425_format_rfc5425_framer",
 			transport:  dnsutils.SOCKET_TCP,
 			mode:       dnsutils.MODE_TEXT,
-			format:     "rfc5425",
+			formatter:  "rfc5424",
+			framer:     "rfc5425",
 			pattern:    `\d+ \<30\>1 \d+-\d+-\d+.*`,
 			listenAddr: ":4000",
 		},
@@ -151,7 +160,8 @@ func Test_SyslogRunTcp(t *testing.T) {
 			config.Loggers.Syslog.Transport = tc.transport
 			config.Loggers.Syslog.RemoteAddress = tc.listenAddr
 			config.Loggers.Syslog.Mode = tc.mode
-			config.Loggers.Syslog.Formatter = tc.format
+			config.Loggers.Syslog.Formatter = tc.formatter
+			config.Loggers.Syslog.Framer = tc.framer
 
 			g := NewSyslog(config, logger.New(false), "test")
 

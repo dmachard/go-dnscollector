@@ -668,7 +668,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.ChannelBufferSize = 65535
 	c.Loggers.Syslog.Tag = ""
 	c.Loggers.Syslog.Framer = ""
-	c.Loggers.Syslog.Formatter = "rfc3164"
+	c.Loggers.Syslog.Formatter = "rfc5424"
 	c.Loggers.Syslog.Hostname = ""
 	c.Loggers.Syslog.AppName = ""
 
