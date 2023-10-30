@@ -19,9 +19,9 @@ Options:
 * `text-format`: (string) output text format, please refer to the default text format to see all available [directives](../configuration.md#custom-text-format), use this parameter if you want a specific format
 * `tls-insecure`: (boolean) insecure mode, skip certificate verify
 * `tls-min-version`: (string) min tls version, default to 1.2
-* `ca-file`: (string) CA file
-* `cert-file`: (string) certificate file
-* `key-file`: (string) private key file
+* `ca-file`: (string) provide CA file to verify the server certificate
+* `cert-file`: (string) provide client certificate file for mTLS
+* `key-file`: (string) provide client private key file for mTLS
 * `formattter`: (string) Set syslog formatter between `unix`, `rfc3164` or `rfc5424` (default)
 * `framer`: (string) Set syslog framer: `none` or `rfc5425`
 * `hostname`: (string) Set syslog hostname
