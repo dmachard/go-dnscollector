@@ -350,6 +350,9 @@ type Config struct {
 			Mode              string `yaml:"mode"`
 			TlsInsecure       bool   `yaml:"tls-insecure"`
 			TlsMinVersion     string `yaml:"tls-min-version"`
+			CAFile            string `yaml:"ca-file"`
+			CertFile          string `yaml:"cert-file"`
+			KeyFile           string `yaml:"key-file"`
 			Formatter         string `yaml:"formatter"`
 			Framer            string `yaml:"framer"`
 			Hostname          string `yaml:"hostname"`
@@ -665,12 +668,15 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.RetryInterval = 10
 	c.Loggers.Syslog.TlsInsecure = false
 	c.Loggers.Syslog.TlsMinVersion = TLS_v12
+	c.Loggers.Syslog.CAFile = ""
+	c.Loggers.Syslog.CertFile = ""
+	c.Loggers.Syslog.KeyFile = ""
 	c.Loggers.Syslog.ChannelBufferSize = 65535
 	c.Loggers.Syslog.Tag = ""
 	c.Loggers.Syslog.Framer = ""
 	c.Loggers.Syslog.Formatter = "rfc5424"
 	c.Loggers.Syslog.Hostname = ""
-	c.Loggers.Syslog.AppName = ""
+	c.Loggers.Syslog.AppName = "DNScollector"
 
 	c.Loggers.Fluentd.Enable = false
 	c.Loggers.Fluentd.RemoteAddress = LOCALHOST_IP
