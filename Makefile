@@ -5,7 +5,7 @@ GO_LOGGER := 0.3.0
 GO_POWERDNS_PROTOBUF := 0.2.0
 GO_DNSTAP_PROTOBUF := 0.6.0
 GO_FRAMESTREAM := 0.6.0
-GO_CLIENTSYSLOG := 0.2.0
+GO_CLIENTSYSLOG := 0.3.0
 
 BUILD_TIME := $(shell LANG=en_US date +"%F_%T_%z")
 COMMIT := $(shell git rev-parse --short HEAD)
