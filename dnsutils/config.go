@@ -350,7 +350,10 @@ type Config struct {
 			Mode              string `yaml:"mode"`
 			TlsInsecure       bool   `yaml:"tls-insecure"`
 			TlsMinVersion     string `yaml:"tls-min-version"`
-			Format            string `yaml:"format"`
+			Formatter         string `yaml:"formatter"`
+			Framer            string `yaml:"framer"`
+			Hostname          string `yaml:"hostname"`
+			AppName           string `yaml:"app-name"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 			Tag               string `yaml:"tag"`
 		} `yaml:"syslog"`
@@ -664,6 +667,10 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.TlsMinVersion = TLS_v12
 	c.Loggers.Syslog.ChannelBufferSize = 65535
 	c.Loggers.Syslog.Tag = ""
+	c.Loggers.Syslog.Framer = ""
+	c.Loggers.Syslog.Formatter = "rfc3164"
+	c.Loggers.Syslog.Hostname = ""
+	c.Loggers.Syslog.AppName = ""
 
 	c.Loggers.Fluentd.Enable = false
 	c.Loggers.Fluentd.RemoteAddress = LOCALHOST_IP

@@ -61,7 +61,7 @@ func Test_SyslogRunUdp(t *testing.T) {
 			config.Loggers.Syslog.Transport = tc.transport
 			config.Loggers.Syslog.RemoteAddress = tc.listenAddr
 			config.Loggers.Syslog.Mode = tc.mode
-			config.Loggers.Syslog.Format = tc.format
+			config.Loggers.Syslog.Formatter = tc.format
 
 			g := NewSyslog(config, logger.New(false), "test")
 
@@ -151,7 +151,7 @@ func Test_SyslogRunTcp(t *testing.T) {
 			config.Loggers.Syslog.Transport = tc.transport
 			config.Loggers.Syslog.RemoteAddress = tc.listenAddr
 			config.Loggers.Syslog.Mode = tc.mode
-			config.Loggers.Syslog.Format = tc.format
+			config.Loggers.Syslog.Formatter = tc.format
 
 			g := NewSyslog(config, logger.New(false), "test")
 

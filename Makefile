@@ -5,6 +5,7 @@ GO_LOGGER := 0.3.0
 GO_POWERDNS_PROTOBUF := 0.2.0
 GO_DNSTAP_PROTOBUF := 0.6.0
 GO_FRAMESTREAM := 0.6.0
+GO_CLIENTSYSLOG := 0.2.0
 
 BUILD_TIME := $(shell LANG=en_US date +"%F_%T_%z")
 COMMIT := $(shell git rev-parse --short HEAD)
@@ -33,6 +34,7 @@ dep:
 	@go get github.com/dmachard/go-powerdns-protobuf@v$(GO_POWERDNS_PROTOBUF)
 	@go get github.com/dmachard/go-dnstap-protobuf@v$(GO_DNSTAP_PROTOBUF)
 	@go get github.com/dmachard/go-framestream@v$(GO_FRAMESTREAM)
+	@go get github.com/dmachard/go-clientsyslog@v$(GO_CLIENTSYSLOG)
 	@go mod edit -go=$(GO_VERSION)
 	@go mod tidy
 
