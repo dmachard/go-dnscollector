@@ -7,7 +7,7 @@ import (
 )
 
 func TestConfigClientTLSNoVerify(t *testing.T) {
-	tlsConfig, err := TlsClientConfig(TlsOptions{InsecureSkipVerify: true})
+	tlsConfig, err := TlsClientConfig(TlsOptions{InsecureSkipVerify: true, MinVersion: TLS_v12})
 
 	if err != nil || tlsConfig == nil {
 		t.Fatal("Unable to configure client TLS", err)

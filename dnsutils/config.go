@@ -18,18 +18,6 @@ func IsValidMode(mode string) bool {
 	return false
 }
 
-func IsValidTLS(mode string) bool {
-	switch mode {
-	case
-		TLS_v10,
-		TLS_v11,
-		TLS_v12,
-		TLS_v13:
-		return true
-	}
-	return false
-}
-
 type MultiplexInOut struct {
 	Name       string                 `yaml:"name"`
 	Transforms map[string]interface{} `yaml:"transforms"`

@@ -151,8 +151,6 @@ func (o *Syslog) Stop() {
 }
 
 func (o *Syslog) ConnectToRemote() {
-	//connTimeout := time.Duration(o.config.Loggers.Dnstap.ConnectTimeout) * time.Second
-
 	for {
 		if o.syslogWriter != nil {
 			o.syslogWriter.Close()
@@ -168,14 +166,14 @@ func (o *Syslog) ConnectToRemote() {
 			o.LogInfo("connecting to local syslog...")
 			logWriter, err = syslog.New(o.facility|o.severity, "")
 		case dnsutils.SOCKET_UNIX, dnsutils.SOCKET_UDP, dnsutils.SOCKET_TCP:
-			o.LogInfo("connecting to syslog %s://%s ...",
+			o.LogInfo("connecting to %s://%s ...",
 				o.config.Loggers.Syslog.Transport,
 				o.config.Loggers.Syslog.RemoteAddress)
 			logWriter, err = syslog.Dial(o.config.Loggers.Syslog.Transport,
 				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity,
 				o.config.Loggers.Syslog.Tag)
 		case dnsutils.SOCKET_TLS:
-			o.LogInfo("connecting to syslog %s://%s ...",
+			o.LogInfo("connecting to %s://%s ...",
 				o.config.Loggers.Syslog.Transport,
 				o.config.Loggers.Syslog.RemoteAddress)
 

@@ -10,14 +10,14 @@ Tcp/unix stream client logger.
 
 Options:
 
-* `transport`: (string) network transport to use: tcp|unix
+* `transport`: (string) network transport to use: tcp|unix|tcp+tls
 * `remote-ip`: (string) remote address
 * `remote-port`: (integer) remote tcp port
-* `sock-path`: (string) unix socket path
+* `sock-path` **DEPRECATED**: (string) unix socket path
 * `connect-timeout`: (integer) connect timeout in second
 * `retry-interval`: (integer) interval in second between retry reconnect
 * `flush-interval`: (integer) interval in second before to flush the buffer
-* `tls-support`: (boolean) enable tls
+* `tls-support` **DEPRECATED**: (boolean) enable tls
 * `tls-insecure`: (boolean) insecure skip verify
 * `tls-min-version`: (string) min tls version, default to 1.2
 * `ca-file`: (string) provide CA file to verify the server certificate
@@ -35,11 +35,9 @@ tcpclient:
   transport: tcp
   remote-address: 127.0.0.1
   remote-port: 9999
-  sock-path: null
   connect-timeout: 5
   retry-interval: 10
   flush-interval: 30
-  tls-support: false
   tls-insecure: false
   tls-min-version: 1.2
   ca-file: ""

@@ -14,6 +14,18 @@ var clientCipherSuites = []uint16{
 	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 }
 
+func IsValidTLS(mode string) bool {
+	switch mode {
+	case
+		TLS_v10,
+		TLS_v11,
+		TLS_v12,
+		TLS_v13:
+		return true
+	}
+	return false
+}
+
 type TlsOptions struct {
 	CAFile             string
 	CertFile           string
@@ -23,6 +35,7 @@ type TlsOptions struct {
 }
 
 func TlsClientConfig(options TlsOptions) (*tls.Config, error) {
+
 	tlsConfig := &tls.Config{
 		MinVersion:         tls.VersionTLS12,
 		InsecureSkipVerify: false,
