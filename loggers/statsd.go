@@ -305,10 +305,10 @@ PROCESS_LOOP:
 			address := o.config.Loggers.Statsd.RemoteAddress + ":" + strconv.Itoa(o.config.Loggers.Statsd.RemotePort)
 
 			// make the connection
-			o.LogInfo("dial to %s", address)
 			var conn net.Conn
 			var err error
 			if o.config.Loggers.Statsd.TlsSupport {
+				o.LogInfo("dial to tls://%s", address)
 				tlsConfig := &tls.Config{
 					MinVersion:         tls.VersionTLS12,
 					InsecureSkipVerify: false,
@@ -318,6 +318,7 @@ PROCESS_LOOP:
 
 				conn, err = tls.Dial(o.config.Loggers.Statsd.Transport, address, tlsConfig)
 			} else {
+				o.LogInfo("dial to %s://%s", o.config.Loggers.Statsd.Transport, address)
 				conn, err = net.Dial(o.config.Loggers.Statsd.Transport, address)
 			}
 

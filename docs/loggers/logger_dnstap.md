@@ -16,6 +16,9 @@ Options:
 * `tls-support`: (boolean) enable tls
 * `tls-insecure`: (boolean) insecure skip verify
 * `tls-min-version`: (string) min tls version, default to 1.2
+* `ca-file`: (string) provide CA file to verify the server certificate
+* `cert-file`: (string) provide client certificate file for mTLS
+* `key-file`: (string) provide client private key file for mTLS
 * `server-id`: (string) server identity
 * `overwrite-identity`: (boolean) overwrite original identity
 * `buffer-size`: (integer) how many DNS messages will be buffered before being sent
@@ -34,6 +37,9 @@ dnstap:
   tls-support: false
   tls-insecure: false
   tls-min-version: 1.2
+  ca-file: ""
+  cert-file: ""
+  key-file: ""
   server-id: "dnscollector"
   overwrite-identity: false
   buffer-size: 100

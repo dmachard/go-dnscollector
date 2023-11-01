@@ -316,6 +316,9 @@ type Config struct {
 			TlsSupport        bool   `yaml:"tls-support"`
 			TlsInsecure       bool   `yaml:"tls-insecure"`
 			TlsMinVersion     string `yaml:"tls-min-version"`
+			CAFile            string `yaml:"ca-file"`
+			CertFile          string `yaml:"cert-file"`
+			KeyFile           string `yaml:"key-file"`
 			ServerId          string `yaml:"server-id"`
 			OverwriteIdentity bool   `yaml:"overwrite-identity"`
 			BufferSize        int    `yaml:"buffer-size"`
@@ -331,6 +334,9 @@ type Config struct {
 			TlsSupport        bool   `yaml:"tls-support"`
 			TlsInsecure       bool   `yaml:"tls-insecure"`
 			TlsMinVersion     string `yaml:"tls-min-version"`
+			CAFile            string `yaml:"ca-file"`
+			CertFile          string `yaml:"cert-file"`
+			KeyFile           string `yaml:"key-file"`
 			Mode              string `yaml:"mode"`
 			TextFormat        string `yaml:"text-format"`
 			PayloadDelimiter  string `yaml:"delimiter"`
@@ -594,6 +600,9 @@ func (c *Config) SetDefault() {
 	c.Loggers.Dnstap.TlsSupport = false
 	c.Loggers.Dnstap.TlsInsecure = false
 	c.Loggers.Dnstap.TlsMinVersion = TLS_v12
+	c.Loggers.Dnstap.CAFile = ""
+	c.Loggers.Dnstap.CertFile = ""
+	c.Loggers.Dnstap.KeyFile = ""
 	c.Loggers.Dnstap.ServerId = ""
 	c.Loggers.Dnstap.OverwriteIdentity = false
 	c.Loggers.Dnstap.BufferSize = 100
@@ -650,6 +659,9 @@ func (c *Config) SetDefault() {
 	c.Loggers.TcpClient.TlsSupport = false
 	c.Loggers.TcpClient.TlsInsecure = false
 	c.Loggers.TcpClient.TlsMinVersion = TLS_v12
+	c.Loggers.TcpClient.CAFile = ""
+	c.Loggers.TcpClient.CertFile = ""
+	c.Loggers.TcpClient.KeyFile = ""
 	c.Loggers.TcpClient.Mode = MODE_JSON
 	c.Loggers.TcpClient.TextFormat = ""
 	c.Loggers.TcpClient.PayloadDelimiter = "\n"

@@ -122,20 +122,27 @@ func (o *TcpClient) ConnectToRemote() {
 		}
 
 		// make the connection
-		o.LogInfo("connecting to %s", address)
 		var conn net.Conn
 		var err error
+		var tlsConfig *tls.Config
 		if o.config.Loggers.TcpClient.TlsSupport {
-			tlsConfig := &tls.Config{
-				MinVersion:         tls.VersionTLS12,
-				InsecureSkipVerify: false,
-			}
-			tlsConfig.InsecureSkipVerify = o.config.Loggers.TcpClient.TlsInsecure
-			tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.TcpClient.TlsMinVersion]
+			o.LogInfo("connecting to tls://%s", address)
 
-			dialer := &net.Dialer{Timeout: connTimeout}
-			conn, err = tls.DialWithDialer(dialer, o.config.Loggers.TcpClient.Transport, address, tlsConfig)
+			tlsOptions := dnsutils.TlsOptions{
+				InsecureSkipVerify: o.config.Loggers.TcpClient.TlsInsecure,
+				MinVersion:         o.config.Loggers.TcpClient.TlsMinVersion,
+				CAFile:             o.config.Loggers.TcpClient.CAFile,
+				CertFile:           o.config.Loggers.TcpClient.CertFile,
+				KeyFile:            o.config.Loggers.TcpClient.KeyFile,
+			}
+
+			tlsConfig, err = dnsutils.TlsClientConfig(tlsOptions)
+			if err == nil {
+				dialer := &net.Dialer{Timeout: connTimeout}
+				conn, err = tls.DialWithDialer(dialer, o.config.Loggers.TcpClient.Transport, address, tlsConfig)
+			}
 		} else {
+			o.LogInfo("connecting to tcp://%s", address)
 			conn, err = net.DialTimeout(o.config.Loggers.TcpClient.Transport, address, connTimeout)
 		}
 

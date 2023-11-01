@@ -20,6 +20,9 @@ Options:
 * `tls-support`: (boolean) enable tls
 * `tls-insecure`: (boolean) insecure skip verify
 * `tls-min-version`: (string) min tls version, default to 1.2
+* `ca-file`: (string) provide CA file to verify the server certificate
+* `cert-file`: (string) provide client certificate file for mTLS
+* `key-file`: (string) provide client private key file for mTLS
 * `mode`: (string) output format: text, json, or flat-json
 * `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 * `buffer-size`: (integer) how many DNS messages will be buffered before being sent
@@ -39,6 +42,9 @@ tcpclient:
   tls-support: false
   tls-insecure: false
   tls-min-version: 1.2
+  ca-file: ""
+  cert-file: ""
+  key-file: ""
   mode: json
   text-format: ""
   buffer-size: 100

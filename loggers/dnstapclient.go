@@ -133,21 +133,27 @@ func (o *DnstapSender) ConnectToRemote() {
 			o.transportConn = nil
 		}
 
-		o.LogInfo("connecting to %s", address)
 		var conn net.Conn
 		var err error
+		var tlsConfig *tls.Config
 		if o.config.Loggers.Dnstap.TlsSupport {
-			tlsConfig := &tls.Config{
-				InsecureSkipVerify: false,
-				MinVersion:         tls.VersionTLS12,
+			o.LogInfo("connecting to tls://%s", transport, address)
+
+			tlsOptions := dnsutils.TlsOptions{
+				InsecureSkipVerify: o.config.Loggers.Dnstap.TlsInsecure,
+				MinVersion:         o.config.Loggers.Dnstap.TlsMinVersion,
+				CAFile:             o.config.Loggers.Dnstap.CAFile,
+				CertFile:           o.config.Loggers.Dnstap.CertFile,
+				KeyFile:            o.config.Loggers.Dnstap.KeyFile,
 			}
-			tlsConfig.InsecureSkipVerify = o.config.Loggers.Dnstap.TlsInsecure
-			tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.Dnstap.TlsMinVersion]
 
-			dialer := &net.Dialer{Timeout: connTimeout}
-			conn, err = tls.DialWithDialer(dialer, transport, address, tlsConfig)
+			tlsConfig, err = dnsutils.TlsClientConfig(tlsOptions)
+			if err == nil {
+				dialer := &net.Dialer{Timeout: connTimeout}
+				conn, err = tls.DialWithDialer(dialer, transport, address, tlsConfig)
+			}
 		} else {
-
+			o.LogInfo("connecting to %s://%s", transport, address)
 			conn, err = net.DialTimeout(transport, address, connTimeout)
 		}
 
