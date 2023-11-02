@@ -78,44 +78,10 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-    - name: syslog
-      syslog:
-        # Set the syslog logging severity
-        severity: INFO
-        # Set the syslog logging facility
-        facility: DAEMON
-        # Transport to use to a remote log daemon or local one
-        # local|tcp|udp|unix or tcp+tls
-        transport: tcp+tls
-        # Remote address host:port
-        remote-address: "localhost:6514"
-        # interval in second between retry reconnect
-        retry-interval: 10
-        # output text format, please refer to the top of this file to see all available directives
-        text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
-        # output format: text|json|flat-json
-        mode: text
-        # insecure skip verify
-        tls-insecure: false
-        ca-file: "/home/denis/Lab/syslogng-compose/config/ca.crt"
-        cert-file: "/home/denis/Lab/syslogng-compose/config/client.crt"
-        key-file: "/home/denis/Lab/syslogng-compose/config/client.key"
-        # set syslog formatter between unix, rfc3164 (default) or rfc5424
-        formatter: "rfc5424"
-        # set syslog framer: `none` or `rfc5425`
-        framer: "rfc5425"
-        # set syslog hostname
-        hostname: "testclient"
-        # set syslog program name
-        app-name: "APPPP"
-        # Channel buffer size for incoming packets, number of packet before to drop it.
-        chan-buffer-size: 65535
-        # Syslog tag or MSGID
-        tag: "TestTAG"
-        
+
   routes:
     - from: [ tap ]
-      to: [ console, syslog ]
+      to: [ console ]
 
 ################################################
 # list of supported collectors
