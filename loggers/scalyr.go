@@ -110,11 +110,6 @@ func (c *ScalyrClient) ReadConfig() {
 		c.flush = time.NewTicker(time.Duration(flushInterval) * time.Second)
 	}
 
-	tlsMinVersion := "TLS_v12"
-	if dnsutils.IsValidTLS(tlsMinVersion) {
-		tlsMinVersion = c.config.Loggers.ScalyrClient.TlsMinVersion
-	}
-
 	// tls client config
 	tlsOptions := dnsutils.TlsOptions{
 		InsecureSkipVerify: c.config.Loggers.ScalyrClient.TlsInsecure,
