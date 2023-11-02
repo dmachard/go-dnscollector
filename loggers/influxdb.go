@@ -51,11 +51,7 @@ func (c *InfluxDBClient) GetName() string { return c.name }
 
 func (c *InfluxDBClient) SetLoggers(loggers []dnsutils.Worker) {}
 
-func (o *InfluxDBClient) ReadConfig() {
-	if !dnsutils.IsValidTLS(o.config.Loggers.InfluxDB.TlsMinVersion) {
-		o.logger.Fatal("logger=influxdb - invalid tls min version")
-	}
-}
+func (o *InfluxDBClient) ReadConfig() {}
 
 func (o *InfluxDBClient) ReloadConfig(config *dnsutils.Config) {
 	o.LogInfo("reload configuration!")

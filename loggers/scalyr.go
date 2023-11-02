@@ -3,7 +3,6 @@ package loggers
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -117,12 +116,18 @@ func (c *ScalyrClient) ReadConfig() {
 	}
 
 	// tls client config
-	tlsConfig := &tls.Config{
-		MinVersion:         tls.VersionTLS12,
-		InsecureSkipVerify: false,
+	tlsOptions := dnsutils.TlsOptions{
+		InsecureSkipVerify: c.config.Loggers.ScalyrClient.TlsInsecure,
+		MinVersion:         c.config.Loggers.ScalyrClient.TlsMinVersion,
+		CAFile:             c.config.Loggers.ScalyrClient.CAFile,
+		CertFile:           c.config.Loggers.ScalyrClient.CertFile,
+		KeyFile:            c.config.Loggers.ScalyrClient.KeyFile,
 	}
-	tlsConfig.InsecureSkipVerify = c.config.Loggers.ScalyrClient.TlsInsecure
-	tlsConfig.MinVersion = dnsutils.TLS_VERSION[tlsMinVersion]
+
+	tlsConfig, err := dnsutils.TlsClientConfig(tlsOptions)
+	if err != nil {
+		c.logger.Fatal("unable to parse tls confgi: ", err)
+	}
 
 	// prepare http client
 	tr := &http.Transport{

@@ -7,7 +7,7 @@ Options:
 
 - `server-url`: (string) Scalyr API Host
 - `apikey`: (string, required) API Token with Log Write permissions
-- `mode`: (string) text, json, or flat-json
+- `mode`: (string) `text`, `json`, or `flat-json`
 - `parser`: (string) When using text or json mode, the name of the parser Scalyr should use
 - `flush-interval`: (integer) flush batch every X seconds
 - `batch-size`: (integer) batch size for log entries in bytes
@@ -15,6 +15,9 @@ Options:
 - `proxy-url`: (string) Proxy URL
 - `tls-insecure`: (boolean) insecure skip verify
 - `tls-min-version`: (string) min tls version
+- `ca-file`: (string) provide CA file to verify the server certificate
+- `cert-file`: (string) provide client certificate file for mTLS
+- `key-file`: (string) provide client private key file for mTLS
 - `session-info`: (map) Any "session" or server information for Scalyr. e.g. 'region', 'serverHost'. If 'serverHost' is not included, it is set using the hostname.
 - `attrs`: (map) Any extra attributes that should be added to the log's fields.
 - `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
@@ -38,5 +41,8 @@ scalyrclient:
   proxy-url: ""
   tls-insecure: false
   tls-min-version: 1.2
+  ca-file: ""
+  cert-file: ""
+  key-file: ""
   chan-buffer-size: 65535
 ```

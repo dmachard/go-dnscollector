@@ -303,23 +303,37 @@ PROCESS_LOOP:
 
 		case <-t2.C:
 			address := o.config.Loggers.Statsd.RemoteAddress + ":" + strconv.Itoa(o.config.Loggers.Statsd.RemotePort)
+			connTimeout := time.Duration(o.config.Loggers.Statsd.ConnectTimeout) * time.Second
 
 			// make the connection
 			var conn net.Conn
 			var err error
-			if o.config.Loggers.Statsd.TlsSupport {
-				o.LogInfo("dial to tls://%s", address)
-				tlsConfig := &tls.Config{
-					MinVersion:         tls.VersionTLS12,
-					InsecureSkipVerify: false,
-				}
-				tlsConfig.InsecureSkipVerify = o.config.Loggers.Statsd.TlsInsecure
-				tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.Statsd.TlsMinVersion]
 
-				conn, err = tls.Dial(o.config.Loggers.Statsd.Transport, address, tlsConfig)
-			} else {
-				o.LogInfo("dial to %s://%s", o.config.Loggers.Statsd.Transport, address)
-				conn, err = net.Dial(o.config.Loggers.Statsd.Transport, address)
+			switch o.config.Loggers.Statsd.Transport {
+			case dnsutils.SOCKET_TCP:
+				o.LogInfo("connecting to %s://%s", o.config.Loggers.Statsd.Transport, address)
+				conn, err = net.DialTimeout(o.config.Loggers.Statsd.Transport, address, connTimeout)
+
+			case dnsutils.SOCKET_TLS:
+				o.LogInfo("connecting to %s://%s", o.config.Loggers.Statsd.Transport, address)
+
+				var tlsConfig *tls.Config
+
+				tlsOptions := dnsutils.TlsOptions{
+					InsecureSkipVerify: o.config.Loggers.Statsd.TlsInsecure,
+					MinVersion:         o.config.Loggers.Statsd.TlsMinVersion,
+					CAFile:             o.config.Loggers.Statsd.CAFile,
+					CertFile:           o.config.Loggers.Statsd.CertFile,
+					KeyFile:            o.config.Loggers.Statsd.KeyFile,
+				}
+
+				tlsConfig, err = dnsutils.TlsClientConfig(tlsOptions)
+				if err == nil {
+					dialer := &net.Dialer{Timeout: connTimeout}
+					conn, err = tls.DialWithDialer(dialer, dnsutils.SOCKET_TCP, address, tlsConfig)
+				}
+			default:
+				o.logger.Fatal("logger=dnstap - invalid transport:", o.config.Loggers.Statsd.Transport)
 			}
 
 			// something is wrong during connection ?

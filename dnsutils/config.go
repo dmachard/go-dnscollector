@@ -358,12 +358,12 @@ type Config struct {
 			Enable            bool   `yaml:"enable"`
 			RemoteAddress     string `yaml:"remote-address"`
 			RemotePort        int    `yaml:"remote-port"`
-			SockPath          string `yaml:"sock-path"`
+			SockPath          string `yaml:"sock-path"` // deprecated
 			ConnectTimeout    int    `yaml:"connect-timeout"`
 			RetryInterval     int    `yaml:"retry-interval"`
 			FlushInterval     int    `yaml:"flush-interval"`
 			Transport         string `yaml:"transport"`
-			TlsSupport        bool   `yaml:"tls-support"`
+			TlsSupport        bool   `yaml:"tls-support"` // deprecated
 			TlsInsecure       bool   `yaml:"tls-insecure"`
 			TlsMinVersion     string `yaml:"tls-min-version"`
 			CAFile            string `yaml:"ca-file"`
@@ -414,11 +414,15 @@ type Config struct {
 			Prefix            string `yaml:"prefix"`
 			RemoteAddress     string `yaml:"remote-address"`
 			RemotePort        int    `yaml:"remote-port"`
+			ConnectTimeout    int    `yaml:"connect-timeout"`
 			Transport         string `yaml:"transport"`
 			FlushInterval     int    `yaml:"flush-interval"`
-			TlsSupport        bool   `yaml:"tls-support"`
+			TlsSupport        bool   `yaml:"tls-support"` //deprecated
 			TlsInsecure       bool   `yaml:"tls-insecure"`
 			TlsMinVersion     string `yaml:"tls-min-version"`
+			CAFile            string `yaml:"ca-file"`
+			CertFile          string `yaml:"cert-file"`
+			KeyFile           string `yaml:"key-file"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"statsd"`
 		ElasticSearchClient struct {
@@ -442,6 +446,9 @@ type Config struct {
 			ProxyURL          string                 `yaml:"proxy-url"`
 			TlsInsecure       bool                   `yaml:"tls-insecure"`
 			TlsMinVersion     string                 `yaml:"tls-min-version"`
+			CAFile            string                 `yaml:"ca-file"`
+			CertFile          string                 `yaml:"cert-file"`
+			KeyFile           string                 `yaml:"key-file"`
 			ChannelBufferSize int                    `yaml:"chan-buffer-size"`
 		} `yaml:"scalyrclient"`
 		RedisPub struct {
@@ -696,12 +703,12 @@ func (c *Config) SetDefault() {
 	c.Loggers.Fluentd.Enable = false
 	c.Loggers.Fluentd.RemoteAddress = LOCALHOST_IP
 	c.Loggers.Fluentd.RemotePort = 24224
-	c.Loggers.Fluentd.SockPath = ""
+	c.Loggers.Fluentd.SockPath = "" // deprecated
 	c.Loggers.Fluentd.RetryInterval = 10
 	c.Loggers.Fluentd.ConnectTimeout = 5
 	c.Loggers.Fluentd.FlushInterval = 30
 	c.Loggers.Fluentd.Transport = "tcp"
-	c.Loggers.Fluentd.TlsSupport = false
+	c.Loggers.Fluentd.TlsSupport = false // deprecated
 	c.Loggers.Fluentd.TlsInsecure = false
 	c.Loggers.Fluentd.TlsMinVersion = TLS_v12
 	c.Loggers.Fluentd.CAFile = ""
@@ -749,10 +756,14 @@ func (c *Config) SetDefault() {
 	c.Loggers.Statsd.RemoteAddress = LOCALHOST_IP
 	c.Loggers.Statsd.RemotePort = 8125
 	c.Loggers.Statsd.Transport = "udp"
+	c.Loggers.Statsd.ConnectTimeout = 5
 	c.Loggers.Statsd.FlushInterval = 10
-	c.Loggers.Statsd.TlsSupport = false
+	c.Loggers.Statsd.TlsSupport = false // deprecated
 	c.Loggers.Statsd.TlsInsecure = false
 	c.Loggers.Statsd.TlsMinVersion = TLS_v12
+	c.Loggers.Statsd.CAFile = ""
+	c.Loggers.Statsd.CertFile = ""
+	c.Loggers.Statsd.KeyFile = ""
 	c.Loggers.Statsd.ChannelBufferSize = 65535
 
 	c.Loggers.ElasticSearchClient.Enable = false
