@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"net"
 	"strconv"
 	"strings"
@@ -19,6 +20,8 @@ type TcpClient struct {
 	doneProcess        chan bool
 	stopRun            chan bool
 	doneRun            chan bool
+	stopReceive        chan bool
+	doneReceive        chan bool
 	inputChan          chan dnsutils.DnsMessage
 	outputChan         chan dnsutils.DnsMessage
 	config             *dnsutils.Config
@@ -41,6 +44,8 @@ func NewTcpClient(config *dnsutils.Config, logger *logger.Logger, name string) *
 		doneProcess:        make(chan bool),
 		stopRun:            make(chan bool),
 		doneRun:            make(chan bool),
+		stopReceive:        make(chan bool),
+		doneReceive:        make(chan bool),
 		inputChan:          make(chan dnsutils.DnsMessage, config.Loggers.TcpClient.ChannelBufferSize),
 		outputChan:         make(chan dnsutils.DnsMessage, config.Loggers.TcpClient.ChannelBufferSize),
 		transportReady:     make(chan bool),
@@ -104,6 +109,10 @@ func (o *TcpClient) Stop() {
 	o.LogInfo("stopping to process...")
 	o.stopProcess <- true
 	<-o.doneProcess
+
+	o.LogInfo("stopping to receive...")
+	o.stopReceive <- true
+	<-o.doneReceive
 }
 
 func (o *TcpClient) Disconnect() {
@@ -113,8 +122,31 @@ func (o *TcpClient) Disconnect() {
 	}
 }
 
-func (o *TcpClient) ConnectToRemote() {
+func (o *TcpClient) ReadFromConnection() {
+	buf := make([]byte, 4096)
 
+	for {
+		select {
+		// Stop signal received, exit the goroutine
+		case <-o.stopReceive:
+			o.doneReceive <- true
+			return
+		default:
+			_, err := o.transportConn.Read(buf)
+			if err != nil {
+				var netErr net.Error
+				if errors.As(err, &netErr) && netErr.Timeout() {
+					continue
+				}
+				o.LogError("Error reading from connection: %s", err.Error())
+				return
+			}
+			// We just discard the data to avoid memory leak or blocking situation
+		}
+	}
+}
+
+func (o *TcpClient) ConnectToRemote() {
 	for {
 		if o.transportConn != nil {
 			o.transportConn.Close()
@@ -160,7 +192,7 @@ func (o *TcpClient) ConnectToRemote() {
 				conn, err = tls.DialWithDialer(dialer, dnsutils.SOCKET_TCP, address, tlsConfig)
 			}
 		default:
-			o.logger.Fatal("logger=dnstap - invalid transport:", o.transport, err)
+			o.logger.Fatal("logger=dnstap - invalid transport:", o.transport)
 		}
 
 		// something is wrong during connection ?
@@ -293,6 +325,9 @@ PROCESS_LOOP:
 			o.LogInfo("transport connected with success")
 			o.transportWriter = bufio.NewWriter(o.transportConn)
 			o.writerReady = true
+
+			// read from the connection until we stop
+			go o.ReadFromConnection()
 
 		// incoming dns message to process
 		case dm, opened := <-o.outputChan:

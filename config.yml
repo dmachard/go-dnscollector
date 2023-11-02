@@ -78,10 +78,44 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-
+    - name: syslog
+      syslog:
+        # Set the syslog logging severity
+        severity: INFO
+        # Set the syslog logging facility
+        facility: DAEMON
+        # Transport to use to a remote log daemon or local one
+        # local|tcp|udp|unix or tcp+tls
+        transport: tcp+tls
+        # Remote address host:port
+        remote-address: "localhost:6514"
+        # interval in second between retry reconnect
+        retry-interval: 10
+        # output text format, please refer to the top of this file to see all available directives
+        text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
+        # output format: text|json|flat-json
+        mode: text
+        # insecure skip verify
+        tls-insecure: false
+        ca-file: "/home/denis/Lab/syslogng-compose/config/ca.crt"
+        cert-file: "/home/denis/Lab/syslogng-compose/config/client.crt"
+        key-file: "/home/denis/Lab/syslogng-compose/config/client.key"
+        # set syslog formatter between unix, rfc3164 (default) or rfc5424
+        formatter: "rfc5424"
+        # set syslog framer: `none` or `rfc5425`
+        framer: "rfc5425"
+        # set syslog hostname
+        hostname: "testclient"
+        # set syslog program name
+        app-name: "APPPP"
+        # Channel buffer size for incoming packets, number of packet before to drop it.
+        chan-buffer-size: 65535
+        # Syslog tag or MSGID
+        tag: "TestTAG"
+        
   routes:
     - from: [ tap ]
-      to: [ console ]
+      to: [ console, syslog ]
 
 ################################################
 # list of supported collectors
@@ -320,6 +354,14 @@ multiplexer:
 #   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # server identity, if empty use the global one or hostname
 #   server-id: "dnscollector"
 #   # overwrite original identity
@@ -331,26 +373,30 @@ multiplexer:
 
 # # resend captured dns traffic to a tcp remote destination or to unix socket
 # tcpclient:
-#   # network transport to use: tcp|unix
+#   # network transport to use: unix|tcp|tcp+tls
 #   transport: tcp
-#   # remote address
+#   # remote address or unix socket path
 #   remote-address: 127.0.0.1
 #   # remote tcp port
 #   remote-port: 9999
-#   # unix socket path
-#   sock-path: null
 #   # connect timeout
 #   connect-timeout: 5
 #   # interval in second between retry reconnect
 #   retry-interval: 10
 #   # interval in second before to flush the buffer
 #   flush-interval: 30
-#   # enable tls
-#   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # trusted certificate file
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # output format: text|json|flat-json
-#   mode: json
+#   mode: flat-json
 #   # output text format, please refer to the top of this file to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 #   # delimiter to use between payload sent
@@ -363,7 +409,7 @@ multiplexer:
 # # Send captured traffic to a redis channel, mapped on TCP client logger options
 # redispub:
 #   # output format: text|json|flat-json
-#   mode: json
+#   mode: flat-json
 #   # remote address
 #   remote-address: 127.0.0.1
 #   # remote tcp port
@@ -372,9 +418,14 @@ multiplexer:
 #   connect-timeout: 5
 #   retry-interval: 10
 #   flush-interval: 2
-#   # enable tls
-#   tls-support: false
+#   # enable insecure tls
 #   tls-insecure: false
+#   # trusted certificate file
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # output text format, please refer to the top of this file to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 #   delimiter: "\n"
@@ -406,6 +457,14 @@ multiplexer:
 #   mode: text
 #   # insecure mode, skip certificate verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # set syslog formatter between unix, rfc3164 (default) or rfc5424
 #   formatter: "rfc3164"
 #   # set syslog framer: `none` or `rfc5425`

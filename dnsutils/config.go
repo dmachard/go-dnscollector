@@ -316,10 +316,10 @@ type Config struct {
 			Enable            bool   `yaml:"enable"`
 			RemoteAddress     string `yaml:"remote-address"`
 			RemotePort        int    `yaml:"remote-port"`
-			SockPath          string `yaml:"sock-path"`
+			SockPath          string `yaml:"sock-path"` // deprecated
 			RetryInterval     int    `yaml:"retry-interval"`
 			Transport         string `yaml:"transport"`
-			TlsSupport        bool   `yaml:"tls-support"`
+			TlsSupport        bool   `yaml:"tls-support"` // deprecated
 			TlsInsecure       bool   `yaml:"tls-insecure"`
 			TlsMinVersion     string `yaml:"tls-min-version"`
 			CAFile            string `yaml:"ca-file"`
@@ -439,12 +439,15 @@ type Config struct {
 			Enable            bool   `yaml:"enable"`
 			RemoteAddress     string `yaml:"remote-address"`
 			RemotePort        int    `yaml:"remote-port"`
-			SockPath          string `yaml:"sock-path"`
+			SockPath          string `yaml:"sock-path"` // deprecated
 			RetryInterval     int    `yaml:"retry-interval"`
 			Transport         string `yaml:"transport"`
-			TlsSupport        bool   `yaml:"tls-support"`
+			TlsSupport        bool   `yaml:"tls-support"` // deprecated
 			TlsInsecure       bool   `yaml:"tls-insecure"`
 			TlsMinVersion     string `yaml:"tls-min-version"`
+			CAFile            string `yaml:"ca-file"`
+			CertFile          string `yaml:"cert-file"`
+			KeyFile           string `yaml:"key-file"`
 			Mode              string `yaml:"mode"`
 			TextFormat        string `yaml:"text-format"`
 			PayloadDelimiter  string `yaml:"delimiter"`
@@ -650,7 +653,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.TcpClient.CAFile = ""
 	c.Loggers.TcpClient.CertFile = ""
 	c.Loggers.TcpClient.KeyFile = ""
-	c.Loggers.TcpClient.Mode = MODE_JSON
+	c.Loggers.TcpClient.Mode = MODE_FLATJSON
 	c.Loggers.TcpClient.TextFormat = ""
 	c.Loggers.TcpClient.PayloadDelimiter = "\n"
 	c.Loggers.TcpClient.BufferSize = 100
@@ -747,7 +750,10 @@ func (c *Config) SetDefault() {
 	c.Loggers.RedisPub.TlsSupport = false
 	c.Loggers.RedisPub.TlsInsecure = false
 	c.Loggers.RedisPub.TlsMinVersion = TLS_v12
-	c.Loggers.RedisPub.Mode = MODE_JSON
+	c.Loggers.RedisPub.CAFile = ""
+	c.Loggers.RedisPub.CertFile = ""
+	c.Loggers.RedisPub.KeyFile = ""
+	c.Loggers.RedisPub.Mode = MODE_FLATJSON
 	c.Loggers.RedisPub.TextFormat = ""
 	c.Loggers.RedisPub.PayloadDelimiter = "\n"
 	c.Loggers.RedisPub.BufferSize = 100
