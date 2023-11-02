@@ -3,7 +3,6 @@ package loggers
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"strconv"
 	"strings"
@@ -62,11 +61,6 @@ func (c *KafkaProducer) GetName() string { return c.name }
 func (c *KafkaProducer) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *KafkaProducer) ReadConfig() {
-
-	if o.config.Loggers.RedisPub.TlsSupport && !dnsutils.IsValidTLS(o.config.Loggers.RedisPub.TlsMinVersion) {
-		o.logger.Fatal("logger to kafka - invalid tls min version")
-	}
-
 	if len(o.config.Loggers.RedisPub.TextFormat) > 0 {
 		o.textFormat = strings.Fields(o.config.Loggers.RedisPub.TextFormat)
 	} else {
@@ -131,13 +125,18 @@ func (o *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Tim
 
 		// enable TLS
 		if o.config.Loggers.KafkaProducer.TlsSupport {
-			tlsConfig := &tls.Config{
-				MinVersion:         tls.VersionTLS12,
-				InsecureSkipVerify: false,
+			tlsOptions := dnsutils.TlsOptions{
+				InsecureSkipVerify: o.config.Loggers.KafkaProducer.TlsInsecure,
+				MinVersion:         o.config.Loggers.KafkaProducer.TlsMinVersion,
+				CAFile:             o.config.Loggers.KafkaProducer.CAFile,
+				CertFile:           o.config.Loggers.KafkaProducer.CertFile,
+				KeyFile:            o.config.Loggers.KafkaProducer.KeyFile,
 			}
-			tlsConfig.InsecureSkipVerify = o.config.Loggers.TcpClient.TlsInsecure
-			tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.TcpClient.TlsMinVersion]
 
+			tlsConfig, err := dnsutils.TlsClientConfig(tlsOptions)
+			if err != nil {
+				o.logger.Fatal("logger=kafka - tls config failed:", err)
+			}
 			dialer.TLS = tlsConfig
 		}
 

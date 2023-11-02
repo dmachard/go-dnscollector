@@ -366,6 +366,9 @@ type Config struct {
 			TlsSupport        bool   `yaml:"tls-support"`
 			TlsInsecure       bool   `yaml:"tls-insecure"`
 			TlsMinVersion     string `yaml:"tls-min-version"`
+			CAFile            string `yaml:"ca-file"`
+			CertFile          string `yaml:"cert-file"`
+			KeyFile           string `yaml:"key-file"`
 			Tag               string `yaml:"tag"`
 			BufferSize        int    `yaml:"buffer-size"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
@@ -377,6 +380,9 @@ type Config struct {
 			TlsSupport        bool   `yaml:"tls-support"`
 			TlsInsecure       bool   `yaml:"tls-insecure"`
 			TlsMinVersion     string `yaml:"tls-min-version"`
+			CAFile            string `yaml:"ca-file"`
+			CertFile          string `yaml:"cert-file"`
+			KeyFile           string `yaml:"key-file"`
 			Bucket            string `yaml:"bucket"`
 			Organization      string `yaml:"organization"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
@@ -393,6 +399,9 @@ type Config struct {
 			ProxyURL          string            `yaml:"proxy-url"`
 			TlsInsecure       bool              `yaml:"tls-insecure"`
 			TlsMinVersion     string            `yaml:"tls-min-version"`
+			CAFile            string            `yaml:"ca-file"`
+			CertFile          string            `yaml:"cert-file"`
+			KeyFile           string            `yaml:"key-file"`
 			BasicAuthLogin    string            `yaml:"basic-auth-login"`
 			BasicAuthPwd      string            `yaml:"basic-auth-pwd"`
 			BasicAuthPwdFile  string            `yaml:"basic-auth-pwd-file"`
@@ -465,6 +474,9 @@ type Config struct {
 			TlsSupport        bool   `yaml:"tls-support"`
 			TlsInsecure       bool   `yaml:"tls-insecure"`
 			TlsMinVersion     string `yaml:"tls-min-version"`
+			CAFile            string `yaml:"ca-file"`
+			CertFile          string `yaml:"cert-file"`
+			KeyFile           string `yaml:"key-file"`
 			SaslSupport       bool   `yaml:"sasl-support"`
 			SaslUsername      string `yaml:"sasl-username"`
 			SaslPassword      string `yaml:"sasl-password"`
@@ -692,6 +704,9 @@ func (c *Config) SetDefault() {
 	c.Loggers.Fluentd.TlsSupport = false
 	c.Loggers.Fluentd.TlsInsecure = false
 	c.Loggers.Fluentd.TlsMinVersion = TLS_v12
+	c.Loggers.Fluentd.CAFile = ""
+	c.Loggers.Fluentd.CertFile = ""
+	c.Loggers.Fluentd.KeyFile = ""
 	c.Loggers.Fluentd.Tag = "dns.collector"
 	c.Loggers.Fluentd.BufferSize = 100
 	c.Loggers.Fluentd.ChannelBufferSize = 65535
@@ -702,6 +717,9 @@ func (c *Config) SetDefault() {
 	c.Loggers.InfluxDB.TlsSupport = false
 	c.Loggers.InfluxDB.TlsInsecure = false
 	c.Loggers.InfluxDB.TlsMinVersion = TLS_v12
+	c.Loggers.InfluxDB.CAFile = ""
+	c.Loggers.InfluxDB.CertFile = ""
+	c.Loggers.InfluxDB.KeyFile = ""
 	c.Loggers.InfluxDB.Bucket = ""
 	c.Loggers.InfluxDB.Organization = ""
 	c.Loggers.InfluxDB.ChannelBufferSize = 65535
@@ -717,6 +735,9 @@ func (c *Config) SetDefault() {
 	c.Loggers.LokiClient.ProxyURL = ""
 	c.Loggers.LokiClient.TlsInsecure = false
 	c.Loggers.LokiClient.TlsMinVersion = TLS_v12
+	c.Loggers.LokiClient.CAFile = ""
+	c.Loggers.LokiClient.CertFile = ""
+	c.Loggers.LokiClient.KeyFile = ""
 	c.Loggers.LokiClient.BasicAuthLogin = ""
 	c.Loggers.LokiClient.BasicAuthPwd = ""
 	c.Loggers.LokiClient.BasicAuthPwdFile = ""
@@ -769,6 +790,9 @@ func (c *Config) SetDefault() {
 	c.Loggers.KafkaProducer.TlsSupport = false
 	c.Loggers.KafkaProducer.TlsInsecure = false
 	c.Loggers.KafkaProducer.TlsMinVersion = TLS_v12
+	c.Loggers.KafkaProducer.CAFile = ""
+	c.Loggers.KafkaProducer.CertFile = ""
+	c.Loggers.KafkaProducer.KeyFile = ""
 	c.Loggers.KafkaProducer.SaslSupport = false
 	c.Loggers.KafkaProducer.SaslUsername = ""
 	c.Loggers.KafkaProducer.SaslPassword = ""

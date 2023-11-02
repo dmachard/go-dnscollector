@@ -240,7 +240,7 @@ func (o *FluentdClient) Process() {
 	bufferDm := []dnsutils.DnsMessage{}
 
 	// init flust timer for buffer
-	flushInterval := time.Duration(o.config.Loggers.TcpClient.FlushInterval) * time.Second
+	flushInterval := time.Duration(o.config.Loggers.Fluentd.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
 	o.LogInfo("ready to process")
@@ -273,7 +273,7 @@ PROCESS_LOOP:
 			bufferDm = append(bufferDm, dm)
 
 			// buffer is full ?
-			if len(bufferDm) >= o.config.Loggers.TcpClient.BufferSize {
+			if len(bufferDm) >= o.config.Loggers.Fluentd.BufferSize {
 				o.FlushBuffer(&bufferDm)
 			}
 

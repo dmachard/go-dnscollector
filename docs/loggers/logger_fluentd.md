@@ -9,7 +9,7 @@ Fluentd client to remote server or unix socket.
 
 Options:
 
-* `transport`: (string) network transport to use: tcp|unix
+* `transport`: (string) network transport to use: `tcp`|`unix`
 * `listen-ip`: (string) remote address
 * `listen-port`: (integer) remote tcp port
 * `sock-path`: (string) unix socket path
@@ -20,6 +20,9 @@ Options:
 * `tls-support`: (boolean) enable tls
 * `tls-insecure`: (boolean) insecure skip verify
 * `tls-min-version`: (string) min tls version, default to 1.2
+* `ca-file`: (string) provide CA file to verify the server certificate
+* `cert-file`: (string) provide client certificate file for mTLS
+* `key-file`: (string) provide client private key file for mTLS
 * `buffer-size`: (integer) how many DNS messages will be buffered before being sent
 * `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
@@ -38,6 +41,9 @@ fluentd:
   tls-support: false
   tls-insecure: false
   tls-min-version: 1.2
+  ca-file: ""
+  cert-file: ""
+  key-file: ""
   buffer-size: 100
   chan-buffer-size: 65535
 ```

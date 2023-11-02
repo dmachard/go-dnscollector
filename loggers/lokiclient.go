@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -115,10 +114,6 @@ func (c *LokiClient) GetName() string { return c.name }
 func (c *LokiClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *LokiClient) ReadConfig() {
-	if !dnsutils.IsValidTLS(o.config.Loggers.LokiClient.TlsMinVersion) {
-		o.logger.Fatal("logger=loki - invalid tls min version")
-	}
-
 	if len(o.config.Loggers.LokiClient.TextFormat) > 0 {
 		o.textFormat = strings.Fields(o.config.Loggers.LokiClient.TextFormat)
 	} else {
@@ -126,12 +121,18 @@ func (o *LokiClient) ReadConfig() {
 	}
 
 	// tls client config
-	tlsConfig := &tls.Config{
-		MinVersion:         tls.VersionTLS12,
-		InsecureSkipVerify: false,
+	tlsOptions := dnsutils.TlsOptions{
+		InsecureSkipVerify: o.config.Loggers.LokiClient.TlsInsecure,
+		MinVersion:         o.config.Loggers.LokiClient.TlsMinVersion,
+		CAFile:             o.config.Loggers.LokiClient.CAFile,
+		CertFile:           o.config.Loggers.LokiClient.CertFile,
+		KeyFile:            o.config.Loggers.LokiClient.KeyFile,
 	}
-	tlsConfig.InsecureSkipVerify = o.config.Loggers.LokiClient.TlsInsecure
-	tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.LokiClient.TlsMinVersion]
+
+	tlsConfig, err := dnsutils.TlsClientConfig(tlsOptions)
+	if err != nil {
+		o.logger.Fatal("logger=loki - tls config failed:", err)
+	}
 
 	// prepare http client
 	tr := &http.Transport{
@@ -145,7 +146,7 @@ func (o *LokiClient) ReadConfig() {
 	if len(o.config.Loggers.LokiClient.ProxyURL) > 0 {
 		proxyURL, err := url.Parse(o.config.Loggers.LokiClient.ProxyURL)
 		if err != nil {
-			o.logger.Fatal("unable to parse proxy url: ", err)
+			o.logger.Fatal("logger=loki - unable to parse proxy url: ", err)
 		}
 		tr.Proxy = http.ProxyURL(proxyURL)
 	}
@@ -155,7 +156,7 @@ func (o *LokiClient) ReadConfig() {
 	if o.config.Loggers.LokiClient.BasicAuthPwdFile != "" {
 		content, err := os.ReadFile(o.config.Loggers.LokiClient.BasicAuthPwdFile)
 		if err != nil {
-			o.logger.Fatal("unable to load password from file: ", err)
+			o.logger.Fatal("logger=loki - unable to load password from file: ", err)
 		}
 		o.config.Loggers.LokiClient.BasicAuthPwd = string(content)
 	}
@@ -407,7 +408,7 @@ func (o *LokiClient) SendEntries(buf []byte) {
 		}
 		post = post.WithContext(ctx)
 		post.Header.Set("Content-Type", "application/x-protobuf")
-		post.Header.Set("User-Agent", "dnscollector")
+		post.Header.Set("User-Agent", o.config.GetServerIdentity())
 		if len(o.config.Loggers.LokiClient.TenantId) > 0 {
 			post.Header.Set("X-Scope-OrgID", o.config.Loggers.LokiClient.TenantId)
 		}

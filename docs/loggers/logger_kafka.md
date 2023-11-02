@@ -12,11 +12,14 @@ Options:
 - `tls-support`: (boolean) enable tls
 - `tls-insecure`: (boolean) insecure skip verify
 - `tls-min-version`: (string) min tls version, default to 1.2
+- `ca-file`: (string) provide CA file to verify the server certificate
+- `cert-file`: (string) provide client certificate file for mTLS
+- `key-file`: (string) provide client private key file for mTLS
 - `sasl-support`: (boolean) enable SASL
 - `sasl-username`: (string) SASL username
 - `sasl-password`: (string) SASL password
-- `sasl-mechanism`: (string) SASL mechanism: PLAIN or SCRAM-SHA-512
-- `mode`: (string)  output format: text, json, or flat-json
+- `sasl-mechanism`: (string) SASL mechanism: `PLAIN` or `SCRAM-SHA-512`
+- `mode`: (string)  output format: `text`, `json`, or `flat-json`
 - `buffer-size`: (integer) how many DNS messages will be buffered before being sent
 - `topic`: (integer) kafka topic to forward messages to
 - `partition`: (integer) kafka partition
@@ -34,6 +37,9 @@ kafkaproducer:
   tls-support: false
   tls-insecure: false
   tls-min-version: 1.2
+  ca-file: ""
+  cert-file: ""
+  key-file: ""
   sasl-support: false
   sasl-mechanism: PLAIN
   sasl-username: ""

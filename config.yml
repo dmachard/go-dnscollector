@@ -477,6 +477,14 @@ multiplexer:
 #   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # how many DNS messages will be buffered before being sent
 #   buffer-size: 100
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
@@ -492,6 +500,14 @@ multiplexer:
 #   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # bucket
 #   bucket: "db_dns"
 #   # Organization
@@ -520,6 +536,14 @@ multiplexer:
 #   proxy-url: ""
 #   # insecure skip verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # basic auth login
 #   basic-auth-login: ""
 #   # basic auth password
