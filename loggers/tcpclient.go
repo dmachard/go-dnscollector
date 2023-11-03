@@ -197,7 +197,7 @@ func (o *TcpClient) ConnectToRemote() {
 				conn, err = tls.DialWithDialer(dialer, dnsutils.SOCKET_TCP, address, tlsConfig)
 			}
 		default:
-			o.logger.Fatal("logger=dnstap - invalid transport:", o.transport)
+			o.logger.Fatal("logger=tcpclient - invalid transport:", o.transport)
 		}
 
 		// something is wrong during connection ?

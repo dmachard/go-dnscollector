@@ -304,20 +304,18 @@ multiplexer:
 
 # # resend captured dns traffic to another dnstap collector or to unix socket
 # dnstap:
+#   # network transport to use: unix|tcp|tcp+tls
+#   transport: tcp
 #   # remote address
 #   remote-address: 10.0.0.1
 #   # remote tcp port
 #   remote-port: 6000
-#   # unix socket path
-#   sock-path: null
 #   # connect timeout
 #   connect-timeout: 5
 #   # interval in second between retry reconnect
 #   retry-interval: 10
 #   # interval in second before to flush the buffer
 #   flush-interval: 30
-#   # enable tls
-#   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
 #   # tls min version

@@ -13,7 +13,7 @@ Options:
 * `transport`: (string) network transport to use: `tcp`|`unix`|`tcp+tls`
 * `remote-ip`: (string) remote address
 * `remote-port`: (integer) remote tcp port
-* `sock-path` **DEPRECATED, replaced by remote-ip**: (string) unix socket path
+* `sock-path` **DEPRECATED, replaced by remote-address**: (string) unix socket path
 * `connect-timeout`: (integer) connect timeout in second
 * `retry-interval`: (integer) interval in second between retry reconnect
 * `flush-interval`: (integer) interval in second before to flush the buffer

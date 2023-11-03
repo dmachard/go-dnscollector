@@ -25,6 +25,7 @@ type DnstapSender struct {
 	logger             *logger.Logger
 	fs                 *framestream.Fstrm
 	fsReady            bool
+	transport          string
 	transportConn      net.Conn
 	transportReady     chan bool
 	transportReconnect chan bool
@@ -58,6 +59,17 @@ func (c *DnstapSender) GetName() string { return c.name }
 func (c *DnstapSender) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *DnstapSender) ReadConfig() {
+	o.transport = o.config.Loggers.Dnstap.Transport
+
+	// begin backward compatibility
+	if o.config.Loggers.Dnstap.TlsSupport {
+		o.transport = dnsutils.SOCKET_TLS
+	}
+	if len(o.config.Loggers.Dnstap.SockPath) > 0 {
+		o.transport = dnsutils.SOCKET_UNIX
+	}
+	// end
+
 	// get hostname or global one
 	if o.config.Loggers.Dnstap.ServerId == "" {
 		o.config.Loggers.Dnstap.ServerId = o.config.GetServerIdentity()
@@ -109,35 +121,39 @@ func (o *DnstapSender) Disconnect() {
 }
 
 func (o *DnstapSender) ConnectToRemote() {
-
-	// prepare the address
-	var address string
-	var transport string
-	if len(o.config.Loggers.Dnstap.SockPath) > 0 {
-		address = o.config.Loggers.Dnstap.SockPath
-		transport = dnsutils.SOCKET_UNIX
-	} else {
-		address = net.JoinHostPort(
-			o.config.Loggers.Dnstap.RemoteAddress,
-			strconv.Itoa(o.config.Loggers.Dnstap.RemotePort),
-		)
-		transport = dnsutils.SOCKET_TCP
-	}
-
-	connTimeout := time.Duration(o.config.Loggers.Dnstap.ConnectTimeout) * time.Second
-
-	// make the connection
 	for {
 		if o.transportConn != nil {
 			o.transportConn.Close()
 			o.transportConn = nil
 		}
 
+		address := net.JoinHostPort(
+			o.config.Loggers.Dnstap.RemoteAddress,
+			strconv.Itoa(o.config.Loggers.Dnstap.RemotePort),
+		)
+		connTimeout := time.Duration(o.config.Loggers.Dnstap.ConnectTimeout) * time.Second
+
+		// make the connection
 		var conn net.Conn
 		var err error
-		var tlsConfig *tls.Config
-		if o.config.Loggers.Dnstap.TlsSupport {
-			o.LogInfo("connecting to tls://%s", transport, address)
+
+		switch o.transport {
+		case dnsutils.SOCKET_UNIX:
+			address = o.config.Loggers.Dnstap.RemoteAddress
+			if len(o.config.Loggers.Dnstap.SockPath) > 0 {
+				address = o.config.Loggers.Dnstap.SockPath
+			}
+			o.LogInfo("connecting to %s://%s", o.transport, address)
+			conn, err = net.DialTimeout(o.transport, address, connTimeout)
+
+		case dnsutils.SOCKET_TCP:
+			o.LogInfo("connecting to %s://%s", o.transport, address)
+			conn, err = net.DialTimeout(o.transport, address, connTimeout)
+
+		case dnsutils.SOCKET_TLS:
+			o.LogInfo("connecting to %s://%s", o.transport, address)
+
+			var tlsConfig *tls.Config
 
 			tlsOptions := dnsutils.TlsOptions{
 				InsecureSkipVerify: o.config.Loggers.Dnstap.TlsInsecure,
@@ -150,11 +166,10 @@ func (o *DnstapSender) ConnectToRemote() {
 			tlsConfig, err = dnsutils.TlsClientConfig(tlsOptions)
 			if err == nil {
 				dialer := &net.Dialer{Timeout: connTimeout}
-				conn, err = tls.DialWithDialer(dialer, transport, address, tlsConfig)
+				conn, err = tls.DialWithDialer(dialer, dnsutils.SOCKET_TCP, address, tlsConfig)
 			}
-		} else {
-			o.LogInfo("connecting to %s://%s", transport, address)
-			conn, err = net.DialTimeout(transport, address, connTimeout)
+		default:
+			o.logger.Fatal("logger=dnstap - invalid transport:", o.transport)
 		}
 
 		// something is wrong during connection ?

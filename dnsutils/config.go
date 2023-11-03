@@ -297,6 +297,7 @@ type Config struct {
 			Enable            bool   `yaml:"enable"`
 			RemoteAddress     string `yaml:"remote-address"`
 			RemotePort        int    `yaml:"remote-port"`
+			Transport         string `yaml:"transport"`
 			SockPath          string `yaml:"sock-path"`
 			ConnectTimeout    int    `yaml:"connect-timeout"`
 			RetryInterval     int    `yaml:"retry-interval"`
@@ -603,6 +604,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Dnstap.Enable = false
 	c.Loggers.Dnstap.RemoteAddress = LOCALHOST_IP
 	c.Loggers.Dnstap.RemotePort = 6000
+	c.Loggers.Dnstap.Transport = SOCKET_TCP
 	c.Loggers.Dnstap.ConnectTimeout = 5
 	c.Loggers.Dnstap.RetryInterval = 10
 	c.Loggers.Dnstap.FlushInterval = 30
@@ -665,7 +667,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.TcpClient.RemotePort = 9999
 	c.Loggers.TcpClient.SockPath = ""
 	c.Loggers.TcpClient.RetryInterval = 10
-	c.Loggers.TcpClient.Transport = "tcp"
+	c.Loggers.TcpClient.Transport = SOCKET_TCP
 	c.Loggers.TcpClient.TlsSupport = false
 	c.Loggers.TcpClient.TlsInsecure = false
 	c.Loggers.TcpClient.TlsMinVersion = TLS_v12
@@ -707,7 +709,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Fluentd.RetryInterval = 10
 	c.Loggers.Fluentd.ConnectTimeout = 5
 	c.Loggers.Fluentd.FlushInterval = 30
-	c.Loggers.Fluentd.Transport = "tcp"
+	c.Loggers.Fluentd.Transport = SOCKET_TCP
 	c.Loggers.Fluentd.TlsSupport = false // deprecated
 	c.Loggers.Fluentd.TlsInsecure = false
 	c.Loggers.Fluentd.TlsMinVersion = TLS_v12
@@ -755,7 +757,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Statsd.Prefix = PROG_NAME
 	c.Loggers.Statsd.RemoteAddress = LOCALHOST_IP
 	c.Loggers.Statsd.RemotePort = 8125
-	c.Loggers.Statsd.Transport = "udp"
+	c.Loggers.Statsd.Transport = SOCKET_UDP
 	c.Loggers.Statsd.ConnectTimeout = 5
 	c.Loggers.Statsd.FlushInterval = 10
 	c.Loggers.Statsd.TlsSupport = false // deprecated
