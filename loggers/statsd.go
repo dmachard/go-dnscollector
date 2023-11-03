@@ -310,7 +310,7 @@ PROCESS_LOOP:
 			var err error
 
 			switch o.config.Loggers.Statsd.Transport {
-			case dnsutils.SOCKET_TCP:
+			case dnsutils.SOCKET_TCP, dnsutils.SOCKET_UDP:
 				o.LogInfo("connecting to %s://%s", o.config.Loggers.Statsd.Transport, address)
 				conn, err = net.DialTimeout(o.config.Loggers.Statsd.Transport, address, connTimeout)
 
@@ -333,7 +333,7 @@ PROCESS_LOOP:
 					conn, err = tls.DialWithDialer(dialer, dnsutils.SOCKET_TCP, address, tlsConfig)
 				}
 			default:
-				o.logger.Fatal("logger=dnstap - invalid transport:", o.config.Loggers.Statsd.Transport)
+				o.logger.Fatal("logger=statsd - invalid transport:", o.config.Loggers.Statsd.Transport)
 			}
 
 			// something is wrong during connection ?

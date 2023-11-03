@@ -3,6 +3,7 @@ package loggers
 import (
 	"crypto/tls"
 	"errors"
+	"io"
 	"net"
 	"strconv"
 	"time"
@@ -123,6 +124,10 @@ func (o *FluentdClient) ReadFromConnection() {
 				var netErr net.Error
 				if errors.As(err, &netErr) && netErr.Timeout() {
 					continue
+				}
+				// catch EOF error
+				if errors.Is(err, io.EOF) {
+					return
 				}
 				o.LogError("Error reading from connection: %s", err.Error())
 				return

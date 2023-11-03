@@ -11,13 +11,13 @@ Redis Pub logger
 Options:
 
 * `transport`: (string) network transport to use: `tcp`|`unix`|`tcp+tls`
-* `listen-ip`: (string) remote address
-* `listen-port`: (integer) remote tcp port
-* `sock-path` **DEPRECATED**: (string) unix socket path
+* `remote-ip`: (string) remote address
+* `remote-port`: (integer) remote tcp port
+* `sock-path` **DEPRECATED, replaced by remote-ip**: (string) unix socket path
 * `connect-timeout`: (integer) connect timeout in second
 * `retry-interval`: (integer) interval in second between retry reconnect
 * `flush-interval`: (integer) interval in second before to flush the buffer
-* `tls-support` **DEPRECATED**: (boolean) enable tls
+* `tls-support` **DEPRECATED, replaced with tcp+tls flag on transport**: (boolean) enable tls
 * `tls-insecure`: (boolean) insecure tls, skip certificate and hostname verify
 * `tls-min-version`: (string) min tls version, default to 1.2
 * `ca-file`: (string) provide CA file to verify the server certificate

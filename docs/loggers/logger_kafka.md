@@ -4,7 +4,7 @@ Kafka producer
 
 Options:
 
-- `remote-ip`: (string) remote address
+- `remote-address`: (string) remote address
 - `remote-port`: (integer) remote tcp port
 - `connect-timeout`: (integer) connect timeout in second
 - `retry-interval`: (integer) interval in second between retry reconnect

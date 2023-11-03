@@ -32,13 +32,16 @@ Gauges:
 Options:
 
 * `transport`: (string) network transport to use: `udp` | `tcp` | `tcp+tls`
-* `remote-ip`: (string) remote address
+* `remote-address`: (string) remote address
 * `remote-port`: (integer) remote tcp port
 * `connect-timeout`: (integer) connect timeout in second
 * `prefix`: (string) statsd prefix name
-* `tls-support` **DEPRECATED**: (boolean) enable tls
+* `tls-support` **DEPRECATED, replaced with tcp+tls flag on transport**: (boolean) enable tls
 * `tls-insecure`: (boolean) insecure skip verify
 * `tls-min-version`: (string) min tls version
+* `ca-file`: (string) provide CA file to verify the server certificate
+* `cert-file`: (string) provide client certificate file for mTLS
+* `key-file`: (string) provide client private key file for mTLS
 * `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:

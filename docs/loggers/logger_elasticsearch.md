@@ -4,6 +4,7 @@
 ElasticSearch client to remote ElasticSearch server
 
 Options:
+
 - `server`: (string) Elasticsearch server url
 - `index`: (string) Elasticsearch index
 - `bulk-size`: (integer) Bulk size to be used for bulk batches

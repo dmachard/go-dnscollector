@@ -7,8 +7,8 @@ DNStap stream logger to a remote tcp destination or unix socket.
 
 Options:
 
-* `listen-ip`: (string) remote address
-* `listen-port`: (integer) remote tcp port
+* `remote-address`: (string) remote address
+* `remote-port`: (integer) remote tcp port
 * `sock-path`: (string) unix socket path
 * `connect-timeout`: (integer) connect timeout in second
 * `retry-interval`: (integer) interval in second between retry reconnect
