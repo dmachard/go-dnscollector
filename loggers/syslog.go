@@ -151,8 +151,6 @@ func (o *Syslog) Stop() {
 }
 
 func (o *Syslog) ConnectToRemote() {
-	//connTimeout := time.Duration(o.config.Loggers.Dnstap.ConnectTimeout) * time.Second
-
 	for {
 		if o.syslogWriter != nil {
 			o.syslogWriter.Close()
@@ -160,6 +158,7 @@ func (o *Syslog) ConnectToRemote() {
 		}
 
 		var logWriter *syslog.Writer
+		var tlsConfig *tls.Config
 		var err error
 
 		switch o.config.Loggers.Syslog.Transport {
@@ -167,27 +166,32 @@ func (o *Syslog) ConnectToRemote() {
 			o.LogInfo("connecting to local syslog...")
 			logWriter, err = syslog.New(o.facility|o.severity, "")
 		case dnsutils.SOCKET_UNIX, dnsutils.SOCKET_UDP, dnsutils.SOCKET_TCP:
-			o.LogInfo("connecting to syslog %s://%s ...",
+			o.LogInfo("connecting to %s://%s ...",
 				o.config.Loggers.Syslog.Transport,
 				o.config.Loggers.Syslog.RemoteAddress)
 			logWriter, err = syslog.Dial(o.config.Loggers.Syslog.Transport,
 				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity,
 				o.config.Loggers.Syslog.Tag)
 		case dnsutils.SOCKET_TLS:
-			o.LogInfo("connecting to syslog %s://%s ...",
+			o.LogInfo("connecting to %s://%s ...",
 				o.config.Loggers.Syslog.Transport,
 				o.config.Loggers.Syslog.RemoteAddress)
-			tlsConfig := &tls.Config{
-				MinVersion:         tls.VersionTLS12,
-				InsecureSkipVerify: false,
-			}
-			tlsConfig.InsecureSkipVerify = o.config.Loggers.Syslog.TlsInsecure
-			tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.Syslog.TlsMinVersion]
 
-			logWriter, err = syslog.DialWithTLSConfig(o.config.Loggers.Syslog.Transport,
-				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity,
-				o.config.Loggers.Syslog.Tag,
-				tlsConfig)
+			tlsOptions := dnsutils.TlsOptions{
+				InsecureSkipVerify: o.config.Loggers.Syslog.TlsInsecure,
+				MinVersion:         o.config.Loggers.Syslog.TlsMinVersion,
+				CAFile:             o.config.Loggers.Syslog.CAFile,
+				CertFile:           o.config.Loggers.Syslog.CertFile,
+				KeyFile:            o.config.Loggers.Syslog.KeyFile,
+			}
+
+			tlsConfig, err = dnsutils.TlsClientConfig(tlsOptions)
+			if err == nil {
+				logWriter, err = syslog.DialWithTLSConfig(o.config.Loggers.Syslog.Transport,
+					o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity,
+					o.config.Loggers.Syslog.Tag,
+					tlsConfig)
+			}
 		default:
 			o.logger.Fatal("invalid syslog transport: ", o.config.Loggers.Syslog.Transport)
 		}

@@ -31,13 +31,17 @@ Gauges:
 
 Options:
 
-* `transport`: (string) network transport to use: udp or tcp
-* `listen-ip`: (string) remote address
-* `listen-port`: (integer) remote tcp port
+* `transport`: (string) network transport to use: `udp` | `tcp` | `tcp+tls`
+* `remote-address`: (string) remote address
+* `remote-port`: (integer) remote tcp port
+* `connect-timeout`: (integer) connect timeout in second
 * `prefix`: (string) statsd prefix name
-* `tls-support`: (boolean) enable tls
+* `tls-support` **DEPRECATED, replaced with tcp+tls flag on transport**: (boolean) enable tls
 * `tls-insecure`: (boolean) insecure skip verify
 * `tls-min-version`: (string) min tls version
+* `ca-file`: (string) provide CA file to verify the server certificate
+* `cert-file`: (string) provide client certificate file for mTLS
+* `key-file`: (string) provide client private key file for mTLS
 * `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
@@ -48,8 +52,10 @@ statsd:
   remote-address: 127.0.0.1
   remote-port: 8125
   prefix: "dnscollector"
-  tls-support: false
   tls-insecure: false
   tls-min-version: 1.2
+  ca-file: ""
+  cert-file: ""
+  key-file: ""
   chan-buffer-size: 65535
 ```

@@ -304,22 +304,28 @@ multiplexer:
 
 # # resend captured dns traffic to another dnstap collector or to unix socket
 # dnstap:
+#   # network transport to use: unix|tcp|tcp+tls
+#   transport: tcp
 #   # remote address
 #   remote-address: 10.0.0.1
 #   # remote tcp port
 #   remote-port: 6000
-#   # unix socket path
-#   sock-path: null
 #   # connect timeout
 #   connect-timeout: 5
 #   # interval in second between retry reconnect
 #   retry-interval: 10
 #   # interval in second before to flush the buffer
 #   flush-interval: 30
-#   # enable tls
-#   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # server identity, if empty use the global one or hostname
 #   server-id: "dnscollector"
 #   # overwrite original identity
@@ -331,26 +337,30 @@ multiplexer:
 
 # # resend captured dns traffic to a tcp remote destination or to unix socket
 # tcpclient:
-#   # network transport to use: tcp|unix
+#   # network transport to use: unix|tcp|tcp+tls
 #   transport: tcp
-#   # remote address
+#   # remote address or unix socket path
 #   remote-address: 127.0.0.1
 #   # remote tcp port
 #   remote-port: 9999
-#   # unix socket path
-#   sock-path: null
 #   # connect timeout
 #   connect-timeout: 5
 #   # interval in second between retry reconnect
 #   retry-interval: 10
 #   # interval in second before to flush the buffer
 #   flush-interval: 30
-#   # enable tls
-#   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # trusted certificate file
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # output format: text|json|flat-json
-#   mode: json
+#   mode: flat-json
 #   # output text format, please refer to the top of this file to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 #   # delimiter to use between payload sent
@@ -363,7 +373,7 @@ multiplexer:
 # # Send captured traffic to a redis channel, mapped on TCP client logger options
 # redispub:
 #   # output format: text|json|flat-json
-#   mode: json
+#   mode: flat-json
 #   # remote address
 #   remote-address: 127.0.0.1
 #   # remote tcp port
@@ -372,9 +382,14 @@ multiplexer:
 #   connect-timeout: 5
 #   retry-interval: 10
 #   flush-interval: 2
-#   # enable tls
-#   tls-support: false
+#   # enable insecure tls
 #   tls-insecure: false
+#   # trusted certificate file
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # output text format, please refer to the top of this file to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 #   delimiter: "\n"
@@ -406,6 +421,14 @@ multiplexer:
 #   mode: text
 #   # insecure mode, skip certificate verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # set syslog formatter between unix, rfc3164 (default) or rfc5424
 #   formatter: "rfc3164"
 #   # set syslog framer: `none` or `rfc5425`
@@ -432,15 +455,13 @@ multiplexer:
 
 # # resend captured dns traffic to a remote fluentd server or to unix socket
 # fluentd:
-#   # network transport to use: tcp|unix
+#   # network transport to use: tcp|unix|tcp+tls
 #   transport: tcp
 #   # remote address
 #   remote-address: 127.0.0.1
 #   # remote tcp port
 #   remote-port: 24224
-#   # unix socket path
-#   sock-path: null
-#   # connect timeout
+#   # connect timeout in seconds
 #   connect-timeout: 5
 #   # interval in second between retry reconnect
 #   retry-interval: 10
@@ -448,10 +469,16 @@ multiplexer:
 #   flush-interval: 30
 #   # tag name
 #   tag: "dns.collector"
-#   # enable tls
-#   tls-support: false
-#   # insecure skip verify
+#   # insecure tls, skip certificate and hostname verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # how many DNS messages will be buffered before being sent
 #   buffer-size: 100
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
@@ -467,6 +494,14 @@ multiplexer:
 #   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # bucket
 #   bucket: "db_dns"
 #   # Organization
@@ -495,6 +530,14 @@ multiplexer:
 #   proxy-url: ""
 #   # insecure skip verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # basic auth login
 #   basic-auth-login: ""
 #   # basic auth password
@@ -515,16 +558,22 @@ multiplexer:
 
 # # forward to statsd proxy
 # statsd:
-#   # network transport to use: udp|tcp
+#   # network transport to use: udp|tcp|tcp+tls
 #   transport: udp
 #   # remote address
 #   remote-address: 127.0.0.1
 #   # remote tcp port
 #   remote-port: 8125
-#   # enable tls
-#   tls-support: false
-#   # insecure skip verify
+#   # connect timeout in seconds
+#   connect-timeout: 5
+#   # insecure tls, skip  certificate verify
 #   tls-insecure: false
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # prefix
 #   prefix: "dnscollector"
 #   # flush every X seconds
@@ -557,6 +606,11 @@ multiplexer:
 #   tls-insecure: false
 #   # tls min version
 #   tls-min-version: 1.2
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
 

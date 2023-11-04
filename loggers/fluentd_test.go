@@ -29,7 +29,7 @@ func Test_FluentdClient(t *testing.T) {
 			g := NewFluentdClient(cfg, logger.New(false), "test")
 
 			// fake msgpack receiver
-			fakeRcvr, err := net.Listen(tc.transport, ":24224")
+			fakeRcvr, err := net.Listen(tc.transport, tc.address)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -66,6 +66,10 @@ func Test_FluentdClient(t *testing.T) {
 			if dm.DNS.Qname != dmRcv.DNS.Qname {
 				t.Errorf("qname error want %s, got %s", dm.DNS.Qname, dmRcv.DNS.Qname)
 			}
+
+			// stop all
+			fakeRcvr.Close()
+			g.Stop()
 		})
 	}
 }

@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
+	"io"
 	"net"
 	"strconv"
 	"strings"
@@ -19,6 +21,8 @@ type TcpClient struct {
 	doneProcess        chan bool
 	stopRun            chan bool
 	doneRun            chan bool
+	stopRead           chan bool
+	doneRead           chan bool
 	inputChan          chan dnsutils.DnsMessage
 	outputChan         chan dnsutils.DnsMessage
 	config             *dnsutils.Config
@@ -26,6 +30,7 @@ type TcpClient struct {
 	logger             *logger.Logger
 	textFormat         []string
 	name               string
+	transport          string
 	transportWriter    *bufio.Writer
 	transportConn      net.Conn
 	transportReady     chan bool
@@ -40,6 +45,8 @@ func NewTcpClient(config *dnsutils.Config, logger *logger.Logger, name string) *
 		doneProcess:        make(chan bool),
 		stopRun:            make(chan bool),
 		doneRun:            make(chan bool),
+		stopRead:           make(chan bool),
+		doneRead:           make(chan bool),
 		inputChan:          make(chan dnsutils.DnsMessage, config.Loggers.TcpClient.ChannelBufferSize),
 		outputChan:         make(chan dnsutils.DnsMessage, config.Loggers.TcpClient.ChannelBufferSize),
 		transportReady:     make(chan bool),
@@ -60,9 +67,16 @@ func (c *TcpClient) GetName() string { return c.name }
 func (c *TcpClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *TcpClient) ReadConfig() {
-	if !dnsutils.IsValidTLS(o.config.Loggers.TcpClient.TlsMinVersion) {
-		o.logger.Fatal("logger tcp - invalid tls min version")
+	o.transport = o.config.Loggers.TcpClient.Transport
+
+	// begin backward compatibility
+	if o.config.Loggers.TcpClient.TlsSupport {
+		o.transport = dnsutils.SOCKET_TLS
 	}
+	if len(o.config.Loggers.TcpClient.SockPath) > 0 {
+		o.transport = dnsutils.SOCKET_UNIX
+	}
+	// end
 
 	if len(o.config.Loggers.TcpClient.TextFormat) > 0 {
 		o.textFormat = strings.Fields(o.config.Loggers.TcpClient.TextFormat)
@@ -93,6 +107,10 @@ func (o *TcpClient) Stop() {
 	o.stopRun <- true
 	<-o.doneRun
 
+	o.LogInfo("stopping to read...")
+	o.stopRead <- true
+	<-o.doneRead
+
 	o.LogInfo("stopping to process...")
 	o.stopProcess <- true
 	<-o.doneProcess
@@ -105,38 +123,77 @@ func (o *TcpClient) Disconnect() {
 	}
 }
 
-func (o *TcpClient) ConnectToRemote() {
-	// prepare the address
-	var address string
-	if len(o.config.Loggers.TcpClient.SockPath) > 0 {
-		address = o.config.Loggers.TcpClient.SockPath
-	} else {
-		address = o.config.Loggers.TcpClient.RemoteAddress + ":" + strconv.Itoa(o.config.Loggers.TcpClient.RemotePort)
-	}
-	connTimeout := time.Duration(o.config.Loggers.TcpClient.ConnectTimeout) * time.Second
+func (o *TcpClient) ReadFromConnection() {
+	buffer := make([]byte, 4096)
 
+	go func() {
+		for {
+			_, err := o.transportConn.Read(buffer)
+			if err != nil {
+				if errors.Is(err, io.EOF) || errors.Is(err, net.ErrClosed) {
+					o.LogInfo("read from connection terminated")
+					break
+				}
+				o.LogError("Error on reading: %s", err.Error())
+			}
+			// We just discard the data
+		}
+	}()
+
+	// block goroutine until receive true event in stopRead channel
+	<-o.stopRead
+	o.doneRead <- true
+
+	o.LogInfo("read goroutine terminated")
+}
+
+func (o *TcpClient) ConnectToRemote() {
 	for {
 		if o.transportConn != nil {
 			o.transportConn.Close()
 			o.transportConn = nil
 		}
 
+		address := o.config.Loggers.TcpClient.RemoteAddress + ":" + strconv.Itoa(o.config.Loggers.TcpClient.RemotePort)
+		connTimeout := time.Duration(o.config.Loggers.TcpClient.ConnectTimeout) * time.Second
+
 		// make the connection
-		o.LogInfo("connecting to %s", address)
 		var conn net.Conn
 		var err error
-		if o.config.Loggers.TcpClient.TlsSupport {
-			tlsConfig := &tls.Config{
-				MinVersion:         tls.VersionTLS12,
-				InsecureSkipVerify: false,
-			}
-			tlsConfig.InsecureSkipVerify = o.config.Loggers.TcpClient.TlsInsecure
-			tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.TcpClient.TlsMinVersion]
 
-			dialer := &net.Dialer{Timeout: connTimeout}
-			conn, err = tls.DialWithDialer(dialer, o.config.Loggers.TcpClient.Transport, address, tlsConfig)
-		} else {
-			conn, err = net.DialTimeout(o.config.Loggers.TcpClient.Transport, address, connTimeout)
+		switch o.transport {
+		case dnsutils.SOCKET_UNIX:
+			address = o.config.Loggers.TcpClient.RemoteAddress
+			if len(o.config.Loggers.TcpClient.SockPath) > 0 {
+				address = o.config.Loggers.TcpClient.SockPath
+			}
+			o.LogInfo("connecting to %s://%s", o.transport, address)
+			conn, err = net.DialTimeout(o.transport, address, connTimeout)
+
+		case dnsutils.SOCKET_TCP:
+			o.LogInfo("connecting to %s://%s", o.transport, address)
+			conn, err = net.DialTimeout(o.transport, address, connTimeout)
+
+		case dnsutils.SOCKET_TLS:
+			o.LogInfo("connecting to %s://%s", o.transport, address)
+
+			var tlsConfig *tls.Config
+
+			tlsOptions := dnsutils.TlsOptions{
+				InsecureSkipVerify: o.config.Loggers.TcpClient.TlsInsecure,
+				MinVersion:         o.config.Loggers.TcpClient.TlsMinVersion,
+				CAFile:             o.config.Loggers.TcpClient.CAFile,
+				CertFile:           o.config.Loggers.TcpClient.CertFile,
+				KeyFile:            o.config.Loggers.TcpClient.KeyFile,
+			}
+
+			tlsConfig, err = dnsutils.TlsClientConfig(tlsOptions)
+			if err == nil {
+				dialer := &net.Dialer{Timeout: connTimeout}
+				conn, err = tls.DialWithDialer(dialer, dnsutils.SOCKET_TCP, address, tlsConfig)
+			}
+		default:
+			o.logger.Fatal("logger=tcpclient - invalid transport:", o.transport)
 		}
 
 		// something is wrong during connection ?
@@ -249,7 +306,7 @@ func (o *TcpClient) Process() {
 	bufferDm := []dnsutils.DnsMessage{}
 
 	// init flust timer for buffer
-	flushInterval := time.Duration(o.config.Loggers.TcpClient.FlushInterval) * time.Second
+	flushInterval := time.Duration(o.config.Loggers.Fluentd.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
 	// init remote conn
@@ -269,6 +326,9 @@ PROCESS_LOOP:
 			o.LogInfo("transport connected with success")
 			o.transportWriter = bufio.NewWriter(o.transportConn)
 			o.writerReady = true
+
+			// read from the connection until we stop
+			go o.ReadFromConnection()
 
 		// incoming dns message to process
 		case dm, opened := <-o.outputChan:

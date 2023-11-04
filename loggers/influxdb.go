@@ -1,7 +1,6 @@
 package loggers
 
 import (
-	"crypto/tls"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -52,11 +51,7 @@ func (c *InfluxDBClient) GetName() string { return c.name }
 
 func (c *InfluxDBClient) SetLoggers(loggers []dnsutils.Worker) {}
 
-func (o *InfluxDBClient) ReadConfig() {
-	if !dnsutils.IsValidTLS(o.config.Loggers.InfluxDB.TlsMinVersion) {
-		o.logger.Fatal("logger=influxdb - invalid tls min version")
-	}
-}
+func (o *InfluxDBClient) ReadConfig() {}
 
 func (o *InfluxDBClient) ReloadConfig(config *dnsutils.Config) {
 	o.LogInfo("reload configuration!")
@@ -139,13 +134,18 @@ func (o *InfluxDBClient) Process() {
 	opts := influxdb2.DefaultOptions()
 	opts.SetUseGZip(true)
 	if o.config.Loggers.InfluxDB.TlsSupport {
-		tlsConfig := &tls.Config{
-			InsecureSkipVerify: false,
-			MinVersion:         tls.VersionTLS12,
+		tlsOptions := dnsutils.TlsOptions{
+			InsecureSkipVerify: o.config.Loggers.InfluxDB.TlsInsecure,
+			MinVersion:         o.config.Loggers.InfluxDB.TlsMinVersion,
+			CAFile:             o.config.Loggers.InfluxDB.CAFile,
+			CertFile:           o.config.Loggers.InfluxDB.CertFile,
+			KeyFile:            o.config.Loggers.InfluxDB.KeyFile,
 		}
 
-		tlsConfig.InsecureSkipVerify = o.config.Loggers.InfluxDB.TlsInsecure
-		tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.InfluxDB.TlsMinVersion]
+		tlsConfig, err := dnsutils.TlsClientConfig(tlsOptions)
+		if err != nil {
+			o.logger.Fatal("logger=influxdb - tls config failed:", err)
+		}
 
 		opts.SetTLSConfig(tlsConfig)
 	}
