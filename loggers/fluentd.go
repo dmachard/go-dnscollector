@@ -19,8 +19,8 @@ type FluentdClient struct {
 	doneProcess        chan bool
 	stopRun            chan bool
 	doneRun            chan bool
-	stopReceive        chan bool
-	doneReceive        chan bool
+	stopRead           chan bool
+	doneRead           chan bool
 	inputChan          chan dnsutils.DnsMessage
 	outputChan         chan dnsutils.DnsMessage
 	config             *dnsutils.Config
@@ -41,8 +41,8 @@ func NewFluentdClient(config *dnsutils.Config, logger *logger.Logger, name strin
 		doneProcess:        make(chan bool),
 		stopRun:            make(chan bool),
 		doneRun:            make(chan bool),
-		stopReceive:        make(chan bool),
-		doneReceive:        make(chan bool),
+		stopRead:           make(chan bool),
+		doneRead:           make(chan bool),
 		inputChan:          make(chan dnsutils.DnsMessage, config.Loggers.Fluentd.ChannelBufferSize),
 		outputChan:         make(chan dnsutils.DnsMessage, config.Loggers.Fluentd.ChannelBufferSize),
 		transportReady:     make(chan bool),
@@ -97,6 +97,10 @@ func (o *FluentdClient) Stop() {
 	o.stopRun <- true
 	<-o.doneRun
 
+	o.LogInfo("stopping to read...")
+	o.stopRead <- true
+	<-o.doneRead
+
 	o.LogInfo("stopping to process...")
 	o.stopProcess <- true
 	<-o.doneProcess
@@ -110,31 +114,27 @@ func (o *FluentdClient) Disconnect() {
 }
 
 func (o *FluentdClient) ReadFromConnection() {
-	buf := make([]byte, 4096)
+	buffer := make([]byte, 4096)
 
-	for {
-		select {
-		// Stop signal received, exit the goroutine
-		case <-o.stopReceive:
-			o.doneReceive <- true
-			return
-		default:
-			_, err := o.transportConn.Read(buf)
+	go func() {
+		for {
+			_, err := o.transportConn.Read(buffer)
 			if err != nil {
-				var netErr net.Error
-				if errors.As(err, &netErr) && netErr.Timeout() {
-					continue
+				if errors.Is(err, io.EOF) || errors.Is(err, net.ErrClosed) {
+					o.LogInfo("read from connection terminated")
+					break
 				}
-				// catch EOF error
-				if errors.Is(err, io.EOF) {
-					return
-				}
-				o.LogError("Error reading from connection: %s", err.Error())
-				return
+				o.LogError("Error on reading: %s", err.Error())
 			}
-			// We just discard the data to avoid memory leak or blocking situation
+			// We just discard the data
 		}
-	}
+	}()
+
+	// block goroutine until receive true event in stopRead channel
+	<-o.stopRead
+	o.doneRead <- true
+
+	o.LogInfo("read goroutine terminated")
 }
 
 func (o *FluentdClient) ConnectToRemote() {

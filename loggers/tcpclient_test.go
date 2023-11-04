@@ -36,6 +36,8 @@ func Test_TcpClientRun(t *testing.T) {
 			cfg.Loggers.TcpClient.FlushInterval = 1
 			cfg.Loggers.TcpClient.BufferSize = 0
 			cfg.Loggers.TcpClient.Mode = tc.mode
+			cfg.Loggers.TcpClient.RemoteAddress = "127.0.0.1"
+			cfg.Loggers.TcpClient.RemotePort = 9999
 
 			g := NewTcpClient(cfg, logger.New(false), "test")
 
@@ -73,8 +75,12 @@ func Test_TcpClientRun(t *testing.T) {
 
 			pattern := regexp.MustCompile(tc.pattern)
 			if !pattern.MatchString(line) {
-				t.Errorf("syslog error want %s, got: %s", tc.pattern, line)
+				t.Errorf("tcp error want %s, got: %s", tc.pattern, line)
 			}
+
+			// stop all
+			fakeRcvr.Close()
+			g.Stop()
 		})
 	}
 }
