@@ -14,8 +14,14 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   linter:
+    permissions:
+      contents: read  # for actions/checkout to fetch code
+      pull-requests: read  # for golangci/golangci-lint-action to fetch pull requests
     runs-on: ubuntu-22.04
 
     steps:
