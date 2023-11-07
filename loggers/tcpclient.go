@@ -306,7 +306,7 @@ func (o *TcpClient) Process() {
 	bufferDm := []dnsutils.DnsMessage{}
 
 	// init flust timer for buffer
-	flushInterval := time.Duration(o.config.Loggers.Fluentd.FlushInterval) * time.Second
+	flushInterval := time.Duration(o.config.Loggers.TcpClient.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
 	// init remote conn
