@@ -23,8 +23,8 @@ func Test_SyslogRunUdp(t *testing.T) {
 	}{
 		{
 			name:       "unix_format",
-			transport:  dnsutils.SOCKET_UDP,
-			mode:       dnsutils.MODE_TEXT,
+			transport:  dnsutils.SocketUDP,
+			mode:       dnsutils.ModeText,
 			formatter:  "unix",
 			framer:     "",
 			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
@@ -32,8 +32,8 @@ func Test_SyslogRunUdp(t *testing.T) {
 		},
 		{
 			name:       "rfc3164_format",
-			transport:  dnsutils.SOCKET_UDP,
-			mode:       dnsutils.MODE_TEXT,
+			transport:  dnsutils.SocketUDP,
+			mode:       dnsutils.ModeText,
 			formatter:  "rfc3164",
 			framer:     "",
 			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
@@ -41,8 +41,8 @@ func Test_SyslogRunUdp(t *testing.T) {
 		},
 		{
 			name:       "rfc5424_format",
-			transport:  dnsutils.SOCKET_UDP,
-			mode:       dnsutils.MODE_TEXT,
+			transport:  dnsutils.SocketUDP,
+			mode:       dnsutils.ModeText,
 			formatter:  "rfc5424",
 			framer:     "",
 			pattern:    `<30>1 \d+-\d+-\d+.*`,
@@ -50,8 +50,8 @@ func Test_SyslogRunUdp(t *testing.T) {
 		},
 		{
 			name:       "rfc5424_format_rfc5425_framer",
-			transport:  dnsutils.SOCKET_UDP,
-			mode:       dnsutils.MODE_TEXT,
+			transport:  dnsutils.SocketUDP,
+			mode:       dnsutils.ModeText,
 			formatter:  "rfc5424",
 			framer:     "rfc5425",
 			pattern:    `\d+ \<30\>1 \d+-\d+-\d+.*`,
@@ -83,7 +83,7 @@ func Test_SyslogRunUdp(t *testing.T) {
 
 			// send fake dns message to logger
 			time.Sleep(time.Second)
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			g.Channel() <- dm
 
 			// read data on fake server side
@@ -117,8 +117,8 @@ func Test_SyslogRunTcp(t *testing.T) {
 	}{
 		{
 			name:       "unix_format",
-			transport:  dnsutils.SOCKET_TCP,
-			mode:       dnsutils.MODE_TEXT,
+			transport:  dnsutils.SocketTCP,
+			mode:       dnsutils.ModeText,
 			formatter:  "unix",
 			framer:     "",
 			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
@@ -126,8 +126,8 @@ func Test_SyslogRunTcp(t *testing.T) {
 		},
 		{
 			name:       "rfc3164_format",
-			transport:  dnsutils.SOCKET_TCP,
-			mode:       dnsutils.MODE_TEXT,
+			transport:  dnsutils.SocketTCP,
+			mode:       dnsutils.ModeText,
 			formatter:  "rfc3164",
 			framer:     "",
 			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
@@ -135,8 +135,8 @@ func Test_SyslogRunTcp(t *testing.T) {
 		},
 		{
 			name:       "rfc5424_format",
-			transport:  dnsutils.SOCKET_TCP,
-			mode:       dnsutils.MODE_TEXT,
+			transport:  dnsutils.SocketTCP,
+			mode:       dnsutils.ModeText,
 			formatter:  "rfc5424",
 			framer:     "",
 			pattern:    `<30>1 \d+-\d+-\d+.*`,
@@ -144,8 +144,8 @@ func Test_SyslogRunTcp(t *testing.T) {
 		},
 		{
 			name:       "rfc5425_format_rfc5425_framer",
-			transport:  dnsutils.SOCKET_TCP,
-			mode:       dnsutils.MODE_TEXT,
+			transport:  dnsutils.SocketTCP,
+			mode:       dnsutils.ModeText,
 			formatter:  "rfc5424",
 			framer:     "rfc5425",
 			pattern:    `\d+ \<30\>1 \d+-\d+-\d+.*`,
@@ -184,7 +184,7 @@ func Test_SyslogRunTcp(t *testing.T) {
 
 			// send fake dns message to logger
 			time.Sleep(time.Second)
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			g.Channel() <- dm
 
 			// read data on server side and decode-it

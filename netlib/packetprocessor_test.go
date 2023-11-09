@@ -45,14 +45,14 @@ func Test_IpDefrag(t *testing.T) {
 				return
 			}
 
-			fragIp4Chan := make(chan gopacket.Packet)
-			fragIp6Chan := make(chan gopacket.Packet)
+			fragIP4Chan := make(chan gopacket.Packet)
+			fragIP6Chan := make(chan gopacket.Packet)
 			outputChan := make(chan gopacket.Packet, 2)
 
 			// defrag ipv4
-			go IpDefragger(fragIp4Chan, outputChan, outputChan)
+			go IPDefragger(fragIP4Chan, outputChan, outputChan)
 			// defrag ipv6
-			go IpDefragger(fragIp6Chan, outputChan, outputChan)
+			go IPDefragger(fragIP6Chan, outputChan, outputChan)
 
 			packetSource := gopacket.NewPacketSource(pcapHandler, pcapHandler.LinkType())
 			packetSource.DecodeOptions.Lazy = true
@@ -83,7 +83,7 @@ func Test_IpDefrag(t *testing.T) {
 				if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
 					ip4 := packet.NetworkLayer().(*layers.IPv4)
 					if ip4.Flags&layers.IPv4MoreFragments == 1 || ip4.FragOffset > 0 {
-						fragIp4Chan <- packet
+						fragIP4Chan <- packet
 					} else {
 						outputChan <- packet
 					}
@@ -92,7 +92,7 @@ func Test_IpDefrag(t *testing.T) {
 				if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
 					v6frag := packet.Layer(layers.LayerTypeIPv6Fragment)
 					if v6frag != nil {
-						fragIp6Chan <- packet
+						fragIP6Chan <- packet
 					} else {
 						outputChan <- packet
 					}

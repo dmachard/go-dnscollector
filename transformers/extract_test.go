@@ -14,19 +14,19 @@ func TestExtract_Json(t *testing.T) {
 	// enable feature
 	config := dnsutils.GetFakeConfigTransformers()
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
-	outChans = append(outChans, make(chan dnsutils.DnsMessage, 1))
+	outChans := []chan dnsutils.DNSMessage{}
+	outChans = append(outChans, make(chan dnsutils.DNSMessage, 1))
 
 	// get fake
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	dm.Init()
 
 	// init subproccesor
 	extract := NewExtractSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
-	extract.InitDnsMessage(&dm)
+	extract.InitDNSMessage(&dm)
 
 	// expected json
-	refJson := `
+	refJSON := `
 			{
 				"extracted":{
 					"dns_payload": "LQ=="
@@ -35,13 +35,13 @@ func TestExtract_Json(t *testing.T) {
 			`
 
 	var dmMap map[string]interface{}
-	err := json.Unmarshal([]byte(dm.ToJson()), &dmMap)
+	err := json.Unmarshal([]byte(dm.ToJSON()), &dmMap)
 	if err != nil {
 		t.Fatalf("could not unmarshal dm json: %s\n", err)
 	}
 
 	var refMap map[string]interface{}
-	err = json.Unmarshal([]byte(refJson), &refMap)
+	err = json.Unmarshal([]byte(refJSON), &refMap)
 	if err != nil {
 		t.Fatalf("could not unmarshal ref json: %s\n", err)
 	}
@@ -62,7 +62,7 @@ func TestExtract_AddPayload(t *testing.T) {
 	config.Extract.AddPayload = true
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
 	extract := NewExtractSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
@@ -72,7 +72,7 @@ func TestExtract_AddPayload(t *testing.T) {
 		t.Fatalf("extract should be enabled")
 	}
 
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	src := []byte("P6CBgAABAAEAAAABD29yYW5nZS1zYW5ndWluZQJmcgAAAQABwAwAAQABAABUYAAEwcvvUQAAKQTQAAAAAAAA")
 	dst := make([]byte, base64.StdEncoding.DecodedLen(len(src)))
 	base64.StdEncoding.Decode(dst, src)

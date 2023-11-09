@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	PROTOBUF_PDNS_TO_DNSTAP = map[string]string{
+	ProtobufPowerDNSToDNSTap = map[string]string{
 		"DNSQueryType":            "CLIENT_QUERY",
 		"DNSResponseType":         "CLIENT_RESPONSE",
 		"DNSOutgoingQueryType":    "RESOLVER_QUERY",
@@ -25,7 +25,7 @@ var (
 )
 
 type PdnsProcessor struct {
-	ConnId       int
+	ConnID       int
 	doneRun      chan bool
 	stopRun      chan bool
 	doneMonitor  chan bool
@@ -40,10 +40,10 @@ type PdnsProcessor struct {
 	droppedCount map[string]int
 }
 
-func NewPdnsProcessor(connId int, config *dnsutils.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
-	logger.Info("[%s] processor=pdns#%d - initialization...", name, connId)
+func NewPdnsProcessor(connID int, config *dnsutils.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
+	logger.Info("[%s] processor=pdns#%d - initialization...", name, connID)
 	d := PdnsProcessor{
-		ConnId:       connId,
+		ConnID:       connID,
 		doneMonitor:  make(chan bool),
 		doneRun:      make(chan bool),
 		stopMonitor:  make(chan bool),
@@ -60,165 +60,165 @@ func NewPdnsProcessor(connId int, config *dnsutils.Config, logger *logger.Logger
 	return d
 }
 
-func (c *PdnsProcessor) LogInfo(msg string, v ...interface{}) {
+func (p *PdnsProcessor) LogInfo(msg string, v ...interface{}) {
 	var log string
-	if c.ConnId == 0 {
-		log = fmt.Sprintf("[%s] processor=powerdns - ", c.name)
+	if p.ConnID == 0 {
+		log = fmt.Sprintf("[%s] processor=powerdns - ", p.name)
 	} else {
-		log = fmt.Sprintf("[%s] processor=powerdns#%d - ", c.name, c.ConnId)
+		log = fmt.Sprintf("[%s] processor=powerdns#%d - ", p.name, p.ConnID)
 	}
-	c.logger.Info(log+msg, v...)
+	p.logger.Info(log+msg, v...)
 }
 
-func (c *PdnsProcessor) LogError(msg string, v ...interface{}) {
+func (p *PdnsProcessor) LogError(msg string, v ...interface{}) {
 	var log string
-	if c.ConnId == 0 {
-		log = fmt.Sprintf("[%s] processor=powerdns - ", c.name)
+	if p.ConnID == 0 {
+		log = fmt.Sprintf("[%s] processor=powerdns - ", p.name)
 	} else {
-		log = fmt.Sprintf("[%s] processor=powerdns#%d - ", c.name, c.ConnId)
+		log = fmt.Sprintf("[%s] processor=powerdns#%d - ", p.name, p.ConnID)
 	}
-	c.logger.Error(log+msg, v...)
+	p.logger.Error(log+msg, v...)
 }
 
-func (d *PdnsProcessor) GetChannel() chan []byte {
-	return d.recvFrom
+func (p *PdnsProcessor) GetChannel() chan []byte {
+	return p.recvFrom
 }
 
-func (d *PdnsProcessor) Stop() {
-	d.LogInfo("stopping to process...")
-	d.stopRun <- true
-	<-d.doneRun
+func (p *PdnsProcessor) Stop() {
+	p.LogInfo("stopping to process...")
+	p.stopRun <- true
+	<-p.doneRun
 
-	d.LogInfo("stopping to monitor loggers...")
-	d.stopMonitor <- true
-	<-d.doneMonitor
+	p.LogInfo("stopping to monitor loggers...")
+	p.stopMonitor <- true
+	<-p.doneMonitor
 }
 
-func (d *PdnsProcessor) MonitorLoggers() {
+func (p *PdnsProcessor) MonitorLoggers() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 FOLLOW_LOOP:
 	for {
 		select {
-		case <-d.stopMonitor:
-			close(d.dropped)
+		case <-p.stopMonitor:
+			close(p.dropped)
 			bufferFull.Stop()
-			d.doneMonitor <- true
+			p.doneMonitor <- true
 			break FOLLOW_LOOP
 
-		case loggerName := <-d.dropped:
-			if _, ok := d.droppedCount[loggerName]; !ok {
-				d.droppedCount[loggerName] = 1
+		case loggerName := <-p.dropped:
+			if _, ok := p.droppedCount[loggerName]; !ok {
+				p.droppedCount[loggerName] = 1
 			} else {
-				d.droppedCount[loggerName]++
+				p.droppedCount[loggerName]++
 			}
 
 		case <-bufferFull.C:
 
-			for v, k := range d.droppedCount {
+			for v, k := range p.droppedCount {
 				if k > 0 {
-					d.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
-					d.droppedCount[v] = 0
+					p.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
+					p.droppedCount[v] = 0
 				}
 			}
 			bufferFull.Reset(watchInterval)
 
 		}
 	}
-	d.LogInfo("monitor terminated")
+	p.LogInfo("monitor terminated")
 }
 
-func (d *PdnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
+func (p *PdnsProcessor) Run(loggersChannel []chan dnsutils.DNSMessage, loggersName []string) {
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
 
 	// prepare enabled transformers
-	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel, d.ConnId)
+	transforms := transformers.NewTransforms(&p.config.IngoingTransformers, p.logger, p.name, loggersChannel, p.ConnID)
 
 	// start goroutine to count dropped messsages
-	go d.MonitorLoggers()
+	go p.MonitorLoggers()
 
 	// read incoming dns message
-	d.LogInfo("waiting dns message to process...")
+	p.LogInfo("waiting dns message to process...")
 RUN_LOOP:
 	for {
 		select {
-		case cfg := <-d.ConfigChan:
-			d.config = cfg
+		case cfg := <-p.ConfigChan:
+			p.config = cfg
 			transforms.ReloadConfig(&cfg.IngoingTransformers)
 
-		case <-d.stopRun:
+		case <-p.stopRun:
 			transforms.Reset()
-			//close(d.recvFrom)
-			d.doneRun <- true
+			//close(p.recvFrom)
+			p.doneRun <- true
 			break RUN_LOOP
 
-		case data, opened := <-d.recvFrom:
+		case data, opened := <-p.recvFrom:
 			if !opened {
-				d.LogInfo("channel closed, exit")
+				p.LogInfo("channel closed, exit")
 				return
 			}
 
 			err := proto.Unmarshal(data, pbdm)
 			if err != nil {
-				d.LogError("pbdm decoding, %s", err)
+				p.LogError("pbdm decoding, %s", err)
 				continue
 			}
 
 			// init dns message
-			dm := dnsutils.DnsMessage{}
+			dm := dnsutils.DNSMessage{}
 			dm.Init()
 
 			// init dns message with additionnals parts
-			transforms.InitDnsMessageFormat(&dm)
+			transforms.InitDNSMessageFormat(&dm)
 
 			// init powerdns with default values
-			dm.PowerDns = &dnsutils.PowerDns{
+			dm.PowerDNS = &dnsutils.PowerDNS{
 				Tags:                  []string{},
 				OriginalRequestSubnet: "",
 				AppliedPolicy:         "",
 				Metadata:              map[string]string{},
 			}
 
-			dm.DnsTap.Identity = string(pbdm.GetServerIdentity())
-			dm.DnsTap.Operation = PROTOBUF_PDNS_TO_DNSTAP[pbdm.GetType().String()]
+			dm.DNSTap.Identity = string(pbdm.GetServerIdentity())
+			dm.DNSTap.Operation = ProtobufPowerDNSToDNSTap[pbdm.GetType().String()]
 
-			if ipVersion, valid := dnsutils.IP_VERSION[pbdm.GetSocketFamily().String()]; valid {
+			if ipVersion, valid := dnsutils.IPVersion[pbdm.GetSocketFamily().String()]; valid {
 				dm.NetworkInfo.Family = ipVersion
 			} else {
-				dm.NetworkInfo.Family = dnsutils.STR_UNKNOWN
+				dm.NetworkInfo.Family = dnsutils.StrUnknown
 			}
 			dm.NetworkInfo.Protocol = pbdm.GetSocketProtocol().String()
 
 			if pbdm.From != nil {
-				dm.NetworkInfo.QueryIp = net.IP(pbdm.From).String()
+				dm.NetworkInfo.QueryIP = net.IP(pbdm.From).String()
 			}
 			dm.NetworkInfo.QueryPort = strconv.FormatUint(uint64(pbdm.GetFromPort()), 10)
-			dm.NetworkInfo.ResponseIp = net.IP(pbdm.To).String()
+			dm.NetworkInfo.ResponseIP = net.IP(pbdm.To).String()
 			dm.NetworkInfo.ResponsePort = strconv.FormatUint(uint64(pbdm.GetToPort()), 10)
 
-			dm.DNS.Id = int(pbdm.GetId())
+			dm.DNS.ID = int(pbdm.GetId())
 			dm.DNS.Length = int(pbdm.GetInBytes())
-			dm.DnsTap.TimeSec = int(pbdm.GetTimeSec())
-			dm.DnsTap.TimeNsec = int(pbdm.GetTimeUsec()) * 1e3
+			dm.DNSTap.TimeSec = int(pbdm.GetTimeSec())
+			dm.DNSTap.TimeNsec = int(pbdm.GetTimeUsec()) * 1e3
 
 			if int(pbdm.Type.Number())%2 == 1 {
-				dm.DNS.Type = dnsutils.DnsQuery
+				dm.DNS.Type = dnsutils.DNSQuery
 			} else {
-				dm.DNS.Type = dnsutils.DnsReply
+				dm.DNS.Type = dnsutils.DNSReply
 
 				tsQuery := float64(pbdm.Response.GetQueryTimeSec()) + float64(pbdm.Response.GetQueryTimeUsec())/1e6
 				tsReply := float64(pbdm.GetTimeSec()) + float64(pbdm.GetTimeUsec())/1e6
 
 				// convert latency to human
-				dm.DnsTap.Latency = tsReply - tsQuery
-				dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
+				dm.DNSTap.Latency = tsReply - tsQuery
+				dm.DNSTap.LatencySec = fmt.Sprintf("%.6f", dm.DNSTap.Latency)
 				dm.DNS.Rcode = dnsutils.RcodeToString(int(pbdm.Response.GetRcode()))
 			}
 
 			// compute timestamp
-			ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
-			dm.DnsTap.Timestamp = ts.UnixNano()
-			dm.DnsTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
+			ts := time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec))
+			dm.DNSTap.Timestamp = ts.UnixNano()
+			dm.DNSTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
 			dm.DNS.Qname = pbdm.Question.GetQName()
 			// remove ending dot ?
@@ -228,7 +228,7 @@ RUN_LOOP:
 			dm.DNS.Qtype = dnsutils.RdatatypeToString(int(pbdm.Question.GetQType()))
 
 			// get specific powerdns params
-			pdns := dnsutils.PowerDns{}
+			pdns := dnsutils.PowerDNS{}
 
 			// get PowerDNS OriginalRequestSubnet
 			ip := pbdm.GetOriginalRequestorSubnet()
@@ -261,10 +261,10 @@ RUN_LOOP:
 			pdns.Metadata = metas
 
 			// finally set pdns to dns message
-			dm.PowerDns = &pdns
+			dm.PowerDNS = &pdns
 
 			// decode answers
-			answers := []dnsutils.DnsAnswer{}
+			answers := []dnsutils.DNSAnswer{}
 			RRs := pbdm.GetResponse().GetRrs()
 			for j := range RRs {
 				rdata := string(RRs[j].GetRdata())
@@ -279,36 +279,36 @@ RUN_LOOP:
 					rdata = addr.String()
 				}
 
-				rr := dnsutils.DnsAnswer{
+				rr := dnsutils.DNSAnswer{
 					Name:      RRs[j].GetName(),
 					Rdatatype: dnsutils.RdatatypeToString(int(RRs[j].GetType())),
 					Class:     int(RRs[j].GetClass()),
-					Ttl:       int(RRs[j].GetTtl()),
+					TTL:       int(RRs[j].GetTtl()),
 					Rdata:     rdata,
 				}
 				answers = append(answers, rr)
 			}
-			dm.DNS.DnsRRs.Answers = answers
+			dm.DNS.DNSRRs.Answers = answers
 
-			if d.config.Collectors.PowerDNS.AddDnsPayload {
+			if p.config.Collectors.PowerDNS.AddDNSPayload {
 
 				qname := dns.Fqdn(pbdm.Question.GetQName())
-				newDns := new(dns.Msg)
-				newDns.Id = uint16(pbdm.GetId())
-				newDns.Response = false
+				newDNS := new(dns.Msg)
+				newDNS.Id = uint16(pbdm.GetId())
+				newDNS.Response = false
 
 				question := dns.Question{
 					Name:   qname,
 					Qtype:  uint16(pbdm.Question.GetQType()),
 					Qclass: uint16(pbdm.Question.GetQClass()),
 				}
-				newDns.Question = append(newDns.Question, question)
+				newDNS.Question = append(newDNS.Question, question)
 
 				if int(pbdm.Type.Number())%2 != 1 {
-					newDns.Response = true
-					newDns.Rcode = int(pbdm.Response.GetRcode())
+					newDNS.Response = true
+					newDNS.Rcode = int(pbdm.Response.GetRcode())
 
-					newDns.Answer = []dns.RR{}
+					newDNS.Answer = []dns.RR{}
 					rrs := pbdm.GetResponse().GetRrs()
 					for j := range rrs {
 						rrname := dns.Fqdn(rrs[j].GetName())
@@ -319,28 +319,28 @@ RUN_LOOP:
 								Hdr: dns.RR_Header{Name: rrname, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: rrs[j].GetTtl()},
 								A:   net.IP(rrs[j].GetRdata()),
 							}
-							newDns.Answer = append(newDns.Answer, rdata)
+							newDNS.Answer = append(newDNS.Answer, rdata)
 						// AAAA
 						case 28:
 							rdata := &dns.AAAA{
 								Hdr:  dns.RR_Header{Name: rrname, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: rrs[j].GetTtl()},
 								AAAA: net.IP(rrs[j].GetRdata()),
 							}
-							newDns.Answer = append(newDns.Answer, rdata)
+							newDNS.Answer = append(newDNS.Answer, rdata)
 						// CNAME
 						case 5:
 							rdata := &dns.CNAME{
 								Hdr:    dns.RR_Header{Name: rrname, Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: rrs[j].GetTtl()},
 								Target: dns.Fqdn(string(rrs[j].GetRdata())),
 							}
-							newDns.Answer = append(newDns.Answer, rdata)
+							newDNS.Answer = append(newDNS.Answer, rdata)
 						}
 
 					}
 
 				}
 
-				pktWire, err := newDns.Pack()
+				pktWire, err := newDNS.Pack()
 				if err == nil {
 					dm.DNS.Payload = pktWire
 					if dm.DNS.Length == 0 {
@@ -352,7 +352,7 @@ RUN_LOOP:
 			}
 
 			// apply all enabled transformers
-			if transforms.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			if transforms.ProcessMessage(&dm) == transformers.ReturnDrop {
 				continue
 			}
 
@@ -361,10 +361,10 @@ RUN_LOOP:
 				select {
 				case loggersChannel[i] <- dm: // Successful send to logger channel
 				default:
-					d.dropped <- loggersName[i]
+					p.dropped <- loggersName[i]
 				}
 			}
 		}
 	}
-	d.LogInfo("processing terminated")
+	p.LogInfo("processing terminated")
 }

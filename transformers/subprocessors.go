@@ -12,9 +12,9 @@ const (
 )
 
 var (
-	RETURN_SUCCESS = 1
-	RETURN_DROP    = 2
-	RETURN_ERROR   = 3
+	ReturnSuccess = 1
+	ReturnDrop    = 2
+	ReturnError   = 3
 )
 
 type Transforms struct {
@@ -24,7 +24,7 @@ type Transforms struct {
 	instance int
 
 	SuspiciousTransform      SuspiciousTransform
-	GeoipTransform           GeoIpProcessor
+	GeoipTransform           GeoIPProcessor
 	FilteringTransform       FilteringProcessor
 	UserPrivacyTransform     UserPrivacyProcessor
 	NormalizeTransform       NormalizeProcessor
@@ -33,10 +33,10 @@ type Transforms struct {
 	ExtractProcessor         ExtractProcessor
 	MachineLearningTransform MlProcessor
 
-	activeTransforms []func(dm *dnsutils.DnsMessage) int
+	activeTransforms []func(dm *dnsutils.DNSMessage) int
 }
 
-func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DnsMessage, instance int) Transforms {
+func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DNSMessage, instance int) Transforms {
 
 	d := Transforms{
 		config:   config,
@@ -52,7 +52,7 @@ func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, n
 	d.ReducerTransform = NewReducerSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 	d.UserPrivacyTransform = NewUserPrivacySubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 	d.FilteringTransform = NewFilteringProcessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.GeoipTransform = NewDnsGeoIpProcessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.GeoipTransform = NewDNSGeoIPProcessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 	d.MachineLearningTransform = NewMachineLearningSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 
 	d.Prepare()
@@ -122,8 +122,8 @@ func (p *Transforms) Prepare() error {
 
 		p.FilteringTransform.LoadRcodes()
 		p.FilteringTransform.LoadDomainsList()
-		p.FilteringTransform.LoadQueryIpList()
-		p.FilteringTransform.LoadrDataIpList()
+		p.FilteringTransform.LoadQueryIPList()
+		p.FilteringTransform.LoadrDataIPList()
 
 		p.FilteringTransform.LoadActiveFilters()
 	}
@@ -171,28 +171,28 @@ func (p *Transforms) Prepare() error {
 	return nil
 }
 
-func (p *Transforms) InitDnsMessageFormat(dm *dnsutils.DnsMessage) {
+func (p *Transforms) InitDNSMessageFormat(dm *dnsutils.DNSMessage) {
 	if p.config.GeoIP.Enable {
-		p.GeoipTransform.InitDnsMessage(dm)
+		p.GeoipTransform.InitDNSMessage(dm)
 	}
 	if p.config.Suspicious.Enable {
-		p.SuspiciousTransform.InitDnsMessage(dm)
+		p.SuspiciousTransform.InitDNSMessage(dm)
 	}
 	if p.config.Normalize.Enable {
 		if p.config.Normalize.AddTld || p.config.Normalize.AddTldPlusOne {
-			p.NormalizeTransform.InitDnsMessage(dm)
+			p.NormalizeTransform.InitDNSMessage(dm)
 		}
 	}
 	if p.config.Extract.Enable {
 		if p.config.Extract.AddPayload {
-			p.ExtractProcessor.InitDnsMessage(dm)
+			p.ExtractProcessor.InitDNSMessage(dm)
 		}
 	}
 	if p.config.Reducer.Enable {
-		p.ReducerTransform.InitDnsMessage(dm)
+		p.ReducerTransform.InitDNSMessage(dm)
 	}
 	if p.config.MachineLearning.Enable {
-		p.MachineLearningTransform.InitDnsMessage(dm)
+		p.MachineLearningTransform.InitDNSMessage(dm)
 	}
 }
 
@@ -211,21 +211,21 @@ func (p *Transforms) LogError(msg string, v ...interface{}) {
 }
 
 // transform functions: return code
-func (p *Transforms) machineLearningTransform(dm *dnsutils.DnsMessage) int {
+func (p *Transforms) machineLearningTransform(dm *dnsutils.DNSMessage) int {
 	p.MachineLearningTransform.AddFeatures(dm)
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *Transforms) suspiciousTransform(dm *dnsutils.DnsMessage) int {
+func (p *Transforms) suspiciousTransform(dm *dnsutils.DNSMessage) int {
 	p.SuspiciousTransform.CheckIfSuspicious(dm)
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *Transforms) geoipTransform(dm *dnsutils.DnsMessage) int {
-	geoInfo, err := p.GeoipTransform.Lookup(dm.NetworkInfo.QueryIp)
+func (p *Transforms) geoipTransform(dm *dnsutils.DNSMessage) int {
+	geoInfo, err := p.GeoipTransform.Lookup(dm.NetworkInfo.QueryIP)
 	if err != nil {
 		p.LogError("geoip lookup error %v", err)
-		return RETURN_ERROR
+		return ReturnError
 	}
 
 	dm.Geo.Continent = geoInfo.Continent
@@ -234,64 +234,64 @@ func (p *Transforms) geoipTransform(dm *dnsutils.DnsMessage) int {
 	dm.Geo.AutonomousSystemNumber = geoInfo.ASN
 	dm.Geo.AutonomousSystemOrg = geoInfo.ASO
 
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *Transforms) anonymizeIP(dm *dnsutils.DnsMessage) int {
-	dm.NetworkInfo.QueryIp = p.UserPrivacyTransform.AnonymizeIP(dm.NetworkInfo.QueryIp)
+func (p *Transforms) anonymizeIP(dm *dnsutils.DNSMessage) int {
+	dm.NetworkInfo.QueryIP = p.UserPrivacyTransform.AnonymizeIP(dm.NetworkInfo.QueryIP)
 
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *Transforms) hashIP(dm *dnsutils.DnsMessage) int {
-	dm.NetworkInfo.QueryIp = p.UserPrivacyTransform.HashIP(dm.NetworkInfo.QueryIp)
-	dm.NetworkInfo.ResponseIp = p.UserPrivacyTransform.HashIP(dm.NetworkInfo.ResponseIp)
-	return RETURN_SUCCESS
+func (p *Transforms) hashIP(dm *dnsutils.DNSMessage) int {
+	dm.NetworkInfo.QueryIP = p.UserPrivacyTransform.HashIP(dm.NetworkInfo.QueryIP)
+	dm.NetworkInfo.ResponseIP = p.UserPrivacyTransform.HashIP(dm.NetworkInfo.ResponseIP)
+	return ReturnSuccess
 }
 
-func (p *Transforms) measureLatency(dm *dnsutils.DnsMessage) int {
+func (p *Transforms) measureLatency(dm *dnsutils.DNSMessage) int {
 	p.LatencyTransform.MeasureLatency(dm)
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *Transforms) detectEvictedTimeout(dm *dnsutils.DnsMessage) int {
+func (p *Transforms) detectEvictedTimeout(dm *dnsutils.DNSMessage) int {
 	p.LatencyTransform.DetectEvictedTimeout(dm)
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *Transforms) minimazeQname(dm *dnsutils.DnsMessage) int {
+func (p *Transforms) minimazeQname(dm *dnsutils.DNSMessage) int {
 	dm.DNS.Qname = p.UserPrivacyTransform.MinimazeQname(dm.DNS.Qname)
 
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *Transforms) addBase64Payload(dm *dnsutils.DnsMessage) int {
+func (p *Transforms) addBase64Payload(dm *dnsutils.DNSMessage) int {
 	dm.Extracted.Base64Payload = p.ExtractProcessor.AddBase64Payload(dm)
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *Transforms) ProcessMessage(dm *dnsutils.DnsMessage) int {
+func (p *Transforms) ProcessMessage(dm *dnsutils.DNSMessage) int {
 	// Begin to normalize
-	p.NormalizeTransform.ProcessDnsMessage(dm)
+	p.NormalizeTransform.ProcessDNSMessage(dm)
 
 	// Traffic filtering ?
 	if p.FilteringTransform.CheckIfDrop(dm) {
-		return RETURN_DROP
+		return ReturnDrop
 	}
 
 	// Traffic reducer ?
-	if p.ReducerTransform.ProcessDnsMessage(dm) == RETURN_DROP {
-		return RETURN_DROP
+	if p.ReducerTransform.ProcessDNSMessage(dm) == ReturnDrop {
+		return ReturnDrop
 	}
 
 	//  and finaly apply other transformation
-	var r_code int
+	var rCode int
 	for _, fn := range p.activeTransforms {
-		r_code = fn(dm)
-		if r_code != RETURN_SUCCESS {
-			return r_code
+		rCode = fn(dm)
+		if rCode != ReturnSuccess {
+			return rCode
 		}
 	}
 
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }

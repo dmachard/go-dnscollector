@@ -5,15 +5,15 @@ import (
 )
 
 type FakeLogger struct {
-	inputChan  chan dnsutils.DnsMessage
-	outputChan chan dnsutils.DnsMessage
+	inputChan  chan dnsutils.DNSMessage
+	outputChan chan dnsutils.DNSMessage
 	name       string
 }
 
 func NewFakeLogger() *FakeLogger {
 	o := &FakeLogger{
-		inputChan:  make(chan dnsutils.DnsMessage, 512),
-		outputChan: make(chan dnsutils.DnsMessage, 512),
+		inputChan:  make(chan dnsutils.DNSMessage, 512),
+		outputChan: make(chan dnsutils.DNSMessage, 512),
 		name:       "fake",
 	}
 	return o
@@ -23,14 +23,14 @@ func (c *FakeLogger) GetName() string { return c.name }
 
 func (c *FakeLogger) SetLoggers(loggers []dnsutils.Worker) {}
 
-func (o *FakeLogger) ReadConfig() {}
+func (c *FakeLogger) ReadConfig() {}
 
-func (o *FakeLogger) ReloadConfig(config *dnsutils.Config) {}
+func (c *FakeLogger) ReloadConfig(config *dnsutils.Config) {}
 
-func (o *FakeLogger) Stop() {}
+func (c *FakeLogger) Stop() {}
 
-func (o *FakeLogger) Channel() chan dnsutils.DnsMessage {
-	return o.inputChan
+func (c *FakeLogger) Channel() chan dnsutils.DNSMessage {
+	return c.inputChan
 }
 
-func (o *FakeLogger) Run() {}
+func (c *FakeLogger) Run() {}

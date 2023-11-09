@@ -16,7 +16,7 @@ func Test_InfluxDB(t *testing.T) {
 	g := NewInfluxDBClient(dnsutils.GetFakeConfig(), logger.New(false), "test")
 
 	// fake msgpack receiver
-	fakeRcvr, err := net.Listen(dnsutils.SOCKET_TCP, "127.0.0.1:8086")
+	fakeRcvr, err := net.Listen(dnsutils.SocketTCP, "127.0.0.1:8086")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,7 +26,7 @@ func Test_InfluxDB(t *testing.T) {
 	go g.Run()
 
 	// send fake dns message to logger
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	g.Channel() <- dm
 
 	// accept conn
@@ -43,7 +43,7 @@ func Test_InfluxDB(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	conn.Write([]byte(dnsutils.HTTP_OK))
+	conn.Write([]byte(dnsutils.HTTPOK))
 
 	payload, err := io.ReadAll(request.Body)
 	if err != nil {

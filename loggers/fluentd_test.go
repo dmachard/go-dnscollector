@@ -16,7 +16,7 @@ func Test_FluentdClient(t *testing.T) {
 		address   string
 	}{
 		{
-			transport: dnsutils.SOCKET_TCP,
+			transport: dnsutils.SocketTCP,
 			address:   ":24224",
 		},
 	}
@@ -47,7 +47,7 @@ func Test_FluentdClient(t *testing.T) {
 
 			// send fake dns message to logger
 			time.Sleep(time.Second)
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			g.Channel() <- dm
 
 			// read data on fake server side
@@ -58,7 +58,7 @@ func Test_FluentdClient(t *testing.T) {
 			}
 
 			// unpack msgpack
-			var dmRcv dnsutils.DnsMessage
+			var dmRcv dnsutils.DNSMessage
 			err = msgpack.Unmarshal(buf[24:], &dmRcv)
 			if err != nil {
 				t.Errorf("error to unpack msgpack: %s", err)

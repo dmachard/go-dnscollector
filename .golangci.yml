@@ -21,8 +21,8 @@ linters:
   - goimports
   - gosimple
   - ineffassign
+  - stylecheck
   
   # list of linters to use in the future:
-  #- stylecheck
   #- gocritic
   #- gosec

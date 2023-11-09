@@ -9,22 +9,22 @@ import (
 )
 
 // DefragPacket is a struct that holds DNS data
-type DnsPacket struct {
+type DNSPacket struct {
 	// DNS payload
 	Payload []byte
 	// IP layer
-	IpLayer gopacket.Flow
+	IPLayer gopacket.Flow
 	// Transport layer
 	TransportLayer gopacket.Flow
 	// Timestamp
 	Timestamp time.Time
 	// IP Defragmented
-	IpDefragmented bool
+	IPDefragmented bool
 	// TCP reassembly
-	TcpReassembled bool
+	TCPReassembled bool
 }
 
-func UdpProcessor(udpInput chan gopacket.Packet, dnsOutput chan DnsPacket, portFilter int) {
+func UDPProcessor(udpInput chan gopacket.Packet, dnsOutput chan DNSPacket, portFilter int) {
 	for packet := range udpInput {
 		p := packet.TransportLayer().(*layers.UDP)
 
@@ -34,19 +34,19 @@ func UdpProcessor(udpInput chan gopacket.Packet, dnsOutput chan DnsPacket, portF
 			}
 		}
 
-		dnsOutput <- DnsPacket{
+		dnsOutput <- DNSPacket{
 			Payload:        p.Payload,
-			IpLayer:        packet.NetworkLayer().NetworkFlow(),
+			IPLayer:        packet.NetworkLayer().NetworkFlow(),
 			TransportLayer: p.TransportFlow(),
 			Timestamp:      packet.Metadata().Timestamp,
-			TcpReassembled: false,
-			IpDefragmented: packet.Metadata().Truncated,
+			TCPReassembled: false,
+			IPDefragmented: packet.Metadata().Truncated,
 		}
 	}
 }
 
-func TcpAssembler(tcpInput chan gopacket.Packet, dnsOutput chan DnsPacket, portFilter int) {
-	streamFactory := &DnsStreamFactory{Reassembled: dnsOutput}
+func TCPAssembler(tcpInput chan gopacket.Packet, dnsOutput chan DNSPacket, portFilter int) {
+	streamFactory := &DNSStreamFactory{Reassembled: dnsOutput}
 	streamPool := tcpassembly.NewStreamPool(streamFactory)
 	assembler := tcpassembly.NewAssembler(streamPool)
 
@@ -62,7 +62,7 @@ func TcpAssembler(tcpInput chan gopacket.Packet, dnsOutput chan DnsPacket, portF
 
 			// ip fragments should not happened with tcp ...
 			if packet.Metadata().Truncated {
-				streamFactory.IpDefragmented = packet.Metadata().Truncated
+				streamFactory.IPDefragmented = packet.Metadata().Truncated
 			}
 
 			// ignore packet ?
@@ -86,7 +86,7 @@ FLUSHALL:
 	assembler.FlushAll()
 }
 
-func IpDefragger(ipInput chan gopacket.Packet, udpOutput chan gopacket.Packet, tcpOutput chan gopacket.Packet) {
+func IPDefragger(ipInput chan gopacket.Packet, udpOutput chan gopacket.Packet, tcpOutput chan gopacket.Packet) {
 	defragger := NewIPDefragmenter()
 	for fragment := range ipInput {
 		reassembled, err := defragger.DefragIP(fragment)

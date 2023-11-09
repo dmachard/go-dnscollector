@@ -56,27 +56,27 @@ func OptCodeToString(rcode int) string {
 	if value, ok := OptCodes[rcode]; ok {
 		return value
 	}
-	return STR_UNKNOWN
+	return StrUnknown
 }
 
-func DecodeEDNS(arcount int, start_offset int, payload []byte) (DnsExtended, int, error) {
-	offset := start_offset
-	edns := DnsExtended{}
-	options := []DnsOption{}
+func DecodeEDNS(arcount int, startOffset int, payload []byte) (DNSExtended, int, error) {
+	offset := startOffset
+	edns := DNSExtended{}
+	options := []DNSOption{}
 	ednsFound := false
 
 	for i := 0; i < arcount; i++ {
 		// Decode NAME
-		name, offset_next, err := ParseLabels(offset, payload)
+		name, offsetNext, err := ParseLabels(offset, payload)
 		if err != nil {
 			return edns, offset, err
 		}
 		// before to continue, check we have enough data
-		if len(payload[offset_next:]) < 10 {
-			return edns, offset, ErrDecodeDnsAnswerTooShort
+		if len(payload[offsetNext:]) < 10 {
+			return edns, offset, ErrDecodeDNSAnswerTooShort
 		}
 		// decode TYPE, take in account only OPT option
-		t := binary.BigEndian.Uint16(payload[offset_next : offset_next+2])
+		t := binary.BigEndian.Uint16(payload[offsetNext : offsetNext+2])
 		if t == 41 {
 			// RFC 6891 says "When an OPT RR is included within any DNS message, it MUST be the
 			// only OPT RR in that message."
@@ -89,7 +89,7 @@ func DecodeEDNS(arcount int, start_offset int, payload []byte) (DnsExtended, int
 			}
 
 			// decode udp payload size
-			edns.UdpSize = int(binary.BigEndian.Uint16(payload[offset_next+2 : offset_next+4]))
+			edns.UDPSize = int(binary.BigEndian.Uint16(payload[offsetNext+2 : offsetNext+4]))
 
 			/* decode extended rcode and flags
 			    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
@@ -98,15 +98,15 @@ func DecodeEDNS(arcount int, start_offset int, payload []byte) (DnsExtended, int
 			2:  | DO|                           Z                               |
 			    +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+ */
 			// Extended rcode is equal to the upper 8 bits
-			flagsBytes := binary.BigEndian.Uint32(payload[offset_next+4 : offset_next+8])
+			flagsBytes := binary.BigEndian.Uint32(payload[offsetNext+4 : offsetNext+8])
 			edns.ExtendedRcode = int(flagsBytes&0xFF000000>>24) << 4
 			edns.Version = int(flagsBytes & 0x00FF0000 >> 16)
 			edns.Do = int(flagsBytes & 0x00008000 >> 0xF)
 			edns.Z = int(flagsBytes & 0x7FFF)
 
 			// decode RDLENGTH
-			rdlength := binary.BigEndian.Uint16(payload[offset_next+8 : offset_next+10])
-			if len(payload[offset_next+10:]) < int(rdlength) {
+			rdlength := binary.BigEndian.Uint16(payload[offsetNext+8 : offsetNext+10])
+			if len(payload[offsetNext+10:]) < int(rdlength) {
 				return edns, offset, ErrDecodeEdnsDataTooShort
 			}
 
@@ -121,34 +121,34 @@ func DecodeEDNS(arcount int, start_offset int, payload []byte) (DnsExtended, int
 			   /                          OPTION-DATA                          /
 			   /                                                               /
 			   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+ */
-			end_offset := offset_next + 10 + int(rdlength)
-			offset_next = offset_next + 10
+			endOffset := offsetNext + 10 + int(rdlength)
+			offsetNext = offsetNext + 10
 
 			for {
 				// no more options to read ?
-				if offset_next >= end_offset {
+				if offsetNext >= endOffset {
 					break
 				}
 
 				// check that we can read code and length
-				if end_offset-offset_next < 4 {
+				if endOffset-offsetNext < 4 {
 					return edns, offset, ErrDecodeEdnsOptionTooShort
 				}
 
-				optCode := int(binary.BigEndian.Uint16(payload[offset_next : offset_next+2]))
-				optLength := int(binary.BigEndian.Uint16(payload[offset_next+2 : offset_next+4]))
+				optCode := int(binary.BigEndian.Uint16(payload[offsetNext : offsetNext+2]))
+				optLength := int(binary.BigEndian.Uint16(payload[offsetNext+2 : offsetNext+4]))
 				// ensure there is enough data on RDATA for this option
-				if offset_next+4+optLength > end_offset {
+				if offsetNext+4+optLength > endOffset {
 					return edns, offset, ErrDecodeEdnsDataTooShort
 				}
 
 				optName := OptCodeToString(optCode)
-				optString, err := ParseOption(optName, payload[offset_next+4:offset_next+4+optLength])
+				optString, err := ParseOption(optName, payload[offsetNext+4:offsetNext+4+optLength])
 				if err != nil {
 					return edns, offset, err
 				}
 				// create option
-				o := DnsOption{
+				o := DNSOption{
 					Code: optCode,
 					Name: optName,
 					Data: optString,
@@ -156,20 +156,20 @@ func DecodeEDNS(arcount int, start_offset int, payload []byte) (DnsExtended, int
 				options = append(options, o)
 
 				// compute next offset
-				offset_next = offset_next + 4 + optLength
+				offsetNext = offsetNext + 4 + optLength
 			}
 
 			edns.Options = options
 			ednsFound = true
-			offset = offset_next
+			offset = offsetNext
 
 		} else {
 			// advance to next RR
-			rdlength := binary.BigEndian.Uint16(payload[offset_next+8 : offset_next+10])
-			if len(payload[offset_next+10:]) < int(rdlength) {
+			rdlength := binary.BigEndian.Uint16(payload[offsetNext+8 : offsetNext+10])
+			if len(payload[offsetNext+10:]) < int(rdlength) {
 				return edns, offset, ErrDecodeEdnsDataTooShort
 			}
-			offset = offset_next + 10 + int(rdlength)
+			offset = offsetNext + 10 + int(rdlength)
 		}
 	}
 	return edns, offset, nil

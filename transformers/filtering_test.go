@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	TEST_URL1 = "mail.google.com"
-	TEST_URL2 = "test.github.com"
+	testURL1 = "mail.google.com"
+	testURL2 = "test.github.com"
 )
 
 func TestFilteringQR(t *testing.T) {
@@ -20,18 +20,18 @@ func TestFilteringQR(t *testing.T) {
 	config.Filtering.LogReplies = false
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadActiveFilters()
 
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	if !filtering.CheckIfDrop(&dm) {
 		t.Errorf("dns query should be ignored")
 	}
 
-	dm.DNS.Type = dnsutils.DnsReply
+	dm.DNS.Type = dnsutils.DNSReply
 	if !filtering.CheckIfDrop(&dm) {
 		t.Errorf("dns reply should be ignored")
 	}
@@ -45,14 +45,14 @@ func TestFilteringByRcodeNOERROR(t *testing.T) {
 	config.Filtering.DropRcodes = []string{"NOERROR"}
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadRcodes()
 	filtering.LoadActiveFilters()
 
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped")
 	}
@@ -66,14 +66,14 @@ func TestFilteringByRcodeEmpty(t *testing.T) {
 	config.Filtering.DropRcodes = []string{}
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadRcodes()
 	filtering.LoadActiveFilters()
 
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}
@@ -83,28 +83,28 @@ func TestFilteringByKeepQueryIp(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
-	config.Filtering.KeepQueryIpFile = "../testsdata/filtering_queryip_keep.txt"
+	config.Filtering.KeepQueryIPFile = "../testsdata/filtering_queryip_keep.txt"
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
-	filtering.LoadQueryIpList()
+	filtering.LoadQueryIPList()
 	filtering.LoadActiveFilters()
 
-	dm := dnsutils.GetFakeDnsMessage()
-	dm.NetworkInfo.QueryIp = "192.168.0.1"
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.NetworkInfo.QueryIP = "192.168.0.1"
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}
 
-	dm.NetworkInfo.QueryIp = "192.168.1.10"
+	dm.NetworkInfo.QueryIP = "192.168.1.10"
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}
 
-	dm.NetworkInfo.QueryIp = "192.3.2.1" // kept by subnet
+	dm.NetworkInfo.QueryIP = "192.3.2.1" // kept by subnet
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}
@@ -115,28 +115,28 @@ func TestFilteringByDropQueryIp(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
-	config.Filtering.DropQueryIpFile = "../testsdata/filtering_queryip.txt"
+	config.Filtering.DropQueryIPFile = "../testsdata/filtering_queryip.txt"
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
-	filtering.LoadQueryIpList()
+	filtering.LoadQueryIPList()
 	filtering.LoadActiveFilters()
 
-	dm := dnsutils.GetFakeDnsMessage()
-	dm.NetworkInfo.QueryIp = "192.168.0.1"
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.NetworkInfo.QueryIP = "192.168.0.1"
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}
 
-	dm.NetworkInfo.QueryIp = "192.168.1.15"
+	dm.NetworkInfo.QueryIP = "192.168.1.15"
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}
 
-	dm.NetworkInfo.QueryIp = "192.0.2.3" // dropped by subnet
+	dm.NetworkInfo.QueryIP = "192.0.2.3" // dropped by subnet
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}
@@ -150,15 +150,15 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 	config.Filtering.KeepRdataFile = "../testsdata/filtering_rdataip_keep.txt"
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
-	filtering.LoadrDataIpList()
+	filtering.LoadrDataIPList()
 	filtering.LoadActiveFilters()
 
-	dm := dnsutils.GetFakeDnsMessage()
-	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.DNSRRs.Answers = []dnsutils.DNSAnswer{
 		{
 			Rdatatype: "A",
 			Rdata:     "192.168.0.1",
@@ -168,7 +168,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 		t.Errorf("dns query should be dropped!")
 	}
 
-	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+	dm.DNS.DNSRRs.Answers = []dnsutils.DNSAnswer{
 		{
 			Rdatatype: "A",
 			Rdata:     "192.168.1.10",
@@ -178,7 +178,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 		t.Errorf("dns query should not be dropped!")
 	}
 
-	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+	dm.DNS.DNSRRs.Answers = []dnsutils.DNSAnswer{
 		{
 			Rdatatype: "A",
 			Rdata:     "192.168.1.11", // included in subnet
@@ -188,7 +188,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 		t.Errorf("dns query should not be dropped!")
 	}
 
-	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+	dm.DNS.DNSRRs.Answers = []dnsutils.DNSAnswer{
 		{
 			Rdatatype: "A",
 			Rdata:     "192.0.2.3", // dropped by subnet
@@ -198,7 +198,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 		t.Errorf("dns query should be dropped!")
 	}
 
-	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+	dm.DNS.DNSRRs.Answers = []dnsutils.DNSAnswer{
 		{
 			Rdatatype: "A",
 			Rdata:     "192.0.2.1",
@@ -208,7 +208,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 		t.Errorf("dns query should not be dropped!")
 	}
 
-	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+	dm.DNS.DNSRRs.Answers = []dnsutils.DNSAnswer{
 		{
 			Rdatatype: "AAAA",
 			Rdata:     "2001:db8:85a3::8a2e:370:7334",
@@ -218,7 +218,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 		t.Errorf("dns query should not be dropped!")
 	}
 
-	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+	dm.DNS.DNSRRs.Answers = []dnsutils.DNSAnswer{
 		{
 			Rdatatype: "AAAA",
 			Rdata:     "2041::7334",
@@ -228,7 +228,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 		t.Errorf("dns query should be dropped!")
 	}
 
-	dm.DNS.DnsRRs.Answers = []dnsutils.DnsAnswer{
+	dm.DNS.DNSRRs.Answers = []dnsutils.DNSAnswer{
 		{
 			Rdatatype: "AAAA",
 			Rdata:     "2001:0dbd:85a3::0001",
@@ -246,20 +246,20 @@ func TestFilteringByFqdn(t *testing.T) {
 	config.Filtering.DropFqdnFile = "../testsdata/filtering_fqdn.txt"
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadDomainsList()
 	filtering.LoadActiveFilters()
 
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = "www.microsoft.com"
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}
 
-	dm.DNS.Qname = TEST_URL1
+	dm.DNS.Qname = testURL1
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}
@@ -272,20 +272,20 @@ func TestFilteringByDomainRegex(t *testing.T) {
 	config.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadDomainsList()
 	filtering.LoadActiveFilters()
 
-	dm := dnsutils.GetFakeDnsMessage()
-	dm.DNS.Qname = TEST_URL1
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = testURL1
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}
 
-	dm.DNS.Qname = TEST_URL2
+	dm.DNS.Qname = testURL2
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}
@@ -301,7 +301,7 @@ func TestFilteringByKeepDomain(t *testing.T) {
 	config := dnsutils.GetFakeConfigTransformers()
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// file contains google.fr, test.github.com
 	config.Filtering.Enable = true
@@ -312,8 +312,8 @@ func TestFilteringByKeepDomain(t *testing.T) {
 	filtering.LoadDomainsList()
 	filtering.LoadActiveFilters()
 
-	dm := dnsutils.GetFakeDnsMessage()
-	dm.DNS.Qname = TEST_URL1
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = testURL1
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped! Domain: %s", dm.DNS.Qname)
 	}
@@ -323,7 +323,7 @@ func TestFilteringByKeepDomain(t *testing.T) {
 		t.Errorf("dns query should be dropped! Domain: %s", dm.DNS.Qname)
 	}
 
-	dm.DNS.Qname = TEST_URL2
+	dm.DNS.Qname = testURL2
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}
@@ -339,7 +339,7 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 	config := dnsutils.GetFakeConfigTransformers()
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	/* file contains:
 	(mail|sheets).google.com$
@@ -354,8 +354,8 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 	filtering.LoadDomainsList()
 	filtering.LoadActiveFilters()
 
-	dm := dnsutils.GetFakeDnsMessage()
-	dm.DNS.Qname = TEST_URL1
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = testURL1
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}
@@ -367,7 +367,7 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 		t.Errorf("dns query should be dropped!")
 	}
 
-	dm.DNS.Qname = TEST_URL2
+	dm.DNS.Qname = testURL2
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped!")
 	}
@@ -385,13 +385,13 @@ func TestFilteringByDownsample(t *testing.T) {
 	config.Filtering.Downsample = 2
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadActiveFilters()
 
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 
 	// filtering.downsampleCount
 	if filtering.CheckIfDrop(&dm) == false {
@@ -428,24 +428,24 @@ func TestFilteringMultipleFilters(t *testing.T) {
 	config := dnsutils.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
 	config.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
-	config.Filtering.DropQueryIpFile = "../testsdata/filtering_queryip.txt"
+	config.Filtering.DropQueryIPFile = "../testsdata/filtering_queryip.txt"
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
-	filtering.LoadQueryIpList()
+	filtering.LoadQueryIPList()
 	filtering.LoadDomainsList()
 	filtering.LoadActiveFilters()
 
-	dm := dnsutils.GetFakeDnsMessage()
-	dm.DNS.Qname = TEST_URL1
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = testURL1
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}
 
-	dm.DNS.Qname = TEST_URL2
+	dm.DNS.Qname = testURL2
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}
@@ -455,12 +455,12 @@ func TestFilteringMultipleFilters(t *testing.T) {
 		t.Errorf("dns query should not be dropped!")
 	}
 
-	dm.NetworkInfo.QueryIp = "192.168.1.15"
+	dm.NetworkInfo.QueryIP = "192.168.1.15"
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}
 
-	dm.NetworkInfo.QueryIp = "192.0.2.3" // dropped by subnet
+	dm.NetworkInfo.QueryIP = "192.0.2.3" // dropped by subnet
 	if filtering.CheckIfDrop(&dm) == false {
 		t.Errorf("dns query should be dropped!")
 	}

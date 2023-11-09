@@ -17,15 +17,15 @@ func Test_RedisPubRun(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.MODE_TEXT,
+			mode:    dnsutils.ModeText,
 			pattern: " dns.collector ",
 		},
 		{
-			mode:    dnsutils.MODE_JSON,
+			mode:    dnsutils.ModeJSON,
 			pattern: `\\\"qname\\\":\\\"dns.collector\\\"`,
 		},
 		{
-			mode:    dnsutils.MODE_FLATJSON,
+			mode:    dnsutils.ModeFlatJSON,
 			pattern: `\\\"dns.qname\\\":\\\"dns.collector\\\"`,
 		},
 	}
@@ -41,7 +41,7 @@ func Test_RedisPubRun(t *testing.T) {
 			g := NewRedisPub(cfg, logger.New(false), "test")
 
 			// fake json receiver
-			fakeRcvr, err := net.Listen(dnsutils.SOCKET_TCP, ":6379")
+			fakeRcvr, err := net.Listen(dnsutils.SocketTCP, ":6379")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -61,7 +61,7 @@ func Test_RedisPubRun(t *testing.T) {
 			time.Sleep(time.Second)
 
 			// send fake dns message to logger
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			g.Channel() <- dm
 
 			// read data on server side and decode-it

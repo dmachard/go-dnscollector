@@ -63,7 +63,7 @@ func TestRestAPI_MethodNotAllowed(t *testing.T) {
 	g := NewRestAPI(config, logger.New(false), "test")
 
 	// record one dns message to simulate some incoming data
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	dm.PublicSuffix = &dnsutils.TransformPublicSuffix{
 		QnamePublicSuffix:        "-",
 		QnameEffectiveTLDPlusOne: "-",
@@ -71,7 +71,7 @@ func TestRestAPI_MethodNotAllowed(t *testing.T) {
 	dm.PublicSuffix.QnamePublicSuffix = "collector"
 
 	// record the dns message
-	g.RecordDnsMessage(dm)
+	g.RecordDNSMessage(dm)
 
 	tt := []struct {
 		name       string
@@ -158,7 +158,7 @@ func TestRestAPI_GetMethod(t *testing.T) {
 		handler    func(w http.ResponseWriter, r *http.Request)
 		method     string
 		want       string
-		dm         dnsutils.DnsMessage
+		dm         dnsutils.DNSMessage
 		dmRcode    string
 		statusCode int
 	}{
@@ -169,7 +169,7 @@ func TestRestAPI_GetMethod(t *testing.T) {
 			method:     http.MethodGet,
 			want:       `\[\{"key":"collector","hit":1\}\]`,
 			statusCode: http.StatusOK,
-			dm:         dnsutils.GetFakeDnsMessage(),
+			dm:         dnsutils.GetFakeDNSMessage(),
 			dmRcode:    "NOERROR",
 		},
 		{
@@ -179,7 +179,7 @@ func TestRestAPI_GetMethod(t *testing.T) {
 			method:     http.MethodGet,
 			want:       `\[\{"key":"1.2.3.4","hit":2\}\]`,
 			statusCode: http.StatusOK,
-			dm:         dnsutils.GetFakeDnsMessage(),
+			dm:         dnsutils.GetFakeDNSMessage(),
 			dmRcode:    "NOERROR",
 		},
 		{
@@ -189,7 +189,7 @@ func TestRestAPI_GetMethod(t *testing.T) {
 			method:     http.MethodGet,
 			want:       `\[\{"key":"dns.collector","hit":3\}\]`,
 			statusCode: http.StatusOK,
-			dm:         dnsutils.GetFakeDnsMessage(),
+			dm:         dnsutils.GetFakeDNSMessage(),
 			dmRcode:    "NOERROR",
 		},
 		{
@@ -199,7 +199,7 @@ func TestRestAPI_GetMethod(t *testing.T) {
 			method:     http.MethodGet,
 			want:       `\[\{"key":"dns.collector","hit":1\}\]`,
 			statusCode: http.StatusOK,
-			dm:         dnsutils.GetFakeDnsMessage(),
+			dm:         dnsutils.GetFakeDNSMessage(),
 			dmRcode:    "NXDOMAIN",
 		},
 		{
@@ -209,7 +209,7 @@ func TestRestAPI_GetMethod(t *testing.T) {
 			method:     http.MethodGet,
 			want:       `\[\{"key":"dns.collector","hit":1\}\]`,
 			statusCode: http.StatusOK,
-			dm:         dnsutils.GetFakeDnsMessage(),
+			dm:         dnsutils.GetFakeDNSMessage(),
 			dmRcode:    "SERVFAIL",
 		},
 		{
@@ -219,7 +219,7 @@ func TestRestAPI_GetMethod(t *testing.T) {
 			method:     http.MethodGet,
 			want:       `\[\{"key":".com","hit":1\}\]`,
 			statusCode: http.StatusOK,
-			dm:         dnsutils.GetFakeDnsMessage(),
+			dm:         dnsutils.GetFakeDNSMessage(),
 			dmRcode:    "NOERROR",
 		},
 		{
@@ -229,7 +229,7 @@ func TestRestAPI_GetMethod(t *testing.T) {
 			method:     http.MethodGet,
 			want:       `\[\{"score":1,"malformed-pkt":false,"large-pkt":false,"long-domain":false,"slow-domain":false,"unallowed-chars":false,"uncommon-qtypes":false,"excessive-number-labels":false,"domain":"dns:collector"\}\]`,
 			statusCode: http.StatusOK,
-			dm:         dnsutils.GetFakeDnsMessage(),
+			dm:         dnsutils.GetFakeDNSMessage(),
 			dmRcode:    "NOERROR",
 		},
 		{
@@ -239,7 +239,7 @@ func TestRestAPI_GetMethod(t *testing.T) {
 			method:     http.MethodDelete,
 			want:       `OK`,
 			statusCode: http.StatusOK,
-			dm:         dnsutils.GetFakeDnsMessage(),
+			dm:         dnsutils.GetFakeDNSMessage(),
 			dmRcode:    "NOERROR",
 		},
 		{
@@ -249,7 +249,7 @@ func TestRestAPI_GetMethod(t *testing.T) {
 			method:     http.MethodGet,
 			want:       `\[\{"key":"1.2.3.4","hit":1\}\]`,
 			statusCode: http.StatusOK,
-			dm:         dnsutils.GetFakeDnsMessage(),
+			dm:         dnsutils.GetFakeDNSMessage(),
 			dmRcode:    "NOERROR",
 		},
 		{
@@ -259,7 +259,7 @@ func TestRestAPI_GetMethod(t *testing.T) {
 			method:     http.MethodGet,
 			want:       `\[\{"key":"dns.collector","hit":2}\]`,
 			statusCode: http.StatusOK,
-			dm:         dnsutils.GetFakeDnsMessage(),
+			dm:         dnsutils.GetFakeDNSMessage(),
 			dmRcode:    "NOERROR",
 		},
 		{
@@ -269,7 +269,7 @@ func TestRestAPI_GetMethod(t *testing.T) {
 			method:     http.MethodGet,
 			want:       `\[\]`,
 			statusCode: http.StatusOK,
-			dm:         dnsutils.GetFakeDnsMessage(),
+			dm:         dnsutils.GetFakeDNSMessage(),
 			dmRcode:    "NOERROR",
 		},
 	}
@@ -288,7 +288,7 @@ func TestRestAPI_GetMethod(t *testing.T) {
 				dm.DNS.Qname = "dns:collector"
 				dm.Suspicious = &dnsutils.TransformSuspicious{Score: 1}
 			}
-			g.RecordDnsMessage(dm)
+			g.RecordDNSMessage(dm)
 
 			// init httptest
 			request := httptest.NewRequest(tc.method, tc.uri, strings.NewReader(""))

@@ -74,7 +74,7 @@ func Test_StdoutTextMode(t *testing.T) {
 			go g.Run()
 
 			// print dns message to stdout buffer
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			dm.DNS.Qname = tc.qname
 			g.Channel() <- dm
 
@@ -96,11 +96,11 @@ func Test_StdoutJsonMode(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.MODE_JSON,
+			mode:    dnsutils.ModeJSON,
 			pattern: "\"qname\":\"dns.collector\"",
 		},
 		{
-			mode:    dnsutils.MODE_FLATJSON,
+			mode:    dnsutils.ModeFlatJSON,
 			pattern: "\"dns.qname\":\"dns.collector\"",
 		},
 	}
@@ -118,7 +118,7 @@ func Test_StdoutJsonMode(t *testing.T) {
 			go g.Run()
 
 			// print dns message to stdout buffer
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			g.Channel() <- dm
 
 			// stop logger
@@ -149,7 +149,7 @@ func Test_StdoutPcapMode(t *testing.T) {
 	go g.Run()
 
 	// send DNSMessage to channel
-	dm := dnsutils.GetFakeDnsMessageWithPayload()
+	dm := dnsutils.GetFakeDNSMessageWithPayload()
 	g.Channel() <- dm
 
 	// stop logger
@@ -190,7 +190,7 @@ func Test_StdoutPcapMode_NoDNSPayload(t *testing.T) {
 	go g.Run()
 
 	// send DNSMessage to channel
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	g.Channel() <- dm
 
 	// stop logger

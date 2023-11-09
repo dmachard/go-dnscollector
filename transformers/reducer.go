@@ -20,14 +20,14 @@ type MapTraffic struct {
 	sync.RWMutex
 	ttl          time.Duration
 	kv           *sync.Map
-	channels     []chan dnsutils.DnsMessage
+	channels     []chan dnsutils.DNSMessage
 	expiredKeys  *list.List
 	droppedCount int
 	logInfo      func(msg string, v ...interface{})
 	logError     func(msg string, v ...interface{})
 }
 
-func NewMapTraffic(ttl time.Duration, channels []chan dnsutils.DnsMessage,
+func NewMapTraffic(ttl time.Duration, channels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{})) MapTraffic {
 	return MapTraffic{
 		ttl:         ttl,
@@ -39,17 +39,17 @@ func NewMapTraffic(ttl time.Duration, channels []chan dnsutils.DnsMessage,
 	}
 }
 
-func (mp *MapTraffic) SetTtl(ttl time.Duration) {
+func (mp *MapTraffic) SetTTL(ttl time.Duration) {
 	mp.ttl = ttl
 }
 
-func (mp *MapTraffic) Set(key string, dm *dnsutils.DnsMessage) {
+func (mp *MapTraffic) Set(key string, dm *dnsutils.DNSMessage) {
 	mp.Lock()
 	defer mp.Unlock()
 
 	if v, ok := mp.kv.Load(key); ok {
-		v.(*dnsutils.DnsMessage).Reducer.Occurences++
-		v.(*dnsutils.DnsMessage).Reducer.CumulativeLength += dm.DNS.Length
+		v.(*dnsutils.DNSMessage).Reducer.Occurences++
+		v.(*dnsutils.DNSMessage).Reducer.CumulativeLength += dm.DNS.Length
 		return
 	}
 
@@ -88,7 +88,7 @@ func (mp *MapTraffic) ProcessExpiredKeys() {
 		key := expired.key
 		if v, ok := mp.kv.Load(key); ok {
 			for i := range mp.channels {
-				mp.channels[i] <- *v.(*dnsutils.DnsMessage)
+				mp.channels[i] <- *v.(*dnsutils.DNSMessage)
 			}
 			mp.kv.Delete(key)
 		}
@@ -104,8 +104,8 @@ type ReducerProcessor struct {
 	logger           *logger.Logger
 	name             string
 	instance         int
-	outChannels      []chan dnsutils.DnsMessage
-	activeProcessors []func(dm *dnsutils.DnsMessage) int
+	outChannels      []chan dnsutils.DNSMessage
+	activeProcessors []func(dm *dnsutils.DNSMessage) int
 	mapTraffic       MapTraffic
 	logInfo          func(msg string, v ...interface{})
 	logError         func(msg string, v ...interface{})
@@ -114,7 +114,7 @@ type ReducerProcessor struct {
 
 func NewReducerSubprocessor(
 	config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DnsMessage,
+	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) *ReducerProcessor {
 	s := ReducerProcessor{
@@ -133,7 +133,7 @@ func NewReducerSubprocessor(
 
 func (p *ReducerProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
 	p.config = config
-	p.mapTraffic.SetTtl(time.Duration(config.Reducer.WatchInterval) * time.Second)
+	p.mapTraffic.SetTTL(time.Duration(config.Reducer.WatchInterval) * time.Second)
 
 	p.LoadActiveReducers()
 }
@@ -148,7 +148,7 @@ func (p *ReducerProcessor) LoadActiveReducers() {
 	}
 }
 
-func (p *ReducerProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
+func (p *ReducerProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 	if dm.Reducer == nil {
 		dm.Reducer = &dnsutils.TransformReducer{
 			Occurences:       0,
@@ -157,11 +157,11 @@ func (p *ReducerProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
 	}
 }
 
-func (p *ReducerProcessor) RepetitiveTrafficDetector(dm *dnsutils.DnsMessage) int {
+func (p *ReducerProcessor) RepetitiveTrafficDetector(dm *dnsutils.DNSMessage) int {
 	p.strBuilder.Reset()
-	p.strBuilder.WriteString(dm.DnsTap.Identity)
-	p.strBuilder.WriteString(dm.DnsTap.Operation)
-	p.strBuilder.WriteString(dm.NetworkInfo.QueryIp)
+	p.strBuilder.WriteString(dm.DNSTap.Identity)
+	p.strBuilder.WriteString(dm.DNSTap.Operation)
+	p.strBuilder.WriteString(dm.NetworkInfo.QueryIP)
 	if p.config.Reducer.QnamePlusOne {
 		qname := strings.ToLower(dm.DNS.Qname)
 		qname = strings.TrimSuffix(qname, ".")
@@ -175,23 +175,23 @@ func (p *ReducerProcessor) RepetitiveTrafficDetector(dm *dnsutils.DnsMessage) in
 
 	p.mapTraffic.Set(dmTag, dm)
 
-	return RETURN_DROP
+	return ReturnDrop
 }
 
-func (s *ReducerProcessor) ProcessDnsMessage(dm *dnsutils.DnsMessage) int {
+func (p *ReducerProcessor) ProcessDNSMessage(dm *dnsutils.DNSMessage) int {
 	dmCopy := *dm
 
-	if len(s.activeProcessors) == 0 {
-		return RETURN_SUCCESS
+	if len(p.activeProcessors) == 0 {
+		return ReturnSuccess
 	}
 
-	var r_code int
-	for _, fn := range s.activeProcessors {
-		r_code = fn(&dmCopy)
-		if r_code != RETURN_SUCCESS {
-			return r_code
+	var rCode int
+	for _, fn := range p.activeProcessors {
+		rCode = fn(&dmCopy)
+		if rCode != ReturnSuccess {
+			return rCode
 		}
 	}
 
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }

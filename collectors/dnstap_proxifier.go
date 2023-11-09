@@ -48,8 +48,8 @@ func (c *DnstapProxifier) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *DnstapProxifier) Loggers() []chan dnsutils.DnsMessage {
-	channels := []chan dnsutils.DnsMessage{}
+func (c *DnstapProxifier) Loggers() []chan dnsutils.DNSMessage {
+	channels := []chan dnsutils.DNSMessage{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
 	}
@@ -57,7 +57,7 @@ func (c *DnstapProxifier) Loggers() []chan dnsutils.DnsMessage {
 }
 
 func (c *DnstapProxifier) ReadConfig() {
-	if !dnsutils.IsValidTLS(c.config.Collectors.DnstapProxifier.TlsMinVersion) {
+	if !dnsutils.IsValidTLS(c.config.Collectors.DnstapProxifier.TLSMinVersion) {
 		c.logger.Fatal("collector=dnstaprelay - invalid tls min version")
 	}
 
@@ -77,14 +77,14 @@ func (c *DnstapProxifier) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] collector=dnstaprelay - "+msg, v...)
 }
 
-func (c *DnstapProxifier) HandleFrame(recvFrom chan []byte, sendTo []chan dnsutils.DnsMessage) {
+func (c *DnstapProxifier) HandleFrame(recvFrom chan []byte, sendTo []chan dnsutils.DNSMessage) {
 	for data := range recvFrom {
 		// init DNS message container
-		dm := dnsutils.DnsMessage{}
+		dm := dnsutils.DNSMessage{}
 		dm.Init()
 
 		// register payload
-		dm.DnsTap.Payload = data
+		dm.DNSTap.Payload = data
 
 		// forward to outputs
 		for i := range sendTo {
@@ -128,7 +128,7 @@ func (c *DnstapProxifier) HandleConn(conn net.Conn) {
 	c.LogInfo("%s - connection closed\n", peer)
 }
 
-func (c *DnstapProxifier) Channel() chan dnsutils.DnsMessage {
+func (c *DnstapProxifier) Channel() chan dnsutils.DNSMessage {
 	return nil
 }
 
@@ -163,7 +163,7 @@ func (c *DnstapProxifier) Listen() error {
 	}
 
 	// listening with tls enabled ?
-	if c.config.Collectors.DnstapProxifier.TlsSupport {
+	if c.config.Collectors.DnstapProxifier.TLSSupport {
 		c.LogInfo("tls support enabled")
 		var cer tls.Certificate
 		cer, err = tls.LoadX509KeyPair(c.config.Collectors.DnstapProxifier.CertFile, c.config.Collectors.DnstapProxifier.KeyFile)
@@ -178,19 +178,19 @@ func (c *DnstapProxifier) Listen() error {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLS_VERSION[c.config.Collectors.DnstapProxifier.TlsMinVersion]
+		tlsConfig.MinVersion = dnsutils.TLSVersion[c.config.Collectors.DnstapProxifier.TLSMinVersion]
 
 		if len(c.sockPath) > 0 {
-			listener, err = tls.Listen(dnsutils.SOCKET_UNIX, c.sockPath, tlsConfig)
+			listener, err = tls.Listen(dnsutils.SocketUnix, c.sockPath, tlsConfig)
 		} else {
-			listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, tlsConfig)
+			listener, err = tls.Listen(dnsutils.SocketTCP, addrlisten, tlsConfig)
 		}
 	} else {
 		// basic listening
 		if len(c.sockPath) > 0 {
-			listener, err = net.Listen(dnsutils.SOCKET_UNIX, c.sockPath)
+			listener, err = net.Listen(dnsutils.SocketUnix, c.sockPath)
 		} else {
-			listener, err = net.Listen(dnsutils.SOCKET_TCP, addrlisten)
+			listener, err = net.Listen(dnsutils.SocketTCP, addrlisten)
 		}
 	}
 

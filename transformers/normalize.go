@@ -28,7 +28,7 @@ var (
 		"DNSQueryType":       "Q", // powerdns
 		"DNSResponseType":    "R", // powerdns
 	}
-	DnsQr = map[string]string{
+	DNSQr = map[string]string{
 		"QUERY": "Q",
 		"REPLY": "R",
 	}
@@ -67,15 +67,15 @@ type NormalizeProcessor struct {
 	logger           *logger.Logger
 	name             string
 	instance         int
-	activeProcessors []func(dm *dnsutils.DnsMessage) int
-	outChannels      []chan dnsutils.DnsMessage
+	activeProcessors []func(dm *dnsutils.DNSMessage) int
+	outChannels      []chan dnsutils.DNSMessage
 	logInfo          func(msg string, v ...interface{})
 	logError         func(msg string, v ...interface{})
 }
 
 func NewNormalizeSubprocessor(
 	config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DnsMessage,
+	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) NormalizeProcessor {
 	s := NormalizeProcessor{
@@ -128,11 +128,11 @@ func (p *NormalizeProcessor) LoadActiveProcessors() {
 	}
 }
 
-func (s *NormalizeProcessor) IsEnabled() bool {
-	return s.config.Normalize.Enable
+func (p *NormalizeProcessor) IsEnabled() bool {
+	return p.config.Normalize.Enable
 }
 
-func (p *NormalizeProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
+func (p *NormalizeProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 	if dm.PublicSuffix == nil {
 		dm.PublicSuffix = &dnsutils.TransformPublicSuffix{
 			QnamePublicSuffix:        "-",
@@ -141,17 +141,17 @@ func (p *NormalizeProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
 	}
 }
 
-func (p *NormalizeProcessor) LowercaseQname(dm *dnsutils.DnsMessage) int {
+func (p *NormalizeProcessor) LowercaseQname(dm *dnsutils.DNSMessage) int {
 	dm.DNS.Qname = strings.ToLower(dm.DNS.Qname)
 
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *NormalizeProcessor) QuietText(dm *dnsutils.DnsMessage) int {
-	if v, found := DnstapMessage[dm.DnsTap.Operation]; found {
-		dm.DnsTap.Operation = v
+func (p *NormalizeProcessor) QuietText(dm *dnsutils.DNSMessage) int {
+	if v, found := DnstapMessage[dm.DNSTap.Operation]; found {
+		dm.DNSTap.Operation = v
 	}
-	if v, found := DnsQr[dm.DNS.Type]; found {
+	if v, found := DNSQr[dm.DNS.Type]; found {
 		dm.DNS.Type = v
 	}
 	if v, found := IPversion[dm.NetworkInfo.Family]; found {
@@ -160,10 +160,10 @@ func (p *NormalizeProcessor) QuietText(dm *dnsutils.DnsMessage) int {
 	if v, found := Rcodes[dm.DNS.Rcode]; found {
 		dm.DNS.Rcode = v
 	}
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *NormalizeProcessor) GetEffectiveTld(dm *dnsutils.DnsMessage) int {
+func (p *NormalizeProcessor) GetEffectiveTld(dm *dnsutils.DNSMessage) int {
 	// PublicSuffix is case sensitive.
 	// remove ending dot ?
 	qname := strings.ToLower(dm.DNS.Qname)
@@ -176,10 +176,10 @@ func (p *NormalizeProcessor) GetEffectiveTld(dm *dnsutils.DnsMessage) int {
 	} else {
 		p.logError("suffix unmanaged by icann: %s", qname)
 	}
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *NormalizeProcessor) GetEffectiveTldPlusOne(dm *dnsutils.DnsMessage) int {
+func (p *NormalizeProcessor) GetEffectiveTldPlusOne(dm *dnsutils.DNSMessage) int {
 	// PublicSuffix is case sensitive, remove ending dot ?
 	qname := strings.ToLower(dm.DNS.Qname)
 	qname = strings.TrimSuffix(qname, ".")
@@ -188,21 +188,21 @@ func (p *NormalizeProcessor) GetEffectiveTldPlusOne(dm *dnsutils.DnsMessage) int
 		dm.PublicSuffix.QnameEffectiveTLDPlusOne = etld
 	}
 
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *NormalizeProcessor) ProcessDnsMessage(dm *dnsutils.DnsMessage) int {
+func (p *NormalizeProcessor) ProcessDNSMessage(dm *dnsutils.DNSMessage) int {
 	if len(p.activeProcessors) == 0 {
-		return RETURN_SUCCESS
+		return ReturnSuccess
 	}
 
-	var r_code int
+	var rCode int
 	for _, fn := range p.activeProcessors {
-		r_code = fn(dm)
-		if r_code != RETURN_SUCCESS {
-			return r_code
+		rCode = fn(dm)
+		if rCode != ReturnSuccess {
+			return rCode
 		}
 	}
 
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }

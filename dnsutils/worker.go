@@ -5,7 +5,7 @@ type Worker interface {
 	GetName() string
 	Stop()
 	Run()
-	Channel() chan DnsMessage
+	Channel() chan DNSMessage
 	ReadConfig()
 	ReloadConfig(config *Config)
 }

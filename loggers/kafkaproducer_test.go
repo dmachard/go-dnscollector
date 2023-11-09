@@ -80,7 +80,7 @@ func Test_KafkaProducer(t *testing.T) {
 			time.Sleep(1 * time.Second)
 
 			// send fake dns message to logger
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			g.Channel() <- dm
 
 			// just wait

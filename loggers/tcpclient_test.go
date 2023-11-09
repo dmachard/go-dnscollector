@@ -17,15 +17,15 @@ func Test_TcpClientRun(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.MODE_TEXT,
+			mode:    dnsutils.ModeText,
 			pattern: " dns.collector ",
 		},
 		{
-			mode:    dnsutils.MODE_JSON,
+			mode:    dnsutils.ModeJSON,
 			pattern: "\"qname\":\"dns.collector\"",
 		},
 		{
-			mode:    dnsutils.MODE_FLATJSON,
+			mode:    dnsutils.ModeFlatJSON,
 			pattern: "\"dns.qname\":\"dns.collector\"",
 		},
 	}
@@ -33,16 +33,16 @@ func Test_TcpClientRun(t *testing.T) {
 		t.Run(tc.mode, func(t *testing.T) {
 			// init logger
 			cfg := dnsutils.GetFakeConfig()
-			cfg.Loggers.TcpClient.FlushInterval = 1
-			cfg.Loggers.TcpClient.BufferSize = 0
-			cfg.Loggers.TcpClient.Mode = tc.mode
-			cfg.Loggers.TcpClient.RemoteAddress = "127.0.0.1"
-			cfg.Loggers.TcpClient.RemotePort = 9999
+			cfg.Loggers.TCPClient.FlushInterval = 1
+			cfg.Loggers.TCPClient.BufferSize = 0
+			cfg.Loggers.TCPClient.Mode = tc.mode
+			cfg.Loggers.TCPClient.RemoteAddress = "127.0.0.1"
+			cfg.Loggers.TCPClient.RemotePort = 9999
 
-			g := NewTcpClient(cfg, logger.New(false), "test")
+			g := NewTCPClient(cfg, logger.New(false), "test")
 
 			// fake json receiver
-			fakeRcvr, err := net.Listen(dnsutils.SOCKET_TCP, ":9999")
+			fakeRcvr, err := net.Listen(dnsutils.SocketTCP, ":9999")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -62,7 +62,7 @@ func Test_TcpClientRun(t *testing.T) {
 			time.Sleep(time.Second)
 
 			// send fake dns message to logger
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			g.Channel() <- dm
 
 			// read data on server side and decode-it

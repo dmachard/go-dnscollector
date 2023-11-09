@@ -35,17 +35,17 @@ func (f *fragments) insert(in gopacket.Packet) (gopacket.Packet, error) {
 	var inFragMore bool
 
 	if in.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
-		inIp6 := in.Layer(layers.LayerTypeIPv6).(*layers.IPv6)
+		inIP6 := in.Layer(layers.LayerTypeIPv6).(*layers.IPv6)
 		inFrag6 := in.Layer(layers.LayerTypeIPv6Fragment).(*layers.IPv6Fragment)
 		inFragOffset = inFrag6.FragmentOffset * 8
-		inFragLength = inIp6.Length - 8
+		inFragLength = inIP6.Length - 8
 		inFragMore = inFrag6.MoreFragments
 	}
 	if in.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
-		inIp4 := in.Layer(layers.LayerTypeIPv4).(*layers.IPv4)
-		inFragOffset = inIp4.FragOffset * 8
-		inFragLength = inIp4.Length - 20
-		inFragMore = inIp4.Flags&layers.IPv4MoreFragments > 0
+		inIP4 := in.Layer(layers.LayerTypeIPv4).(*layers.IPv4)
+		inFragOffset = inIP4.FragOffset * 8
+		inFragLength = inIP4.Length - 20
+		inFragMore = inIP4.Flags&layers.IPv4MoreFragments > 0
 	}
 
 	if inFragOffset >= f.Highest {
@@ -238,18 +238,18 @@ func newIPv6(packet gopacket.Packet) ipFlow {
 	}
 }
 
-type IpDefragmenter struct {
+type IPDefragmenter struct {
 	sync.RWMutex
 	ipFlows map[ipFlow]*fragments
 }
 
-func NewIPDefragmenter() *IpDefragmenter {
-	return &IpDefragmenter{
+func NewIPDefragmenter() *IPDefragmenter {
+	return &IPDefragmenter{
 		ipFlows: make(map[ipFlow]*fragments),
 	}
 }
 
-func (d *IpDefragmenter) DefragIP(in gopacket.Packet) (gopacket.Packet, error) {
+func (d *IPDefragmenter) DefragIP(in gopacket.Packet) (gopacket.Packet, error) {
 	// check if we need to defrag
 	if st := d.dontDefrag(in); st {
 		return in, nil
@@ -303,7 +303,7 @@ func (d *IpDefragmenter) DefragIP(in gopacket.Packet) (gopacket.Packet, error) {
 	return nil, err2
 }
 
-func (d *IpDefragmenter) dontDefrag(in gopacket.Packet) bool {
+func (d *IPDefragmenter) dontDefrag(in gopacket.Packet) bool {
 	if in.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
 		// check if we need to defrag
 		frag := in.Layer(layers.LayerTypeIPv6Fragment)
@@ -327,7 +327,7 @@ func (d *IpDefragmenter) dontDefrag(in gopacket.Packet) bool {
 	return false
 }
 
-func (d *IpDefragmenter) securityChecks(in gopacket.Packet) error {
+func (d *IPDefragmenter) securityChecks(in gopacket.Packet) error {
 	if in.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
 		frag6 := in.Layer(layers.LayerTypeIPv6Fragment).(*layers.IPv6Fragment)
 
@@ -366,13 +366,13 @@ func (d *IpDefragmenter) securityChecks(in gopacket.Packet) error {
 	return nil
 }
 
-func (d *IpDefragmenter) flush(ipf ipFlow) {
+func (d *IPDefragmenter) flush(ipf ipFlow) {
 	d.Lock()
 	delete(d.ipFlows, ipf)
 	d.Unlock()
 }
 
-func (d *IpDefragmenter) DiscardOlderThan(t time.Time) int {
+func (d *IPDefragmenter) DiscardOlderThan(t time.Time) int {
 	var nb int
 	d.Lock()
 	for k, v := range d.ipFlows {

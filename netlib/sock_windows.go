@@ -12,7 +12,7 @@ import (
 )
 
 // Configure SO_RCVBUF, thanks to https://github.com/dmachard/go-dns-collector/issues/61#issuecomment-1201199895
-func SetSock_RCVBUF(conn net.Conn, desired int, is_tls bool) (int, int, error) {
+func SetSockRCVBUF(conn net.Conn, desired int, is_tls bool) (int, int, error) {
 	var file *os.File
 	var err error
 	if is_tls {

@@ -3,81 +3,81 @@ package dnsutils
 import "crypto/tls"
 
 const (
-	STR_UNKNOWN = "UNKNOWN"
+	StrUnknown = "UNKNOWN"
 
-	PROG_NAME    = "dnscollector"
-	LOCALHOST_IP = "127.0.0.1"
-	ANY_IP       = "0.0.0.0"
-	HTTP_OK      = "HTTP/1.1 200 OK\r\n\r\n"
+	ProgName    = "dnscollector"
+	LocalhostIP = "127.0.0.1"
+	AnyIP       = "0.0.0.0"
+	HTTPOK      = "HTTP/1.1 200 OK\r\n\r\n"
 
-	VALID_DOMAIN        = "dnscollector.dev."
-	BAD_LABEL_DOMAIN    = "ultramegaverytoolonglabel-ultramegaverytoolonglabel-ultramegaverytoolonglabel.dnscollector.dev."
-	bad_long_label      = "ultramegaverytoolonglabel-ultramegaverytoolonglabel-"
-	BAD_VERYLONG_DOMAIN = "ultramegaverytoolonglabel.dnscollector" +
-		bad_long_label +
-		bad_long_label +
-		bad_long_label +
-		bad_long_label +
-		bad_long_label +
+	ValidDomain       = "dnscollector.dev."
+	BadDomainLabel    = "ultramegaverytoolonglabel-ultramegaverytoolonglabel-ultramegaverytoolonglabel.dnscollector.dev."
+	badLongLabel      = "ultramegaverytoolonglabel-ultramegaverytoolonglabel-"
+	BadVeryLongDomain = "ultramegaverytoolonglabel.dnscollector" +
+		badLongLabel +
+		badLongLabel +
+		badLongLabel +
+		badLongLabel +
+		badLongLabel +
 		".dev."
 
-	MODE_TEXT     = "text"
-	MODE_JSON     = "json"
-	MODE_FLATJSON = "flat-json"
-	MODE_PCAP     = "pcap"
-	MODE_DNSTAP   = "dnstap"
+	ModeText     = "text"
+	ModeJSON     = "json"
+	ModeFlatJSON = "flat-json"
+	ModePCAP     = "pcap"
+	ModeDNSTap   = "dnstap"
 
-	SASL_MECHANISM_PLAIN = "PLAIN"
-	SASL_MECHANISM_SCRAM = "SCRAM-SHA-512"
+	SASLMechanismPlain = "PLAIN"
+	SASLMechanismScram = "SCRAM-SHA-512"
 
-	DNS_RCODE_NXDOMAIN = "NXDOMAIN"
-	DNS_RCODE_SERVFAIL = "SERVFAIL"
-	DNS_RCODE_TIMEOUT  = "TIMEOUT"
+	DNSRcodeNXDomain = "NXDOMAIN"
+	DNSRcodeServFail = "SERVFAIL"
+	DNSRcodeTimeout  = "TIMEOUT"
 
-	DNSTAP_OPERATION_QUERY = "QUERY"
-	DNSTAP_OPERATION_REPLY = "REPLY"
+	DNSTapOperationQuery = "QUERY"
+	DNSTapOperationReply = "REPLY"
 
-	DNSTAP_CLIENT_RESPONSE = "CLIENT_RESPONSE"
-	DNSTAP_CLIENT_QUERY    = "CLIENT_QUERY"
+	DNSTapClientResponse = "CLIENT_RESPONSE"
+	DNSTapClientQuery    = "CLIENT_QUERY"
 
-	DNSTAP_IDENTITY_TEST = "test_id"
+	DNSTapIdentityTest = "test_id"
 
-	PROTO_INET  = "INET"
-	PROTO_INET6 = "INET6"
-	PROTO_IPV6  = "IPv6"
-	PROTO_IPV4  = "IPv4"
+	ProtoInet  = "INET"
+	ProtoInet6 = "INET6"
+	ProtoIPv6  = "IPv6"
+	ProtoIPv4  = "IPv4"
 
-	PROTO_UDP = "UDP"
-	PROTO_TCP = "TCP"
-	PROTO_DOT = "DOT"
-	PROTO_DOH = "DOH"
+	ProtoUDP = "UDP"
+	ProtoTCP = "TCP"
+	ProtoDoT = "DOT"
+	ProtoDoH = "DOH"
 
-	SOCKET_TCP  = "tcp"
-	SOCKET_UDP  = "udp"
-	SOCKET_UNIX = "unix"
-	SOCKET_TLS  = "tcp+tls"
+	SocketTCP  = "tcp"
+	SocketUDP  = "udp"
+	SocketUnix = "unix"
+	SocketTLS  = "tcp+tls"
 
-	TLS_v10 = "1.0"
-	TLS_v11 = "1.1"
-	TLS_v12 = "1.2"
-	TLS_v13 = "1.3"
+	TLSV10 = "1.0"
+	TLSV11 = "1.1"
+	TLSV12 = "1.2"
+	TLSV13 = "1.3"
 )
 
 var (
-	TLS_VERSION = map[string]uint16{
-		TLS_v10: tls.VersionTLS10,
-		TLS_v11: tls.VersionTLS11,
-		TLS_v12: tls.VersionTLS12,
-		TLS_v13: tls.VersionTLS13,
+	TLSVersion = map[string]uint16{
+		TLSV10: tls.VersionTLS10,
+		TLSV11: tls.VersionTLS11,
+		TLSV12: tls.VersionTLS12,
+		TLSV13: tls.VersionTLS13,
 	}
 
-	IP_VERSION = map[string]string{
-		PROTO_INET:  PROTO_IPV4,
-		PROTO_INET6: PROTO_IPV6,
+	IPVersion = map[string]string{
+		ProtoInet:  ProtoIPv4,
+		ProtoInet6: ProtoIPv6,
 	}
 
-	IP_TO_INET = map[string]string{
-		PROTO_IPV4: PROTO_INET,
-		PROTO_IPV6: PROTO_INET6,
+	IPToInet = map[string]string{
+		ProtoIPv4: ProtoInet,
+		ProtoIPv6: ProtoInet6,
 	}
 )

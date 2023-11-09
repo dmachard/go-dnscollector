@@ -27,8 +27,8 @@ var waitFor = 10 * time.Second
 func IsValidMode(mode string) bool {
 	switch mode {
 	case
-		dnsutils.MODE_PCAP,
-		dnsutils.MODE_DNSTAP:
+		dnsutils.ModePCAP,
+		dnsutils.ModeDNSTap:
 		return true
 	}
 	return false
@@ -43,9 +43,9 @@ type FileIngestor struct {
 	logger          *logger.Logger
 	watcher         *fsnotify.Watcher
 	watcherTimers   map[string]*time.Timer
-	dnsProcessor    processors.DnsProcessor
-	dnstapProcessor processors.DnstapProcessor
-	filterDnsPort   int
+	dnsProcessor    processors.DNSProcessor
+	dnstapProcessor processors.DNSTapProcessor
+	filterDNSPort   int
 	identity        string
 	name            string
 	mu              sync.Mutex
@@ -73,8 +73,8 @@ func (c *FileIngestor) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *FileIngestor) Loggers() ([]chan dnsutils.DnsMessage, []string) {
-	channels := []chan dnsutils.DnsMessage{}
+func (c *FileIngestor) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
@@ -89,7 +89,7 @@ func (c *FileIngestor) ReadConfig() {
 	}
 
 	c.identity = c.config.GetServerIdentity()
-	c.filterDnsPort = c.config.Collectors.FileIngestor.PcapDnsPort
+	c.filterDNSPort = c.config.Collectors.FileIngestor.PcapDNSPort
 
 	c.LogInfo("watching directory [%s] to find [%s] files",
 		c.config.Collectors.FileIngestor.WatchDir,
@@ -109,7 +109,7 @@ func (c *FileIngestor) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] collector=fileingestor - "+msg, v...)
 }
 
-func (c *FileIngestor) Channel() chan dnsutils.DnsMessage {
+func (c *FileIngestor) Channel() chan dnsutils.DNSMessage {
 	return nil
 }
 
@@ -126,13 +126,13 @@ func (c *FileIngestor) Stop() {
 
 func (c *FileIngestor) ProcessFile(filePath string) {
 	switch c.config.Collectors.FileIngestor.WatchMode {
-	case dnsutils.MODE_PCAP:
+	case dnsutils.ModePCAP:
 		// process file with pcap extension only
 		if filepath.Ext(filePath) == ".pcap" || filepath.Ext(filePath) == ".pcap.gz" {
 			c.LogInfo("file ready to process %s", filePath)
 			go c.ProcessPcap(filePath)
 		}
-	case dnsutils.MODE_DNSTAP:
+	case dnsutils.ModeDNSTap:
 		// processs dnstap
 		if filepath.Ext(filePath) == ".fstrm" {
 			c.LogInfo("file ready to process %s", filePath)
@@ -165,24 +165,24 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 		return
 	}
 
-	dnsChan := make(chan netlib.DnsPacket)
+	dnsChan := make(chan netlib.DNSPacket)
 	udpChan := make(chan gopacket.Packet)
 	tcpChan := make(chan gopacket.Packet)
-	fragIp4Chan := make(chan gopacket.Packet)
-	fragIp6Chan := make(chan gopacket.Packet)
+	fragIP4Chan := make(chan gopacket.Packet)
+	fragIP6Chan := make(chan gopacket.Packet)
 
 	packetSource := gopacket.NewPacketSource(pcapHandler, pcapHandler.LinkType())
 	packetSource.DecodeOptions.Lazy = true
 	packetSource.NoCopy = true
 
 	// defrag ipv4
-	go netlib.IpDefragger(fragIp4Chan, udpChan, tcpChan)
+	go netlib.IPDefragger(fragIP4Chan, udpChan, tcpChan)
 	// defrag ipv6
-	go netlib.IpDefragger(fragIp6Chan, udpChan, tcpChan)
+	go netlib.IPDefragger(fragIP6Chan, udpChan, tcpChan)
 	// tcp assembly
-	go netlib.TcpAssembler(tcpChan, dnsChan, c.filterDnsPort)
+	go netlib.TCPAssembler(tcpChan, dnsChan, c.filterDNSPort)
 	// udp processor
-	go netlib.UdpProcessor(udpChan, dnsChan, c.filterDnsPort)
+	go netlib.UDPProcessor(udpChan, dnsChan, c.filterDNSPort)
 
 	go func() {
 		nbPackets := 0
@@ -196,24 +196,24 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 
 				lastReceivedTime = time.Now()
 				// prepare dns message
-				dm := dnsutils.DnsMessage{}
+				dm := dnsutils.DNSMessage{}
 				dm.Init()
 
-				dm.NetworkInfo.Family = dnsPacket.IpLayer.EndpointType().String()
-				dm.NetworkInfo.QueryIp = dnsPacket.IpLayer.Src().String()
-				dm.NetworkInfo.ResponseIp = dnsPacket.IpLayer.Dst().String()
+				dm.NetworkInfo.Family = dnsPacket.IPLayer.EndpointType().String()
+				dm.NetworkInfo.QueryIP = dnsPacket.IPLayer.Src().String()
+				dm.NetworkInfo.ResponseIP = dnsPacket.IPLayer.Dst().String()
 				dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
 				dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
 				dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
-				dm.NetworkInfo.IpDefragmented = dnsPacket.IpDefragmented
-				dm.NetworkInfo.TcpReassembled = dnsPacket.TcpReassembled
+				dm.NetworkInfo.IPDefragmented = dnsPacket.IPDefragmented
+				dm.NetworkInfo.TCPReassembled = dnsPacket.TCPReassembled
 
 				dm.DNS.Payload = dnsPacket.Payload
 				dm.DNS.Length = len(dnsPacket.Payload)
 
-				dm.DnsTap.Identity = c.identity
-				dm.DnsTap.TimeSec = dnsPacket.Timestamp.Second()
-				dm.DnsTap.TimeNsec = int(dnsPacket.Timestamp.UnixNano())
+				dm.DNSTap.Identity = c.identity
+				dm.DNSTap.TimeSec = dnsPacket.Timestamp.Second()
+				dm.DNSTap.TimeNsec = int(dnsPacket.Timestamp.UnixNano())
 
 				// count it
 				nbPackets++
@@ -257,7 +257,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 		if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
 			ip4 := packet.NetworkLayer().(*layers.IPv4)
 			if ip4.Flags&layers.IPv4MoreFragments == 1 || ip4.FragOffset > 0 {
-				fragIp4Chan <- packet
+				fragIP4Chan <- packet
 				continue
 			}
 		}
@@ -266,7 +266,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 		if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
 			v6frag := packet.Layer(layers.LayerTypeIPv6Fragment)
 			if v6frag != nil {
-				fragIp6Chan <- packet
+				fragIP6Chan <- packet
 				continue
 			}
 		}
@@ -292,8 +292,8 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 	}
 
 	//close chan
-	close(fragIp4Chan)
-	close(fragIp6Chan)
+	close(fragIP4Chan)
+	close(fragIP6Chan)
 	close(udpChan)
 	close(tcpChan)
 
@@ -374,11 +374,11 @@ func (c *FileIngestor) RemoveEvent(filePath string) {
 func (c *FileIngestor) Run() {
 	c.LogInfo("starting collector...")
 
-	c.dnsProcessor = processors.NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
+	c.dnsProcessor = processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
 	go c.dnsProcessor.Run(c.Loggers())
 
 	// start dnstap subprocessor
-	c.dnstapProcessor = processors.NewDnstapProcessor(0, c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
+	c.dnstapProcessor = processors.NewDNSTapProcessor(0, c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
 	go c.dnstapProcessor.Run(c.Loggers())
 
 	// read current folder content
@@ -397,12 +397,12 @@ func (c *FileIngestor) Run() {
 		fn := filepath.Join(c.config.Collectors.FileIngestor.WatchDir, entry.Name())
 
 		switch c.config.Collectors.FileIngestor.WatchMode {
-		case dnsutils.MODE_PCAP:
+		case dnsutils.ModePCAP:
 			// process file with pcap extension
 			if filepath.Ext(fn) == ".pcap" || filepath.Ext(fn) == ".pcap.gz" {
 				go c.ProcessPcap(fn)
 			}
-		case dnsutils.MODE_DNSTAP:
+		case dnsutils.ModeDNSTap:
 			// processs dnstap
 			if filepath.Ext(fn) == ".fstrm" {
 				go c.ProcessDnstap(fn)

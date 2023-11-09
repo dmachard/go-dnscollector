@@ -57,8 +57,8 @@ type Syslog struct {
 	doneProcess        chan bool
 	stopRun            chan bool
 	doneRun            chan bool
-	inputChan          chan dnsutils.DnsMessage
-	outputChan         chan dnsutils.DnsMessage
+	inputChan          chan dnsutils.DNSMessage
+	outputChan         chan dnsutils.DNSMessage
 	config             *dnsutils.Config
 	configChan         chan *dnsutils.Config
 	logger             *logger.Logger
@@ -74,13 +74,13 @@ type Syslog struct {
 
 func NewSyslog(config *dnsutils.Config, console *logger.Logger, name string) *Syslog {
 	console.Info("[%s] logger=syslog - enabled", name)
-	o := &Syslog{
+	s := &Syslog{
 		stopProcess:        make(chan bool),
 		doneProcess:        make(chan bool),
 		stopRun:            make(chan bool),
 		doneRun:            make(chan bool),
-		inputChan:          make(chan dnsutils.DnsMessage, config.Loggers.Syslog.ChannelBufferSize),
-		outputChan:         make(chan dnsutils.DnsMessage, config.Loggers.Syslog.ChannelBufferSize),
+		inputChan:          make(chan dnsutils.DNSMessage, config.Loggers.Syslog.ChannelBufferSize),
+		outputChan:         make(chan dnsutils.DNSMessage, config.Loggers.Syslog.ChannelBufferSize),
 		transportReady:     make(chan bool),
 		transportReconnect: make(chan bool),
 		logger:             console,
@@ -88,272 +88,272 @@ func NewSyslog(config *dnsutils.Config, console *logger.Logger, name string) *Sy
 		configChan:         make(chan *dnsutils.Config),
 		name:               name,
 	}
-	o.ReadConfig()
-	return o
+	s.ReadConfig()
+	return s
 }
 
-func (c *Syslog) GetName() string { return c.name }
+func (s *Syslog) GetName() string { return s.name }
 
-func (c *Syslog) SetLoggers(loggers []dnsutils.Worker) {}
+func (s *Syslog) SetLoggers(loggers []dnsutils.Worker) {}
 
-func (c *Syslog) ReadConfig() {
-	if !dnsutils.IsValidTLS(c.config.Loggers.Syslog.TlsMinVersion) {
-		c.logger.Fatal("logger=syslog - invalid tls min version")
+func (s *Syslog) ReadConfig() {
+	if !dnsutils.IsValidTLS(s.config.Loggers.Syslog.TLSMinVersion) {
+		s.logger.Fatal("logger=syslog - invalid tls min version")
 	}
 
-	if !dnsutils.IsValidMode(c.config.Loggers.Syslog.Mode) {
-		c.logger.Fatal("logger=syslog - invalid mode text or json expected")
+	if !dnsutils.IsValidMode(s.config.Loggers.Syslog.Mode) {
+		s.logger.Fatal("logger=syslog - invalid mode text or json expected")
 	}
-	severity, err := GetPriority(c.config.Loggers.Syslog.Severity)
+	severity, err := GetPriority(s.config.Loggers.Syslog.Severity)
 	if err != nil {
-		c.logger.Fatal("logger=syslog - invalid severity")
+		s.logger.Fatal("logger=syslog - invalid severity")
 	}
-	c.severity = severity
+	s.severity = severity
 
-	facility, err := GetPriority(c.config.Loggers.Syslog.Facility)
+	facility, err := GetPriority(s.config.Loggers.Syslog.Facility)
 	if err != nil {
-		c.logger.Fatal("logger=syslog - invalid facility")
+		s.logger.Fatal("logger=syslog - invalid facility")
 	}
-	c.facility = facility
+	s.facility = facility
 
-	if len(c.config.Loggers.Syslog.TextFormat) > 0 {
-		c.textFormat = strings.Fields(c.config.Loggers.Syslog.TextFormat)
+	if len(s.config.Loggers.Syslog.TextFormat) > 0 {
+		s.textFormat = strings.Fields(s.config.Loggers.Syslog.TextFormat)
 	} else {
-		c.textFormat = strings.Fields(c.config.Global.TextFormat)
+		s.textFormat = strings.Fields(s.config.Global.TextFormat)
 	}
 }
 
-func (o *Syslog) ReloadConfig(config *dnsutils.Config) {
-	o.LogInfo("reload configuration!")
-	o.configChan <- config
+func (s *Syslog) ReloadConfig(config *dnsutils.Config) {
+	s.LogInfo("reload configuration!")
+	s.configChan <- config
 }
 
-func (o *Syslog) Channel() chan dnsutils.DnsMessage {
-	return o.inputChan
+func (s *Syslog) Channel() chan dnsutils.DNSMessage {
+	return s.inputChan
 }
 
-func (o *Syslog) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger=syslog - "+msg, v...)
+func (s *Syslog) LogInfo(msg string, v ...interface{}) {
+	s.logger.Info("["+s.name+"] logger=syslog - "+msg, v...)
 }
 
-func (o *Syslog) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger=syslog - "+msg, v...)
+func (s *Syslog) LogError(msg string, v ...interface{}) {
+	s.logger.Error("["+s.name+"] logger=syslog - "+msg, v...)
 }
 
-func (o *Syslog) Stop() {
-	o.LogInfo("stopping to run...")
-	o.stopRun <- true
-	<-o.doneRun
+func (s *Syslog) Stop() {
+	s.LogInfo("stopping to run...")
+	s.stopRun <- true
+	<-s.doneRun
 
-	o.LogInfo("stopping to process...")
-	o.stopProcess <- true
-	<-o.doneProcess
+	s.LogInfo("stopping to process...")
+	s.stopProcess <- true
+	<-s.doneProcess
 }
 
-func (o *Syslog) ConnectToRemote() {
+func (s *Syslog) ConnectToRemote() {
 	for {
-		if o.syslogWriter != nil {
-			o.syslogWriter.Close()
-			o.syslogWriter = nil
+		if s.syslogWriter != nil {
+			s.syslogWriter.Close()
+			s.syslogWriter = nil
 		}
 
 		var logWriter *syslog.Writer
 		var tlsConfig *tls.Config
 		var err error
 
-		switch o.config.Loggers.Syslog.Transport {
+		switch s.config.Loggers.Syslog.Transport {
 		case "local":
-			o.LogInfo("connecting to local syslog...")
-			logWriter, err = syslog.New(o.facility|o.severity, "")
-		case dnsutils.SOCKET_UNIX, dnsutils.SOCKET_UDP, dnsutils.SOCKET_TCP:
-			o.LogInfo("connecting to %s://%s ...",
-				o.config.Loggers.Syslog.Transport,
-				o.config.Loggers.Syslog.RemoteAddress)
-			logWriter, err = syslog.Dial(o.config.Loggers.Syslog.Transport,
-				o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity,
-				o.config.Loggers.Syslog.Tag)
-		case dnsutils.SOCKET_TLS:
-			o.LogInfo("connecting to %s://%s ...",
-				o.config.Loggers.Syslog.Transport,
-				o.config.Loggers.Syslog.RemoteAddress)
+			s.LogInfo("connecting to local syslog...")
+			logWriter, err = syslog.New(s.facility|s.severity, "")
+		case dnsutils.SocketUnix, dnsutils.SocketUDP, dnsutils.SocketTCP:
+			s.LogInfo("connecting to %s://%s ...",
+				s.config.Loggers.Syslog.Transport,
+				s.config.Loggers.Syslog.RemoteAddress)
+			logWriter, err = syslog.Dial(s.config.Loggers.Syslog.Transport,
+				s.config.Loggers.Syslog.RemoteAddress, s.facility|s.severity,
+				s.config.Loggers.Syslog.Tag)
+		case dnsutils.SocketTLS:
+			s.LogInfo("connecting to %s://%s ...",
+				s.config.Loggers.Syslog.Transport,
+				s.config.Loggers.Syslog.RemoteAddress)
 
-			tlsOptions := dnsutils.TlsOptions{
-				InsecureSkipVerify: o.config.Loggers.Syslog.TlsInsecure,
-				MinVersion:         o.config.Loggers.Syslog.TlsMinVersion,
-				CAFile:             o.config.Loggers.Syslog.CAFile,
-				CertFile:           o.config.Loggers.Syslog.CertFile,
-				KeyFile:            o.config.Loggers.Syslog.KeyFile,
+			tlsOptions := dnsutils.TLSOptions{
+				InsecureSkipVerify: s.config.Loggers.Syslog.TLSInsecure,
+				MinVersion:         s.config.Loggers.Syslog.TLSMinVersion,
+				CAFile:             s.config.Loggers.Syslog.CAFile,
+				CertFile:           s.config.Loggers.Syslog.CertFile,
+				KeyFile:            s.config.Loggers.Syslog.KeyFile,
 			}
 
-			tlsConfig, err = dnsutils.TlsClientConfig(tlsOptions)
+			tlsConfig, err = dnsutils.TLSClientConfig(tlsOptions)
 			if err == nil {
-				logWriter, err = syslog.DialWithTLSConfig(o.config.Loggers.Syslog.Transport,
-					o.config.Loggers.Syslog.RemoteAddress, o.facility|o.severity,
-					o.config.Loggers.Syslog.Tag,
+				logWriter, err = syslog.DialWithTLSConfig(s.config.Loggers.Syslog.Transport,
+					s.config.Loggers.Syslog.RemoteAddress, s.facility|s.severity,
+					s.config.Loggers.Syslog.Tag,
 					tlsConfig)
 			}
 		default:
-			o.logger.Fatal("invalid syslog transport: ", o.config.Loggers.Syslog.Transport)
+			s.logger.Fatal("invalid syslog transport: ", s.config.Loggers.Syslog.Transport)
 		}
 
 		// something is wrong during connection ?
 		if err != nil {
-			o.LogError("%s", err)
-			o.LogInfo("retry to connect in %d seconds", o.config.Loggers.Syslog.RetryInterval)
-			time.Sleep(time.Duration(o.config.Loggers.Syslog.RetryInterval) * time.Second)
+			s.LogError("%s", err)
+			s.LogInfo("retry to connect in %d seconds", s.config.Loggers.Syslog.RetryInterval)
+			time.Sleep(time.Duration(s.config.Loggers.Syslog.RetryInterval) * time.Second)
 			continue
 		}
 
-		o.syslogWriter = logWriter
+		s.syslogWriter = logWriter
 
 		// set syslog format
-		switch strings.ToLower(o.config.Loggers.Syslog.Formatter) {
+		switch strings.ToLower(s.config.Loggers.Syslog.Formatter) {
 		case "unix":
-			o.syslogWriter.SetFormatter(syslog.UnixFormatter)
+			s.syslogWriter.SetFormatter(syslog.UnixFormatter)
 		case "rfc3164":
-			o.syslogWriter.SetFormatter(syslog.RFC3164Formatter)
+			s.syslogWriter.SetFormatter(syslog.RFC3164Formatter)
 		case "rfc5424", "":
-			o.syslogWriter.SetFormatter(syslog.RFC5424Formatter)
+			s.syslogWriter.SetFormatter(syslog.RFC5424Formatter)
 		}
 
 		// set syslog framer
-		switch strings.ToLower(o.config.Loggers.Syslog.Framer) {
+		switch strings.ToLower(s.config.Loggers.Syslog.Framer) {
 		case "none", "":
-			o.syslogWriter.SetFramer(syslog.DefaultFramer)
+			s.syslogWriter.SetFramer(syslog.DefaultFramer)
 		case "rfc5425":
-			o.syslogWriter.SetFramer(syslog.RFC5425MessageLengthFramer)
+			s.syslogWriter.SetFramer(syslog.RFC5425MessageLengthFramer)
 		}
 
 		// custom hostname
-		if len(o.config.Loggers.Syslog.Hostname) > 0 {
-			o.syslogWriter.SetHostname(o.config.Loggers.Syslog.Hostname)
+		if len(s.config.Loggers.Syslog.Hostname) > 0 {
+			s.syslogWriter.SetHostname(s.config.Loggers.Syslog.Hostname)
 		}
 		// custom program name
-		if len(o.config.Loggers.Syslog.AppName) > 0 {
-			o.syslogWriter.SetProgram(o.config.Loggers.Syslog.AppName)
+		if len(s.config.Loggers.Syslog.AppName) > 0 {
+			s.syslogWriter.SetProgram(s.config.Loggers.Syslog.AppName)
 		}
 
 		// notify process that the transport is ready
 		// block the loop until a reconnect is needed
-		o.transportReady <- true
-		o.transportReconnect <- true
+		s.transportReady <- true
+		s.transportReconnect <- true
 	}
 }
 
-func (o *Syslog) Run() {
-	o.LogInfo("running in background...")
+func (s *Syslog) Run() {
+	s.LogInfo("running in background...")
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.outputChan)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+	listChannel := []chan dnsutils.DNSMessage{}
+	listChannel = append(listChannel, s.outputChan)
+	subprocessors := transformers.NewTransforms(&s.config.OutgoingTransformers, s.logger, s.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go o.Process()
+	go s.Process()
 
 	// init remote conn
-	go o.ConnectToRemote()
+	go s.ConnectToRemote()
 
 	// loop to process incoming messages
 RUN_LOOP:
 	for {
 		select {
-		case <-o.stopRun:
+		case <-s.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
 
-			o.doneRun <- true
+			s.doneRun <- true
 			break RUN_LOOP
 
 		// new config provided?
-		case cfg, opened := <-o.configChan:
+		case cfg, opened := <-s.configChan:
 			if !opened {
 				return
 			}
-			o.config = cfg
-			o.ReadConfig()
+			s.config = cfg
+			s.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-o.inputChan:
+		case dm, opened := <-s.inputChan:
 			if !opened {
-				o.LogInfo("input channel closed!")
+				s.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			subprocessors.InitDNSMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
 				continue
 			}
 
 			// send to output channel
-			o.outputChan <- dm
+			s.outputChan <- dm
 		}
 	}
-	o.LogInfo("run terminated")
+	s.LogInfo("run terminated")
 }
 
-func (o *Syslog) Process() {
+func (s *Syslog) Process() {
 	var err error
 	buffer := new(bytes.Buffer)
 
-	o.LogInfo("processing dns messages...")
+	s.LogInfo("processing dns messages...")
 PROCESS_LOOP:
 	for {
 		select {
-		case <-o.stopProcess:
+		case <-s.stopProcess:
 			// close connection
-			if o.syslogWriter != nil {
-				o.syslogWriter.Close()
+			if s.syslogWriter != nil {
+				s.syslogWriter.Close()
 			}
-			o.doneProcess <- true
+			s.doneProcess <- true
 			break PROCESS_LOOP
 
-		case <-o.transportReady:
-			o.LogInfo("syslog transport is ready")
-			o.syslogReady = true
+		case <-s.transportReady:
+			s.LogInfo("syslog transport is ready")
+			s.syslogReady = true
 
 		// incoming dns message to process
-		case dm, opened := <-o.outputChan:
+		case dm, opened := <-s.outputChan:
 			if !opened {
-				o.LogInfo("output channel closed!")
+				s.LogInfo("output channel closed!")
 				return
 			}
 
 			// discar dns message if the connection is not ready
-			if !o.syslogReady {
+			if !s.syslogReady {
 				continue
 			}
 
-			switch o.config.Loggers.Syslog.Mode {
-			case dnsutils.MODE_TEXT:
-				_, err = o.syslogWriter.Write(dm.Bytes(o.textFormat,
-					o.config.Global.TextFormatDelimiter,
-					o.config.Global.TextFormatBoundary))
+			switch s.config.Loggers.Syslog.Mode {
+			case dnsutils.ModeText:
+				_, err = s.syslogWriter.Write(dm.Bytes(s.textFormat,
+					s.config.Global.TextFormatDelimiter,
+					s.config.Global.TextFormatBoundary))
 
-			case dnsutils.MODE_JSON:
+			case dnsutils.ModeJSON:
 				json.NewEncoder(buffer).Encode(dm)
-				_, err = o.syslogWriter.Write(buffer.Bytes())
+				_, err = s.syslogWriter.Write(buffer.Bytes())
 				buffer.Reset()
 
-			case dnsutils.MODE_FLATJSON:
+			case dnsutils.ModeFlatJSON:
 				flat, errflat := dm.Flatten()
 				if errflat != nil {
-					o.LogError("flattening DNS message failed: %e", err)
+					s.LogError("flattening DNS message failed: %e", err)
 					continue
 				}
 				json.NewEncoder(buffer).Encode(flat)
-				_, err = o.syslogWriter.Write(buffer.Bytes())
+				_, err = s.syslogWriter.Write(buffer.Bytes())
 				buffer.Reset()
 			}
 
 			if err != nil {
-				o.LogError("write error %s", err)
-				o.syslogReady = false
-				o.syslogWriter.Close()
-				<-o.transportReconnect
+				s.LogError("write error %s", err)
+				s.syslogReady = false
+				s.syslogWriter.Close()
+				<-s.transportReconnect
 			}
 		}
 	}
-	o.LogInfo("processing terminated")
+	s.LogInfo("processing terminated")
 }
