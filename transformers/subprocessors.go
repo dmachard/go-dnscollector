@@ -7,6 +7,10 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
+const (
+	enabled = "enabled"
+)
+
 var (
 	RETURN_SUCCESS = 1
 	RETURN_DROP    = 2
@@ -76,7 +80,7 @@ func (p *Transforms) Prepare() error {
 
 	if p.config.Normalize.Enable {
 		prefixlog := fmt.Sprintf("transformer=normalize#%d ", p.instance)
-		p.LogInfo(prefixlog + "enabled")
+		p.LogInfo(prefixlog + enabled)
 
 		p.NormalizeTransform.LoadActiveProcessors()
 	}
@@ -84,7 +88,7 @@ func (p *Transforms) Prepare() error {
 	if p.config.GeoIP.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.geoipTransform)
 		prefixlog := fmt.Sprintf("transformer=geoip#%d ", p.instance)
-		p.LogInfo(prefixlog + "enabled")
+		p.LogInfo(prefixlog + enabled)
 
 		if err := p.GeoipTransform.Open(); err != nil {
 			p.LogError(prefixlog+"open error %v", err)
@@ -114,7 +118,7 @@ func (p *Transforms) Prepare() error {
 
 	if p.config.Filtering.Enable {
 		prefixlog := fmt.Sprintf("transformer=filtering#%d ", p.instance)
-		p.LogInfo(prefixlog + "enabled")
+		p.LogInfo(prefixlog + enabled)
 
 		p.FilteringTransform.LoadRcodes()
 		p.FilteringTransform.LoadDomainsList()
@@ -140,12 +144,12 @@ func (p *Transforms) Prepare() error {
 	if p.config.Suspicious.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.suspiciousTransform)
 		prefixlog := fmt.Sprintf("transformer=suspicious#%d - ", p.instance)
-		p.LogInfo(prefixlog + "is enabled")
+		p.LogInfo(prefixlog + enabled)
 	}
 
 	if p.config.Reducer.Enable {
 		prefixlog := fmt.Sprintf("transformer=reducer#%d - ", p.instance)
-		p.LogInfo(prefixlog + "is enabled")
+		p.LogInfo(prefixlog + enabled)
 
 		p.ReducerTransform.LoadActiveReducers()
 	}
@@ -161,7 +165,7 @@ func (p *Transforms) Prepare() error {
 	if p.config.MachineLearning.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.machineLearningTransform)
 		prefixlog := fmt.Sprintf("transformer=ml#%d - ", p.instance)
-		p.LogInfo(prefixlog + "is enabled")
+		p.LogInfo(prefixlog + enabled)
 	}
 
 	return nil

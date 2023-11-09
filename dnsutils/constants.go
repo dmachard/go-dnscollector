@@ -12,12 +12,13 @@ const (
 
 	VALID_DOMAIN        = "dnscollector.dev."
 	BAD_LABEL_DOMAIN    = "ultramegaverytoolonglabel-ultramegaverytoolonglabel-ultramegaverytoolonglabel.dnscollector.dev."
+	bad_long_label      = "ultramegaverytoolonglabel-ultramegaverytoolonglabel-"
 	BAD_VERYLONG_DOMAIN = "ultramegaverytoolonglabel.dnscollector" +
-		"ultramegaverytoolonglabel-ultramegaverytoolonglabel-" +
-		"ultramegaverytoolonglabel-ultramegaverytoolonglabel-" +
-		"ultramegaverytoolonglabel-ultramegaverytoolonglabel-" +
-		"ultramegaverytoolonglabel-ultramegaverytoolonglabel-" +
-		"ultramegaverytoolonglabel-ultramegaverytoolonglabel-" +
+		bad_long_label +
+		bad_long_label +
+		bad_long_label +
+		bad_long_label +
+		bad_long_label +
 		".dev."
 
 	MODE_TEXT     = "text"
