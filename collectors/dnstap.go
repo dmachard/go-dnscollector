@@ -80,13 +80,12 @@ func (c *Dnstap) ReadConfig() {
 	}
 
 	c.sockPath = c.config.Collectors.Dnstap.SockPath
+	c.connMode = "tcp"
 
 	if len(c.config.Collectors.Dnstap.SockPath) > 0 {
 		c.connMode = "unix"
 	} else if c.config.Collectors.Dnstap.TLSSupport {
 		c.connMode = "tls"
-	} else {
-		c.connMode = "tcp"
 	}
 }
 

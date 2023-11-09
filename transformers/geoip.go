@@ -170,15 +170,13 @@ func (p *GeoIPProcessor) Lookup(ip string) (GeoRecord, error) {
 		rec.CountryISOCode = record.Country.ISOCode
 		rec.Continent = record.Continent.Code
 
-	} else {
-		if p.dbCountry != nil {
-			err := p.dbCountry.Lookup(net.ParseIP(ip), &record)
-			if err != nil {
-				return rec, err
-			}
-			rec.CountryISOCode = record.Country.ISOCode
-			rec.Continent = record.Continent.Code
+	} else if p.dbCountry != nil {
+		err := p.dbCountry.Lookup(net.ParseIP(ip), &record)
+		if err != nil {
+			return rec, err
 		}
+		rec.CountryISOCode = record.Country.ISOCode
+		rec.Continent = record.Continent.Code
 	}
 
 	return rec, nil

@@ -848,7 +848,7 @@ func TestDecodeQuestion_SkipOpt(t *testing.T) {
 		0x00, 0x00, 0x0e, 0x10,
 		// RDLENGTH
 		0x00, 0x01,
-		//RDATA
+		// RDATA
 		0x01,
 		// 2nd resource record
 		0x0f, 0x64,
@@ -1331,7 +1331,7 @@ func TestDecodeDnsLabel_EndOffset_WithPtr(t *testing.T) {
 
 func TestDecodePayload_QueryHappy(t *testing.T) {
 	payload := []byte{
-		//header
+		// header
 		0x9e, 0x84, 0x01, 0x20, 0x00, 0x01, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x01,
 		// query section
@@ -1397,7 +1397,7 @@ func TestDecodePayload_QueryHappy(t *testing.T) {
 }
 func TestDecodePayload_QueryInvalid(t *testing.T) {
 	payload := []byte{
-		//header
+		// header
 		0x9e, 0x84, 0x01, 0x20, 0x00, 0x01, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x01,
 		// query section

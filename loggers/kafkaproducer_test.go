@@ -15,7 +15,7 @@ import (
 func Test_KafkaProducer(t *testing.T) {
 
 	// for debug only
-	//sarama.Logger = log.New(os.Stdout, "[sarama] ", log.LstdFlags)
+	// sarama.Logger = log.New(os.Stdout, "[sarama] ", log.LstdFlags)
 
 	testcases := []struct {
 		transport string
@@ -52,7 +52,7 @@ func Test_KafkaProducer(t *testing.T) {
 				"ApiVersionsRequest": sarama.NewMockApiVersionsResponse(t).SetApiKeys(
 					[]sarama.ApiVersionsResponseKey{
 						{
-							ApiKey:     3, //Metadata
+							ApiKey:     3, // Metadata
 							MinVersion: 0,
 							MaxVersion: 6,
 						},

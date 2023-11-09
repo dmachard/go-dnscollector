@@ -344,7 +344,6 @@ PROCESS_LOOP:
 			if conn != nil {
 				c.LogInfo("dialing with success, continue...")
 
-				//var b bytes.Buffer
 				b := bufio.NewWriter(conn)
 
 				prefix := c.config.Loggers.Statsd.Prefix

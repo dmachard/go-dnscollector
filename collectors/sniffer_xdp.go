@@ -140,7 +140,7 @@ func (c *XDPSniffer) Run() {
 	})
 	if err != nil {
 		c.LogError("could not attach XDP program: %s", err)
-		os.Exit(1)
+		os.Exit(1) // nolint
 	}
 	defer l.Close()
 
@@ -168,7 +168,7 @@ func (c *XDPSniffer) Run() {
 				// send the config to the dns processor
 				dnsProcessor.ConfigChan <- cfg
 
-			//dns message to read ?
+			// dns message to read ?
 			case dm := <-dnsChan:
 
 				// update identity with config ?

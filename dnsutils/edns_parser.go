@@ -122,7 +122,7 @@ func DecodeEDNS(arcount int, startOffset int, payload []byte) (DNSExtended, int,
 			   /                                                               /
 			   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+ */
 			endOffset := offsetNext + 10 + int(rdlength)
-			offsetNext = offsetNext + 10
+			offsetNext += 10
 
 			for {
 				// no more options to read ?

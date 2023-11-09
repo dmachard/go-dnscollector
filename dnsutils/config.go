@@ -419,7 +419,7 @@ type Config struct {
 			ConnectTimeout    int    `yaml:"connect-timeout"`
 			Transport         string `yaml:"transport"`
 			FlushInterval     int    `yaml:"flush-interval"`
-			TLSSupport        bool   `yaml:"tls-support"` //deprecated
+			TLSSupport        bool   `yaml:"tls-support"` // deprecated
 			TLSInsecure       bool   `yaml:"tls-insecure"`
 			TLSMinVersion     string `yaml:"tls-min-version"`
 			CAFile            string `yaml:"ca-file"`

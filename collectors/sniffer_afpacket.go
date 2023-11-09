@@ -273,7 +273,7 @@ func (c *AfpacketSniffer) Run() {
 	if c.fd == 0 {
 		if err := c.Listen(); err != nil {
 			c.LogError("init raw socket failed: %v\n", err)
-			os.Exit(1)
+			os.Exit(1) // nolint
 		}
 	}
 
@@ -348,7 +348,7 @@ func (c *AfpacketSniffer) Run() {
 		oob := make([]byte, 100)
 
 		for {
-			//flags, from
+			// flags, from
 			bufN, oobn, _, _, err := syscall.Recvmsg(c.fd, buf, oob, 0)
 			if err != nil {
 				if errors.Is(err, syscall.EINTR) {

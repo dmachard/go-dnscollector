@@ -128,7 +128,6 @@ RUN_LOOP:
 
 		case <-d.stopRun:
 			transforms.Reset()
-			//close(d.recvFrom)
 			d.doneRun <- true
 			break RUN_LOOP
 

@@ -80,7 +80,7 @@ func (f *fragments) insert(in gopacket.Packet) (gopacket.Packet, error) {
 	if f.Highest < inFragOffset+inFragLength {
 		f.Highest = inFragOffset + inFragLength
 	}
-	f.Current = f.Current + inFragLength
+	f.Current += inFragLength
 
 	// Final Fragment ?
 	if !inFragMore && f.Highest == f.Current {
@@ -119,19 +119,19 @@ func (f *fragments) build(in gopacket.Packet) (gopacket.Packet, error) {
 			ipOffset = 20
 		}
 
-		if fragOffset*8 == currentOffset {
+		offset := fragOffset * 8
+		switch {
+		case offset == currentOffset:
 			final = append(final, fragPayload...)
 			currentOffset = currentOffset + fragLength - ipOffset
-
-		} else if fragOffset*8 < currentOffset {
+		case offset < currentOffset:
 			startAt := currentOffset - fragOffset*8
 			if startAt > fragLength-ipOffset {
 				return nil, fmt.Errorf("defrag: invalid fragment")
 			}
 			final = append(final, fragPayload[startAt:]...)
-			currentOffset = currentOffset + fragOffset*8
-
-		} else {
+			currentOffset += fragOffset * 8
+		default:
 			// Houston - we have an hole !
 			return nil, fmt.Errorf("defrag: hole found")
 		}
@@ -377,7 +377,7 @@ func (d *IPDefragmenter) DiscardOlderThan(t time.Time) int {
 	d.Lock()
 	for k, v := range d.ipFlows {
 		if v.LastSeen.Before(t) {
-			nb = nb + 1
+			nb++
 			delete(d.ipFlows, k)
 		}
 	}

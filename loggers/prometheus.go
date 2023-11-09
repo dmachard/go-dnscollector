@@ -536,7 +536,7 @@ func (c *PrometheusCountersSet) Collect(ch chan<- prometheus.Metric) {
 		float64(c.epsCounters.EpsMax),
 	)
 
-	//Update qtypes counter
+	// Update qtypes counter
 	for k, v := range c.epsCounters.TotalQtypes {
 		ch <- prometheus.MustNewConstMetric(c.prom.counterQtypes, prometheus.CounterValue,
 			v, k,

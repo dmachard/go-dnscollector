@@ -124,7 +124,7 @@ func Test_LogFileWrite_PcapMode(t *testing.T) {
 	data := make([]byte, 100)
 	count, err := f.Read(data)
 	if err != nil {
-		log.Fatal(err)
+		t.Errorf("unexpected error: %e", err)
 	}
 
 	if count == 0 {

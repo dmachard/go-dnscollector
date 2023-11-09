@@ -324,7 +324,7 @@ func (dm *DNSMessage) handlePdnsDirectives(directives []string, s *strings.Build
 				if len(dm.PowerDNS.Metadata) > 0 && len(directives) == 2 {
 					if metaValue, ok := dm.PowerDNS.Metadata[directives[1]]; ok {
 						if len(metaValue) > 0 {
-							s.WriteString(strings.Replace(metaValue, " ", "_", -1))
+							s.WriteString(strings.ReplaceAll(metaValue, " ", "_"))
 						} else {
 							s.WriteString("-")
 						}
@@ -342,11 +342,8 @@ func (dm *DNSMessage) handlePdnsDirectives(directives []string, s *strings.Build
 func (dm *DNSMessage) handleSuspiciousDirectives(directives []string, s *strings.Builder) {
 	if dm.Suspicious == nil {
 		s.WriteString("-")
-	} else {
-		switch directive := directives[0]; {
-		case directive == "suspicious-score":
-			s.WriteString(strconv.Itoa(int(dm.Suspicious.Score)))
-		}
+	} else if directives[0] == "suspicious-score" {
+		s.WriteString(strconv.Itoa(int(dm.Suspicious.Score)))
 	}
 }
 
@@ -366,16 +363,15 @@ func (dm *DNSMessage) handlePublicSuffixDirectives(directives []string, s *strin
 func (dm *DNSMessage) handleExtractedDirectives(directives []string, s *strings.Builder) {
 	if dm.Extracted == nil {
 		s.WriteString("-")
-	} else {
-		switch directive := directives[0]; {
-		case directive == "extracted-dns-payload":
-			if len(dm.DNS.Payload) > 0 {
-				dst := make([]byte, base64.StdEncoding.EncodedLen(len(dm.DNS.Payload)))
-				base64.StdEncoding.Encode(dst, dm.DNS.Payload)
-				s.Write(dst)
-			} else {
-				s.WriteString("-")
-			}
+		return
+	}
+	if directives[0] == "extracted-dns-payload" {
+		if len(dm.DNS.Payload) > 0 {
+			dst := make([]byte, base64.StdEncoding.EncodedLen(len(dm.DNS.Payload)))
+			base64.StdEncoding.Encode(dst, dm.DNS.Payload)
+			s.Write(dst)
+		} else {
+			s.WriteString("-")
 		}
 	}
 }
@@ -441,7 +437,6 @@ func (dm *DNSMessage) handleMachineLearningDirectives(directives []string, s *st
 }
 
 func (dm *DNSMessage) Bytes(format []string, fieldDelimiter string, fieldBoundary string) []byte {
-	//var s bytes.Buffer
 	var s strings.Builder
 
 	for i, word := range format {
@@ -600,7 +595,7 @@ func (dm *DNSMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 		}
 	}
 
-	return []byte(s.String()) //s.Bytes()
+	return []byte(s.String())
 }
 
 func (dm *DNSMessage) String(format []string, fieldDelimiter string, fieldBoundary string) string {

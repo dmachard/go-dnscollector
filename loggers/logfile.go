@@ -319,10 +319,8 @@ func (l *LogFile) PostRotateCommand(filename string) {
 		_, err := exec.Command(l.config.Loggers.LogFile.PostRotateCommand, filename).Output()
 		if err != nil {
 			l.LogError("postrotate command error: %s", err)
-		} else {
-			if l.config.Loggers.LogFile.PostRotateDelete {
-				os.Remove(filename)
-			}
+		} else if l.config.Loggers.LogFile.PostRotateDelete {
+			os.Remove(filename)
 		}
 	}
 }

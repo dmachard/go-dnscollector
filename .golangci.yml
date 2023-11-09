@@ -22,7 +22,7 @@ linters:
   - gosimple
   - ineffassign
   - stylecheck
+  - gocritic
   
   # list of linters to use in the future:
-  #- gocritic
   #- gosec

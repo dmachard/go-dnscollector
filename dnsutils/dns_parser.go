@@ -279,7 +279,7 @@ func DecodePayload(dm *DNSMessage, header *DNSHeader, config *Config) error {
 	// decode DNS answers
 	if header.Ancount > 0 {
 		answers, offset, err := DecodeAnswer(header.Ancount, payloadOffset, dm.DNS.Payload)
-		if err == nil {
+		if err == nil { // nolint
 			dm.DNS.DNSRRs.Answers = answers
 			payloadOffset = offset
 		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDNSAnswerTooShort) || errors.Is(err, ErrDecodeDNSAnswerRdataTooShort) || errors.Is(err, ErrDecodeDNSLabelTooShort)) {
@@ -309,7 +309,7 @@ func DecodePayload(dm *DNSMessage, header *DNSHeader, config *Config) error {
 	if header.Arcount > 0 {
 		// decode additional answers
 		answers, _, err := DecodeAnswer(header.Arcount, payloadOffset, dm.DNS.Payload)
-		if err == nil {
+		if err == nil { // nolint
 			dm.DNS.DNSRRs.Records = answers
 		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDNSAnswerTooShort) || errors.Is(err, ErrDecodeDNSAnswerRdataTooShort) || errors.Is(err, ErrDecodeDNSLabelTooShort)) {
 			dm.DNS.MalformedPacket = true
@@ -320,7 +320,7 @@ func DecodePayload(dm *DNSMessage, header *DNSHeader, config *Config) error {
 		}
 		// decode EDNS options, if there are any
 		edns, _, err := DecodeEDNS(header.Arcount, payloadOffset, dm.DNS.Payload)
-		if err == nil {
+		if err == nil { // nolint
 			dm.EDNS = edns
 		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDNSAnswerTooShort) ||
 			errors.Is(err, ErrDecodeDNSAnswerRdataTooShort) ||
@@ -488,7 +488,7 @@ func ParseLabels(offset int, payload []byte) (string, int, error) {
 		}
 
 		length := int(payload[offset])
-		if length == 0 {
+		if length == 0 { // nolint
 			if endOffset == -1 {
 				endOffset = offset + 1
 			}
@@ -532,7 +532,7 @@ func ParseLabels(offset int, payload []byte) (string, int, error) {
 		}
 	}
 
-	return strings.Join(labels[:], "."), endOffset, nil
+	return strings.Join(labels, "."), endOffset, nil
 }
 
 func ParseRdata(rdatatype string, rdata []byte, payload []byte, rdataOffset int) (string, error) {
@@ -888,7 +888,7 @@ func ParseSVCParam(svcParamKey uint16, paramData []byte) (string, error) {
 		}
 		return "", nil
 	case 3:
-		//port
+		// port
 		if len(paramData) != 2 {
 			return "", ErrDecodeDNSAnswerRdataTooShort
 		}

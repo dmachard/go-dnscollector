@@ -146,7 +146,7 @@ func (s *LatencyProcessor) MeasureLatency(dm *dnsutils.DNSMessage) {
 		hashData := []string{dm.NetworkInfo.QueryIP, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.DNS.ID)}
 
 		hashfnv := fnv.New64a()
-		hashfnv.Write([]byte(strings.Join(hashData[:], "+")))
+		hashfnv.Write([]byte(strings.Join(hashData, "+")))
 
 		if dm.DNS.Type == dnsutils.DNSQuery {
 			s.hashQueries.Set(hashfnv.Sum64(), dm.DNSTap.Timestamp)
@@ -170,15 +170,13 @@ func (s *LatencyProcessor) DetectEvictedTimeout(dm *dnsutils.DNSMessage) {
 		hashData := []string{dm.NetworkInfo.QueryIP, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.DNS.ID)}
 
 		hashfnv := fnv.New64a()
-		hashfnv.Write([]byte(strings.Join(hashData[:], "+")))
+		hashfnv.Write([]byte(strings.Join(hashData, "+")))
 		key := hashfnv.Sum64()
 
 		if dm.DNS.Type == dnsutils.DNSQuery {
 			s.mapQueries.Set(key, *dm)
-		} else {
-			if s.mapQueries.Exists(key) {
-				s.mapQueries.Delete(key)
-			}
+		} else if s.mapQueries.Exists(key) {
+			s.mapQueries.Delete(key)
 		}
 	}
 }

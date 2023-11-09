@@ -281,8 +281,6 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 
 	}
 
-	// remove it ?
-	//assembler.FlushAll()
 	c.LogInfo("pcap file [%s] processing terminated, %d packet(s) read", fileName, nbPackets)
 
 	// remove it ?
@@ -291,7 +289,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 		os.Remove(filePath)
 	}
 
-	//close chan
+	// close chan
 	close(fragIP4Chan)
 	close(fragIP6Chan)
 	close(udpChan)

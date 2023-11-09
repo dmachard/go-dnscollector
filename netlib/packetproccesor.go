@@ -92,15 +92,15 @@ func IPDefragger(ipInput chan gopacket.Packet, udpOutput chan gopacket.Packet, t
 		reassembled, err := defragger.DefragIP(fragment)
 		if err != nil {
 			break
-		} else if reassembled == nil {
+		}
+		if reassembled == nil {
 			continue
-		} else {
-			if reassembled.TransportLayer() != nil && reassembled.TransportLayer().LayerType() == layers.LayerTypeUDP {
-				udpOutput <- reassembled
-			}
-			if reassembled.TransportLayer() != nil && reassembled.TransportLayer().LayerType() == layers.LayerTypeTCP {
-				tcpOutput <- reassembled
-			}
+		}
+		if reassembled.TransportLayer() != nil && reassembled.TransportLayer().LayerType() == layers.LayerTypeUDP {
+			udpOutput <- reassembled
+		}
+		if reassembled.TransportLayer() != nil && reassembled.TransportLayer().LayerType() == layers.LayerTypeTCP {
+			tcpOutput <- reassembled
 		}
 	}
 }

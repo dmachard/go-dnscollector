@@ -74,7 +74,7 @@ func (s *stream) Reassembled(rs []tcpassembly.Reassembly) {
 				TCPReassembled: s.tcpReassembled,
 			}
 
-			//Reset the buffer.
+			// Reset the buffer.
 			s.data = s.data[s.lenDNS+2:]
 			s.lenDNS = 0
 

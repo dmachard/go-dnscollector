@@ -30,7 +30,7 @@ func TestTailRun(t *testing.T) {
 	g := loggers.NewFakeLogger()
 	c := NewTail([]dnsutils.Worker{g}, config, logger.New(false), "test")
 	if err := c.Follow(); err != nil {
-		log.Fatal("collector tail following error: ", err)
+		t.Errorf("collector tail following error: %e", err)
 	}
 	go c.Run()
 
@@ -39,7 +39,7 @@ func TestTailRun(t *testing.T) {
 	w := bufio.NewWriter(tmpFile)
 	linesToWrite := "2021-08-27T07:18:35.775473Z dnscollector CLIENT_QUERY NOERROR 192.168.1.5 45660 INET INET 43b www.google.org A 0.00000"
 	if _, err := w.WriteString(linesToWrite + "\n"); err != nil {
-		log.Fatal("Failed to write to temporary file", err)
+		t.Errorf("Failed to write to temporary file: %e", err)
 	}
 	w.Flush()
 

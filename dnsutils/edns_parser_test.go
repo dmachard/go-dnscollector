@@ -57,7 +57,8 @@ func TestDecodeReply_EDNS(t *testing.T) {
 	o := &dns.EDNS0_COOKIE{Code: 10, Cookie: "aaaa"}
 	e.Option = append(e.Option, o)
 
-	m.Extra = append(dm.Extra, e)
+	m.Extra = dm.Extra
+	m.Extra = append(m.Extra, e)
 
 	m.SetRcode(dm, 42) // 32(extended rcode) + 10(rcode)
 
@@ -92,7 +93,7 @@ func TestDecodeQuery_EdnsSubnet(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x0b,
-		//RDATA
+		// RDATA
 		// CODE - Client subnet
 		0x00, 0x08,
 		// Length
@@ -162,7 +163,7 @@ func TestDecodeQuery_EdnsSubnetV6(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x0b,
-		//RDATA
+		// RDATA
 		// CODE - Client subnet
 		0x00, 0x08,
 		// Length
@@ -233,7 +234,7 @@ func TestDecodeQuery_EdnsSubnet_invalidFam(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x0b,
-		//RDATA
+		// RDATA
 		// CODE - Client subnet
 		0x00, 0x08,
 		// Length
@@ -291,7 +292,7 @@ func TestDecodeQuery_EdnsSubnet_Short(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x06,
-		//RDATA
+		// RDATA
 		// CODE - Client subnet
 		0x00, 0x08,
 		// Length
@@ -349,7 +350,7 @@ func TestDecodeQuery_EdnsSubnet_NoAddr(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x08,
-		//RDATA
+		// RDATA
 		// CODE - Client subnet
 		0x00, 0x08,
 		// Length
@@ -357,7 +358,7 @@ func TestDecodeQuery_EdnsSubnet_NoAddr(t *testing.T) {
 		// Option data
 		// family
 		0x00, 0x01,
-		//prefix-len
+		// prefix-len
 		0x18,
 		// scope prefix-len
 		0x00,
@@ -418,7 +419,7 @@ func TestDecodeAnswer_EdnsError(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x06,
-		//RDATA
+		// RDATA
 		// CODE - Extended error
 		0x00, 0x0f,
 		// Length
@@ -472,7 +473,7 @@ func TestDecodeAnswer_EdnsErrorText(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x0c,
-		//RDATA
+		// RDATA
 		// CODE - Extended error
 		0x00, 0x0f,
 		// Length
@@ -529,7 +530,7 @@ func TestDecodeAnswer_EdnsErrorShort(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x05,
-		//RDATA
+		// RDATA
 		// CODE - Extended error
 		0x00, 0x0f,
 		// Length
@@ -579,7 +580,7 @@ func TestDecodeEdns_Short(t *testing.T) {
 				0x00, 0x00, 0x80, 0x00,
 				// RDLENGTH
 				0x00, 0x10,
-				//RDATA
+				// RDATA
 				// CODE - Extended error
 				0x00, 0x0f,
 				// Length
@@ -602,7 +603,7 @@ func TestDecodeEdns_Short(t *testing.T) {
 				0x00, 0x00, 0x80, 0x00,
 				// RDLENGTH
 				0x00, 0x02,
-				//RDATA
+				// RDATA
 				// CODE - Extended error
 				0x00, 0x0f,
 			},
@@ -621,7 +622,7 @@ func TestDecodeEdns_Short(t *testing.T) {
 				0x00, 0x00, 0x80, 0x00,
 				// RDLENGTH
 				0x00, 0x05,
-				//RDATA
+				// RDATA
 				// CODE - Extended error
 				0x00, 0x0f,
 				// Length
@@ -644,7 +645,7 @@ func TestDecodeEdns_Short(t *testing.T) {
 				0x00, 0x00, 0x80, 0x00,
 				// RDLENGTH
 				0x00, 0x05,
-				//RDATA
+				// RDATA
 				// CODE - Extended error
 				0x00, 0x0f,
 				// Length
@@ -663,7 +664,7 @@ func TestDecodeEdns_Short(t *testing.T) {
 				0x00, 0x00, 0x80, 0x00,
 				// RDLENGTH
 				0x00, 0x07,
-				//RDATA
+				// RDATA
 				// CODE - Extended error
 				0x00, 0x0f,
 				// Length
@@ -686,7 +687,7 @@ func TestDecodeEdns_Short(t *testing.T) {
 				0x00, 0x00, 0x80, 0x00,
 				// RDLENGTH
 				0x00, 0x06,
-				//RDATA
+				// RDATA
 				// CODE - Extended error
 				0x00, 0x0f,
 				// Length
@@ -720,7 +721,7 @@ func TestDecodeEdns_MultipleOpts(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x06,
-		//RDATA
+		// RDATA
 		// CODE - Extended error
 		0x00, 0x0f,
 		// Length
@@ -737,7 +738,7 @@ func TestDecodeEdns_MultipleOpts(t *testing.T) {
 		0x00, 0x00, 0x00, 0x01,
 		// RDLENGTH
 		0x00, 0x06,
-		//RDATA
+		// RDATA
 		// CODE - Extended error
 		0x00, 0x0f,
 		// Length
