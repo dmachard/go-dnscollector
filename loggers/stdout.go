@@ -187,9 +187,14 @@ PROCESS_LOOP:
 
 			switch o.config.Loggers.Stdout.Mode {
 			case dnsutils.MODE_PCAP:
+				if len(dm.DNS.Payload) == 0 {
+					o.LogError("no dns payload to encode, drop it!")
+					continue
+				}
+
 				pkt, err := dm.ToPacketLayer()
 				if err != nil {
-					o.LogError("failed to encode to packet layer: %s", err)
+					o.LogError("unable to pack layer: %s", err)
 					continue
 				}
 
