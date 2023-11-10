@@ -149,3 +149,41 @@ func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 		t.Errorf("malformed packet not detected")
 	}
 }
+
+func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
+	logger := logger.New(true)
+	var o bytes.Buffer
+	logger.SetOutput(&o)
+
+	// init the dnstap consumer
+	cfg := dnsutils.GetFakeConfig()
+	cfg.Collectors.Dnstap.DisableDNSParser = true
+
+	consumer := NewDnstapProcessor(0, cfg, logger, "test", 512)
+	chan_to := make(chan dnsutils.DnsMessage, 512)
+
+	// prepare dns query
+	dnsmsg := new(dns.Msg)
+	dnsmsg.SetQuestion("www.google.fr.", dns.TypeA)
+	dnsquestion, _ := dnsmsg.Pack()
+
+	// prepare dnstap
+	dt := &dnstap.Dnstap{}
+	dt.Type = dnstap.Dnstap_Type.Enum(1)
+
+	dt.Message = &dnstap.Message{}
+	dt.Message.Type = dnstap.Message_Type.Enum(5)
+	dt.Message.QueryMessage = dnsquestion
+
+	data, _ := proto.Marshal(dt)
+
+	go consumer.Run([]chan dnsutils.DnsMessage{chan_to}, []string{"test"})
+	// add packet to consumer
+	consumer.GetChannel() <- data
+
+	// read dns message from dnstap consumer
+	dm := <-chan_to
+	if dm.DNS.Id != 0 {
+		t.Errorf("DNS ID should be equal to zero: %d", dm.DNS.Id)
+	}
+}
