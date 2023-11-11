@@ -186,6 +186,7 @@ type Config struct {
 			RcvBufSize        int    `yaml:"sock-rcvbuf"`
 			ResetConn         bool   `yaml:"reset-conn"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
+			DisableDNSParser  bool   `yaml:"disable-dnsparser"`
 		} `yaml:"dnstap"`
 		DnstapProxifier struct {
 			Enable        bool   `yaml:"enable"`
@@ -549,6 +550,7 @@ func (c *Config) SetDefault() {
 	c.Collectors.Dnstap.RcvBufSize = 0
 	c.Collectors.Dnstap.ResetConn = true
 	c.Collectors.Dnstap.ChannelBufferSize = 65535
+	c.Collectors.Dnstap.DisableDNSParser = false
 
 	c.Collectors.DnstapProxifier.Enable = false
 	c.Collectors.DnstapProxifier.ListenIP = ANY_IP

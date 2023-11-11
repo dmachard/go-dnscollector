@@ -260,20 +260,22 @@ RUN_LOOP:
 			dm.DnsTap.Timestamp = ts.UnixNano()
 			dm.DnsTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
-			// decode the dns payload to get id, rcode and the number of question
-			// number of answer, ignore invalid packet
-			dnsHeader, err := dnsutils.DecodeDns(dm.DNS.Payload)
-			if err != nil {
-				// parser error
-				dm.DNS.MalformedPacket = true
-				d.LogInfo("dns parser malformed packet: %s", err)
-			}
+			if !d.config.Collectors.Dnstap.DisableDNSParser {
+				// decode the dns payload to get id, rcode and the number of question
+				// number of answer, ignore invalid packet
+				dnsHeader, err := dnsutils.DecodeDns(dm.DNS.Payload)
+				if err != nil {
+					// parser error
+					dm.DNS.MalformedPacket = true
+					d.LogInfo("dns parser malformed packet: %s", err)
+				}
 
-			if err = dnsutils.DecodePayload(&dm, &dnsHeader, d.config); err != nil {
-				// decoding error
-				if d.config.Global.Trace.LogMalformed {
-					d.LogError("%v - %v", err, dm)
-					d.LogError("dump invalid dns payload: %v", dm.DNS.Payload)
+				if err = dnsutils.DecodePayload(&dm, &dnsHeader, d.config); err != nil {
+					// decoding error
+					if d.config.Global.Trace.LogMalformed {
+						d.LogError("%v - %v", err, dm)
+						d.LogError("dump invalid dns payload: %v", dm.DNS.Payload)
+					}
 				}
 			}
 

@@ -3,6 +3,7 @@ package loggers
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -39,7 +40,8 @@ type StdOut struct {
 	config      *dnsutils.Config
 	configChan  chan *dnsutils.Config
 	logger      *logger.Logger
-	stdout      *log.Logger
+	writerText  *log.Logger
+	writerPcap  *pcapgo.Writer
 	name        string
 }
 
@@ -55,7 +57,7 @@ func NewStdOut(config *dnsutils.Config, console *logger.Logger, name string) *St
 		logger:      console,
 		config:      config,
 		configChan:  make(chan *dnsutils.Config),
-		stdout:      log.New(os.Stdout, "", 0),
+		writerText:  log.New(os.Stdout, "", 0),
 		name:        name,
 	}
 	o.ReadConfig()
@@ -70,6 +72,7 @@ func (c *StdOut) ReadConfig() {
 	if !IsStdoutValidMode(c.config.Loggers.Stdout.Mode) {
 		c.logger.Fatal("["+c.name+"] logger=stdout - invalid mode: ", c.config.Loggers.Stdout.Mode)
 	}
+
 	if len(c.config.Loggers.Stdout.TextFormat) > 0 {
 		c.textFormat = strings.Fields(c.config.Loggers.Stdout.TextFormat)
 	} else {
@@ -90,8 +93,18 @@ func (c *StdOut) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=stdout - "+msg, v...)
 }
 
-func (o *StdOut) SetBuffer(b *bytes.Buffer) {
-	o.stdout.SetOutput(b)
+func (o *StdOut) SetTextWriter(b *bytes.Buffer) {
+	o.writerText = log.New(os.Stdout, "", 0)
+	o.writerText.SetOutput(b)
+}
+
+func (o *StdOut) SetPcapWriter(w io.Writer) {
+	o.LogInfo("init pcap writer")
+
+	o.writerPcap = pcapgo.NewWriter(w)
+	if err := o.writerPcap.WriteFileHeader(65536, layers.LinkTypeEthernet); err != nil {
+		o.logger.Fatal("["+o.name+"] logger=stdout - pcap init error: %e", err)
+	}
 }
 
 func (o *StdOut) Channel() chan dnsutils.DnsMessage {
@@ -140,7 +153,7 @@ RUN_LOOP:
 
 		case dm, opened := <-o.inputChan:
 			if !opened {
-				o.LogInfo("input channel closed!")
+				o.LogInfo("run: input channel closed!")
 				return
 			}
 
@@ -162,13 +175,8 @@ func (o *StdOut) Process() {
 	// standard output buffer
 	buffer := new(bytes.Buffer)
 
-	// pcap init ?
-	var writerPcap *pcapgo.Writer
-	if o.config.Loggers.Stdout.Mode == dnsutils.MODE_PCAP {
-		writerPcap = pcapgo.NewWriter(os.Stdout)
-		if err := writerPcap.WriteFileHeader(65536, layers.LinkTypeEthernet); err != nil {
-			o.LogError("pcap init error: %e", err)
-		}
+	if o.config.Loggers.Stdout.Mode == dnsutils.MODE_PCAP && o.writerPcap == nil {
+		o.SetPcapWriter(os.Stdout)
 	}
 
 	o.LogInfo("ready to process")
@@ -181,15 +189,20 @@ PROCESS_LOOP:
 
 		case dm, opened := <-o.outputChan:
 			if !opened {
-				o.LogInfo("output channel closed!")
+				o.LogInfo("process: output channel closed!")
 				return
 			}
 
 			switch o.config.Loggers.Stdout.Mode {
 			case dnsutils.MODE_PCAP:
+				if len(dm.DNS.Payload) == 0 {
+					o.LogError("process: no dns payload to encode, drop it")
+					continue
+				}
+
 				pkt, err := dm.ToPacketLayer()
 				if err != nil {
-					o.LogError("failed to encode to packet layer: %s", err)
+					o.LogError("unable to pack layer: %s", err)
 					continue
 				}
 
@@ -209,25 +222,25 @@ PROCESS_LOOP:
 					Length:        bufSize,
 				}
 
-				writerPcap.WritePacket(ci, buf.Bytes())
+				o.writerPcap.WritePacket(ci, buf.Bytes())
 
 			case dnsutils.MODE_TEXT:
-				o.stdout.Print(dm.String(o.textFormat,
+				o.writerText.Print(dm.String(o.textFormat,
 					o.config.Global.TextFormatDelimiter,
 					o.config.Global.TextFormatBoundary))
 
 			case dnsutils.MODE_JSON:
 				json.NewEncoder(buffer).Encode(dm)
-				o.stdout.Print(buffer.String())
+				o.writerText.Print(buffer.String())
 				buffer.Reset()
 
 			case dnsutils.MODE_FLATJSON:
 				flat, err := dm.Flatten()
 				if err != nil {
-					o.LogError("flattening DNS message failed: %e", err)
+					o.LogError("process: flattening DNS message failed: %e", err)
 				}
 				json.NewEncoder(buffer).Encode(flat)
-				o.stdout.Print(buffer.String())
+				o.writerText.Print(buffer.String())
 				buffer.Reset()
 			}
 		}

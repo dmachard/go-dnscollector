@@ -17,6 +17,7 @@ Options:
 - `sock-rcvbuf`: (integer) sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
 - `reset-conn`: (bool) Reset TCP connection on exit
 - `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
+- `disable-dnsparser"`: (bool) disable the minimalist DNS parser
 
 Default values:
 
@@ -32,6 +33,7 @@ dnstap:
   sock-rcvbuf: 0
   reset-conn: true
   chan-buffer-size: 65535
+  disable-dnsparser: false
 ```
 
 ## DNS tap Proxifier

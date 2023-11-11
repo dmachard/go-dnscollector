@@ -109,6 +109,8 @@ multiplexer:
 #   reset-conn: true
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
+#   # Disable the minimalist DNS parser
+#   disable-dnsparser: true
 
 # # dnstap proxifier with no protobuf decoding.
 # dnstap-proxifier:

@@ -17,6 +17,7 @@ import (
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"github.com/miekg/dns"
 	"github.com/nqd/flat"
 	"google.golang.org/protobuf/proto"
 )
@@ -731,7 +732,7 @@ func (dm *DnsMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 		ip6.SrcIP = net.ParseIP(srcIp)
 		ip6.DstIP = net.ParseIP(dstIp)
 	default:
-		return nil, errors.New("family " + dm.NetworkInfo.Family + " not yet implemented")
+		return nil, errors.New("family (" + dm.NetworkInfo.Family + ") not yet implemented")
 	}
 
 	// set transport
@@ -828,5 +829,19 @@ func GetFakeDnsMessage() DnsMessage {
 	dm.NetworkInfo.ResponsePort = "4321"
 	dm.DNS.Rcode = "NOERROR"
 	dm.DNS.Qtype = "A"
+	return dm
+}
+
+func GetFakeDnsMessageWithPayload() DnsMessage {
+	// fake dns query payload
+	dnsmsg := new(dns.Msg)
+	dnsmsg.SetQuestion("dnscollector.dev.", dns.TypeA)
+	dnsquestion, _ := dnsmsg.Pack()
+
+	dm := GetFakeDnsMessage()
+	dm.NetworkInfo.Family = PROTO_IPV4
+	dm.NetworkInfo.Protocol = PROTO_UDP
+	dm.DNS.Payload = dnsquestion
+	dm.DNS.Length = len(dnsquestion)
 	return dm
 }

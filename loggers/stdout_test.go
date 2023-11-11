@@ -8,6 +8,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-logger"
+	"github.com/google/gopacket/pcapgo"
 )
 
 func Test_StdoutTextMode(t *testing.T) {
@@ -68,7 +69,7 @@ func Test_StdoutTextMode(t *testing.T) {
 			cfg.Global.TextFormatBoundary = tc.boundary
 
 			g := NewStdOut(cfg, logger.New(false), "test")
-			g.SetBuffer(&stdout)
+			g.SetTextWriter(&stdout)
 
 			go g.Run()
 
@@ -112,7 +113,7 @@ func Test_StdoutJsonMode(t *testing.T) {
 			cfg := dnsutils.GetFakeConfig()
 			cfg.Loggers.Stdout.Mode = tc.mode
 			g := NewStdOut(cfg, logger.New(false), "test")
-			g.SetBuffer(&stdout)
+			g.SetTextWriter(&stdout)
 
 			go g.Run()
 
@@ -131,5 +132,76 @@ func Test_StdoutJsonMode(t *testing.T) {
 				t.Errorf("stdout error want %s, got: %s", tc.pattern, ret)
 			}
 		})
+	}
+}
+
+func Test_StdoutPcapMode(t *testing.T) {
+	// redirect stdout output to bytes buffer
+	var pcap bytes.Buffer
+
+	// init logger and run
+	cfg := dnsutils.GetFakeConfig()
+	cfg.Loggers.Stdout.Mode = "pcap"
+
+	g := NewStdOut(cfg, logger.New(false), "test")
+	g.SetPcapWriter(&pcap)
+
+	go g.Run()
+
+	// send DNSMessage to channel
+	dm := dnsutils.GetFakeDnsMessageWithPayload()
+	g.Channel() <- dm
+
+	// stop logger
+	time.Sleep(time.Second)
+	g.Stop()
+
+	// check pcap output
+	pcapReader, err := pcapgo.NewReader(bytes.NewReader(pcap.Bytes()))
+	if err != nil {
+		t.Errorf("unable to read pcap: %s", err)
+		return
+	}
+	data, _, err := pcapReader.ReadPacketData()
+	if err != nil {
+		t.Errorf("unable to read packet: %s", err)
+		return
+	}
+	if len(data) < dm.DNS.Length {
+		t.Errorf("incorrect packet size: %d", len(data))
+	}
+}
+
+func Test_StdoutPcapMode_NoDNSPayload(t *testing.T) {
+	// redirect stdout output to bytes buffer
+	logger := logger.New(false)
+	var logs bytes.Buffer
+	logger.SetOutput(&logs)
+
+	var pcap bytes.Buffer
+
+	// init logger and run
+	cfg := dnsutils.GetFakeConfig()
+	cfg.Loggers.Stdout.Mode = "pcap"
+
+	g := NewStdOut(cfg, logger, "test")
+	g.SetPcapWriter(&pcap)
+
+	go g.Run()
+
+	// send DNSMessage to channel
+	dm := dnsutils.GetFakeDnsMessage()
+	g.Channel() <- dm
+
+	// stop logger
+	time.Sleep(time.Second)
+	g.Stop()
+
+	// check output
+	regxp := "ERROR:.*process: no dns payload to encode, drop it.*"
+	pattern := regexp.MustCompile(regxp)
+	ret := logs.String()
+	if !pattern.MatchString(ret) {
+		t.Errorf("stdout error want %s, got: %s", regxp, ret)
 	}
 }
