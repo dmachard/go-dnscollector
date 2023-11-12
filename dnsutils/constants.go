@@ -5,10 +5,12 @@ import "crypto/tls"
 const (
 	STR_UNKNOWN = "UNKNOWN"
 
-	PROG_NAME           = "dnscollector"
-	LOCALHOST_IP        = "127.0.0.1"
-	ANY_IP              = "0.0.0.0"
-	HTTP_OK             = "HTTP/1.1 200 OK\r\n\r\n"
+	PROG_NAME    = "dnscollector"
+	LOCALHOST_IP = "127.0.0.1"
+	ANY_IP       = "0.0.0.0"
+	HTTP_OK      = "HTTP/1.1 200 OK\r\n\r\n"
+
+	VALID_DOMAIN        = "dnscollector.dev."
 	BAD_LABEL_DOMAIN    = "ultramegaverytoolonglabel-ultramegaverytoolonglabel-ultramegaverytoolonglabel.dnscollector.dev."
 	BAD_VERYLONG_DOMAIN = "ultramegaverytoolonglabel.dnscollector" +
 		"ultramegaverytoolonglabel-ultramegaverytoolonglabel-" +
