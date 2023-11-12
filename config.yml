@@ -70,6 +70,7 @@ multiplexer:
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
+        add-dns-payload: false
       transforms:
         normalize:
           qname-lowercase: false
@@ -199,6 +200,8 @@ multiplexer:
 #   reset-conn: true
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
+#   # Reconstruct DNS payload
+#   add-dns-payload: false
 
 # # tzsp (TaZmen Sniffer Protocol)
 # tzsp:

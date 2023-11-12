@@ -11,7 +11,7 @@ import (
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
-	"golang.org/x/net/dns/dnsmessage"
+	"github.com/miekg/dns"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -292,76 +292,62 @@ RUN_LOOP:
 
 			if d.config.Collectors.PowerDNS.AddDnsPayload {
 
-				qname, err := dnsmessage.NewName(pbdm.Question.GetQName())
-				if err != nil {
-					dm.DNS.MalformedPacket = true
+				qname := dns.Fqdn(pbdm.Question.GetQName())
+				newDns := new(dns.Msg)
+				newDns.Id = uint16(pbdm.GetId())
+				newDns.Response = false
+
+				question := dns.Question{
+					Name:   qname,
+					Qtype:  uint16(pbdm.Question.GetQType()),
+					Qclass: uint16(pbdm.Question.GetQClass()),
+				}
+				newDns.Question = append(newDns.Question, question)
+
+				if int(pbdm.Type.Number())%2 != 1 {
+					newDns.Response = true
+					newDns.Rcode = int(pbdm.Response.GetRcode())
+
+					newDns.Answer = []dns.RR{}
+					rrs := pbdm.GetResponse().GetRrs()
+					for j := range rrs {
+						rrname := dns.Fqdn(rrs[j].GetName())
+						switch rrs[j].GetType() {
+						// A
+						case 1:
+							rdata := &dns.A{
+								Hdr: dns.RR_Header{Name: rrname, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: rrs[j].GetTtl()},
+								A:   net.IP(rrs[j].GetRdata()),
+							}
+							newDns.Answer = append(newDns.Answer, rdata)
+						// AAAA
+						case 28:
+							rdata := &dns.AAAA{
+								Hdr:  dns.RR_Header{Name: rrname, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: rrs[j].GetTtl()},
+								AAAA: net.IP(rrs[j].GetRdata()),
+							}
+							newDns.Answer = append(newDns.Answer, rdata)
+						// CNAME
+						case 5:
+							rdata := &dns.CNAME{
+								Hdr:    dns.RR_Header{Name: rrname, Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: rrs[j].GetTtl()},
+								Target: dns.Fqdn(string(rrs[j].GetRdata())),
+							}
+							newDns.Answer = append(newDns.Answer, rdata)
+						}
+
+					}
+
+				}
+
+				pktWire, err := newDns.Pack()
+				if err == nil {
+					dm.DNS.Payload = pktWire
+					if dm.DNS.Length == 0 {
+						dm.DNS.Length = len(pktWire)
+					}
 				} else {
-
-					newDns := dnsmessage.Message{
-						Header: dnsmessage.Header{ID: uint16(pbdm.GetId()), Response: false},
-						Questions: []dnsmessage.Question{
-							{
-								Name:  qname,
-								Type:  dnsmessage.Type(pbdm.Question.GetQType()),
-								Class: dnsmessage.Class(pbdm.Question.GetQClass()),
-							},
-						},
-					}
-					if int(pbdm.Type.Number())%2 != 1 {
-						newDns.Header.Response = true
-						newDns.Header.RCode = dnsmessage.RCode(pbdm.Response.GetRcode())
-
-						newDns.Answers = []dnsmessage.Resource{}
-						// add RR only A, AAAA and CNAME are exported by PowerDNS
-						rrs := pbdm.GetResponse().GetRrs()
-
-						for j := range rrs {
-							rrname, err := dnsmessage.NewName(rrs[j].GetName())
-							if err != nil {
-								dm.DNS.MalformedPacket = true
-								continue
-							}
-							r := dnsmessage.Resource{}
-							r.Header = dnsmessage.ResourceHeader{
-								Name:  rrname,
-								Type:  dnsmessage.Type(rrs[j].GetType()),
-								Class: dnsmessage.Class(rrs[j].GetClass()),
-								TTL:   rrs[j].GetTtl(),
-							}
-							switch {
-							// A
-							case RRs[j].GetType() == 1:
-								var rdata [4]byte
-								copy(rdata[:], rrs[j].GetRdata()[:4])
-								r.Body = &dnsmessage.AResource{A: rdata}
-							// AAAA
-							case RRs[j].GetType() == 28:
-								var rdata [16]byte
-								copy(rdata[:], rrs[j].GetRdata()[:16])
-								r.Body = &dnsmessage.AAAAResource{AAAA: rdata}
-							// CNAME
-							case RRs[j].GetType() == 5:
-								cname, err := dnsmessage.NewName(string(rrs[j].GetRdata()))
-								if err != nil {
-									dm.DNS.MalformedPacket = true
-									continue
-								}
-								r.Body = &dnsmessage.CNAMEResource{CNAME: cname}
-							}
-
-							newDns.Answers = append(newDns.Answers, r)
-
-						}
-					}
-
-					if !dm.DNS.MalformedPacket {
-						pktWire, err := newDns.Pack()
-						if err == nil {
-							dm.DNS.Payload = pktWire
-						} else {
-							dm.DNS.MalformedPacket = true
-						}
-					}
+					dm.DNS.MalformedPacket = true
 				}
 			}
 
