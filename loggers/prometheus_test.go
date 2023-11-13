@@ -234,6 +234,33 @@ func TestPrometheus_ConfirmDifferentResolvers(t *testing.T) {
 	ensureMetricValue(t, mf, "dnscollector_bytes_total", map[string]string{"resolver": "10.10.10.10"}, 999)
 }
 
+func TestPrometheus_etldplusone(t *testing.T) {
+	config := dnsutils.GetFakeConfig()
+	config.Loggers.Prometheus.LabelsList = []string{"stream_id"}
+	g := NewPrometheus(config, logger.New(false), "test")
+
+	noerror_record := dnsutils.GetFakeDnsMessage()
+	noerror_record.DNS.Type = dnsutils.DnsQuery
+	noerror_record.PublicSuffix = &dnsutils.TransformPublicSuffix{
+		QnamePublicSuffix:        "co.uk",
+		QnameEffectiveTLDPlusOne: "domain.co.uk",
+	}
+	noerror_record.DNS.Flags.AA = true
+	noerror_record.DnsTap.Latency = 0.05
+	noerror_record.NetworkInfo.Protocol = UDP
+	noerror_record.NetworkInfo.Family = IPv4
+	noerror_record.DNS.Length = 123
+
+	g.Record(noerror_record)
+	// The next would be a different TLD+1
+	noerror_record.PublicSuffix.QnameEffectiveTLDPlusOne = "anotherdomain.co.uk"
+	g.Record(noerror_record)
+
+	mf := getMetrics(g, t)
+	ensureMetricValue(t, mf, "dnscollector_etldplusone_total", map[string]string{"stream_id": "collector"}, 2)
+	ensureMetricValue(t, mf, "dnscollector_etldplusone_top", map[string]string{"stream_id": "collector", "suffix": "anotherdomain.co.uk"}, 1)
+}
+
 func ensureMetricValue(t *testing.T, mf map[string]*dto.MetricFamily, name string, labels map[string]string, value float64) bool {
 	m, found := mf[name]
 	if !found {

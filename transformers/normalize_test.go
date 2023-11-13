@@ -192,7 +192,7 @@ func TestNormalize_AddTldPlusOne(t *testing.T) {
 
 			psl.GetEffectiveTldPlusOne(&dm)
 			if dm.PublicSuffix.QnameEffectiveTLDPlusOne != tc.want {
-				t.Errorf("Bad TLD, got: %s, expected: com", dm.PublicSuffix.QnameEffectiveTLDPlusOne)
+				t.Errorf("Bad TLD, got: %s, expected: %s", dm.PublicSuffix.QnameEffectiveTLDPlusOne, tc.want)
 
 			}
 		})

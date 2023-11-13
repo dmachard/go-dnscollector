@@ -93,22 +93,24 @@ type PrometheusCountersSet struct {
 	prom *Prometheus
 
 	// Counters
-	requesters map[string]int // Requests number made by a specific requestor
-	domains    map[string]int // Requests number made to find out about a specific domain
-	nxdomains  map[string]int // Requests number ended up in NXDOMAIN
-	sfdomains  map[string]int // Requests number ended up in SERVFAIL
-	tlds       map[string]int // Requests number for a specific TLD
-	suspicious map[string]int // Requests number for a specific name that looked suspicious
-	evicted    map[string]int // Requests number for a specific name that timed out
+	requesters  map[string]int // Requests number made by a specific requestor
+	domains     map[string]int // Requests number made to find out about a specific domain
+	nxdomains   map[string]int // Requests number ended up in NXDOMAIN
+	sfdomains   map[string]int // Requests number ended up in SERVFAIL
+	tlds        map[string]int // Requests number for a specific TLD
+	etldplusone map[string]int // Requests number for a specific eTLD+1
+	suspicious  map[string]int // Requests number for a specific name that looked suspicious
+	evicted     map[string]int // Requests number for a specific name that timed out
 
-	epsCounters   EpsCounters
-	topRequesters *topmap.TopMap
-	topEvicted    *topmap.TopMap
-	topSfDomains  *topmap.TopMap
-	topDomains    *topmap.TopMap
-	topNxDomains  *topmap.TopMap
-	topTlds       *topmap.TopMap
-	topSuspicious *topmap.TopMap
+	epsCounters    EpsCounters
+	topRequesters  *topmap.TopMap
+	topEvicted     *topmap.TopMap
+	topSfDomains   *topmap.TopMap
+	topDomains     *topmap.TopMap
+	topNxDomains   *topmap.TopMap
+	topTlds        *topmap.TopMap
+	topETLDPlusOne *topmap.TopMap
+	topSuspicious  *topmap.TopMap
 
 	labels     prometheus.Labels // Do we really need to keep that map outside of registration?
 	sync.Mutex                   // Each PrometheusCountersSet locks independently
@@ -178,21 +180,23 @@ type Prometheus struct {
 	counters        *PromCounterCatalogueContainer
 
 	// All metrics use these descriptions when regestering
-	gaugeTopDomains    *prometheus.Desc
-	gaugeTopNxDomains  *prometheus.Desc
-	gaugeTopSfDomains  *prometheus.Desc
-	gaugeTopRequesters *prometheus.Desc
-	gaugeTopTlds       *prometheus.Desc
-	gaugeTopSuspicious *prometheus.Desc
-	gaugeTopEvicted    *prometheus.Desc
+	gaugeTopDomains      *prometheus.Desc
+	gaugeTopNxDomains    *prometheus.Desc
+	gaugeTopSfDomains    *prometheus.Desc
+	gaugeTopRequesters   *prometheus.Desc
+	gaugeTopTlds         *prometheus.Desc
+	gaugeTopETldsPlusOne *prometheus.Desc
+	gaugeTopSuspicious   *prometheus.Desc
+	gaugeTopEvicted      *prometheus.Desc
 
-	counterDomains    *prometheus.Desc
-	counterDomainsNx  *prometheus.Desc
-	counterDomainsSf  *prometheus.Desc
-	counterRequesters *prometheus.Desc
-	counterTlds       *prometheus.Desc
-	counterSuspicious *prometheus.Desc
-	counterEvicted    *prometheus.Desc
+	counterDomains     *prometheus.Desc
+	counterDomainsNx   *prometheus.Desc
+	counterDomainsSf   *prometheus.Desc
+	counterRequesters  *prometheus.Desc
+	counterTlds        *prometheus.Desc
+	counterETldPlusOne *prometheus.Desc
+	counterSuspicious  *prometheus.Desc
+	counterEvicted     *prometheus.Desc
 
 	gaugeEps    *prometheus.Desc
 	gaugeEpsMax *prometheus.Desc
@@ -229,15 +233,16 @@ type Prometheus struct {
 
 func newPrometheusCounterSet(p *Prometheus, labels prometheus.Labels) *PrometheusCountersSet {
 	pcs := &PrometheusCountersSet{
-		prom:       p,
-		labels:     labels,
-		requesters: make(map[string]int),
-		domains:    make(map[string]int),
-		nxdomains:  make(map[string]int),
-		sfdomains:  make(map[string]int),
-		tlds:       make(map[string]int),
-		suspicious: make(map[string]int),
-		evicted:    make(map[string]int),
+		prom:        p,
+		labels:      labels,
+		requesters:  make(map[string]int),
+		domains:     make(map[string]int),
+		nxdomains:   make(map[string]int),
+		sfdomains:   make(map[string]int),
+		tlds:        make(map[string]int),
+		etldplusone: make(map[string]int),
+		suspicious:  make(map[string]int),
+		evicted:     make(map[string]int),
 
 		epsCounters: EpsCounters{
 			TotalRcodes:     make(map[string]float64),
@@ -246,13 +251,14 @@ func newPrometheusCounterSet(p *Prometheus, labels prometheus.Labels) *Prometheu
 			TotalIPProtocol: make(map[string]float64),
 		},
 
-		topRequesters: topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
-		topEvicted:    topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
-		topSfDomains:  topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
-		topDomains:    topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
-		topNxDomains:  topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
-		topTlds:       topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
-		topSuspicious: topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
+		topRequesters:  topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
+		topEvicted:     topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
+		topSfDomains:   topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
+		topDomains:     topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
+		topNxDomains:   topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
+		topTlds:        topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
+		topETLDPlusOne: topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
+		topSuspicious:  topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
 	}
 
 	prometheus.WrapRegistererWith(labels, p.promRegistry).MustRegister(pcs)
@@ -274,6 +280,7 @@ func (c *PrometheusCountersSet) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.prom.gaugeTopSfDomains
 	ch <- c.prom.gaugeTopRequesters
 	ch <- c.prom.gaugeTopTlds
+	ch <- c.prom.gaugeTopETldsPlusOne
 	ch <- c.prom.gaugeTopSuspicious
 	ch <- c.prom.gaugeTopEvicted
 
@@ -283,6 +290,7 @@ func (c *PrometheusCountersSet) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.prom.counterDomainsSf
 	ch <- c.prom.counterRequesters
 	ch <- c.prom.counterTlds
+	ch <- c.prom.counterETldPlusOne
 	ch <- c.prom.counterSuspicious
 	ch <- c.prom.counterEvicted
 
@@ -367,6 +375,18 @@ func (c *PrometheusCountersSet) Record(dm dnsutils.DnsMessage) {
 				c.tlds[dm.PublicSuffix.QnamePublicSuffix] += 1
 			}
 			c.topTlds.Record(dm.PublicSuffix.QnamePublicSuffix, c.tlds[dm.PublicSuffix.QnamePublicSuffix])
+		}
+	}
+
+	// count TLD+1 if it is set
+	if dm.PublicSuffix != nil {
+		if dm.PublicSuffix.QnameEffectiveTLDPlusOne != "-" {
+			if _, exists := c.tlds[dm.PublicSuffix.QnameEffectiveTLDPlusOne]; !exists {
+				c.etldplusone[dm.PublicSuffix.QnameEffectiveTLDPlusOne] = 1
+			} else {
+				c.etldplusone[dm.PublicSuffix.QnameEffectiveTLDPlusOne] += 1
+			}
+			c.topETLDPlusOne.Record(dm.PublicSuffix.QnameEffectiveTLDPlusOne, c.etldplusone[dm.PublicSuffix.QnameEffectiveTLDPlusOne])
 		}
 	}
 
@@ -485,6 +505,10 @@ func (o *PrometheusCountersSet) Collect(ch chan<- prometheus.Metric) {
 		float64(len(o.tlds)),
 	)
 
+	ch <- prometheus.MustNewConstMetric(o.prom.counterETldPlusOne, prometheus.CounterValue,
+		float64(len(o.etldplusone)),
+	)
+
 	// Count number of unique suspicious names
 	ch <- prometheus.MustNewConstMetric(o.prom.counterSuspicious, prometheus.CounterValue,
 		float64(len(o.suspicious)),
@@ -516,6 +540,11 @@ func (o *PrometheusCountersSet) Collect(ch chan<- prometheus.Metric) {
 
 	for _, r := range o.topTlds.Get() {
 		ch <- prometheus.MustNewConstMetric(o.prom.gaugeTopTlds, prometheus.GaugeValue,
+			float64(r.Hit), r.Name)
+	}
+
+	for _, r := range o.topETLDPlusOne.Get() {
+		ch <- prometheus.MustNewConstMetric(o.prom.gaugeTopETldsPlusOne, prometheus.GaugeValue,
 			float64(r.Hit), r.Name)
 	}
 
@@ -823,6 +852,12 @@ func (o *Prometheus) InitProm() {
 		"Number of hit per tld - topN",
 		[]string{"suffix"}, nil,
 	)
+	//etldplusone_top_total
+	o.gaugeTopETldsPlusOne = prometheus.NewDesc(
+		fmt.Sprintf("%s_top_etldplusone", prom_prefix),
+		"Number of hit per eTLD+1 - topN",
+		[]string{"suffix"}, nil,
+	)
 
 	o.gaugeTopSuspicious = prometheus.NewDesc(
 		fmt.Sprintf("%s_top_suspicious", prom_prefix),
@@ -875,6 +910,12 @@ func (o *Prometheus) InitProm() {
 
 	o.counterTlds = prometheus.NewDesc(
 		fmt.Sprintf("%s_tlds_total", prom_prefix),
+		"The total number of tld per stream identity",
+		nil, nil,
+	)
+
+	o.counterETldPlusOne = prometheus.NewDesc(
+		fmt.Sprintf("%s_etldplusone_total", prom_prefix),
 		"The total number of tld per stream identity",
 		nil, nil,
 	)
