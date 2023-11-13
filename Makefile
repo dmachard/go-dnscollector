@@ -50,12 +50,13 @@ version: build
 lint:
 	$(GOPATH)/bin/golangci-lint run --config=.golangci.yml ./...
 	
-test:
+tests:
 	@go test ./dnsutils/ -race -cover -v
 	@go test ./netlib/ -race -cover -v
 	@go test -timeout 30s ./transformers/ -race -cover -v
 	@go test -timeout 30s ./collectors/ -race -cover -v
 	@go test -timeout 90s ./loggers/ -race -cover -v
+	@go test -timeout 30s ./processors/ -race -cover -v
 
 clean:
 	@go clean

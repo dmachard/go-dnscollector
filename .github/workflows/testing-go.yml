@@ -117,3 +117,27 @@ jobs:
         curl -u admin:changeme http://127.0.0.1:8081/metrics | ./promtool check metrics
       env:
         PROM_VERSION: "2.47.0"
+
+  count:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: "1.21"
+
+    - id: count_tests
+      run: |
+        data=$(sudo go test -v ./collectors ./processors ./dnsutils ./netlib ./loggers ./transformers 2>&1 | grep -c RUN)
+        echo "Count of Tests: $data"
+        echo "data=$data" >> $GITHUB_OUTPUT
+
+    - id: count_lines
+      run: |
+        data=$(find . -name "*.go" -exec grep -v "^$" {} \; -exec grep -v "//" {} \; | wc -l)
+        echo "Count of Lines: $data"
+        echo "data=$data" >> $GITHUB_OUTPUT
