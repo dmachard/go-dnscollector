@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/Shopify/sarama v1.38.1
-	github.com/cilium/ebpf v0.12.2
+	github.com/cilium/ebpf v0.12.3
 	github.com/dmachard/go-clientsyslog v0.3.0
 	github.com/dmachard/go-dnstap-protobuf v0.6.0
 	github.com/dmachard/go-framestream v0.6.0
@@ -32,7 +32,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/net v0.17.0
-	golang.org/x/sys v0.13.0
+	golang.org/x/sys v0.14.1-0.20231108175955-e4099bfacb8c
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.1
