@@ -29,7 +29,6 @@ powerdns:
   sock-rcvbuf: 0
   reset-conn: true
   chan-buffer-size: 65535
-  add-dns-payload: false
 ```
 
 The DNS-collector has a full [Protobuf Logging](https://dnsdist.org/reference/protobuf.html) support for PowerDNS's products.

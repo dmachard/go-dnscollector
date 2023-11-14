@@ -8,8 +8,8 @@ Print to your standard output, all DNS logs received
 
 Options:
 
-* `mode`: (string) output format: text, json, flat-json or pcap
-* `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
+* `mode`: (string) output format: `text`, `json`, `flat-json` or `pcap`
+* `text-format`: (string) output text format, please refer to the default text format to see all available [directives](../configuration.md#custom-text-format), use this parameter if you want a specific format
 * `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
