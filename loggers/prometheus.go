@@ -205,9 +205,9 @@ type Prometheus struct {
 	counterRcodes      *prometheus.Desc
 	counterIPProtocol  *prometheus.Desc
 	counterIPVersion   *prometheus.Desc
-	counterDnsMessages *prometheus.Desc
-	counterDnsQueries  *prometheus.Desc
-	counterDnsReplies  *prometheus.Desc
+	counterDNSMessages *prometheus.Desc
+	counterDNSQueries  *prometheus.Desc
+	counterDNSReplies  *prometheus.Desc
 
 	counterFlagsTC          *prometheus.Desc
 	counterFlagsAA          *prometheus.Desc
@@ -301,9 +301,9 @@ func (c *PrometheusCountersSet) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.prom.counterRcodes
 	ch <- c.prom.counterIPProtocol
 	ch <- c.prom.counterIPVersion
-	ch <- c.prom.counterDnsMessages
-	ch <- c.prom.counterDnsQueries
-	ch <- c.prom.counterDnsReplies
+	ch <- c.prom.counterDNSMessages
+	ch <- c.prom.counterDNSQueries
+	ch <- c.prom.counterDNSReplies
 
 	ch <- c.prom.counterFlagsTC
 	ch <- c.prom.counterFlagsAA
@@ -346,7 +346,6 @@ func (c *PrometheusCountersSet) Record(dm dnsutils.DnsMessage) {
 		} else {
 			c.sfdomains[dm.DNS.Qname] += 1
 		}
-
 		c.topSfDomains.Record(dm.DNS.Qname, c.sfdomains[dm.DNS.Qname])
 
 	case dnsutils.DNS_RCODE_NXDOMAIN:
@@ -480,177 +479,177 @@ func (c *PrometheusCountersSet) Record(dm dnsutils.DnsMessage) {
 
 }
 
-func (o *PrometheusCountersSet) Collect(ch chan<- prometheus.Metric) {
-	o.Lock()
-	defer o.Unlock()
+func (c *PrometheusCountersSet) Collect(ch chan<- prometheus.Metric) {
+	c.Lock()
+	defer c.Unlock()
 	// Update number of domains
-	ch <- prometheus.MustNewConstMetric(o.prom.counterDomains, prometheus.CounterValue,
-		float64(len(o.domains)),
+	ch <- prometheus.MustNewConstMetric(c.prom.counterDomains, prometheus.CounterValue,
+		float64(len(c.domains)),
 	)
 	// Count NX domains
-	ch <- prometheus.MustNewConstMetric(o.prom.counterDomainsNx, prometheus.CounterValue,
-		float64(len(o.nxdomains)),
+	ch <- prometheus.MustNewConstMetric(c.prom.counterDomainsNx, prometheus.CounterValue,
+		float64(len(c.nxdomains)),
 	)
 	// Count SERVFAIL domains
-	ch <- prometheus.MustNewConstMetric(o.prom.counterDomainsSf, prometheus.CounterValue,
-		float64(len(o.sfdomains)),
+	ch <- prometheus.MustNewConstMetric(c.prom.counterDomainsSf, prometheus.CounterValue,
+		float64(len(c.sfdomains)),
 	)
 	// Requesters counter
-	ch <- prometheus.MustNewConstMetric(o.prom.counterRequesters, prometheus.CounterValue,
-		float64(len(o.requesters)),
+	ch <- prometheus.MustNewConstMetric(c.prom.counterRequesters, prometheus.CounterValue,
+		float64(len(c.requesters)),
 	)
 
 	// Count number of unique TLDs
-	ch <- prometheus.MustNewConstMetric(o.prom.counterTlds, prometheus.CounterValue,
-		float64(len(o.tlds)),
+	ch <- prometheus.MustNewConstMetric(c.prom.counterTlds, prometheus.CounterValue,
+		float64(len(c.tlds)),
 	)
 
-	ch <- prometheus.MustNewConstMetric(o.prom.counterETldPlusOne, prometheus.CounterValue,
-		float64(len(o.etldplusone)),
+	ch <- prometheus.MustNewConstMetric(c.prom.counterETldPlusOne, prometheus.CounterValue,
+		float64(len(c.etldplusone)),
 	)
 
 	// Count number of unique suspicious names
-	ch <- prometheus.MustNewConstMetric(o.prom.counterSuspicious, prometheus.CounterValue,
-		float64(len(o.suspicious)),
+	ch <- prometheus.MustNewConstMetric(c.prom.counterSuspicious, prometheus.CounterValue,
+		float64(len(c.suspicious)),
 	)
 
 	// Count number of unique unanswered (timedout) names
-	ch <- prometheus.MustNewConstMetric(o.prom.counterEvicted, prometheus.CounterValue,
-		float64(len(o.evicted)),
+	ch <- prometheus.MustNewConstMetric(c.prom.counterEvicted, prometheus.CounterValue,
+		float64(len(c.evicted)),
 	)
-	for _, r := range o.topDomains.Get() {
-		ch <- prometheus.MustNewConstMetric(o.prom.gaugeTopDomains, prometheus.GaugeValue,
+	for _, r := range c.topDomains.Get() {
+		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopDomains, prometheus.GaugeValue,
 			float64(r.Hit), r.Name)
 	}
 
-	for _, r := range o.topNxDomains.Get() {
-		ch <- prometheus.MustNewConstMetric(o.prom.gaugeTopNxDomains, prometheus.GaugeValue,
+	for _, r := range c.topNxDomains.Get() {
+		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopNxDomains, prometheus.GaugeValue,
 			float64(r.Hit), r.Name)
 	}
 
-	for _, r := range o.topSfDomains.Get() {
-		ch <- prometheus.MustNewConstMetric(o.prom.gaugeTopSfDomains, prometheus.GaugeValue,
+	for _, r := range c.topSfDomains.Get() {
+		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopSfDomains, prometheus.GaugeValue,
 			float64(r.Hit), r.Name)
 	}
 
-	for _, r := range o.topRequesters.Get() {
-		ch <- prometheus.MustNewConstMetric(o.prom.gaugeTopRequesters, prometheus.GaugeValue,
+	for _, r := range c.topRequesters.Get() {
+		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopRequesters, prometheus.GaugeValue,
 			float64(r.Hit), r.Name)
 	}
 
-	for _, r := range o.topTlds.Get() {
-		ch <- prometheus.MustNewConstMetric(o.prom.gaugeTopTlds, prometheus.GaugeValue,
+	for _, r := range c.topTlds.Get() {
+		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopTlds, prometheus.GaugeValue,
 			float64(r.Hit), r.Name)
 	}
 
-	for _, r := range o.topETLDPlusOne.Get() {
-		ch <- prometheus.MustNewConstMetric(o.prom.gaugeTopETldsPlusOne, prometheus.GaugeValue,
+	for _, r := range c.topETLDPlusOne.Get() {
+		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopETldsPlusOne, prometheus.GaugeValue,
 			float64(r.Hit), r.Name)
 	}
 
-	for _, r := range o.topSuspicious.Get() {
-		ch <- prometheus.MustNewConstMetric(o.prom.gaugeTopSuspicious, prometheus.GaugeValue,
+	for _, r := range c.topSuspicious.Get() {
+		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopSuspicious, prometheus.GaugeValue,
 			float64(r.Hit), r.Name)
 	}
 
-	for _, r := range o.topEvicted.Get() {
-		ch <- prometheus.MustNewConstMetric(o.prom.gaugeTopEvicted, prometheus.GaugeValue,
+	for _, r := range c.topEvicted.Get() {
+		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopEvicted, prometheus.GaugeValue,
 			float64(r.Hit), r.Name)
 	}
 
-	ch <- prometheus.MustNewConstMetric(o.prom.gaugeEps, prometheus.GaugeValue,
-		float64(o.epsCounters.Eps),
+	ch <- prometheus.MustNewConstMetric(c.prom.gaugeEps, prometheus.GaugeValue,
+		float64(c.epsCounters.Eps),
 	)
-	ch <- prometheus.MustNewConstMetric(o.prom.gaugeEpsMax, prometheus.GaugeValue,
-		float64(o.epsCounters.EpsMax),
+	ch <- prometheus.MustNewConstMetric(c.prom.gaugeEpsMax, prometheus.GaugeValue,
+		float64(c.epsCounters.EpsMax),
 	)
 
 	// Update qtypes counter
-	for k, v := range o.epsCounters.TotalQtypes {
-		ch <- prometheus.MustNewConstMetric(o.prom.counterQtypes, prometheus.CounterValue,
+	for k, v := range c.epsCounters.TotalQtypes {
+		ch <- prometheus.MustNewConstMetric(c.prom.counterQtypes, prometheus.CounterValue,
 			v, k,
 		)
 	}
 
 	// Update Return Codes counter
-	for k, v := range o.epsCounters.TotalRcodes {
-		ch <- prometheus.MustNewConstMetric(o.prom.counterRcodes, prometheus.CounterValue,
+	for k, v := range c.epsCounters.TotalRcodes {
+		ch <- prometheus.MustNewConstMetric(c.prom.counterRcodes, prometheus.CounterValue,
 			v, k,
 		)
 	}
 
 	// Update IP protocol counter
-	for k, v := range o.epsCounters.TotalIPProtocol {
-		ch <- prometheus.MustNewConstMetric(o.prom.counterIPProtocol, prometheus.CounterValue,
+	for k, v := range c.epsCounters.TotalIPProtocol {
+		ch <- prometheus.MustNewConstMetric(c.prom.counterIPProtocol, prometheus.CounterValue,
 			v, k,
 		)
 	}
 
 	// Update IP version counter
-	for k, v := range o.epsCounters.TotalIPVersion {
-		ch <- prometheus.MustNewConstMetric(o.prom.counterIPVersion, prometheus.CounterValue,
+	for k, v := range c.epsCounters.TotalIPVersion {
+		ch <- prometheus.MustNewConstMetric(c.prom.counterIPVersion, prometheus.CounterValue,
 			v, k,
 		)
 	}
 
 	// Update global number of dns messages
-	ch <- prometheus.MustNewConstMetric(o.prom.counterDnsMessages, prometheus.CounterValue,
-		o.epsCounters.TotalDNSMessages)
+	ch <- prometheus.MustNewConstMetric(c.prom.counterDNSMessages, prometheus.CounterValue,
+		c.epsCounters.TotalDNSMessages)
 
 	// Update number of dns queries
-	ch <- prometheus.MustNewConstMetric(o.prom.counterDnsQueries, prometheus.CounterValue,
-		float64(o.epsCounters.TotalQueries))
+	ch <- prometheus.MustNewConstMetric(c.prom.counterDNSQueries, prometheus.CounterValue,
+		float64(c.epsCounters.TotalQueries))
 
 	// Update number of dns replies
-	ch <- prometheus.MustNewConstMetric(o.prom.counterDnsReplies, prometheus.CounterValue,
-		float64(o.epsCounters.TotalReplies))
+	ch <- prometheus.MustNewConstMetric(c.prom.counterDNSReplies, prometheus.CounterValue,
+		float64(c.epsCounters.TotalReplies))
 
 	// Update flags
-	ch <- prometheus.MustNewConstMetric(o.prom.counterFlagsTC, prometheus.CounterValue,
-		o.epsCounters.TotalTC)
-	ch <- prometheus.MustNewConstMetric(o.prom.counterFlagsAA, prometheus.CounterValue,
-		o.epsCounters.TotalAA)
-	ch <- prometheus.MustNewConstMetric(o.prom.counterFlagsRA, prometheus.CounterValue,
-		o.epsCounters.TotalRA)
-	ch <- prometheus.MustNewConstMetric(o.prom.counterFlagsAD, prometheus.CounterValue,
-		o.epsCounters.TotalAD)
-	ch <- prometheus.MustNewConstMetric(o.prom.counterFlagsMalformed, prometheus.CounterValue,
-		o.epsCounters.TotalMalformed)
-	ch <- prometheus.MustNewConstMetric(o.prom.counterFlagsFragmented, prometheus.CounterValue,
-		o.epsCounters.TotalFragmented)
-	ch <- prometheus.MustNewConstMetric(o.prom.counterFlagsReassembled, prometheus.CounterValue,
-		o.epsCounters.TotalReasembled)
+	ch <- prometheus.MustNewConstMetric(c.prom.counterFlagsTC, prometheus.CounterValue,
+		c.epsCounters.TotalTC)
+	ch <- prometheus.MustNewConstMetric(c.prom.counterFlagsAA, prometheus.CounterValue,
+		c.epsCounters.TotalAA)
+	ch <- prometheus.MustNewConstMetric(c.prom.counterFlagsRA, prometheus.CounterValue,
+		c.epsCounters.TotalRA)
+	ch <- prometheus.MustNewConstMetric(c.prom.counterFlagsAD, prometheus.CounterValue,
+		c.epsCounters.TotalAD)
+	ch <- prometheus.MustNewConstMetric(c.prom.counterFlagsMalformed, prometheus.CounterValue,
+		c.epsCounters.TotalMalformed)
+	ch <- prometheus.MustNewConstMetric(c.prom.counterFlagsFragmented, prometheus.CounterValue,
+		c.epsCounters.TotalFragmented)
+	ch <- prometheus.MustNewConstMetric(c.prom.counterFlagsReassembled, prometheus.CounterValue,
+		c.epsCounters.TotalReasembled)
 
-	ch <- prometheus.MustNewConstMetric(o.prom.totalBytes,
-		prometheus.CounterValue, float64(o.epsCounters.TotalBytes),
+	ch <- prometheus.MustNewConstMetric(c.prom.totalBytes,
+		prometheus.CounterValue, float64(c.epsCounters.TotalBytes),
 	)
-	ch <- prometheus.MustNewConstMetric(o.prom.totalReceivedBytes, prometheus.CounterValue,
-		float64(o.epsCounters.TotalBytesReceived),
+	ch <- prometheus.MustNewConstMetric(c.prom.totalReceivedBytes, prometheus.CounterValue,
+		float64(c.epsCounters.TotalBytesReceived),
 	)
-	ch <- prometheus.MustNewConstMetric(o.prom.totalSentBytes, prometheus.CounterValue,
-		float64(o.epsCounters.TotalBytesSent))
+	ch <- prometheus.MustNewConstMetric(c.prom.totalSentBytes, prometheus.CounterValue,
+		float64(c.epsCounters.TotalBytesSent))
 
 }
 
-func (o *PrometheusCountersSet) ComputeEventsPerSecond() {
-	o.Lock()
-	defer o.Unlock()
-	if o.epsCounters.TotalEvents > 0 && o.epsCounters.TotalEventsPrev > 0 {
-		o.epsCounters.Eps = o.epsCounters.TotalEvents - o.epsCounters.TotalEventsPrev
+func (c *PrometheusCountersSet) ComputeEventsPerSecond() {
+	c.Lock()
+	defer c.Unlock()
+	if c.epsCounters.TotalEvents > 0 && c.epsCounters.TotalEventsPrev > 0 {
+		c.epsCounters.Eps = c.epsCounters.TotalEvents - c.epsCounters.TotalEventsPrev
 	}
-	o.epsCounters.TotalEventsPrev = o.epsCounters.TotalEvents
-	if o.epsCounters.Eps > o.epsCounters.EpsMax {
-		o.epsCounters.EpsMax = o.epsCounters.Eps
+	c.epsCounters.TotalEventsPrev = c.epsCounters.TotalEvents
+	if c.epsCounters.Eps > c.epsCounters.EpsMax {
+		c.epsCounters.EpsMax = c.epsCounters.Eps
 	}
 }
 
-func NewPromCounterCatalogueContainer(p *Prometheus, sel_labels []string, l map[string]string) *PromCounterCatalogueContainer {
-	if len(sel_labels) == 0 {
-		panic("Cannot create a new PromCounterCatalogueContainer with empty list of sel_labels")
+func NewPromCounterCatalogueContainer(p *Prometheus, selLabels []string, l map[string]string) *PromCounterCatalogueContainer {
+	if len(selLabels) == 0 {
+		panic("Cannot create a new PromCounterCatalogueContainer with empty list of selLabels")
 	}
-	sel, ok := catalogueSelectors[sel_labels[0]]
+	sel, ok := catalogueSelectors[selLabels[0]]
 	if !ok {
-		panic(fmt.Sprintf("No selector for %v label", sel_labels[0]))
+		panic(fmt.Sprintf("No selector for %v label", selLabels[0]))
 	}
 
 	// copy all the data over, to make sure this container does not share memory with other containers
@@ -658,13 +657,13 @@ func NewPromCounterCatalogueContainer(p *Prometheus, sel_labels []string, l map[
 		prom:       p,
 		stats:      make(map[string]PrometheusCountersCatalogue),
 		selector:   sel,
-		labelNames: make([]string, len(sel_labels)),
+		labelNames: make([]string, len(selLabels)),
 		labels:     make(map[string]string),
 	}
 	for k, v := range l {
 		r.labels[k] = v
 	}
-	copy(r.labelNames, sel_labels)
+	copy(r.labelNames, selLabels)
 	return r
 }
 
@@ -810,10 +809,10 @@ func (o *Prometheus) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *Prometheus) InitProm() {
 
-	prom_prefix := SanitizeMetricName(o.config.Loggers.Prometheus.PromPrefix)
+	promPrefix := SanitizeMetricName(o.config.Loggers.Prometheus.PromPrefix)
 
 	// register metric about current version information.
-	o.promRegistry.MustRegister(version.NewCollector(prom_prefix))
+	o.promRegistry.MustRegister(version.NewCollector(promPrefix))
 
 	// export Go runtime metrics
 	o.promRegistry.MustRegister(
@@ -825,218 +824,218 @@ func (o *Prometheus) InitProm() {
 	// Metric description created in Prometheus object, but used in Describe method of PrometheusCounterSet
 	// Prometheus class itself reports signle metric - BuildInfo.
 	o.gaugeTopDomains = prometheus.NewDesc(
-		fmt.Sprintf("%s_top_domains", prom_prefix),
+		fmt.Sprintf("%s_top_domains", promPrefix),
 		"Number of hit per domain topN, partitioned by qname",
 		[]string{"domain"}, nil,
 	)
 	o.gaugeTopNxDomains = prometheus.NewDesc(
-		fmt.Sprintf("%s_top_nxdomains", prom_prefix),
+		fmt.Sprintf("%s_top_nxdomains", promPrefix),
 		"Number of hit per nx domain topN, partitioned by qname",
 		[]string{"domain"}, nil,
 	)
 
 	o.gaugeTopSfDomains = prometheus.NewDesc(
-		fmt.Sprintf("%s_top_sfdomains", prom_prefix),
+		fmt.Sprintf("%s_top_sfdomains", promPrefix),
 		"Number of hit per servfail domain topN, partitioned by stream and qname",
 		[]string{"domain"}, nil,
 	)
 
 	o.gaugeTopRequesters = prometheus.NewDesc(
-		fmt.Sprintf("%s_top_requesters", prom_prefix),
+		fmt.Sprintf("%s_top_requesters", promPrefix),
 		"Number of hit per requester topN, partitioned by client IP",
 		[]string{"ip"}, nil,
 	)
 
 	o.gaugeTopTlds = prometheus.NewDesc(
-		fmt.Sprintf("%s_top_tlds", prom_prefix),
+		fmt.Sprintf("%s_top_tlds", promPrefix),
 		"Number of hit per tld - topN",
 		[]string{"suffix"}, nil,
 	)
 	// etldplusone_top_total
 	o.gaugeTopETldsPlusOne = prometheus.NewDesc(
-		fmt.Sprintf("%s_top_etldplusone", prom_prefix),
+		fmt.Sprintf("%s_top_etldplusone", promPrefix),
 		"Number of hit per eTLD+1 - topN",
 		[]string{"suffix"}, nil,
 	)
 
 	o.gaugeTopSuspicious = prometheus.NewDesc(
-		fmt.Sprintf("%s_top_suspicious", prom_prefix),
+		fmt.Sprintf("%s_top_suspicious", promPrefix),
 		"Number of hit per suspicious domain - topN",
 		[]string{"domain"}, nil,
 	)
 
 	o.gaugeTopEvicted = prometheus.NewDesc(
-		fmt.Sprintf("%s_top_unanswered", prom_prefix),
+		fmt.Sprintf("%s_top_unanswered", promPrefix),
 		"Number of hit per unanswered domain - topN",
 		[]string{"domain"}, nil,
 	)
 
 	o.gaugeEps = prometheus.NewDesc(
-		fmt.Sprintf("%s_throughput_ops", prom_prefix),
+		fmt.Sprintf("%s_throughput_ops", promPrefix),
 		"Number of ops per second received, partitioned by stream",
 		nil, nil,
 	)
 
 	o.gaugeEpsMax = prometheus.NewDesc(
-		fmt.Sprintf("%s_throughput_ops_max", prom_prefix),
+		fmt.Sprintf("%s_throughput_ops_max", promPrefix),
 		"Max number of ops per second observed, partitioned by stream",
 		nil, nil,
 	)
 
 	// Counter metrics
 	o.counterDomains = prometheus.NewDesc(
-		fmt.Sprintf("%s_domains_total", prom_prefix),
+		fmt.Sprintf("%s_domains_total", promPrefix),
 		"The total number of domains per stream identity",
 		nil, nil,
 	)
 
 	o.counterDomainsNx = prometheus.NewDesc(
-		fmt.Sprintf("%s_nxdomains_total", prom_prefix),
+		fmt.Sprintf("%s_nxdomains_total", promPrefix),
 		"The total number of unknown domains per stream identity",
 		nil, nil,
 	)
 
 	o.counterDomainsSf = prometheus.NewDesc(
-		fmt.Sprintf("%s_sfdomains_total", prom_prefix),
+		fmt.Sprintf("%s_sfdomains_total", promPrefix),
 		"The total number of serverfail domains per stream identity",
 		nil, nil,
 	)
 
 	o.counterRequesters = prometheus.NewDesc(
-		fmt.Sprintf("%s_requesters_total", prom_prefix),
+		fmt.Sprintf("%s_requesters_total", promPrefix),
 		"The total number of DNS clients per stream identity",
 		nil, nil,
 	)
 
 	o.counterTlds = prometheus.NewDesc(
-		fmt.Sprintf("%s_tlds_total", prom_prefix),
+		fmt.Sprintf("%s_tlds_total", promPrefix),
 		"The total number of tld per stream identity",
 		nil, nil,
 	)
 
 	o.counterETldPlusOne = prometheus.NewDesc(
-		fmt.Sprintf("%s_etldplusone_total", prom_prefix),
+		fmt.Sprintf("%s_etldplusone_total", promPrefix),
 		"The total number of tld per stream identity",
 		nil, nil,
 	)
 
 	o.counterSuspicious = prometheus.NewDesc(
-		fmt.Sprintf("%s_suspicious_total", prom_prefix),
+		fmt.Sprintf("%s_suspicious_total", promPrefix),
 		"The total number of suspicious domain per stream identity",
 		nil, nil,
 	)
 
 	o.counterEvicted = prometheus.NewDesc(
-		fmt.Sprintf("%s_unanswered_total", prom_prefix),
+		fmt.Sprintf("%s_unanswered_total", promPrefix),
 		"The total number of unanswered domains per stream identity",
 		nil, nil,
 	)
 
 	o.counterQtypes = prometheus.NewDesc(
-		fmt.Sprintf("%s_qtypes_total", prom_prefix),
+		fmt.Sprintf("%s_qtypes_total", promPrefix),
 		"Counter of queries per qtypes",
 		[]string{"query_type"}, nil,
 	)
 
 	o.counterRcodes = prometheus.NewDesc(
-		fmt.Sprintf("%s_rcodes_total", prom_prefix),
+		fmt.Sprintf("%s_rcodes_total", promPrefix),
 		"Counter of replies per return codes",
 		[]string{"return_code"}, nil,
 	)
 
 	o.counterIPProtocol = prometheus.NewDesc(
-		fmt.Sprintf("%s_ipprotocol_total", prom_prefix),
+		fmt.Sprintf("%s_ipprotocol_total", promPrefix),
 		"Counter of packets per IP protocol",
 		[]string{"net_transport"}, nil,
 	)
 
 	o.counterIPVersion = prometheus.NewDesc(
-		fmt.Sprintf("%s_ipversion_total", prom_prefix),
+		fmt.Sprintf("%s_ipversion_total", promPrefix),
 		"Counter of packets per IP version",
 		[]string{"net_family"}, nil,
 	)
 
-	o.counterDnsMessages = prometheus.NewDesc(
-		fmt.Sprintf("%s_dnsmessages_total", prom_prefix),
+	o.counterDNSMessages = prometheus.NewDesc(
+		fmt.Sprintf("%s_dnsmessages_total", promPrefix),
 		"Counter of DNS messages per stream",
 		nil, nil,
 	)
 
-	o.counterDnsQueries = prometheus.NewDesc(
-		fmt.Sprintf("%s_queries_total", prom_prefix),
+	o.counterDNSQueries = prometheus.NewDesc(
+		fmt.Sprintf("%s_queries_total", promPrefix),
 		"Counter of DNS queries per stream",
 		nil, nil,
 	)
 
-	o.counterDnsReplies = prometheus.NewDesc(
-		fmt.Sprintf("%s_replies_total", prom_prefix),
+	o.counterDNSReplies = prometheus.NewDesc(
+		fmt.Sprintf("%s_replies_total", promPrefix),
 		"Counter of DNS replies per stream",
 		nil, nil,
 	)
 
 	o.counterFlagsTC = prometheus.NewDesc(
-		fmt.Sprintf("%s_flag_tc_total", prom_prefix),
+		fmt.Sprintf("%s_flag_tc_total", promPrefix),
 		"Number of packet with flag TC",
 		nil, nil,
 	)
 
 	o.counterFlagsAA = prometheus.NewDesc(
-		fmt.Sprintf("%s_flag_aa_total", prom_prefix),
+		fmt.Sprintf("%s_flag_aa_total", promPrefix),
 		"Number of packet with flag AA",
 		nil, nil,
 	)
 
 	o.counterFlagsRA = prometheus.NewDesc(
-		fmt.Sprintf("%s_flag_ra_total", prom_prefix),
+		fmt.Sprintf("%s_flag_ra_total", promPrefix),
 		"Number of packet with flag RA",
 		nil, nil,
 	)
 
 	o.counterFlagsAD = prometheus.NewDesc(
-		fmt.Sprintf("%s_flag_ad_total", prom_prefix),
+		fmt.Sprintf("%s_flag_ad_total", promPrefix),
 		"Number of packet with flag AD",
 		nil, nil,
 	)
 
 	o.counterFlagsMalformed = prometheus.NewDesc(
-		fmt.Sprintf("%s_malformed_total", prom_prefix),
+		fmt.Sprintf("%s_malformed_total", promPrefix),
 		"Number of malformed packets",
 		nil, nil,
 	)
 
 	o.counterFlagsFragmented = prometheus.NewDesc(
-		fmt.Sprintf("%s_fragmented_total", prom_prefix),
+		fmt.Sprintf("%s_fragmented_total", promPrefix),
 		"Number of IP fragmented packets",
 		nil, nil,
 	)
 
 	o.counterFlagsReassembled = prometheus.NewDesc(
-		fmt.Sprintf("%s_reassembled_total", prom_prefix),
+		fmt.Sprintf("%s_reassembled_total", promPrefix),
 		"Number of TCP reassembled packets",
 		nil, nil,
 	)
 
 	o.totalBytes = prometheus.NewDesc(
-		fmt.Sprintf("%s_bytes_total", prom_prefix),
+		fmt.Sprintf("%s_bytes_total", promPrefix),
 		"The total bytes received and sent",
 		nil, nil,
 	)
 
 	o.totalReceivedBytes = prometheus.NewDesc(
-		fmt.Sprintf("%s_received_bytes_total", prom_prefix),
+		fmt.Sprintf("%s_received_bytes_total", promPrefix),
 		"The total bytes received",
 		nil, nil,
 	)
 
 	o.totalSentBytes = prometheus.NewDesc(
-		fmt.Sprintf("%s_sent_bytes_total", prom_prefix),
+		fmt.Sprintf("%s_sent_bytes_total", promPrefix),
 		"The total bytes sent",
 		nil, nil,
 	)
 
 	o.histogramQueriesLength = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    fmt.Sprintf("%s_queries_size_bytes", prom_prefix),
+			Name:    fmt.Sprintf("%s_queries_size_bytes", promPrefix),
 			Help:    "Size of the queries in bytes.",
 			Buckets: []float64{50, 100, 250, 500},
 		},
@@ -1046,7 +1045,7 @@ func (o *Prometheus) InitProm() {
 
 	o.histogramRepliesLength = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    fmt.Sprintf("%s_replies_size_bytes", prom_prefix),
+			Name:    fmt.Sprintf("%s_replies_size_bytes", promPrefix),
 			Help:    "Size of the replies in bytes.",
 			Buckets: []float64{50, 100, 250, 500},
 		},
@@ -1056,7 +1055,7 @@ func (o *Prometheus) InitProm() {
 
 	o.histogramQnamesLength = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    fmt.Sprintf("%s_qnames_size_bytes", prom_prefix),
+			Name:    fmt.Sprintf("%s_qnames_size_bytes", promPrefix),
 			Help:    "Size of the qname in bytes.",
 			Buckets: []float64{10, 20, 40, 60, 100},
 		},
@@ -1066,7 +1065,7 @@ func (o *Prometheus) InitProm() {
 
 	o.histogramLatencies = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    fmt.Sprintf("%s_latencies", prom_prefix),
+			Name:    fmt.Sprintf("%s_latencies", promPrefix),
 			Help:    "Latency between query and reply",
 			Buckets: []float64{0.001, 0.010, 0.050, 0.100, 0.5, 1.0},
 		},
@@ -1250,8 +1249,8 @@ RUN_LOOP:
 
 func (o *Prometheus) Process() {
 	// init timer to compute qps
-	t1_interval := 1 * time.Second
-	t1 := time.NewTimer(t1_interval)
+	t1Interval := 1 * time.Second
+	t1 := time.NewTimer(t1Interval)
 
 	o.LogInfo("ready to process")
 PROCESS_LOOP:
@@ -1274,7 +1273,7 @@ PROCESS_LOOP:
 			o.ComputeEventsPerSecond()
 
 			// reset the timer
-			t1.Reset(t1_interval)
+			t1.Reset(t1Interval)
 		}
 	}
 	o.LogInfo("processing terminated")
