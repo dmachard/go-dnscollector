@@ -803,19 +803,19 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, name string) 
 	return o
 }
 
-func (o *Prometheus) GetName() string { return o.name }
+func (c *Prometheus) GetName() string { return c.name }
 
-func (o *Prometheus) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *Prometheus) SetLoggers(loggers []dnsutils.Worker) {}
 
-func (o *Prometheus) InitProm() {
+func (c *Prometheus) InitProm() {
 
-	promPrefix := SanitizeMetricName(o.config.Loggers.Prometheus.PromPrefix)
+	promPrefix := SanitizeMetricName(c.config.Loggers.Prometheus.PromPrefix)
 
 	// register metric about current version information.
-	o.promRegistry.MustRegister(version.NewCollector(promPrefix))
+	c.promRegistry.MustRegister(version.NewCollector(promPrefix))
 
 	// export Go runtime metrics
-	o.promRegistry.MustRegister(
+	c.promRegistry.MustRegister(
 		collectors.NewGoCollector(collectors.WithGoCollectorMemStatsMetricsDisabled()),
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 	)
@@ -823,332 +823,332 @@ func (o *Prometheus) InitProm() {
 
 	// Metric description created in Prometheus object, but used in Describe method of PrometheusCounterSet
 	// Prometheus class itself reports signle metric - BuildInfo.
-	o.gaugeTopDomains = prometheus.NewDesc(
+	c.gaugeTopDomains = prometheus.NewDesc(
 		fmt.Sprintf("%s_top_domains", promPrefix),
 		"Number of hit per domain topN, partitioned by qname",
 		[]string{"domain"}, nil,
 	)
-	o.gaugeTopNxDomains = prometheus.NewDesc(
+	c.gaugeTopNxDomains = prometheus.NewDesc(
 		fmt.Sprintf("%s_top_nxdomains", promPrefix),
 		"Number of hit per nx domain topN, partitioned by qname",
 		[]string{"domain"}, nil,
 	)
 
-	o.gaugeTopSfDomains = prometheus.NewDesc(
+	c.gaugeTopSfDomains = prometheus.NewDesc(
 		fmt.Sprintf("%s_top_sfdomains", promPrefix),
 		"Number of hit per servfail domain topN, partitioned by stream and qname",
 		[]string{"domain"}, nil,
 	)
 
-	o.gaugeTopRequesters = prometheus.NewDesc(
+	c.gaugeTopRequesters = prometheus.NewDesc(
 		fmt.Sprintf("%s_top_requesters", promPrefix),
 		"Number of hit per requester topN, partitioned by client IP",
 		[]string{"ip"}, nil,
 	)
 
-	o.gaugeTopTlds = prometheus.NewDesc(
+	c.gaugeTopTlds = prometheus.NewDesc(
 		fmt.Sprintf("%s_top_tlds", promPrefix),
 		"Number of hit per tld - topN",
 		[]string{"suffix"}, nil,
 	)
 	// etldplusone_top_total
-	o.gaugeTopETldsPlusOne = prometheus.NewDesc(
+	c.gaugeTopETldsPlusOne = prometheus.NewDesc(
 		fmt.Sprintf("%s_top_etldplusone", promPrefix),
 		"Number of hit per eTLD+1 - topN",
 		[]string{"suffix"}, nil,
 	)
 
-	o.gaugeTopSuspicious = prometheus.NewDesc(
+	c.gaugeTopSuspicious = prometheus.NewDesc(
 		fmt.Sprintf("%s_top_suspicious", promPrefix),
 		"Number of hit per suspicious domain - topN",
 		[]string{"domain"}, nil,
 	)
 
-	o.gaugeTopEvicted = prometheus.NewDesc(
+	c.gaugeTopEvicted = prometheus.NewDesc(
 		fmt.Sprintf("%s_top_unanswered", promPrefix),
 		"Number of hit per unanswered domain - topN",
 		[]string{"domain"}, nil,
 	)
 
-	o.gaugeEps = prometheus.NewDesc(
+	c.gaugeEps = prometheus.NewDesc(
 		fmt.Sprintf("%s_throughput_ops", promPrefix),
 		"Number of ops per second received, partitioned by stream",
 		nil, nil,
 	)
 
-	o.gaugeEpsMax = prometheus.NewDesc(
+	c.gaugeEpsMax = prometheus.NewDesc(
 		fmt.Sprintf("%s_throughput_ops_max", promPrefix),
 		"Max number of ops per second observed, partitioned by stream",
 		nil, nil,
 	)
 
 	// Counter metrics
-	o.counterDomains = prometheus.NewDesc(
+	c.counterDomains = prometheus.NewDesc(
 		fmt.Sprintf("%s_domains_total", promPrefix),
 		"The total number of domains per stream identity",
 		nil, nil,
 	)
 
-	o.counterDomainsNx = prometheus.NewDesc(
+	c.counterDomainsNx = prometheus.NewDesc(
 		fmt.Sprintf("%s_nxdomains_total", promPrefix),
 		"The total number of unknown domains per stream identity",
 		nil, nil,
 	)
 
-	o.counterDomainsSf = prometheus.NewDesc(
+	c.counterDomainsSf = prometheus.NewDesc(
 		fmt.Sprintf("%s_sfdomains_total", promPrefix),
 		"The total number of serverfail domains per stream identity",
 		nil, nil,
 	)
 
-	o.counterRequesters = prometheus.NewDesc(
+	c.counterRequesters = prometheus.NewDesc(
 		fmt.Sprintf("%s_requesters_total", promPrefix),
 		"The total number of DNS clients per stream identity",
 		nil, nil,
 	)
 
-	o.counterTlds = prometheus.NewDesc(
+	c.counterTlds = prometheus.NewDesc(
 		fmt.Sprintf("%s_tlds_total", promPrefix),
 		"The total number of tld per stream identity",
 		nil, nil,
 	)
 
-	o.counterETldPlusOne = prometheus.NewDesc(
+	c.counterETldPlusOne = prometheus.NewDesc(
 		fmt.Sprintf("%s_etldplusone_total", promPrefix),
 		"The total number of tld per stream identity",
 		nil, nil,
 	)
 
-	o.counterSuspicious = prometheus.NewDesc(
+	c.counterSuspicious = prometheus.NewDesc(
 		fmt.Sprintf("%s_suspicious_total", promPrefix),
 		"The total number of suspicious domain per stream identity",
 		nil, nil,
 	)
 
-	o.counterEvicted = prometheus.NewDesc(
+	c.counterEvicted = prometheus.NewDesc(
 		fmt.Sprintf("%s_unanswered_total", promPrefix),
 		"The total number of unanswered domains per stream identity",
 		nil, nil,
 	)
 
-	o.counterQtypes = prometheus.NewDesc(
+	c.counterQtypes = prometheus.NewDesc(
 		fmt.Sprintf("%s_qtypes_total", promPrefix),
 		"Counter of queries per qtypes",
 		[]string{"query_type"}, nil,
 	)
 
-	o.counterRcodes = prometheus.NewDesc(
+	c.counterRcodes = prometheus.NewDesc(
 		fmt.Sprintf("%s_rcodes_total", promPrefix),
 		"Counter of replies per return codes",
 		[]string{"return_code"}, nil,
 	)
 
-	o.counterIPProtocol = prometheus.NewDesc(
+	c.counterIPProtocol = prometheus.NewDesc(
 		fmt.Sprintf("%s_ipprotocol_total", promPrefix),
 		"Counter of packets per IP protocol",
 		[]string{"net_transport"}, nil,
 	)
 
-	o.counterIPVersion = prometheus.NewDesc(
+	c.counterIPVersion = prometheus.NewDesc(
 		fmt.Sprintf("%s_ipversion_total", promPrefix),
 		"Counter of packets per IP version",
 		[]string{"net_family"}, nil,
 	)
 
-	o.counterDNSMessages = prometheus.NewDesc(
+	c.counterDNSMessages = prometheus.NewDesc(
 		fmt.Sprintf("%s_dnsmessages_total", promPrefix),
 		"Counter of DNS messages per stream",
 		nil, nil,
 	)
 
-	o.counterDNSQueries = prometheus.NewDesc(
+	c.counterDNSQueries = prometheus.NewDesc(
 		fmt.Sprintf("%s_queries_total", promPrefix),
 		"Counter of DNS queries per stream",
 		nil, nil,
 	)
 
-	o.counterDNSReplies = prometheus.NewDesc(
+	c.counterDNSReplies = prometheus.NewDesc(
 		fmt.Sprintf("%s_replies_total", promPrefix),
 		"Counter of DNS replies per stream",
 		nil, nil,
 	)
 
-	o.counterFlagsTC = prometheus.NewDesc(
+	c.counterFlagsTC = prometheus.NewDesc(
 		fmt.Sprintf("%s_flag_tc_total", promPrefix),
 		"Number of packet with flag TC",
 		nil, nil,
 	)
 
-	o.counterFlagsAA = prometheus.NewDesc(
+	c.counterFlagsAA = prometheus.NewDesc(
 		fmt.Sprintf("%s_flag_aa_total", promPrefix),
 		"Number of packet with flag AA",
 		nil, nil,
 	)
 
-	o.counterFlagsRA = prometheus.NewDesc(
+	c.counterFlagsRA = prometheus.NewDesc(
 		fmt.Sprintf("%s_flag_ra_total", promPrefix),
 		"Number of packet with flag RA",
 		nil, nil,
 	)
 
-	o.counterFlagsAD = prometheus.NewDesc(
+	c.counterFlagsAD = prometheus.NewDesc(
 		fmt.Sprintf("%s_flag_ad_total", promPrefix),
 		"Number of packet with flag AD",
 		nil, nil,
 	)
 
-	o.counterFlagsMalformed = prometheus.NewDesc(
+	c.counterFlagsMalformed = prometheus.NewDesc(
 		fmt.Sprintf("%s_malformed_total", promPrefix),
 		"Number of malformed packets",
 		nil, nil,
 	)
 
-	o.counterFlagsFragmented = prometheus.NewDesc(
+	c.counterFlagsFragmented = prometheus.NewDesc(
 		fmt.Sprintf("%s_fragmented_total", promPrefix),
 		"Number of IP fragmented packets",
 		nil, nil,
 	)
 
-	o.counterFlagsReassembled = prometheus.NewDesc(
+	c.counterFlagsReassembled = prometheus.NewDesc(
 		fmt.Sprintf("%s_reassembled_total", promPrefix),
 		"Number of TCP reassembled packets",
 		nil, nil,
 	)
 
-	o.totalBytes = prometheus.NewDesc(
+	c.totalBytes = prometheus.NewDesc(
 		fmt.Sprintf("%s_bytes_total", promPrefix),
 		"The total bytes received and sent",
 		nil, nil,
 	)
 
-	o.totalReceivedBytes = prometheus.NewDesc(
+	c.totalReceivedBytes = prometheus.NewDesc(
 		fmt.Sprintf("%s_received_bytes_total", promPrefix),
 		"The total bytes received",
 		nil, nil,
 	)
 
-	o.totalSentBytes = prometheus.NewDesc(
+	c.totalSentBytes = prometheus.NewDesc(
 		fmt.Sprintf("%s_sent_bytes_total", promPrefix),
 		"The total bytes sent",
 		nil, nil,
 	)
 
-	o.histogramQueriesLength = prometheus.NewHistogramVec(
+	c.histogramQueriesLength = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    fmt.Sprintf("%s_queries_size_bytes", promPrefix),
 			Help:    "Size of the queries in bytes.",
 			Buckets: []float64{50, 100, 250, 500},
 		},
-		o.catalogueLabels,
+		c.catalogueLabels,
 	)
-	o.promRegistry.MustRegister(o.histogramQueriesLength)
+	c.promRegistry.MustRegister(c.histogramQueriesLength)
 
-	o.histogramRepliesLength = prometheus.NewHistogramVec(
+	c.histogramRepliesLength = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    fmt.Sprintf("%s_replies_size_bytes", promPrefix),
 			Help:    "Size of the replies in bytes.",
 			Buckets: []float64{50, 100, 250, 500},
 		},
-		o.catalogueLabels,
+		c.catalogueLabels,
 	)
-	o.promRegistry.MustRegister(o.histogramRepliesLength)
+	c.promRegistry.MustRegister(c.histogramRepliesLength)
 
-	o.histogramQnamesLength = prometheus.NewHistogramVec(
+	c.histogramQnamesLength = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    fmt.Sprintf("%s_qnames_size_bytes", promPrefix),
 			Help:    "Size of the qname in bytes.",
 			Buckets: []float64{10, 20, 40, 60, 100},
 		},
-		o.catalogueLabels,
+		c.catalogueLabels,
 	)
-	o.promRegistry.MustRegister(o.histogramQnamesLength)
+	c.promRegistry.MustRegister(c.histogramQnamesLength)
 
-	o.histogramLatencies = prometheus.NewHistogramVec(
+	c.histogramLatencies = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    fmt.Sprintf("%s_latencies", promPrefix),
 			Help:    "Latency between query and reply",
 			Buckets: []float64{0.001, 0.010, 0.050, 0.100, 0.5, 1.0},
 		},
-		o.catalogueLabels,
+		c.catalogueLabels,
 	)
-	o.promRegistry.MustRegister(o.histogramLatencies)
+	c.promRegistry.MustRegister(c.histogramLatencies)
 }
 
-func (o *Prometheus) ReadConfig() {
-	if !dnsutils.IsValidTLS(o.config.Loggers.Prometheus.TlsMinVersion) {
-		o.logger.Fatal("logger prometheus - invalid tls min version")
+func (c *Prometheus) ReadConfig() {
+	if !dnsutils.IsValidTLS(c.config.Loggers.Prometheus.TlsMinVersion) {
+		c.logger.Fatal("logger prometheus - invalid tls min version")
 	}
 }
 
-func (o *Prometheus) ReloadConfig(config *dnsutils.Config) {
-	o.LogInfo("reload configuration!")
-	o.configChan <- config
+func (c *Prometheus) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload configuration!")
+	c.configChan <- config
 }
 
-func (o *Prometheus) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger=prometheus - "+msg, v...)
+func (c *Prometheus) LogInfo(msg string, v ...interface{}) {
+	c.logger.Info("["+c.name+"] logger=prometheus - "+msg, v...)
 }
 
-func (o *Prometheus) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger=prometheus - "+msg, v...)
+func (c *Prometheus) LogError(msg string, v ...interface{}) {
+	c.logger.Error("["+c.name+"] logger=prometheus - "+msg, v...)
 }
 
-func (o *Prometheus) Channel() chan dnsutils.DnsMessage {
-	return o.inputChan
+func (c *Prometheus) Channel() chan dnsutils.DnsMessage {
+	return c.inputChan
 }
 
-func (o *Prometheus) Stop() {
-	o.LogInfo("stopping to run...")
-	o.stopRun <- true
-	<-o.doneRun
+func (c *Prometheus) Stop() {
+	c.LogInfo("stopping to run...")
+	c.stopRun <- true
+	<-c.doneRun
 
-	o.LogInfo("stopping to process...")
-	o.stopProcess <- true
-	<-o.doneProcess
+	c.LogInfo("stopping to process...")
+	c.stopProcess <- true
+	<-c.doneProcess
 
-	o.LogInfo("stopping http server...")
-	o.netListener.Close()
-	<-o.doneAPI
+	c.LogInfo("stopping http server...")
+	c.netListener.Close()
+	<-c.doneAPI
 }
 
-func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
+func (c *Prometheus) Record(dm dnsutils.DnsMessage) {
 	// record stream identity
-	o.Lock()
+	c.Lock()
 
 	// count number of dns messages per network family (ipv4 or v6)
-	v := o.counters.GetCountersSet(&dm)
+	v := c.counters.GetCountersSet(&dm)
 	counterSet, ok := v.(*PrometheusCountersSet)
-	o.Unlock()
+	c.Unlock()
 	if !ok {
-		o.LogError(fmt.Sprintf("Prometheus logger - GetCountersSet returned an invalid value of %T, expected *PrometheusCountersSet", v))
+		c.LogError(fmt.Sprintf("Prometheus logger - GetCountersSet returned an invalid value of %T, expected *PrometheusCountersSet", v))
 	} else {
 		counterSet.Record(dm)
 	}
 
 }
 
-func (o *Prometheus) ComputeEventsPerSecond() {
+func (c *Prometheus) ComputeEventsPerSecond() {
 	// for each stream compute the number of events per second
-	o.Lock()
-	defer o.Unlock()
-	for _, cntrSet := range o.counters.GetAllCounterSets() {
+	c.Lock()
+	defer c.Unlock()
+	for _, cntrSet := range c.counters.GetAllCounterSets() {
 		cntrSet.ComputeEventsPerSecond()
 	}
 }
 
-func (o *Prometheus) ListenAndServe() {
-	o.LogInfo("starting http server...")
+func (c *Prometheus) ListenAndServe() {
+	c.LogInfo("starting http server...")
 
 	var err error
 	var listener net.Listener
-	addrlisten := o.config.Loggers.Prometheus.ListenIP + ":" + strconv.Itoa(o.config.Loggers.Prometheus.ListenPort)
+	addrlisten := c.config.Loggers.Prometheus.ListenIP + ":" + strconv.Itoa(c.config.Loggers.Prometheus.ListenPort)
 	// listening with tls enabled ?
-	if o.config.Loggers.Prometheus.TlsSupport {
-		o.LogInfo("tls support enabled")
+	if c.config.Loggers.Prometheus.TlsSupport {
+		c.LogInfo("tls support enabled")
 		var cer tls.Certificate
-		cer, err = tls.LoadX509KeyPair(o.config.Loggers.Prometheus.CertFile, o.config.Loggers.Prometheus.KeyFile)
+		cer, err = tls.LoadX509KeyPair(c.config.Loggers.Prometheus.CertFile, c.config.Loggers.Prometheus.KeyFile)
 		if err != nil {
-			o.logger.Fatal("loading certificate failed:", err)
+			c.logger.Fatal("loading certificate failed:", err)
 		}
 
 		// prepare tls configuration
@@ -1158,15 +1158,15 @@ func (o *Prometheus) ListenAndServe() {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.Prometheus.TlsMinVersion]
+		tlsConfig.MinVersion = dnsutils.TLS_VERSION[c.config.Loggers.Prometheus.TlsMinVersion]
 
-		if o.config.Loggers.Prometheus.TlsMutual {
+		if c.config.Loggers.Prometheus.TlsMutual {
 
 			// Create a CA certificate pool and add cert.pem to it
 			var caCert []byte
-			caCert, err = os.ReadFile(o.config.Loggers.Prometheus.CertFile)
+			caCert, err = os.ReadFile(c.config.Loggers.Prometheus.CertFile)
 			if err != nil {
-				o.logger.Fatal(err)
+				c.logger.Fatal(err)
 			}
 			caCertPool := x509.NewCertPool()
 			caCertPool.AppendCertsFromPEM(caCert)
@@ -1184,53 +1184,53 @@ func (o *Prometheus) ListenAndServe() {
 
 	// something wrong ?
 	if err != nil {
-		o.logger.Fatal("http server listening failed:", err)
+		c.logger.Fatal("http server listening failed:", err)
 	}
 
-	o.netListener = listener
-	o.LogInfo("is listening on %s", listener.Addr())
+	c.netListener = listener
+	c.LogInfo("is listening on %s", listener.Addr())
 
-	o.httpServer.Serve(o.netListener)
+	c.httpServer.Serve(c.netListener)
 
-	o.LogInfo("http server terminated")
-	o.doneAPI <- true
+	c.LogInfo("http server terminated")
+	c.doneAPI <- true
 }
 
-func (o *Prometheus) Run() {
-	o.LogInfo("running in background...")
+func (c *Prometheus) Run() {
+	c.LogInfo("running in background...")
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.outputChan)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+	listChannel = append(listChannel, c.outputChan)
+	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
 
 	// start http server
-	go o.ListenAndServe()
+	go c.ListenAndServe()
 
 	// goroutine to process transformed dns messages
-	go o.Process()
+	go c.Process()
 
 	// loop to process incoming messages
 RUN_LOOP:
 	for {
 		select {
-		case <-o.stopRun:
+		case <-c.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
-			o.doneRun <- true
+			c.doneRun <- true
 			break RUN_LOOP
 
-		case cfg, opened := <-o.configChan:
+		case cfg, opened := <-c.configChan:
 			if !opened {
 				return
 			}
-			o.config = cfg
-			o.ReadConfig()
+			c.config = cfg
+			c.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-o.inputChan:
+		case dm, opened := <-c.inputChan:
 			if !opened {
-				o.LogInfo("input channel closed!")
+				c.LogInfo("input channel closed!")
 				return
 			}
 
@@ -1241,42 +1241,42 @@ RUN_LOOP:
 			}
 
 			// send to output channel
-			o.outputChan <- dm
+			c.outputChan <- dm
 		}
 	}
-	o.LogInfo("run terminated")
+	c.LogInfo("run terminated")
 }
 
-func (o *Prometheus) Process() {
+func (c *Prometheus) Process() {
 	// init timer to compute qps
 	t1Interval := 1 * time.Second
 	t1 := time.NewTimer(t1Interval)
 
-	o.LogInfo("ready to process")
+	c.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {
-		case <-o.stopProcess:
-			o.doneProcess <- true
+		case <-c.stopProcess:
+			c.doneProcess <- true
 			break PROCESS_LOOP
-		case dm, opened := <-o.outputChan:
+		case dm, opened := <-c.outputChan:
 			if !opened {
-				o.LogInfo("output channel closed!")
+				c.LogInfo("output channel closed!")
 				return
 			}
 
 			// record the dnstap message
-			o.Record(dm)
+			c.Record(dm)
 
 		case <-t1.C:
 			// compute eps each second
-			o.ComputeEventsPerSecond()
+			c.ComputeEventsPerSecond()
 
 			// reset the timer
 			t1.Reset(t1Interval)
 		}
 	}
-	o.LogInfo("processing terminated")
+	c.LogInfo("processing terminated")
 }
 
 /*
