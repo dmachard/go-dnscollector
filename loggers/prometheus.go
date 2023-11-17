@@ -58,7 +58,7 @@ type EpsCounters struct {
 	TotalQtypes        map[string]float64
 	TotalIPVersion     map[string]float64
 	TotalIPProtocol    map[string]float64
-	TotalDnsMessages   float64
+	TotalDNSMessages   float64
 	TotalQueries       int
 	TotalReplies       int
 	TotalBytesSent     int
@@ -118,24 +118,24 @@ type PrometheusCountersSet struct {
 
 // PromCounterCatalogueContainer is the implementation of PrometheusCountersCatalogue interface
 // That maps a single label into other Containers or CounterSet
-// The 'chain' of nested Containers keep track of label_names requested by the config
+// The 'chain' of nested Containers keep track of labelNames requested by the config
 // to figure out whether nested Container should be created, or, if all labels but the last one
 // already considered at the upper levels, it is time to create individual CounterSet
 type PromCounterCatalogueContainer struct {
 	prom *Prometheus
 
-	// label_names - is a list of label *names* for PromCounterCatalogueContainer's in stats
+	// labelNames - is a list of label *names* for PromCounterCatalogueContainer's in stats
 	// map to use to get proper selectors.
 	// The topmost instance of PromCounterCatalogueContainer has the full list of all names to
 	// consider (the one provided by the config). Whenver it needs to create a new item in
-	// it's stats map, it suplies label_names[1:] to the constructor for the lower level
+	// it's stats map, it suplies labelNames[1:] to the constructor for the lower level
 	// container to get the selector for the next level
-	label_names []string // This is list of label names for nested containers
+	labelNames []string // This is list of label names for nested containers
 
 	// This is the unique set of label-value pairs for this catalogue element.
 	// The topmost Catalog has it empty, when it creates a new entry it provides the pair of
-	// label_names[0]->selector(message) to the constructor. Lower levels get these pair
-	// collected. Ultimately, when all label names in label_names is exausted, Catalogue creates
+	// labelNames[0]->selector(message) to the constructor. Lower levels get these pair
+	// collected. Ultimately, when all label names in labelNames is exausted, Catalogue creates
 	// an instance of newPrometheusCounterSet and provides it with labels map to properly wrap
 	// in Prometheus registry.
 	// The goal is to separate label/values pairs construction and individual counters collection
@@ -161,7 +161,7 @@ func GetResolverIP(dm *dnsutils.DnsMessage) string {
 }
 
 type Prometheus struct {
-	doneApi      chan bool
+	doneAPI      chan bool
 	stopProcess  chan bool
 	doneProcess  chan bool
 	stopRun      chan bool
@@ -420,7 +420,7 @@ func (c *PrometheusCountersSet) Record(dm dnsutils.DnsMessage) {
 	// Record EPS related data
 	c.epsCounters.TotalEvents++
 	c.epsCounters.TotalBytes += dm.DNS.Length
-	c.epsCounters.TotalDnsMessages++
+	c.epsCounters.TotalDNSMessages++
 
 	if _, exists := c.epsCounters.TotalIPVersion[dm.NetworkInfo.Family]; !exists {
 		c.epsCounters.TotalIPVersion[dm.NetworkInfo.Family] = 1
@@ -565,7 +565,7 @@ func (o *PrometheusCountersSet) Collect(ch chan<- prometheus.Metric) {
 		float64(o.epsCounters.EpsMax),
 	)
 
-	//Update qtypes counter
+	// Update qtypes counter
 	for k, v := range o.epsCounters.TotalQtypes {
 		ch <- prometheus.MustNewConstMetric(o.prom.counterQtypes, prometheus.CounterValue,
 			v, k,
@@ -595,7 +595,7 @@ func (o *PrometheusCountersSet) Collect(ch chan<- prometheus.Metric) {
 
 	// Update global number of dns messages
 	ch <- prometheus.MustNewConstMetric(o.prom.counterDnsMessages, prometheus.CounterValue,
-		o.epsCounters.TotalDnsMessages)
+		o.epsCounters.TotalDNSMessages)
 
 	// Update number of dns queries
 	ch <- prometheus.MustNewConstMetric(o.prom.counterDnsQueries, prometheus.CounterValue,
@@ -658,13 +658,13 @@ func NewPromCounterCatalogueContainer(p *Prometheus, sel_labels []string, l map[
 		prom:        p,
 		stats:       make(map[string]PrometheusCountersCatalogue),
 		selector:    sel,
-		label_names: make([]string, len(sel_labels)),
+		labelNames: make([]string, len(sel_labels)),
 		labels:      make(map[string]string),
 	}
 	for k, v := range l {
 		r.labels[k] = v
 	}
-	copy(r.label_names, sel_labels)
+	copy(r.labelNames, sel_labels)
 	return r
 }
 
@@ -708,15 +708,15 @@ func (c *PromCounterCatalogueContainer) GetCountersSet(dm *dnsutils.DnsMessage) 
 	var newElem PrometheusCountersCatalogue
 	// Prepare labels for the new element (needed for ether CatalogueContainer and CounterSet)
 	newLables := map[string]string{
-		c.label_names[0]: lbl,
+		c.labelNames[0]: lbl,
 	}
 	for k, v := range c.labels {
 		newLables[k] = v
 	}
-	if len(c.label_names) > 1 {
+	if len(c.labelNames) > 1 {
 		newElem = NewPromCounterCatalogueContainer(
 			c.prom,
-			c.label_names[1:],
+			c.labelNames[1:],
 			newLables, // Here we'll do an extra map copy...
 		)
 	} else {
@@ -736,15 +736,15 @@ func (c *PromCounterCatalogueContainer) GetCountersSet(dm *dnsutils.DnsMessage) 
 
 // This function checks the configuration, to determine which label dimentions were requested
 // by configuration, and returns correct implementation of Catalogue.
-func CreateSystemCatalogue(prom *Prometheus) ([]string, *PromCounterCatalogueContainer) {
-	lbls := prom.config.Loggers.Prometheus.LabelsList
+func CreateSystemCatalogue(o *Prometheus) ([]string, *PromCounterCatalogueContainer) {
+	lbls := o.config.Loggers.Prometheus.LabelsList
 
 	// Default configuration is label with stream_id, to keep us backward compatible
 	if len(lbls) == 0 {
 		lbls = []string{"stream_id"}
 	}
 	return lbls, NewPromCounterCatalogueContainer(
-		prom,
+		o,
 		lbls,
 		make(map[string]string),
 	)
@@ -753,7 +753,7 @@ func CreateSystemCatalogue(prom *Prometheus) ([]string, *PromCounterCatalogueCon
 func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, name string) *Prometheus {
 	logger.Info("[%s] logger=prometheus - enabled", name)
 	o := &Prometheus{
-		doneApi:      make(chan bool),
+		doneAPI:      make(chan bool),
 		stopProcess:  make(chan bool),
 		doneProcess:  make(chan bool),
 		stopRun:      make(chan bool),
@@ -804,9 +804,9 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, name string) 
 	return o
 }
 
-func (c *Prometheus) GetName() string { return c.name }
+func (o *Prometheus) GetName() string { return o.name }
 
-func (c *Prometheus) SetLoggers(loggers []dnsutils.Worker) {}
+func (o *Prometheus) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (o *Prometheus) InitProm() {
 
@@ -852,7 +852,7 @@ func (o *Prometheus) InitProm() {
 		"Number of hit per tld - topN",
 		[]string{"suffix"}, nil,
 	)
-	//etldplusone_top_total
+	// etldplusone_top_total
 	o.gaugeTopETldsPlusOne = prometheus.NewDesc(
 		fmt.Sprintf("%s_top_etldplusone", prom_prefix),
 		"Number of hit per eTLD+1 - topN",
@@ -1109,7 +1109,7 @@ func (o *Prometheus) Stop() {
 
 	o.LogInfo("stopping http server...")
 	o.netListener.Close()
-	<-o.doneApi
+	<-o.doneAPI
 }
 
 func (o *Prometheus) Record(dm dnsutils.DnsMessage) {
@@ -1137,19 +1137,19 @@ func (o *Prometheus) ComputeEventsPerSecond() {
 	}
 }
 
-func (s *Prometheus) ListenAndServe() {
-	s.LogInfo("starting http server...")
+func (o *Prometheus) ListenAndServe() {
+	o.LogInfo("starting http server...")
 
 	var err error
 	var listener net.Listener
-	addrlisten := s.config.Loggers.Prometheus.ListenIP + ":" + strconv.Itoa(s.config.Loggers.Prometheus.ListenPort)
+	addrlisten := o.config.Loggers.Prometheus.ListenIP + ":" + strconv.Itoa(o.config.Loggers.Prometheus.ListenPort)
 	// listening with tls enabled ?
-	if s.config.Loggers.Prometheus.TlsSupport {
-		s.LogInfo("tls support enabled")
+	if o.config.Loggers.Prometheus.TlsSupport {
+		o.LogInfo("tls support enabled")
 		var cer tls.Certificate
-		cer, err = tls.LoadX509KeyPair(s.config.Loggers.Prometheus.CertFile, s.config.Loggers.Prometheus.KeyFile)
+		cer, err = tls.LoadX509KeyPair(o.config.Loggers.Prometheus.CertFile, o.config.Loggers.Prometheus.KeyFile)
 		if err != nil {
-			s.logger.Fatal("loading certificate failed:", err)
+			o.logger.Fatal("loading certificate failed:", err)
 		}
 
 		// prepare tls configuration
@@ -1159,15 +1159,15 @@ func (s *Prometheus) ListenAndServe() {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLS_VERSION[s.config.Loggers.Prometheus.TlsMinVersion]
+		tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.Prometheus.TlsMinVersion]
 
-		if s.config.Loggers.Prometheus.TlsMutual {
+		if o.config.Loggers.Prometheus.TlsMutual {
 
 			// Create a CA certificate pool and add cert.pem to it
 			var caCert []byte
-			caCert, err = os.ReadFile(s.config.Loggers.Prometheus.CertFile)
+			caCert, err = os.ReadFile(o.config.Loggers.Prometheus.CertFile)
 			if err != nil {
-				s.logger.Fatal(err)
+				o.logger.Fatal(err)
 			}
 			caCertPool := x509.NewCertPool()
 			caCertPool.AppendCertsFromPEM(caCert)
@@ -1185,53 +1185,53 @@ func (s *Prometheus) ListenAndServe() {
 
 	// something wrong ?
 	if err != nil {
-		s.logger.Fatal("http server listening failed:", err)
+		o.logger.Fatal("http server listening failed:", err)
 	}
 
-	s.netListener = listener
-	s.LogInfo("is listening on %s", listener.Addr())
+	o.netListener = listener
+	o.LogInfo("is listening on %s", listener.Addr())
 
-	s.httpServer.Serve(s.netListener)
+	o.httpServer.Serve(o.netListener)
 
-	s.LogInfo("http server terminated")
-	s.doneApi <- true
+	o.LogInfo("http server terminated")
+	o.doneAPI <- true
 }
 
-func (s *Prometheus) Run() {
-	s.LogInfo("running in background...")
+func (o *Prometheus) Run() {
+	o.LogInfo("running in background...")
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, s.outputChan)
-	subprocessors := transformers.NewTransforms(&s.config.OutgoingTransformers, s.logger, s.name, listChannel, 0)
+	listChannel = append(listChannel, o.outputChan)
+	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
 
 	// start http server
-	go s.ListenAndServe()
+	go o.ListenAndServe()
 
 	// goroutine to process transformed dns messages
-	go s.Process()
+	go o.Process()
 
 	// loop to process incoming messages
 RUN_LOOP:
 	for {
 		select {
-		case <-s.stopRun:
+		case <-o.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
-			s.doneRun <- true
+			o.doneRun <- true
 			break RUN_LOOP
 
-		case cfg, opened := <-s.configChan:
+		case cfg, opened := <-o.configChan:
 			if !opened {
 				return
 			}
-			s.config = cfg
-			s.ReadConfig()
+			o.config = cfg
+			o.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-s.inputChan:
+		case dm, opened := <-o.inputChan:
 			if !opened {
-				s.LogInfo("input channel closed!")
+				o.LogInfo("input channel closed!")
 				return
 			}
 
@@ -1242,42 +1242,42 @@ RUN_LOOP:
 			}
 
 			// send to output channel
-			s.outputChan <- dm
+			o.outputChan <- dm
 		}
 	}
-	s.LogInfo("run terminated")
+	o.LogInfo("run terminated")
 }
 
-func (s *Prometheus) Process() {
+func (o *Prometheus) Process() {
 	// init timer to compute qps
 	t1_interval := 1 * time.Second
 	t1 := time.NewTimer(t1_interval)
 
-	s.LogInfo("ready to process")
+	o.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {
-		case <-s.stopProcess:
-			s.doneProcess <- true
+		case <-o.stopProcess:
+			o.doneProcess <- true
 			break PROCESS_LOOP
-		case dm, opened := <-s.outputChan:
+		case dm, opened := <-o.outputChan:
 			if !opened {
-				s.LogInfo("output channel closed!")
+				o.LogInfo("output channel closed!")
 				return
 			}
 
 			// record the dnstap message
-			s.Record(dm)
+			o.Record(dm)
 
 		case <-t1.C:
 			// compute eps each second
-			s.ComputeEventsPerSecond()
+			o.ComputeEventsPerSecond()
 
 			// reset the timer
 			t1.Reset(t1_interval)
 		}
 	}
-	s.LogInfo("processing terminated")
+	o.LogInfo("processing terminated")
 }
 
 /*
