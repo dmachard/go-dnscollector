@@ -39,7 +39,7 @@ make lint
 Execute testunits before to commit
 
 ```bash
-sudo make test
+sudo make tests
 ```
 
 Execute a test for one specific testcase in a package

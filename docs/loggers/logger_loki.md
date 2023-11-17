@@ -10,7 +10,7 @@ Options:
 - `flush-interval`: (integer) flush batch every X seconds
 - `batch-size`: (integer) batch size for log entries in bytes
 - `retry-interval`: (integer) interval in second between before to retry to send batch
-- `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
+- `text-format`: (string) output text format, please refer to the default text format to see all available [directives](../configuration.md#custom-text-format), use this parameter if you want a specific format
 - `proxy-url`: (string) Proxy URL
 - `tls-insecure`: (boolean) insecure  tls, skip certificate and hostname verify
 - `tls-min-version`: (string) min tls version
