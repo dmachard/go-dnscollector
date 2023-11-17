@@ -655,11 +655,11 @@ func NewPromCounterCatalogueContainer(p *Prometheus, sel_labels []string, l map[
 
 	// copy all the data over, to make sure this container does not share memory with other containers
 	r := &PromCounterCatalogueContainer{
-		prom:        p,
-		stats:       make(map[string]PrometheusCountersCatalogue),
-		selector:    sel,
+		prom:       p,
+		stats:      make(map[string]PrometheusCountersCatalogue),
+		selector:   sel,
 		labelNames: make([]string, len(sel_labels)),
-		labels:      make(map[string]string),
+		labels:     make(map[string]string),
 	}
 	for k, v := range l {
 		r.labels[k] = v
