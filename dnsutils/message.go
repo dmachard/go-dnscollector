@@ -835,7 +835,7 @@ func GetFakeDnsMessage() DnsMessage {
 func GetFakeDnsMessageWithPayload() DnsMessage {
 	// fake dns query payload
 	dnsmsg := new(dns.Msg)
-	dnsmsg.SetQuestion("dnscollector.dev.", dns.TypeA)
+	dnsmsg.SetQuestion("dnscollector.dev.", dns.TypeAAAA)
 	dnsquestion, _ := dnsmsg.Pack()
 
 	dm := GetFakeDnsMessage()

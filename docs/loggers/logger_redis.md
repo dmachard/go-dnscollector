@@ -11,7 +11,7 @@ Redis Pub logger
 Options:
 
 * `transport`: (string) network transport to use: `tcp`|`unix`|`tcp+tls`
-* `remote-ip`: (string) remote address
+* `remote-address`: (string) remote IP or host address
 * `remote-port`: (integer) remote tcp port
 * `sock-path` **DEPRECATED, replaced by remote-address**: (string) unix socket path
 * `connect-timeout`: (integer) connect timeout in second
