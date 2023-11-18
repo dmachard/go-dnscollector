@@ -7,7 +7,7 @@ require (
 	github.com/cilium/ebpf v0.12.2
 	github.com/dmachard/go-clientsyslog v0.3.0
 	github.com/dmachard/go-dnstap-protobuf v0.6.0
-	github.com/dmachard/go-framestream v0.6.0
+	github.com/dmachard/go-framestream v0.7.0
 	github.com/dmachard/go-logger v0.3.0
 	github.com/dmachard/go-powerdns-protobuf v0.2.0
 	github.com/dmachard/go-topmap v0.5.0

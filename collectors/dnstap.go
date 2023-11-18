@@ -175,6 +175,18 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 			break
 		}
 
+		if frame.IsControl() {
+			if err := fs.ResetReceiver(frame); err != nil {
+				if errors.Is(err, io.EOF) {
+					c.LogConnInfo(connId, "framestream reseted by sender")
+				} else {
+					c.LogConnError(connId, "framestream reseted by sender - %s", err)
+				}
+
+			}
+			break
+		}
+
 		// send payload to the channel
 		select {
 		case dnstapProcessor.GetChannel() <- frame.Data(): // Successful send to channel
