@@ -2,8 +2,10 @@ package collectors
 
 import (
 	"bufio"
+	"bytes"
 	"log"
 	"net"
+	"regexp"
 	"testing"
 	"time"
 
@@ -110,4 +112,57 @@ func Test_DnstapCollector(t *testing.T) {
 			c.Stop()
 		})
 	}
+}
+
+// Testcase for https://github.com/dmachard/go-dnscollector/issues/461
+// Support Bind9 with dnstap closing.
+func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
+	// redirect stdout output to bytes buffer
+	logger := logger.New(true)
+	var logs bytes.Buffer
+	logger.SetOutput(&logs)
+
+	config := dnsutils.GetFakeConfig()
+	config.Collectors.Dnstap.SockPath = "/tmp/dnscollector.sock"
+
+	// start the collector in unix mode
+	g := loggers.NewFakeLogger()
+	c := NewDnstap([]dnsutils.Worker{g}, config, logger, "test")
+	if err := c.Listen(); err != nil {
+		log.Fatal("collector listening  error: ", err)
+	}
+
+	go c.Run()
+
+	// simulate dns server connection to collector
+	conn, err := net.Dial(dnsutils.SOCKET_UNIX, "/tmp/dnscollector.sock")
+	if err != nil {
+		t.Error("could not connect: ", err)
+	}
+	defer conn.Close()
+
+	r := bufio.NewReader(conn)
+	w := bufio.NewWriter(conn)
+	fs := framestream.NewFstrm(r, w, conn, 5*time.Second, []byte("protobuf:dnstap.Dnstap"), true)
+	if err := fs.InitSender(); err != nil {
+		t.Fatalf("framestream init error: %s", err)
+	}
+
+	// checking reset
+	errClose := fs.ResetSender()
+	if errClose != nil {
+		t.Errorf("reset sender error: %s", errClose)
+	}
+
+	// check logs output
+	regxp := ".*framestream reseted by sender.*"
+	pattern := regexp.MustCompile(regxp)
+	ret := logs.String()
+	if !pattern.MatchString(ret) {
+		t.Errorf("logger error want %s, got: %s", regxp, ret)
+	}
+
+	// stop collector
+	c.Stop()
+
 }

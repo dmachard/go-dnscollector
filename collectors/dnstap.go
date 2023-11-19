@@ -180,7 +180,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 				if errors.Is(err, io.EOF) {
 					c.LogConnInfo(connId, "framestream reseted by sender")
 				} else {
-					c.LogConnError(connId, "framestream reseted by sender - %s", err)
+					c.LogConnError(connId, "unexpected control framestream - %s", err)
 				}
 
 			}
