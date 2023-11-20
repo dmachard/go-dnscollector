@@ -135,7 +135,7 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	go c.Run()
 
 	// simulate dns server connection to collector
-	conn, err := net.Dial(dnsutils.SOCKET_UNIX, "/tmp/dnscollector.sock")
+	conn, err := net.Dial(dnsutils.SocketUnix, "/tmp/dnscollector.sock")
 	if err != nil {
 		t.Error("could not connect: ", err)
 	}

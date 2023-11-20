@@ -294,7 +294,8 @@ func DecodePayload(dm *DNSMessage, header *DNSHeader, config *Config) error {
 
 	// decode authoritative answers
 	if header.Nscount > 0 {
-		if answers, offsetrr, err := DecodeAnswer(header.Nscount, payloadOffset, dm.DNS.Payload); err == nil {
+		answers, offsetrr, err := DecodeAnswer(header.Nscount, payloadOffset, dm.DNS.Payload)
+		if err == nil { // nolint
 			dm.DNS.DNSRRs.Nameservers = answers
 			payloadOffset = offsetrr
 		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDNSAnswerTooShort) || errors.Is(err, ErrDecodeDNSAnswerRdataTooShort) || errors.Is(err, ErrDecodeDNSLabelTooShort)) {

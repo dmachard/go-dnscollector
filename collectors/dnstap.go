@@ -177,9 +177,9 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 		if frame.IsControl() {
 			if err := fs.ResetReceiver(frame); err != nil {
 				if errors.Is(err, io.EOF) {
-					c.LogConnInfo(connId, "framestream reseted by sender")
+					c.LogConnInfo(connID, "framestream reseted by sender")
 				} else {
-					c.LogConnError(connId, "unexpected control framestream - %s", err)
+					c.LogConnError(connID, "unexpected control framestream - %s", err)
 				}
 
 			}
