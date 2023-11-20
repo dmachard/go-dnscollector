@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const DnsLen = 12
+const DNSLen = 12
 const UNKNOWN = "UNKNOWN"
 
 var (
@@ -113,15 +113,15 @@ var (
 	}
 )
 
-var ErrDecodeDnsHeaderTooShort = errors.New("malformed pkt, dns payload too short to decode header")
-var ErrDecodeDnsLabelTooLong = errors.New("malformed pkt, label too long")
-var ErrDecodeDnsLabelInvalidData = errors.New("malformed pkt, invalid label length byte")
-var ErrDecodeDnsLabelInvalidOffset = errors.New("malformed pkt, invalid offset to decode label")
-var ErrDecodeDnsLabelInvalidPointer = errors.New("malformed pkt, label pointer not pointing to prior data")
-var ErrDecodeDnsLabelTooShort = errors.New("malformed pkt, dns payload too short to get label")
+var ErrDecodeDNSHeaderTooShort = errors.New("malformed pkt, dns payload too short to decode header")
+var ErrDecodeDNSLabelTooLong = errors.New("malformed pkt, label too long")
+var ErrDecodeDNSLabelInvalidData = errors.New("malformed pkt, invalid label length byte")
+var ErrDecodeDNSLabelInvalidOffset = errors.New("malformed pkt, invalid offset to decode label")
+var ErrDecodeDNSLabelInvalidPointer = errors.New("malformed pkt, label pointer not pointing to prior data")
+var ErrDecodeDNSLabelTooShort = errors.New("malformed pkt, dns payload too short to get label")
 var ErrDecodeQuestionQtypeTooShort = errors.New("malformed pkt, not enough data to decode qtype")
-var ErrDecodeDnsAnswerTooShort = errors.New("malformed pkt, not enough data to decode answer")
-var ErrDecodeDnsAnswerRdataTooShort = errors.New("malformed pkt, not enough data to decode rdata answer")
+var ErrDecodeDNSAnswerTooShort = errors.New("malformed pkt, not enough data to decode answer")
+var ErrDecodeDNSAnswerRdataTooShort = errors.New("malformed pkt, not enough data to decode rdata answer")
 
 func RdatatypeToString(rrtype int) string {
 	if value, ok := Rdatatypes[rrtype]; ok {
@@ -151,8 +151,8 @@ func (e *decodingError) Unwrap() error {
 	return e.err
 }
 
-type DnsHeader struct {
-	Id      int
+type DNSHeader struct {
+	ID      int
 	Qr      int
 	Opcode  int
 	Aa      int
@@ -188,15 +188,15 @@ type DnsHeader struct {
 	+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 
-func DecodeDns(payload []byte) (DnsHeader, error) {
-	dh := DnsHeader{}
+func DecodeDNS(payload []byte) (DNSHeader, error) {
+	dh := DNSHeader{}
 
 	// before to start, check to be sure to have enough data to decode
-	if len(payload) < DnsLen {
-		return dh, ErrDecodeDnsHeaderTooShort
+	if len(payload) < DNSLen {
+		return dh, ErrDecodeDNSHeaderTooShort
 	}
 	// decode ID
-	dh.Id = int(binary.BigEndian.Uint16(payload[:2]))
+	dh.ID = int(binary.BigEndian.Uint16(payload[:2]))
 
 	// decode flags
 	flagsBytes := binary.BigEndian.Uint16(payload[2:4])
@@ -227,23 +227,23 @@ func DecodeDns(payload []byte) (DnsHeader, error) {
 // error, but does not process the packet.
 // Error is returned if packet can not be parsed. Returned error wraps the
 // original error returned by relevant decoding operation.
-func DecodePayload(dm *DnsMessage, header *DnsHeader, config *Config) error {
+func DecodePayload(dm *DNSMessage, header *DNSHeader, config *Config) error {
 	if dm.DNS.MalformedPacket {
 		// do not continue if packet is malformed, the header can not be
 		// trusted.
 		return nil
 	}
 
-	dm.DNS.Id = header.Id
+	dm.DNS.ID = header.ID
 	dm.DNS.Rcode = RcodeToString(header.Rcode)
 	dm.DNS.Opcode = header.Opcode
 
 	// update dnstap operation if the opcode is equal to 5 (dns update)
 	if dm.DNS.Opcode == 5 && header.Qr == 1 {
-		dm.DnsTap.Operation = "UPDATE_QUERY"
+		dm.DNSTap.Operation = "UPDATE_QUERY"
 	}
 	if dm.DNS.Opcode == 5 && header.Qr == 0 {
-		dm.DnsTap.Operation = "UPDATE_RESPONSE"
+		dm.DNSTap.Operation = "UPDATE_RESPONSE"
 	}
 
 	if header.Qr == 1 {
@@ -262,30 +262,30 @@ func DecodePayload(dm *DnsMessage, header *DnsHeader, config *Config) error {
 		dm.DNS.Flags.AD = true
 	}
 
-	var payload_offset int
+	var payloadOffset int
 	// decode DNS question
 	if header.Qdcount > 0 {
-		dns_qname, dns_rrtype, offsetrr, err := DecodeQuestion(header.Qdcount, dm.DNS.Payload)
+		dnsQname, dnsRRtype, offsetrr, err := DecodeQuestion(header.Qdcount, dm.DNS.Payload)
 		if err != nil {
 			dm.DNS.MalformedPacket = true
 			return &decodingError{part: "query", err: err}
 		}
 
-		dm.DNS.Qname = dns_qname
-		dm.DNS.Qtype = RdatatypeToString(dns_rrtype)
-		payload_offset = offsetrr
+		dm.DNS.Qname = dnsQname
+		dm.DNS.Qtype = RdatatypeToString(dnsRRtype)
+		payloadOffset = offsetrr
 	}
 
 	// decode DNS answers
 	if header.Ancount > 0 {
-		answers, offset, err := DecodeAnswer(header.Ancount, payload_offset, dm.DNS.Payload)
-		if err == nil {
-			dm.DNS.DnsRRs.Answers = answers
-			payload_offset = offset
-		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDnsAnswerTooShort) || errors.Is(err, ErrDecodeDnsAnswerRdataTooShort) || errors.Is(err, ErrDecodeDnsLabelTooShort)) {
+		answers, offset, err := DecodeAnswer(header.Ancount, payloadOffset, dm.DNS.Payload)
+		if err == nil { // nolint
+			dm.DNS.DNSRRs.Answers = answers
+			payloadOffset = offset
+		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDNSAnswerTooShort) || errors.Is(err, ErrDecodeDNSAnswerRdataTooShort) || errors.Is(err, ErrDecodeDNSLabelTooShort)) {
 			dm.DNS.MalformedPacket = true
-			dm.DNS.DnsRRs.Answers = answers
-			payload_offset = offset
+			dm.DNS.DNSRRs.Answers = answers
+			payloadOffset = offset
 		} else {
 			dm.DNS.MalformedPacket = true
 			return &decodingError{part: "answer records", err: err}
@@ -294,13 +294,13 @@ func DecodePayload(dm *DnsMessage, header *DnsHeader, config *Config) error {
 
 	// decode authoritative answers
 	if header.Nscount > 0 {
-		if answers, offsetrr, err := DecodeAnswer(header.Nscount, payload_offset, dm.DNS.Payload); err == nil {
-			dm.DNS.DnsRRs.Nameservers = answers
-			payload_offset = offsetrr
-		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDnsAnswerTooShort) || errors.Is(err, ErrDecodeDnsAnswerRdataTooShort) || errors.Is(err, ErrDecodeDnsLabelTooShort)) {
+		if answers, offsetrr, err := DecodeAnswer(header.Nscount, payloadOffset, dm.DNS.Payload); err == nil {
+			dm.DNS.DNSRRs.Nameservers = answers
+			payloadOffset = offsetrr
+		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDNSAnswerTooShort) || errors.Is(err, ErrDecodeDNSAnswerRdataTooShort) || errors.Is(err, ErrDecodeDNSLabelTooShort)) {
 			dm.DNS.MalformedPacket = true
-			dm.DNS.DnsRRs.Nameservers = answers
-			payload_offset = offsetrr
+			dm.DNS.DNSRRs.Nameservers = answers
+			payloadOffset = offsetrr
 		} else {
 			dm.DNS.MalformedPacket = true
 			return &decodingError{part: "authority records", err: err}
@@ -308,23 +308,23 @@ func DecodePayload(dm *DnsMessage, header *DnsHeader, config *Config) error {
 	}
 	if header.Arcount > 0 {
 		// decode additional answers
-		answers, _, err := DecodeAnswer(header.Arcount, payload_offset, dm.DNS.Payload)
-		if err == nil {
-			dm.DNS.DnsRRs.Records = answers
-		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDnsAnswerTooShort) || errors.Is(err, ErrDecodeDnsAnswerRdataTooShort) || errors.Is(err, ErrDecodeDnsLabelTooShort)) {
+		answers, _, err := DecodeAnswer(header.Arcount, payloadOffset, dm.DNS.Payload)
+		if err == nil { // nolint
+			dm.DNS.DNSRRs.Records = answers
+		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDNSAnswerTooShort) || errors.Is(err, ErrDecodeDNSAnswerRdataTooShort) || errors.Is(err, ErrDecodeDNSLabelTooShort)) {
 			dm.DNS.MalformedPacket = true
-			dm.DNS.DnsRRs.Records = answers
+			dm.DNS.DNSRRs.Records = answers
 		} else {
 			dm.DNS.MalformedPacket = true
 			return &decodingError{part: "additional records", err: err}
 		}
 		// decode EDNS options, if there are any
-		edns, _, err := DecodeEDNS(header.Arcount, payload_offset, dm.DNS.Payload)
-		if err == nil {
+		edns, _, err := DecodeEDNS(header.Arcount, payloadOffset, dm.DNS.Payload)
+		if err == nil { // nolint
 			dm.EDNS = edns
-		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDnsAnswerTooShort) ||
-			errors.Is(err, ErrDecodeDnsAnswerRdataTooShort) ||
-			errors.Is(err, ErrDecodeDnsLabelTooShort) ||
+		} else if dm.DNS.Flags.TC && (errors.Is(err, ErrDecodeDNSAnswerTooShort) ||
+			errors.Is(err, ErrDecodeDNSAnswerRdataTooShort) ||
+			errors.Is(err, ErrDecodeDNSLabelTooShort) ||
 			errors.Is(err, ErrDecodeEdnsDataTooShort) ||
 			errors.Is(err, ErrDecodeEdnsOptionTooShort)) {
 			dm.DNS.MalformedPacket = true
@@ -350,7 +350,7 @@ DNS QUESTION
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 func DecodeQuestion(qdcount int, payload []byte) (string, int, int, error) {
-	offset := DnsLen
+	offset := DNSLen
 	var qname string
 	var qtype int
 
@@ -405,68 +405,68 @@ PTR can be used on NAME for compression
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
 
-func DecodeAnswer(ancount int, start_offset int, payload []byte) ([]DnsAnswer, int, error) {
-	offset := start_offset
-	answers := []DnsAnswer{}
+func DecodeAnswer(ancount int, startOffset int, payload []byte) ([]DNSAnswer, int, error) {
+	offset := startOffset
+	answers := []DNSAnswer{}
 
 	for i := 0; i < ancount; i++ {
 		// Decode NAME
-		name, offset_next, err := ParseLabels(offset, payload)
+		name, offsetNext, err := ParseLabels(offset, payload)
 		if err != nil {
 			return answers, offset, err
 		}
 
 		// before to continue, check we have enough data
-		if len(payload[offset_next:]) < 10 {
-			return answers, offset, ErrDecodeDnsAnswerTooShort
+		if len(payload[offsetNext:]) < 10 {
+			return answers, offset, ErrDecodeDNSAnswerTooShort
 		}
 		// decode TYPE
-		t := binary.BigEndian.Uint16(payload[offset_next : offset_next+2])
+		t := binary.BigEndian.Uint16(payload[offsetNext : offsetNext+2])
 		// decode CLASS
-		class := binary.BigEndian.Uint16(payload[offset_next+2 : offset_next+4])
+		class := binary.BigEndian.Uint16(payload[offsetNext+2 : offsetNext+4])
 		// decode TTL
-		ttl := binary.BigEndian.Uint32(payload[offset_next+4 : offset_next+8])
+		ttl := binary.BigEndian.Uint32(payload[offsetNext+4 : offsetNext+8])
 		// decode RDLENGTH
-		rdlength := binary.BigEndian.Uint16(payload[offset_next+8 : offset_next+10])
+		rdlength := binary.BigEndian.Uint16(payload[offsetNext+8 : offsetNext+10])
 
 		// decode RDATA
 		// but before to continue, check we have enough data to decode the rdata
-		if len(payload[offset_next+10:]) < int(rdlength) {
-			return answers, offset, ErrDecodeDnsAnswerRdataTooShort
+		if len(payload[offsetNext+10:]) < int(rdlength) {
+			return answers, offset, ErrDecodeDNSAnswerRdataTooShort
 		}
-		rdata := payload[offset_next+10 : offset_next+10+int(rdlength)]
+		rdata := payload[offsetNext+10 : offsetNext+10+int(rdlength)]
 
 		// ignore OPT, this type is decoded in the EDNS extension
 		if t == 41 {
-			offset = offset_next + 10 + int(rdlength)
+			offset = offsetNext + 10 + int(rdlength)
 			continue
 		}
 		// parse rdata
 		rdatatype := RdatatypeToString(int(t))
-		parsed, err := ParseRdata(rdatatype, rdata, payload[:offset_next+10+int(rdlength)], offset_next+10)
+		parsed, err := ParseRdata(rdatatype, rdata, payload[:offsetNext+10+int(rdlength)], offsetNext+10)
 		if err != nil {
 			return answers, offset, err
 		}
 
 		// finnally append answer to the list
-		a := DnsAnswer{
+		a := DNSAnswer{
 			Name:      name,
 			Rdatatype: rdatatype,
 			Class:     int(class),
-			Ttl:       int(ttl),
+			TTL:       int(ttl),
 			Rdata:     parsed,
 		}
 		answers = append(answers, a)
 
 		// compute the next offset
-		offset = offset_next + 10 + int(rdlength)
+		offset = offsetNext + 10 + int(rdlength)
 	}
 	return answers, offset, nil
 }
 
 func ParseLabels(offset int, payload []byte) (string, int, error) {
 	if offset < 0 {
-		return "", 0, ErrDecodeDnsLabelInvalidOffset
+		return "", 0, ErrDecodeDNSLabelInvalidOffset
 	}
 
 	labels := make([]string, 0, 8)
@@ -482,28 +482,28 @@ func ParseLabels(offset int, payload []byte) (string, int, error) {
 
 	for {
 		if offset >= len(payload) {
-			return "", 0, ErrDecodeDnsLabelTooShort
+			return "", 0, ErrDecodeDNSLabelTooShort
 		} else if offset >= maxOffset {
-			return "", 0, ErrDecodeDnsLabelInvalidPointer
+			return "", 0, ErrDecodeDNSLabelInvalidPointer
 		}
 
 		length := int(payload[offset])
-		if length == 0 {
+		if length == 0 { // nolint
 			if endOffset == -1 {
 				endOffset = offset + 1
 			}
 			break
 		} else if length&0xc0 == 0xc0 {
 			if offset+2 > len(payload) {
-				return "", 0, ErrDecodeDnsLabelTooShort
+				return "", 0, ErrDecodeDNSLabelTooShort
 			} else if offset+2 > maxOffset {
-				return "", 0, ErrDecodeDnsLabelInvalidPointer
+				return "", 0, ErrDecodeDNSLabelInvalidPointer
 			}
 
 			ptr := int(binary.BigEndian.Uint16(payload[offset:offset+2]) & 16383)
 			if ptr >= startOffset {
 				// Require pointers to always point to prior data (based on a reading of RFC 1035, section 4.1.4).
-				return "", 0, ErrDecodeDnsLabelInvalidPointer
+				return "", 0, ErrDecodeDNSLabelInvalidPointer
 			}
 
 			if endOffset == -1 {
@@ -514,28 +514,28 @@ func ParseLabels(offset int, payload []byte) (string, int, error) {
 			offset = ptr
 		} else if length&0xc0 == 0x00 {
 			if offset+length+1 > len(payload) {
-				return "", 0, ErrDecodeDnsLabelTooShort
+				return "", 0, ErrDecodeDNSLabelTooShort
 			} else if offset+length+1 > maxOffset {
-				return "", 0, ErrDecodeDnsLabelInvalidPointer
+				return "", 0, ErrDecodeDNSLabelInvalidPointer
 			}
 
 			totalLength += length + 1
 			if totalLength > 254 {
-				return "", 0, ErrDecodeDnsLabelTooLong
+				return "", 0, ErrDecodeDNSLabelTooLong
 			}
 
 			label := payload[offset+1 : offset+length+1]
 			labels = append(labels, string(label))
 			offset += length + 1
 		} else {
-			return "", 0, ErrDecodeDnsLabelInvalidData
+			return "", 0, ErrDecodeDNSLabelInvalidData
 		}
 	}
 
-	return strings.Join(labels[:], "."), endOffset, nil
+	return strings.Join(labels, "."), endOffset, nil
 }
 
-func ParseRdata(rdatatype string, rdata []byte, payload []byte, rdata_offset int) (string, error) {
+func ParseRdata(rdatatype string, rdata []byte, payload []byte, rdataOffset int) (string, error) {
 	var ret string
 	var err error
 	switch rdatatype {
@@ -544,19 +544,19 @@ func ParseRdata(rdatatype string, rdata []byte, payload []byte, rdata_offset int
 	case "AAAA":
 		ret, err = ParseAAAA(rdata)
 	case "CNAME":
-		ret, err = ParseCNAME(rdata_offset, payload)
+		ret, err = ParseCNAME(rdataOffset, payload)
 	case "MX":
-		ret, err = ParseMX(rdata_offset, payload)
+		ret, err = ParseMX(rdataOffset, payload)
 	case "SRV":
-		ret, err = ParseSRV(rdata_offset, payload)
+		ret, err = ParseSRV(rdataOffset, payload)
 	case "NS":
-		ret, err = ParseNS(rdata_offset, payload)
+		ret, err = ParseNS(rdataOffset, payload)
 	case "TXT":
 		ret, err = ParseTXT(rdata)
 	case "PTR":
-		ret, err = ParsePTR(rdata_offset, payload)
+		ret, err = ParsePTR(rdataOffset, payload)
 	case "SOA":
-		ret, err = ParseSOA(rdata_offset, payload)
+		ret, err = ParseSOA(rdataOffset, payload)
 	case "HTTPS", "SVCB":
 		ret, err = ParseSVCB(rdata)
 	default:
@@ -590,10 +590,10 @@ SOA
 |                                               |
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseSOA(rdata_offset int, payload []byte) (string, error) {
+func ParseSOA(rdataOffset int, payload []byte) (string, error) {
 	var offset int
 
-	primaryNS, offset, err := ParseLabels(rdata_offset, payload)
+	primaryNS, offset, err := ParseLabels(rdataOffset, payload)
 	if err != nil {
 		return "", err
 	}
@@ -605,7 +605,7 @@ func ParseSOA(rdata_offset int, payload []byte) (string, error) {
 
 	// ensure there is enough data to parse rest of the fields
 	if offset+20 > len(payload) {
-		return "", ErrDecodeDnsAnswerRdataTooShort
+		return "", ErrDecodeDNSAnswerRdataTooShort
 	}
 	rdata := payload[offset : offset+20]
 
@@ -628,7 +628,7 @@ IPv4
 */
 func ParseA(r []byte) (string, error) {
 	if len(r) < net.IPv4len {
-		return "", ErrDecodeDnsAnswerRdataTooShort
+		return "", ErrDecodeDNSAnswerRdataTooShort
 	}
 	addr := make(net.IP, net.IPv4len)
 	copy(addr, r[:net.IPv4len])
@@ -650,7 +650,7 @@ IPv6
 */
 func ParseAAAA(rdata []byte) (string, error) {
 	if len(rdata) < net.IPv6len {
-		return "", ErrDecodeDnsAnswerRdataTooShort
+		return "", ErrDecodeDNSAnswerRdataTooShort
 	}
 	addr := make(net.IP, net.IPv6len)
 	copy(addr, rdata[:net.IPv6len])
@@ -664,8 +664,8 @@ CNAME
 /                                               /
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseCNAME(rdata_offset int, payload []byte) (string, error) {
-	cname, _, err := ParseLabels(rdata_offset, payload)
+func ParseCNAME(rdataOffset int, payload []byte) (string, error) {
+	cname, _, err := ParseLabels(rdataOffset, payload)
 	if err != nil {
 		return "", err
 	}
@@ -681,14 +681,14 @@ MX
 /                                               /
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseMX(rdata_offset int, payload []byte) (string, error) {
+func ParseMX(rdataOffset int, payload []byte) (string, error) {
 	// ensure there is enough data for pereference and at least
 	// one byte for label
-	if len(payload) < rdata_offset+3 {
-		return "", ErrDecodeDnsAnswerRdataTooShort
+	if len(payload) < rdataOffset+3 {
+		return "", ErrDecodeDNSAnswerRdataTooShort
 	}
-	pref := binary.BigEndian.Uint16(payload[rdata_offset : rdata_offset+2])
-	host, _, err := ParseLabels(rdata_offset+2, payload)
+	pref := binary.BigEndian.Uint16(payload[rdataOffset : rdataOffset+2])
+	host, _, err := ParseLabels(rdataOffset+2, payload)
 	if err != nil {
 		return "", err
 	}
@@ -709,14 +709,14 @@ SRV
 |                    TARGET                     |
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseSRV(rdata_offset int, payload []byte) (string, error) {
-	if len(payload) < rdata_offset+7 {
-		return "", ErrDecodeDnsAnswerRdataTooShort
+func ParseSRV(rdataOffset int, payload []byte) (string, error) {
+	if len(payload) < rdataOffset+7 {
+		return "", ErrDecodeDNSAnswerRdataTooShort
 	}
-	priority := binary.BigEndian.Uint16(payload[rdata_offset : rdata_offset+2])
-	weight := binary.BigEndian.Uint16(payload[rdata_offset+2 : rdata_offset+4])
-	port := binary.BigEndian.Uint16(payload[rdata_offset+4 : rdata_offset+6])
-	target, _, err := ParseLabels(rdata_offset+6, payload)
+	priority := binary.BigEndian.Uint16(payload[rdataOffset : rdataOffset+2])
+	weight := binary.BigEndian.Uint16(payload[rdataOffset+2 : rdataOffset+4])
+	port := binary.BigEndian.Uint16(payload[rdataOffset+4 : rdataOffset+6])
+	target, _, err := ParseLabels(rdataOffset+6, payload)
 	if err != nil {
 		return "", err
 	}
@@ -731,8 +731,8 @@ NS
 /                                               /
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParseNS(rdata_offset int, payload []byte) (string, error) {
-	ns, _, err := ParseLabels(rdata_offset, payload)
+func ParseNS(rdataOffset int, payload []byte) (string, error) {
+	ns, _, err := ParseLabels(rdataOffset, payload)
 	if err != nil {
 		return "", err
 	}
@@ -750,11 +750,11 @@ TXT
 func ParseTXT(rdata []byte) (string, error) {
 	// ensure there is enough data to read the length
 	if len(rdata) < 1 {
-		return "", ErrDecodeDnsAnswerRdataTooShort
+		return "", ErrDecodeDNSAnswerRdataTooShort
 	}
 	length := int(rdata[0])
 	if len(rdata)-1 < length {
-		return "", ErrDecodeDnsAnswerRdataTooShort
+		return "", ErrDecodeDNSAnswerRdataTooShort
 	}
 	txt := string(rdata[1 : length+1])
 	return txt, nil
@@ -766,8 +766,8 @@ PTR
 /                   PTRDNAME                    /
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func ParsePTR(rdata_offset int, payload []byte) (string, error) {
-	ptr, _, err := ParseLabels(rdata_offset, payload)
+func ParsePTR(rdataOffset int, payload []byte) (string, error) {
+	ptr, _, err := ParseLabels(rdataOffset, payload)
 	if err != nil {
 		return "", err
 	}
@@ -787,7 +787,7 @@ SVCB
 func ParseSVCB(rdata []byte) (string, error) {
 	// priority, root label, no Params
 	if len(rdata) < 3 {
-		return "", ErrDecodeDnsAnswerRdataTooShort
+		return "", ErrDecodeDNSAnswerRdataTooShort
 	}
 	svcPriority := binary.BigEndian.Uint16(rdata[0:2])
 	targetName, offset, err := ParseLabels(2, rdata)
@@ -805,14 +805,14 @@ func ParseSVCB(rdata []byte) (string, error) {
 	for offset < len(rdata) {
 		if len(rdata) < offset+4 {
 			// SVCParam is at least 4 bytes (Key and Length)
-			return "", ErrDecodeDnsAnswerRdataTooShort
+			return "", ErrDecodeDNSAnswerRdataTooShort
 		}
 		paramKey := binary.BigEndian.Uint16(rdata[offset : offset+2])
 		offset += 2
 		paramLen := binary.BigEndian.Uint16(rdata[offset : offset+2])
 		offset += 2
 		if len(rdata) < offset+int(paramLen) {
-			return "", ErrDecodeDnsAnswerRdataTooShort
+			return "", ErrDecodeDNSAnswerRdataTooShort
 		}
 		param, err := ParseSVCParam(paramKey, rdata[offset:offset+int(paramLen)])
 		if err != nil {
@@ -853,7 +853,7 @@ func ParseSVCParam(svcParamKey uint16, paramData []byte) (string, error) {
 	case 0:
 		// mandatory
 		if len(paramData)%2 != 0 {
-			return "", ErrDecodeDnsAnswerRdataTooShort
+			return "", ErrDecodeDNSAnswerRdataTooShort
 		}
 		var mandatory []string
 		for i := 0; i < len(paramData); i += 2 {
@@ -864,7 +864,7 @@ func ParseSVCParam(svcParamKey uint16, paramData []byte) (string, error) {
 	case 1:
 		// alpn
 		if len(paramData) == 0 {
-			return "", ErrDecodeDnsAnswerRdataTooShort
+			return "", ErrDecodeDNSAnswerRdataTooShort
 		}
 		var alpns []string
 		offset := 0
@@ -872,7 +872,7 @@ func ParseSVCParam(svcParamKey uint16, paramData []byte) (string, error) {
 			length := int(paramData[offset])
 			offset++
 			if len(paramData) < offset+length {
-				return "", ErrDecodeDnsAnswerRdataTooShort
+				return "", ErrDecodeDNSAnswerRdataTooShort
 			}
 			alpns = append(alpns, svcbParamToStr(paramData[offset:offset+length]))
 			offset += length
@@ -884,20 +884,20 @@ func ParseSVCParam(svcParamKey uint16, paramData []byte) (string, error) {
 	case 2:
 		// no-default-alpn
 		if len(paramData) != 0 {
-			return "", ErrDecodeDnsAnswerRdataTooShort
+			return "", ErrDecodeDNSAnswerRdataTooShort
 		}
 		return "", nil
 	case 3:
-		//port
+		// port
 		if len(paramData) != 2 {
-			return "", ErrDecodeDnsAnswerRdataTooShort
+			return "", ErrDecodeDNSAnswerRdataTooShort
 		}
 		port := binary.BigEndian.Uint16(paramData)
 		return fmt.Sprintf("%d", port), nil
 	case 4:
 		// ipv4hint
 		if len(paramData)%4 != 0 {
-			return "", ErrDecodeDnsAnswerRdataTooShort
+			return "", ErrDecodeDNSAnswerRdataTooShort
 		}
 		var addresses []string
 		for offset := 0; offset < len(paramData); offset += 4 {
@@ -914,7 +914,7 @@ func ParseSVCParam(svcParamKey uint16, paramData []byte) (string, error) {
 	case 6:
 		// ipv6hint
 		if len(paramData)%16 != 0 {
-			return "", ErrDecodeDnsAnswerRdataTooShort
+			return "", ErrDecodeDNSAnswerRdataTooShort
 		}
 		var addresses []string
 		for offset := 0; offset < len(paramData); offset += 16 {

@@ -33,10 +33,10 @@ type Dnstap struct {
 	logger        *logger.Logger
 	name          string
 	connMode      string
-	connId        int
+	connID        int
 	droppedCount  int
 	dropped       chan int
-	tapProcessors []processors.DnstapProcessor
+	tapProcessors []processors.DNSTapProcessor
 	sync.RWMutex
 }
 
@@ -64,8 +64,8 @@ func (c *Dnstap) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *Dnstap) Loggers() ([]chan dnsutils.DnsMessage, []string) {
-	channels := []chan dnsutils.DnsMessage{}
+func (c *Dnstap) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
@@ -75,18 +75,17 @@ func (c *Dnstap) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 }
 
 func (c *Dnstap) ReadConfig() {
-	if !dnsutils.IsValidTLS(c.config.Collectors.Dnstap.TlsMinVersion) {
+	if !dnsutils.IsValidTLS(c.config.Collectors.Dnstap.TLSMinVersion) {
 		c.logger.Fatal("collector=dnstap - invalid tls min version")
 	}
 
 	c.sockPath = c.config.Collectors.Dnstap.SockPath
+	c.connMode = "tcp"
 
 	if len(c.config.Collectors.Dnstap.SockPath) > 0 {
 		c.connMode = "unix"
-	} else if c.config.Collectors.Dnstap.TlsSupport {
+	} else if c.config.Collectors.Dnstap.TLSSupport {
 		c.connMode = "tls"
-	} else {
-		c.connMode = "tcp"
 	}
 }
 
@@ -103,13 +102,13 @@ func (c *Dnstap) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+" collector=dnstap - "+msg, v...)
 }
 
-func (c *Dnstap) LogConnInfo(connId int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf("[%s] collector=dnstap#%d - ", c.name, connId)
+func (c *Dnstap) LogConnInfo(connID int, msg string, v ...interface{}) {
+	prefix := fmt.Sprintf("[%s] collector=dnstap#%d - ", c.name, connID)
 	c.logger.Info(prefix+msg, v...)
 }
 
-func (c *Dnstap) LogConnError(connId int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf("[%s] collector=dnstap#%d - ", c.name, connId)
+func (c *Dnstap) LogConnError(connID int, msg string, v ...interface{}) {
+	prefix := fmt.Sprintf("[%s] collector=dnstap#%d - ", c.name, connID)
 	c.logger.Error(prefix+msg, v...)
 }
 
@@ -117,18 +116,18 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	// close connection on function exit
 	defer conn.Close()
 
-	var connId int
+	var connID int
 	c.Lock()
-	c.connId++
-	connId = c.connId
+	c.connID++
+	connID = c.connID
 	c.Unlock()
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogConnInfo(connId, "new connection from %s", peer)
+	c.LogConnInfo(connID, "new connection from %s", peer)
 
 	// start dnstap subprocessor
-	dnstapProcessor := processors.NewDnstapProcessor(connId, c.config, c.logger, c.name, c.config.Collectors.Dnstap.ChannelBufferSize)
+	dnstapProcessor := processors.NewDNSTapProcessor(connID, c.config, c.logger, c.name, c.config.Collectors.Dnstap.ChannelBufferSize)
 	c.Lock()
 	c.tapProcessors = append(c.tapProcessors, dnstapProcessor)
 	c.Unlock()
@@ -141,9 +140,9 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// init framestream receiver
 	if err := fs.InitReceiver(); err != nil {
-		c.LogConnError(connId, "stream initialization: %s", err)
+		c.LogConnError(connID, "stream initialization: %s", err)
 	} else {
-		c.LogConnInfo(connId, "receiver framestream initialized")
+		c.LogConnInfo(connID, "receiver framestream initialized")
 	}
 
 	// process incoming frame and send it to dnstap consumer channel
@@ -165,9 +164,9 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 			}
 
 			if connClosed {
-				c.LogConnInfo(connId, "connection closed with peer %s", peer)
+				c.LogConnInfo(connID, "connection closed with peer %s", peer)
 			} else {
-				c.LogConnError(connId, "framestream reader error: %s", err)
+				c.LogConnError(connID, "framestream reader error: %s", err)
 			}
 
 			// stop processor and exit the loop
@@ -187,7 +186,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	// then removes the current tap processor from the list
 	c.Lock()
 	for i, t := range c.tapProcessors {
-		if t.ConnId == connId {
+		if t.ConnID == connID {
 			c.tapProcessors = append(c.tapProcessors[:i], c.tapProcessors[i+1:]...)
 		}
 	}
@@ -201,10 +200,10 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	}
 	c.Unlock()
 
-	c.LogConnInfo(connId, "connection handler terminated")
+	c.LogConnInfo(connID, "connection handler terminated")
 }
 
-func (c *Dnstap) Channel() chan dnsutils.DnsMessage {
+func (c *Dnstap) Channel() chan dnsutils.DNSMessage {
 	return nil
 }
 
@@ -254,7 +253,7 @@ func (c *Dnstap) Listen() error {
 	}
 
 	// listening with tls enabled ?
-	if c.config.Collectors.Dnstap.TlsSupport {
+	if c.config.Collectors.Dnstap.TLSSupport {
 		c.LogInfo("tls support enabled")
 		var cer tls.Certificate
 		cer, err = tls.LoadX509KeyPair(c.config.Collectors.Dnstap.CertFile, c.config.Collectors.Dnstap.KeyFile)
@@ -268,20 +267,20 @@ func (c *Dnstap) Listen() error {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLS_VERSION[c.config.Collectors.Dnstap.TlsMinVersion]
+		tlsConfig.MinVersion = dnsutils.TLSVersion[c.config.Collectors.Dnstap.TLSMinVersion]
 
 		if len(c.sockPath) > 0 {
-			listener, err = tls.Listen(dnsutils.SOCKET_UNIX, c.sockPath, tlsConfig)
+			listener, err = tls.Listen(dnsutils.SocketUnix, c.sockPath, tlsConfig)
 		} else {
-			listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, tlsConfig)
+			listener, err = tls.Listen(dnsutils.SocketTCP, addrlisten, tlsConfig)
 		}
 
 	} else {
 		// basic listening
 		if len(c.sockPath) > 0 {
-			listener, err = net.Listen(dnsutils.SOCKET_UNIX, c.sockPath)
+			listener, err = net.Listen(dnsutils.SocketUnix, c.sockPath)
 		} else {
-			listener, err = net.Listen(dnsutils.SOCKET_TCP, addrlisten)
+			listener, err = net.Listen(dnsutils.SocketTCP, addrlisten)
 		}
 	}
 
@@ -367,10 +366,10 @@ RUN_LOOP:
 			}
 
 			if (c.connMode == "tls" || c.connMode == "tcp") && c.config.Collectors.Dnstap.RcvBufSize > 0 {
-				before, actual, err := netlib.SetSock_RCVBUF(
+				before, actual, err := netlib.SetSockRCVBUF(
 					conn,
 					c.config.Collectors.Dnstap.RcvBufSize,
-					c.config.Collectors.Dnstap.TlsSupport,
+					c.config.Collectors.Dnstap.TLSSupport,
 				)
 				if err != nil {
 					c.logger.Fatal("Unable to set SO_RCVBUF: ", err)

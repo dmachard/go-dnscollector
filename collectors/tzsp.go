@@ -19,7 +19,7 @@ import (
 	"github.com/rs/tzsp"
 )
 
-type TzspSniffer struct {
+type TZSPSniffer struct {
 	done     chan bool
 	exit     chan bool
 	listen   net.UDPConn
@@ -30,9 +30,9 @@ type TzspSniffer struct {
 	identity string
 }
 
-func NewTzsp(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *TzspSniffer {
+func NewTZSP(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *TZSPSniffer {
 	logger.Info("[%s] collector=tzsp - enabled", name)
-	s := &TzspSniffer{
+	s := &TZSPSniffer{
 		done:    make(chan bool),
 		exit:    make(chan bool),
 		config:  config,
@@ -44,14 +44,14 @@ func NewTzsp(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.
 	return s
 }
 
-func (c *TzspSniffer) GetName() string { return c.name }
+func (c *TZSPSniffer) GetName() string { return c.name }
 
-func (c *TzspSniffer) SetLoggers(loggers []dnsutils.Worker) {
+func (c *TZSPSniffer) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *TzspSniffer) Loggers() ([]chan dnsutils.DnsMessage, []string) {
-	channels := []chan dnsutils.DnsMessage{}
+func (c *TZSPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
@@ -60,26 +60,26 @@ func (c *TzspSniffer) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 	return channels, names
 }
 
-func (c *TzspSniffer) LogInfo(msg string, v ...interface{}) {
+func (c *TZSPSniffer) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] collector=tzsp  "+msg, v...)
 }
 
-func (c *TzspSniffer) LogError(msg string, v ...interface{}) {
+func (c *TZSPSniffer) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] collector=tzsp - "+msg, v...)
 }
 
-func (c *TzspSniffer) ReadConfig() {
+func (c *TZSPSniffer) ReadConfig() {
 	c.identity = c.config.GetServerIdentity()
 }
 
-func (c *TzspSniffer) ReloadConfig(config *dnsutils.Config) {
+func (c *TZSPSniffer) ReloadConfig(config *dnsutils.Config) {
 	// TODO implement reload configuration
 }
 
-func (c *TzspSniffer) Listen() error {
+func (c *TZSPSniffer) Listen() error {
 	c.logger.Info("running in background...")
 
-	ServerAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", c.config.Collectors.Tzsp.ListenIp, c.config.Collectors.Tzsp.ListenPort))
+	ServerAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", c.config.Collectors.Tzsp.ListenIP, c.config.Collectors.Tzsp.ListenPort))
 	if err != nil {
 		return err
 	}
@@ -104,11 +104,11 @@ func (c *TzspSniffer) Listen() error {
 	return nil
 }
 
-func (c *TzspSniffer) Channel() chan dnsutils.DnsMessage {
+func (c *TZSPSniffer) Channel() chan dnsutils.DNSMessage {
 	return nil
 }
 
-func (c *TzspSniffer) Stop() {
+func (c *TZSPSniffer) Stop() {
 	c.LogInfo("stopping...")
 
 	// Finally close the listener to unblock accept
@@ -119,21 +119,21 @@ func (c *TzspSniffer) Stop() {
 	close(c.done)
 }
 
-func (c *TzspSniffer) Run() {
+func (c *TZSPSniffer) Run() {
 	c.logger.Info("starting collector...")
 
 	if err := c.Listen(); err != nil {
 		c.logger.Fatal("collector=tzsp listening failed: ", err)
 	}
 
-	dnsProcessor := processors.NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.Tzsp.ChannelBufferSize)
+	dnsProcessor := processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.Tzsp.ChannelBufferSize)
 	go dnsProcessor.Run(c.Loggers())
 
 	go func() {
 		buf := make([]byte, 65536)
 		oob := make([]byte, 100)
 		for {
-			//flags, from
+			// flags, from
 			bufN, oobn, _, _, err := c.listen.ReadMsgUDPAddrPort(buf, oob)
 			if err != nil {
 				panic(err)
@@ -167,7 +167,7 @@ func (c *TzspSniffer) Run() {
 			pkt := make([]byte, bufN)
 			copy(pkt, buf[:bufN])
 
-			tzsp_packet, err := tzsp.Parse(pkt)
+			tzspPacket, err := tzsp.Parse(pkt)
 
 			if err != nil {
 				c.LogError("Failed to parse packet: ", err)
@@ -183,30 +183,30 @@ func (c *TzspSniffer) Run() {
 			decodedLayers := make([]gopacket.LayerType, 0, 4)
 
 			// decode-it
-			parser.DecodeLayers(tzsp_packet.Data, &decodedLayers)
+			parser.DecodeLayers(tzspPacket.Data, &decodedLayers)
 
-			dm := dnsutils.DnsMessage{}
+			dm := dnsutils.DNSMessage{}
 			dm.Init()
 
-			ignore_packet := false
+			ignorePacket := false
 			for _, layertyp := range decodedLayers {
 				switch layertyp {
 				case layers.LayerTypeIPv4:
-					dm.NetworkInfo.Family = dnsutils.PROTO_IPV4
-					dm.NetworkInfo.QueryIp = ip4.SrcIP.String()
-					dm.NetworkInfo.ResponseIp = ip4.DstIP.String()
+					dm.NetworkInfo.Family = dnsutils.ProtoIPv4
+					dm.NetworkInfo.QueryIP = ip4.SrcIP.String()
+					dm.NetworkInfo.ResponseIP = ip4.DstIP.String()
 
 				case layers.LayerTypeIPv6:
-					dm.NetworkInfo.QueryIp = ip6.SrcIP.String()
-					dm.NetworkInfo.ResponseIp = ip6.DstIP.String()
-					dm.NetworkInfo.Family = dnsutils.PROTO_IPV6
+					dm.NetworkInfo.QueryIP = ip6.SrcIP.String()
+					dm.NetworkInfo.ResponseIP = ip6.DstIP.String()
+					dm.NetworkInfo.Family = dnsutils.ProtoIPv6
 
 				case layers.LayerTypeUDP:
 					dm.NetworkInfo.QueryPort = fmt.Sprint(int(udp.SrcPort))
 					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(udp.DstPort))
 					dm.DNS.Payload = udp.Payload
 					dm.DNS.Length = len(udp.Payload)
-					dm.NetworkInfo.Protocol = dnsutils.PROTO_UDP
+					dm.NetworkInfo.Protocol = dnsutils.ProtoUDP
 
 				case layers.LayerTypeTCP:
 					// ignore SYN/ACK packet
@@ -222,7 +222,7 @@ func (c *TzspSniffer) Run() {
 					}
 					dnsLengthField := binary.BigEndian.Uint16(tcp.Payload[0:2])
 					if len(tcp.Payload) < int(dnsLengthField) {
-						ignore_packet = true
+						ignorePacket = true
 						continue
 					}
 
@@ -230,16 +230,16 @@ func (c *TzspSniffer) Run() {
 					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(tcp.DstPort))
 					dm.DNS.Payload = tcp.Payload[2:]
 					dm.DNS.Length = len(tcp.Payload[2:])
-					dm.NetworkInfo.Protocol = dnsutils.PROTO_TCP
+					dm.NetworkInfo.Protocol = dnsutils.ProtoTCP
 				}
 			}
 
-			if !ignore_packet {
-				dm.DnsTap.Identity = c.identity
+			if !ignorePacket {
+				dm.DNSTap.Identity = c.identity
 
 				// set timestamp
-				dm.DnsTap.TimeSec = int(tsec)
-				dm.DnsTap.TimeNsec = int(nsec)
+				dm.DNSTap.TimeSec = int(tsec)
+				dm.DNSTap.TimeNsec = int(nsec)
 
 				// just decode QR
 				if len(dm.DNS.Payload) < 4 {

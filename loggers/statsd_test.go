@@ -16,7 +16,7 @@ func TestStatsdRun(t *testing.T) {
 	g := NewStatsdClient(config, logger.New(false), "test")
 
 	// fake msgpack receiver
-	fakeRcvr, err := net.ListenPacket(dnsutils.SOCKET_UDP, "127.0.0.1:8125")
+	fakeRcvr, err := net.ListenPacket(dnsutils.SocketUDP, "127.0.0.1:8125")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,7 +26,7 @@ func TestStatsdRun(t *testing.T) {
 	go g.Run()
 
 	// send fake dns message to logger
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	g.Channel() <- dm
 
 	// read data on fake server side

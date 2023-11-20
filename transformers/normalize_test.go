@@ -15,18 +15,18 @@ func TestNormalize_Json(t *testing.T) {
 	config := dnsutils.GetFakeConfigTransformers()
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// get fake
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	dm.Init()
 
 	// init subproccesor
 	qnameNorm := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
-	qnameNorm.InitDnsMessage(&dm)
+	qnameNorm.InitDNSMessage(&dm)
 
 	// expected json
-	refJson := `
+	refJSON := `
 			{
 				"publicsuffix": {
 					"tld":"-",
@@ -36,13 +36,13 @@ func TestNormalize_Json(t *testing.T) {
 			`
 
 	var dmMap map[string]interface{}
-	err := json.Unmarshal([]byte(dm.ToJson()), &dmMap)
+	err := json.Unmarshal([]byte(dm.ToJSON()), &dmMap)
 	if err != nil {
 		t.Fatalf("could not unmarshal dm json: %s\n", err)
 	}
 
 	var refMap map[string]interface{}
-	err = json.Unmarshal([]byte(refJson), &refMap)
+	err = json.Unmarshal([]byte(refJSON), &refMap)
 	if err != nil {
 		t.Fatalf("could not unmarshal ref json: %s\n", err)
 	}
@@ -63,13 +63,13 @@ func TestNormalize_LowercaseQname(t *testing.T) {
 	config.Normalize.QnameLowerCase = true
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
 	qnameNorm := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	qname := "www.Google.Com"
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = qname
 
 	ret := qnameNorm.LowercaseQname(&dm)
@@ -85,16 +85,16 @@ func TestNormalize_QuietText(t *testing.T) {
 	config.Normalize.QuietText = true
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
 	norm := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	norm.QuietText(&dm)
 
-	if dm.DnsTap.Operation != "CQ" {
-		t.Errorf("CQ expected: %s", dm.DnsTap.Operation)
+	if dm.DNSTap.Operation != "CQ" {
+		t.Errorf("CQ expected: %s", dm.DNSTap.Operation)
 	}
 
 	if dm.DNS.Type != "Q" {
@@ -109,7 +109,7 @@ func TestNormalize_AddTLD(t *testing.T) {
 	config.Normalize.AddTld = true
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
 	psl := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
@@ -139,10 +139,10 @@ func TestNormalize_AddTLD(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			dm.DNS.Qname = tc.qname
 
-			psl.InitDnsMessage(&dm)
+			psl.InitDNSMessage(&dm)
 
 			psl.GetEffectiveTld(&dm)
 			if dm.PublicSuffix.QnamePublicSuffix != tc.want {
@@ -160,7 +160,7 @@ func TestNormalize_AddTldPlusOne(t *testing.T) {
 	config.Normalize.AddTld = true
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
 	psl := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
@@ -185,10 +185,10 @@ func TestNormalize_AddTldPlusOne(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			dm.DNS.Qname = tc.qname
 
-			psl.InitDnsMessage(&dm)
+			psl.InitDNSMessage(&dm)
 
 			psl.GetEffectiveTldPlusOne(&dm)
 			if dm.PublicSuffix.QnameEffectiveTLDPlusOne != tc.want {

@@ -10,18 +10,18 @@ import (
 	"github.com/miekg/dns"
 )
 
-func GetFakeDns() ([]byte, error) {
+func GetFakeDNS() ([]byte, error) {
 	dnsmsg := new(dns.Msg)
 	dnsmsg.SetQuestion("dns.collector.", dns.TypeA)
 	return dnsmsg.Pack()
 }
 
-type DnsProcessor struct {
+type DNSProcessor struct {
 	doneRun      chan bool
 	stopRun      chan bool
 	doneMonitor  chan bool
 	stopMonitor  chan bool
-	recvFrom     chan dnsutils.DnsMessage
+	recvFrom     chan dnsutils.DNSMessage
 	logger       *logger.Logger
 	config       *dnsutils.Config
 	ConfigChan   chan *dnsutils.Config
@@ -30,14 +30,14 @@ type DnsProcessor struct {
 	droppedCount map[string]int
 }
 
-func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) DnsProcessor {
+func NewDNSProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) DNSProcessor {
 	logger.Info("[%s] processor=dns - initialization...", name)
-	d := DnsProcessor{
+	d := DNSProcessor{
 		doneMonitor:  make(chan bool),
 		doneRun:      make(chan bool),
 		stopMonitor:  make(chan bool),
 		stopRun:      make(chan bool),
-		recvFrom:     make(chan dnsutils.DnsMessage, size),
+		recvFrom:     make(chan dnsutils.DNSMessage, size),
 		logger:       logger,
 		config:       config,
 		ConfigChan:   make(chan *dnsutils.Config),
@@ -48,25 +48,25 @@ func NewDnsProcessor(config *dnsutils.Config, logger *logger.Logger, name string
 	return d
 }
 
-func (c *DnsProcessor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] processor=dns - "+msg, v...)
+func (d *DNSProcessor) LogInfo(msg string, v ...interface{}) {
+	d.logger.Info("["+d.name+"] processor=dns - "+msg, v...)
 }
 
-func (c *DnsProcessor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] processor=dns - "+msg, v...)
+func (d *DNSProcessor) LogError(msg string, v ...interface{}) {
+	d.logger.Error("["+d.name+"] processor=dns - "+msg, v...)
 }
 
-func (d *DnsProcessor) GetChannel() chan dnsutils.DnsMessage {
+func (d *DNSProcessor) GetChannel() chan dnsutils.DNSMessage {
 	return d.recvFrom
 }
 
-func (d *DnsProcessor) GetChannelList() []chan dnsutils.DnsMessage {
-	channel := []chan dnsutils.DnsMessage{}
+func (d *DNSProcessor) GetChannelList() []chan dnsutils.DNSMessage {
+	channel := []chan dnsutils.DNSMessage{}
 	channel = append(channel, d.recvFrom)
 	return channel
 }
 
-func (d *DnsProcessor) Stop() {
+func (d *DNSProcessor) Stop() {
 	d.LogInfo("stopping to process...")
 	d.stopRun <- true
 	<-d.doneRun
@@ -76,7 +76,7 @@ func (d *DnsProcessor) Stop() {
 	<-d.doneMonitor
 }
 
-func (d *DnsProcessor) MonitorLoggers() {
+func (d *DNSProcessor) MonitorLoggers() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 FOLLOW_LOOP:
@@ -110,7 +110,7 @@ FOLLOW_LOOP:
 	d.LogInfo("monitor terminated")
 }
 
-func (d *DnsProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
+func (d *DNSProcessor) Run(loggersChannel []chan dnsutils.DNSMessage, loggersName []string) {
 	// prepare enabled transformers
 	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel, 0)
 
@@ -128,7 +128,6 @@ RUN_LOOP:
 
 		case <-d.stopRun:
 			transforms.Reset()
-			//close(d.recvFrom)
 			d.doneRun <- true
 			break RUN_LOOP
 
@@ -139,15 +138,15 @@ RUN_LOOP:
 			}
 
 			// init dns message with additionnals parts
-			transforms.InitDnsMessageFormat(&dm)
+			transforms.InitDNSMessageFormat(&dm)
 
 			// compute timestamp
-			ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
-			dm.DnsTap.Timestamp = ts.UnixNano()
-			dm.DnsTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
+			ts := time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec))
+			dm.DNSTap.Timestamp = ts.UnixNano()
+			dm.DNSTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
 			// decode the dns payload
-			dnsHeader, err := dnsutils.DecodeDns(dm.DNS.Payload)
+			dnsHeader, err := dnsutils.DecodeDNS(dm.DNS.Payload)
 			if err != nil {
 				dm.DNS.MalformedPacket = true
 				d.LogError("dns parser malformed packet: %s - %v+", err, dm)
@@ -155,17 +154,17 @@ RUN_LOOP:
 
 			// dns reply ?
 			if dnsHeader.Qr == 1 {
-				dm.DnsTap.Operation = "CLIENT_RESPONSE"
-				dm.DNS.Type = dnsutils.DnsReply
-				qip := dm.NetworkInfo.QueryIp
+				dm.DNSTap.Operation = "CLIENT_RESPONSE"
+				dm.DNS.Type = dnsutils.DNSReply
+				qip := dm.NetworkInfo.QueryIP
 				qport := dm.NetworkInfo.QueryPort
-				dm.NetworkInfo.QueryIp = dm.NetworkInfo.ResponseIp
+				dm.NetworkInfo.QueryIP = dm.NetworkInfo.ResponseIP
 				dm.NetworkInfo.QueryPort = dm.NetworkInfo.ResponsePort
-				dm.NetworkInfo.ResponseIp = qip
+				dm.NetworkInfo.ResponseIP = qip
 				dm.NetworkInfo.ResponsePort = qport
 			} else {
-				dm.DNS.Type = dnsutils.DnsQuery
-				dm.DnsTap.Operation = dnsutils.DNSTAP_CLIENT_QUERY
+				dm.DNS.Type = dnsutils.DNSQuery
+				dm.DNSTap.Operation = dnsutils.DNSTapClientQuery
 			}
 
 			if err = dnsutils.DecodePayload(&dm, &dnsHeader, d.config); err != nil {
@@ -179,12 +178,12 @@ RUN_LOOP:
 			}
 
 			// apply all enabled transformers
-			if transforms.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			if transforms.ProcessMessage(&dm) == transformers.ReturnDrop {
 				continue
 			}
 
 			// convert latency to human
-			dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
+			dm.DNSTap.LatencySec = fmt.Sprintf("%.6f", dm.DNSTap.Latency)
 
 			// dispatch dns message to all generators
 			for i := range loggersChannel {

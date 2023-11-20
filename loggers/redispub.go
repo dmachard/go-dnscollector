@@ -24,8 +24,8 @@ type RedisPub struct {
 	doneRun            chan bool
 	stopRead           chan bool
 	doneRead           chan bool
-	inputChan          chan dnsutils.DnsMessage
-	outputChan         chan dnsutils.DnsMessage
+	inputChan          chan dnsutils.DNSMessage
+	outputChan         chan dnsutils.DNSMessage
 	config             *dnsutils.Config
 	configChan         chan *dnsutils.Config
 	logger             *logger.Logger
@@ -48,8 +48,8 @@ func NewRedisPub(config *dnsutils.Config, logger *logger.Logger, name string) *R
 		doneRun:            make(chan bool),
 		stopRead:           make(chan bool),
 		doneRead:           make(chan bool),
-		inputChan:          make(chan dnsutils.DnsMessage, config.Loggers.RedisPub.ChannelBufferSize),
-		outputChan:         make(chan dnsutils.DnsMessage, config.Loggers.RedisPub.ChannelBufferSize),
+		inputChan:          make(chan dnsutils.DNSMessage, config.Loggers.RedisPub.ChannelBufferSize),
+		outputChan:         make(chan dnsutils.DNSMessage, config.Loggers.RedisPub.ChannelBufferSize),
 		transportReady:     make(chan bool),
 		transportReconnect: make(chan bool),
 		logger:             logger,
@@ -67,195 +67,195 @@ func (c *RedisPub) GetName() string { return c.name }
 
 func (c *RedisPub) SetLoggers(loggers []dnsutils.Worker) {}
 
-func (o *RedisPub) ReadConfig() {
+func (c *RedisPub) ReadConfig() {
 
-	o.transport = o.config.Loggers.RedisPub.Transport
+	c.transport = c.config.Loggers.RedisPub.Transport
 
 	// begin backward compatibility
-	if o.config.Loggers.RedisPub.TlsSupport {
-		o.transport = dnsutils.SOCKET_TLS
+	if c.config.Loggers.RedisPub.TLSSupport {
+		c.transport = dnsutils.SocketTLS
 	}
-	if len(o.config.Loggers.RedisPub.SockPath) > 0 {
-		o.transport = dnsutils.SOCKET_UNIX
+	if len(c.config.Loggers.RedisPub.SockPath) > 0 {
+		c.transport = dnsutils.SocketUnix
 	}
 	// end
 
-	if len(o.config.Loggers.RedisPub.TextFormat) > 0 {
-		o.textFormat = strings.Fields(o.config.Loggers.RedisPub.TextFormat)
+	if len(c.config.Loggers.RedisPub.TextFormat) > 0 {
+		c.textFormat = strings.Fields(c.config.Loggers.RedisPub.TextFormat)
 	} else {
-		o.textFormat = strings.Fields(o.config.Global.TextFormat)
+		c.textFormat = strings.Fields(c.config.Global.TextFormat)
 	}
 }
 
-func (o *RedisPub) ReloadConfig(config *dnsutils.Config) {
-	o.LogInfo("reload configuration!")
-	o.configChan <- config
+func (c *RedisPub) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload configuration!")
+	c.configChan <- config
 }
 
-func (o *RedisPub) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger=redispub - "+msg, v...)
+func (c *RedisPub) LogInfo(msg string, v ...interface{}) {
+	c.logger.Info("["+c.name+"] logger=redispub - "+msg, v...)
 }
 
-func (o *RedisPub) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger=redispub - "+msg, v...)
+func (c *RedisPub) LogError(msg string, v ...interface{}) {
+	c.logger.Error("["+c.name+"] logger=redispub - "+msg, v...)
 }
 
-func (o *RedisPub) Channel() chan dnsutils.DnsMessage {
-	return o.inputChan
+func (c *RedisPub) Channel() chan dnsutils.DNSMessage {
+	return c.inputChan
 }
 
-func (o *RedisPub) Stop() {
-	o.LogInfo("stopping to run...")
-	o.stopRun <- true
-	<-o.doneRun
+func (c *RedisPub) Stop() {
+	c.LogInfo("stopping to run...")
+	c.stopRun <- true
+	<-c.doneRun
 
-	o.LogInfo("stopping to receive...")
-	o.stopRead <- true
-	<-o.doneRead
+	c.LogInfo("stopping to receive...")
+	c.stopRead <- true
+	<-c.doneRead
 
-	o.LogInfo("stopping to process...")
-	o.stopProcess <- true
-	<-o.doneProcess
+	c.LogInfo("stopping to process...")
+	c.stopProcess <- true
+	<-c.doneProcess
 }
 
-func (o *RedisPub) Disconnect() {
-	if o.transportConn != nil {
-		o.LogInfo("closing redispub connection")
-		o.transportConn.Close()
+func (c *RedisPub) Disconnect() {
+	if c.transportConn != nil {
+		c.LogInfo("closing redispub connection")
+		c.transportConn.Close()
 	}
 }
 
-func (o *RedisPub) ReadFromConnection() {
+func (c *RedisPub) ReadFromConnection() {
 	buffer := make([]byte, 4096)
 
 	go func() {
 		for {
-			_, err := o.transportConn.Read(buffer)
+			_, err := c.transportConn.Read(buffer)
 			if err != nil {
 				if errors.Is(err, io.EOF) || errors.Is(err, net.ErrClosed) {
-					o.LogInfo("read from connection terminated")
+					c.LogInfo("read from connection terminated")
 					break
 				}
-				o.LogError("Error on reading: %s", err.Error())
+				c.LogError("Error on reading: %s", err.Error())
 			}
 			// We just discard the data
 		}
 	}()
 
 	// block goroutine until receive true event in stopRead channel
-	<-o.stopRead
-	o.doneRead <- true
+	<-c.stopRead
+	c.doneRead <- true
 
-	o.LogInfo("read goroutine terminated")
+	c.LogInfo("read goroutine terminated")
 }
 
-func (o *RedisPub) ConnectToRemote() {
+func (c *RedisPub) ConnectToRemote() {
 	for {
-		if o.transportConn != nil {
-			o.transportConn.Close()
-			o.transportConn = nil
+		if c.transportConn != nil {
+			c.transportConn.Close()
+			c.transportConn = nil
 		}
 
-		address := o.config.Loggers.RedisPub.RemoteAddress + ":" + strconv.Itoa(o.config.Loggers.RedisPub.RemotePort)
-		connTimeout := time.Duration(o.config.Loggers.RedisPub.ConnectTimeout) * time.Second
+		address := c.config.Loggers.RedisPub.RemoteAddress + ":" + strconv.Itoa(c.config.Loggers.RedisPub.RemotePort)
+		connTimeout := time.Duration(c.config.Loggers.RedisPub.ConnectTimeout) * time.Second
 
 		var conn net.Conn
 		var err error
 
-		switch o.transport {
-		case dnsutils.SOCKET_UNIX:
-			address = o.config.Loggers.RedisPub.RemoteAddress
-			if len(o.config.Loggers.RedisPub.SockPath) > 0 {
-				address = o.config.Loggers.RedisPub.SockPath
+		switch c.transport {
+		case dnsutils.SocketUnix:
+			address = c.config.Loggers.RedisPub.RemoteAddress
+			if len(c.config.Loggers.RedisPub.SockPath) > 0 {
+				address = c.config.Loggers.RedisPub.SockPath
 			}
-			o.LogInfo("connecting to %s://%s", o.transport, address)
-			conn, err = net.DialTimeout(o.transport, address, connTimeout)
+			c.LogInfo("connecting to %s://%s", c.transport, address)
+			conn, err = net.DialTimeout(c.transport, address, connTimeout)
 
-		case dnsutils.SOCKET_TCP:
-			o.LogInfo("connecting to %s://%s", o.transport, address)
-			conn, err = net.DialTimeout(o.transport, address, connTimeout)
+		case dnsutils.SocketTCP:
+			c.LogInfo("connecting to %s://%s", c.transport, address)
+			conn, err = net.DialTimeout(c.transport, address, connTimeout)
 
-		case dnsutils.SOCKET_TLS:
-			o.LogInfo("connecting to %s://%s", o.transport, address)
+		case dnsutils.SocketTLS:
+			c.LogInfo("connecting to %s://%s", c.transport, address)
 
 			var tlsConfig *tls.Config
 
-			tlsOptions := dnsutils.TlsOptions{
-				InsecureSkipVerify: o.config.Loggers.RedisPub.TlsInsecure,
-				MinVersion:         o.config.Loggers.RedisPub.TlsMinVersion,
-				CAFile:             o.config.Loggers.RedisPub.CAFile,
-				CertFile:           o.config.Loggers.RedisPub.CertFile,
-				KeyFile:            o.config.Loggers.RedisPub.KeyFile,
+			tlsOptions := dnsutils.TLSOptions{
+				InsecureSkipVerify: c.config.Loggers.RedisPub.TLSInsecure,
+				MinVersion:         c.config.Loggers.RedisPub.TLSMinVersion,
+				CAFile:             c.config.Loggers.RedisPub.CAFile,
+				CertFile:           c.config.Loggers.RedisPub.CertFile,
+				KeyFile:            c.config.Loggers.RedisPub.KeyFile,
 			}
 
-			tlsConfig, err = dnsutils.TlsClientConfig(tlsOptions)
+			tlsConfig, err = dnsutils.TLSClientConfig(tlsOptions)
 			if err == nil {
 				dialer := &net.Dialer{Timeout: connTimeout}
-				conn, err = tls.DialWithDialer(dialer, dnsutils.SOCKET_TCP, address, tlsConfig)
+				conn, err = tls.DialWithDialer(dialer, dnsutils.SocketTCP, address, tlsConfig)
 			}
 
 		default:
-			o.logger.Fatal("logger=redispub - invalid transport:", o.transport)
+			c.logger.Fatal("logger=redispub - invalid transport:", c.transport)
 		}
 
 		// something is wrong during connection ?
 		if err != nil {
-			o.LogError("%s", err)
-			o.LogInfo("retry to connect in %d seconds", o.config.Loggers.RedisPub.RetryInterval)
-			time.Sleep(time.Duration(o.config.Loggers.RedisPub.RetryInterval) * time.Second)
+			c.LogError("%s", err)
+			c.LogInfo("retry to connect in %d seconds", c.config.Loggers.RedisPub.RetryInterval)
+			time.Sleep(time.Duration(c.config.Loggers.RedisPub.RetryInterval) * time.Second)
 			continue
 		}
 
-		o.transportConn = conn
+		c.transportConn = conn
 
 		// block until framestream is ready
-		o.transportReady <- true
+		c.transportReady <- true
 
 		// block until an error occured, need to reconnect
-		o.transportReconnect <- true
+		c.transportReconnect <- true
 	}
 }
 
-func (o *RedisPub) FlushBuffer(buf *[]dnsutils.DnsMessage) {
+func (c *RedisPub) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	// create escaping buffer
-	escape_buffer := new(bytes.Buffer)
+	escapeBuffer := new(bytes.Buffer)
 	// create a new encoder that writes to the buffer
-	encoder := json.NewEncoder(escape_buffer)
+	encoder := json.NewEncoder(escapeBuffer)
 
 	for _, dm := range *buf {
-		escape_buffer.Reset()
+		escapeBuffer.Reset()
 
-		cmd := "PUBLISH " + strconv.Quote(o.config.Loggers.RedisPub.RedisChannel) + " "
-		o.transportWriter.WriteString(cmd)
+		cmd := "PUBLISH " + strconv.Quote(c.config.Loggers.RedisPub.RedisChannel) + " "
+		c.transportWriter.WriteString(cmd)
 
-		if o.config.Loggers.RedisPub.Mode == dnsutils.MODE_TEXT {
-			o.transportWriter.WriteString(strconv.Quote(dm.String(o.textFormat, o.config.Global.TextFormatDelimiter, o.config.Global.TextFormatBoundary)))
-			o.transportWriter.WriteString(o.config.Loggers.RedisPub.PayloadDelimiter)
+		if c.config.Loggers.RedisPub.Mode == dnsutils.ModeText {
+			c.transportWriter.WriteString(strconv.Quote(dm.String(c.textFormat, c.config.Global.TextFormatDelimiter, c.config.Global.TextFormatBoundary)))
+			c.transportWriter.WriteString(c.config.Loggers.RedisPub.PayloadDelimiter)
 		}
 
-		if o.config.Loggers.RedisPub.Mode == dnsutils.MODE_JSON {
+		if c.config.Loggers.RedisPub.Mode == dnsutils.ModeJSON {
 			encoder.Encode(dm)
-			o.transportWriter.WriteString(strconv.Quote(escape_buffer.String()))
-			o.transportWriter.WriteString(o.config.Loggers.RedisPub.PayloadDelimiter)
+			c.transportWriter.WriteString(strconv.Quote(escapeBuffer.String()))
+			c.transportWriter.WriteString(c.config.Loggers.RedisPub.PayloadDelimiter)
 		}
 
-		if o.config.Loggers.RedisPub.Mode == dnsutils.MODE_FLATJSON {
+		if c.config.Loggers.RedisPub.Mode == dnsutils.ModeFlatJSON {
 			flat, err := dm.Flatten()
 			if err != nil {
-				o.LogError("flattening DNS message failed: %e", err)
+				c.LogError("flattening DNS message failed: %e", err)
 				continue
 			}
 			encoder.Encode(flat)
-			o.transportWriter.WriteString(strconv.Quote(escape_buffer.String()))
-			o.transportWriter.WriteString(o.config.Loggers.RedisPub.PayloadDelimiter)
+			c.transportWriter.WriteString(strconv.Quote(escapeBuffer.String()))
+			c.transportWriter.WriteString(c.config.Loggers.RedisPub.PayloadDelimiter)
 		}
 
 		// flush the transport buffer
-		err := o.transportWriter.Flush()
+		err := c.transportWriter.Flush()
 		if err != nil {
-			o.LogError("send frame error", err.Error())
-			o.writerReady = false
-			<-o.transportReconnect
+			c.LogError("send frame error", err.Error())
+			c.writerReady = false
+			<-c.transportReconnect
 			break
 		}
 	}
@@ -264,93 +264,93 @@ func (o *RedisPub) FlushBuffer(buf *[]dnsutils.DnsMessage) {
 	*buf = nil
 }
 
-func (o *RedisPub) Run() {
-	o.LogInfo("running in background...")
+func (c *RedisPub) Run() {
+	c.LogInfo("running in background...")
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.outputChan)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+	listChannel := []chan dnsutils.DNSMessage{}
+	listChannel = append(listChannel, c.outputChan)
+	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go o.Process()
+	go c.Process()
 
 	// loop to process incoming messages
 RUN_LOOP:
 	for {
 		select {
-		case <-o.stopRun:
+		case <-c.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
 
-			o.doneRun <- true
+			c.doneRun <- true
 			break RUN_LOOP
 
-		case cfg, opened := <-o.configChan:
+		case cfg, opened := <-c.configChan:
 			if !opened {
 				return
 			}
-			o.config = cfg
-			o.ReadConfig()
+			c.config = cfg
+			c.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-o.inputChan:
+		case dm, opened := <-c.inputChan:
 			if !opened {
-				o.LogInfo("input channel closed!")
+				c.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			subprocessors.InitDNSMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
 				continue
 			}
 
 			// send to output channel
-			o.outputChan <- dm
+			c.outputChan <- dm
 		}
 	}
-	o.LogInfo("run terminated")
+	c.LogInfo("run terminated")
 }
 
-func (o *RedisPub) Process() {
+func (c *RedisPub) Process() {
 	// init buffer
-	bufferDm := []dnsutils.DnsMessage{}
+	bufferDm := []dnsutils.DNSMessage{}
 
 	// init flust timer for buffer
-	flushInterval := time.Duration(o.config.Loggers.RedisPub.FlushInterval) * time.Second
+	flushInterval := time.Duration(c.config.Loggers.RedisPub.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
 	// init remote conn
-	go o.ConnectToRemote()
+	go c.ConnectToRemote()
 
-	o.LogInfo("ready to process")
+	c.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {
-		case <-o.stopProcess:
+		case <-c.stopProcess:
 			// closing remote connection if exist
-			o.Disconnect()
-			o.doneProcess <- true
+			c.Disconnect()
+			c.doneProcess <- true
 			break PROCESS_LOOP
 
-		case <-o.transportReady:
-			o.LogInfo("transport connected with success")
-			o.transportWriter = bufio.NewWriter(o.transportConn)
-			o.writerReady = true
+		case <-c.transportReady:
+			c.LogInfo("transport connected with success")
+			c.transportWriter = bufio.NewWriter(c.transportConn)
+			c.writerReady = true
 			// read from the connection until we stop
-			go o.ReadFromConnection()
+			go c.ReadFromConnection()
 
 		// incoming dns message to process
-		case dm, opened := <-o.outputChan:
+		case dm, opened := <-c.outputChan:
 			if !opened {
-				o.LogInfo("output channel closed!")
+				c.LogInfo("output channel closed!")
 				return
 			}
 
 			// drop dns message if the connection is not ready to avoid memory leak or
 			// to block the channel
-			if !o.writerReady {
+			if !c.writerReady {
 				continue
 			}
 
@@ -358,20 +358,20 @@ PROCESS_LOOP:
 			bufferDm = append(bufferDm, dm)
 
 			// buffer is full ?
-			if len(bufferDm) >= o.config.Loggers.RedisPub.BufferSize {
-				o.FlushBuffer(&bufferDm)
+			if len(bufferDm) >= c.config.Loggers.RedisPub.BufferSize {
+				c.FlushBuffer(&bufferDm)
 			}
 
 		// flush the buffer
 		case <-flushTimer.C:
-			if !o.writerReady {
-				o.LogInfo("Buffer cleared!")
+			if !c.writerReady {
+				c.LogInfo("Buffer cleared!")
 				bufferDm = nil
 				continue
 			}
 
 			if len(bufferDm) > 0 {
-				o.FlushBuffer(&bufferDm)
+				c.FlushBuffer(&bufferDm)
 			}
 
 			// restart timer
@@ -379,5 +379,5 @@ PROCESS_LOOP:
 
 		}
 	}
-	o.LogInfo("processing terminated")
+	c.LogInfo("processing terminated")
 }

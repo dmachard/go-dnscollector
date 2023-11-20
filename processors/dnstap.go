@@ -13,13 +13,13 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func GetFakeDnstap(dnsquery []byte) *dnstap.Dnstap {
-	dt_query := &dnstap.Dnstap{}
+func GetFakeDNSTap(dnsquery []byte) *dnstap.Dnstap {
+	dtQuery := &dnstap.Dnstap{}
 
 	dt := dnstap.Dnstap_MESSAGE
-	dt_query.Identity = []byte("dnstap-generator")
-	dt_query.Version = []byte("-")
-	dt_query.Type = &dt
+	dtQuery.Identity = []byte("dnstap-generator")
+	dtQuery.Version = []byte("-")
+	dtQuery.Type = &dt
 
 	mt := dnstap.Message_CLIENT_QUERY
 	sf := dnstap.SocketFamily_INET
@@ -44,12 +44,12 @@ func GetFakeDnstap(dnsquery []byte) *dnstap.Dnstap {
 	msg.QueryTimeSec = &tsec
 	msg.QueryTimeNsec = &tnsec
 
-	dt_query.Message = msg
-	return dt_query
+	dtQuery.Message = msg
+	return dtQuery
 }
 
-type DnstapProcessor struct {
-	ConnId       int
+type DNSTapProcessor struct {
+	ConnID       int
 	doneRun      chan bool
 	stopRun      chan bool
 	doneMonitor  chan bool
@@ -64,11 +64,11 @@ type DnstapProcessor struct {
 	droppedCount map[string]int
 }
 
-func NewDnstapProcessor(connId int, config *dnsutils.Config, logger *logger.Logger, name string, size int) DnstapProcessor {
-	logger.Info("[%s] processor=dnstap#%d - initialization...", name, connId)
+func NewDNSTapProcessor(connID int, config *dnsutils.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
+	logger.Info("[%s] processor=dnstap#%d - initialization...", name, connID)
 
-	d := DnstapProcessor{
-		ConnId:       connId,
+	d := DNSTapProcessor{
+		ConnID:       connID,
 		doneMonitor:  make(chan bool),
 		doneRun:      make(chan bool),
 		stopMonitor:  make(chan bool),
@@ -86,31 +86,31 @@ func NewDnstapProcessor(connId int, config *dnsutils.Config, logger *logger.Logg
 	return d
 }
 
-func (c *DnstapProcessor) LogInfo(msg string, v ...interface{}) {
+func (d *DNSTapProcessor) LogInfo(msg string, v ...interface{}) {
 	var log string
-	if c.ConnId == 0 {
-		log = fmt.Sprintf("[%s] processor=dnstap - ", c.name)
+	if d.ConnID == 0 {
+		log = fmt.Sprintf("[%s] processor=dnstap - ", d.name)
 	} else {
-		log = fmt.Sprintf("[%s] processor=dnstap#%d - ", c.name, c.ConnId)
+		log = fmt.Sprintf("[%s] processor=dnstap#%d - ", d.name, d.ConnID)
 	}
-	c.logger.Info(log+msg, v...)
+	d.logger.Info(log+msg, v...)
 }
 
-func (c *DnstapProcessor) LogError(msg string, v ...interface{}) {
+func (d *DNSTapProcessor) LogError(msg string, v ...interface{}) {
 	var log string
-	if c.ConnId == 0 {
-		log = fmt.Sprintf("[%s] processor=dnstap - ", c.name)
+	if d.ConnID == 0 {
+		log = fmt.Sprintf("[%s] processor=dnstap - ", d.name)
 	} else {
-		log = fmt.Sprintf("[%s] processor=dnstap#%d - ", c.name, c.ConnId)
+		log = fmt.Sprintf("[%s] processor=dnstap#%d - ", d.name, d.ConnID)
 	}
-	c.logger.Error(log+msg, v...)
+	d.logger.Error(log+msg, v...)
 }
 
-func (d *DnstapProcessor) GetChannel() chan []byte {
+func (d *DNSTapProcessor) GetChannel() chan []byte {
 	return d.recvFrom
 }
 
-func (d *DnstapProcessor) Stop() {
+func (d *DNSTapProcessor) Stop() {
 	d.LogInfo("stopping to process...")
 	d.stopRun <- true
 	<-d.doneRun
@@ -120,7 +120,7 @@ func (d *DnstapProcessor) Stop() {
 	<-d.doneMonitor
 }
 
-func (d *DnstapProcessor) MonitorLoggers() {
+func (d *DNSTapProcessor) MonitorLoggers() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 MONITOR_LOOP:
@@ -153,11 +153,11 @@ MONITOR_LOOP:
 	d.LogInfo("monitor terminated")
 }
 
-func (d *DnstapProcessor) Run(loggersChannel []chan dnsutils.DnsMessage, loggersName []string) {
+func (d *DNSTapProcessor) Run(loggersChannel []chan dnsutils.DNSMessage, loggersName []string) {
 	dt := &dnstap.Dnstap{}
 
 	// prepare enabled transformers
-	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel, d.ConnId)
+	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel, d.ConnID)
 
 	// start goroutine to count dropped messsages
 	go d.MonitorLoggers()
@@ -188,31 +188,31 @@ RUN_LOOP:
 			}
 
 			// init dns message
-			dm := dnsutils.DnsMessage{}
+			dm := dnsutils.DNSMessage{}
 			dm.Init()
 
 			// init dns message with additionnals parts
-			transforms.InitDnsMessageFormat(&dm)
+			transforms.InitDNSMessageFormat(&dm)
 
 			identity := dt.GetIdentity()
 			if len(identity) > 0 {
-				dm.DnsTap.Identity = string(identity)
+				dm.DNSTap.Identity = string(identity)
 			}
 			version := dt.GetVersion()
 			if len(version) > 0 {
-				dm.DnsTap.Version = string(version)
+				dm.DNSTap.Version = string(version)
 			}
-			dm.DnsTap.Operation = dt.GetMessage().GetType().String()
+			dm.DNSTap.Operation = dt.GetMessage().GetType().String()
 
 			extra := string(dt.GetExtra())
 			if len(extra) > 0 {
-				dm.DnsTap.Extra = extra
+				dm.DNSTap.Extra = extra
 			}
 
-			if ipVersion, valid := dnsutils.IP_VERSION[dt.GetMessage().GetSocketFamily().String()]; valid {
+			if ipVersion, valid := dnsutils.IPVersion[dt.GetMessage().GetSocketFamily().String()]; valid {
 				dm.NetworkInfo.Family = ipVersion
 			} else {
-				dm.NetworkInfo.Family = dnsutils.STR_UNKNOWN
+				dm.NetworkInfo.Family = dnsutils.StrUnknown
 			}
 
 			dm.NetworkInfo.Protocol = dt.GetMessage().GetSocketProtocol().String()
@@ -220,7 +220,7 @@ RUN_LOOP:
 			// decode query address and port
 			queryip := dt.GetMessage().GetQueryAddress()
 			if len(queryip) > 0 {
-				dm.NetworkInfo.QueryIp = net.IP(queryip).String()
+				dm.NetworkInfo.QueryIP = net.IP(queryip).String()
 			}
 			queryport := dt.GetMessage().GetQueryPort()
 			if queryport > 0 {
@@ -230,7 +230,7 @@ RUN_LOOP:
 			// decode response address and port
 			responseip := dt.GetMessage().GetResponseAddress()
 			if len(responseip) > 0 {
-				dm.NetworkInfo.ResponseIp = net.IP(responseip).String()
+				dm.NetworkInfo.ResponseIP = net.IP(responseip).String()
 			}
 			responseport := dt.GetMessage().GetResponsePort()
 			if responseport > 0 {
@@ -238,32 +238,32 @@ RUN_LOOP:
 			}
 
 			// get dns payload and timestamp according to the type (query or response)
-			op := dnstap.Message_Type_value[dm.DnsTap.Operation]
+			op := dnstap.Message_Type_value[dm.DNSTap.Operation]
 			if op%2 == 1 {
-				dns_payload := dt.GetMessage().GetQueryMessage()
-				dm.DNS.Payload = dns_payload
-				dm.DNS.Length = len(dns_payload)
-				dm.DNS.Type = dnsutils.DnsQuery
-				dm.DnsTap.TimeSec = int(dt.GetMessage().GetQueryTimeSec())
-				dm.DnsTap.TimeNsec = int(dt.GetMessage().GetQueryTimeNsec())
+				dnsPayload := dt.GetMessage().GetQueryMessage()
+				dm.DNS.Payload = dnsPayload
+				dm.DNS.Length = len(dnsPayload)
+				dm.DNS.Type = dnsutils.DNSQuery
+				dm.DNSTap.TimeSec = int(dt.GetMessage().GetQueryTimeSec())
+				dm.DNSTap.TimeNsec = int(dt.GetMessage().GetQueryTimeNsec())
 			} else {
-				dns_payload := dt.GetMessage().GetResponseMessage()
-				dm.DNS.Payload = dns_payload
-				dm.DNS.Length = len(dns_payload)
-				dm.DNS.Type = dnsutils.DnsReply
-				dm.DnsTap.TimeSec = int(dt.GetMessage().GetResponseTimeSec())
-				dm.DnsTap.TimeNsec = int(dt.GetMessage().GetResponseTimeNsec())
+				dnsPayload := dt.GetMessage().GetResponseMessage()
+				dm.DNS.Payload = dnsPayload
+				dm.DNS.Length = len(dnsPayload)
+				dm.DNS.Type = dnsutils.DNSReply
+				dm.DNSTap.TimeSec = int(dt.GetMessage().GetResponseTimeSec())
+				dm.DNSTap.TimeNsec = int(dt.GetMessage().GetResponseTimeNsec())
 			}
 
 			// compute timestamp
-			ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
-			dm.DnsTap.Timestamp = ts.UnixNano()
-			dm.DnsTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
+			ts := time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec))
+			dm.DNSTap.Timestamp = ts.UnixNano()
+			dm.DNSTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
 			if !d.config.Collectors.Dnstap.DisableDNSParser {
 				// decode the dns payload to get id, rcode and the number of question
 				// number of answer, ignore invalid packet
-				dnsHeader, err := dnsutils.DecodeDns(dm.DNS.Payload)
+				dnsHeader, err := dnsutils.DecodeDNS(dm.DNS.Payload)
 				if err != nil {
 					// parser error
 					dm.DNS.MalformedPacket = true
@@ -280,12 +280,12 @@ RUN_LOOP:
 			}
 
 			// apply all enabled transformers
-			if transforms.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			if transforms.ProcessMessage(&dm) == transformers.ReturnDrop {
 				continue
 			}
 
 			// convert latency to human
-			dm.DnsTap.LatencySec = fmt.Sprintf("%.6f", dm.DnsTap.Latency)
+			dm.DNSTap.LatencySec = fmt.Sprintf("%.6f", dm.DNSTap.Latency)
 
 			// dispatch dns message to connected loggers
 			for i := range loggersChannel {

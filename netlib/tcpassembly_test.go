@@ -63,8 +63,8 @@ func Test_TcpAssembly(t *testing.T) {
 				return
 			}
 
-			reassembleChan := make(chan DnsPacket)
-			streamFactory := &DnsStreamFactory{Reassembled: reassembleChan}
+			reassembleChan := make(chan DNSPacket)
+			streamFactory := &DNSStreamFactory{Reassembled: reassembleChan}
 			streamPool := tcpassembly.NewStreamPool(streamFactory)
 			assembler := tcpassembly.NewAssembler(streamPool)
 
@@ -92,9 +92,9 @@ func Test_TcpAssembly(t *testing.T) {
 
 				if packet.TransportLayer().LayerType() == layers.LayerTypeUDP {
 					p := packet.TransportLayer().(*layers.UDP)
-					reassembleChan <- DnsPacket{
+					reassembleChan <- DNSPacket{
 						Payload:        p.Payload,
-						IpLayer:        packet.NetworkLayer().NetworkFlow(),
+						IPLayer:        packet.NetworkLayer().NetworkFlow(),
 						TransportLayer: p.TransportFlow(),
 						Timestamp:      packet.Metadata().Timestamp,
 					}
@@ -108,7 +108,7 @@ func Test_TcpAssembly(t *testing.T) {
 				}
 			}
 			// send empty packet to stop the goroutine
-			reassembleChan <- DnsPacket{}
+			reassembleChan <- DNSPacket{}
 
 			<-done
 			if nbPackets != tc.nbPackets {

@@ -30,7 +30,7 @@ This is the list of available label values selectors.
 Configuration may specifiy a list of lables to use for metrics.
 Any label in this catalogueSelectors can be specidied in config (prometheus-labels stanza)
 */
-var catalogueSelectors map[string]func(*dnsutils.DnsMessage) string = map[string]func(*dnsutils.DnsMessage) string{
+var catalogueSelectors map[string]func(*dnsutils.DNSMessage) string = map[string]func(*dnsutils.DNSMessage) string{
 	"stream_id": GetStreamID,
 	"resolver":  GetResolverIP,
 }
@@ -82,7 +82,7 @@ type PrometheusCountersCatalogue interface {
 	// to allow fetching a CounterSet by the list of metric/values by fetching values from
 	// the DNS message it logs.
 	// There is a schematic sample layout when there are 2 labels considered at the end of this file
-	GetCountersSet(*dnsutils.DnsMessage) PrometheusCountersCatalogue
+	GetCountersSet(*dnsutils.DNSMessage) PrometheusCountersCatalogue
 }
 
 // This type represents a set of counters for a unique set of label name=value pairs.
@@ -144,7 +144,7 @@ type PromCounterCatalogueContainer struct {
 
 	// selector is a function that obtains a value for a label considering DNS Message data
 	// in most cases - just a field of that message
-	selector func(*dnsutils.DnsMessage) string
+	selector func(*dnsutils.DNSMessage) string
 
 	sync.RWMutex
 }
@@ -152,12 +152,12 @@ type PromCounterCatalogueContainer struct {
 /*
 Selectors
 */
-func GetStreamID(dm *dnsutils.DnsMessage) string {
-	return dm.DnsTap.Identity
+func GetStreamID(dm *dnsutils.DNSMessage) string {
+	return dm.DNSTap.Identity
 }
 
-func GetResolverIP(dm *dnsutils.DnsMessage) string {
-	return dm.NetworkInfo.ResponseIp
+func GetResolverIP(dm *dnsutils.DNSMessage) string {
+	return dm.NetworkInfo.ResponseIP
 }
 
 type Prometheus struct {
@@ -168,8 +168,8 @@ type Prometheus struct {
 	doneRun      chan bool
 	httpServer   *http.Server
 	netListener  net.Listener
-	inputChan    chan dnsutils.DnsMessage
-	outputChan   chan dnsutils.DnsMessage
+	inputChan    chan dnsutils.DNSMessage
+	outputChan   chan dnsutils.DNSMessage
 	config       *dnsutils.Config
 	configChan   chan *dnsutils.Config
 	logger       *logger.Logger
@@ -265,7 +265,7 @@ func newPrometheusCounterSet(p *Prometheus, labels prometheus.Labels) *Prometheu
 	return pcs
 }
 
-func (c *PrometheusCountersSet) GetCountersSet(dm *dnsutils.DnsMessage) PrometheusCountersCatalogue {
+func (c *PrometheusCountersSet) GetCountersSet(dm *dnsutils.DNSMessage) PrometheusCountersCatalogue {
 	return c
 }
 
@@ -319,20 +319,20 @@ func (c *PrometheusCountersSet) Describe(ch chan<- *prometheus.Desc) {
 }
 
 // Updates all counters for a specific set of labelName=labelValue
-func (c *PrometheusCountersSet) Record(dm dnsutils.DnsMessage) {
+func (c *PrometheusCountersSet) Record(dm dnsutils.DNSMessage) {
 	c.Lock()
 	defer c.Unlock()
 	// count number of dns message per requester ip and top clients
-	if _, exists := c.requesters[dm.NetworkInfo.QueryIp]; !exists {
-		c.requesters[dm.NetworkInfo.QueryIp] = 1
+	if _, exists := c.requesters[dm.NetworkInfo.QueryIP]; !exists {
+		c.requesters[dm.NetworkInfo.QueryIP] = 1
 	} else {
-		c.requesters[dm.NetworkInfo.QueryIp] += 1
+		c.requesters[dm.NetworkInfo.QueryIP] += 1
 	}
-	c.topRequesters.Record(dm.NetworkInfo.QueryIp, c.requesters[dm.NetworkInfo.QueryIp])
+	c.topRequesters.Record(dm.NetworkInfo.QueryIP, c.requesters[dm.NetworkInfo.QueryIP])
 
 	// top domains
 	switch dm.DNS.Rcode {
-	case dnsutils.DNS_RCODE_TIMEOUT:
+	case dnsutils.DNSRcodeTimeout:
 		if _, exists := c.evicted[dm.DNS.Qname]; !exists {
 			c.evicted[dm.DNS.Qname] = 1
 		} else {
@@ -340,7 +340,7 @@ func (c *PrometheusCountersSet) Record(dm dnsutils.DnsMessage) {
 		}
 		c.topEvicted.Record(dm.DNS.Qname, c.evicted[dm.DNS.Qname])
 
-	case dnsutils.DNS_RCODE_SERVFAIL:
+	case dnsutils.DNSRcodeServFail:
 		if _, exists := c.sfdomains[dm.DNS.Qname]; !exists {
 			c.sfdomains[dm.DNS.Qname] = 1
 		} else {
@@ -348,7 +348,7 @@ func (c *PrometheusCountersSet) Record(dm dnsutils.DnsMessage) {
 		}
 		c.topSfDomains.Record(dm.DNS.Qname, c.sfdomains[dm.DNS.Qname])
 
-	case dnsutils.DNS_RCODE_NXDOMAIN:
+	case dnsutils.DNSRcodeNXDomain:
 		if _, exists := c.nxdomains[dm.DNS.Qname]; !exists {
 			c.nxdomains[dm.DNS.Qname] = 1
 		} else {
@@ -405,11 +405,11 @@ func (c *PrometheusCountersSet) Record(dm dnsutils.DnsMessage) {
 	if c.prom.config.Loggers.Prometheus.HistogramMetricsEnabled {
 		c.prom.histogramQnamesLength.With(c.labels).Observe(float64(len(dm.DNS.Qname)))
 
-		if dm.DnsTap.Latency > 0.0 {
-			c.prom.histogramLatencies.With(c.labels).Observe(dm.DnsTap.Latency)
+		if dm.DNSTap.Latency > 0.0 {
+			c.prom.histogramLatencies.With(c.labels).Observe(dm.DNSTap.Latency)
 		}
 
-		if dm.DNS.Type == dnsutils.DnsQuery {
+		if dm.DNS.Type == dnsutils.DNSQuery {
 			c.prom.histogramQueriesLength.With(c.labels).Observe(float64(dm.DNS.Length))
 		} else {
 			c.prom.histogramRepliesLength.With(c.labels).Observe(float64(dm.DNS.Length))
@@ -445,11 +445,11 @@ func (c *PrometheusCountersSet) Record(dm dnsutils.DnsMessage) {
 		c.epsCounters.TotalRcodes[dm.DNS.Rcode]++
 	}
 
-	if dm.DNS.Type == dnsutils.DnsQuery {
+	if dm.DNS.Type == dnsutils.DNSQuery {
 		c.epsCounters.TotalBytesReceived += dm.DNS.Length
 		c.epsCounters.TotalQueries++
 	}
-	if dm.DNS.Type == dnsutils.DnsReply {
+	if dm.DNS.Type == dnsutils.DNSReply {
 		c.epsCounters.TotalBytesSent += dm.DNS.Length
 		c.epsCounters.TotalReplies++
 	}
@@ -470,10 +470,10 @@ func (c *PrometheusCountersSet) Record(dm dnsutils.DnsMessage) {
 	if dm.DNS.MalformedPacket {
 		c.epsCounters.TotalMalformed++
 	}
-	if dm.NetworkInfo.IpDefragmented {
+	if dm.NetworkInfo.IPDefragmented {
 		c.epsCounters.TotalFragmented++
 	}
-	if dm.NetworkInfo.TcpReassembled {
+	if dm.NetworkInfo.TCPReassembled {
 		c.epsCounters.TotalReasembled++
 	}
 
@@ -686,7 +686,7 @@ func (c *PromCounterCatalogueContainer) GetAllCounterSets() []*PrometheusCounter
 }
 
 // Searches for an existing element for a label value, creating one if not found
-func (c *PromCounterCatalogueContainer) GetCountersSet(dm *dnsutils.DnsMessage) PrometheusCountersCatalogue {
+func (c *PromCounterCatalogueContainer) GetCountersSet(dm *dnsutils.DNSMessage) PrometheusCountersCatalogue {
 	if c.selector == nil {
 		panic(fmt.Sprintf("%v: nil selector", c))
 	}
@@ -759,8 +759,8 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, name string) 
 		doneRun:      make(chan bool),
 		config:       config,
 		configChan:   make(chan *dnsutils.Config),
-		inputChan:    make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
-		outputChan:   make(chan dnsutils.DnsMessage, config.Loggers.Prometheus.ChannelBufferSize),
+		inputChan:    make(chan dnsutils.DNSMessage, config.Loggers.Prometheus.ChannelBufferSize),
+		outputChan:   make(chan dnsutils.DNSMessage, config.Loggers.Prometheus.ChannelBufferSize),
 		logger:       logger,
 		promRegistry: prometheus.NewPedanticRegistry(),
 		name:         name,
@@ -1075,7 +1075,7 @@ func (c *Prometheus) InitProm() {
 }
 
 func (c *Prometheus) ReadConfig() {
-	if !dnsutils.IsValidTLS(c.config.Loggers.Prometheus.TlsMinVersion) {
+	if !dnsutils.IsValidTLS(c.config.Loggers.Prometheus.TLSMinVersion) {
 		c.logger.Fatal("logger prometheus - invalid tls min version")
 	}
 }
@@ -1093,7 +1093,7 @@ func (c *Prometheus) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=prometheus - "+msg, v...)
 }
 
-func (c *Prometheus) Channel() chan dnsutils.DnsMessage {
+func (c *Prometheus) Channel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 
@@ -1111,7 +1111,7 @@ func (c *Prometheus) Stop() {
 	<-c.doneAPI
 }
 
-func (c *Prometheus) Record(dm dnsutils.DnsMessage) {
+func (c *Prometheus) Record(dm dnsutils.DNSMessage) {
 	// record stream identity
 	c.Lock()
 
@@ -1143,7 +1143,7 @@ func (c *Prometheus) ListenAndServe() {
 	var listener net.Listener
 	addrlisten := c.config.Loggers.Prometheus.ListenIP + ":" + strconv.Itoa(c.config.Loggers.Prometheus.ListenPort)
 	// listening with tls enabled ?
-	if c.config.Loggers.Prometheus.TlsSupport {
+	if c.config.Loggers.Prometheus.TLSSupport {
 		c.LogInfo("tls support enabled")
 		var cer tls.Certificate
 		cer, err = tls.LoadX509KeyPair(c.config.Loggers.Prometheus.CertFile, c.config.Loggers.Prometheus.KeyFile)
@@ -1158,9 +1158,9 @@ func (c *Prometheus) ListenAndServe() {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLS_VERSION[c.config.Loggers.Prometheus.TlsMinVersion]
+		tlsConfig.MinVersion = dnsutils.TLSVersion[c.config.Loggers.Prometheus.TLSMinVersion]
 
-		if c.config.Loggers.Prometheus.TlsMutual {
+		if c.config.Loggers.Prometheus.TLSMutual {
 
 			// Create a CA certificate pool and add cert.pem to it
 			var caCert []byte
@@ -1175,11 +1175,11 @@ func (c *Prometheus) ListenAndServe() {
 			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
 		}
 
-		listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, tlsConfig)
+		listener, err = tls.Listen(dnsutils.SocketTCP, addrlisten, tlsConfig)
 
 	} else {
 		// basic listening
-		listener, err = net.Listen(dnsutils.SOCKET_TCP, addrlisten)
+		listener, err = net.Listen(dnsutils.SocketTCP, addrlisten)
 	}
 
 	// something wrong ?
@@ -1200,7 +1200,7 @@ func (c *Prometheus) Run() {
 	c.LogInfo("running in background...")
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DnsMessage{}
+	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, c.outputChan)
 	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
 
@@ -1235,8 +1235,8 @@ RUN_LOOP:
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			subprocessors.InitDNSMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
 				continue
 			}
 

@@ -14,15 +14,15 @@ func Test_DnsProcessor(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init and run the dns processor
-	consumer := NewDnsProcessor(dnsutils.GetFakeConfig(), logger, "test", 512)
-	chan_to := make(chan dnsutils.DnsMessage, 512)
-	go consumer.Run([]chan dnsutils.DnsMessage{chan_to}, []string{"test"})
+	consumer := NewDNSProcessor(dnsutils.GetFakeConfig(), logger, "test", 512)
+	chanTo := make(chan dnsutils.DNSMessage, 512)
+	go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
 
-	dm := dnsutils.GetFakeDnsMessageWithPayload()
+	dm := dnsutils.GetFakeDNSMessageWithPayload()
 	consumer.GetChannel() <- dm
 
 	// read dns message from dnstap consumer
-	dmOut := <-chan_to
+	dmOut := <-chanTo
 
 	if dmOut.DNS.Qname != "dnscollector.dev" {
 		t.Errorf("invalid qname in dns message: %s", dm.DNS.Qname)

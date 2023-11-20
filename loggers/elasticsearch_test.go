@@ -22,7 +22,7 @@ func Test_ElasticSearchClient(t *testing.T) {
 		inputSize int
 	}{
 		{
-			mode:      dnsutils.MODE_FLATJSON,
+			mode:      dnsutils.ModeFlatJSON,
 			bulkSize:  10,
 			inputSize: 500,
 		},
@@ -43,7 +43,7 @@ func Test_ElasticSearchClient(t *testing.T) {
 
 			go g.Run()
 
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 
 			for i := 0; i < tc.inputSize; i++ {
 				g.Channel() <- dm
@@ -64,7 +64,7 @@ func Test_ElasticSearchClient(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				conn.Write([]byte(dnsutils.HTTP_OK))
+				conn.Write([]byte(dnsutils.HTTPOK))
 
 				// read payload from request body
 				payload, err := io.ReadAll(request.Body)
@@ -80,7 +80,7 @@ func Test_ElasticSearchClient(t *testing.T) {
 						json.Unmarshal(scanner.Bytes(), &res)
 						assert.Equal(t, map[string]interface{}{}, res["create"])
 					} else {
-						var bulkDm dnsutils.DnsMessage
+						var bulkDm dnsutils.DNSMessage
 						err := json.Unmarshal(scanner.Bytes(), &bulkDm)
 						assert.NoError(t, err)
 					}
@@ -88,7 +88,7 @@ func Test_ElasticSearchClient(t *testing.T) {
 				}
 
 				assert.Equal(t, tc.bulkSize*2, cnt)
-				assert.Equal(t, "http://127.0.0.1:9200/indexname/_bulk", g.bulkUrl)
+				assert.Equal(t, "http://127.0.0.1:9200/indexname/_bulk", g.bulkURL)
 			}
 		})
 	}
@@ -103,7 +103,7 @@ func Test_ElasticSearchClientFlushINterval(t *testing.T) {
 		flushInterval int
 	}{
 		{
-			mode:          dnsutils.MODE_FLATJSON,
+			mode:          dnsutils.ModeFlatJSON,
 			bulkSize:      100,
 			inputSize:     99,
 			flushInterval: 5,
@@ -126,7 +126,7 @@ func Test_ElasticSearchClientFlushINterval(t *testing.T) {
 
 			go g.Run()
 
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 
 			for i := 0; i < tc.inputSize; i++ {
 				g.Channel() <- dm
@@ -144,7 +144,7 @@ func Test_ElasticSearchClientFlushINterval(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			conn.Write([]byte(dnsutils.HTTP_OK))
+			conn.Write([]byte(dnsutils.HTTPOK))
 
 			// read payload from request body
 			payload, err := io.ReadAll(request.Body)
@@ -160,7 +160,7 @@ func Test_ElasticSearchClientFlushINterval(t *testing.T) {
 					json.Unmarshal(scanner.Bytes(), &res)
 					assert.Equal(t, map[string]interface{}{}, res["create"])
 				} else {
-					var bulkDm dnsutils.DnsMessage
+					var bulkDm dnsutils.DNSMessage
 					err := json.Unmarshal(scanner.Bytes(), &bulkDm)
 					assert.NoError(t, err)
 				}
@@ -168,7 +168,7 @@ func Test_ElasticSearchClientFlushINterval(t *testing.T) {
 			}
 
 			assert.Equal(t, tc.inputSize*2, cnt)
-			assert.Equal(t, "http://127.0.0.1:9200/indexname/_bulk", g.bulkUrl)
+			assert.Equal(t, "http://127.0.0.1:9200/indexname/_bulk", g.bulkURL)
 
 		})
 	}

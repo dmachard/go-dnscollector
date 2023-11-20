@@ -21,13 +21,13 @@ type UserPrivacyProcessor struct {
 	v4Mask      net.IPMask
 	v6Mask      net.IPMask
 	instance    int
-	outChannels []chan dnsutils.DnsMessage
+	outChannels []chan dnsutils.DNSMessage
 	logInfo     func(msg string, v ...interface{})
 	logError    func(msg string, v ...interface{})
 }
 
 func NewUserPrivacySubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DnsMessage,
+	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) UserPrivacyProcessor {
 	s := UserPrivacyProcessor{

@@ -20,10 +20,10 @@ import (
 func IsStdoutValidMode(mode string) bool {
 	switch mode {
 	case
-		dnsutils.MODE_TEXT,
-		dnsutils.MODE_JSON,
-		dnsutils.MODE_FLATJSON,
-		dnsutils.MODE_PCAP:
+		dnsutils.ModeText,
+		dnsutils.ModeJSON,
+		dnsutils.ModeFlatJSON,
+		dnsutils.ModePCAP:
 		return true
 	}
 	return false
@@ -34,8 +34,8 @@ type StdOut struct {
 	doneProcess chan bool
 	stopRun     chan bool
 	doneRun     chan bool
-	inputChan   chan dnsutils.DnsMessage
-	outputChan  chan dnsutils.DnsMessage
+	inputChan   chan dnsutils.DNSMessage
+	outputChan  chan dnsutils.DNSMessage
 	textFormat  []string
 	config      *dnsutils.Config
 	configChan  chan *dnsutils.Config
@@ -52,8 +52,8 @@ func NewStdOut(config *dnsutils.Config, console *logger.Logger, name string) *St
 		doneProcess: make(chan bool),
 		stopRun:     make(chan bool),
 		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.Stdout.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.Stdout.ChannelBufferSize),
+		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.Stdout.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.Stdout.ChannelBufferSize),
 		logger:      console,
 		config:      config,
 		configChan:  make(chan *dnsutils.Config),
@@ -80,9 +80,9 @@ func (c *StdOut) ReadConfig() {
 	}
 }
 
-func (o *StdOut) ReloadConfig(config *dnsutils.Config) {
-	o.LogInfo("reload configuration!")
-	o.configChan <- config
+func (c *StdOut) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload configuration!")
+	c.configChan <- config
 }
 
 func (c *StdOut) LogInfo(msg string, v ...interface{}) {
@@ -93,116 +93,116 @@ func (c *StdOut) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=stdout - "+msg, v...)
 }
 
-func (o *StdOut) SetTextWriter(b *bytes.Buffer) {
-	o.writerText = log.New(os.Stdout, "", 0)
-	o.writerText.SetOutput(b)
+func (c *StdOut) SetTextWriter(b *bytes.Buffer) {
+	c.writerText = log.New(os.Stdout, "", 0)
+	c.writerText.SetOutput(b)
 }
 
-func (o *StdOut) SetPcapWriter(w io.Writer) {
-	o.LogInfo("init pcap writer")
+func (c *StdOut) SetPcapWriter(w io.Writer) {
+	c.LogInfo("init pcap writer")
 
-	o.writerPcap = pcapgo.NewWriter(w)
-	if err := o.writerPcap.WriteFileHeader(65536, layers.LinkTypeEthernet); err != nil {
-		o.logger.Fatal("["+o.name+"] logger=stdout - pcap init error: %e", err)
+	c.writerPcap = pcapgo.NewWriter(w)
+	if err := c.writerPcap.WriteFileHeader(65536, layers.LinkTypeEthernet); err != nil {
+		c.logger.Fatal("["+c.name+"] logger=stdout - pcap init error: %e", err)
 	}
 }
 
-func (o *StdOut) Channel() chan dnsutils.DnsMessage {
-	return o.inputChan
+func (c *StdOut) Channel() chan dnsutils.DNSMessage {
+	return c.inputChan
 }
 
-func (o *StdOut) Stop() {
-	o.LogInfo("stopping to run...")
-	o.stopRun <- true
-	<-o.doneRun
+func (c *StdOut) Stop() {
+	c.LogInfo("stopping to run...")
+	c.stopRun <- true
+	<-c.doneRun
 
-	o.LogInfo("stopping to process...")
-	o.stopProcess <- true
-	<-o.doneProcess
+	c.LogInfo("stopping to process...")
+	c.stopProcess <- true
+	<-c.doneProcess
 }
 
-func (o *StdOut) Run() {
-	o.LogInfo("running in background...")
+func (c *StdOut) Run() {
+	c.LogInfo("running in background...")
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.outputChan)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+	listChannel := []chan dnsutils.DNSMessage{}
+	listChannel = append(listChannel, c.outputChan)
+	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go o.Process()
+	go c.Process()
 
 	// loop to process incoming messages
 RUN_LOOP:
 	for {
 		select {
-		case <-o.stopRun:
+		case <-c.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
-			o.doneRun <- true
+			c.doneRun <- true
 			break RUN_LOOP
 
 		// new config provided?
-		case cfg, opened := <-o.configChan:
+		case cfg, opened := <-c.configChan:
 			if !opened {
 				return
 			}
-			o.config = cfg
-			o.ReadConfig()
+			c.config = cfg
+			c.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-o.inputChan:
+		case dm, opened := <-c.inputChan:
 			if !opened {
-				o.LogInfo("run: input channel closed!")
+				c.LogInfo("run: input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			subprocessors.InitDNSMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
 				continue
 			}
 
 			// send to output channel
-			o.outputChan <- dm
+			c.outputChan <- dm
 		}
 	}
-	o.LogInfo("run terminated")
+	c.LogInfo("run terminated")
 }
 
-func (o *StdOut) Process() {
+func (c *StdOut) Process() {
 
 	// standard output buffer
 	buffer := new(bytes.Buffer)
 
-	if o.config.Loggers.Stdout.Mode == dnsutils.MODE_PCAP && o.writerPcap == nil {
-		o.SetPcapWriter(os.Stdout)
+	if c.config.Loggers.Stdout.Mode == dnsutils.ModePCAP && c.writerPcap == nil {
+		c.SetPcapWriter(os.Stdout)
 	}
 
-	o.LogInfo("ready to process")
+	c.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {
-		case <-o.stopProcess:
-			o.doneProcess <- true
+		case <-c.stopProcess:
+			c.doneProcess <- true
 			break PROCESS_LOOP
 
-		case dm, opened := <-o.outputChan:
+		case dm, opened := <-c.outputChan:
 			if !opened {
-				o.LogInfo("process: output channel closed!")
+				c.LogInfo("process: output channel closed!")
 				return
 			}
 
-			switch o.config.Loggers.Stdout.Mode {
-			case dnsutils.MODE_PCAP:
+			switch c.config.Loggers.Stdout.Mode {
+			case dnsutils.ModePCAP:
 				if len(dm.DNS.Payload) == 0 {
-					o.LogError("process: no dns payload to encode, drop it")
+					c.LogError("process: no dns payload to encode, drop it")
 					continue
 				}
 
 				pkt, err := dm.ToPacketLayer()
 				if err != nil {
-					o.LogError("unable to pack layer: %s", err)
+					c.LogError("unable to pack layer: %s", err)
 					continue
 				}
 
@@ -217,33 +217,33 @@ PROCESS_LOOP:
 
 				bufSize := len(buf.Bytes())
 				ci := gopacket.CaptureInfo{
-					Timestamp:     time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec)),
+					Timestamp:     time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec)),
 					CaptureLength: bufSize,
 					Length:        bufSize,
 				}
 
-				o.writerPcap.WritePacket(ci, buf.Bytes())
+				c.writerPcap.WritePacket(ci, buf.Bytes())
 
-			case dnsutils.MODE_TEXT:
-				o.writerText.Print(dm.String(o.textFormat,
-					o.config.Global.TextFormatDelimiter,
-					o.config.Global.TextFormatBoundary))
+			case dnsutils.ModeText:
+				c.writerText.Print(dm.String(c.textFormat,
+					c.config.Global.TextFormatDelimiter,
+					c.config.Global.TextFormatBoundary))
 
-			case dnsutils.MODE_JSON:
+			case dnsutils.ModeJSON:
 				json.NewEncoder(buffer).Encode(dm)
-				o.writerText.Print(buffer.String())
+				c.writerText.Print(buffer.String())
 				buffer.Reset()
 
-			case dnsutils.MODE_FLATJSON:
+			case dnsutils.ModeFlatJSON:
 				flat, err := dm.Flatten()
 				if err != nil {
-					o.LogError("process: flattening DNS message failed: %e", err)
+					c.LogError("process: flattening DNS message failed: %e", err)
 				}
 				json.NewEncoder(buffer).Encode(flat)
-				o.writerText.Print(buffer.String())
+				c.writerText.Print(buffer.String())
 				buffer.Reset()
 			}
 		}
 	}
-	o.LogInfo("processing terminated")
+	c.LogInfo("processing terminated")
 }

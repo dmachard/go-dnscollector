@@ -26,8 +26,8 @@ func TestDecodeQuery_EDNS(t *testing.T) {
 
 	payload, _ := dm.Pack()
 
-	_, _, offset_rr, _ := DecodeQuestion(1, payload)
-	_, _, err := DecodeEDNS(len(dm.Extra), offset_rr, payload)
+	_, _, offsetRR, _ := DecodeQuestion(1, payload)
+	_, _, err := DecodeEDNS(len(dm.Extra), offsetRR, payload)
 
 	if err != nil {
 		t.Errorf("edns error returned: %v", err)
@@ -57,15 +57,16 @@ func TestDecodeReply_EDNS(t *testing.T) {
 	o := &dns.EDNS0_COOKIE{Code: 10, Cookie: "aaaa"}
 	e.Option = append(e.Option, o)
 
-	m.Extra = append(dm.Extra, e)
+	m.Extra = dm.Extra
+	m.Extra = append(m.Extra, e)
 
 	m.SetRcode(dm, 42) // 32(extended rcode) + 10(rcode)
 
 	payload, _ := m.Pack()
-	_, _, offset_rr, _ := DecodeQuestion(1, payload)
-	_, offset_rr, _ = DecodeAnswer(len(m.Answer), offset_rr, payload)
+	_, _, offsetRR, _ := DecodeQuestion(1, payload)
+	_, offsetRR, _ = DecodeAnswer(len(m.Answer), offsetRR, payload)
 
-	_, _, err := DecodeEDNS(len(m.Extra), offset_rr, payload)
+	_, _, err := DecodeEDNS(len(m.Extra), offsetRR, payload)
 	if err != nil {
 		t.Errorf("edns error returned: %v", err)
 	}
@@ -92,7 +93,7 @@ func TestDecodeQuery_EdnsSubnet(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x0b,
-		//RDATA
+		// RDATA
 		// CODE - Client subnet
 		0x00, 0x08,
 		// Length
@@ -126,7 +127,7 @@ func TestDecodeQuery_EdnsSubnet(t *testing.T) {
 	if erre != nil {
 		t.Errorf("unexpected error when decoding EDNS: %v", erre)
 	}
-	if edns.Do != 1 || edns.Z != 0 || edns.Version != 0 || edns.UdpSize != 1232 || edns.ExtendedRcode != 0 {
+	if edns.Do != 1 || edns.Z != 0 || edns.Version != 0 || edns.UDPSize != 1232 || edns.ExtendedRcode != 0 {
 		t.Errorf("invalid data in parsed EDNS header: %v", edns)
 	}
 
@@ -134,10 +135,10 @@ func TestDecodeQuery_EdnsSubnet(t *testing.T) {
 		t.Errorf("expected 1 EDNS option to be parsed, got %v", len(edns.Options))
 	}
 
-	expected_option := DnsOption{Code: 0x0008, Name: OptCodeToString(0x0008), Data: "192.168.1.0/24"}
+	expectedOption := DNSOption{Code: 0x0008, Name: OptCodeToString(0x0008), Data: "192.168.1.0/24"}
 
-	if edns.Options[0] != expected_option {
-		t.Errorf("bad option parsed, expected %v, got %v", expected_option, edns.Options[0])
+	if edns.Options[0] != expectedOption {
+		t.Errorf("bad option parsed, expected %v, got %v", expectedOption, edns.Options[0])
 	}
 
 }
@@ -162,7 +163,7 @@ func TestDecodeQuery_EdnsSubnetV6(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x0b,
-		//RDATA
+		// RDATA
 		// CODE - Client subnet
 		0x00, 0x08,
 		// Length
@@ -196,7 +197,7 @@ func TestDecodeQuery_EdnsSubnetV6(t *testing.T) {
 	if erre != nil {
 		t.Errorf("unexpected error when decoding EDNS: %v", erre)
 	}
-	if edns.Do != 1 || edns.Z != 0 || edns.Version != 0 || edns.UdpSize != 1232 || edns.ExtendedRcode != 0 {
+	if edns.Do != 1 || edns.Z != 0 || edns.Version != 0 || edns.UDPSize != 1232 || edns.ExtendedRcode != 0 {
 		t.Errorf("invalid data in parsed EDNS header: %v", edns)
 	}
 
@@ -204,10 +205,10 @@ func TestDecodeQuery_EdnsSubnetV6(t *testing.T) {
 		t.Errorf("expected 1 EDNS option to be parsed, got %v", len(edns.Options))
 	}
 
-	expected_option := DnsOption{Code: 0x0008, Name: OptCodeToString(0x0008), Data: "[fe80:100::]/24"}
+	expectedOption := DNSOption{Code: 0x0008, Name: OptCodeToString(0x0008), Data: "[fe80:100::]/24"}
 
-	if edns.Options[0] != expected_option {
-		t.Errorf("bad option parsed, expected %v, got %v", expected_option, edns.Options[0])
+	if edns.Options[0] != expectedOption {
+		t.Errorf("bad option parsed, expected %v, got %v", expectedOption, edns.Options[0])
 	}
 
 }
@@ -233,7 +234,7 @@ func TestDecodeQuery_EdnsSubnet_invalidFam(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x0b,
-		//RDATA
+		// RDATA
 		// CODE - Client subnet
 		0x00, 0x08,
 		// Length
@@ -291,7 +292,7 @@ func TestDecodeQuery_EdnsSubnet_Short(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x06,
-		//RDATA
+		// RDATA
 		// CODE - Client subnet
 		0x00, 0x08,
 		// Length
@@ -349,7 +350,7 @@ func TestDecodeQuery_EdnsSubnet_NoAddr(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x08,
-		//RDATA
+		// RDATA
 		// CODE - Client subnet
 		0x00, 0x08,
 		// Length
@@ -357,7 +358,7 @@ func TestDecodeQuery_EdnsSubnet_NoAddr(t *testing.T) {
 		// Option data
 		// family
 		0x00, 0x01,
-		//prefix-len
+		// prefix-len
 		0x18,
 		// scope prefix-len
 		0x00,
@@ -385,7 +386,7 @@ func TestDecodeQuery_EdnsSubnet_NoAddr(t *testing.T) {
 		t.Errorf("unexpected error while decoding EDNS: %v", erre)
 	}
 
-	expected := DnsOption{Code: 0x0008, Name: OptCodeToString(0x0008), Data: "0.0.0.0/24"}
+	expected := DNSOption{Code: 0x0008, Name: OptCodeToString(0x0008), Data: "0.0.0.0/24"}
 
 	if len(edns.Options) != 1 {
 		t.Errorf("expected one EDNS option, got %d", len(edns.Options))
@@ -418,7 +419,7 @@ func TestDecodeAnswer_EdnsError(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x06,
-		//RDATA
+		// RDATA
 		// CODE - Extended error
 		0x00, 0x0f,
 		// Length
@@ -438,14 +439,14 @@ func TestDecodeAnswer_EdnsError(t *testing.T) {
 		t.Errorf("unexpected error while decoding edns: %v", erre)
 	}
 
-	if edns.Do != 1 || edns.Z != 0 || edns.Version != 0 || edns.UdpSize != 1232 || edns.ExtendedRcode != 0 {
+	if edns.Do != 1 || edns.Z != 0 || edns.Version != 0 || edns.UDPSize != 1232 || edns.ExtendedRcode != 0 {
 		t.Errorf("invalid data in parsed EDNS header: %v", edns)
 	}
 
 	if len(edns.Options) != 1 {
 		t.Errorf("expected one edns option to be parsed, got %d", len(edns.Options))
 	}
-	expected := DnsOption{Code: 0x000f, Name: OptCodeToString(0x000f), Data: "23 Network Error -"}
+	expected := DNSOption{Code: 0x000f, Name: OptCodeToString(0x000f), Data: "23 Network Error -"}
 	if edns.Options[0] != expected {
 		t.Errorf("bad edns option, expected %v, got %v", expected, edns.Options[0])
 	}
@@ -472,7 +473,7 @@ func TestDecodeAnswer_EdnsErrorText(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x0c,
-		//RDATA
+		// RDATA
 		// CODE - Extended error
 		0x00, 0x0f,
 		// Length
@@ -494,14 +495,14 @@ func TestDecodeAnswer_EdnsErrorText(t *testing.T) {
 		t.Errorf("unexpected error while decoding edns: %v", erre)
 	}
 
-	if edns.Do != 1 || edns.Z != 0 || edns.Version != 0 || edns.UdpSize != 1232 || edns.ExtendedRcode != 0 {
+	if edns.Do != 1 || edns.Z != 0 || edns.Version != 0 || edns.UDPSize != 1232 || edns.ExtendedRcode != 0 {
 		t.Errorf("invalid data in parsed EDNS header: %v", edns)
 	}
 
 	if len(edns.Options) != 1 {
 		t.Errorf("expected one edns option to be parsed, got %d", len(edns.Options))
 	}
-	expected := DnsOption{Code: 0x000f, Name: OptCodeToString(0x000f), Data: "23 Network Error b0rken"}
+	expected := DNSOption{Code: 0x000f, Name: OptCodeToString(0x000f), Data: "23 Network Error b0rken"}
 	if edns.Options[0] != expected {
 		t.Errorf("bad edns option, expected %v, got %v", expected, edns.Options[0])
 	}
@@ -529,7 +530,7 @@ func TestDecodeAnswer_EdnsErrorShort(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x05,
-		//RDATA
+		// RDATA
 		// CODE - Extended error
 		0x00, 0x0f,
 		// Length
@@ -557,14 +558,14 @@ func TestDecodeEdns_Short(t *testing.T) {
 		expectedError error
 	}{{
 		"empty", []byte{},
-		ErrDecodeDnsLabelTooShort,
+		ErrDecodeDNSLabelTooShort,
 	},
 		{
 			"short", []byte{
 				// empty name
 				0x00,
 			},
-			ErrDecodeDnsAnswerTooShort,
+			ErrDecodeDNSAnswerTooShort,
 		},
 		{
 			"invalid rdlength",
@@ -579,7 +580,7 @@ func TestDecodeEdns_Short(t *testing.T) {
 				0x00, 0x00, 0x80, 0x00,
 				// RDLENGTH
 				0x00, 0x10,
-				//RDATA
+				// RDATA
 				// CODE - Extended error
 				0x00, 0x0f,
 				// Length
@@ -602,7 +603,7 @@ func TestDecodeEdns_Short(t *testing.T) {
 				0x00, 0x00, 0x80, 0x00,
 				// RDLENGTH
 				0x00, 0x02,
-				//RDATA
+				// RDATA
 				// CODE - Extended error
 				0x00, 0x0f,
 			},
@@ -621,7 +622,7 @@ func TestDecodeEdns_Short(t *testing.T) {
 				0x00, 0x00, 0x80, 0x00,
 				// RDLENGTH
 				0x00, 0x05,
-				//RDATA
+				// RDATA
 				// CODE - Extended error
 				0x00, 0x0f,
 				// Length
@@ -644,7 +645,7 @@ func TestDecodeEdns_Short(t *testing.T) {
 				0x00, 0x00, 0x80, 0x00,
 				// RDLENGTH
 				0x00, 0x05,
-				//RDATA
+				// RDATA
 				// CODE - Extended error
 				0x00, 0x0f,
 				// Length
@@ -663,7 +664,7 @@ func TestDecodeEdns_Short(t *testing.T) {
 				0x00, 0x00, 0x80, 0x00,
 				// RDLENGTH
 				0x00, 0x07,
-				//RDATA
+				// RDATA
 				// CODE - Extended error
 				0x00, 0x0f,
 				// Length
@@ -686,7 +687,7 @@ func TestDecodeEdns_Short(t *testing.T) {
 				0x00, 0x00, 0x80, 0x00,
 				// RDLENGTH
 				0x00, 0x06,
-				//RDATA
+				// RDATA
 				// CODE - Extended error
 				0x00, 0x0f,
 				// Length
@@ -720,7 +721,7 @@ func TestDecodeEdns_MultipleOpts(t *testing.T) {
 		0x00, 0x00, 0x80, 0x00,
 		// RDLENGTH
 		0x00, 0x06,
-		//RDATA
+		// RDATA
 		// CODE - Extended error
 		0x00, 0x0f,
 		// Length
@@ -737,7 +738,7 @@ func TestDecodeEdns_MultipleOpts(t *testing.T) {
 		0x00, 0x00, 0x00, 0x01,
 		// RDLENGTH
 		0x00, 0x06,
-		//RDATA
+		// RDATA
 		// CODE - Extended error
 		0x00, 0x0f,
 		// Length
@@ -788,8 +789,8 @@ func TestDecodeEdns_NonEDNSFollows(t *testing.T) {
 	if len(edns.Options) != 0 {
 		t.Errorf("Did not expect any Options on EDNS")
 	}
-	if edns.UdpSize != 1232 {
-		t.Errorf("expected UDP Size of 1232, got %d", edns.UdpSize)
+	if edns.UDPSize != 1232 {
+		t.Errorf("expected UDP Size of 1232, got %d", edns.UDPSize)
 	}
 }
 
@@ -827,8 +828,8 @@ func TestDecodeEdns_EDNSFollows(t *testing.T) {
 	if len(edns.Options) != 0 {
 		t.Errorf("Did not expect any Options on EDNS")
 	}
-	if edns.UdpSize != 1232 {
-		t.Errorf("expected UDP Size of 1232, got %d", edns.UdpSize)
+	if edns.UDPSize != 1232 {
+		t.Errorf("expected UDP Size of 1232, got %d", edns.UDPSize)
 	}
 }
 

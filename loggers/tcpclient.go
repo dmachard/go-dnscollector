@@ -16,15 +16,15 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-type TcpClient struct {
+type TCPClient struct {
 	stopProcess        chan bool
 	doneProcess        chan bool
 	stopRun            chan bool
 	doneRun            chan bool
 	stopRead           chan bool
 	doneRead           chan bool
-	inputChan          chan dnsutils.DnsMessage
-	outputChan         chan dnsutils.DnsMessage
+	inputChan          chan dnsutils.DNSMessage
+	outputChan         chan dnsutils.DNSMessage
 	config             *dnsutils.Config
 	configChan         chan *dnsutils.Config
 	logger             *logger.Logger
@@ -38,17 +38,17 @@ type TcpClient struct {
 	writerReady        bool
 }
 
-func NewTcpClient(config *dnsutils.Config, logger *logger.Logger, name string) *TcpClient {
+func NewTCPClient(config *dnsutils.Config, logger *logger.Logger, name string) *TCPClient {
 	logger.Info("[%s] logger=tcpclient - enabled", name)
-	s := &TcpClient{
+	s := &TCPClient{
 		stopProcess:        make(chan bool),
 		doneProcess:        make(chan bool),
 		stopRun:            make(chan bool),
 		doneRun:            make(chan bool),
 		stopRead:           make(chan bool),
 		doneRead:           make(chan bool),
-		inputChan:          make(chan dnsutils.DnsMessage, config.Loggers.TcpClient.ChannelBufferSize),
-		outputChan:         make(chan dnsutils.DnsMessage, config.Loggers.TcpClient.ChannelBufferSize),
+		inputChan:          make(chan dnsutils.DNSMessage, config.Loggers.TCPClient.ChannelBufferSize),
+		outputChan:         make(chan dnsutils.DNSMessage, config.Loggers.TCPClient.ChannelBufferSize),
 		transportReady:     make(chan bool),
 		transportReconnect: make(chan bool),
 		logger:             logger,
@@ -62,188 +62,188 @@ func NewTcpClient(config *dnsutils.Config, logger *logger.Logger, name string) *
 	return s
 }
 
-func (c *TcpClient) GetName() string { return c.name }
+func (c *TCPClient) GetName() string { return c.name }
 
-func (c *TcpClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *TCPClient) SetLoggers(loggers []dnsutils.Worker) {}
 
-func (o *TcpClient) ReadConfig() {
-	o.transport = o.config.Loggers.TcpClient.Transport
+func (c *TCPClient) ReadConfig() {
+	c.transport = c.config.Loggers.TCPClient.Transport
 
 	// begin backward compatibility
-	if o.config.Loggers.TcpClient.TlsSupport {
-		o.transport = dnsutils.SOCKET_TLS
+	if c.config.Loggers.TCPClient.TLSSupport {
+		c.transport = dnsutils.SocketTLS
 	}
-	if len(o.config.Loggers.TcpClient.SockPath) > 0 {
-		o.transport = dnsutils.SOCKET_UNIX
+	if len(c.config.Loggers.TCPClient.SockPath) > 0 {
+		c.transport = dnsutils.SocketUnix
 	}
 	// end
 
-	if len(o.config.Loggers.TcpClient.TextFormat) > 0 {
-		o.textFormat = strings.Fields(o.config.Loggers.TcpClient.TextFormat)
+	if len(c.config.Loggers.TCPClient.TextFormat) > 0 {
+		c.textFormat = strings.Fields(c.config.Loggers.TCPClient.TextFormat)
 	} else {
-		o.textFormat = strings.Fields(o.config.Global.TextFormat)
+		c.textFormat = strings.Fields(c.config.Global.TextFormat)
 	}
 }
 
-func (o *TcpClient) ReloadConfig(config *dnsutils.Config) {
-	o.LogInfo("reload configuration!")
-	o.configChan <- config
+func (c *TCPClient) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload configuration!")
+	c.configChan <- config
 }
 
-func (o *TcpClient) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger=tcpclient - "+msg, v...)
+func (c *TCPClient) LogInfo(msg string, v ...interface{}) {
+	c.logger.Info("["+c.name+"] logger=tcpclient - "+msg, v...)
 }
 
-func (o *TcpClient) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger=tcpclient - "+msg, v...)
+func (c *TCPClient) LogError(msg string, v ...interface{}) {
+	c.logger.Error("["+c.name+"] logger=tcpclient - "+msg, v...)
 }
 
-func (o *TcpClient) Channel() chan dnsutils.DnsMessage {
-	return o.inputChan
+func (c *TCPClient) Channel() chan dnsutils.DNSMessage {
+	return c.inputChan
 }
 
-func (o *TcpClient) Stop() {
-	o.LogInfo("stopping to run...")
-	o.stopRun <- true
-	<-o.doneRun
+func (c *TCPClient) Stop() {
+	c.LogInfo("stopping to run...")
+	c.stopRun <- true
+	<-c.doneRun
 
-	o.LogInfo("stopping to read...")
-	o.stopRead <- true
-	<-o.doneRead
+	c.LogInfo("stopping to read...")
+	c.stopRead <- true
+	<-c.doneRead
 
-	o.LogInfo("stopping to process...")
-	o.stopProcess <- true
-	<-o.doneProcess
+	c.LogInfo("stopping to process...")
+	c.stopProcess <- true
+	<-c.doneProcess
 }
 
-func (o *TcpClient) Disconnect() {
-	if o.transportConn != nil {
-		o.LogInfo("closing tcp connection")
-		o.transportConn.Close()
+func (c *TCPClient) Disconnect() {
+	if c.transportConn != nil {
+		c.LogInfo("closing tcp connection")
+		c.transportConn.Close()
 	}
 }
 
-func (o *TcpClient) ReadFromConnection() {
+func (c *TCPClient) ReadFromConnection() {
 	buffer := make([]byte, 4096)
 
 	go func() {
 		for {
-			_, err := o.transportConn.Read(buffer)
+			_, err := c.transportConn.Read(buffer)
 			if err != nil {
 				if errors.Is(err, io.EOF) || errors.Is(err, net.ErrClosed) {
-					o.LogInfo("read from connection terminated")
+					c.LogInfo("read from connection terminated")
 					break
 				}
-				o.LogError("Error on reading: %s", err.Error())
+				c.LogError("Error on reading: %s", err.Error())
 			}
 			// We just discard the data
 		}
 	}()
 
 	// block goroutine until receive true event in stopRead channel
-	<-o.stopRead
-	o.doneRead <- true
+	<-c.stopRead
+	c.doneRead <- true
 
-	o.LogInfo("read goroutine terminated")
+	c.LogInfo("read goroutine terminated")
 }
 
-func (o *TcpClient) ConnectToRemote() {
+func (c *TCPClient) ConnectToRemote() {
 	for {
-		if o.transportConn != nil {
-			o.transportConn.Close()
-			o.transportConn = nil
+		if c.transportConn != nil {
+			c.transportConn.Close()
+			c.transportConn = nil
 		}
 
-		address := o.config.Loggers.TcpClient.RemoteAddress + ":" + strconv.Itoa(o.config.Loggers.TcpClient.RemotePort)
-		connTimeout := time.Duration(o.config.Loggers.TcpClient.ConnectTimeout) * time.Second
+		address := c.config.Loggers.TCPClient.RemoteAddress + ":" + strconv.Itoa(c.config.Loggers.TCPClient.RemotePort)
+		connTimeout := time.Duration(c.config.Loggers.TCPClient.ConnectTimeout) * time.Second
 
 		// make the connection
 		var conn net.Conn
 		var err error
 
-		switch o.transport {
-		case dnsutils.SOCKET_UNIX:
-			address = o.config.Loggers.TcpClient.RemoteAddress
-			if len(o.config.Loggers.TcpClient.SockPath) > 0 {
-				address = o.config.Loggers.TcpClient.SockPath
+		switch c.transport {
+		case dnsutils.SocketUnix:
+			address = c.config.Loggers.TCPClient.RemoteAddress
+			if len(c.config.Loggers.TCPClient.SockPath) > 0 {
+				address = c.config.Loggers.TCPClient.SockPath
 			}
-			o.LogInfo("connecting to %s://%s", o.transport, address)
-			conn, err = net.DialTimeout(o.transport, address, connTimeout)
+			c.LogInfo("connecting to %s://%s", c.transport, address)
+			conn, err = net.DialTimeout(c.transport, address, connTimeout)
 
-		case dnsutils.SOCKET_TCP:
-			o.LogInfo("connecting to %s://%s", o.transport, address)
-			conn, err = net.DialTimeout(o.transport, address, connTimeout)
+		case dnsutils.SocketTCP:
+			c.LogInfo("connecting to %s://%s", c.transport, address)
+			conn, err = net.DialTimeout(c.transport, address, connTimeout)
 
-		case dnsutils.SOCKET_TLS:
-			o.LogInfo("connecting to %s://%s", o.transport, address)
+		case dnsutils.SocketTLS:
+			c.LogInfo("connecting to %s://%s", c.transport, address)
 
 			var tlsConfig *tls.Config
 
-			tlsOptions := dnsutils.TlsOptions{
-				InsecureSkipVerify: o.config.Loggers.TcpClient.TlsInsecure,
-				MinVersion:         o.config.Loggers.TcpClient.TlsMinVersion,
-				CAFile:             o.config.Loggers.TcpClient.CAFile,
-				CertFile:           o.config.Loggers.TcpClient.CertFile,
-				KeyFile:            o.config.Loggers.TcpClient.KeyFile,
+			tlsOptions := dnsutils.TLSOptions{
+				InsecureSkipVerify: c.config.Loggers.TCPClient.TLSInsecure,
+				MinVersion:         c.config.Loggers.TCPClient.TLSMinVersion,
+				CAFile:             c.config.Loggers.TCPClient.CAFile,
+				CertFile:           c.config.Loggers.TCPClient.CertFile,
+				KeyFile:            c.config.Loggers.TCPClient.KeyFile,
 			}
 
-			tlsConfig, err = dnsutils.TlsClientConfig(tlsOptions)
+			tlsConfig, err = dnsutils.TLSClientConfig(tlsOptions)
 			if err == nil {
 				dialer := &net.Dialer{Timeout: connTimeout}
-				conn, err = tls.DialWithDialer(dialer, dnsutils.SOCKET_TCP, address, tlsConfig)
+				conn, err = tls.DialWithDialer(dialer, dnsutils.SocketTCP, address, tlsConfig)
 			}
 		default:
-			o.logger.Fatal("logger=tcpclient - invalid transport:", o.transport)
+			c.logger.Fatal("logger=tcpclient - invalid transport:", c.transport)
 		}
 
 		// something is wrong during connection ?
 		if err != nil {
-			o.LogError("%s", err)
-			o.LogInfo("retry to connect in %d seconds", o.config.Loggers.TcpClient.RetryInterval)
-			time.Sleep(time.Duration(o.config.Loggers.TcpClient.RetryInterval) * time.Second)
+			c.LogError("%s", err)
+			c.LogInfo("retry to connect in %d seconds", c.config.Loggers.TCPClient.RetryInterval)
+			time.Sleep(time.Duration(c.config.Loggers.TCPClient.RetryInterval) * time.Second)
 			continue
 		}
 
-		o.transportConn = conn
+		c.transportConn = conn
 
 		// block until framestream is ready
-		o.transportReady <- true
+		c.transportReady <- true
 
 		// block until an error occured, need to reconnect
-		o.transportReconnect <- true
+		c.transportReconnect <- true
 	}
 }
 
-func (o *TcpClient) FlushBuffer(buf *[]dnsutils.DnsMessage) {
+func (c *TCPClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	for _, dm := range *buf {
-		if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_TEXT {
-			o.transportWriter.Write(dm.Bytes(o.textFormat,
-				o.config.Global.TextFormatDelimiter,
-				o.config.Global.TextFormatBoundary))
-			o.transportWriter.WriteString(o.config.Loggers.TcpClient.PayloadDelimiter)
+		if c.config.Loggers.TCPClient.Mode == dnsutils.ModeText {
+			c.transportWriter.Write(dm.Bytes(c.textFormat,
+				c.config.Global.TextFormatDelimiter,
+				c.config.Global.TextFormatBoundary))
+			c.transportWriter.WriteString(c.config.Loggers.TCPClient.PayloadDelimiter)
 		}
 
-		if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_JSON {
-			json.NewEncoder(o.transportWriter).Encode(dm)
-			o.transportWriter.WriteString(o.config.Loggers.TcpClient.PayloadDelimiter)
+		if c.config.Loggers.TCPClient.Mode == dnsutils.ModeJSON {
+			json.NewEncoder(c.transportWriter).Encode(dm)
+			c.transportWriter.WriteString(c.config.Loggers.TCPClient.PayloadDelimiter)
 		}
 
-		if o.config.Loggers.TcpClient.Mode == dnsutils.MODE_FLATJSON {
+		if c.config.Loggers.TCPClient.Mode == dnsutils.ModeFlatJSON {
 			flat, err := dm.Flatten()
 			if err != nil {
-				o.LogError("flattening DNS message failed: %e", err)
+				c.LogError("flattening DNS message failed: %e", err)
 				continue
 			}
-			json.NewEncoder(o.transportWriter).Encode(flat)
-			o.transportWriter.WriteString(o.config.Loggers.TcpClient.PayloadDelimiter)
+			json.NewEncoder(c.transportWriter).Encode(flat)
+			c.transportWriter.WriteString(c.config.Loggers.TCPClient.PayloadDelimiter)
 		}
 
 		// flush the transport buffer
-		err := o.transportWriter.Flush()
+		err := c.transportWriter.Flush()
 		if err != nil {
-			o.LogError("send frame error", err.Error())
-			o.writerReady = false
-			<-o.transportReconnect
+			c.LogError("send frame error", err.Error())
+			c.writerReady = false
+			<-c.transportReconnect
 			break
 		}
 	}
@@ -252,94 +252,94 @@ func (o *TcpClient) FlushBuffer(buf *[]dnsutils.DnsMessage) {
 	*buf = nil
 }
 
-func (o *TcpClient) Run() {
-	o.LogInfo("running in background...")
+func (c *TCPClient) Run() {
+	c.LogInfo("running in background...")
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.outputChan)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+	listChannel := []chan dnsutils.DNSMessage{}
+	listChannel = append(listChannel, c.outputChan)
+	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go o.Process()
+	go c.Process()
 
 	// loop to process incoming messages
 RUN_LOOP:
 	for {
 		select {
-		case <-o.stopRun:
+		case <-c.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
 
-			o.doneRun <- true
+			c.doneRun <- true
 			break RUN_LOOP
 
-		case cfg, opened := <-o.configChan:
+		case cfg, opened := <-c.configChan:
 			if !opened {
 				return
 			}
-			o.config = cfg
-			o.ReadConfig()
+			c.config = cfg
+			c.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-o.inputChan:
+		case dm, opened := <-c.inputChan:
 			if !opened {
-				o.LogInfo("input channel closed!")
+				c.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			subprocessors.InitDNSMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
 				continue
 			}
 
 			// send to output channel
-			o.outputChan <- dm
+			c.outputChan <- dm
 		}
 	}
-	o.LogInfo("run terminated")
+	c.LogInfo("run terminated")
 }
 
-func (o *TcpClient) Process() {
+func (c *TCPClient) Process() {
 	// init buffer
-	bufferDm := []dnsutils.DnsMessage{}
+	bufferDm := []dnsutils.DNSMessage{}
 
 	// init flust timer for buffer
-	flushInterval := time.Duration(o.config.Loggers.TcpClient.FlushInterval) * time.Second
+	flushInterval := time.Duration(c.config.Loggers.TCPClient.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
 	// init remote conn
-	go o.ConnectToRemote()
+	go c.ConnectToRemote()
 
-	o.LogInfo("ready to process")
+	c.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {
-		case <-o.stopProcess:
+		case <-c.stopProcess:
 			// closing remote connection if exist
-			o.Disconnect()
-			o.doneProcess <- true
+			c.Disconnect()
+			c.doneProcess <- true
 			break PROCESS_LOOP
 
-		case <-o.transportReady:
-			o.LogInfo("transport connected with success")
-			o.transportWriter = bufio.NewWriter(o.transportConn)
-			o.writerReady = true
+		case <-c.transportReady:
+			c.LogInfo("transport connected with success")
+			c.transportWriter = bufio.NewWriter(c.transportConn)
+			c.writerReady = true
 
 			// read from the connection until we stop
-			go o.ReadFromConnection()
+			go c.ReadFromConnection()
 
 		// incoming dns message to process
-		case dm, opened := <-o.outputChan:
+		case dm, opened := <-c.outputChan:
 			if !opened {
-				o.LogInfo("output channel closed!")
+				c.LogInfo("output channel closed!")
 				return
 			}
 
 			// drop dns message if the connection is not ready to avoid memory leak or
 			// to block the channel
-			if !o.writerReady {
+			if !c.writerReady {
 				continue
 			}
 
@@ -347,20 +347,20 @@ PROCESS_LOOP:
 			bufferDm = append(bufferDm, dm)
 
 			// buffer is full ?
-			if len(bufferDm) >= o.config.Loggers.TcpClient.BufferSize {
-				o.FlushBuffer(&bufferDm)
+			if len(bufferDm) >= c.config.Loggers.TCPClient.BufferSize {
+				c.FlushBuffer(&bufferDm)
 			}
 
 		// flush the buffer
 		case <-flushTimer.C:
-			if !o.writerReady {
-				o.LogInfo("buffer cleared!")
+			if !c.writerReady {
+				c.LogInfo("buffer cleared!")
 				bufferDm = nil
 				continue
 			}
 
 			if len(bufferDm) > 0 {
-				o.FlushBuffer(&bufferDm)
+				c.FlushBuffer(&bufferDm)
 			}
 
 			// restart timer
@@ -368,5 +368,5 @@ PROCESS_LOOP:
 
 		}
 	}
-	o.LogInfo("processing terminated")
+	c.LogInfo("processing terminated")
 }
