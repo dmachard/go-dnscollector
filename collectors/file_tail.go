@@ -47,8 +47,8 @@ func (c *Tail) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *Tail) Loggers() []chan dnsutils.DnsMessage {
-	channels := []chan dnsutils.DnsMessage{}
+func (c *Tail) Loggers() []chan dnsutils.DNSMessage {
+	channels := []chan dnsutils.DNSMessage{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
 	}
@@ -70,7 +70,7 @@ func (c *Tail) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] collector=tail - "+msg, v...)
 }
 
-func (c *Tail) Channel() chan dnsutils.DnsMessage {
+func (c *Tail) Channel() chan dnsutils.DNSMessage {
 	return nil
 }
 
@@ -108,17 +108,17 @@ func (c *Tail) Run() {
 	subprocessors := transformers.NewTransforms(&c.config.IngoingTransformers, c.logger, c.name, c.Loggers(), 0)
 
 	// init dns message
-	dm := dnsutils.DnsMessage{}
+	dm := dnsutils.DNSMessage{}
 	dm.Init()
 
 	// init dns message with additionnals parts
-	subprocessors.InitDnsMessageFormat(&dm)
+	subprocessors.InitDNSMessageFormat(&dm)
 
 	hostname, err := os.Hostname()
 	if err == nil {
-		dm.DnsTap.Identity = hostname
+		dm.DNSTap.Identity = hostname
 	} else {
-		dm.DnsTap.Identity = "undefined"
+		dm.DNSTap.Identity = "undefined"
 	}
 
 RUN_LOOP:
@@ -148,15 +148,15 @@ RUN_LOOP:
 			if len(c.config.Collectors.Tail.PatternQuery) > 0 {
 				re = regexp.MustCompile(c.config.Collectors.Tail.PatternQuery)
 				matches = re.FindStringSubmatch(line.Text)
-				dm.DNS.Type = dnsutils.DnsQuery
-				dm.DnsTap.Operation = dnsutils.DNSTAP_OPERATION_QUERY
+				dm.DNS.Type = dnsutils.DNSQuery
+				dm.DNSTap.Operation = dnsutils.DNSTapOperationQuery
 			}
 
 			if len(c.config.Collectors.Tail.PatternReply) > 0 && len(matches) == 0 {
 				re = regexp.MustCompile(c.config.Collectors.Tail.PatternReply)
 				matches = re.FindStringSubmatch(line.Text)
-				dm.DNS.Type = dnsutils.DnsReply
-				dm.DnsTap.Operation = dnsutils.DNSTAP_OPERATION_REPLY
+				dm.DNS.Type = dnsutils.DNSReply
+				dm.DNSTap.Operation = dnsutils.DNSTapOperationReply
 			}
 
 			if len(matches) == 0 {
@@ -165,7 +165,7 @@ RUN_LOOP:
 
 			qrIndex := re.SubexpIndex("qr")
 			if qrIndex != -1 {
-				dm.DnsTap.Operation = matches[qrIndex]
+				dm.DNSTap.Operation = matches[qrIndex]
 			}
 
 			var t time.Time
@@ -178,12 +178,12 @@ RUN_LOOP:
 			} else {
 				t = time.Now()
 			}
-			dm.DnsTap.TimeSec = int(t.Unix())
-			dm.DnsTap.TimeNsec = int(t.UnixNano() - t.Unix()*1e9)
+			dm.DNSTap.TimeSec = int(t.Unix())
+			dm.DNSTap.TimeNsec = int(t.UnixNano() - t.Unix()*1e9)
 
 			identityIndex := re.SubexpIndex("identity")
 			if identityIndex != -1 {
-				dm.DnsTap.Identity = matches[identityIndex]
+				dm.DNSTap.Identity = matches[identityIndex]
 			}
 
 			rcodeIndex := re.SubexpIndex("rcode")
@@ -193,7 +193,7 @@ RUN_LOOP:
 
 			queryipIndex := re.SubexpIndex("queryip")
 			if queryipIndex != -1 {
-				dm.NetworkInfo.QueryIp = matches[queryipIndex]
+				dm.NetworkInfo.QueryIP = matches[queryipIndex]
 			}
 
 			queryportIndex := re.SubexpIndex("queryport")
@@ -205,7 +205,7 @@ RUN_LOOP:
 
 			responseipIndex := re.SubexpIndex("responseip")
 			if responseipIndex != -1 {
-				dm.NetworkInfo.ResponseIp = matches[responseipIndex]
+				dm.NetworkInfo.ResponseIP = matches[responseipIndex]
 			}
 
 			responseportIndex := re.SubexpIndex("responseport")
@@ -219,14 +219,14 @@ RUN_LOOP:
 			if familyIndex != -1 {
 				dm.NetworkInfo.Family = matches[familyIndex]
 			} else {
-				dm.NetworkInfo.Family = dnsutils.PROTO_IPV4
+				dm.NetworkInfo.Family = dnsutils.ProtoIPv4
 			}
 
 			protocolIndex := re.SubexpIndex("protocol")
 			if protocolIndex != -1 {
 				dm.NetworkInfo.Protocol = matches[protocolIndex]
 			} else {
-				dm.NetworkInfo.Protocol = dnsutils.PROTO_UDP
+				dm.NetworkInfo.Protocol = dnsutils.ProtoUDP
 			}
 
 			lengthIndex := re.SubexpIndex("length")
@@ -249,13 +249,13 @@ RUN_LOOP:
 
 			latencyIndex := re.SubexpIndex("latency")
 			if latencyIndex != -1 {
-				dm.DnsTap.LatencySec = matches[latencyIndex]
+				dm.DNSTap.LatencySec = matches[latencyIndex]
 			}
 
 			// compute timestamp
-			ts := time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
-			dm.DnsTap.Timestamp = ts.UnixNano()
-			dm.DnsTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
+			ts := time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec))
+			dm.DNSTap.Timestamp = ts.UnixNano()
+			dm.DNSTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
 			// fake dns packet
 			dnspkt := new(dns.Msg)
@@ -266,7 +266,7 @@ RUN_LOOP:
 			}
 			dnspkt.SetQuestion(dm.DNS.Qname, dnstype)
 
-			if dm.DNS.Type == dnsutils.DnsReply {
+			if dm.DNS.Type == dnsutils.DNSReply {
 				rr, _ := dns.NewRR(fmt.Sprintf("%s %s 0.0.0.0", dm.DNS.Qname, dm.DNS.Qtype))
 				if err == nil {
 					dnspkt.Answer = append(dnspkt.Answer, rr)
@@ -283,7 +283,7 @@ RUN_LOOP:
 			dm.DNS.Length = len(dm.DNS.Payload)
 
 			// apply all enabled transformers
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
 				continue
 			}
 

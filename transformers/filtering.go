@@ -30,15 +30,15 @@ type FilteringProcessor struct {
 	name                 string
 	downsample           int
 	downsampleCount      int
-	activeFilters        []func(dm *dnsutils.DnsMessage) bool
+	activeFilters        []func(dm *dnsutils.DNSMessage) bool
 	instance             int
-	outChannels          []chan dnsutils.DnsMessage
+	outChannels          []chan dnsutils.DNSMessage
 	logInfo              func(msg string, v ...interface{})
 	logError             func(msg string, v ...interface{})
 }
 
 func NewFilteringProcessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DnsMessage,
+	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) FilteringProcessor {
 	// creates a new file watcher
@@ -103,12 +103,12 @@ func (p *FilteringProcessor) LoadActiveFilters() {
 		p.activeFilters = append(p.activeFilters, p.rCodeFilter)
 	}
 
-	if len(p.config.Filtering.KeepQueryIpFile) > 0 {
-		p.activeFilters = append(p.activeFilters, p.keepQueryIpFilter)
+	if len(p.config.Filtering.KeepQueryIPFile) > 0 {
+		p.activeFilters = append(p.activeFilters, p.keepQueryIPFilter)
 	}
 
-	if len(p.config.Filtering.DropQueryIpFile) > 0 {
-		p.activeFilters = append(p.activeFilters, p.DropQueryIpFilter)
+	if len(p.config.Filtering.DropQueryIPFile) > 0 {
+		p.activeFilters = append(p.activeFilters, p.DropQueryIPFilter)
 	}
 
 	if len(p.config.Filtering.KeepRdataFile) > 0 {
@@ -152,17 +152,17 @@ func (p *FilteringProcessor) LoadRcodes() {
 	}
 }
 
-func (p *FilteringProcessor) LoadQueryIpList() {
-	if len(p.config.Filtering.DropQueryIpFile) > 0 {
-		read, err := p.loadQueryIpList(p.config.Filtering.DropQueryIpFile, true)
+func (p *FilteringProcessor) LoadQueryIPList() {
+	if len(p.config.Filtering.DropQueryIPFile) > 0 {
+		read, err := p.loadQueryIPList(p.config.Filtering.DropQueryIPFile, true)
 		if err != nil {
 			p.LogError("unable to open query ip file: ", err)
 		}
 		p.LogInfo("loaded with %d query ip to the drop list", read)
 	}
 
-	if len(p.config.Filtering.KeepQueryIpFile) > 0 {
-		read, err := p.loadQueryIpList(p.config.Filtering.KeepQueryIpFile, false)
+	if len(p.config.Filtering.KeepQueryIPFile) > 0 {
+		read, err := p.loadQueryIPList(p.config.Filtering.KeepQueryIPFile, false)
 		if err != nil {
 			p.LogError("unable to open query ip file: ", err)
 		}
@@ -170,9 +170,9 @@ func (p *FilteringProcessor) LoadQueryIpList() {
 	}
 }
 
-func (p *FilteringProcessor) LoadrDataIpList() {
+func (p *FilteringProcessor) LoadrDataIPList() {
 	if len(p.config.Filtering.KeepRdataFile) > 0 {
-		read, err := p.loadKeepRdataIpList(p.config.Filtering.KeepRdataFile)
+		read, err := p.loadKeepRdataIPList(p.config.Filtering.KeepRdataFile)
 		if err != nil {
 			p.LogError("unable to open rdata ip file: ", err)
 		}
@@ -266,7 +266,7 @@ func (p *FilteringProcessor) LoadDomainsList() {
 	}
 }
 
-func (p *FilteringProcessor) loadQueryIpList(fname string, drop bool) (uint64, error) {
+func (p *FilteringProcessor) loadQueryIPList(fname string, drop bool) (uint64, error) {
 	var emptyIPSet *netaddr.IPSet
 	p.ipsetDrop = emptyIPSet
 	p.ipsetKeep = emptyIPSet
@@ -306,7 +306,7 @@ func (p *FilteringProcessor) loadQueryIpList(fname string, drop bool) (uint64, e
 	return read, err
 }
 
-func (p *FilteringProcessor) loadKeepRdataIpList(fname string) (uint64, error) {
+func (p *FilteringProcessor) loadKeepRdataIPList(fname string) (uint64, error) {
 	var emptyIPSet *netaddr.IPSet
 	p.rDataIpsetKeep = emptyIPSet
 
@@ -355,15 +355,15 @@ func (p *FilteringProcessor) Run() {
 	}
 }
 
-func (p *FilteringProcessor) ignoreQueryFilter(dm *dnsutils.DnsMessage) bool {
-	return dm.DNS.Type == dnsutils.DnsQuery
+func (p *FilteringProcessor) ignoreQueryFilter(dm *dnsutils.DNSMessage) bool {
+	return dm.DNS.Type == dnsutils.DNSQuery
 }
 
-func (p *FilteringProcessor) ignoreReplyFilter(dm *dnsutils.DnsMessage) bool {
-	return dm.DNS.Type == dnsutils.DnsReply
+func (p *FilteringProcessor) ignoreReplyFilter(dm *dnsutils.DNSMessage) bool {
+	return dm.DNS.Type == dnsutils.DNSReply
 }
 
-func (p *FilteringProcessor) rCodeFilter(dm *dnsutils.DnsMessage) bool {
+func (p *FilteringProcessor) rCodeFilter(dm *dnsutils.DNSMessage) bool {
 	// drop according to the rcode ?
 	if _, ok := p.mapRcodes[dm.DNS.Rcode]; ok {
 		return true
@@ -371,20 +371,20 @@ func (p *FilteringProcessor) rCodeFilter(dm *dnsutils.DnsMessage) bool {
 	return false
 }
 
-func (p *FilteringProcessor) keepQueryIpFilter(dm *dnsutils.DnsMessage) bool {
-	ip, _ := netaddr.ParseIP(dm.NetworkInfo.QueryIp)
+func (p *FilteringProcessor) keepQueryIPFilter(dm *dnsutils.DNSMessage) bool {
+	ip, _ := netaddr.ParseIP(dm.NetworkInfo.QueryIP)
 	return !p.ipsetKeep.Contains(ip)
 }
 
-func (p *FilteringProcessor) DropQueryIpFilter(dm *dnsutils.DnsMessage) bool {
-	ip, _ := netaddr.ParseIP(dm.NetworkInfo.QueryIp)
+func (p *FilteringProcessor) DropQueryIPFilter(dm *dnsutils.DNSMessage) bool {
+	ip, _ := netaddr.ParseIP(dm.NetworkInfo.QueryIP)
 	return p.ipsetDrop.Contains(ip)
 }
 
-func (p *FilteringProcessor) keepRdataFilter(dm *dnsutils.DnsMessage) bool {
-	if len(dm.DNS.DnsRRs.Answers) > 0 {
+func (p *FilteringProcessor) keepRdataFilter(dm *dnsutils.DNSMessage) bool {
+	if len(dm.DNS.DNSRRs.Answers) > 0 {
 		// If even one exists in filter list then pass through filter
-		for _, answer := range dm.DNS.DnsRRs.Answers {
+		for _, answer := range dm.DNS.DNSRRs.Answers {
 			if answer.Rdatatype == "A" || answer.Rdatatype == "AAAA" {
 				ip, _ := netaddr.ParseIP(answer.Rdata)
 				if p.rDataIpsetKeep.Contains(ip) {
@@ -396,14 +396,14 @@ func (p *FilteringProcessor) keepRdataFilter(dm *dnsutils.DnsMessage) bool {
 	return true
 }
 
-func (p *FilteringProcessor) dropFqdnFilter(dm *dnsutils.DnsMessage) bool {
+func (p *FilteringProcessor) dropFqdnFilter(dm *dnsutils.DNSMessage) bool {
 	if _, ok := p.listFqdns[dm.DNS.Qname]; ok {
 		return true
 	}
 	return false
 }
 
-func (p *FilteringProcessor) dropDomainRegexFilter(dm *dnsutils.DnsMessage) bool {
+func (p *FilteringProcessor) dropDomainRegexFilter(dm *dnsutils.DNSMessage) bool {
 	// partial fqdn with regexp
 	for _, d := range p.listDomainsRegex {
 		if d.MatchString(dm.DNS.Qname) {
@@ -413,14 +413,14 @@ func (p *FilteringProcessor) dropDomainRegexFilter(dm *dnsutils.DnsMessage) bool
 	return false
 }
 
-func (p *FilteringProcessor) keepFqdnFilter(dm *dnsutils.DnsMessage) bool {
+func (p *FilteringProcessor) keepFqdnFilter(dm *dnsutils.DNSMessage) bool {
 	if _, ok := p.listKeepFqdns[dm.DNS.Qname]; ok {
 		return false
 	}
 	return true
 }
 
-func (p *FilteringProcessor) keepDomainRegexFilter(dm *dnsutils.DnsMessage) bool {
+func (p *FilteringProcessor) keepDomainRegexFilter(dm *dnsutils.DNSMessage) bool {
 	// partial fqdn with regexp
 	for _, d := range p.listKeepDomainsRegex {
 		if d.MatchString(dm.DNS.Qname) {
@@ -430,7 +430,7 @@ func (p *FilteringProcessor) keepDomainRegexFilter(dm *dnsutils.DnsMessage) bool
 	return true
 }
 
-func (p *FilteringProcessor) downsampleFilter(dm *dnsutils.DnsMessage) bool {
+func (p *FilteringProcessor) downsampleFilter(dm *dnsutils.DNSMessage) bool {
 	// drop all except every nth entry
 	p.downsampleCount += 1
 	if p.downsampleCount%p.downsample != 0 {
@@ -442,7 +442,7 @@ func (p *FilteringProcessor) downsampleFilter(dm *dnsutils.DnsMessage) bool {
 	return true
 }
 
-func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DnsMessage) bool {
+func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DNSMessage) bool {
 	if len(p.activeFilters) == 0 {
 		return false
 	}

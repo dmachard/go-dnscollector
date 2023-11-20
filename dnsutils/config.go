@@ -10,9 +10,9 @@ import (
 func IsValidMode(mode string) bool {
 	switch mode {
 	case
-		MODE_TEXT,
-		MODE_JSON,
-		MODE_FLATJSON:
+		ModeText,
+		ModeJSON,
+		ModeFlatJSON:
 		return true
 	}
 	return false
@@ -61,8 +61,8 @@ type ConfigTransformers struct {
 		DropDomainFile  string   `yaml:"drop-domain-file"`
 		KeepFqdnFile    string   `yaml:"keep-fqdn-file"`
 		KeepDomainFile  string   `yaml:"keep-domain-file"`
-		DropQueryIpFile string   `yaml:"drop-queryip-file"`
-		KeepQueryIpFile string   `yaml:"keep-queryip-file"`
+		DropQueryIPFile string   `yaml:"drop-queryip-file"`
+		KeepQueryIPFile string   `yaml:"keep-queryip-file"`
 		KeepRdataFile   string   `yaml:"keep-rdata-file"`
 		DropRcodes      []string `yaml:"drop-rcodes,flow"`
 		LogQueries      bool     `yaml:"log-queries"`
@@ -71,9 +71,9 @@ type ConfigTransformers struct {
 	} `yaml:"filtering"`
 	GeoIP struct {
 		Enable        bool   `yaml:"enable"`
-		DbCountryFile string `yaml:"mmdb-country-file"`
-		DbCityFile    string `yaml:"mmdb-city-file"`
-		DbAsnFile     string `yaml:"mmdb-asn-file"`
+		DBCountryFile string `yaml:"mmdb-country-file"`
+		DBCityFile    string `yaml:"mmdb-city-file"`
+		DBASNFile     string `yaml:"mmdb-asn-file"`
 	} `yaml:"geoip"`
 	Suspicious struct {
 		Enable             bool     `yaml:"enable"`
@@ -132,16 +132,16 @@ func (c *ConfigTransformers) SetDefault() {
 	c.Filtering.DropDomainFile = ""
 	c.Filtering.KeepFqdnFile = ""
 	c.Filtering.KeepDomainFile = ""
-	c.Filtering.DropQueryIpFile = ""
+	c.Filtering.DropQueryIPFile = ""
 	c.Filtering.DropRcodes = []string{}
 	c.Filtering.LogQueries = true
 	c.Filtering.LogReplies = true
 	c.Filtering.Downsample = 0
 
 	c.GeoIP.Enable = false
-	c.GeoIP.DbCountryFile = ""
-	c.GeoIP.DbCityFile = ""
-	c.GeoIP.DbAsnFile = ""
+	c.GeoIP.DBCountryFile = ""
+	c.GeoIP.DBCityFile = ""
+	c.GeoIP.DBASNFile = ""
 
 	c.Extract.Enable = false
 	c.Extract.AddPayload = false
@@ -179,8 +179,8 @@ type Config struct {
 			ListenIP          string `yaml:"listen-ip"`
 			ListenPort        int    `yaml:"listen-port"`
 			SockPath          string `yaml:"sock-path"`
-			TlsSupport        bool   `yaml:"tls-support"`
-			TlsMinVersion     string `yaml:"tls-min-version"`
+			TLSSupport        bool   `yaml:"tls-support"`
+			TLSMinVersion     string `yaml:"tls-min-version"`
 			CertFile          string `yaml:"cert-file"`
 			KeyFile           string `yaml:"key-file"`
 			RcvBufSize        int    `yaml:"sock-rcvbuf"`
@@ -193,8 +193,8 @@ type Config struct {
 			ListenIP      string `yaml:"listen-ip"`
 			ListenPort    int    `yaml:"listen-port"`
 			SockPath      string `yaml:"sock-path"`
-			TlsSupport    bool   `yaml:"tls-support"`
-			TlsMinVersion string `yaml:"tls-min-version"`
+			TLSSupport    bool   `yaml:"tls-support"`
+			TLSMinVersion string `yaml:"tls-min-version"`
 			CertFile      string `yaml:"cert-file"`
 			KeyFile       string `yaml:"key-file"`
 		} `yaml:"dnstap-proxifier"`
@@ -214,11 +214,11 @@ type Config struct {
 			Enable            bool   `yaml:"enable"`
 			ListenIP          string `yaml:"listen-ip"`
 			ListenPort        int    `yaml:"listen-port"`
-			TlsSupport        bool   `yaml:"tls-support"`
-			TlsMinVersion     string `yaml:"tls-min-version"`
+			TLSSupport        bool   `yaml:"tls-support"`
+			TLSMinVersion     string `yaml:"tls-min-version"`
 			CertFile          string `yaml:"cert-file"`
 			KeyFile           string `yaml:"key-file"`
-			AddDnsPayload     bool   `yaml:"add-dns-payload"`
+			AddDNSPayload     bool   `yaml:"add-dns-payload"`
 			RcvBufSize        int    `yaml:"sock-rcvbuf"`
 			ResetConn         bool   `yaml:"reset-conn"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
@@ -227,13 +227,13 @@ type Config struct {
 			Enable            bool   `yaml:"enable"`
 			WatchDir          string `yaml:"watch-dir"`
 			WatchMode         string `yaml:"watch-mode"`
-			PcapDnsPort       int    `yaml:"pcap-dns-port"`
+			PcapDNSPort       int    `yaml:"pcap-dns-port"`
 			DeleteAfter       bool   `yaml:"delete-after"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"file-ingestor"`
 		Tzsp struct {
 			Enable            bool   `yaml:"enable"`
-			ListenIp          string `yaml:"listen-ip"`
+			ListenIP          string `yaml:"listen-ip"`
 			ListenPort        int    `yaml:"listen-port"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"tzsp"`
@@ -252,9 +252,9 @@ type Config struct {
 			Enable                  bool     `yaml:"enable"`
 			ListenIP                string   `yaml:"listen-ip"`
 			ListenPort              int      `yaml:"listen-port"`
-			TlsSupport              bool     `yaml:"tls-support"`
-			TlsMutual               bool     `yaml:"tls-mutual"`
-			TlsMinVersion           string   `yaml:"tls-min-version"`
+			TLSSupport              bool     `yaml:"tls-support"`
+			TLSMutual               bool     `yaml:"tls-mutual"`
+			TLSMinVersion           string   `yaml:"tls-min-version"`
 			CertFile                string   `yaml:"cert-file"`
 			KeyFile                 string   `yaml:"key-file"`
 			PromPrefix              string   `yaml:"prometheus-prefix"`
@@ -272,8 +272,8 @@ type Config struct {
 			ListenPort        int    `yaml:"listen-port"`
 			BasicAuthLogin    string `yaml:"basic-auth-login"`
 			BasicAuthPwd      string `yaml:"basic-auth-pwd"`
-			TlsSupport        bool   `yaml:"tls-support"`
-			TlsMinVersion     string `yaml:"tls-min-version"`
+			TLSSupport        bool   `yaml:"tls-support"`
+			TLSMinVersion     string `yaml:"tls-min-version"`
 			CertFile          string `yaml:"cert-file"`
 			KeyFile           string `yaml:"key-file"`
 			TopN              int    `yaml:"top-n"`
@@ -294,7 +294,7 @@ type Config struct {
 			TextFormat          string `yaml:"text-format"`
 			ChannelBufferSize   int    `yaml:"chan-buffer-size"`
 		} `yaml:"logfile"`
-		Dnstap struct {
+		DNSTap struct {
 			Enable            bool   `yaml:"enable"`
 			RemoteAddress     string `yaml:"remote-address"`
 			RemotePort        int    `yaml:"remote-port"`
@@ -303,27 +303,27 @@ type Config struct {
 			ConnectTimeout    int    `yaml:"connect-timeout"`
 			RetryInterval     int    `yaml:"retry-interval"`
 			FlushInterval     int    `yaml:"flush-interval"`
-			TlsSupport        bool   `yaml:"tls-support"`
-			TlsInsecure       bool   `yaml:"tls-insecure"`
-			TlsMinVersion     string `yaml:"tls-min-version"`
+			TLSSupport        bool   `yaml:"tls-support"`
+			TLSInsecure       bool   `yaml:"tls-insecure"`
+			TLSMinVersion     string `yaml:"tls-min-version"`
 			CAFile            string `yaml:"ca-file"`
 			CertFile          string `yaml:"cert-file"`
 			KeyFile           string `yaml:"key-file"`
-			ServerId          string `yaml:"server-id"`
+			ServerID          string `yaml:"server-id"`
 			OverwriteIdentity bool   `yaml:"overwrite-identity"`
 			BufferSize        int    `yaml:"buffer-size"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		} `yaml:"dnstap"`
-		TcpClient struct {
+		TCPClient struct {
 			Enable            bool   `yaml:"enable"`
 			RemoteAddress     string `yaml:"remote-address"`
 			RemotePort        int    `yaml:"remote-port"`
 			SockPath          string `yaml:"sock-path"` // deprecated
 			RetryInterval     int    `yaml:"retry-interval"`
 			Transport         string `yaml:"transport"`
-			TlsSupport        bool   `yaml:"tls-support"` // deprecated
-			TlsInsecure       bool   `yaml:"tls-insecure"`
-			TlsMinVersion     string `yaml:"tls-min-version"`
+			TLSSupport        bool   `yaml:"tls-support"` // deprecated
+			TLSInsecure       bool   `yaml:"tls-insecure"`
+			TLSMinVersion     string `yaml:"tls-min-version"`
 			CAFile            string `yaml:"ca-file"`
 			CertFile          string `yaml:"cert-file"`
 			KeyFile           string `yaml:"key-file"`
@@ -344,8 +344,8 @@ type Config struct {
 			RetryInterval     int    `yaml:"retry-interval"`
 			TextFormat        string `yaml:"text-format"`
 			Mode              string `yaml:"mode"`
-			TlsInsecure       bool   `yaml:"tls-insecure"`
-			TlsMinVersion     string `yaml:"tls-min-version"`
+			TLSInsecure       bool   `yaml:"tls-insecure"`
+			TLSMinVersion     string `yaml:"tls-min-version"`
 			CAFile            string `yaml:"ca-file"`
 			CertFile          string `yaml:"cert-file"`
 			KeyFile           string `yaml:"key-file"`
@@ -365,9 +365,9 @@ type Config struct {
 			RetryInterval     int    `yaml:"retry-interval"`
 			FlushInterval     int    `yaml:"flush-interval"`
 			Transport         string `yaml:"transport"`
-			TlsSupport        bool   `yaml:"tls-support"` // deprecated
-			TlsInsecure       bool   `yaml:"tls-insecure"`
-			TlsMinVersion     string `yaml:"tls-min-version"`
+			TLSSupport        bool   `yaml:"tls-support"` // deprecated
+			TLSInsecure       bool   `yaml:"tls-insecure"`
+			TLSMinVersion     string `yaml:"tls-min-version"`
 			CAFile            string `yaml:"ca-file"`
 			CertFile          string `yaml:"cert-file"`
 			KeyFile           string `yaml:"key-file"`
@@ -379,9 +379,9 @@ type Config struct {
 			Enable            bool   `yaml:"enable"`
 			ServerURL         string `yaml:"server-url"`
 			AuthToken         string `yaml:"auth-token"`
-			TlsSupport        bool   `yaml:"tls-support"`
-			TlsInsecure       bool   `yaml:"tls-insecure"`
-			TlsMinVersion     string `yaml:"tls-min-version"`
+			TLSSupport        bool   `yaml:"tls-support"`
+			TLSInsecure       bool   `yaml:"tls-insecure"`
+			TLSMinVersion     string `yaml:"tls-min-version"`
 			CAFile            string `yaml:"ca-file"`
 			CertFile          string `yaml:"cert-file"`
 			KeyFile           string `yaml:"key-file"`
@@ -399,15 +399,15 @@ type Config struct {
 			RetryInterval     int               `yaml:"retry-interval"`
 			TextFormat        string            `yaml:"text-format"`
 			ProxyURL          string            `yaml:"proxy-url"`
-			TlsInsecure       bool              `yaml:"tls-insecure"`
-			TlsMinVersion     string            `yaml:"tls-min-version"`
+			TLSInsecure       bool              `yaml:"tls-insecure"`
+			TLSMinVersion     string            `yaml:"tls-min-version"`
 			CAFile            string            `yaml:"ca-file"`
 			CertFile          string            `yaml:"cert-file"`
 			KeyFile           string            `yaml:"key-file"`
 			BasicAuthLogin    string            `yaml:"basic-auth-login"`
 			BasicAuthPwd      string            `yaml:"basic-auth-pwd"`
 			BasicAuthPwdFile  string            `yaml:"basic-auth-pwd-file"`
-			TenantId          string            `yaml:"tenant-id"`
+			TenantID          string            `yaml:"tenant-id"`
 			RelabelConfigs    []*relabel.Config `yaml:"relabel-configs"`
 			ChannelBufferSize int               `yaml:"chan-buffer-size"`
 		} `yaml:"lokiclient"`
@@ -419,9 +419,9 @@ type Config struct {
 			ConnectTimeout    int    `yaml:"connect-timeout"`
 			Transport         string `yaml:"transport"`
 			FlushInterval     int    `yaml:"flush-interval"`
-			TlsSupport        bool   `yaml:"tls-support"` //deprecated
-			TlsInsecure       bool   `yaml:"tls-insecure"`
-			TlsMinVersion     string `yaml:"tls-min-version"`
+			TLSSupport        bool   `yaml:"tls-support"` // deprecated
+			TLSInsecure       bool   `yaml:"tls-insecure"`
+			TLSMinVersion     string `yaml:"tls-min-version"`
 			CAFile            string `yaml:"ca-file"`
 			CertFile          string `yaml:"cert-file"`
 			KeyFile           string `yaml:"key-file"`
@@ -442,12 +442,12 @@ type Config struct {
 			SessionInfo       map[string]string      `yaml:"sessioninfo"`
 			Attrs             map[string]interface{} `yaml:"attrs"`
 			ServerURL         string                 `yaml:"server-url"`
-			ApiKey            string                 `yaml:"apikey"`
+			APIKey            string                 `yaml:"apikey"`
 			Parser            string                 `yaml:"parser"`
 			FlushInterval     int                    `yaml:"flush-interval"`
 			ProxyURL          string                 `yaml:"proxy-url"`
-			TlsInsecure       bool                   `yaml:"tls-insecure"`
-			TlsMinVersion     string                 `yaml:"tls-min-version"`
+			TLSInsecure       bool                   `yaml:"tls-insecure"`
+			TLSMinVersion     string                 `yaml:"tls-min-version"`
 			CAFile            string                 `yaml:"ca-file"`
 			CertFile          string                 `yaml:"cert-file"`
 			KeyFile           string                 `yaml:"key-file"`
@@ -460,9 +460,9 @@ type Config struct {
 			SockPath          string `yaml:"sock-path"` // deprecated
 			RetryInterval     int    `yaml:"retry-interval"`
 			Transport         string `yaml:"transport"`
-			TlsSupport        bool   `yaml:"tls-support"` // deprecated
-			TlsInsecure       bool   `yaml:"tls-insecure"`
-			TlsMinVersion     string `yaml:"tls-min-version"`
+			TLSSupport        bool   `yaml:"tls-support"` // deprecated
+			TLSInsecure       bool   `yaml:"tls-insecure"`
+			TLSMinVersion     string `yaml:"tls-min-version"`
 			CAFile            string `yaml:"ca-file"`
 			CertFile          string `yaml:"cert-file"`
 			KeyFile           string `yaml:"key-file"`
@@ -480,9 +480,9 @@ type Config struct {
 			RemoteAddress     string `yaml:"remote-address"`
 			RemotePort        int    `yaml:"remote-port"`
 			RetryInterval     int    `yaml:"retry-interval"`
-			TlsSupport        bool   `yaml:"tls-support"`
-			TlsInsecure       bool   `yaml:"tls-insecure"`
-			TlsMinVersion     string `yaml:"tls-min-version"`
+			TLSSupport        bool   `yaml:"tls-support"`
+			TLSInsecure       bool   `yaml:"tls-insecure"`
+			TLSMinVersion     string `yaml:"tls-min-version"`
 			CAFile            string `yaml:"ca-file"`
 			CertFile          string `yaml:"cert-file"`
 			KeyFile           string `yaml:"key-file"`
@@ -540,11 +540,11 @@ func (c *Config) SetDefault() {
 	c.Collectors.Tail.FilePath = ""
 
 	c.Collectors.Dnstap.Enable = false
-	c.Collectors.Dnstap.ListenIP = ANY_IP
+	c.Collectors.Dnstap.ListenIP = AnyIP
 	c.Collectors.Dnstap.ListenPort = 6000
 	c.Collectors.Dnstap.SockPath = ""
-	c.Collectors.Dnstap.TlsSupport = false
-	c.Collectors.Dnstap.TlsMinVersion = TLS_v12
+	c.Collectors.Dnstap.TLSSupport = false
+	c.Collectors.Dnstap.TLSMinVersion = TLSV12
 	c.Collectors.Dnstap.CertFile = ""
 	c.Collectors.Dnstap.KeyFile = ""
 	c.Collectors.Dnstap.RcvBufSize = 0
@@ -553,11 +553,11 @@ func (c *Config) SetDefault() {
 	c.Collectors.Dnstap.DisableDNSParser = false
 
 	c.Collectors.DnstapProxifier.Enable = false
-	c.Collectors.DnstapProxifier.ListenIP = ANY_IP
+	c.Collectors.DnstapProxifier.ListenIP = AnyIP
 	c.Collectors.DnstapProxifier.ListenPort = 6000
 	c.Collectors.DnstapProxifier.SockPath = ""
-	c.Collectors.DnstapProxifier.TlsSupport = false
-	c.Collectors.DnstapProxifier.TlsMinVersion = TLS_v12
+	c.Collectors.DnstapProxifier.TLSSupport = false
+	c.Collectors.DnstapProxifier.TLSMinVersion = TLSV12
 	c.Collectors.DnstapProxifier.CertFile = ""
 	c.Collectors.DnstapProxifier.KeyFile = ""
 
@@ -571,26 +571,26 @@ func (c *Config) SetDefault() {
 	c.Collectors.AfpacketLiveCapture.ChannelBufferSize = 65535
 
 	c.Collectors.PowerDNS.Enable = false
-	c.Collectors.PowerDNS.ListenIP = ANY_IP
+	c.Collectors.PowerDNS.ListenIP = AnyIP
 	c.Collectors.PowerDNS.ListenPort = 6001
-	c.Collectors.PowerDNS.TlsSupport = false
-	c.Collectors.PowerDNS.TlsMinVersion = TLS_v12
+	c.Collectors.PowerDNS.TLSSupport = false
+	c.Collectors.PowerDNS.TLSMinVersion = TLSV12
 	c.Collectors.PowerDNS.CertFile = ""
 	c.Collectors.PowerDNS.KeyFile = ""
-	c.Collectors.PowerDNS.AddDnsPayload = false
+	c.Collectors.PowerDNS.AddDNSPayload = false
 	c.Collectors.PowerDNS.RcvBufSize = 0
 	c.Collectors.PowerDNS.ResetConn = true
 	c.Collectors.PowerDNS.ChannelBufferSize = 65535
 
 	c.Collectors.FileIngestor.Enable = false
 	c.Collectors.FileIngestor.WatchDir = ""
-	c.Collectors.FileIngestor.PcapDnsPort = 53
-	c.Collectors.FileIngestor.WatchMode = MODE_PCAP
+	c.Collectors.FileIngestor.PcapDNSPort = 53
+	c.Collectors.FileIngestor.WatchMode = ModePCAP
 	c.Collectors.FileIngestor.DeleteAfter = false
 	c.Collectors.FileIngestor.ChannelBufferSize = 65535
 
 	c.Collectors.Tzsp.Enable = false
-	c.Collectors.Tzsp.ListenIp = ANY_IP
+	c.Collectors.Tzsp.ListenIP = AnyIP
 	c.Collectors.Tzsp.ListenPort = 10000
 	c.Collectors.Tzsp.ChannelBufferSize = 65535
 
@@ -599,28 +599,28 @@ func (c *Config) SetDefault() {
 
 	// Loggers
 	c.Loggers.Stdout.Enable = false
-	c.Loggers.Stdout.Mode = MODE_TEXT
+	c.Loggers.Stdout.Mode = ModeText
 	c.Loggers.Stdout.TextFormat = ""
 	c.Loggers.Stdout.ChannelBufferSize = 65535
 
-	c.Loggers.Dnstap.Enable = false
-	c.Loggers.Dnstap.RemoteAddress = LOCALHOST_IP
-	c.Loggers.Dnstap.RemotePort = 6000
-	c.Loggers.Dnstap.Transport = SOCKET_TCP
-	c.Loggers.Dnstap.ConnectTimeout = 5
-	c.Loggers.Dnstap.RetryInterval = 10
-	c.Loggers.Dnstap.FlushInterval = 30
-	c.Loggers.Dnstap.SockPath = ""
-	c.Loggers.Dnstap.TlsSupport = false
-	c.Loggers.Dnstap.TlsInsecure = false
-	c.Loggers.Dnstap.TlsMinVersion = TLS_v12
-	c.Loggers.Dnstap.CAFile = ""
-	c.Loggers.Dnstap.CertFile = ""
-	c.Loggers.Dnstap.KeyFile = ""
-	c.Loggers.Dnstap.ServerId = ""
-	c.Loggers.Dnstap.OverwriteIdentity = false
-	c.Loggers.Dnstap.BufferSize = 100
-	c.Loggers.Dnstap.ChannelBufferSize = 65535
+	c.Loggers.DNSTap.Enable = false
+	c.Loggers.DNSTap.RemoteAddress = LocalhostIP
+	c.Loggers.DNSTap.RemotePort = 6000
+	c.Loggers.DNSTap.Transport = SocketTCP
+	c.Loggers.DNSTap.ConnectTimeout = 5
+	c.Loggers.DNSTap.RetryInterval = 10
+	c.Loggers.DNSTap.FlushInterval = 30
+	c.Loggers.DNSTap.SockPath = ""
+	c.Loggers.DNSTap.TLSSupport = false
+	c.Loggers.DNSTap.TLSInsecure = false
+	c.Loggers.DNSTap.TLSMinVersion = TLSV12
+	c.Loggers.DNSTap.CAFile = ""
+	c.Loggers.DNSTap.CertFile = ""
+	c.Loggers.DNSTap.KeyFile = ""
+	c.Loggers.DNSTap.ServerID = ""
+	c.Loggers.DNSTap.OverwriteIdentity = false
+	c.Loggers.DNSTap.BufferSize = 100
+	c.Loggers.DNSTap.ChannelBufferSize = 65535
 
 	c.Loggers.LogFile.Enable = false
 	c.Loggers.LogFile.FilePath = ""
@@ -630,21 +630,21 @@ func (c *Config) SetDefault() {
 	c.Loggers.LogFile.Compress = false
 	c.Loggers.LogFile.CompressInterval = 60
 	c.Loggers.LogFile.CompressPostCommand = ""
-	c.Loggers.LogFile.Mode = MODE_TEXT
+	c.Loggers.LogFile.Mode = ModeText
 	c.Loggers.LogFile.PostRotateCommand = ""
 	c.Loggers.LogFile.PostRotateDelete = false
 	c.Loggers.LogFile.TextFormat = ""
 	c.Loggers.LogFile.ChannelBufferSize = 65535
 
 	c.Loggers.Prometheus.Enable = false
-	c.Loggers.Prometheus.ListenIP = LOCALHOST_IP
+	c.Loggers.Prometheus.ListenIP = LocalhostIP
 	c.Loggers.Prometheus.ListenPort = 8081
-	c.Loggers.Prometheus.TlsSupport = false
-	c.Loggers.Prometheus.TlsMutual = false
-	c.Loggers.Prometheus.TlsMinVersion = TLS_v12
+	c.Loggers.Prometheus.TLSSupport = false
+	c.Loggers.Prometheus.TLSMutual = false
+	c.Loggers.Prometheus.TLSMinVersion = TLSV12
 	c.Loggers.Prometheus.CertFile = ""
 	c.Loggers.Prometheus.KeyFile = ""
-	c.Loggers.Prometheus.PromPrefix = PROG_NAME
+	c.Loggers.Prometheus.PromPrefix = ProgName
 	c.Loggers.Prometheus.TopN = 10
 	c.Loggers.Prometheus.BasicAuthLogin = "admin"
 	c.Loggers.Prometheus.BasicAuthPwd = "changeme"
@@ -653,36 +653,36 @@ func (c *Config) SetDefault() {
 	c.Loggers.Prometheus.HistogramMetricsEnabled = false
 
 	c.Loggers.RestAPI.Enable = false
-	c.Loggers.RestAPI.ListenIP = LOCALHOST_IP
+	c.Loggers.RestAPI.ListenIP = LocalhostIP
 	c.Loggers.RestAPI.ListenPort = 8080
 	c.Loggers.RestAPI.BasicAuthLogin = "admin"
 	c.Loggers.RestAPI.BasicAuthPwd = "changeme"
-	c.Loggers.RestAPI.TlsSupport = false
-	c.Loggers.RestAPI.TlsMinVersion = TLS_v12
+	c.Loggers.RestAPI.TLSSupport = false
+	c.Loggers.RestAPI.TLSMinVersion = TLSV12
 	c.Loggers.RestAPI.CertFile = ""
 	c.Loggers.RestAPI.KeyFile = ""
 	c.Loggers.RestAPI.TopN = 100
 	c.Loggers.RestAPI.ChannelBufferSize = 65535
 
-	c.Loggers.TcpClient.Enable = false
-	c.Loggers.TcpClient.RemoteAddress = LOCALHOST_IP
-	c.Loggers.TcpClient.RemotePort = 9999
-	c.Loggers.TcpClient.SockPath = ""
-	c.Loggers.TcpClient.RetryInterval = 10
-	c.Loggers.TcpClient.Transport = SOCKET_TCP
-	c.Loggers.TcpClient.TlsSupport = false
-	c.Loggers.TcpClient.TlsInsecure = false
-	c.Loggers.TcpClient.TlsMinVersion = TLS_v12
-	c.Loggers.TcpClient.CAFile = ""
-	c.Loggers.TcpClient.CertFile = ""
-	c.Loggers.TcpClient.KeyFile = ""
-	c.Loggers.TcpClient.Mode = MODE_FLATJSON
-	c.Loggers.TcpClient.TextFormat = ""
-	c.Loggers.TcpClient.PayloadDelimiter = "\n"
-	c.Loggers.TcpClient.BufferSize = 100
-	c.Loggers.TcpClient.ConnectTimeout = 5
-	c.Loggers.TcpClient.FlushInterval = 30
-	c.Loggers.TcpClient.ChannelBufferSize = 65535
+	c.Loggers.TCPClient.Enable = false
+	c.Loggers.TCPClient.RemoteAddress = LocalhostIP
+	c.Loggers.TCPClient.RemotePort = 9999
+	c.Loggers.TCPClient.SockPath = ""
+	c.Loggers.TCPClient.RetryInterval = 10
+	c.Loggers.TCPClient.Transport = SocketTCP
+	c.Loggers.TCPClient.TLSSupport = false
+	c.Loggers.TCPClient.TLSInsecure = false
+	c.Loggers.TCPClient.TLSMinVersion = TLSV12
+	c.Loggers.TCPClient.CAFile = ""
+	c.Loggers.TCPClient.CertFile = ""
+	c.Loggers.TCPClient.KeyFile = ""
+	c.Loggers.TCPClient.Mode = ModeFlatJSON
+	c.Loggers.TCPClient.TextFormat = ""
+	c.Loggers.TCPClient.PayloadDelimiter = "\n"
+	c.Loggers.TCPClient.BufferSize = 100
+	c.Loggers.TCPClient.ConnectTimeout = 5
+	c.Loggers.TCPClient.FlushInterval = 30
+	c.Loggers.TCPClient.ChannelBufferSize = 65535
 
 	c.Loggers.Syslog.Enable = false
 	c.Loggers.Syslog.Severity = "INFO"
@@ -690,10 +690,10 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.Transport = "local"
 	c.Loggers.Syslog.RemoteAddress = "127.0.0.1:514"
 	c.Loggers.Syslog.TextFormat = ""
-	c.Loggers.Syslog.Mode = MODE_TEXT
+	c.Loggers.Syslog.Mode = ModeText
 	c.Loggers.Syslog.RetryInterval = 10
-	c.Loggers.Syslog.TlsInsecure = false
-	c.Loggers.Syslog.TlsMinVersion = TLS_v12
+	c.Loggers.Syslog.TLSInsecure = false
+	c.Loggers.Syslog.TLSMinVersion = TLSV12
 	c.Loggers.Syslog.CAFile = ""
 	c.Loggers.Syslog.CertFile = ""
 	c.Loggers.Syslog.KeyFile = ""
@@ -705,16 +705,16 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.AppName = "DNScollector"
 
 	c.Loggers.Fluentd.Enable = false
-	c.Loggers.Fluentd.RemoteAddress = LOCALHOST_IP
+	c.Loggers.Fluentd.RemoteAddress = LocalhostIP
 	c.Loggers.Fluentd.RemotePort = 24224
 	c.Loggers.Fluentd.SockPath = "" // deprecated
 	c.Loggers.Fluentd.RetryInterval = 10
 	c.Loggers.Fluentd.ConnectTimeout = 5
 	c.Loggers.Fluentd.FlushInterval = 30
-	c.Loggers.Fluentd.Transport = SOCKET_TCP
-	c.Loggers.Fluentd.TlsSupport = false // deprecated
-	c.Loggers.Fluentd.TlsInsecure = false
-	c.Loggers.Fluentd.TlsMinVersion = TLS_v12
+	c.Loggers.Fluentd.Transport = SocketTCP
+	c.Loggers.Fluentd.TLSSupport = false // deprecated
+	c.Loggers.Fluentd.TLSInsecure = false
+	c.Loggers.Fluentd.TLSMinVersion = TLSV12
 	c.Loggers.Fluentd.CAFile = ""
 	c.Loggers.Fluentd.CertFile = ""
 	c.Loggers.Fluentd.KeyFile = ""
@@ -725,9 +725,9 @@ func (c *Config) SetDefault() {
 	c.Loggers.InfluxDB.Enable = false
 	c.Loggers.InfluxDB.ServerURL = "http://localhost:8086"
 	c.Loggers.InfluxDB.AuthToken = ""
-	c.Loggers.InfluxDB.TlsSupport = false
-	c.Loggers.InfluxDB.TlsInsecure = false
-	c.Loggers.InfluxDB.TlsMinVersion = TLS_v12
+	c.Loggers.InfluxDB.TLSSupport = false
+	c.Loggers.InfluxDB.TLSInsecure = false
+	c.Loggers.InfluxDB.TLSMinVersion = TLSV12
 	c.Loggers.InfluxDB.CAFile = ""
 	c.Loggers.InfluxDB.CertFile = ""
 	c.Loggers.InfluxDB.KeyFile = ""
@@ -737,34 +737,34 @@ func (c *Config) SetDefault() {
 
 	c.Loggers.LokiClient.Enable = false
 	c.Loggers.LokiClient.ServerURL = "http://localhost:3100/loki/api/v1/push"
-	c.Loggers.LokiClient.JobName = PROG_NAME
-	c.Loggers.LokiClient.Mode = MODE_TEXT
+	c.Loggers.LokiClient.JobName = ProgName
+	c.Loggers.LokiClient.Mode = ModeText
 	c.Loggers.LokiClient.FlushInterval = 5
 	c.Loggers.LokiClient.BatchSize = 1024 * 1024
 	c.Loggers.LokiClient.RetryInterval = 10
 	c.Loggers.LokiClient.TextFormat = ""
 	c.Loggers.LokiClient.ProxyURL = ""
-	c.Loggers.LokiClient.TlsInsecure = false
-	c.Loggers.LokiClient.TlsMinVersion = TLS_v12
+	c.Loggers.LokiClient.TLSInsecure = false
+	c.Loggers.LokiClient.TLSMinVersion = TLSV12
 	c.Loggers.LokiClient.CAFile = ""
 	c.Loggers.LokiClient.CertFile = ""
 	c.Loggers.LokiClient.KeyFile = ""
 	c.Loggers.LokiClient.BasicAuthLogin = ""
 	c.Loggers.LokiClient.BasicAuthPwd = ""
 	c.Loggers.LokiClient.BasicAuthPwdFile = ""
-	c.Loggers.LokiClient.TenantId = ""
+	c.Loggers.LokiClient.TenantID = ""
 	c.Loggers.LokiClient.ChannelBufferSize = 65535
 
 	c.Loggers.Statsd.Enable = false
-	c.Loggers.Statsd.Prefix = PROG_NAME
-	c.Loggers.Statsd.RemoteAddress = LOCALHOST_IP
+	c.Loggers.Statsd.Prefix = ProgName
+	c.Loggers.Statsd.RemoteAddress = LocalhostIP
 	c.Loggers.Statsd.RemotePort = 8125
-	c.Loggers.Statsd.Transport = SOCKET_UDP
+	c.Loggers.Statsd.Transport = SocketUDP
 	c.Loggers.Statsd.ConnectTimeout = 5
 	c.Loggers.Statsd.FlushInterval = 10
-	c.Loggers.Statsd.TlsSupport = false // deprecated
-	c.Loggers.Statsd.TlsInsecure = false
-	c.Loggers.Statsd.TlsMinVersion = TLS_v12
+	c.Loggers.Statsd.TLSSupport = false // deprecated
+	c.Loggers.Statsd.TLSInsecure = false
+	c.Loggers.Statsd.TLSMinVersion = TLSV12
 	c.Loggers.Statsd.CAFile = ""
 	c.Loggers.Statsd.CertFile = ""
 	c.Loggers.Statsd.KeyFile = ""
@@ -778,18 +778,18 @@ func (c *Config) SetDefault() {
 	c.Loggers.ElasticSearchClient.FlushInterval = 10
 
 	c.Loggers.RedisPub.Enable = false
-	c.Loggers.RedisPub.RemoteAddress = LOCALHOST_IP
+	c.Loggers.RedisPub.RemoteAddress = LocalhostIP
 	c.Loggers.RedisPub.RemotePort = 6379
 	c.Loggers.RedisPub.SockPath = ""
 	c.Loggers.RedisPub.RetryInterval = 10
-	c.Loggers.RedisPub.Transport = SOCKET_TCP
-	c.Loggers.RedisPub.TlsSupport = false
-	c.Loggers.RedisPub.TlsInsecure = false
-	c.Loggers.RedisPub.TlsMinVersion = TLS_v12
+	c.Loggers.RedisPub.Transport = SocketTCP
+	c.Loggers.RedisPub.TLSSupport = false
+	c.Loggers.RedisPub.TLSInsecure = false
+	c.Loggers.RedisPub.TLSMinVersion = TLSV12
 	c.Loggers.RedisPub.CAFile = ""
 	c.Loggers.RedisPub.CertFile = ""
 	c.Loggers.RedisPub.KeyFile = ""
-	c.Loggers.RedisPub.Mode = MODE_FLATJSON
+	c.Loggers.RedisPub.Mode = ModeFlatJSON
 	c.Loggers.RedisPub.TextFormat = ""
 	c.Loggers.RedisPub.PayloadDelimiter = "\n"
 	c.Loggers.RedisPub.BufferSize = 100
@@ -799,20 +799,20 @@ func (c *Config) SetDefault() {
 	c.Loggers.RedisPub.ChannelBufferSize = 65535
 
 	c.Loggers.KafkaProducer.Enable = false
-	c.Loggers.KafkaProducer.RemoteAddress = LOCALHOST_IP
+	c.Loggers.KafkaProducer.RemoteAddress = LocalhostIP
 	c.Loggers.KafkaProducer.RemotePort = 9092
 	c.Loggers.KafkaProducer.RetryInterval = 10
-	c.Loggers.KafkaProducer.TlsSupport = false
-	c.Loggers.KafkaProducer.TlsInsecure = false
-	c.Loggers.KafkaProducer.TlsMinVersion = TLS_v12
+	c.Loggers.KafkaProducer.TLSSupport = false
+	c.Loggers.KafkaProducer.TLSInsecure = false
+	c.Loggers.KafkaProducer.TLSMinVersion = TLSV12
 	c.Loggers.KafkaProducer.CAFile = ""
 	c.Loggers.KafkaProducer.CertFile = ""
 	c.Loggers.KafkaProducer.KeyFile = ""
 	c.Loggers.KafkaProducer.SaslSupport = false
 	c.Loggers.KafkaProducer.SaslUsername = ""
 	c.Loggers.KafkaProducer.SaslPassword = ""
-	c.Loggers.KafkaProducer.SaslMechanism = SASL_MECHANISM_PLAIN
-	c.Loggers.KafkaProducer.Mode = MODE_FLATJSON
+	c.Loggers.KafkaProducer.SaslMechanism = SASLMechanismPlain
+	c.Loggers.KafkaProducer.Mode = ModeFlatJSON
 	c.Loggers.KafkaProducer.BufferSize = 100
 	c.Loggers.KafkaProducer.ConnectTimeout = 5
 	c.Loggers.KafkaProducer.FlushInterval = 10

@@ -46,8 +46,8 @@ func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] AFPACKET sniffer - "+msg, v...)
 }
 
-func (c *AfpacketSniffer) Loggers() []chan dnsutils.DnsMessage {
-	channels := []chan dnsutils.DnsMessage{}
+func (c *AfpacketSniffer) Loggers() []chan dnsutils.DNSMessage {
+	channels := []chan dnsutils.DNSMessage{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
 	}
@@ -58,7 +58,7 @@ func (c *AfpacketSniffer) ReadConfig() {}
 
 func (c *AfpacketSniffer) ReloadConfig(config *dnsutils.Config) {}
 
-func (c *AfpacketSniffer) Channel() chan dnsutils.DnsMessage {
+func (c *AfpacketSniffer) Channel() chan dnsutils.DNSMessage {
 	return nil
 }
 

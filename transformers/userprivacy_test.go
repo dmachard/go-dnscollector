@@ -14,7 +14,7 @@ func TestReduceQname(t *testing.T) {
 	config.UserPrivacy.MinimazeQname = true
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
 	userPrivacy := NewUserPrivacySubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
@@ -45,7 +45,7 @@ func TestAnonymizeIPv4(t *testing.T) {
 	config.UserPrivacy.AnonymizeIP = true
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
 	userPrivacy := NewUserPrivacySubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
@@ -65,7 +65,7 @@ func TestAnonymizeIPv6(t *testing.T) {
 	config.UserPrivacy.AnonymizeIP = true
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
 	userPrivacy := NewUserPrivacySubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)

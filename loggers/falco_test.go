@@ -19,7 +19,7 @@ func Test_FalcoClient(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.MODE_JSON,
+			mode:    dnsutils.ModeJSON,
 			pattern: "\"qname\":\"dns.collector\"",
 		},
 	}
@@ -37,7 +37,7 @@ func Test_FalcoClient(t *testing.T) {
 
 			go g.Run()
 
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			g.Channel() <- dm
 
 			// accept conn
@@ -52,7 +52,7 @@ func Test_FalcoClient(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			conn.Write([]byte(dnsutils.HTTP_OK))
+			conn.Write([]byte(dnsutils.HTTPOK))
 
 			// read payload from request body
 			payload, err := io.ReadAll(request.Body)

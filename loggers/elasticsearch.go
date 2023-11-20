@@ -19,33 +19,33 @@ type ElasticSearchClient struct {
 	doneProcess chan bool
 	stopRun     chan bool
 	doneRun     chan bool
-	inputChan   chan dnsutils.DnsMessage
-	outputChan  chan dnsutils.DnsMessage
+	inputChan   chan dnsutils.DNSMessage
+	outputChan  chan dnsutils.DNSMessage
 	config      *dnsutils.Config
 	configChan  chan *dnsutils.Config
 	logger      *logger.Logger
 	name        string
 	server      string
 	index       string
-	bulkUrl     string
+	bulkURL     string
 }
 
 func NewElasticSearchClient(config *dnsutils.Config, console *logger.Logger, name string) *ElasticSearchClient {
 	console.Info("[%s] logger=elasticsearch - enabled", name)
-	o := &ElasticSearchClient{
+	c := &ElasticSearchClient{
 		stopProcess: make(chan bool),
 		doneProcess: make(chan bool),
 		stopRun:     make(chan bool),
 		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
+		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
 		logger:      console,
 		config:      config,
 		configChan:  make(chan *dnsutils.Config),
 		name:        name,
 	}
-	o.ReadConfig()
-	return o
+	c.ReadConfig()
+	return c
 }
 
 func (c *ElasticSearchClient) GetName() string { return c.name }
@@ -61,86 +61,86 @@ func (c *ElasticSearchClient) ReadConfig() {
 		c.LogError(err.Error())
 	}
 	u.Path = path.Join(u.Path, c.index, "_bulk")
-	c.bulkUrl = u.String()
+	c.bulkURL = u.String()
 }
 
-func (o *ElasticSearchClient) ReloadConfig(config *dnsutils.Config) {
-	o.LogInfo("reload configuration!")
-	o.configChan <- config
+func (c *ElasticSearchClient) ReloadConfig(config *dnsutils.Config) {
+	c.LogInfo("reload configuration!")
+	c.configChan <- config
 }
 
-func (o *ElasticSearchClient) Channel() chan dnsutils.DnsMessage {
-	return o.inputChan
+func (c *ElasticSearchClient) Channel() chan dnsutils.DNSMessage {
+	return c.inputChan
 }
 
-func (o *ElasticSearchClient) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger=elasticsearch - "+msg, v...)
+func (c *ElasticSearchClient) LogInfo(msg string, v ...interface{}) {
+	c.logger.Info("["+c.name+"] logger=elasticsearch - "+msg, v...)
 }
 
-func (o *ElasticSearchClient) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger=elasticsearch - "+msg, v...)
+func (c *ElasticSearchClient) LogError(msg string, v ...interface{}) {
+	c.logger.Error("["+c.name+"] logger=elasticsearch - "+msg, v...)
 }
 
-func (o *ElasticSearchClient) Stop() {
-	o.LogInfo("stopping to run...")
-	o.stopRun <- true
-	<-o.doneRun
+func (c *ElasticSearchClient) Stop() {
+	c.LogInfo("stopping to run...")
+	c.stopRun <- true
+	<-c.doneRun
 
-	o.LogInfo("stopping to process...")
-	o.stopProcess <- true
-	<-o.doneProcess
+	c.LogInfo("stopping to process...")
+	c.stopProcess <- true
+	<-c.doneProcess
 }
 
-func (o *ElasticSearchClient) Run() {
-	o.LogInfo("running in background...")
+func (c *ElasticSearchClient) Run() {
+	c.LogInfo("running in background...")
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.outputChan)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+	listChannel := []chan dnsutils.DNSMessage{}
+	listChannel = append(listChannel, c.outputChan)
+	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go o.Process()
+	go c.Process()
 
 	// loop to process incoming messages
 RUN_LOOP:
 	for {
 		select {
-		case <-o.stopRun:
+		case <-c.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
 
-			o.doneRun <- true
+			c.doneRun <- true
 			break RUN_LOOP
 
-		case cfg, opened := <-o.configChan:
+		case cfg, opened := <-c.configChan:
 			if !opened {
 				return
 			}
-			o.config = cfg
-			o.ReadConfig()
+			c.config = cfg
+			c.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-o.inputChan:
+		case dm, opened := <-c.inputChan:
 			if !opened {
-				o.LogInfo("input channel closed!")
+				c.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			subprocessors.InitDNSMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
 				continue
 			}
 
 			// send to output channel
-			o.outputChan <- dm
+			c.outputChan <- dm
 		}
 	}
-	o.LogInfo("run terminated")
+	c.LogInfo("run terminated")
 }
 
-func (o *ElasticSearchClient) FlushBuffer(buf *[]dnsutils.DnsMessage) {
+func (c *ElasticSearchClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	buffer := new(bytes.Buffer)
 
 	for _, dm := range *buf {
@@ -149,42 +149,42 @@ func (o *ElasticSearchClient) FlushBuffer(buf *[]dnsutils.DnsMessage) {
 		// encode
 		flat, err := dm.Flatten()
 		if err != nil {
-			o.LogError("flattening DNS message failed: %e", err)
+			c.LogError("flattening DNS message failed: %e", err)
 		}
 		json.NewEncoder(buffer).Encode(flat)
 	}
 
-	req, _ := http.NewRequest("POST", o.bulkUrl, buffer)
+	req, _ := http.NewRequest("POST", c.bulkURL, buffer)
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
 	_, err := client.Do(req)
 	if err != nil {
-		o.LogError(err.Error())
+		c.LogError(err.Error())
 	}
 
 	*buf = nil
 }
 
-func (o *ElasticSearchClient) Process() {
-	bufferDm := []dnsutils.DnsMessage{}
-	o.LogInfo("ready to process")
+func (c *ElasticSearchClient) Process() {
+	bufferDm := []dnsutils.DNSMessage{}
+	c.LogInfo("ready to process")
 
-	flushInterval := time.Duration(o.config.Loggers.ElasticSearchClient.FlushInterval) * time.Second
+	flushInterval := time.Duration(c.config.Loggers.ElasticSearchClient.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
 PROCESS_LOOP:
 	for {
 		select {
-		case <-o.stopProcess:
-			o.doneProcess <- true
+		case <-c.stopProcess:
+			c.doneProcess <- true
 			break PROCESS_LOOP
 
 		// incoming dns message to process
-		case dm, opened := <-o.outputChan:
+		case dm, opened := <-c.outputChan:
 			if !opened {
-				o.LogInfo("output channel closed!")
+				c.LogInfo("output channel closed!")
 				return
 			}
 
@@ -192,18 +192,18 @@ PROCESS_LOOP:
 			bufferDm = append(bufferDm, dm)
 
 			// buffer is full ?
-			if len(bufferDm) >= o.config.Loggers.ElasticSearchClient.BulkSize {
-				o.FlushBuffer(&bufferDm)
+			if len(bufferDm) >= c.config.Loggers.ElasticSearchClient.BulkSize {
+				c.FlushBuffer(&bufferDm)
 			}
 			// flush the buffer
 		case <-flushTimer.C:
 			if len(bufferDm) > 0 {
-				o.FlushBuffer(&bufferDm)
+				c.FlushBuffer(&bufferDm)
 			}
 
 			// restart timer
 			flushTimer.Reset(flushInterval)
 		}
 	}
-	o.LogInfo("processing terminated")
+	c.LogInfo("processing terminated")
 }

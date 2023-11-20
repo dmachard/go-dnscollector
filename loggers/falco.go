@@ -16,8 +16,8 @@ type FalcoClient struct {
 	doneProcess chan bool
 	stopRun     chan bool
 	doneRun     chan bool
-	inputChan   chan dnsutils.DnsMessage
-	outputChan  chan dnsutils.DnsMessage
+	inputChan   chan dnsutils.DNSMessage
+	outputChan  chan dnsutils.DNSMessage
 	config      *dnsutils.Config
 	configChan  chan *dnsutils.Config
 	logger      *logger.Logger
@@ -32,8 +32,8 @@ func NewFalcoClient(config *dnsutils.Config, console *logger.Logger, name string
 		doneProcess: make(chan bool),
 		stopRun:     make(chan bool),
 		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.FalcoClient.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.FalcoClient.ChannelBufferSize),
+		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.FalcoClient.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.FalcoClient.ChannelBufferSize),
 		logger:      console,
 		config:      config,
 		configChan:  make(chan *dnsutils.Config),
@@ -43,29 +43,29 @@ func NewFalcoClient(config *dnsutils.Config, console *logger.Logger, name string
 	return f
 }
 
-func (c *FalcoClient) GetName() string { return c.name }
+func (f *FalcoClient) GetName() string { return f.name }
 
-func (c *FalcoClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (f *FalcoClient) SetLoggers(loggers []dnsutils.Worker) {}
 
-func (c *FalcoClient) ReadConfig() {
-	c.url = c.config.Loggers.FalcoClient.URL
+func (f *FalcoClient) ReadConfig() {
+	f.url = f.config.Loggers.FalcoClient.URL
 }
 
-func (c *FalcoClient) ReloadConfig(config *dnsutils.Config) {
-	c.LogInfo("reload configuration!")
-	c.configChan <- config
+func (f *FalcoClient) ReloadConfig(config *dnsutils.Config) {
+	f.LogInfo("reload configuration!")
+	f.configChan <- config
 }
 
-func (f *FalcoClient) Channel() chan dnsutils.DnsMessage {
+func (f *FalcoClient) Channel() chan dnsutils.DNSMessage {
 	return f.inputChan
 }
 
-func (c *FalcoClient) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger=falco - "+msg, v...)
+func (f *FalcoClient) LogInfo(msg string, v ...interface{}) {
+	f.logger.Info("["+f.name+"] logger=falco - "+msg, v...)
 }
 
-func (c *FalcoClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger=falco - "+msg, v...)
+func (f *FalcoClient) LogError(msg string, v ...interface{}) {
+	f.logger.Error("["+f.name+"] logger=falco - "+msg, v...)
 }
 
 func (f *FalcoClient) Stop() {
@@ -82,7 +82,7 @@ func (f *FalcoClient) Run() {
 	f.LogInfo("running in background...")
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DnsMessage{}
+	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, f.outputChan)
 	subprocessors := transformers.NewTransforms(&f.config.OutgoingTransformers, f.logger, f.name, listChannel, 0)
 
@@ -115,8 +115,8 @@ RUN_LOOP:
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			subprocessors.InitDNSMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
 				continue
 			}
 
