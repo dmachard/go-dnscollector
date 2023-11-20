@@ -16,13 +16,13 @@ type SuspiciousTransform struct {
 	CommonQtypes          map[string]bool
 	whitelistDomainsRegex map[string]*regexp.Regexp
 	instance              int
-	outChannels           []chan dnsutils.DnsMessage
+	outChannels           []chan dnsutils.DNSMessage
 	logInfo               func(msg string, v ...interface{})
 	logError              func(msg string, v ...interface{})
 }
 
 func NewSuspiciousSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DnsMessage,
+	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) SuspiciousTransform {
 	d := SuspiciousTransform{
@@ -60,10 +60,10 @@ func (p *SuspiciousTransform) ReadConfig() {
 	}
 }
 
-func (s *SuspiciousTransform) ReloadConfig(config *dnsutils.ConfigTransformers) {
-	s.config = config
+func (p *SuspiciousTransform) ReloadConfig(config *dnsutils.ConfigTransformers) {
+	p.config = config
 
-	s.ReadConfig()
+	p.ReadConfig()
 }
 
 func (p *SuspiciousTransform) IsEnabled() bool {
@@ -80,7 +80,7 @@ func (p *SuspiciousTransform) LogError(msg string, v ...interface{}) {
 	p.logError(log+msg, v...)
 }
 
-func (p *SuspiciousTransform) InitDnsMessage(dm *dnsutils.DnsMessage) {
+func (p *SuspiciousTransform) InitDNSMessage(dm *dnsutils.DNSMessage) {
 	if dm.Suspicious == nil {
 		dm.Suspicious = &dnsutils.TransformSuspicious{
 			Score:                 0.0,
@@ -95,7 +95,7 @@ func (p *SuspiciousTransform) InitDnsMessage(dm *dnsutils.DnsMessage) {
 	}
 }
 
-func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
+func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DNSMessage) {
 
 	if dm.Suspicious == nil {
 		p.LogError("transformer is not properly initialized")
@@ -128,7 +128,7 @@ func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
 	}
 
 	// slow domain name resolution ?
-	if dm.DnsTap.Latency > p.config.Suspicious.ThresholdSlow {
+	if dm.DNSTap.Latency > p.config.Suspicious.ThresholdSlow {
 		dm.Suspicious.Score += 1.0
 		dm.Suspicious.SlowDomain = true
 	}

@@ -16,8 +16,13 @@ linters:
   - errorlint
   # set of rules from staticcheck.
   - staticcheck
+  # checks for 'suspisious' constructs like wrong Printf calls
+  - govet
+  - goimports
+  - gosimple
+  - ineffassign
+  - stylecheck
+  - gocritic
   
   # list of linters to use in the future:
-  #- stylecheck
-  #- gocritic
   #- gosec

@@ -17,16 +17,16 @@ var clientCipherSuites = []uint16{
 func IsValidTLS(mode string) bool {
 	switch mode {
 	case
-		TLS_v10,
-		TLS_v11,
-		TLS_v12,
-		TLS_v13:
+		TLSV10,
+		TLSV11,
+		TLSV12,
+		TLSV13:
 		return true
 	}
 	return false
 }
 
-type TlsOptions struct {
+type TLSOptions struct {
 	CAFile             string
 	CertFile           string
 	KeyFile            string
@@ -34,7 +34,7 @@ type TlsOptions struct {
 	MinVersion         string
 }
 
-func TlsClientConfig(options TlsOptions) (*tls.Config, error) {
+func TLSClientConfig(options TLSOptions) (*tls.Config, error) {
 
 	tlsConfig := &tls.Config{
 		MinVersion:         tls.VersionTLS12,
@@ -63,7 +63,7 @@ func TlsClientConfig(options TlsOptions) (*tls.Config, error) {
 		tlsConfig.Certificates = []tls.Certificate{cer}
 	}
 
-	if tlsVersion, ok := TLS_VERSION[options.MinVersion]; ok {
+	if tlsVersion, ok := TLSVersion[options.MinVersion]; ok {
 		tlsConfig.MinVersion = tlsVersion
 	} else {
 		return nil, fmt.Errorf("invalid minimum TLS version: %x", options.MinVersion)

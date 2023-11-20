@@ -185,11 +185,11 @@ func main() {
 		if subcfg.Loggers.LogFile.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewLogFile(subcfg, logger, output.Name)
 		}
-		if subcfg.Loggers.Dnstap.Enable && IsLoggerRouted(config, output.Name) {
+		if subcfg.Loggers.DNSTap.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewDnstapSender(subcfg, logger, output.Name)
 		}
-		if subcfg.Loggers.TcpClient.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewTcpClient(subcfg, logger, output.Name)
+		if subcfg.Loggers.TCPClient.Enable && IsLoggerRouted(config, output.Name) {
+			mapLoggers[output.Name] = loggers.NewTCPClient(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.Syslog.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewSyslog(subcfg, logger, output.Name)
@@ -241,7 +241,7 @@ func main() {
 			mapCollectors[input.Name] = collectors.NewAfpacketSniffer(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.XdpLiveCapture.Enable && IsCollectorRouted(config, input.Name) {
-			mapCollectors[input.Name] = collectors.NewXdpSniffer(nil, subcfg, logger, input.Name)
+			mapCollectors[input.Name] = collectors.NewXDPSniffer(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.Tail.Enable && IsCollectorRouted(config, input.Name) {
 			mapCollectors[input.Name] = collectors.NewTail(nil, subcfg, logger, input.Name)
@@ -253,7 +253,7 @@ func main() {
 			mapCollectors[input.Name] = collectors.NewFileIngestor(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.Tzsp.Enable && IsCollectorRouted(config, input.Name) {
-			mapCollectors[input.Name] = collectors.NewTzsp(nil, subcfg, logger, input.Name)
+			mapCollectors[input.Name] = collectors.NewTZSP(nil, subcfg, logger, input.Name)
 		}
 	}
 

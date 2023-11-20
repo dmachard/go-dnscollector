@@ -20,17 +20,17 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func GetIpAddress[T uint32 | [4]uint32](ip T, mapper func(T) net.IP) net.IP {
+func GetIPAddress[T uint32 | [4]uint32](ip T, mapper func(T) net.IP) net.IP {
 	return mapper(ip)
 }
 
-func ConvertIp4(ip uint32) net.IP {
+func ConvertIP4(ip uint32) net.IP {
 	addr := make(net.IP, net.IPv4len)
 	binary.BigEndian.PutUint32(addr, ip)
 	return addr
 }
 
-func ConvertIp6(ip [4]uint32) net.IP {
+func ConvertIP6(ip [4]uint32) net.IP {
 	addr := make(net.IP, net.IPv6len)
 	binary.LittleEndian.PutUint32(addr[0:], ip[0])
 	binary.LittleEndian.PutUint32(addr[4:], ip[1])
@@ -39,7 +39,7 @@ func ConvertIp6(ip [4]uint32) net.IP {
 	return addr
 }
 
-type XdpSniffer struct {
+type XDPSniffer struct {
 	done       chan bool
 	exit       chan bool
 	identity   string
@@ -50,9 +50,9 @@ type XdpSniffer struct {
 	name       string
 }
 
-func NewXdpSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *XdpSniffer {
+func NewXDPSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *XDPSniffer {
 	logger.Info("[%s] collector=xdp - enabled", name)
-	s := &XdpSniffer{
+	s := &XDPSniffer{
 		done:       make(chan bool),
 		exit:       make(chan bool),
 		config:     config,
@@ -65,22 +65,22 @@ func NewXdpSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *l
 	return s
 }
 
-func (c *XdpSniffer) LogInfo(msg string, v ...interface{}) {
+func (c *XDPSniffer) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info("["+c.name+"] collector=xdp - "+msg, v...)
 }
 
-func (c *XdpSniffer) LogError(msg string, v ...interface{}) {
+func (c *XDPSniffer) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] collector=xdp - "+msg, v...)
 }
 
-func (c *XdpSniffer) GetName() string { return c.name }
+func (c *XDPSniffer) GetName() string { return c.name }
 
-func (c *XdpSniffer) SetLoggers(loggers []dnsutils.Worker) {
+func (c *XDPSniffer) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *XdpSniffer) Loggers() ([]chan dnsutils.DnsMessage, []string) {
-	channels := []chan dnsutils.DnsMessage{}
+func (c *XDPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
@@ -89,20 +89,20 @@ func (c *XdpSniffer) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 	return channels, names
 }
 
-func (c *XdpSniffer) ReadConfig() {
+func (c *XDPSniffer) ReadConfig() {
 	c.identity = c.config.GetServerIdentity()
 }
 
-func (c *XdpSniffer) ReloadConfig(config *dnsutils.Config) {
+func (c *XDPSniffer) ReloadConfig(config *dnsutils.Config) {
 	c.LogInfo("reload configuration...")
 	c.configChan <- config
 }
 
-func (c *XdpSniffer) Channel() chan dnsutils.DnsMessage {
+func (c *XDPSniffer) Channel() chan dnsutils.DNSMessage {
 	return nil
 }
 
-func (c *XdpSniffer) Stop() {
+func (c *XDPSniffer) Stop() {
 	c.LogInfo("stopping...")
 
 	// exit to close properly
@@ -113,10 +113,10 @@ func (c *XdpSniffer) Stop() {
 	close(c.done)
 }
 
-func (c *XdpSniffer) Run() {
+func (c *XDPSniffer) Run() {
 	c.LogInfo("starting collector...")
 
-	dnsProcessor := processors.NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.XdpLiveCapture.ChannelBufferSize)
+	dnsProcessor := processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.XdpLiveCapture.ChannelBufferSize)
 	go dnsProcessor.Run(c.Loggers())
 
 	iface, err := net.InterfaceByName(c.config.Collectors.XdpLiveCapture.Device)
@@ -140,7 +140,7 @@ func (c *XdpSniffer) Run() {
 	})
 	if err != nil {
 		c.LogError("could not attach XDP program: %s", err)
-		os.Exit(1)
+		os.Exit(1) // nolint
 	}
 	defer l.Close()
 
@@ -151,7 +151,7 @@ func (c *XdpSniffer) Run() {
 		panic(err)
 	}
 
-	dnsChan := make(chan dnsutils.DnsMessage)
+	dnsChan := make(chan dnsutils.DNSMessage)
 
 	// goroutine to read all packets reassembled
 	go func() {
@@ -168,11 +168,11 @@ func (c *XdpSniffer) Run() {
 				// send the config to the dns processor
 				dnsProcessor.ConfigChan <- cfg
 
-			//dns message to read ?
+			// dns message to read ?
 			case dm := <-dnsChan:
 
 				// update identity with config ?
-				dm.DnsTap.Identity = c.identity
+				dm.DNSTap.Identity = c.identity
 
 				dnsProcessor.GetChannel() <- dm
 
@@ -212,43 +212,43 @@ func (c *XdpSniffer) Run() {
 			// convert ip
 			var saddr, daddr net.IP
 			if pkt.IpVersion == 0x0800 {
-				saddr = GetIpAddress(pkt.SrcAddr, ConvertIp4)
-				daddr = GetIpAddress(pkt.DstAddr, ConvertIp4)
+				saddr = GetIPAddress(pkt.SrcAddr, ConvertIP4)
+				daddr = GetIPAddress(pkt.DstAddr, ConvertIP4)
 			} else {
-				saddr = GetIpAddress(pkt.SrcAddr6, ConvertIp6)
-				daddr = GetIpAddress(pkt.DstAddr6, ConvertIp6)
+				saddr = GetIPAddress(pkt.SrcAddr6, ConvertIP6)
+				daddr = GetIPAddress(pkt.DstAddr6, ConvertIP6)
 			}
 
 			// prepare DnsMessage
-			dm := dnsutils.DnsMessage{}
+			dm := dnsutils.DNSMessage{}
 			dm.Init()
 
-			dm.DnsTap.TimeSec = int(tsAdjusted.Unix())
-			dm.DnsTap.TimeNsec = int(tsAdjusted.UnixNano() - tsAdjusted.Unix()*1e9)
+			dm.DNSTap.TimeSec = int(tsAdjusted.Unix())
+			dm.DNSTap.TimeNsec = int(tsAdjusted.UnixNano() - tsAdjusted.Unix()*1e9)
 
 			if pkt.SrcPort == 53 {
-				dm.DnsTap.Operation = dnsutils.DNSTAP_CLIENT_RESPONSE
+				dm.DNSTap.Operation = dnsutils.DNSTapClientResponse
 			} else {
-				dm.DnsTap.Operation = dnsutils.DNSTAP_CLIENT_QUERY
+				dm.DNSTap.Operation = dnsutils.DNSTapClientQuery
 			}
 
-			dm.NetworkInfo.QueryIp = saddr.String()
+			dm.NetworkInfo.QueryIP = saddr.String()
 			dm.NetworkInfo.QueryPort = fmt.Sprint(pkt.SrcPort)
-			dm.NetworkInfo.ResponseIp = daddr.String()
+			dm.NetworkInfo.ResponseIP = daddr.String()
 			dm.NetworkInfo.ResponsePort = fmt.Sprint(pkt.DstPort)
 
 			if pkt.IpVersion == 0x0800 {
-				dm.NetworkInfo.Family = dnsutils.PROTO_IPV4
+				dm.NetworkInfo.Family = dnsutils.ProtoIPv4
 			} else {
-				dm.NetworkInfo.Family = dnsutils.PROTO_IPV6
+				dm.NetworkInfo.Family = dnsutils.ProtoIPv6
 			}
 
 			if pkt.IpProto == 0x11 {
-				dm.NetworkInfo.Protocol = dnsutils.PROTO_UDP
+				dm.NetworkInfo.Protocol = dnsutils.ProtoUDP
 				dm.DNS.Payload = record.RawSample[int(pkt.PktOffset)+int(pkt.PayloadOffset):]
 				dm.DNS.Length = len(dm.DNS.Payload)
 			} else {
-				dm.NetworkInfo.Protocol = dnsutils.PROTO_TCP
+				dm.NetworkInfo.Protocol = dnsutils.ProtoTCP
 				dm.DNS.Payload = record.RawSample[int(pkt.PktOffset)+int(pkt.PayloadOffset)+2:]
 				dm.DNS.Length = len(dm.DNS.Payload)
 			}

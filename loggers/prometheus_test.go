@@ -77,46 +77,46 @@ func getMetricsTestCase(config *dnsutils.Config, labels map[string]string) func(
 		g := NewPrometheus(config, logger.New(false), "test")
 
 		// record one dns message to simulate some incoming data
-		noerror_record := dnsutils.GetFakeDnsMessage()
-		noerror_record.DNS.Type = dnsutils.DnsQuery
-		noerror_record.PublicSuffix = &dnsutils.TransformPublicSuffix{
+		noErrorRecord := dnsutils.GetFakeDNSMessage()
+		noErrorRecord.DNS.Type = dnsutils.DNSQuery
+		noErrorRecord.PublicSuffix = &dnsutils.TransformPublicSuffix{
 			QnamePublicSuffix: "faketld",
 		}
-		noerror_record.DNS.Flags.AA = true
-		noerror_record.DnsTap.Latency = 0.05
-		noerror_record.NetworkInfo.Protocol = UDP
-		noerror_record.NetworkInfo.Family = IPv4
-		noerror_record.DNS.Length = 123
+		noErrorRecord.DNS.Flags.AA = true
+		noErrorRecord.DNSTap.Latency = 0.05
+		noErrorRecord.NetworkInfo.Protocol = UDP
+		noErrorRecord.NetworkInfo.Family = IPv4
+		noErrorRecord.DNS.Length = 123
 
-		g.Record(noerror_record)
+		g.Record(noErrorRecord)
 
 		// compute metrics, this function is called every second
 		g.ComputeEventsPerSecond()
 
-		nx_record := dnsutils.GetFakeDnsMessage()
-		nx_record.DNS.Type = dnsutils.DnsReply
-		nx_record.DNS.Rcode = dnsutils.DNS_RCODE_NXDOMAIN
-		nx_record.NetworkInfo.Protocol = UDP
-		nx_record.NetworkInfo.Family = IPv4
-		nx_record.DNS.Length = 123
+		nxRecord := dnsutils.GetFakeDNSMessage()
+		nxRecord.DNS.Type = dnsutils.DNSReply
+		nxRecord.DNS.Rcode = dnsutils.DNSRcodeNXDomain
+		nxRecord.NetworkInfo.Protocol = UDP
+		nxRecord.NetworkInfo.Family = IPv4
+		nxRecord.DNS.Length = 123
 
 		// nx_record.PublicSuffix = &dnsutils.TransformPublicSuffix{
 		// 	QnamePublicSuffix: "faketld1",
 		// }
-		g.Record(nx_record)
+		g.Record(nxRecord)
 
-		sf_record := dnsutils.GetFakeDnsMessage()
-		sf_record.DNS.Type = dnsutils.DnsReply
-		sf_record.DNS.Rcode = dnsutils.DNS_RCODE_SERVFAIL
-		sf_record.NetworkInfo.Protocol = UDP
-		sf_record.NetworkInfo.Family = IPv4
-		sf_record.DNS.Length = 123
+		sfRecord := dnsutils.GetFakeDNSMessage()
+		sfRecord.DNS.Type = dnsutils.DNSReply
+		sfRecord.DNS.Rcode = dnsutils.DNSRcodeServFail
+		sfRecord.NetworkInfo.Protocol = UDP
+		sfRecord.NetworkInfo.Family = IPv4
+		sfRecord.DNS.Length = 123
 
-		g.Record(sf_record)
+		g.Record(sfRecord)
 
 		// Generate records for a different stream id
-		noerror_record.DnsTap.Identity = "other_collector"
-		g.Record(noerror_record)
+		noErrorRecord.DNSTap.Identity = "other_collector"
+		g.Record(noErrorRecord)
 
 		// call ComputeMetrics for the second time, to calculate per-second metrcis
 		g.ComputeEventsPerSecond()
@@ -169,9 +169,9 @@ func TestPrometheus_EPS_Counters(t *testing.T) {
 	g := NewPrometheus(config, logger.New(false), "test")
 
 	// record one dns message to simulate some incoming data
-	noerror_record := dnsutils.GetFakeDnsMessage()
-	noerror_record.DNS.Type = dnsutils.DnsQuery
-	g.Record(noerror_record)
+	noErrorRecord := dnsutils.GetFakeDNSMessage()
+	noErrorRecord.DNS.Type = dnsutils.DNSQuery
+	g.Record(noErrorRecord)
 	// Zero second elapsed, initalize EPS
 	g.ComputeEventsPerSecond()
 	mf := getMetrics(g, t)
@@ -179,8 +179,8 @@ func TestPrometheus_EPS_Counters(t *testing.T) {
 
 	// Simulate processing 2 more messages, that will be 2 events per second
 	// after next ComputeEventsPerSecond call
-	g.Record(noerror_record)
-	g.Record(noerror_record)
+	g.Record(noErrorRecord)
+	g.Record(noErrorRecord)
 	g.ComputeEventsPerSecond()
 	mf = getMetrics(g, t)
 	ensureMetricValue(t, mf, "dnscollector_throughput_ops", map[string]string{"stream_id": "collector"}, 2)
@@ -191,7 +191,7 @@ func TestPrometheus_EPS_Counters(t *testing.T) {
 	// }
 
 	// During next 'second' we see only 1 event. EPS counter changes, EPS Max counter keeps it's value
-	g.Record(noerror_record)
+	g.Record(noErrorRecord)
 	g.ComputeEventsPerSecond()
 
 	mf = getMetrics(g, t)
@@ -221,13 +221,13 @@ func TestPrometheus_ConfirmDifferentResolvers(t *testing.T) {
 	config := dnsutils.GetFakeConfig()
 	config.Loggers.Prometheus.LabelsList = []string{"resolver"}
 	g := NewPrometheus(config, logger.New(false), "test")
-	noerror_record := dnsutils.GetFakeDnsMessage()
-	noerror_record.DNS.Length = 123
-	noerror_record.NetworkInfo.ResponseIp = "1.2.3.4"
-	g.Record(noerror_record)
-	noerror_record.DNS.Length = 999
-	noerror_record.NetworkInfo.ResponseIp = "10.10.10.10"
-	g.Record(noerror_record)
+	noErrorRecord := dnsutils.GetFakeDNSMessage()
+	noErrorRecord.DNS.Length = 123
+	noErrorRecord.NetworkInfo.ResponseIP = "1.2.3.4"
+	g.Record(noErrorRecord)
+	noErrorRecord.DNS.Length = 999
+	noErrorRecord.NetworkInfo.ResponseIP = "10.10.10.10"
+	g.Record(noErrorRecord)
 	mf := getMetrics(g, t)
 
 	ensureMetricValue(t, mf, "dnscollector_bytes_total", map[string]string{"resolver": "1.2.3.4"}, 123)

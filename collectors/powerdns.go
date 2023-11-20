@@ -25,7 +25,7 @@ type ProtobufPowerDNS struct {
 	stopMonitor    chan bool
 	cleanup        chan bool
 	listen         net.Listener
-	connId         int
+	connID         int
 	conns          []net.Conn
 	loggers        []dnsutils.Worker
 	config         *dnsutils.Config
@@ -63,8 +63,8 @@ func (c *ProtobufPowerDNS) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *ProtobufPowerDNS) Loggers() ([]chan dnsutils.DnsMessage, []string) {
-	channels := []chan dnsutils.DnsMessage{}
+func (c *ProtobufPowerDNS) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
@@ -74,7 +74,7 @@ func (c *ProtobufPowerDNS) Loggers() ([]chan dnsutils.DnsMessage, []string) {
 }
 
 func (c *ProtobufPowerDNS) ReadConfig() {
-	if !dnsutils.IsValidTLS(c.config.Collectors.PowerDNS.TlsMinVersion) {
+	if !dnsutils.IsValidTLS(c.config.Collectors.PowerDNS.TLSMinVersion) {
 		c.logger.Fatal("collector=powerdns - invalid tls min version")
 	}
 }
@@ -92,13 +92,13 @@ func (c *ProtobufPowerDNS) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] collector=powerdns - "+msg, v...)
 }
 
-func (c *ProtobufPowerDNS) LogConnInfo(connId int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf("[%s] collector=powerdns#%d - ", c.name, connId)
+func (c *ProtobufPowerDNS) LogConnInfo(connID int, msg string, v ...interface{}) {
+	prefix := fmt.Sprintf("[%s] collector=powerdns#%d - ", c.name, connID)
 	c.logger.Info(prefix+msg, v...)
 }
 
-func (c *ProtobufPowerDNS) LogConnError(connId int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf("[%s] collector=powerdns#%d - ", c.name, connId)
+func (c *ProtobufPowerDNS) LogConnError(connID int, msg string, v ...interface{}) {
+	prefix := fmt.Sprintf("[%s] collector=powerdns#%d - ", c.name, connID)
 	c.logger.Error(prefix+msg, v...)
 }
 
@@ -106,18 +106,18 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	// close connection on function exit
 	defer conn.Close()
 
-	var connId int
+	var connID int
 	c.Lock()
-	c.connId++
-	connId = c.connId
+	c.connID++
+	connID = c.connID
 	c.Unlock()
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogConnInfo(connId, "new connection from %s", peer)
+	c.LogConnInfo(connID, "new connection from %s", peer)
 
 	// start protobuf subprocessor
-	pdnsProc := processors.NewPdnsProcessor(connId, c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
+	pdnsProc := processors.NewPdnsProcessor(connID, c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
 	c.Lock()
 	c.pdnsProcessors = append(c.pdnsProcessors, &pdnsProc)
 	c.Unlock()
@@ -145,9 +145,9 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 			}
 
 			if connClosed {
-				c.LogConnInfo(connId, "connection closed with peer %s", peer)
+				c.LogConnInfo(connID, "connection closed with peer %s", peer)
 			} else {
-				c.LogConnError(connId, "powerdns reader error: %s", err)
+				c.LogConnError(connID, "powerdns reader error: %s", err)
 			}
 
 			// stop processor
@@ -168,7 +168,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	// then removes the current tap processor from the list
 	c.Lock()
 	for i, t := range c.pdnsProcessors {
-		if t.ConnId == connId {
+		if t.ConnID == connID {
 			c.pdnsProcessors = append(c.pdnsProcessors[:i], c.pdnsProcessors[i+1:]...)
 		}
 	}
@@ -182,10 +182,10 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	}
 	c.Unlock()
 
-	c.LogConnInfo(connId, "connection handler terminated")
+	c.LogConnInfo(connID, "connection handler terminated")
 }
 
-func (c *ProtobufPowerDNS) Channel() chan dnsutils.DnsMessage {
+func (c *ProtobufPowerDNS) Channel() chan dnsutils.DNSMessage {
 	return nil
 }
 
@@ -235,7 +235,7 @@ func (c *ProtobufPowerDNS) Listen() error {
 	addrlisten := c.config.Collectors.PowerDNS.ListenIP + ":" + strconv.Itoa(c.config.Collectors.PowerDNS.ListenPort)
 
 	// listening with tls enabled ?
-	if c.config.Collectors.PowerDNS.TlsSupport {
+	if c.config.Collectors.PowerDNS.TLSSupport {
 		c.LogInfo("tls support enabled")
 		var cer tls.Certificate
 		cer, err = tls.LoadX509KeyPair(c.config.Collectors.PowerDNS.CertFile, c.config.Collectors.PowerDNS.KeyFile)
@@ -250,11 +250,11 @@ func (c *ProtobufPowerDNS) Listen() error {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLS_VERSION[c.config.Collectors.PowerDNS.TlsMinVersion]
+		tlsConfig.MinVersion = dnsutils.TLSVersion[c.config.Collectors.PowerDNS.TLSMinVersion]
 
-		listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, tlsConfig)
+		listener, err = tls.Listen(dnsutils.SocketTCP, addrlisten, tlsConfig)
 	} else {
-		listener, err = net.Listen(dnsutils.SOCKET_TCP, addrlisten)
+		listener, err = net.Listen(dnsutils.SocketTCP, addrlisten)
 	}
 	// something is wrong ?
 	if err != nil {
@@ -340,10 +340,10 @@ RUN_LOOP:
 			}
 
 			if c.config.Collectors.Dnstap.RcvBufSize > 0 {
-				before, actual, err := netlib.SetSock_RCVBUF(
+				before, actual, err := netlib.SetSockRCVBUF(
 					conn,
 					c.config.Collectors.Dnstap.RcvBufSize,
-					c.config.Collectors.Dnstap.TlsSupport,
+					c.config.Collectors.Dnstap.TLSSupport,
 				)
 				if err != nil {
 					c.logger.Fatal("Unable to set SO_RCVBUF: ", err)

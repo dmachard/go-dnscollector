@@ -32,7 +32,7 @@ type GeoRecord struct {
 	ASO            string
 }
 
-type GeoIpProcessor struct {
+type GeoIPProcessor struct {
 	config      *dnsutils.ConfigTransformers
 	logger      *logger.Logger
 	dbCountry   *maxminddb.Reader
@@ -41,16 +41,16 @@ type GeoIpProcessor struct {
 	enabled     bool
 	name        string
 	instance    int
-	outChannels []chan dnsutils.DnsMessage
+	outChannels []chan dnsutils.DNSMessage
 	logInfo     func(msg string, v ...interface{})
 	logError    func(msg string, v ...interface{})
 }
 
-func NewDnsGeoIpProcessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DnsMessage,
+func NewDNSGeoIPProcessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
-) GeoIpProcessor {
-	d := GeoIpProcessor{
+) GeoIPProcessor {
+	d := GeoIPProcessor{
 		config:      config,
 		logger:      logger,
 		name:        name,
@@ -63,23 +63,23 @@ func NewDnsGeoIpProcessor(config *dnsutils.ConfigTransformers, logger *logger.Lo
 	return d
 }
 
-func (p *GeoIpProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+func (p *GeoIPProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
 	p.config = config
 }
 
-func (p *GeoIpProcessor) LogInfo(msg string, v ...interface{}) {
+func (p *GeoIPProcessor) LogInfo(msg string, v ...interface{}) {
 	log := fmt.Sprintf("transformer=geoip#%d - ", p.instance)
 	p.logInfo(log+msg, v...)
 }
 
-func (p *GeoIpProcessor) LogError(msg string, v ...interface{}) {
+func (p *GeoIPProcessor) LogError(msg string, v ...interface{}) {
 	log := fmt.Sprintf("transformer=geoip#%d - ", p.instance)
 	p.logError(log+msg, v...)
 }
 
-func (p *GeoIpProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
+func (p *GeoIPProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 	if dm.Geo == nil {
-		dm.Geo = &dnsutils.TransformDnsGeo{
+		dm.Geo = &dnsutils.TransformDNSGeo{
 			CountryIsoCode:         "-",
 			City:                   "-",
 			Continent:              "-",
@@ -89,15 +89,15 @@ func (p *GeoIpProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
 	}
 }
 
-func (p *GeoIpProcessor) Open() (err error) {
+func (p *GeoIPProcessor) Open() (err error) {
 	// before to open, close all files
 	// because open can be called also on reload
 	p.enabled = false
 	p.Close()
 
 	// open files ?
-	if len(p.config.GeoIP.DbCountryFile) > 0 {
-		p.dbCountry, err = maxminddb.Open(p.config.GeoIP.DbCountryFile)
+	if len(p.config.GeoIP.DBCountryFile) > 0 {
+		p.dbCountry, err = maxminddb.Open(p.config.GeoIP.DBCountryFile)
 		if err != nil {
 			p.enabled = false
 			return
@@ -106,8 +106,8 @@ func (p *GeoIpProcessor) Open() (err error) {
 		p.LogInfo("country database loaded (%d records)", p.dbCountry.Metadata.NodeCount)
 	}
 
-	if len(p.config.GeoIP.DbCityFile) > 0 {
-		p.dbCity, err = maxminddb.Open(p.config.GeoIP.DbCityFile)
+	if len(p.config.GeoIP.DBCityFile) > 0 {
+		p.dbCity, err = maxminddb.Open(p.config.GeoIP.DBCityFile)
 		if err != nil {
 			p.enabled = false
 			return
@@ -116,8 +116,8 @@ func (p *GeoIpProcessor) Open() (err error) {
 		p.LogInfo("city database loaded (%d records)", p.dbCity.Metadata.NodeCount)
 	}
 
-	if len(p.config.GeoIP.DbAsnFile) > 0 {
-		p.dbAsn, err = maxminddb.Open(p.config.GeoIP.DbAsnFile)
+	if len(p.config.GeoIP.DBASNFile) > 0 {
+		p.dbAsn, err = maxminddb.Open(p.config.GeoIP.DBASNFile)
 		if err != nil {
 			p.enabled = false
 			return
@@ -128,11 +128,11 @@ func (p *GeoIpProcessor) Open() (err error) {
 	return nil
 }
 
-func (p *GeoIpProcessor) IsEnabled() bool {
+func (p *GeoIPProcessor) IsEnabled() bool {
 	return p.enabled
 }
 
-func (p *GeoIpProcessor) Close() {
+func (p *GeoIPProcessor) Close() {
 	if p.dbCountry != nil {
 		p.dbCountry.Close()
 	}
@@ -144,7 +144,7 @@ func (p *GeoIpProcessor) Close() {
 	}
 }
 
-func (p *GeoIpProcessor) Lookup(ip string) (GeoRecord, error) {
+func (p *GeoIPProcessor) Lookup(ip string) (GeoRecord, error) {
 	record := &MaxminddbRecord{}
 	rec := GeoRecord{Continent: "-",
 		CountryISOCode: "-",
@@ -170,15 +170,13 @@ func (p *GeoIpProcessor) Lookup(ip string) (GeoRecord, error) {
 		rec.CountryISOCode = record.Country.ISOCode
 		rec.Continent = record.Continent.Code
 
-	} else {
-		if p.dbCountry != nil {
-			err := p.dbCountry.Lookup(net.ParseIP(ip), &record)
-			if err != nil {
-				return rec, err
-			}
-			rec.CountryISOCode = record.Country.ISOCode
-			rec.Continent = record.Continent.Code
+	} else if p.dbCountry != nil {
+		err := p.dbCountry.Lookup(net.ParseIP(ip), &record)
+		if err != nil {
+			return rec, err
 		}
+		rec.CountryISOCode = record.Country.ISOCode
+		rec.Continent = record.Continent.Code
 	}
 
 	return rec, nil

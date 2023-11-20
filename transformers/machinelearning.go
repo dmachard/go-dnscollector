@@ -24,13 +24,13 @@ func isConsonant(char rune) bool {
 type MlProcessor struct {
 	config      *dnsutils.ConfigTransformers
 	instance    int
-	outChannels []chan dnsutils.DnsMessage
+	outChannels []chan dnsutils.DNSMessage
 	logInfo     func(msg string, v ...interface{})
 	logError    func(msg string, v ...interface{})
 }
 
 func NewMachineLearningSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DnsMessage,
+	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) MlProcessor {
 	s := MlProcessor{
@@ -58,7 +58,7 @@ func (p *MlProcessor) LogError(msg string, v ...interface{}) {
 	p.logError(log+msg, v...)
 }
 
-func (p *MlProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
+func (p *MlProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 	if dm.MachineLearning == nil {
 		dm.MachineLearning = &dnsutils.TransformML{
 			Entropy:               0,
@@ -83,7 +83,7 @@ func (p *MlProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
 	}
 }
 
-func (p *MlProcessor) AddFeatures(dm *dnsutils.DnsMessage) {
+func (p *MlProcessor) AddFeatures(dm *dnsutils.DNSMessage) {
 
 	if dm.MachineLearning == nil {
 		p.LogError("transformer is not properly initialized")

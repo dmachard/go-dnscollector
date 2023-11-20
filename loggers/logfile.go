@@ -33,11 +33,11 @@ const (
 func IsValidMode(mode string) bool {
 	switch mode {
 	case
-		dnsutils.MODE_TEXT,
-		dnsutils.MODE_JSON,
-		dnsutils.MODE_FLATJSON,
-		dnsutils.MODE_PCAP,
-		dnsutils.MODE_DNSTAP:
+		dnsutils.ModeText,
+		dnsutils.ModeJSON,
+		dnsutils.ModeFlatJSON,
+		dnsutils.ModePCAP,
+		dnsutils.ModeDNSTap:
 		return true
 	}
 	return false
@@ -48,8 +48,8 @@ type LogFile struct {
 	doneProcess    chan bool
 	stopRun        chan bool
 	doneRun        chan bool
-	inputChan      chan dnsutils.DnsMessage
-	outputChan     chan dnsutils.DnsMessage
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
 	writerPlain    *bufio.Writer
 	writerPcap     *pcapgo.Writer
 	writerDnstap   *framestream.Encoder
@@ -74,8 +74,8 @@ func NewLogFile(config *dnsutils.Config, logger *logger.Logger, name string) *Lo
 		doneProcess: make(chan bool),
 		stopRun:     make(chan bool),
 		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.LogFile.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.LogFile.ChannelBufferSize),
+		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.LogFile.ChannelBufferSize),
+		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.LogFile.ChannelBufferSize),
 		config:      config,
 		configChan:  make(chan *dnsutils.Config),
 		logger:      logger,
@@ -95,7 +95,7 @@ func (l *LogFile) GetName() string { return l.name }
 
 func (l *LogFile) SetLoggers(loggers []dnsutils.Worker) {}
 
-func (l *LogFile) Channel() chan dnsutils.DnsMessage {
+func (l *LogFile) Channel() chan dnsutils.DNSMessage {
 	return l.inputChan
 }
 
@@ -117,9 +117,9 @@ func (l *LogFile) ReadConfig() {
 	l.LogInfo("running in mode: %s", l.config.Loggers.LogFile.Mode)
 }
 
-func (o *LogFile) ReloadConfig(config *dnsutils.Config) {
-	o.LogInfo("reload configuration!")
-	o.configChan <- config
+func (l *LogFile) ReloadConfig(config *dnsutils.Config) {
+	l.LogInfo("reload configuration!")
+	l.configChan <- config
 }
 
 func (l *LogFile) LogInfo(msg string, v ...interface{}) {
@@ -176,9 +176,9 @@ func (l *LogFile) Cleanup() error {
 	sort.Ints(logFiles)
 
 	// too much log files ?
-	diff_nb := len(logFiles) - l.config.Loggers.LogFile.MaxFiles
-	if diff_nb > 0 {
-		for i := 0; i < diff_nb; i++ {
+	diffNB := len(logFiles) - l.config.Loggers.LogFile.MaxFiles
+	if diffNB > 0 {
+		for i := 0; i < diffNB; i++ {
 			filename := fmt.Sprintf("%s-%d%s", l.filePrefix, logFiles[i], l.fileExt)
 			f := filepath.Join(l.fileDir, filename)
 			if _, err := os.Stat(f); os.IsNotExist(err) {
@@ -209,11 +209,11 @@ func (l *LogFile) OpenFile() error {
 	l.fileSize = fileinfo.Size()
 
 	switch l.config.Loggers.LogFile.Mode {
-	case dnsutils.MODE_TEXT, dnsutils.MODE_JSON, dnsutils.MODE_FLATJSON:
+	case dnsutils.ModeText, dnsutils.ModeJSON, dnsutils.ModeFlatJSON:
 		bufferSize := 4096
 		l.writerPlain = bufio.NewWriterSize(fd, bufferSize)
 
-	case dnsutils.MODE_PCAP:
+	case dnsutils.ModePCAP:
 		l.writerPcap = pcapgo.NewWriter(fd)
 		if l.fileSize == 0 {
 			if err := l.writerPcap.WriteFileHeader(65536, layers.LinkTypeEthernet); err != nil {
@@ -221,7 +221,7 @@ func (l *LogFile) OpenFile() error {
 			}
 		}
 
-	case dnsutils.MODE_DNSTAP:
+	case dnsutils.ModeDNSTap:
 		fsOptions := &framestream.EncoderOptions{ContentType: []byte("protobuf:dnstap.Dnstap"), Bidirectional: false}
 		l.writerDnstap, err = framestream.NewEncoder(fd, fsOptions)
 		if err != nil {
@@ -234,8 +234,8 @@ func (l *LogFile) OpenFile() error {
 	return nil
 }
 
-func (o *LogFile) GetMaxSize() int64 {
-	return int64(1024*1024) * int64(o.config.Loggers.LogFile.MaxSize)
+func (l *LogFile) GetMaxSize() int64 {
+	return int64(1024*1024) * int64(l.config.Loggers.LogFile.MaxSize)
 }
 
 func (l *LogFile) CompressFile() {
@@ -319,10 +319,8 @@ func (l *LogFile) PostRotateCommand(filename string) {
 		_, err := exec.Command(l.config.Loggers.LogFile.PostRotateCommand, filename).Output()
 		if err != nil {
 			l.LogError("postrotate command error: %s", err)
-		} else {
-			if l.config.Loggers.LogFile.PostRotateDelete {
-				os.Remove(filename)
-			}
+		} else if l.config.Loggers.LogFile.PostRotateDelete {
+			os.Remove(filename)
 		}
 	}
 }
@@ -340,9 +338,9 @@ func (l *LogFile) CompressPostRotateCommand(filename string) {
 
 func (l *LogFile) FlushWriters() {
 	switch l.config.Loggers.LogFile.Mode {
-	case dnsutils.MODE_TEXT, dnsutils.MODE_JSON, dnsutils.MODE_FLATJSON:
+	case dnsutils.ModeText, dnsutils.ModeJSON, dnsutils.ModeFlatJSON:
 		l.writerPlain.Flush()
-	case dnsutils.MODE_DNSTAP:
+	case dnsutils.ModeDNSTap:
 		l.writerDnstap.Flush()
 	}
 }
@@ -351,7 +349,7 @@ func (l *LogFile) RotateFile() error {
 	// close writer and existing file
 	l.FlushWriters()
 
-	if l.config.Loggers.LogFile.Mode == dnsutils.MODE_DNSTAP {
+	if l.config.Loggers.LogFile.Mode == dnsutils.ModeDNSTap {
 		l.writerDnstap.Close()
 	}
 
@@ -385,7 +383,7 @@ func (l *LogFile) RotateFile() error {
 	return nil
 }
 
-func (l *LogFile) WriteToPcap(dm dnsutils.DnsMessage, pkt []gopacket.SerializableLayer) {
+func (l *LogFile) WriteToPcap(dm dnsutils.DNSMessage, pkt []gopacket.SerializableLayer) {
 	// create the packet with the layers
 	buf := gopacket.NewSerializeBuffer()
 	opts := gopacket.SerializeOptions{
@@ -407,7 +405,7 @@ func (l *LogFile) WriteToPcap(dm dnsutils.DnsMessage, pkt []gopacket.Serializabl
 	}
 
 	ci := gopacket.CaptureInfo{
-		Timestamp:     time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec)),
+		Timestamp:     time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec)),
 		CaptureLength: bufSize,
 		Length:        bufSize,
 	}
@@ -458,7 +456,7 @@ func (l *LogFile) Run() {
 	l.LogInfo("running in background...")
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DnsMessage{}
+	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, l.outputChan)
 	subprocessors := transformers.NewTransforms(&l.config.OutgoingTransformers, l.logger, l.name, listChannel, 0)
 
@@ -490,8 +488,8 @@ RUN_LOOP:
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			subprocessors.InitDNSMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
 				continue
 			}
 
@@ -526,7 +524,7 @@ PROCESS_LOOP:
 
 			// closing file
 			l.LogInfo("closing log file")
-			if l.config.Loggers.LogFile.Mode == dnsutils.MODE_DNSTAP {
+			if l.config.Loggers.LogFile.Mode == dnsutils.ModeDNSTap {
 				l.writerDnstap.Close()
 			}
 			l.fileFd.Close()
@@ -544,7 +542,7 @@ PROCESS_LOOP:
 			switch l.config.Loggers.LogFile.Mode {
 
 			// with basic text mode
-			case dnsutils.MODE_TEXT:
+			case dnsutils.ModeText:
 				l.WriteToPlain(dm.Bytes(l.textFormat,
 					l.config.Global.TextFormatDelimiter,
 					l.config.Global.TextFormatBoundary))
@@ -554,7 +552,7 @@ PROCESS_LOOP:
 				l.WriteToPlain(delimiter.Bytes())
 
 			// with json mode
-			case dnsutils.MODE_FLATJSON:
+			case dnsutils.ModeFlatJSON:
 				flat, err := dm.Flatten()
 				if err != nil {
 					l.LogError("flattening DNS message failed: %e", err)
@@ -564,14 +562,14 @@ PROCESS_LOOP:
 				buffer.Reset()
 
 			// with json mode
-			case dnsutils.MODE_JSON:
+			case dnsutils.ModeJSON:
 				json.NewEncoder(buffer).Encode(dm)
 				l.WriteToPlain(buffer.Bytes())
 				buffer.Reset()
 
 			// with dnstap mode
-			case dnsutils.MODE_DNSTAP:
-				data, err = dm.ToDnstap()
+			case dnsutils.ModeDNSTap:
+				data, err = dm.ToDNSTap()
 				if err != nil {
 					l.LogError("failed to encode to DNStap protobuf: %s", err)
 					continue
@@ -579,7 +577,7 @@ PROCESS_LOOP:
 				l.WriteToDnstap(data)
 
 			// with pcap mode
-			case dnsutils.MODE_PCAP:
+			case dnsutils.ModePCAP:
 				pkt, err := dm.ToPacketLayer()
 				if err != nil {
 					l.LogError("failed to encode to packet layer: %s", err)

@@ -27,7 +27,7 @@ func Htons(v uint16) int {
 	return int((v << 8) | (v >> 8))
 }
 
-func GetBpfFilter_Ingress(port int) []bpf.Instruction {
+func GetBPFFilterIngress(port int) []bpf.Instruction {
 	// bpf filter: (ip  or ip6 ) and (udp or tcp) and port 53
 	// fragmented packets are ignored
 	var filter = []bpf.Instruction{
@@ -188,8 +188,8 @@ func (c *AfpacketSniffer) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
 
-func (c *AfpacketSniffer) Loggers() ([]chan dnsutils.DnsMessage, []string) {
-	channels := []chan dnsutils.DnsMessage{}
+func (c *AfpacketSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
 	for _, p := range c.loggers {
 		channels = append(channels, p.Channel())
@@ -207,7 +207,7 @@ func (c *AfpacketSniffer) ReloadConfig(config *dnsutils.Config) {
 	c.configChan <- config
 }
 
-func (c *AfpacketSniffer) Channel() chan dnsutils.DnsMessage {
+func (c *AfpacketSniffer) Channel() chan dnsutils.DNSMessage {
 	return nil
 }
 
@@ -273,34 +273,34 @@ func (c *AfpacketSniffer) Run() {
 	if c.fd == 0 {
 		if err := c.Listen(); err != nil {
 			c.LogError("init raw socket failed: %v\n", err)
-			os.Exit(1)
+			os.Exit(1) // nolint
 		}
 	}
 
-	dnsProcessor := processors.NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.AfpacketLiveCapture.ChannelBufferSize)
+	dnsProcessor := processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.AfpacketLiveCapture.ChannelBufferSize)
 	go dnsProcessor.Run(c.Loggers())
 
-	dnsChan := make(chan netlib.DnsPacket)
+	dnsChan := make(chan netlib.DNSPacket)
 	udpChan := make(chan gopacket.Packet)
 	tcpChan := make(chan gopacket.Packet)
-	fragIp4Chan := make(chan gopacket.Packet)
-	fragIp6Chan := make(chan gopacket.Packet)
+	fragIP4Chan := make(chan gopacket.Packet)
+	fragIP6Chan := make(chan gopacket.Packet)
 
 	netDecoder := &netlib.NetDecoder{}
 
 	// defrag ipv4
-	go netlib.IpDefragger(fragIp4Chan, udpChan, tcpChan)
+	go netlib.IPDefragger(fragIP4Chan, udpChan, tcpChan)
 	// defrag ipv6
-	go netlib.IpDefragger(fragIp6Chan, udpChan, tcpChan)
+	go netlib.IPDefragger(fragIP6Chan, udpChan, tcpChan)
 	// tcp assembly
-	go netlib.TcpAssembler(tcpChan, dnsChan, 0)
+	go netlib.TCPAssembler(tcpChan, dnsChan, 0)
 	// udp processor
-	go netlib.UdpProcessor(udpChan, dnsChan, 0)
+	go netlib.UDPProcessor(udpChan, dnsChan, 0)
 
 	// goroutine to read all packets reassembled
 	go func() {
 		// prepare dns message
-		dm := dnsutils.DnsMessage{}
+		dm := dnsutils.DNSMessage{}
 
 		for {
 			select {
@@ -320,9 +320,9 @@ func (c *AfpacketSniffer) Run() {
 				// reset
 				dm.Init()
 
-				dm.NetworkInfo.Family = dnsPacket.IpLayer.EndpointType().String()
-				dm.NetworkInfo.QueryIp = dnsPacket.IpLayer.Src().String()
-				dm.NetworkInfo.ResponseIp = dnsPacket.IpLayer.Dst().String()
+				dm.NetworkInfo.Family = dnsPacket.IPLayer.EndpointType().String()
+				dm.NetworkInfo.QueryIP = dnsPacket.IPLayer.Src().String()
+				dm.NetworkInfo.ResponseIP = dnsPacket.IPLayer.Dst().String()
 				dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
 				dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
 				dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
@@ -330,12 +330,12 @@ func (c *AfpacketSniffer) Run() {
 				dm.DNS.Payload = dnsPacket.Payload
 				dm.DNS.Length = len(dnsPacket.Payload)
 
-				dm.DnsTap.Identity = c.identity
+				dm.DNSTap.Identity = c.identity
 
 				timestamp := dnsPacket.Timestamp.UnixNano()
 				seconds := timestamp / int64(time.Second)
-				dm.DnsTap.TimeSec = int(seconds)
-				dm.DnsTap.TimeNsec = int(timestamp - seconds*int64(time.Second)*int64(time.Nanosecond))
+				dm.DNSTap.TimeSec = int(seconds)
+				dm.DNSTap.TimeNsec = int(timestamp - seconds*int64(time.Second)*int64(time.Nanosecond))
 
 				// send DNS message to DNS processor
 				dnsProcessor.GetChannel() <- dm
@@ -348,7 +348,7 @@ func (c *AfpacketSniffer) Run() {
 		oob := make([]byte, 100)
 
 		for {
-			//flags, from
+			// flags, from
 			bufN, oobn, _, _, err := syscall.Recvmsg(c.fd, buf, oob, 0)
 			if err != nil {
 				if errors.Is(err, syscall.EINTR) {
@@ -404,7 +404,7 @@ func (c *AfpacketSniffer) Run() {
 			if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
 				ip4 := packet.NetworkLayer().(*layers.IPv4)
 				if ip4.Flags&layers.IPv4MoreFragments == 1 || ip4.FragOffset > 0 {
-					fragIp4Chan <- packet
+					fragIP4Chan <- packet
 					continue
 				}
 			}
@@ -413,7 +413,7 @@ func (c *AfpacketSniffer) Run() {
 			if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
 				v6frag := packet.Layer(layers.LayerTypeIPv6Fragment)
 				if v6frag != nil {
-					fragIp6Chan <- packet
+					fragIP6Chan <- packet
 					continue
 				}
 			}
