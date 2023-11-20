@@ -165,6 +165,5 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 
 	// cleanup
 	c.Stop()
-	close(logsChan)
 
 }
