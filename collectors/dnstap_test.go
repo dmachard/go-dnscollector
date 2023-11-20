@@ -2,7 +2,7 @@ package collectors
 
 import (
 	"bufio"
-	"bytes"
+	"fmt"
 	"log"
 	"net"
 	"regexp"
@@ -118,16 +118,16 @@ func Test_DnstapCollector(t *testing.T) {
 // Support Bind9 with dnstap closing.
 func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	// redirect stdout output to bytes buffer
-	logger := logger.New(true)
-	var logs bytes.Buffer
-	logger.SetOutput(&logs)
+	logsChan := make(chan logger.LogEntry, 10)
+	lg := logger.New(true)
+	lg.SetOutputChannel((logsChan))
 
 	config := dnsutils.GetFakeConfig()
 	config.Collectors.Dnstap.SockPath = "/tmp/dnscollector.sock"
 
 	// start the collector in unix mode
 	g := loggers.NewFakeLogger()
-	c := NewDnstap([]dnsutils.Worker{g}, config, logger, "test")
+	c := NewDnstap([]dnsutils.Worker{g}, config, lg, "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector listening  error: ", err)
 	}
@@ -154,15 +154,17 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 		t.Errorf("reset sender error: %s", errClose)
 	}
 
-	// check logs output
 	regxp := ".*framestream reseted by sender.*"
-	pattern := regexp.MustCompile(regxp)
-	ret := logs.String()
-	if !pattern.MatchString(ret) {
-		t.Errorf("logger error want %s, got: %s", regxp, ret)
+	for entry := range logsChan {
+		fmt.Println(entry)
+		pattern := regexp.MustCompile(regxp)
+		if pattern.MatchString(entry.Message) {
+			break
+		}
 	}
 
-	// stop collector
+	// cleanup
 	c.Stop()
+	close(logsChan)
 
 }
