@@ -100,7 +100,7 @@ func getMetricsTestCase(config *dnsutils.Config, labels map[string]string) func(
 		nxRecord.NetworkInfo.Family = IPv4
 		nxRecord.DNS.Length = 123
 
-		// nx_record.PublicSuffix = &dnsutils.TransformPublicSuffix{
+		// nxRecord.PublicSuffix = &dnsutils.TransformPublicSuffix{
 		// 	QnamePublicSuffix: "faketld1",
 		// }
 		g.Record(nxRecord)
@@ -232,6 +232,33 @@ func TestPrometheus_ConfirmDifferentResolvers(t *testing.T) {
 
 	ensureMetricValue(t, mf, "dnscollector_bytes_total", map[string]string{"resolver": "1.2.3.4"}, 123)
 	ensureMetricValue(t, mf, "dnscollector_bytes_total", map[string]string{"resolver": "10.10.10.10"}, 999)
+}
+
+func TestPrometheus_etldplusone(t *testing.T) {
+	config := dnsutils.GetFakeConfig()
+	config.Loggers.Prometheus.LabelsList = []string{"stream_id"}
+	g := NewPrometheus(config, logger.New(false), "test")
+
+	noErrorRecord := dnsutils.GetFakeDNSMessage()
+	noErrorRecord.DNS.Type = dnsutils.DNSQuery
+	noErrorRecord.PublicSuffix = &dnsutils.TransformPublicSuffix{
+		QnamePublicSuffix:        "co.uk",
+		QnameEffectiveTLDPlusOne: "domain.co.uk",
+	}
+	noErrorRecord.DNS.Flags.AA = true
+	noErrorRecord.DNSTap.Latency = 0.05
+	noErrorRecord.NetworkInfo.Protocol = UDP
+	noErrorRecord.NetworkInfo.Family = IPv4
+	noErrorRecord.DNS.Length = 123
+
+	g.Record(noErrorRecord)
+	// The next would be a different TLD+1
+	noErrorRecord.PublicSuffix.QnameEffectiveTLDPlusOne = "anotherdomain.co.uk"
+	g.Record(noErrorRecord)
+
+	mf := getMetrics(g, t)
+	ensureMetricValue(t, mf, "dnscollector_etldplusone_total", map[string]string{"stream_id": "collector"}, 2)
+	ensureMetricValue(t, mf, "dnscollector_etldplusone_top", map[string]string{"stream_id": "collector", "suffix": "anotherdomain.co.uk"}, 1)
 }
 
 func ensureMetricValue(t *testing.T, mf map[string]*dto.MetricFamily, name string, labels map[string]string, value float64) bool {
