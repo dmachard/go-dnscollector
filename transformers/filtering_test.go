@@ -378,6 +378,32 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 	}
 }
 
+func TestFilteringByDownsampleDisabled(t *testing.T) {
+	// config, down sample is disabled by default
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Filtering.Enable = true
+
+	log := logger.New(false)
+	outChans := []chan dnsutils.DNSMessage{}
+
+	// init subproccesor
+	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering.LoadActiveFilters()
+
+	// init DNS Message
+	dm := dnsutils.GetFakeDNSMessage()
+
+	// test for default behavior when downsample is set to 0
+	filtering = NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped! downsampling rate is set to 0 and should not downsample.")
+	}
+	if filtering.CheckIfDrop(&dm) == true {
+		t.Errorf("dns query should not be dropped! downsampling rate is set to 0 and should not downsample.")
+	}
+}
+
 func TestFilteringByDownsample(t *testing.T) {
 	// config
 	config := dnsutils.GetFakeConfigTransformers()
@@ -391,6 +417,7 @@ func TestFilteringByDownsample(t *testing.T) {
 	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadActiveFilters()
 
+	// init DNS Message
 	dm := dnsutils.GetFakeDNSMessage()
 
 	// filtering.downsampleCount
@@ -409,18 +436,38 @@ func TestFilteringByDownsample(t *testing.T) {
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped! downsampled one record and then should include the next if downsample rate is 2")
 	}
+}
 
-	// test for default behavior when downsample is set to 0
-	config.Filtering.Downsample = 0
-	filtering = NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+func TestFilteringByDownsampleUpdateJSONModel(t *testing.T) {
+	// config
+	config := dnsutils.GetFakeConfigTransformers()
+	config.Filtering.Enable = true
+	config.Filtering.Downsample = 2
 
-	if filtering.CheckIfDrop(&dm) == true {
-		t.Errorf("dns query should not be dropped! downsampling rate is set to 0 and should not downsample.")
+	log := logger.New(false)
+	outChans := []chan dnsutils.DNSMessage{}
+
+	// init subproccesor
+	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering.LoadActiveFilters()
+
+	// init DNS Message
+	dm := dnsutils.GetFakeDNSMessage()
+	filtering.InitDNSMessage(&dm)
+
+	// filtering.downsampleCount
+	if filtering.CheckIfDrop(&dm) == false {
+		t.Errorf("dns query should be dropped! downsampled should exclude first hit.")
 	}
-	if filtering.CheckIfDrop(&dm) == true {
-		t.Errorf("dns query should not be dropped! downsampling rate is set to 0 and should not downsample.")
-	}
 
+	// test json model
+
+	jsonRef := dnsutils.DNSMessage{
+		Filtering: &dnsutils.TransformFiltering{SampleRate: 2},
+	}
+	if dm.Filtering.SampleRate != jsonRef.Filtering.SampleRate {
+		t.Errorf("DNS message invalid sample rate: Want=%d, Get=%d", jsonRef.Filtering.SampleRate, dm.Filtering.SampleRate)
+	}
 }
 
 func TestFilteringMultipleFilters(t *testing.T) {
