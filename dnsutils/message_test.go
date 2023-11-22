@@ -76,10 +76,9 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 	if !reflect.DeepEqual(dmMap, refMap) {
 		t.Errorf("json format different from reference")
 	}
-
 }
 
-func TestDnsMessage_Json_Flatten_Reference(t *testing.T) {
+func TestDnsMessage_JsonFlatten_Reference(t *testing.T) {
 	dm := DNSMessage{}
 	dm.Init()
 
@@ -135,7 +134,94 @@ func TestDnsMessage_Json_Flatten_Reference(t *testing.T) {
 	if !reflect.DeepEqual(dmFlat, refMap) {
 		t.Errorf("flatten json format different from reference")
 	}
+}
 
+func TestDnsMessage_Json_Transforms_Reference(t *testing.T) {
+
+	testcases := []struct {
+		transform string
+		dmRef     DNSMessage
+		jsonRef   string
+	}{
+		{
+			transform: "filtering",
+			dmRef:     DNSMessage{Filtering: &TransformFiltering{SampleRate: 22}},
+			jsonRef: `{
+						"filtering": {
+						"sample-rate": 22
+						}
+					}`,
+		},
+		{
+			transform: "reducer",
+			dmRef:     DNSMessage{Reducer: &TransformReducer{Occurences: 10, CumulativeLength: 47}},
+			jsonRef: `{
+						"reducer": {
+							"occurences": 10,
+							"cumulative-length": 47
+						}
+					}`,
+		},
+		{
+			transform: "normalize",
+			dmRef: DNSMessage{
+				PublicSuffix: &TransformPublicSuffix{
+					QnamePublicSuffix:        "com",
+					QnameEffectiveTLDPlusOne: "hello.com",
+				},
+			},
+			jsonRef: `{
+						"publicsuffix": {
+							"tld": "com",
+							"etld+1": "hello.com"
+						}
+					}`,
+		},
+		{
+			transform: "geoip",
+			dmRef: DNSMessage{
+				Geo: &TransformDNSGeo{
+					City:                   "Paris",
+					Continent:              "Europe",
+					CountryIsoCode:         "FR",
+					AutonomousSystemNumber: "1234",
+					AutonomousSystemOrg:    "Internet",
+				},
+			},
+			jsonRef: `{
+						"geoip": {
+							"city": "Paris",
+							"continent": "Europe",
+							"country-isocode": "FR",
+							"as-number": "1234",
+							"as-owner": "Internet"
+						}
+					}`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.transform, func(t *testing.T) {
+
+			tc.dmRef.Init()
+
+			var dmMap map[string]interface{}
+			err := json.Unmarshal([]byte(tc.dmRef.ToJSON()), &dmMap)
+			if err != nil {
+				t.Fatalf("could not unmarshal dm json: %s\n", err)
+			}
+
+			var refMap map[string]interface{}
+			err = json.Unmarshal([]byte(tc.jsonRef), &refMap)
+			if err != nil {
+				t.Fatalf("could not unmarshal ref json: %s\n", err)
+			}
+
+			if !reflect.DeepEqual(dmMap[tc.transform], refMap[tc.transform]) {
+				t.Errorf("json format different from reference, Get=%s Want=%s", dmMap[tc.transform], refMap[tc.transform])
+			}
+		})
+	}
 }
 
 func TestDnsMessage_TextFormat_ToString(t *testing.T) {
@@ -557,6 +643,43 @@ func TestDnsMessage_TextFormat_Directives_Extracted(t *testing.T) {
 				0x00, 0x1c, 0x00, 0x01,
 			}}},
 			expected: "noQBIAADAAAAAAAAAWEAAAEAAQFiAAABAAEBYwAAHAAB",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			line := tc.dm.String(
+				strings.Fields(tc.format),
+				config.Global.TextFormatDelimiter,
+				config.Global.TextFormatBoundary,
+			)
+			if line != tc.expected {
+				t.Errorf("Want: %s, got: %s", tc.expected, line)
+			}
+		})
+	}
+}
+
+func TestDnsMessage_TextFormat_Directives_Filtering(t *testing.T) {
+	config := GetFakeConfig()
+
+	testcases := []struct {
+		name     string
+		format   string
+		dm       DNSMessage
+		expected string
+	}{
+		{
+			name:     "undefined",
+			format:   "filtering-samplerate",
+			dm:       DNSMessage{},
+			expected: "-",
+		},
+		{
+			name:     "default",
+			format:   "filtering-samplerate",
+			dm:       DNSMessage{Filtering: &TransformFiltering{SampleRate: 22}},
+			expected: "22",
 		},
 	}
 

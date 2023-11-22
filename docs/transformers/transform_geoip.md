@@ -36,8 +36,8 @@ Example:
     "city": "-",
     "continent": "-",
     "country-isocode": "-",
-    "as-number": 1234,
-    "as-owner": "Orange",
+    "as-number": "1234",
+    "as-owner": "Orange"
 },
 ```
 

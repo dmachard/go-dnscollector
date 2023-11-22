@@ -383,12 +383,14 @@ func (dm *DNSMessage) handleExtractedDirectives(directives []string, s *strings.
 }
 
 func (dm *DNSMessage) handleFilteringDirectives(directives []string, s *strings.Builder) {
-	if dm.Reducer == nil {
+	if dm.Filtering == nil {
 		s.WriteString("-")
 	} else {
 		switch directive := directives[0]; {
 		case directive == "filtering-samplerate":
 			s.WriteString(strconv.Itoa(dm.Filtering.SampleRate))
+		default:
+			log.Fatalf("unsupport directive for text format: %s", directive)
 		}
 	}
 }
