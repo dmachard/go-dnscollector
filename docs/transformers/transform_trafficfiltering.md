@@ -50,7 +50,7 @@ github.com
 
 Specific text directive(s) available for the text format:
 
-- `filtering-samplerate`: display the rate applied
+- `filtering-sample-rate`: display the rate applied
 
 When the feature is activated, the following JSON fields are populated in your DNS message:
 

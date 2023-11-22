@@ -721,6 +721,8 @@ multiplexer:
 
 # # filtering feature to ignore some specific qname
 # # dns logs is not redirected to loggers if the filtering regexp matched
+# # additionnals directive for text format
+# # - filtering-sample-rate
 # filtering:
 #   # path file of the fqdn drop list, domains list must be a full qualified domain name
 #   drop-fqdn-file: ""

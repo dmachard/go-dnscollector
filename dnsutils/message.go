@@ -387,7 +387,7 @@ func (dm *DNSMessage) handleFilteringDirectives(directives []string, s *strings.
 		s.WriteString("-")
 	} else {
 		switch directive := directives[0]; {
-		case directive == "filtering-samplerate":
+		case directive == "filtering-sample-rate":
 			s.WriteString(strconv.Itoa(dm.Filtering.SampleRate))
 		default:
 			log.Fatalf("unsupport directive for text format: %s", directive)

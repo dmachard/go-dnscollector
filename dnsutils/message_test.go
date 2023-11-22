@@ -671,13 +671,13 @@ func TestDnsMessage_TextFormat_Directives_Filtering(t *testing.T) {
 	}{
 		{
 			name:     "undefined",
-			format:   "filtering-samplerate",
+			format:   "filtering-sample-rate",
 			dm:       DNSMessage{},
 			expected: "-",
 		},
 		{
 			name:     "default",
-			format:   "filtering-samplerate",
+			format:   "filtering-sample-rate",
 			dm:       DNSMessage{Filtering: &TransformFiltering{SampleRate: 22}},
 			expected: "22",
 		},
