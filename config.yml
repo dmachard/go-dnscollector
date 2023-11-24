@@ -652,6 +652,8 @@ multiplexer:
 #   partition: 0
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
+#   # Compression for Kafka messages: none, gzip, lz4, snappy, zstd
+#   compression: none
 
 # # Send captured traffic to falco (https://falco.org/), for security and advanced inspection
 # falco:

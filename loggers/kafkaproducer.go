@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/compress"
 	"github.com/segmentio/kafka-go/sasl/plain"
 	"github.com/segmentio/kafka-go/sasl/scram"
 )
@@ -32,6 +34,7 @@ type KafkaProducer struct {
 	kafkaReady     chan bool
 	kafkaReconnect chan bool
 	kafkaConnected bool
+	compressCodec  compress.Codec
 }
 
 func NewKafkaProducer(config *dnsutils.Config, logger *logger.Logger, name string) *KafkaProducer {
@@ -65,6 +68,23 @@ func (k *KafkaProducer) ReadConfig() {
 		k.textFormat = strings.Fields(k.config.Loggers.RedisPub.TextFormat)
 	} else {
 		k.textFormat = strings.Fields(k.config.Global.TextFormat)
+	}
+
+	if k.config.Loggers.KafkaProducer.Compression != dnsutils.CompressNone {
+		switch k.config.Loggers.KafkaProducer.Compression {
+		case dnsutils.CompressGzip:
+			k.compressCodec = &compress.GzipCodec
+		case dnsutils.CompressLz4:
+			k.compressCodec = &compress.Lz4Codec
+		case dnsutils.CompressSnappy:
+			k.compressCodec = &compress.SnappyCodec
+		case dnsutils.CompressZstd:
+			k.compressCodec = &compress.ZstdCodec
+		case dnsutils.CompressNone:
+			k.compressCodec = nil
+		default:
+			log.Fatal("kafka - invalid compress mode: ", k.config.Loggers.KafkaProducer.Compression)
+		}
 	}
 }
 
@@ -163,6 +183,7 @@ func (k *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Tim
 
 		}
 
+		// connect
 		conn, err := dialer.DialLeader(ctx, "tcp", address, topic, partition)
 		if err != nil {
 			k.LogError("%s", err)
@@ -210,9 +231,16 @@ func (k *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 
 	}
 
-	_, err := k.kafkaConn.WriteMessages(msgs...)
+	// add support for msg compression
+	var err error
+	if k.config.Loggers.KafkaProducer.Compression == dnsutils.CompressNone {
+		_, err = k.kafkaConn.WriteMessages(msgs...)
+	} else {
+		_, err = k.kafkaConn.WriteCompressedMessages(k.compressCodec, msgs...)
+	}
+
 	if err != nil {
-		k.LogError("failed to write message", err.Error())
+		k.LogError("unable to write message", err.Error())
 		k.kafkaConnected = false
 		<-k.kafkaReconnect
 	}

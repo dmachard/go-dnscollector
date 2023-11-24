@@ -1,6 +1,8 @@
 package dnsutils
 
-import "crypto/tls"
+import (
+	"crypto/tls"
+)
 
 const (
 	StrUnknown = "UNKNOWN"
@@ -61,6 +63,12 @@ const (
 	TLSV11 = "1.1"
 	TLSV12 = "1.2"
 	TLSV13 = "1.3"
+
+	CompressGzip   = "gzip"
+	CompressSnappy = "snappy"
+	CompressLz4    = "lz4"
+	CompressZstd   = "ztd"
+	CompressNone   = "none"
 )
 
 var (
