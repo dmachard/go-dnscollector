@@ -27,6 +27,7 @@ Options:
 * `hostname`: (string) Set syslog hostname
 * `app-name`: (string) Set syslog program name
 * `tag`: (string) syslog tag or MSGID
+* `replace-null-char`: (string) replace NULl char in Qname with the specified character
 
 Default values:
 
@@ -50,4 +51,5 @@ syslog:
   hostname: ""
   app-name: ""
   tag: ""
+  replace-null-char: "|"
 ```
