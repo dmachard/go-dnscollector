@@ -336,7 +336,7 @@ PROCESS_LOOP:
 				// because the NULL is a end of log in syslog
 				for i := 0; i < buffer.Len(); i++ {
 					if buffer.Bytes()[i] == 0 {
-						buffer.Bytes()[i] = '|'
+						buffer.Bytes()[i] = s.config.Loggers.Syslog.ReplaceNullChar[0]
 					}
 				}
 

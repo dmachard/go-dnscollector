@@ -25,7 +25,7 @@ func Test_SyslogRunUdp(t *testing.T) {
 			name:       "unix_format",
 			transport:  dnsutils.SocketUDP,
 			mode:       dnsutils.ModeText,
-			formatter:  "unix",
+			formatter:  dnsutils.SocketUnix,
 			framer:     "",
 			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
 			listenAddr: ":4000",
@@ -119,7 +119,7 @@ func Test_SyslogRunTcp(t *testing.T) {
 			name:       "unix_format",
 			transport:  dnsutils.SocketTCP,
 			mode:       dnsutils.ModeText,
-			formatter:  "unix",
+			formatter:  dnsutils.SocketUnix,
 			framer:     "",
 			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
 			listenAddr: ":4000",
@@ -208,7 +208,7 @@ func Test_SyslogRun_RemoveNullCharacter(t *testing.T) {
 	config.Loggers.Syslog.Transport = dnsutils.SocketUDP
 	config.Loggers.Syslog.RemoteAddress = ":4000"
 	config.Loggers.Syslog.Mode = dnsutils.ModeText
-	config.Loggers.Syslog.Formatter = "unix"
+	config.Loggers.Syslog.Formatter = dnsutils.SocketUnix
 	config.Loggers.Syslog.Framer = ""
 
 	g := NewSyslog(config, logger.New(false), "test")
@@ -241,9 +241,17 @@ func Test_SyslogRun_RemoveNullCharacter(t *testing.T) {
 		t.Errorf("no data received")
 	}
 
+	// search null char
 	for _, b := range buf[:n] {
 		if b == '\x00' {
 			t.Errorf("NULL char detected in log")
 		}
+	}
+
+	// search qname
+	pattern := `null` + config.Loggers.Syslog.ReplaceNullChar + `char\.com`
+	re := regexp.MustCompile(pattern)
+	if !re.MatchString(string(buf[:n])) {
+		t.Errorf("syslog error want %s, got: %s", pattern, string(buf[:n]))
 	}
 }
