@@ -498,6 +498,7 @@ type Config struct {
 			Topic             string `yaml:"topic"`
 			Partition         int    `yaml:"partition"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
+			Compression       string `yaml:"compression"`
 		} `yaml:"kafkaproducer"`
 		FalcoClient struct {
 			Enable            bool   `yaml:"enable"`
@@ -821,6 +822,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.KafkaProducer.Topic = "dnscollector"
 	c.Loggers.KafkaProducer.Partition = 0
 	c.Loggers.KafkaProducer.ChannelBufferSize = 65535
+	c.Loggers.KafkaProducer.Compression = CompressNone
 
 	c.Loggers.FalcoClient.Enable = false
 	c.Loggers.FalcoClient.URL = "http://127.0.0.1:9200"
