@@ -443,6 +443,8 @@ multiplexer:
 #   app-name: ""
 #   # Syslog tag or MSGID
 #   tag: ""
+#   # Replace NULl char in Qname with the specified character
+#   replace-null-char: |
 
 # # elasticsearch backend, basic support
 # elasticsearch:

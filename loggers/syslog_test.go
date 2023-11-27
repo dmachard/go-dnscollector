@@ -25,7 +25,7 @@ func Test_SyslogRunUdp(t *testing.T) {
 			name:       "unix_format",
 			transport:  dnsutils.SocketUDP,
 			mode:       dnsutils.ModeText,
-			formatter:  "unix",
+			formatter:  dnsutils.SocketUnix,
 			framer:     "",
 			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
 			listenAddr: ":4000",
@@ -119,7 +119,7 @@ func Test_SyslogRunTcp(t *testing.T) {
 			name:       "unix_format",
 			transport:  dnsutils.SocketTCP,
 			mode:       dnsutils.ModeText,
-			formatter:  "unix",
+			formatter:  dnsutils.SocketUnix,
 			framer:     "",
 			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
 			listenAddr: ":4000",
@@ -199,5 +199,59 @@ func Test_SyslogRunTcp(t *testing.T) {
 				t.Errorf("syslog error want %s, got: %s", tc.pattern, string(line))
 			}
 		})
+	}
+}
+
+func Test_SyslogRun_RemoveNullCharacter(t *testing.T) {
+	// init logger
+	config := dnsutils.GetFakeConfig()
+	config.Loggers.Syslog.Transport = dnsutils.SocketUDP
+	config.Loggers.Syslog.RemoteAddress = ":4000"
+	config.Loggers.Syslog.Mode = dnsutils.ModeText
+	config.Loggers.Syslog.Formatter = dnsutils.SocketUnix
+	config.Loggers.Syslog.Framer = ""
+
+	g := NewSyslog(config, logger.New(false), "test")
+
+	// fake json receiver
+	fakeRcvr, err := net.ListenPacket(config.Loggers.Syslog.Transport, ":4000")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer fakeRcvr.Close()
+
+	// start the logger
+	go g.Run()
+
+	// send fake dns message to logger
+	time.Sleep(time.Second)
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = "null\x00char.com"
+	g.Channel() <- dm
+
+	// read data on fake server side
+	buf := make([]byte, (500))
+
+	n, _, err := fakeRcvr.ReadFrom(buf)
+	if err != nil {
+		t.Errorf("error to read data: %s", err)
+	}
+
+	if n == 0 {
+		t.Errorf("no data received")
+	}
+
+	// search null char
+	for _, b := range buf[:n] {
+		if b == '\x00' {
+			t.Errorf("NULL char detected in log")
+		}
+	}
+
+	// search qname
+	pattern := `null` + config.Loggers.Syslog.ReplaceNullChar + `char\.com`
+	re := regexp.MustCompile(pattern)
+	if !re.MatchString(string(buf[:n])) {
+		t.Errorf("syslog error want %s, got: %s", pattern, string(buf[:n]))
 	}
 }

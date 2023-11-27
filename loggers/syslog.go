@@ -327,24 +327,48 @@ PROCESS_LOOP:
 
 			switch s.config.Loggers.Syslog.Mode {
 			case dnsutils.ModeText:
-				_, err = s.syslogWriter.Write(dm.Bytes(s.textFormat,
+				// write the text line to the buffer
+				buffer.Write(dm.Bytes(s.textFormat,
 					s.config.Global.TextFormatDelimiter,
 					s.config.Global.TextFormatBoundary))
 
+				// replace NULL char from text line directly in the buffer
+				// because the NULL is a end of log in syslog
+				for i := 0; i < buffer.Len(); i++ {
+					if buffer.Bytes()[i] == 0 {
+						buffer.Bytes()[i] = s.config.Loggers.Syslog.ReplaceNullChar[0]
+					}
+				}
+
+				// ensure it ends in a \n
+				buffer.WriteString("\n")
+
+				// write the modified content of the buffer to s.syslogWriter
+				// and reset the buffer
+				_, err = buffer.WriteTo(s.syslogWriter)
+
 			case dnsutils.ModeJSON:
+				// encode to json the dns message
 				json.NewEncoder(buffer).Encode(dm)
-				_, err = s.syslogWriter.Write(buffer.Bytes())
-				buffer.Reset()
+
+				// write the content of the buffer to s.syslogWriter
+				// and reset the buffer
+				_, err = buffer.WriteTo(s.syslogWriter)
 
 			case dnsutils.ModeFlatJSON:
+				// get flatten object
 				flat, errflat := dm.Flatten()
 				if errflat != nil {
 					s.LogError("flattening DNS message failed: %e", err)
 					continue
 				}
+
+				// encode to json
 				json.NewEncoder(buffer).Encode(flat)
-				_, err = s.syslogWriter.Write(buffer.Bytes())
-				buffer.Reset()
+
+				// write the content of the buffer to s.syslogWriter
+				// and reset the buffer
+				_, err = buffer.WriteTo(s.syslogWriter)
 			}
 
 			if err != nil {
