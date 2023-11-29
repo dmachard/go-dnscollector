@@ -293,9 +293,76 @@ RUN_LOOP:
 	s.LogInfo("run terminated")
 }
 
-func (s *Syslog) Process() {
-	var err error
+func (s *Syslog) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	buffer := new(bytes.Buffer)
+	var err error
+
+	for _, dm := range *buf {
+		switch s.config.Loggers.Syslog.Mode {
+		case dnsutils.ModeText:
+			// write the text line to the buffer
+			buffer.Write(dm.Bytes(s.textFormat,
+				s.config.Global.TextFormatDelimiter,
+				s.config.Global.TextFormatBoundary))
+
+			// replace NULL char from text line directly in the buffer
+			// because the NULL is a end of log in syslog
+			for i := 0; i < buffer.Len(); i++ {
+				if buffer.Bytes()[i] == 0 {
+					buffer.Bytes()[i] = s.config.Loggers.Syslog.ReplaceNullChar[0]
+				}
+			}
+
+			// ensure it ends in a \n
+			buffer.WriteString("\n")
+
+			// write the modified content of the buffer to s.syslogWriter
+			// and reset the buffer
+			_, err = buffer.WriteTo(s.syslogWriter)
+
+		case dnsutils.ModeJSON:
+			// encode to json the dns message
+			json.NewEncoder(buffer).Encode(dm)
+
+			// write the content of the buffer to s.syslogWriter
+			// and reset the buffer
+			_, err = buffer.WriteTo(s.syslogWriter)
+
+		case dnsutils.ModeFlatJSON:
+			// get flatten object
+			flat, errflat := dm.Flatten()
+			if errflat != nil {
+				s.LogError("flattening DNS message failed: %e", err)
+				continue
+			}
+
+			// encode to json
+			json.NewEncoder(buffer).Encode(flat)
+
+			// write the content of the buffer to s.syslogWriter
+			// and reset the buffer
+			_, err = buffer.WriteTo(s.syslogWriter)
+		}
+
+		if err != nil {
+			s.LogError("write error %s", err)
+			s.syslogReady = false
+			s.syslogWriter.Close()
+			<-s.transportReconnect
+		}
+	}
+
+	// reset buffer
+	*buf = nil
+}
+
+func (s *Syslog) Process() {
+	// init buffer
+	bufferDm := []dnsutils.DNSMessage{}
+
+	// init flust timer for buffer
+	flushInterval := time.Duration(s.config.Loggers.Syslog.FlushInterval) * time.Second
+	flushTimer := time.NewTimer(flushInterval)
 
 	s.LogInfo("processing dns messages...")
 PROCESS_LOOP:
@@ -324,59 +391,28 @@ PROCESS_LOOP:
 			if !s.syslogReady {
 				continue
 			}
+			// append dns message to buffer
+			bufferDm = append(bufferDm, dm)
 
-			switch s.config.Loggers.Syslog.Mode {
-			case dnsutils.ModeText:
-				// write the text line to the buffer
-				buffer.Write(dm.Bytes(s.textFormat,
-					s.config.Global.TextFormatDelimiter,
-					s.config.Global.TextFormatBoundary))
-
-				// replace NULL char from text line directly in the buffer
-				// because the NULL is a end of log in syslog
-				for i := 0; i < buffer.Len(); i++ {
-					if buffer.Bytes()[i] == 0 {
-						buffer.Bytes()[i] = s.config.Loggers.Syslog.ReplaceNullChar[0]
-					}
-				}
-
-				// ensure it ends in a \n
-				buffer.WriteString("\n")
-
-				// write the modified content of the buffer to s.syslogWriter
-				// and reset the buffer
-				_, err = buffer.WriteTo(s.syslogWriter)
-
-			case dnsutils.ModeJSON:
-				// encode to json the dns message
-				json.NewEncoder(buffer).Encode(dm)
-
-				// write the content of the buffer to s.syslogWriter
-				// and reset the buffer
-				_, err = buffer.WriteTo(s.syslogWriter)
-
-			case dnsutils.ModeFlatJSON:
-				// get flatten object
-				flat, errflat := dm.Flatten()
-				if errflat != nil {
-					s.LogError("flattening DNS message failed: %e", err)
-					continue
-				}
-
-				// encode to json
-				json.NewEncoder(buffer).Encode(flat)
-
-				// write the content of the buffer to s.syslogWriter
-				// and reset the buffer
-				_, err = buffer.WriteTo(s.syslogWriter)
+			// buffer is full ?
+			if len(bufferDm) >= s.config.Loggers.Syslog.BufferSize {
+				s.FlushBuffer(&bufferDm)
 			}
 
-			if err != nil {
-				s.LogError("write error %s", err)
-				s.syslogReady = false
-				s.syslogWriter.Close()
-				<-s.transportReconnect
+			// flush the buffer
+		case <-flushTimer.C:
+			if !s.syslogReady {
+				s.LogInfo("buffer cleared!")
+				bufferDm = nil
+				continue
 			}
+
+			if len(bufferDm) > 0 {
+				s.FlushBuffer(&bufferDm)
+			}
+
+			// restart timer
+			flushTimer.Reset(flushInterval)
 		}
 	}
 	s.LogInfo("processing terminated")

@@ -445,6 +445,10 @@ multiplexer:
 #   tag: ""
 #   # Replace NULl char in Qname with the specified character
 #   replace-null-char: |
+#   # how many DNS messages will be buffered before being sent
+#   buffer-size: 100
+#   # interval in second before to flush the buffer
+#   flush-interval: 30
 
 # # elasticsearch backend, basic support
 # elasticsearch:

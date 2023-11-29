@@ -28,6 +28,8 @@ Options:
 * `app-name`: (string) Set syslog program name
 * `tag`: (string) syslog tag or MSGID
 * `replace-null-char`: (string) replace NULl char in Qname with the specified character
+* `buffer-size`: (integer) how many DNS messages will be buffered before being sent
+* `flush-interval`: (integer) interval in second before to flush the buffer
 
 Default values:
 
@@ -52,4 +54,6 @@ syslog:
   app-name: ""
   tag: ""
   replace-null-char: "|"
+  flush-interval: 30
+  buffer-size: 100
 ```

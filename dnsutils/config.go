@@ -356,6 +356,8 @@ type Config struct {
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 			Tag               string `yaml:"tag"`
 			ReplaceNullChar   string `yaml:"replace-null-char"`
+			FlushInterval     int    `yaml:"flush-interval"`
+			BufferSize        int    `yaml:"buffer-size"`
 		} `yaml:"syslog"`
 		Fluentd struct {
 			Enable            bool   `yaml:"enable"`
@@ -706,6 +708,8 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.Hostname = ""
 	c.Loggers.Syslog.AppName = "DNScollector"
 	c.Loggers.Syslog.ReplaceNullChar = "|"
+	c.Loggers.Syslog.FlushInterval = 30
+	c.Loggers.Syslog.BufferSize = 100
 
 	c.Loggers.Fluentd.Enable = false
 	c.Loggers.Fluentd.RemoteAddress = LocalhostIP
