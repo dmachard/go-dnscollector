@@ -445,6 +445,10 @@ multiplexer:
 #   tag: ""
 #   # Replace NULl char in Qname with the specified character
 #   replace-null-char: |
+#   # how many DNS messages will be buffered before being sent
+#   buffer-size: 100
+#   # interval in second before to flush the buffer
+#   flush-interval: 30
 
 # # elasticsearch backend, basic support
 # elasticsearch:
@@ -509,7 +513,7 @@ multiplexer:
 #   # provide client private key file for mTLS
 #   key-file: ""
 #   # bucket
-#   bucket: "db_dns"
+#   bucket: "dns"
 #   # Organization
 #   organization: "dnscollector"
 #   # Channel buffer size for incoming packets, number of packet before to drop it.

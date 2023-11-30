@@ -68,6 +68,8 @@ func Test_SyslogRunUdp(t *testing.T) {
 			config.Loggers.Syslog.Mode = tc.mode
 			config.Loggers.Syslog.Formatter = tc.formatter
 			config.Loggers.Syslog.Framer = tc.framer
+			config.Loggers.Syslog.FlushInterval = 1
+			config.Loggers.Syslog.BufferSize = 0
 
 			g := NewSyslog(config, logger.New(false), "test")
 
@@ -162,6 +164,8 @@ func Test_SyslogRunTcp(t *testing.T) {
 			config.Loggers.Syslog.Mode = tc.mode
 			config.Loggers.Syslog.Formatter = tc.formatter
 			config.Loggers.Syslog.Framer = tc.framer
+			config.Loggers.Syslog.FlushInterval = 1
+			config.Loggers.Syslog.BufferSize = 0
 
 			g := NewSyslog(config, logger.New(false), "test")
 
@@ -210,6 +214,8 @@ func Test_SyslogRun_RemoveNullCharacter(t *testing.T) {
 	config.Loggers.Syslog.Mode = dnsutils.ModeText
 	config.Loggers.Syslog.Formatter = dnsutils.SocketUnix
 	config.Loggers.Syslog.Framer = ""
+	config.Loggers.Syslog.FlushInterval = 1
+	config.Loggers.Syslog.BufferSize = 0
 
 	g := NewSyslog(config, logger.New(false), "test")
 
