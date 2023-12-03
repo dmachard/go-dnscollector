@@ -430,16 +430,27 @@ func (p *FilteringProcessor) keepDomainRegexFilter(dm *dnsutils.DNSMessage) bool
 	return true
 }
 
+// drop all except every nth entry
 func (p *FilteringProcessor) downsampleFilter(dm *dnsutils.DNSMessage) bool {
-	// drop all except every nth entry
+	// Increment the downsampleCount for each processed DNS message.
 	p.downsampleCount += 1
-	if p.downsampleCount%p.downsample != 0 {
-		return true
-	} else if p.downsampleCount%p.downsample == 0 {
+
+	// Calculate the remainder once and add sampling rate to DNS message
+	remainder := p.downsampleCount % p.downsample
+	if dm.Filtering != nil {
+		dm.Filtering.SampleRate = p.downsample
+	}
+
+	switch remainder {
+	// If the remainder is zero, reset the downsampleCount to 0 and drop the DNS message by returning false.
+	case 0:
 		p.downsampleCount = 0
 		return false
+
+	// If the remainder is not zero, keep the DNS message and return true.
+	default:
+		return true
 	}
-	return true
 }
 
 func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DNSMessage) bool {
@@ -456,4 +467,12 @@ func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DNSMessage) bool {
 	}
 
 	return false
+}
+
+func (p *FilteringProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
+	if dm.Filtering == nil {
+		dm.Filtering = &dnsutils.TransformFiltering{
+			SampleRate: 0,
+		}
+	}
 }
