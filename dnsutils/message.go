@@ -522,8 +522,10 @@ func (dm *DNSMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 			s.WriteString(dm.NetworkInfo.Family)
 		case directive == "protocol":
 			s.WriteString(dm.NetworkInfo.Protocol)
-		case directive == "length":
+		case directive == "length-unit":
 			s.WriteString(strconv.Itoa(dm.DNS.Length) + "b")
+		case directive == "length":
+			s.WriteString(strconv.Itoa(dm.DNS.Length))
 		case directive == "qname":
 			if len(dm.DNS.Qname) == 0 {
 				s.WriteString(".")

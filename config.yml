@@ -40,7 +40,8 @@ global:
   # - id: dns id
   # - family: ip protocol version INET or INET6
   # - protocol: protocol UDP, TCP
-  # - length: the length of the query or reply
+  # - length: the length of the query or reply in bytes
+  # - length-unit: the length of the query or reply in bytes with unit
   # - qtype: dns qtype
   # - qname: dns qname
   # - latency: computed latency between queries and replies
@@ -56,7 +57,7 @@ global:
   # - edns-csubnet: client subnet
   # - df: ip defragmentation flag
   # - tr: tcp reassembled flag
-  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
+  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length-unit qname qtype latency"
   # default text field delimiter
   text-format-delimiter: " "
   # default text field boundary

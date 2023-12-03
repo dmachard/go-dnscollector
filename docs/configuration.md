@@ -82,7 +82,8 @@ Default directives:
 - `id`: dns id
 - `family`: ip protocol version INET or INET6
 - `protocol`: protocol UDP, TCP
-- `length`: the length of the query or reply
+- `length`: the length of the query or reply in bytes
+- `length-unit`: the length of the query or reply in bytes with unit (`b`)
 - `qtype`: dns qtype
 - `qname`: dns qname
 - `latency`: computed latency between queries and replies
@@ -101,7 +102,7 @@ Default directives:
 
 ```yaml
 global:
-  text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length qname qtype latency ttl"
+  text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length-unit qname qtype latency ttl"
   text-format-delimiter: " "
   text-format-boundary: "\""
 ```
