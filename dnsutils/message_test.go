@@ -335,6 +335,11 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 		{
 			format:   "length",
 			dm:       DNSMessage{DNS: DNS{Length: 42}},
+			expected: "42",
+		},
+		{
+			format:   "length-unit",
+			dm:       DNSMessage{DNS: DNS{Length: 42}},
 			expected: "42b",
 		},
 		{

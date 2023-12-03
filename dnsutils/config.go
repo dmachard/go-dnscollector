@@ -520,7 +520,7 @@ type Config struct {
 
 func (c *Config) SetDefault() {
 	// global config
-	c.Global.TextFormat = "timestamp identity operation rcode queryip queryport family protocol length qname qtype latency"
+	c.Global.TextFormat = "timestamp identity operation rcode queryip queryport family protocol length-unit qname qtype latency"
 	c.Global.TextFormatDelimiter = " "
 	c.Global.TextFormatBoundary = "\""
 
