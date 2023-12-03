@@ -2,8 +2,8 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/dmachard/go-dns-collector)](https://goreportcard.com/report/dmachard/go-dns-collector)
 ![Go version](https://img.shields.io/badge/go%20version-min%201.20-blue)
-![Go tests](https://img.shields.io/badge/go%20tests-346-green)
-![Go lines](https://img.shields.io/badge/go%20lines-48543-red)
+![Go tests](https://img.shields.io/badge/go%20tests-349-green)
+![Go lines](https://img.shields.io/badge/go%20lines-48848-red)
 
 ![Go Tests](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-go.yml/badge.svg)
 ![Github Actions](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-dnstap.yml/badge.svg)
@@ -20,7 +20,7 @@
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
 
-Run overview
+Run
 
 <p align="center">
 <img src="docs/_images/terminal.gif" alt="dnscollector"/>
