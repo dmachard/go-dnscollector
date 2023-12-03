@@ -355,6 +355,9 @@ type Config struct {
 			AppName           string `yaml:"app-name"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
 			Tag               string `yaml:"tag"`
+			ReplaceNullChar   string `yaml:"replace-null-char"`
+			FlushInterval     int    `yaml:"flush-interval"`
+			BufferSize        int    `yaml:"buffer-size"`
 		} `yaml:"syslog"`
 		Fluentd struct {
 			Enable            bool   `yaml:"enable"`
@@ -497,6 +500,7 @@ type Config struct {
 			Topic             string `yaml:"topic"`
 			Partition         int    `yaml:"partition"`
 			ChannelBufferSize int    `yaml:"chan-buffer-size"`
+			Compression       string `yaml:"compression"`
 		} `yaml:"kafkaproducer"`
 		FalcoClient struct {
 			Enable            bool   `yaml:"enable"`
@@ -703,6 +707,9 @@ func (c *Config) SetDefault() {
 	c.Loggers.Syslog.Formatter = "rfc5424"
 	c.Loggers.Syslog.Hostname = ""
 	c.Loggers.Syslog.AppName = "DNScollector"
+	c.Loggers.Syslog.ReplaceNullChar = "|"
+	c.Loggers.Syslog.FlushInterval = 30
+	c.Loggers.Syslog.BufferSize = 100
 
 	c.Loggers.Fluentd.Enable = false
 	c.Loggers.Fluentd.RemoteAddress = LocalhostIP
@@ -819,6 +826,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.KafkaProducer.Topic = "dnscollector"
 	c.Loggers.KafkaProducer.Partition = 0
 	c.Loggers.KafkaProducer.ChannelBufferSize = 65535
+	c.Loggers.KafkaProducer.Compression = CompressNone
 
 	c.Loggers.FalcoClient.Enable = false
 	c.Loggers.FalcoClient.URL = "http://127.0.0.1:9200"

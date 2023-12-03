@@ -24,6 +24,7 @@ Options:
 - `topic`: (integer) kafka topic to forward messages to
 - `partition`: (integer) kafka partition
 - `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
+- `compression`: (string) Compression for Kafka messages: none, gzip, lz4, snappy, zstd
 
 Default values:
 
@@ -49,4 +50,5 @@ kafkaproducer:
   topic: "dnscollector"
   partition: 0
   chan-buffer-size: 65535
+  compression: "none"
 ```

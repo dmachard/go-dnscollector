@@ -7,8 +7,8 @@ require (
 	github.com/cilium/ebpf v0.12.3
 	github.com/dmachard/go-clientsyslog v0.3.0
 	github.com/dmachard/go-dnstap-protobuf v0.6.0
-	github.com/dmachard/go-framestream v0.6.0
-	github.com/dmachard/go-logger v0.3.0
+	github.com/dmachard/go-framestream v0.7.0
+	github.com/dmachard/go-logger v0.4.0
 	github.com/dmachard/go-powerdns-protobuf v0.2.0
 	github.com/dmachard/go-topmap v0.5.0
 	github.com/farsightsec/golang-framestream v0.3.0
@@ -21,14 +21,14 @@ require (
 	github.com/grafana/loki v1.6.2-0.20230503110102-9f809eda70ba
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb-client-go v1.4.0
-	github.com/klauspost/compress v1.17.2
-	github.com/miekg/dns v1.1.56
+	github.com/klauspost/compress v1.17.3
+	github.com/miekg/dns v1.1.57
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/nqd/flat v0.2.0
 	github.com/oschwald/maxminddb-golang v1.12.0
 	github.com/prometheus/client_golang v1.17.0
 	github.com/rs/tzsp v0.0.0-20161230003637-8ce729c826b9
-	github.com/segmentio/kafka-go v0.4.44
+	github.com/segmentio/kafka-go v0.4.45
 	github.com/stretchr/testify v1.8.4
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/net v0.18.0
@@ -122,7 +122,7 @@ require (
 	golang.org/x/crypto v0.15.0 // indirect
 	golang.org/x/exp v0.0.0-20230307190834-24139beb5833 // indirect
 	golang.org/x/oauth2 v0.12.0 // indirect
-	golang.org/x/sync v0.3.0 // indirect
+	golang.org/x/sync v0.4.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )

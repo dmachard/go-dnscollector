@@ -172,25 +172,34 @@ func (p *Transforms) Prepare() error {
 }
 
 func (p *Transforms) InitDNSMessageFormat(dm *dnsutils.DNSMessage) {
+	if p.config.Filtering.Enable {
+		p.FilteringTransform.InitDNSMessage(dm)
+	}
+
 	if p.config.GeoIP.Enable {
 		p.GeoipTransform.InitDNSMessage(dm)
 	}
+
 	if p.config.Suspicious.Enable {
 		p.SuspiciousTransform.InitDNSMessage(dm)
 	}
+
 	if p.config.Normalize.Enable {
 		if p.config.Normalize.AddTld || p.config.Normalize.AddTldPlusOne {
 			p.NormalizeTransform.InitDNSMessage(dm)
 		}
 	}
+
 	if p.config.Extract.Enable {
 		if p.config.Extract.AddPayload {
 			p.ExtractProcessor.InitDNSMessage(dm)
 		}
 	}
+
 	if p.config.Reducer.Enable {
 		p.ReducerTransform.InitDNSMessage(dm)
 	}
+
 	if p.config.MachineLearning.Enable {
 		p.MachineLearningTransform.InitDNSMessage(dm)
 	}

@@ -21,7 +21,7 @@ Options:
 - `drop-rcodes`: (list of string) rcode list, empty by default
 - `log-queries`: (boolean) drop all queries on false
 - `log-replies`: (boolean)  drop all replies on false
-- `downsample`: (integer) only keep 1 out of every `downsample` records, e.g. if set to 20, then this will return every 20th record, dropping 95% of queries
+- `downsample`: (integer) set the sampling rate, only keep 1 out of every `downsample` records, e.g. if set to 20, then this will return every 20th record (sampling at 1:20 or dropping 95% of queries).
 
 Default values:
 
@@ -46,4 +46,18 @@ Domain list with regex example:
 ```bash
 (mail|wwww).google.com
 github.com
+```
+
+Specific text directive(s) available for the text format:
+
+- `filtering-sample-rate`: display the rate applied
+
+When the feature is activated, the following JSON fields are populated in your DNS message:
+
+```json
+{
+  "filtering": {
+    "sample-rate": 20,
+  }
+}
 ```

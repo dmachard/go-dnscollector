@@ -32,6 +32,7 @@ var (
 	ExtractedDirectives       = regexp.MustCompile(`^extracted-*`)
 	ReducerDirectives         = regexp.MustCompile(`^reducer-*`)
 	MachineLearningDirectives = regexp.MustCompile(`^ml-*`)
+	FilteringDirectives       = regexp.MustCompile(`^filtering-*`)
 )
 
 func GetIPPort(dm *DNSMessage) (string, int, string, int) {
@@ -177,6 +178,10 @@ type TransformReducer struct {
 	CumulativeLength int `json:"cumulative-length" msgpack:"cumulative-length"`
 }
 
+type TransformFiltering struct {
+	SampleRate int `json:"sample-rate" msgpack:"sample-rate"`
+}
+
 type TransformML struct {
 	Entropy               float64 `json:"entropy" msgpack:"entropy"`   // Entropy of query name
 	Length                int     `json:"length" msgpack:"length"`     // Length of domain
@@ -211,6 +216,7 @@ type DNSMessage struct {
 	Extracted       *TransformExtracted    `json:"extracted,omitempty" msgpack:"extracted"`
 	Reducer         *TransformReducer      `json:"reducer,omitempty" msgpack:"reducer"`
 	MachineLearning *TransformML           `json:"ml,omitempty" msgpack:"ml"`
+	Filtering       *TransformFiltering    `json:"filtering,omitempty" msgpack:"filtering"`
 }
 
 func (dm *DNSMessage) Init() {
@@ -372,6 +378,19 @@ func (dm *DNSMessage) handleExtractedDirectives(directives []string, s *strings.
 			s.Write(dst)
 		} else {
 			s.WriteString("-")
+		}
+	}
+}
+
+func (dm *DNSMessage) handleFilteringDirectives(directives []string, s *strings.Builder) {
+	if dm.Filtering == nil {
+		s.WriteString("-")
+	} else {
+		switch directive := directives[0]; {
+		case directive == "filtering-sample-rate":
+			s.WriteString(strconv.Itoa(dm.Filtering.SampleRate))
+		default:
+			log.Fatalf("unsupport directive for text format: %s", directive)
 		}
 	}
 }
@@ -572,6 +591,7 @@ func (dm *DNSMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 		// more directives from collectors
 		case PdnsDirectives.MatchString(directive):
 			dm.handlePdnsDirectives(directives, &s)
+
 		// more directives from transformers
 		case ReducerDirectives.MatchString(directive):
 			dm.handleReducerDirectives(directives, &s)
@@ -585,6 +605,9 @@ func (dm *DNSMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 			dm.handleExtractedDirectives(directives, &s)
 		case MachineLearningDirectives.MatchString(directive):
 			dm.handleMachineLearningDirectives(directives, &s)
+		case FilteringDirectives.MatchString(directive):
+			dm.handleFilteringDirectives(directives, &s)
+
 		// error unsupport directive for text format
 		default:
 			log.Fatalf("unsupport directive for text format: %s", word)

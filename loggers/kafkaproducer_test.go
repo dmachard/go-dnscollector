@@ -21,29 +21,37 @@ func Test_KafkaProducer(t *testing.T) {
 		transport string
 		address   string
 		topic     string
+		compress  string
 	}{
 		{
-			transport: "tcp",
+			transport: "compress_none",
 			address:   ":9092",
 			topic:     "dnscollector",
+			compress:  "none",
 		},
-	}
-
-	// Create a new mock broker
-	// Création d'un listener factice
-	mockListener, err := net.Listen("tcp", "127.0.0.1:9092")
-	if err != nil {
-		log.Fatal(err)
+		{
+			transport: "compress_gzip",
+			address:   ":9092",
+			topic:     "dnscollector",
+			compress:  "gzip",
+		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.transport, func(t *testing.T) {
+			// Create a new mock broker
+			mockListener, err := net.Listen("tcp", "127.0.0.1:9092")
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer mockListener.Close()
 
 			// init logger
 			cfg := dnsutils.GetFakeConfig()
 			cfg.Loggers.KafkaProducer.BufferSize = 0
 			cfg.Loggers.KafkaProducer.RemotePort = 9092
 			cfg.Loggers.KafkaProducer.Topic = tc.topic
+			cfg.Loggers.KafkaProducer.Compression = tc.compress
 
 			mockBroker := sarama.NewMockBrokerListener(t, 1, mockListener)
 			defer mockBroker.Close()
