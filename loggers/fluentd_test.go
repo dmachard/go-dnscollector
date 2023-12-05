@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	"github.com/vmihailenco/msgpack"
 )
@@ -16,14 +18,14 @@ func Test_FluentdClient(t *testing.T) {
 		address   string
 	}{
 		{
-			transport: dnsutils.SocketTCP,
+			transport: netlib.SocketTCP,
 			address:   ":24224",
 		},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.transport, func(t *testing.T) {
 			// init logger
-			cfg := dnsutils.GetFakeConfig()
+			cfg := pkgconfig.GetFakeConfig()
 			cfg.Loggers.Fluentd.FlushInterval = 1
 			cfg.Loggers.Fluentd.BufferSize = 0
 			g := NewFluentdClient(cfg, logger.New(false), "test")

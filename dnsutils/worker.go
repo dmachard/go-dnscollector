@@ -1,5 +1,7 @@
 package dnsutils
 
+import "github.com/dmachard/go-dnscollector/pkgconfig"
+
 type Worker interface {
 	SetLoggers(loggers []Worker)
 	GetName() string
@@ -7,5 +9,5 @@ type Worker interface {
 	Run()
 	Channel() chan DNSMessage
 	ReadConfig()
-	ReloadConfig(config *Config)
+	ReloadConfig(config *pkgconfig.Config)
 }

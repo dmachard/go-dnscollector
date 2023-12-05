@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 
 	sarama "github.com/Shopify/sarama"
@@ -47,7 +48,7 @@ func Test_KafkaProducer(t *testing.T) {
 			defer mockListener.Close()
 
 			// init logger
-			cfg := dnsutils.GetFakeConfig()
+			cfg := pkgconfig.GetFakeConfig()
 			cfg.Loggers.KafkaProducer.BufferSize = 0
 			cfg.Loggers.KafkaProducer.RemotePort = 9092
 			cfg.Loggers.KafkaProducer.Topic = tc.topic

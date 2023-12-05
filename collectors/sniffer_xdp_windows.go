@@ -5,6 +5,7 @@ package collectors
 
 import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -13,12 +14,12 @@ type XDPSniffer struct {
 	exit     chan bool
 	identity string
 	loggers  []dnsutils.Worker
-	config   *dnsutils.Config
+	config   *pkgconfig.Config
 	logger   *logger.Logger
 	name     string
 }
 
-func NewXDPSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *XDPSniffer {
+func NewXDPSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
 	logger.Info("[%s] XDP collector enabled", name)
 	s := &XDPSniffer{
 		done:    make(chan bool),
@@ -56,7 +57,7 @@ func (c *XDPSniffer) Loggers() []chan dnsutils.DNSMessage {
 
 func (c *XDPSniffer) ReadConfig() {}
 
-func (c *XDPSniffer) ReloadConfig(config *dnsutils.Config) {}
+func (c *XDPSniffer) ReloadConfig(config *pkgconfig.Config) {}
 
 func (c *XDPSniffer) Channel() chan dnsutils.DNSMessage {
 	return nil

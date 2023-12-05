@@ -11,6 +11,8 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/loggers"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -27,21 +29,21 @@ func Test_DnstapCollector(t *testing.T) {
 	}{
 		{
 			name:       "tcp_default",
-			mode:       dnsutils.SocketTCP,
+			mode:       netlib.SocketTCP,
 			address:    ":6000",
 			listenPort: 0,
 			operation:  "CLIENT_QUERY",
 		},
 		{
 			name:       "tcp_custom_port",
-			mode:       dnsutils.SocketTCP,
+			mode:       netlib.SocketTCP,
 			address:    ":7000",
 			listenPort: 7000,
 			operation:  "CLIENT_QUERY",
 		},
 		{
 			name:       "unix_default",
-			mode:       dnsutils.SocketUnix,
+			mode:       netlib.SocketUnix,
 			address:    "/tmp/dnscollector.sock",
 			listenPort: 0,
 			operation:  "CLIENT_QUERY",
@@ -52,11 +54,11 @@ func Test_DnstapCollector(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			g := loggers.NewFakeLogger()
 
-			config := dnsutils.GetFakeConfig()
+			config := pkgconfig.GetFakeConfig()
 			if tc.listenPort > 0 {
 				config.Collectors.Dnstap.ListenPort = tc.listenPort
 			}
-			if tc.mode == dnsutils.SocketUnix {
+			if tc.mode == netlib.SocketUnix {
 				config.Collectors.Dnstap.SockPath = tc.address
 			}
 
@@ -122,7 +124,7 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	lg := logger.New(true)
 	lg.SetOutputChannel((logsChan))
 
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 	config.Collectors.Dnstap.SockPath = "/tmp/dnscollector.sock"
 
 	// start the collector in unix mode
@@ -135,7 +137,7 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	go c.Run()
 
 	// simulate dns server connection to collector
-	conn, err := net.Dial(dnsutils.SocketUnix, "/tmp/dnscollector.sock")
+	conn, err := net.Dial(netlib.SocketUnix, "/tmp/dnscollector.sock")
 	if err != nil {
 		t.Error("could not connect: ", err)
 	}

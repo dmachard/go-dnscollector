@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-logger"
 	"github.com/miekg/dns"
@@ -17,7 +18,7 @@ func Test_DnstapProcessor(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewDNSTapProcessor(0, dnsutils.GetFakeConfig(), logger, "test", 512)
+	consumer := NewDNSTapProcessor(0, pkgconfig.GetFakeConfig(), logger, "test", 512)
 	chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dns query
@@ -52,7 +53,7 @@ func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewDNSTapProcessor(0, dnsutils.GetFakeConfig(), logger, "test", 512)
+	consumer := NewDNSTapProcessor(0, pkgconfig.GetFakeConfig(), logger, "test", 512)
 	chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dns query
@@ -87,7 +88,7 @@ func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewDNSTapProcessor(0, dnsutils.GetFakeConfig(), logger, "test", 512)
+	consumer := NewDNSTapProcessor(0, pkgconfig.GetFakeConfig(), logger, "test", 512)
 	chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dns query
@@ -121,7 +122,7 @@ func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewDNSTapProcessor(0, dnsutils.GetFakeConfig(), logger, "test", 512)
+	consumer := NewDNSTapProcessor(0, pkgconfig.GetFakeConfig(), logger, "test", 512)
 	chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dns query
@@ -156,7 +157,7 @@ func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	cfg := dnsutils.GetFakeConfig()
+	cfg := pkgconfig.GetFakeConfig()
 	cfg.Collectors.Dnstap.DisableDNSParser = true
 
 	consumer := NewDNSTapProcessor(0, cfg, logger, "test", 512)

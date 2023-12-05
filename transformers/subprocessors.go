@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -18,7 +19,7 @@ var (
 )
 
 type Transforms struct {
-	config   *dnsutils.ConfigTransformers
+	config   *pkgconfig.ConfigTransformers
 	logger   *logger.Logger
 	name     string
 	instance int
@@ -36,7 +37,7 @@ type Transforms struct {
 	activeTransforms []func(dm *dnsutils.DNSMessage) int
 }
 
-func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DNSMessage, instance int) Transforms {
+func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DNSMessage, instance int) Transforms {
 
 	d := Transforms{
 		config:   config,
@@ -59,7 +60,7 @@ func NewTransforms(config *dnsutils.ConfigTransformers, logger *logger.Logger, n
 	return d
 }
 
-func (p *Transforms) ReloadConfig(config *dnsutils.ConfigTransformers) {
+func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
 	p.NormalizeTransform.ReloadConfig(config)
 	p.GeoipTransform.ReloadConfig(config)

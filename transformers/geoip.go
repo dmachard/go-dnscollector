@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	"github.com/oschwald/maxminddb-golang"
 )
@@ -33,7 +34,7 @@ type GeoRecord struct {
 }
 
 type GeoIPProcessor struct {
-	config      *dnsutils.ConfigTransformers
+	config      *pkgconfig.ConfigTransformers
 	logger      *logger.Logger
 	dbCountry   *maxminddb.Reader
 	dbCity      *maxminddb.Reader
@@ -46,7 +47,7 @@ type GeoIPProcessor struct {
 	logError    func(msg string, v ...interface{})
 }
 
-func NewDNSGeoIPProcessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+func NewDNSGeoIPProcessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) GeoIPProcessor {
@@ -63,7 +64,7 @@ func NewDNSGeoIPProcessor(config *dnsutils.ConfigTransformers, logger *logger.Lo
 	return d
 }
 
-func (p *GeoIPProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+func (p *GeoIPProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
 }
 

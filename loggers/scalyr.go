@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/dskit/backoff"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -32,8 +33,8 @@ type ScalyrClient struct {
 	outputChan  chan dnsutils.DNSMessage
 	logger      *logger.Logger
 	name        string
-	config      *dnsutils.Config
-	configChan  chan *dnsutils.Config
+	config      *pkgconfig.Config
+	configChan  chan *pkgconfig.Config
 	mode        string
 	textFormat  []string
 
@@ -50,7 +51,7 @@ type ScalyrClient struct {
 	submitterDone chan bool // Will be written to when the HTTP submitter is done
 }
 
-func NewScalyrClient(config *dnsutils.Config, console *logger.Logger, name string) *ScalyrClient {
+func NewScalyrClient(config *pkgconfig.Config, console *logger.Logger, name string) *ScalyrClient {
 	console.Info("[%s] logger=scalyr - starting", name)
 	c := &ScalyrClient{
 		stopProcess: make(chan bool),
@@ -62,8 +63,8 @@ func NewScalyrClient(config *dnsutils.Config, console *logger.Logger, name strin
 		logger:      console,
 		name:        name,
 		config:      config,
-		configChan:  make(chan *dnsutils.Config),
-		mode:        dnsutils.ModeText,
+		configChan:  make(chan *pkgconfig.Config),
+		mode:        pkgconfig.ModeText,
 
 		endpoint: makeEndpoint("app.scalyr.com"),
 		flush:    time.NewTicker(30 * time.Second),
@@ -91,7 +92,7 @@ func (c *ScalyrClient) ReadConfig() {
 		c.mode = c.config.Loggers.ScalyrClient.Mode
 	}
 
-	if len(c.config.Loggers.ScalyrClient.Parser) == 0 && (c.mode == dnsutils.ModeText || c.mode == dnsutils.ModeJSON) {
+	if len(c.config.Loggers.ScalyrClient.Parser) == 0 && (c.mode == pkgconfig.ModeText || c.mode == pkgconfig.ModeJSON) {
 		c.logger.Fatal(fmt.Sprintf("No Scalyr parser configured for Scalyr Client in %s mode", c.mode))
 	}
 	c.parser = c.config.Loggers.ScalyrClient.Parser
@@ -111,7 +112,7 @@ func (c *ScalyrClient) ReadConfig() {
 	}
 
 	// tls client config
-	tlsOptions := dnsutils.TLSOptions{
+	tlsOptions := pkgconfig.TLSOptions{
 		InsecureSkipVerify: c.config.Loggers.ScalyrClient.TLSInsecure,
 		MinVersion:         c.config.Loggers.ScalyrClient.TLSMinVersion,
 		CAFile:             c.config.Loggers.ScalyrClient.CAFile,
@@ -119,7 +120,7 @@ func (c *ScalyrClient) ReadConfig() {
 		KeyFile:            c.config.Loggers.ScalyrClient.KeyFile,
 	}
 
-	tlsConfig, err := dnsutils.TLSClientConfig(tlsOptions)
+	tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
 	if err != nil {
 		c.logger.Fatal("unable to parse tls confgi: ", err)
 	}
@@ -144,7 +145,7 @@ func (c *ScalyrClient) ReadConfig() {
 	c.httpclient = &http.Client{Transport: tr}
 }
 
-func (c *ScalyrClient) ReloadConfig(config *dnsutils.Config) {
+func (c *ScalyrClient) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration!")
 	c.configChan <- config
 }
@@ -247,13 +248,13 @@ PROCESS_LOOP:
 			}
 
 			switch c.mode {
-			case dnsutils.ModeText:
+			case pkgconfig.ModeText:
 				attrs["message"] = string(dm.Bytes(c.textFormat,
 					c.config.Global.TextFormatDelimiter,
 					c.config.Global.TextFormatBoundary))
-			case dnsutils.ModeJSON:
+			case pkgconfig.ModeJSON:
 				attrs["message"] = dm
-			case dnsutils.ModeFlatJSON:
+			case pkgconfig.ModeFlatJSON:
 				var err error
 				if attrs, err = dm.Flatten(); err != nil {
 					c.LogError("unable to flatten: %e", err)

@@ -14,6 +14,8 @@ import (
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/perf"
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-dnscollector/xdp"
 	"github.com/dmachard/go-logger"
@@ -44,19 +46,19 @@ type XDPSniffer struct {
 	exit       chan bool
 	identity   string
 	loggers    []dnsutils.Worker
-	config     *dnsutils.Config
-	configChan chan *dnsutils.Config
+	config     *pkgconfig.Config
+	configChan chan *pkgconfig.Config
 	logger     *logger.Logger
 	name       string
 }
 
-func NewXDPSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *XDPSniffer {
+func NewXDPSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
 	logger.Info("[%s] collector=xdp - enabled", name)
 	s := &XDPSniffer{
 		done:       make(chan bool),
 		exit:       make(chan bool),
 		config:     config,
-		configChan: make(chan *dnsutils.Config),
+		configChan: make(chan *pkgconfig.Config),
 		loggers:    loggers,
 		logger:     logger,
 		name:       name,
@@ -93,7 +95,7 @@ func (c *XDPSniffer) ReadConfig() {
 	c.identity = c.config.GetServerIdentity()
 }
 
-func (c *XDPSniffer) ReloadConfig(config *dnsutils.Config) {
+func (c *XDPSniffer) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration...")
 	c.configChan <- config
 }
@@ -238,17 +240,17 @@ func (c *XDPSniffer) Run() {
 			dm.NetworkInfo.ResponsePort = fmt.Sprint(pkt.DstPort)
 
 			if pkt.IpVersion == 0x0800 {
-				dm.NetworkInfo.Family = dnsutils.ProtoIPv4
+				dm.NetworkInfo.Family = netlib.ProtoIPv4
 			} else {
-				dm.NetworkInfo.Family = dnsutils.ProtoIPv6
+				dm.NetworkInfo.Family = netlib.ProtoIPv6
 			}
 
 			if pkt.IpProto == 0x11 {
-				dm.NetworkInfo.Protocol = dnsutils.ProtoUDP
+				dm.NetworkInfo.Protocol = netlib.ProtoUDP
 				dm.DNS.Payload = record.RawSample[int(pkt.PktOffset)+int(pkt.PayloadOffset):]
 				dm.DNS.Length = len(dm.DNS.Payload)
 			} else {
-				dm.NetworkInfo.Protocol = dnsutils.ProtoTCP
+				dm.NetworkInfo.Protocol = netlib.ProtoTCP
 				dm.DNS.Payload = record.RawSample[int(pkt.PktOffset)+int(pkt.PayloadOffset)+2:]
 				dm.DNS.Length = len(dm.DNS.Payload)
 			}

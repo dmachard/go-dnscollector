@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -25,8 +27,8 @@ type TCPClient struct {
 	doneRead           chan bool
 	inputChan          chan dnsutils.DNSMessage
 	outputChan         chan dnsutils.DNSMessage
-	config             *dnsutils.Config
-	configChan         chan *dnsutils.Config
+	config             *pkgconfig.Config
+	configChan         chan *pkgconfig.Config
 	logger             *logger.Logger
 	textFormat         []string
 	name               string
@@ -38,7 +40,7 @@ type TCPClient struct {
 	writerReady        bool
 }
 
-func NewTCPClient(config *dnsutils.Config, logger *logger.Logger, name string) *TCPClient {
+func NewTCPClient(config *pkgconfig.Config, logger *logger.Logger, name string) *TCPClient {
 	logger.Info("[%s] logger=tcpclient - enabled", name)
 	s := &TCPClient{
 		stopProcess:        make(chan bool),
@@ -53,7 +55,7 @@ func NewTCPClient(config *dnsutils.Config, logger *logger.Logger, name string) *
 		transportReconnect: make(chan bool),
 		logger:             logger,
 		config:             config,
-		configChan:         make(chan *dnsutils.Config),
+		configChan:         make(chan *pkgconfig.Config),
 		name:               name,
 	}
 
@@ -71,10 +73,10 @@ func (c *TCPClient) ReadConfig() {
 
 	// begin backward compatibility
 	if c.config.Loggers.TCPClient.TLSSupport {
-		c.transport = dnsutils.SocketTLS
+		c.transport = netlib.SocketTLS
 	}
 	if len(c.config.Loggers.TCPClient.SockPath) > 0 {
-		c.transport = dnsutils.SocketUnix
+		c.transport = netlib.SocketUnix
 	}
 	// end
 
@@ -85,7 +87,7 @@ func (c *TCPClient) ReadConfig() {
 	}
 }
 
-func (c *TCPClient) ReloadConfig(config *dnsutils.Config) {
+func (c *TCPClient) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration!")
 	c.configChan <- config
 }
@@ -162,7 +164,7 @@ func (c *TCPClient) ConnectToRemote() {
 		var err error
 
 		switch c.transport {
-		case dnsutils.SocketUnix:
+		case netlib.SocketUnix:
 			address = c.config.Loggers.TCPClient.RemoteAddress
 			if len(c.config.Loggers.TCPClient.SockPath) > 0 {
 				address = c.config.Loggers.TCPClient.SockPath
@@ -170,16 +172,16 @@ func (c *TCPClient) ConnectToRemote() {
 			c.LogInfo("connecting to %s://%s", c.transport, address)
 			conn, err = net.DialTimeout(c.transport, address, connTimeout)
 
-		case dnsutils.SocketTCP:
+		case netlib.SocketTCP:
 			c.LogInfo("connecting to %s://%s", c.transport, address)
 			conn, err = net.DialTimeout(c.transport, address, connTimeout)
 
-		case dnsutils.SocketTLS:
+		case netlib.SocketTLS:
 			c.LogInfo("connecting to %s://%s", c.transport, address)
 
 			var tlsConfig *tls.Config
 
-			tlsOptions := dnsutils.TLSOptions{
+			tlsOptions := pkgconfig.TLSOptions{
 				InsecureSkipVerify: c.config.Loggers.TCPClient.TLSInsecure,
 				MinVersion:         c.config.Loggers.TCPClient.TLSMinVersion,
 				CAFile:             c.config.Loggers.TCPClient.CAFile,
@@ -187,10 +189,10 @@ func (c *TCPClient) ConnectToRemote() {
 				KeyFile:            c.config.Loggers.TCPClient.KeyFile,
 			}
 
-			tlsConfig, err = dnsutils.TLSClientConfig(tlsOptions)
+			tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
 			if err == nil {
 				dialer := &net.Dialer{Timeout: connTimeout}
-				conn, err = tls.DialWithDialer(dialer, dnsutils.SocketTCP, address, tlsConfig)
+				conn, err = tls.DialWithDialer(dialer, netlib.SocketTCP, address, tlsConfig)
 			}
 		default:
 			c.logger.Fatal("logger=tcpclient - invalid transport:", c.transport)
@@ -216,19 +218,19 @@ func (c *TCPClient) ConnectToRemote() {
 
 func (c *TCPClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	for _, dm := range *buf {
-		if c.config.Loggers.TCPClient.Mode == dnsutils.ModeText {
+		if c.config.Loggers.TCPClient.Mode == pkgconfig.ModeText {
 			c.transportWriter.Write(dm.Bytes(c.textFormat,
 				c.config.Global.TextFormatDelimiter,
 				c.config.Global.TextFormatBoundary))
 			c.transportWriter.WriteString(c.config.Loggers.TCPClient.PayloadDelimiter)
 		}
 
-		if c.config.Loggers.TCPClient.Mode == dnsutils.ModeJSON {
+		if c.config.Loggers.TCPClient.Mode == pkgconfig.ModeJSON {
 			json.NewEncoder(c.transportWriter).Encode(dm)
 			c.transportWriter.WriteString(c.config.Loggers.TCPClient.PayloadDelimiter)
 		}
 
-		if c.config.Loggers.TCPClient.Mode == dnsutils.ModeFlatJSON {
+		if c.config.Loggers.TCPClient.Mode == pkgconfig.ModeFlatJSON {
 			flat, err := dm.Flatten()
 			if err != nil {
 				c.LogError("flattening DNS message failed: %e", err)

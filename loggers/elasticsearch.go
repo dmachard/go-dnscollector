@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 
@@ -21,8 +22,8 @@ type ElasticSearchClient struct {
 	doneRun     chan bool
 	inputChan   chan dnsutils.DNSMessage
 	outputChan  chan dnsutils.DNSMessage
-	config      *dnsutils.Config
-	configChan  chan *dnsutils.Config
+	config      *pkgconfig.Config
+	configChan  chan *pkgconfig.Config
 	logger      *logger.Logger
 	name        string
 	server      string
@@ -30,7 +31,7 @@ type ElasticSearchClient struct {
 	bulkURL     string
 }
 
-func NewElasticSearchClient(config *dnsutils.Config, console *logger.Logger, name string) *ElasticSearchClient {
+func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, name string) *ElasticSearchClient {
 	console.Info("[%s] logger=elasticsearch - enabled", name)
 	c := &ElasticSearchClient{
 		stopProcess: make(chan bool),
@@ -41,7 +42,7 @@ func NewElasticSearchClient(config *dnsutils.Config, console *logger.Logger, nam
 		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
 		logger:      console,
 		config:      config,
-		configChan:  make(chan *dnsutils.Config),
+		configChan:  make(chan *pkgconfig.Config),
 		name:        name,
 	}
 	c.ReadConfig()
@@ -64,7 +65,7 @@ func (c *ElasticSearchClient) ReadConfig() {
 	c.bulkURL = u.String()
 }
 
-func (c *ElasticSearchClient) ReloadConfig(config *dnsutils.Config) {
+func (c *ElasticSearchClient) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration!")
 	c.configChan <- config
 }

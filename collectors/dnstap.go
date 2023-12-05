@@ -14,6 +14,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -28,8 +29,8 @@ type Dnstap struct {
 	conns         []net.Conn
 	sockPath      string
 	loggers       []dnsutils.Worker
-	config        *dnsutils.Config
-	configChan    chan *dnsutils.Config
+	config        *pkgconfig.Config
+	configChan    chan *pkgconfig.Config
 	logger        *logger.Logger
 	name          string
 	connMode      string
@@ -40,7 +41,7 @@ type Dnstap struct {
 	sync.RWMutex
 }
 
-func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *Dnstap {
+func NewDnstap(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
 	logger.Info("[%s] collector=dnstap - enabled", name)
 	s := &Dnstap{
 		doneRun:     make(chan bool),
@@ -49,7 +50,7 @@ func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logge
 		stopMonitor: make(chan bool),
 		dropped:     make(chan int),
 		config:      config,
-		configChan:  make(chan *dnsutils.Config),
+		configChan:  make(chan *pkgconfig.Config),
 		loggers:     loggers,
 		logger:      logger,
 		name:        name,
@@ -75,7 +76,7 @@ func (c *Dnstap) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 }
 
 func (c *Dnstap) ReadConfig() {
-	if !dnsutils.IsValidTLS(c.config.Collectors.Dnstap.TLSMinVersion) {
+	if !pkgconfig.IsValidTLS(c.config.Collectors.Dnstap.TLSMinVersion) {
 		c.logger.Fatal("collector=dnstap - invalid tls min version")
 	}
 
@@ -89,7 +90,7 @@ func (c *Dnstap) ReadConfig() {
 	}
 }
 
-func (c *Dnstap) ReloadConfig(config *dnsutils.Config) {
+func (c *Dnstap) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration...")
 	c.configChan <- config
 }
@@ -279,20 +280,20 @@ func (c *Dnstap) Listen() error {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLSVersion[c.config.Collectors.Dnstap.TLSMinVersion]
+		tlsConfig.MinVersion = pkgconfig.TLSVersion[c.config.Collectors.Dnstap.TLSMinVersion]
 
 		if len(c.sockPath) > 0 {
-			listener, err = tls.Listen(dnsutils.SocketUnix, c.sockPath, tlsConfig)
+			listener, err = tls.Listen(netlib.SocketUnix, c.sockPath, tlsConfig)
 		} else {
-			listener, err = tls.Listen(dnsutils.SocketTCP, addrlisten, tlsConfig)
+			listener, err = tls.Listen(netlib.SocketTCP, addrlisten, tlsConfig)
 		}
 
 	} else {
 		// basic listening
 		if len(c.sockPath) > 0 {
-			listener, err = net.Listen(dnsutils.SocketUnix, c.sockPath)
+			listener, err = net.Listen(netlib.SocketUnix, c.sockPath)
 		} else {
-			listener, err = net.Listen(dnsutils.SocketTCP, addrlisten)
+			listener, err = net.Listen(netlib.SocketTCP, addrlisten)
 		}
 	}
 

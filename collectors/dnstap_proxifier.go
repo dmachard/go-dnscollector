@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 )
@@ -20,20 +22,20 @@ type DnstapProxifier struct {
 	conns      []net.Conn
 	sockPath   string
 	loggers    []dnsutils.Worker
-	config     *dnsutils.Config
-	configChan chan *dnsutils.Config
+	config     *pkgconfig.Config
+	configChan chan *pkgconfig.Config
 	logger     *logger.Logger
 	name       string
 	stopping   bool
 }
 
-func NewDnstapProxifier(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *DnstapProxifier {
+func NewDnstapProxifier(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
 	logger.Info("[%s] collector=dnstaprelay - enabled", name)
 	s := &DnstapProxifier{
 		doneRun:    make(chan bool),
 		stopRun:    make(chan bool),
 		config:     config,
-		configChan: make(chan *dnsutils.Config),
+		configChan: make(chan *pkgconfig.Config),
 		loggers:    loggers,
 		logger:     logger,
 		name:       name,
@@ -57,14 +59,14 @@ func (c *DnstapProxifier) Loggers() []chan dnsutils.DNSMessage {
 }
 
 func (c *DnstapProxifier) ReadConfig() {
-	if !dnsutils.IsValidTLS(c.config.Collectors.DnstapProxifier.TLSMinVersion) {
+	if !pkgconfig.IsValidTLS(c.config.Collectors.DnstapProxifier.TLSMinVersion) {
 		c.logger.Fatal("collector=dnstaprelay - invalid tls min version")
 	}
 
 	c.sockPath = c.config.Collectors.DnstapProxifier.SockPath
 }
 
-func (c *DnstapProxifier) ReloadConfig(config *dnsutils.Config) {
+func (c *DnstapProxifier) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration...")
 	c.configChan <- config
 }
@@ -178,19 +180,19 @@ func (c *DnstapProxifier) Listen() error {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLSVersion[c.config.Collectors.DnstapProxifier.TLSMinVersion]
+		tlsConfig.MinVersion = pkgconfig.TLSVersion[c.config.Collectors.DnstapProxifier.TLSMinVersion]
 
 		if len(c.sockPath) > 0 {
-			listener, err = tls.Listen(dnsutils.SocketUnix, c.sockPath, tlsConfig)
+			listener, err = tls.Listen(netlib.SocketUnix, c.sockPath, tlsConfig)
 		} else {
-			listener, err = tls.Listen(dnsutils.SocketTCP, addrlisten, tlsConfig)
+			listener, err = tls.Listen(netlib.SocketTCP, addrlisten, tlsConfig)
 		}
 	} else {
 		// basic listening
 		if len(c.sockPath) > 0 {
-			listener, err = net.Listen(dnsutils.SocketUnix, c.sockPath)
+			listener, err = net.Listen(netlib.SocketUnix, c.sockPath)
 		} else {
-			listener, err = net.Listen(dnsutils.SocketTCP, addrlisten)
+			listener, err = net.Listen(netlib.SocketTCP, addrlisten)
 		}
 	}
 

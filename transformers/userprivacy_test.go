@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 func TestReduceQname(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.UserPrivacy.Enable = true
 	config.UserPrivacy.MinimazeQname = true
 
@@ -40,7 +41,7 @@ func TestReduceQname(t *testing.T) {
 
 func TestAnonymizeIPv4(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.UserPrivacy.Enable = true
 	config.UserPrivacy.AnonymizeIP = true
 
@@ -60,7 +61,7 @@ func TestAnonymizeIPv4(t *testing.T) {
 
 func TestAnonymizeIPv6(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.UserPrivacy.Enable = true
 	config.UserPrivacy.AnonymizeIP = true
 

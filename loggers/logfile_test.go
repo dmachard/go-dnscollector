@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -21,15 +22,15 @@ func Test_LogFileText(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.ModeText,
+			mode:    pkgconfig.ModeText,
 			pattern: "0b dns.collector A",
 		},
 		{
-			mode:    dnsutils.ModeJSON,
+			mode:    pkgconfig.ModeJSON,
 			pattern: "\"qname\":\"dns.collector\"",
 		},
 		{
-			mode:    dnsutils.ModeFlatJSON,
+			mode:    pkgconfig.ModeFlatJSON,
 			pattern: "\"dns.qname\":\"dns.collector\"",
 		},
 	}
@@ -45,7 +46,7 @@ func Test_LogFileText(t *testing.T) {
 			defer os.Remove(f.Name()) // clean up
 
 			// config
-			config := dnsutils.GetFakeConfig()
+			config := pkgconfig.GetFakeConfig()
 			config.Loggers.LogFile.FilePath = f.Name()
 			config.Loggers.LogFile.Mode = tc.mode
 			config.Loggers.LogFile.FlushInterval = 0
@@ -88,9 +89,9 @@ func Test_LogFileWrite_PcapMode(t *testing.T) {
 	defer os.Remove(f.Name()) // clean up
 
 	// config
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 	config.Loggers.LogFile.FilePath = f.Name()
-	config.Loggers.LogFile.Mode = dnsutils.ModePCAP
+	config.Loggers.LogFile.Mode = pkgconfig.ModePCAP
 
 	// init generator in testing mode
 	g := NewLogFile(config, logger.New(false), "test")

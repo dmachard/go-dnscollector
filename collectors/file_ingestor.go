@@ -13,6 +13,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	framestream "github.com/farsightsec/golang-framestream"
@@ -27,8 +28,8 @@ var waitFor = 10 * time.Second
 func IsValidMode(mode string) bool {
 	switch mode {
 	case
-		dnsutils.ModePCAP,
-		dnsutils.ModeDNSTap:
+		pkgconfig.ModePCAP,
+		pkgconfig.ModeDNSTap:
 		return true
 	}
 	return false
@@ -38,8 +39,8 @@ type FileIngestor struct {
 	done            chan bool
 	exit            chan bool
 	loggers         []dnsutils.Worker
-	config          *dnsutils.Config
-	configChan      chan *dnsutils.Config
+	config          *pkgconfig.Config
+	configChan      chan *pkgconfig.Config
 	logger          *logger.Logger
 	watcher         *fsnotify.Watcher
 	watcherTimers   map[string]*time.Timer
@@ -51,13 +52,13 @@ type FileIngestor struct {
 	mu              sync.Mutex
 }
 
-func NewFileIngestor(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *FileIngestor {
+func NewFileIngestor(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
 	logger.Info("[%s] collector=fileingestor - enabled", name)
 	s := &FileIngestor{
 		done:          make(chan bool),
 		exit:          make(chan bool),
 		config:        config,
-		configChan:    make(chan *dnsutils.Config),
+		configChan:    make(chan *pkgconfig.Config),
 		loggers:       loggers,
 		logger:        logger,
 		name:          name,
@@ -96,7 +97,7 @@ func (c *FileIngestor) ReadConfig() {
 		c.config.Collectors.FileIngestor.WatchMode)
 }
 
-func (c *FileIngestor) ReloadConfig(config *dnsutils.Config) {
+func (c *FileIngestor) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration...")
 	c.configChan <- config
 }
@@ -126,13 +127,13 @@ func (c *FileIngestor) Stop() {
 
 func (c *FileIngestor) ProcessFile(filePath string) {
 	switch c.config.Collectors.FileIngestor.WatchMode {
-	case dnsutils.ModePCAP:
+	case pkgconfig.ModePCAP:
 		// process file with pcap extension only
 		if filepath.Ext(filePath) == ".pcap" || filepath.Ext(filePath) == ".pcap.gz" {
 			c.LogInfo("file ready to process %s", filePath)
 			go c.ProcessPcap(filePath)
 		}
-	case dnsutils.ModeDNSTap:
+	case pkgconfig.ModeDNSTap:
 		// processs dnstap
 		if filepath.Ext(filePath) == ".fstrm" {
 			c.LogInfo("file ready to process %s", filePath)
@@ -395,12 +396,12 @@ func (c *FileIngestor) Run() {
 		fn := filepath.Join(c.config.Collectors.FileIngestor.WatchDir, entry.Name())
 
 		switch c.config.Collectors.FileIngestor.WatchMode {
-		case dnsutils.ModePCAP:
+		case pkgconfig.ModePCAP:
 			// process file with pcap extension
 			if filepath.Ext(fn) == ".pcap" || filepath.Ext(fn) == ".pcap.gz" {
 				go c.ProcessPcap(fn)
 			}
-		case dnsutils.ModeDNSTap:
+		case pkgconfig.ModeDNSTap:
 			// processs dnstap
 			if filepath.Ext(fn) == ".fstrm" {
 				go c.ProcessDnstap(fn)

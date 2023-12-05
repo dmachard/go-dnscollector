@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -18,14 +19,14 @@ type FalcoClient struct {
 	doneRun     chan bool
 	inputChan   chan dnsutils.DNSMessage
 	outputChan  chan dnsutils.DNSMessage
-	config      *dnsutils.Config
-	configChan  chan *dnsutils.Config
+	config      *pkgconfig.Config
+	configChan  chan *pkgconfig.Config
 	logger      *logger.Logger
 	name        string
 	url         string
 }
 
-func NewFalcoClient(config *dnsutils.Config, console *logger.Logger, name string) *FalcoClient {
+func NewFalcoClient(config *pkgconfig.Config, console *logger.Logger, name string) *FalcoClient {
 	console.Info("[%s] logger=falco - enabled", name)
 	f := &FalcoClient{
 		stopProcess: make(chan bool),
@@ -36,7 +37,7 @@ func NewFalcoClient(config *dnsutils.Config, console *logger.Logger, name string
 		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.FalcoClient.ChannelBufferSize),
 		logger:      console,
 		config:      config,
-		configChan:  make(chan *dnsutils.Config),
+		configChan:  make(chan *pkgconfig.Config),
 		name:        name,
 	}
 	f.ReadConfig()
@@ -51,7 +52,7 @@ func (f *FalcoClient) ReadConfig() {
 	f.url = f.config.Loggers.FalcoClient.URL
 }
 
-func (f *FalcoClient) ReloadConfig(config *dnsutils.Config) {
+func (f *FalcoClient) ReloadConfig(config *pkgconfig.Config) {
 	f.LogInfo("reload configuration!")
 	f.configChan <- config
 }

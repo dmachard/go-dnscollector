@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/dmachard/go-topmap"
@@ -170,8 +172,8 @@ type Prometheus struct {
 	netListener  net.Listener
 	inputChan    chan dnsutils.DNSMessage
 	outputChan   chan dnsutils.DNSMessage
-	config       *dnsutils.Config
-	configChan   chan *dnsutils.Config
+	config       *pkgconfig.Config
+	configChan   chan *pkgconfig.Config
 	logger       *logger.Logger
 	promRegistry *prometheus.Registry
 
@@ -749,7 +751,7 @@ func CreateSystemCatalogue(o *Prometheus) ([]string, *PromCounterCatalogueContai
 	)
 }
 
-func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, name string) *Prometheus {
+func NewPrometheus(config *pkgconfig.Config, logger *logger.Logger, name string) *Prometheus {
 	logger.Info("[%s] logger=prometheus - enabled", name)
 	o := &Prometheus{
 		doneAPI:      make(chan bool),
@@ -758,7 +760,7 @@ func NewPrometheus(config *dnsutils.Config, logger *logger.Logger, name string) 
 		stopRun:      make(chan bool),
 		doneRun:      make(chan bool),
 		config:       config,
-		configChan:   make(chan *dnsutils.Config),
+		configChan:   make(chan *pkgconfig.Config),
 		inputChan:    make(chan dnsutils.DNSMessage, config.Loggers.Prometheus.ChannelBufferSize),
 		outputChan:   make(chan dnsutils.DNSMessage, config.Loggers.Prometheus.ChannelBufferSize),
 		logger:       logger,
@@ -1075,12 +1077,12 @@ func (c *Prometheus) InitProm() {
 }
 
 func (c *Prometheus) ReadConfig() {
-	if !dnsutils.IsValidTLS(c.config.Loggers.Prometheus.TLSMinVersion) {
+	if !pkgconfig.IsValidTLS(c.config.Loggers.Prometheus.TLSMinVersion) {
 		c.logger.Fatal("logger prometheus - invalid tls min version")
 	}
 }
 
-func (c *Prometheus) ReloadConfig(config *dnsutils.Config) {
+func (c *Prometheus) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration!")
 	c.configChan <- config
 }
@@ -1158,7 +1160,7 @@ func (c *Prometheus) ListenAndServe() {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLSVersion[c.config.Loggers.Prometheus.TLSMinVersion]
+		tlsConfig.MinVersion = pkgconfig.TLSVersion[c.config.Loggers.Prometheus.TLSMinVersion]
 
 		if c.config.Loggers.Prometheus.TLSMutual {
 
@@ -1175,11 +1177,11 @@ func (c *Prometheus) ListenAndServe() {
 			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
 		}
 
-		listener, err = tls.Listen(dnsutils.SocketTCP, addrlisten, tlsConfig)
+		listener, err = tls.Listen(netlib.SocketTCP, addrlisten, tlsConfig)
 
 	} else {
 		// basic listening
-		listener, err = net.Listen(dnsutils.SocketTCP, addrlisten)
+		listener, err = net.Listen(netlib.SocketTCP, addrlisten)
 	}
 
 	// something wrong ?

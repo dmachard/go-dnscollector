@@ -2,11 +2,12 @@ package transformers
 
 import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 type ExtractProcessor struct {
-	config      *dnsutils.ConfigTransformers
+	config      *pkgconfig.ConfigTransformers
 	logger      *logger.Logger
 	name        string
 	instance    int
@@ -15,7 +16,7 @@ type ExtractProcessor struct {
 	logError    func(msg string, v ...interface{})
 }
 
-func NewExtractSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+func NewExtractSubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{})) ExtractProcessor {
 	s := ExtractProcessor{
@@ -31,7 +32,7 @@ func NewExtractSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.
 	return s
 }
 
-func (p *ExtractProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+func (p *ExtractProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
 }
 

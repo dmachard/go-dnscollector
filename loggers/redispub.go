@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -26,8 +28,8 @@ type RedisPub struct {
 	doneRead           chan bool
 	inputChan          chan dnsutils.DNSMessage
 	outputChan         chan dnsutils.DNSMessage
-	config             *dnsutils.Config
-	configChan         chan *dnsutils.Config
+	config             *pkgconfig.Config
+	configChan         chan *pkgconfig.Config
 	logger             *logger.Logger
 	textFormat         []string
 	name               string
@@ -39,7 +41,7 @@ type RedisPub struct {
 	writerReady        bool
 }
 
-func NewRedisPub(config *dnsutils.Config, logger *logger.Logger, name string) *RedisPub {
+func NewRedisPub(config *pkgconfig.Config, logger *logger.Logger, name string) *RedisPub {
 	logger.Info("[%s] logger=redispub - enabled", name)
 	s := &RedisPub{
 		stopProcess:        make(chan bool),
@@ -54,7 +56,7 @@ func NewRedisPub(config *dnsutils.Config, logger *logger.Logger, name string) *R
 		transportReconnect: make(chan bool),
 		logger:             logger,
 		config:             config,
-		configChan:         make(chan *dnsutils.Config),
+		configChan:         make(chan *pkgconfig.Config),
 		name:               name,
 	}
 
@@ -73,10 +75,10 @@ func (c *RedisPub) ReadConfig() {
 
 	// begin backward compatibility
 	if c.config.Loggers.RedisPub.TLSSupport {
-		c.transport = dnsutils.SocketTLS
+		c.transport = netlib.SocketTLS
 	}
 	if len(c.config.Loggers.RedisPub.SockPath) > 0 {
-		c.transport = dnsutils.SocketUnix
+		c.transport = netlib.SocketUnix
 	}
 	// end
 
@@ -87,7 +89,7 @@ func (c *RedisPub) ReadConfig() {
 	}
 }
 
-func (c *RedisPub) ReloadConfig(config *dnsutils.Config) {
+func (c *RedisPub) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration!")
 	c.configChan <- config
 }
@@ -163,7 +165,7 @@ func (c *RedisPub) ConnectToRemote() {
 		var err error
 
 		switch c.transport {
-		case dnsutils.SocketUnix:
+		case netlib.SocketUnix:
 			address = c.config.Loggers.RedisPub.RemoteAddress
 			if len(c.config.Loggers.RedisPub.SockPath) > 0 {
 				address = c.config.Loggers.RedisPub.SockPath
@@ -171,16 +173,16 @@ func (c *RedisPub) ConnectToRemote() {
 			c.LogInfo("connecting to %s://%s", c.transport, address)
 			conn, err = net.DialTimeout(c.transport, address, connTimeout)
 
-		case dnsutils.SocketTCP:
+		case netlib.SocketTCP:
 			c.LogInfo("connecting to %s://%s", c.transport, address)
 			conn, err = net.DialTimeout(c.transport, address, connTimeout)
 
-		case dnsutils.SocketTLS:
+		case netlib.SocketTLS:
 			c.LogInfo("connecting to %s://%s", c.transport, address)
 
 			var tlsConfig *tls.Config
 
-			tlsOptions := dnsutils.TLSOptions{
+			tlsOptions := pkgconfig.TLSOptions{
 				InsecureSkipVerify: c.config.Loggers.RedisPub.TLSInsecure,
 				MinVersion:         c.config.Loggers.RedisPub.TLSMinVersion,
 				CAFile:             c.config.Loggers.RedisPub.CAFile,
@@ -188,10 +190,10 @@ func (c *RedisPub) ConnectToRemote() {
 				KeyFile:            c.config.Loggers.RedisPub.KeyFile,
 			}
 
-			tlsConfig, err = dnsutils.TLSClientConfig(tlsOptions)
+			tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
 			if err == nil {
 				dialer := &net.Dialer{Timeout: connTimeout}
-				conn, err = tls.DialWithDialer(dialer, dnsutils.SocketTCP, address, tlsConfig)
+				conn, err = tls.DialWithDialer(dialer, netlib.SocketTCP, address, tlsConfig)
 			}
 
 		default:
@@ -228,18 +230,18 @@ func (c *RedisPub) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 		cmd := "PUBLISH " + strconv.Quote(c.config.Loggers.RedisPub.RedisChannel) + " "
 		c.transportWriter.WriteString(cmd)
 
-		if c.config.Loggers.RedisPub.Mode == dnsutils.ModeText {
+		if c.config.Loggers.RedisPub.Mode == pkgconfig.ModeText {
 			c.transportWriter.WriteString(strconv.Quote(dm.String(c.textFormat, c.config.Global.TextFormatDelimiter, c.config.Global.TextFormatBoundary)))
 			c.transportWriter.WriteString(c.config.Loggers.RedisPub.PayloadDelimiter)
 		}
 
-		if c.config.Loggers.RedisPub.Mode == dnsutils.ModeJSON {
+		if c.config.Loggers.RedisPub.Mode == pkgconfig.ModeJSON {
 			encoder.Encode(dm)
 			c.transportWriter.WriteString(strconv.Quote(escapeBuffer.String()))
 			c.transportWriter.WriteString(c.config.Loggers.RedisPub.PayloadDelimiter)
 		}
 
-		if c.config.Loggers.RedisPub.Mode == dnsutils.ModeFlatJSON {
+		if c.config.Loggers.RedisPub.Mode == pkgconfig.ModeFlatJSON {
 			flat, err := dm.Flatten()
 			if err != nil {
 				c.LogError("flattening DNS message failed: %e", err)

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	publicsuffixlist "golang.org/x/net/publicsuffix"
 )
@@ -63,7 +64,7 @@ var (
 )
 
 type NormalizeProcessor struct {
-	config           *dnsutils.ConfigTransformers
+	config           *pkgconfig.ConfigTransformers
 	logger           *logger.Logger
 	name             string
 	instance         int
@@ -74,7 +75,7 @@ type NormalizeProcessor struct {
 }
 
 func NewNormalizeSubprocessor(
-	config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+	config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) NormalizeProcessor {
@@ -91,7 +92,7 @@ func NewNormalizeSubprocessor(
 	return s
 }
 
-func (p *NormalizeProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+func (p *NormalizeProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
 }
 

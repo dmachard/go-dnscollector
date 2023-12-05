@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -101,7 +102,7 @@ func (mp *HashQueries) Delete(key uint64) {
 
 // latency processor
 type LatencyProcessor struct {
-	config      *dnsutils.ConfigTransformers
+	config      *pkgconfig.ConfigTransformers
 	logger      *logger.Logger
 	name        string
 	instance    int
@@ -112,7 +113,7 @@ type LatencyProcessor struct {
 	logError    func(msg string, v ...interface{})
 }
 
-func NewLatencySubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+func NewLatencySubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) *LatencyProcessor {
@@ -132,7 +133,7 @@ func NewLatencySubprocessor(config *dnsutils.ConfigTransformers, logger *logger.
 	return &s
 }
 
-func (s *LatencyProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+func (s *LatencyProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	s.config = config
 
 	s.hashQueries.SetTTL(time.Duration(config.Latency.QueriesTimeout) * time.Second)

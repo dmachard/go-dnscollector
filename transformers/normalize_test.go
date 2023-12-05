@@ -7,12 +7,13 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 func TestNormalize_Json(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 
 	log := logger.New(false)
 	outChans := []chan dnsutils.DNSMessage{}
@@ -58,7 +59,7 @@ func TestNormalize_Json(t *testing.T) {
 
 func TestNormalize_LowercaseQname(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Normalize.Enable = true
 	config.Normalize.QnameLowerCase = true
 
@@ -80,7 +81,7 @@ func TestNormalize_LowercaseQname(t *testing.T) {
 
 func TestNormalize_QuietText(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Normalize.Enable = true
 	config.Normalize.QuietText = true
 
@@ -104,7 +105,7 @@ func TestNormalize_QuietText(t *testing.T) {
 
 func TestNormalize_AddTLD(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Normalize.Enable = true
 	config.Normalize.AddTld = true
 
@@ -155,7 +156,7 @@ func TestNormalize_AddTLD(t *testing.T) {
 
 func TestNormalize_AddTldPlusOne(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Normalize.Enable = true
 	config.Normalize.AddTld = true
 

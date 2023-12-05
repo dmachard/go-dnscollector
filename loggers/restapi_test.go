@@ -8,12 +8,13 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 func TestRestAPI_BadBasicAuth(t *testing.T) {
 	// init the logger
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 	g := NewRestAPI(config, logger.New(false), "test")
 
 	tt := []struct {
@@ -59,7 +60,7 @@ func TestRestAPI_BadBasicAuth(t *testing.T) {
 
 func TestRestAPI_MethodNotAllowed(t *testing.T) {
 	// init the logger
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 	g := NewRestAPI(config, logger.New(false), "test")
 
 	// record one dns message to simulate some incoming data
@@ -149,7 +150,7 @@ func TestRestAPI_MethodNotAllowed(t *testing.T) {
 
 func TestRestAPI_GetMethod(t *testing.T) {
 	// init the logger
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 	g := NewRestAPI(config, logger.New(false), "test")
 
 	tt := []struct {

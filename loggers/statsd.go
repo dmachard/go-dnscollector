@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/dmachard/go-topmap"
@@ -48,8 +50,8 @@ type StatsdClient struct {
 	doneRun     chan bool
 	inputChan   chan dnsutils.DNSMessage
 	outputChan  chan dnsutils.DNSMessage
-	config      *dnsutils.Config
-	configChan  chan *dnsutils.Config
+	config      *pkgconfig.Config
+	configChan  chan *pkgconfig.Config
 	logger      *logger.Logger
 	name        string
 
@@ -57,7 +59,7 @@ type StatsdClient struct {
 	sync.RWMutex
 }
 
-func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, name string) *StatsdClient {
+func NewStatsdClient(config *pkgconfig.Config, logger *logger.Logger, name string) *StatsdClient {
 	logger.Info("[%s] logger=statsd - enabled", name)
 
 	s := &StatsdClient{
@@ -69,7 +71,7 @@ func NewStatsdClient(config *dnsutils.Config, logger *logger.Logger, name string
 		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.Statsd.ChannelBufferSize),
 		logger:      logger,
 		config:      config,
-		configChan:  make(chan *dnsutils.Config),
+		configChan:  make(chan *pkgconfig.Config),
 		name:        name,
 		Stats:       StreamStats{Streams: make(map[string]*StatsPerStream)},
 	}
@@ -85,12 +87,12 @@ func (c *StatsdClient) GetName() string { return c.name }
 func (c *StatsdClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *StatsdClient) ReadConfig() {
-	if !dnsutils.IsValidTLS(c.config.Loggers.Statsd.TLSMinVersion) {
+	if !pkgconfig.IsValidTLS(c.config.Loggers.Statsd.TLSMinVersion) {
 		c.logger.Fatal("logger=statd - invalid tls min version")
 	}
 }
 
-func (c *StatsdClient) ReloadConfig(config *dnsutils.Config) {
+func (c *StatsdClient) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration!")
 	c.configChan <- config
 }
@@ -310,16 +312,16 @@ PROCESS_LOOP:
 			var err error
 
 			switch c.config.Loggers.Statsd.Transport {
-			case dnsutils.SocketTCP, dnsutils.SocketUDP:
+			case netlib.SocketTCP, netlib.SocketUDP:
 				c.LogInfo("connecting to %s://%s", c.config.Loggers.Statsd.Transport, address)
 				conn, err = net.DialTimeout(c.config.Loggers.Statsd.Transport, address, connTimeout)
 
-			case dnsutils.SocketTLS:
+			case netlib.SocketTLS:
 				c.LogInfo("connecting to %s://%s", c.config.Loggers.Statsd.Transport, address)
 
 				var tlsConfig *tls.Config
 
-				tlsOptions := dnsutils.TLSOptions{
+				tlsOptions := pkgconfig.TLSOptions{
 					InsecureSkipVerify: c.config.Loggers.Statsd.TLSInsecure,
 					MinVersion:         c.config.Loggers.Statsd.TLSMinVersion,
 					CAFile:             c.config.Loggers.Statsd.CAFile,
@@ -327,10 +329,10 @@ PROCESS_LOOP:
 					KeyFile:            c.config.Loggers.Statsd.KeyFile,
 				}
 
-				tlsConfig, err = dnsutils.TLSClientConfig(tlsOptions)
+				tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
 				if err == nil {
 					dialer := &net.Dialer{Timeout: connTimeout}
-					conn, err = tls.DialWithDialer(dialer, dnsutils.SocketTCP, address, tlsConfig)
+					conn, err = tls.DialWithDialer(dialer, netlib.SocketTCP, address, tlsConfig)
 				}
 			default:
 				c.logger.Fatal("logger=statsd - invalid transport:", c.config.Loggers.Statsd.Transport)
