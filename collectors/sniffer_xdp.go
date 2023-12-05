@@ -229,9 +229,9 @@ func (c *XDPSniffer) Run() {
 			dm.DNSTap.TimeNsec = int(tsAdjusted.UnixNano() - tsAdjusted.Unix()*1e9)
 
 			if pkt.SrcPort == 53 {
-				dm.DNSTap.Operation = pkgconfig.DNSTapClientResponse
+				dm.DNSTap.Operation = dnsutils.DNSTapClientResponse
 			} else {
-				dm.DNSTap.Operation = pkgconfig.DNSTapClientQuery
+				dm.DNSTap.Operation = dnsutils.DNSTapClientQuery
 			}
 
 			dm.NetworkInfo.QueryIP = saddr.String()
@@ -246,11 +246,11 @@ func (c *XDPSniffer) Run() {
 			}
 
 			if pkt.IpProto == 0x11 {
-				dm.NetworkInfo.Protocol = pkgconfig.ProtoUDP
+				dm.NetworkInfo.Protocol = netlib.ProtoUDP
 				dm.DNS.Payload = record.RawSample[int(pkt.PktOffset)+int(pkt.PayloadOffset):]
 				dm.DNS.Length = len(dm.DNS.Payload)
 			} else {
-				dm.NetworkInfo.Protocol = pkgconfig.ProtoTCP
+				dm.NetworkInfo.Protocol = netlib.ProtoTCP
 				dm.DNS.Payload = record.RawSample[int(pkt.PktOffset)+int(pkt.PayloadOffset)+2:]
 				dm.DNS.Length = len(dm.DNS.Payload)
 			}

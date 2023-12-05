@@ -208,7 +208,7 @@ func (c *TZSPSniffer) Run() {
 					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(udp.DstPort))
 					dm.DNS.Payload = udp.Payload
 					dm.DNS.Length = len(udp.Payload)
-					dm.NetworkInfo.Protocol = pkgconfig.ProtoUDP
+					dm.NetworkInfo.Protocol = netlib.ProtoUDP
 
 				case layers.LayerTypeTCP:
 					// ignore SYN/ACK packet
@@ -232,7 +232,7 @@ func (c *TZSPSniffer) Run() {
 					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(tcp.DstPort))
 					dm.DNS.Payload = tcp.Payload[2:]
 					dm.DNS.Length = len(tcp.Payload[2:])
-					dm.NetworkInfo.Protocol = pkgconfig.ProtoTCP
+					dm.NetworkInfo.Protocol = netlib.ProtoTCP
 				}
 			}
 

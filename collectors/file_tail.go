@@ -151,14 +151,14 @@ RUN_LOOP:
 				re = regexp.MustCompile(c.config.Collectors.Tail.PatternQuery)
 				matches = re.FindStringSubmatch(line.Text)
 				dm.DNS.Type = dnsutils.DNSQuery
-				dm.DNSTap.Operation = pkgconfig.DNSTapOperationQuery
+				dm.DNSTap.Operation = dnsutils.DNSTapOperationQuery
 			}
 
 			if len(c.config.Collectors.Tail.PatternReply) > 0 && len(matches) == 0 {
 				re = regexp.MustCompile(c.config.Collectors.Tail.PatternReply)
 				matches = re.FindStringSubmatch(line.Text)
 				dm.DNS.Type = dnsutils.DNSReply
-				dm.DNSTap.Operation = pkgconfig.DNSTapOperationReply
+				dm.DNSTap.Operation = dnsutils.DNSTapOperationReply
 			}
 
 			if len(matches) == 0 {
@@ -228,7 +228,7 @@ RUN_LOOP:
 			if protocolIndex != -1 {
 				dm.NetworkInfo.Protocol = matches[protocolIndex]
 			} else {
-				dm.NetworkInfo.Protocol = pkgconfig.ProtoUDP
+				dm.NetworkInfo.Protocol = netlib.ProtoUDP
 			}
 
 			lengthIndex := re.SubexpIndex("length")

@@ -28,7 +28,7 @@ func TestAfpacketSnifferRun(t *testing.T) {
 	// waiting message in channel
 	for {
 		msg := <-g.Channel()
-		if msg.DNSTap.Operation == pkgconfig.DNSTapClientQuery && msg.DNS.Qname == "dns.collector" {
+		if msg.DNSTap.Operation == dnsutils.DNSTapClientQuery && msg.DNS.Qname == "dns.collector" {
 			break
 		}
 	}

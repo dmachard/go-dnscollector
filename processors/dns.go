@@ -165,7 +165,7 @@ RUN_LOOP:
 				dm.NetworkInfo.ResponsePort = qport
 			} else {
 				dm.DNS.Type = dnsutils.DNSQuery
-				dm.DNSTap.Operation = pkgconfig.DNSTapClientQuery
+				dm.DNSTap.Operation = dnsutils.DNSTapClientQuery
 			}
 
 			if err = dnsutils.DecodePayload(&dm, &dnsHeader, d.config); err != nil {

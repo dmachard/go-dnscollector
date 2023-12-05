@@ -334,7 +334,7 @@ func (c *PrometheusCountersSet) Record(dm dnsutils.DNSMessage) {
 
 	// top domains
 	switch dm.DNS.Rcode {
-	case pkgconfig.DNSRcodeTimeout:
+	case dnsutils.DNSRcodeTimeout:
 		if _, exists := c.evicted[dm.DNS.Qname]; !exists {
 			c.evicted[dm.DNS.Qname] = 1
 		} else {
@@ -342,7 +342,7 @@ func (c *PrometheusCountersSet) Record(dm dnsutils.DNSMessage) {
 		}
 		c.topEvicted.Record(dm.DNS.Qname, c.evicted[dm.DNS.Qname])
 
-	case pkgconfig.DNSRcodeServFail:
+	case dnsutils.DNSRcodeServFail:
 		if _, exists := c.sfdomains[dm.DNS.Qname]; !exists {
 			c.sfdomains[dm.DNS.Qname] = 1
 		} else {
@@ -350,7 +350,7 @@ func (c *PrometheusCountersSet) Record(dm dnsutils.DNSMessage) {
 		}
 		c.topSfDomains.Record(dm.DNS.Qname, c.sfdomains[dm.DNS.Qname])
 
-	case pkgconfig.DNSRcodeNXDomain:
+	case dnsutils.DNSRcodeNXDomain:
 		if _, exists := c.nxdomains[dm.DNS.Qname]; !exists {
 			c.nxdomains[dm.DNS.Qname] = 1
 		} else {

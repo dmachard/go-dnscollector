@@ -26,7 +26,7 @@ func Test_FileIngestor_Pcap(t *testing.T) {
 		msg := <-g.Channel()
 
 		// check qname
-		if msg.DNSTap.Operation == pkgconfig.DNSTapClientQuery {
+		if msg.DNSTap.Operation == dnsutils.DNSTapClientQuery {
 			break
 		}
 	}

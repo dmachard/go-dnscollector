@@ -6,6 +6,9 @@ const (
 	ProtoIPv6  = "IPv6"
 	ProtoIPv4  = "IPv4"
 
+	ProtoUDP = "UDP"
+	ProtoTCP = "TCP"
+
 	SocketTCP  = "tcp"
 	SocketUDP  = "udp"
 	SocketUnix = "unix"

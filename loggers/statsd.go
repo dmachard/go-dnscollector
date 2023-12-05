@@ -163,7 +163,7 @@ func (c *StatsdClient) RecordDNSMessage(dm dnsutils.DNSMessage) {
 	} else {
 		c.Stats.Streams[dm.DNSTap.Identity].Domains[dm.DNS.Qname] += 1
 	}
-	if dm.DNS.Rcode == pkgconfig.DNSRcodeNXDomain {
+	if dm.DNS.Rcode == dnsutils.DNSRcodeNXDomain {
 		if _, exists := c.Stats.Streams[dm.DNSTap.Identity].Nxdomains[dm.DNS.Qname]; !exists {
 			c.Stats.Streams[dm.DNSTap.Identity].Nxdomains[dm.DNS.Qname] = 1
 		} else {

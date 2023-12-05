@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/netlib"
-	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -761,7 +760,7 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 	switch dm.NetworkInfo.Protocol {
 
 	// DNS over UDP
-	case pkgconfig.ProtoUDP:
+	case netlib.ProtoUDP:
 		udp.SrcPort = layers.UDPPort(srcPort)
 		udp.DstPort = layers.UDPPort(dstPort)
 
@@ -778,7 +777,7 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 		}
 
 	// DNS over TCP
-	case pkgconfig.ProtoTCP:
+	case netlib.ProtoTCP:
 		tcp.SrcPort = layers.TCPPort(srcPort)
 		tcp.DstPort = layers.TCPPort(dstPort)
 		tcp.PSH = true
@@ -802,7 +801,7 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 
 	// DNS over HTTPS and DNS over TLS
 	// These protocols are translated to DNS over UDP
-	case pkgconfig.ProtoDoH, pkgconfig.ProtoDoT:
+	case ProtoDoH, ProtoDoT:
 		udp.SrcPort = layers.UDPPort(srcPort)
 		udp.DstPort = layers.UDPPort(dstPort)
 
@@ -862,7 +861,7 @@ func GetFakeDNSMessageWithPayload() DNSMessage {
 
 	dm := GetFakeDNSMessage()
 	dm.NetworkInfo.Family = netlib.ProtoIPv4
-	dm.NetworkInfo.Protocol = pkgconfig.ProtoUDP
+	dm.NetworkInfo.Protocol = netlib.ProtoUDP
 	dm.DNS.Payload = dnsquestion
 	dm.DNS.Length = len(dnsquestion)
 	return dm

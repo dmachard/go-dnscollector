@@ -563,7 +563,7 @@ func (c *RestAPI) RecordDNSMessage(dm dnsutils.DNSMessage) {
 		c.HitsUniq.Domains[dm.DNS.Qname] += 1
 	}
 
-	if dm.DNS.Rcode == pkgconfig.DNSRcodeNXDomain {
+	if dm.DNS.Rcode == dnsutils.DNSRcodeNXDomain {
 		if _, exists := c.HitsUniq.NxDomains[dm.DNS.Qname]; !exists {
 			c.HitsUniq.NxDomains[dm.DNS.Qname] = 1
 		} else {
@@ -571,7 +571,7 @@ func (c *RestAPI) RecordDNSMessage(dm dnsutils.DNSMessage) {
 		}
 	}
 
-	if dm.DNS.Rcode == pkgconfig.DNSRcodeServFail {
+	if dm.DNS.Rcode == dnsutils.DNSRcodeServFail {
 		if _, exists := c.HitsUniq.SfDomains[dm.DNS.Qname]; !exists {
 			c.HitsUniq.SfDomains[dm.DNS.Qname] = 1
 		} else {
@@ -592,10 +592,10 @@ func (c *RestAPI) RecordDNSMessage(dm dnsutils.DNSMessage) {
 	if dm.PublicSuffix != nil {
 		c.TopTLDs.Record(dm.PublicSuffix.QnamePublicSuffix, c.HitsUniq.PublicSuffixes[dm.PublicSuffix.QnamePublicSuffix])
 	}
-	if dm.DNS.Rcode == pkgconfig.DNSRcodeNXDomain {
+	if dm.DNS.Rcode == dnsutils.DNSRcodeNXDomain {
 		c.TopNonExistent.Record(dm.DNS.Qname, c.HitsUniq.NxDomains[dm.DNS.Qname])
 	}
-	if dm.DNS.Rcode == pkgconfig.DNSRcodeServFail {
+	if dm.DNS.Rcode == dnsutils.DNSRcodeServFail {
 		c.TopServFail.Record(dm.DNS.Qname, c.HitsUniq.SfDomains[dm.DNS.Qname])
 	}
 

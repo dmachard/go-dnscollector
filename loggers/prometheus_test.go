@@ -96,7 +96,7 @@ func getMetricsTestCase(config *pkgconfig.Config, labels map[string]string) func
 
 		nxRecord := dnsutils.GetFakeDNSMessage()
 		nxRecord.DNS.Type = dnsutils.DNSReply
-		nxRecord.DNS.Rcode = pkgconfig.DNSRcodeNXDomain
+		nxRecord.DNS.Rcode = dnsutils.DNSRcodeNXDomain
 		nxRecord.NetworkInfo.Protocol = UDP
 		nxRecord.NetworkInfo.Family = IPv4
 		nxRecord.DNS.Length = 123
@@ -108,7 +108,7 @@ func getMetricsTestCase(config *pkgconfig.Config, labels map[string]string) func
 
 		sfRecord := dnsutils.GetFakeDNSMessage()
 		sfRecord.DNS.Type = dnsutils.DNSReply
-		sfRecord.DNS.Rcode = pkgconfig.DNSRcodeServFail
+		sfRecord.DNS.Rcode = dnsutils.DNSRcodeServFail
 		sfRecord.NetworkInfo.Protocol = UDP
 		sfRecord.NetworkInfo.Family = IPv4
 		sfRecord.DNS.Length = 123

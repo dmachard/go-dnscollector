@@ -32,23 +32,6 @@ const (
 	SASLMechanismPlain = "PLAIN"
 	SASLMechanismScram = "SCRAM-SHA-512"
 
-	DNSRcodeNXDomain = "NXDOMAIN"
-	DNSRcodeServFail = "SERVFAIL"
-	DNSRcodeTimeout  = "TIMEOUT"
-
-	DNSTapOperationQuery = "QUERY"
-	DNSTapOperationReply = "REPLY"
-
-	DNSTapClientResponse = "CLIENT_RESPONSE"
-	DNSTapClientQuery    = "CLIENT_QUERY"
-
-	DNSTapIdentityTest = "test_id"
-
-	ProtoUDP = "UDP"
-	ProtoTCP = "TCP"
-	ProtoDoT = "DOT"
-	ProtoDoH = "DOH"
-
 	TLSV10 = "1.0"
 	TLSV11 = "1.1"
 	TLSV12 = "1.2"
