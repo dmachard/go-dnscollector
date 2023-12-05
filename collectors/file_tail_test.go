@@ -9,6 +9,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/loggers"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -21,7 +22,7 @@ func TestTailRun(t *testing.T) {
 	defer os.Remove(tmpFile.Name()) // clean up
 
 	// config
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 	config.Collectors.Tail.TimeLayout = "2006-01-02T15:04:05.999999999Z07:00"
 	config.Collectors.Tail.FilePath = tmpFile.Name()
 	config.Collectors.Tail.PatternQuery = "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_QUERY) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"

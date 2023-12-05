@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	publicsuffixlist "golang.org/x/net/publicsuffix"
 )
@@ -100,7 +101,7 @@ func (mp *MapTraffic) ProcessExpiredKeys() {
 }
 
 type ReducerProcessor struct {
-	config           *dnsutils.ConfigTransformers
+	config           *pkgconfig.ConfigTransformers
 	logger           *logger.Logger
 	name             string
 	instance         int
@@ -113,7 +114,7 @@ type ReducerProcessor struct {
 }
 
 func NewReducerSubprocessor(
-	config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+	config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) *ReducerProcessor {
@@ -131,7 +132,7 @@ func NewReducerSubprocessor(
 	return &s
 }
 
-func (p *ReducerProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+func (p *ReducerProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
 	p.mapTraffic.SetTTL(time.Duration(config.Reducer.WatchInterval) * time.Second)
 

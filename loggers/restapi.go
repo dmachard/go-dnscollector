@@ -9,6 +9,8 @@ import (
 	"sync"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/dmachard/go-topmap"
@@ -52,8 +54,8 @@ type RestAPI struct {
 	outputChan  chan dnsutils.DNSMessage
 	httpserver  net.Listener
 	httpmux     *http.ServeMux
-	config      *dnsutils.Config
-	configChan  chan *dnsutils.Config
+	config      *pkgconfig.Config
+	configChan  chan *pkgconfig.Config
 	logger      *logger.Logger
 	name        string
 
@@ -71,7 +73,7 @@ type RestAPI struct {
 	sync.RWMutex
 }
 
-func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, name string) *RestAPI {
+func NewRestAPI(config *pkgconfig.Config, logger *logger.Logger, name string) *RestAPI {
 	logger.Info("[%s] logger=restapi - enabled", name)
 	o := &RestAPI{
 		doneAPI:     make(chan bool),
@@ -80,7 +82,7 @@ func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, name string) *Re
 		stopRun:     make(chan bool),
 		doneRun:     make(chan bool),
 		config:      config,
-		configChan:  make(chan *dnsutils.Config),
+		configChan:  make(chan *pkgconfig.Config),
 		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.RestAPI.ChannelBufferSize),
 		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.RestAPI.ChannelBufferSize),
 		logger:      logger,
@@ -114,12 +116,12 @@ func (c *RestAPI) GetName() string { return c.name }
 func (c *RestAPI) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *RestAPI) ReadConfig() {
-	if !dnsutils.IsValidTLS(c.config.Loggers.RestAPI.TLSMinVersion) {
+	if !pkgconfig.IsValidTLS(c.config.Loggers.RestAPI.TLSMinVersion) {
 		c.logger.Fatal("logger rest api - invalid tls min version")
 	}
 }
 
-func (c *RestAPI) ReloadConfig(config *dnsutils.Config) {
+func (c *RestAPI) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration!")
 	c.configChan <- config
 }
@@ -670,13 +672,13 @@ func (c *RestAPI) ListenAndServe() {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLSVersion[c.config.Loggers.RestAPI.TLSMinVersion]
+		tlsConfig.MinVersion = pkgconfig.TLSVersion[c.config.Loggers.RestAPI.TLSMinVersion]
 
-		listener, err = tls.Listen(dnsutils.SocketTCP, addrlisten, tlsConfig)
+		listener, err = tls.Listen(netlib.SocketTCP, addrlisten, tlsConfig)
 
 	} else {
 		// basic listening
-		listener, err = net.Listen(dnsutils.SocketTCP, addrlisten)
+		listener, err = net.Listen(netlib.SocketTCP, addrlisten)
 	}
 
 	// something wrong ?

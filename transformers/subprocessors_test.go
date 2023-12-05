@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -17,7 +18,7 @@ const (
 
 func TestTransformsSuspicious(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
 
 	// init subproccesor
@@ -48,7 +49,7 @@ func TestTransformsSuspicious(t *testing.T) {
 
 func TestTransformsGeoIPLookupCountry(t *testing.T) {
 	// enable geoip
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.GeoIP.Enable = true
 	config.GeoIP.DBCountryFile = "../testsdata/GeoLite2-Country.mmdb"
 
@@ -77,7 +78,7 @@ func TestTransformsGeoIPLookupCountry(t *testing.T) {
 
 func TestTransformsGeoIPLookupAsn(t *testing.T) {
 	// enable geoip
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.GeoIP.Enable = true
 	config.GeoIP.DBASNFile = "../testsdata/GeoLite2-ASN.mmdb"
 
@@ -106,7 +107,7 @@ func TestTransformsGeoIPLookupAsn(t *testing.T) {
 
 func TestTransformsReduceQname(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.UserPrivacy.Enable = true
 	config.UserPrivacy.MinimazeQname = true
 
@@ -156,7 +157,7 @@ func TestTransformsReduceQname(t *testing.T) {
 
 func TestTransformsAnonymizeIPv4(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.UserPrivacy.Enable = true
 	config.UserPrivacy.AnonymizeIP = true
 
@@ -183,7 +184,7 @@ func TestTransformsAnonymizeIPv4(t *testing.T) {
 
 func TestTransformsAnonymizeIPv6(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.UserPrivacy.Enable = true
 	config.UserPrivacy.AnonymizeIP = true
 
@@ -210,7 +211,7 @@ func TestTransformsAnonymizeIPv6(t *testing.T) {
 
 func TestTransformsNormalizeLowercaseQname(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Normalize.Enable = true
 	config.Normalize.QnameLowerCase = true
 
@@ -237,7 +238,7 @@ func TestTransformsNormalizeLowercaseQname(t *testing.T) {
 
 func TestMultiTransforms(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Normalize.Enable = true
 	config.Normalize.QnameLowerCase = true
 	config.UserPrivacy.Enable = true
@@ -269,7 +270,7 @@ func TestMultiTransforms(t *testing.T) {
 
 func TestTransformAndFilter(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.UserPrivacy.Enable = true
 	config.UserPrivacy.AnonymizeIP = true
 

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -14,7 +15,7 @@ const (
 
 func TestFilteringQR(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
 	config.Filtering.LogQueries = false
 	config.Filtering.LogReplies = false
@@ -40,7 +41,7 @@ func TestFilteringQR(t *testing.T) {
 
 func TestFilteringByRcodeNOERROR(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
 	config.Filtering.DropRcodes = []string{"NOERROR"}
 
@@ -61,7 +62,7 @@ func TestFilteringByRcodeNOERROR(t *testing.T) {
 
 func TestFilteringByRcodeEmpty(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
 	config.Filtering.DropRcodes = []string{}
 
@@ -81,7 +82,7 @@ func TestFilteringByRcodeEmpty(t *testing.T) {
 
 func TestFilteringByKeepQueryIp(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
 	config.Filtering.KeepQueryIPFile = "../testsdata/filtering_queryip_keep.txt"
 
@@ -113,7 +114,7 @@ func TestFilteringByKeepQueryIp(t *testing.T) {
 
 func TestFilteringByDropQueryIp(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
 	config.Filtering.DropQueryIPFile = "../testsdata/filtering_queryip.txt"
 
@@ -145,7 +146,7 @@ func TestFilteringByDropQueryIp(t *testing.T) {
 
 func TestFilteringByKeepRdataIp(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
 	config.Filtering.KeepRdataFile = "../testsdata/filtering_rdataip_keep.txt"
 
@@ -241,7 +242,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 
 func TestFilteringByFqdn(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
 	config.Filtering.DropFqdnFile = "../testsdata/filtering_fqdn.txt"
 
@@ -267,7 +268,7 @@ func TestFilteringByFqdn(t *testing.T) {
 
 func TestFilteringByDomainRegex(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
 	config.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
 
@@ -298,7 +299,7 @@ func TestFilteringByDomainRegex(t *testing.T) {
 
 func TestFilteringByKeepDomain(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 
 	log := logger.New(false)
 	outChans := []chan dnsutils.DNSMessage{}
@@ -336,7 +337,7 @@ func TestFilteringByKeepDomain(t *testing.T) {
 
 func TestFilteringByKeepDomainRegex(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 
 	log := logger.New(false)
 	outChans := []chan dnsutils.DNSMessage{}
@@ -380,7 +381,7 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 
 func TestFilteringByDownsampleDisabled(t *testing.T) {
 	// config, down sample is disabled by default
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
 
 	log := logger.New(false)
@@ -406,7 +407,7 @@ func TestFilteringByDownsampleDisabled(t *testing.T) {
 
 func TestFilteringByDownsample(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
 	config.Filtering.Downsample = 2
 
@@ -440,7 +441,7 @@ func TestFilteringByDownsample(t *testing.T) {
 
 func TestFilteringByDownsampleUpdateJSONModel(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
 	config.Filtering.Downsample = 2
 
@@ -472,7 +473,7 @@ func TestFilteringByDownsampleUpdateJSONModel(t *testing.T) {
 
 func TestFilteringMultipleFilters(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
 	config.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
 	config.Filtering.DropQueryIPFile = "../testsdata/filtering_queryip.txt"

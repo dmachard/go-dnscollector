@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 func TestReducer_Json(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 
 	log := logger.New(false)
 	outChans := []chan dnsutils.DNSMessage{}
@@ -58,7 +59,7 @@ func TestReducer_Json(t *testing.T) {
 
 func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Reducer.Enable = true
 	config.Reducer.RepetitiveTrafficDetector = true
 	config.Reducer.WatchInterval = 1
@@ -171,7 +172,7 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 
 func TestReducer_QnamePlusOne(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Reducer.Enable = true
 	config.Reducer.RepetitiveTrafficDetector = true
 	config.Reducer.QnamePlusOne = true

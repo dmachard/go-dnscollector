@@ -39,7 +39,7 @@ dep:
 	@go mod tidy
 
 build:
-	CGO_ENABLED=0 go build -v -ldflags="$(LD_FLAGS)" -o ${BINARY_NAME} dnscollector.go
+	CGO_ENABLED=0 go build -v -ldflags="$(LD_FLAGS)" -o ${BINARY_NAME} dnscollector.go multiplexer.go
 
 run: build
 	./${BINARY_NAME}
@@ -51,13 +51,14 @@ lint:
 	$(GOPATH)/bin/golangci-lint run --config=.golangci.yml ./...
 	
 tests:
+	@go test -race -cover -v
+	@go test ./pkgconfig/ -race -cover -v
 	@go test ./dnsutils/ -race -cover -v
 	@go test ./netlib/ -race -cover -v
 	@go test -timeout 30s ./transformers/ -race -cover -v
 	@go test -timeout 30s ./collectors/ -race -cover -v
 	@go test -timeout 90s ./loggers/ -race -cover -v
 	@go test -timeout 30s ./processors/ -race -cover -v
-	@go test -timeout 30s . -race -cover -v
 
 clean:
 	@go clean

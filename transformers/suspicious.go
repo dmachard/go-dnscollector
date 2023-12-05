@@ -6,11 +6,12 @@ import (
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 type SuspiciousTransform struct {
-	config                *dnsutils.ConfigTransformers
+	config                *pkgconfig.ConfigTransformers
 	logger                *logger.Logger
 	name                  string
 	CommonQtypes          map[string]bool
@@ -21,7 +22,7 @@ type SuspiciousTransform struct {
 	logError              func(msg string, v ...interface{})
 }
 
-func NewSuspiciousSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+func NewSuspiciousSubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) SuspiciousTransform {
@@ -60,7 +61,7 @@ func (p *SuspiciousTransform) ReadConfig() {
 	}
 }
 
-func (p *SuspiciousTransform) ReloadConfig(config *dnsutils.ConfigTransformers) {
+func (p *SuspiciousTransform) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
 
 	p.ReadConfig()

@@ -7,6 +7,7 @@ import (
 	"unicode"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -22,14 +23,14 @@ func isConsonant(char rune) bool {
 }
 
 type MlProcessor struct {
-	config      *dnsutils.ConfigTransformers
+	config      *pkgconfig.ConfigTransformers
 	instance    int
 	outChannels []chan dnsutils.DNSMessage
 	logInfo     func(msg string, v ...interface{})
 	logError    func(msg string, v ...interface{})
 }
 
-func NewMachineLearningSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+func NewMachineLearningSubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) MlProcessor {
@@ -44,7 +45,7 @@ func NewMachineLearningSubprocessor(config *dnsutils.ConfigTransformers, logger 
 	return s
 }
 
-func (p *MlProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+func (p *MlProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
 }
 

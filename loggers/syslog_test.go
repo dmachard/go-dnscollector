@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -23,17 +25,17 @@ func Test_SyslogRunUdp(t *testing.T) {
 	}{
 		{
 			name:       "unix_format",
-			transport:  dnsutils.SocketUDP,
-			mode:       dnsutils.ModeText,
-			formatter:  dnsutils.SocketUnix,
+			transport:  netlib.SocketUDP,
+			mode:       pkgconfig.ModeText,
+			formatter:  netlib.SocketUnix,
 			framer:     "",
 			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
 			listenAddr: ":4000",
 		},
 		{
 			name:       "rfc3164_format",
-			transport:  dnsutils.SocketUDP,
-			mode:       dnsutils.ModeText,
+			transport:  netlib.SocketUDP,
+			mode:       pkgconfig.ModeText,
 			formatter:  "rfc3164",
 			framer:     "",
 			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
@@ -41,8 +43,8 @@ func Test_SyslogRunUdp(t *testing.T) {
 		},
 		{
 			name:       "rfc5424_format",
-			transport:  dnsutils.SocketUDP,
-			mode:       dnsutils.ModeText,
+			transport:  netlib.SocketUDP,
+			mode:       pkgconfig.ModeText,
 			formatter:  "rfc5424",
 			framer:     "",
 			pattern:    `<30>1 \d+-\d+-\d+.*`,
@@ -50,8 +52,8 @@ func Test_SyslogRunUdp(t *testing.T) {
 		},
 		{
 			name:       "rfc5424_format_rfc5425_framer",
-			transport:  dnsutils.SocketUDP,
-			mode:       dnsutils.ModeText,
+			transport:  netlib.SocketUDP,
+			mode:       pkgconfig.ModeText,
 			formatter:  "rfc5424",
 			framer:     "rfc5425",
 			pattern:    `\d+ \<30\>1 \d+-\d+-\d+.*`,
@@ -62,7 +64,7 @@ func Test_SyslogRunUdp(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			// init logger
-			config := dnsutils.GetFakeConfig()
+			config := pkgconfig.GetFakeConfig()
 			config.Loggers.Syslog.Transport = tc.transport
 			config.Loggers.Syslog.RemoteAddress = tc.listenAddr
 			config.Loggers.Syslog.Mode = tc.mode
@@ -119,17 +121,17 @@ func Test_SyslogRunTcp(t *testing.T) {
 	}{
 		{
 			name:       "unix_format",
-			transport:  dnsutils.SocketTCP,
-			mode:       dnsutils.ModeText,
-			formatter:  dnsutils.SocketUnix,
+			transport:  netlib.SocketTCP,
+			mode:       pkgconfig.ModeText,
+			formatter:  netlib.SocketUnix,
 			framer:     "",
 			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
 			listenAddr: ":4000",
 		},
 		{
 			name:       "rfc3164_format",
-			transport:  dnsutils.SocketTCP,
-			mode:       dnsutils.ModeText,
+			transport:  netlib.SocketTCP,
+			mode:       pkgconfig.ModeText,
 			formatter:  "rfc3164",
 			framer:     "",
 			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
@@ -137,8 +139,8 @@ func Test_SyslogRunTcp(t *testing.T) {
 		},
 		{
 			name:       "rfc5424_format",
-			transport:  dnsutils.SocketTCP,
-			mode:       dnsutils.ModeText,
+			transport:  netlib.SocketTCP,
+			mode:       pkgconfig.ModeText,
 			formatter:  "rfc5424",
 			framer:     "",
 			pattern:    `<30>1 \d+-\d+-\d+.*`,
@@ -146,8 +148,8 @@ func Test_SyslogRunTcp(t *testing.T) {
 		},
 		{
 			name:       "rfc5425_format_rfc5425_framer",
-			transport:  dnsutils.SocketTCP,
-			mode:       dnsutils.ModeText,
+			transport:  netlib.SocketTCP,
+			mode:       pkgconfig.ModeText,
 			formatter:  "rfc5424",
 			framer:     "rfc5425",
 			pattern:    `\d+ \<30\>1 \d+-\d+-\d+.*`,
@@ -158,7 +160,7 @@ func Test_SyslogRunTcp(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			// init logger
-			config := dnsutils.GetFakeConfig()
+			config := pkgconfig.GetFakeConfig()
 			config.Loggers.Syslog.Transport = tc.transport
 			config.Loggers.Syslog.RemoteAddress = tc.listenAddr
 			config.Loggers.Syslog.Mode = tc.mode
@@ -208,11 +210,11 @@ func Test_SyslogRunTcp(t *testing.T) {
 
 func Test_SyslogRun_RemoveNullCharacter(t *testing.T) {
 	// init logger
-	config := dnsutils.GetFakeConfig()
-	config.Loggers.Syslog.Transport = dnsutils.SocketUDP
+	config := pkgconfig.GetFakeConfig()
+	config.Loggers.Syslog.Transport = netlib.SocketUDP
 	config.Loggers.Syslog.RemoteAddress = ":4000"
-	config.Loggers.Syslog.Mode = dnsutils.ModeText
-	config.Loggers.Syslog.Formatter = dnsutils.SocketUnix
+	config.Loggers.Syslog.Mode = pkgconfig.ModeText
+	config.Loggers.Syslog.Formatter = netlib.SocketUnix
 	config.Loggers.Syslog.Framer = ""
 	config.Loggers.Syslog.FlushInterval = 1
 	config.Loggers.Syslog.BufferSize = 0

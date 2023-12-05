@@ -7,18 +7,19 @@ import (
 	"github.com/dmachard/go-dnscollector/collectors"
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/loggers"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	"gopkg.in/yaml.v2"
 )
 
-func IsMuxEnabled(config *dnsutils.Config) bool {
+func IsMuxEnabled(config *pkgconfig.Config) bool {
 	if len(config.Multiplexer.Collectors) > 0 && len(config.Multiplexer.Loggers) > 0 && len(config.Multiplexer.Routes) > 0 {
 		return true
 	}
 	return false
 }
 
-func IsLoggerRouted(config *dnsutils.Config, name string) bool {
+func IsLoggerRouted(config *pkgconfig.Config, name string) bool {
 	for _, routes := range config.Multiplexer.Routes {
 		for _, dst := range routes.Dst {
 			if dst == name {
@@ -29,7 +30,7 @@ func IsLoggerRouted(config *dnsutils.Config, name string) bool {
 	return false
 }
 
-func IsCollectorRouted(config *dnsutils.Config, name string) bool {
+func IsCollectorRouted(config *pkgconfig.Config, name string) bool {
 	for _, routes := range config.Multiplexer.Routes {
 		for _, src := range routes.Src {
 			if src == name {
@@ -40,7 +41,7 @@ func IsCollectorRouted(config *dnsutils.Config, name string) bool {
 	return false
 }
 
-func AreRoutesValid(config *dnsutils.Config) (ret error) {
+func AreRoutesValid(config *pkgconfig.Config) (ret error) {
 	for _, route := range config.Multiplexer.Routes {
 		if len(route.Src) == 0 || len(route.Dst) == 0 {
 			ret = fmt.Errorf("incomplete route, from: %s, to: %s", strings.Join(route.Src, ", "), strings.Join(route.Dst, ", "))
@@ -49,7 +50,7 @@ func AreRoutesValid(config *dnsutils.Config) (ret error) {
 	return
 }
 
-func GetItemConfig(section string, config *dnsutils.Config, item dnsutils.MultiplexInOut) *dnsutils.Config {
+func GetItemConfig(section string, config *pkgconfig.Config, item pkgconfig.MultiplexInOut) *pkgconfig.Config {
 	// load config
 	cfg := make(map[string]interface{})
 	cfg[section] = item.Params
@@ -59,7 +60,7 @@ func GetItemConfig(section string, config *dnsutils.Config, item dnsutils.Multip
 	}
 
 	// get config with default values
-	subcfg := &dnsutils.Config{}
+	subcfg := &pkgconfig.Config{}
 	subcfg.SetDefault()
 
 	// add transformer
@@ -78,7 +79,7 @@ func GetItemConfig(section string, config *dnsutils.Config, item dnsutils.Multip
 	return subcfg
 }
 
-func InitMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[string]dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) {
+func InitMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[string]dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
 
 	// checking all routes before to continue
 	if err := AreRoutesValid(config); err != nil {
@@ -198,7 +199,7 @@ func InitMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[st
 	}
 }
 
-func ReloadMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[string]dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger) {
+func ReloadMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[string]dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
 	for _, output := range config.Multiplexer.Loggers {
 		newcfg := GetItemConfig("loggers", config, output)
 		if _, ok := mapLoggers[output.Name]; ok {

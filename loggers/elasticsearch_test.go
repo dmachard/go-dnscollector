@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,7 +23,7 @@ func Test_ElasticSearchClient(t *testing.T) {
 		inputSize int
 	}{
 		{
-			mode:      dnsutils.ModeFlatJSON,
+			mode:      pkgconfig.ModeFlatJSON,
 			bulkSize:  10,
 			inputSize: 500,
 		},
@@ -36,7 +37,7 @@ func Test_ElasticSearchClient(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.mode, func(t *testing.T) {
-			conf := dnsutils.GetFakeConfig()
+			conf := pkgconfig.GetFakeConfig()
 			conf.Loggers.ElasticSearchClient.Index = "indexname"
 			conf.Loggers.ElasticSearchClient.BulkSize = tc.bulkSize
 			g := NewElasticSearchClient(conf, logger.New(false), "test")
@@ -64,7 +65,7 @@ func Test_ElasticSearchClient(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				conn.Write([]byte(dnsutils.HTTPOK))
+				conn.Write([]byte(pkgconfig.HTTPOK))
 
 				// read payload from request body
 				payload, err := io.ReadAll(request.Body)
@@ -103,7 +104,7 @@ func Test_ElasticSearchClientFlushINterval(t *testing.T) {
 		flushInterval int
 	}{
 		{
-			mode:          dnsutils.ModeFlatJSON,
+			mode:          pkgconfig.ModeFlatJSON,
 			bulkSize:      100,
 			inputSize:     99,
 			flushInterval: 5,
@@ -118,7 +119,7 @@ func Test_ElasticSearchClientFlushINterval(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.mode, func(t *testing.T) {
-			conf := dnsutils.GetFakeConfig()
+			conf := pkgconfig.GetFakeConfig()
 			conf.Loggers.ElasticSearchClient.Index = "indexname"
 			conf.Loggers.ElasticSearchClient.BulkSize = tc.bulkSize
 			conf.Loggers.ElasticSearchClient.FlushInterval = tc.flushInterval
@@ -144,7 +145,7 @@ func Test_ElasticSearchClientFlushINterval(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			conn.Write([]byte(dnsutils.HTTPOK))
+			conn.Write([]byte(pkgconfig.HTTPOK))
 
 			// read payload from request body
 			payload, err := io.ReadAll(request.Body)

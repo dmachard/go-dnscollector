@@ -5,6 +5,7 @@ package collectors
 
 import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -12,13 +13,13 @@ type TZSPSniffer struct {
 	done    chan bool
 	exit    chan bool
 	loggers []dnsutils.Worker
-	config  *dnsutils.Config
+	config  *pkgconfig.Config
 	logger  *logger.Logger
 	name    string
 }
 
 // workaround for macos, not yet supported
-func NewTZSP(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *AfpacketSniffer {
+func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
 	logger.Info("[%s] tzsp collector - enabled", name)
 	s := &AfpacketSniffer{
 		done:    make(chan bool),
@@ -56,7 +57,7 @@ func (c *TZSPSniffer) Loggers() []chan dnsutils.DNSMessage {
 
 func (c *TZSPSniffer) ReadConfig() {}
 
-func (c *TZSPSniffer) ReloadConfig(config *dnsutils.Config) {}
+func (c *TZSPSniffer) ReloadConfig(config *pkgconfig.Config) {}
 
 func (c *TZSPSniffer) Channel() chan dnsutils.DNSMessage {
 	return nil

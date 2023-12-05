@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -32,7 +33,7 @@ func Test_DnstapClient(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.transport, func(t *testing.T) {
 			// init logger
-			cfg := dnsutils.GetFakeConfig()
+			cfg := pkgconfig.GetFakeConfig()
 			cfg.Loggers.DNSTap.FlushInterval = 1
 			cfg.Loggers.DNSTap.BufferSize = 0
 			if tc.transport == "unix" {

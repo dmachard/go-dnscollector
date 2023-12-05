@@ -12,6 +12,8 @@ import (
 	syslog "github.com/dmachard/go-clientsyslog"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -59,8 +61,8 @@ type Syslog struct {
 	doneRun            chan bool
 	inputChan          chan dnsutils.DNSMessage
 	outputChan         chan dnsutils.DNSMessage
-	config             *dnsutils.Config
-	configChan         chan *dnsutils.Config
+	config             *pkgconfig.Config
+	configChan         chan *pkgconfig.Config
 	logger             *logger.Logger
 	severity           syslog.Priority
 	facility           syslog.Priority
@@ -72,7 +74,7 @@ type Syslog struct {
 	name               string
 }
 
-func NewSyslog(config *dnsutils.Config, console *logger.Logger, name string) *Syslog {
+func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *Syslog {
 	console.Info("[%s] logger=syslog - enabled", name)
 	s := &Syslog{
 		stopProcess:        make(chan bool),
@@ -85,7 +87,7 @@ func NewSyslog(config *dnsutils.Config, console *logger.Logger, name string) *Sy
 		transportReconnect: make(chan bool),
 		logger:             console,
 		config:             config,
-		configChan:         make(chan *dnsutils.Config),
+		configChan:         make(chan *pkgconfig.Config),
 		name:               name,
 	}
 	s.ReadConfig()
@@ -97,11 +99,11 @@ func (s *Syslog) GetName() string { return s.name }
 func (s *Syslog) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (s *Syslog) ReadConfig() {
-	if !dnsutils.IsValidTLS(s.config.Loggers.Syslog.TLSMinVersion) {
+	if !pkgconfig.IsValidTLS(s.config.Loggers.Syslog.TLSMinVersion) {
 		s.logger.Fatal("logger=syslog - invalid tls min version")
 	}
 
-	if !dnsutils.IsValidMode(s.config.Loggers.Syslog.Mode) {
+	if !pkgconfig.IsValidMode(s.config.Loggers.Syslog.Mode) {
 		s.logger.Fatal("logger=syslog - invalid mode text or json expected")
 	}
 	severity, err := GetPriority(s.config.Loggers.Syslog.Severity)
@@ -123,7 +125,7 @@ func (s *Syslog) ReadConfig() {
 	}
 }
 
-func (s *Syslog) ReloadConfig(config *dnsutils.Config) {
+func (s *Syslog) ReloadConfig(config *pkgconfig.Config) {
 	s.LogInfo("reload configuration!")
 	s.configChan <- config
 }
@@ -165,19 +167,19 @@ func (s *Syslog) ConnectToRemote() {
 		case "local":
 			s.LogInfo("connecting to local syslog...")
 			logWriter, err = syslog.New(s.facility|s.severity, "")
-		case dnsutils.SocketUnix, dnsutils.SocketUDP, dnsutils.SocketTCP:
+		case netlib.SocketUnix, netlib.SocketUDP, netlib.SocketTCP:
 			s.LogInfo("connecting to %s://%s ...",
 				s.config.Loggers.Syslog.Transport,
 				s.config.Loggers.Syslog.RemoteAddress)
 			logWriter, err = syslog.Dial(s.config.Loggers.Syslog.Transport,
 				s.config.Loggers.Syslog.RemoteAddress, s.facility|s.severity,
 				s.config.Loggers.Syslog.Tag)
-		case dnsutils.SocketTLS:
+		case netlib.SocketTLS:
 			s.LogInfo("connecting to %s://%s ...",
 				s.config.Loggers.Syslog.Transport,
 				s.config.Loggers.Syslog.RemoteAddress)
 
-			tlsOptions := dnsutils.TLSOptions{
+			tlsOptions := pkgconfig.TLSOptions{
 				InsecureSkipVerify: s.config.Loggers.Syslog.TLSInsecure,
 				MinVersion:         s.config.Loggers.Syslog.TLSMinVersion,
 				CAFile:             s.config.Loggers.Syslog.CAFile,
@@ -185,7 +187,7 @@ func (s *Syslog) ConnectToRemote() {
 				KeyFile:            s.config.Loggers.Syslog.KeyFile,
 			}
 
-			tlsConfig, err = dnsutils.TLSClientConfig(tlsOptions)
+			tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
 			if err == nil {
 				logWriter, err = syslog.DialWithTLSConfig(s.config.Loggers.Syslog.Transport,
 					s.config.Loggers.Syslog.RemoteAddress, s.facility|s.severity,
@@ -299,7 +301,7 @@ func (s *Syslog) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 
 	for _, dm := range *buf {
 		switch s.config.Loggers.Syslog.Mode {
-		case dnsutils.ModeText:
+		case pkgconfig.ModeText:
 			// write the text line to the buffer
 			buffer.Write(dm.Bytes(s.textFormat,
 				s.config.Global.TextFormatDelimiter,
@@ -320,7 +322,7 @@ func (s *Syslog) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 			// and reset the buffer
 			_, err = buffer.WriteTo(s.syslogWriter)
 
-		case dnsutils.ModeJSON:
+		case pkgconfig.ModeJSON:
 			// encode to json the dns message
 			json.NewEncoder(buffer).Encode(dm)
 
@@ -328,7 +330,7 @@ func (s *Syslog) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 			// and reset the buffer
 			_, err = buffer.WriteTo(s.syslogWriter)
 
-		case dnsutils.ModeFlatJSON:
+		case pkgconfig.ModeFlatJSON:
 			// get flatten object
 			flat, errflat := dm.Flatten()
 			if errflat != nil {

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -14,7 +15,7 @@ func Test_DnsProcessor(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init and run the dns processor
-	consumer := NewDNSProcessor(dnsutils.GetFakeConfig(), logger, "test", 512)
+	consumer := NewDNSProcessor(pkgconfig.GetFakeConfig(), logger, "test", 512)
 	chanTo := make(chan dnsutils.DNSMessage, 512)
 	go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
 

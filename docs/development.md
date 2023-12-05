@@ -103,10 +103,10 @@ Create the following file `transformers/mytransform.go` and `loggers/mytransform
 
 ```golang
 type MyTransform struct {
- config *dnsutils.ConfigTransformers
+ config *pkgconfig.ConfigTransformers
 }
 
-func NewMyTransform(config *dnsutils.ConfigTransformers) MyTransform {
+func NewMyTransform(config *pkgconfig.ConfigTransformers) MyTransform {
  s := MyTransform{
   config: config,
  }
@@ -158,13 +158,13 @@ import (
 type MyLogger struct {
  done               chan bool
  channel            chan dnsutils.DnsMessage
- config             *dnsutils.Config
+ config             *pkgconfig.Config
  logger             *logger.Logger
  exit               chan bool
  name               string
 }
 
-func NewMyLogger(config *dnsutils.Config, logger *logger.Logger, name string) *MyLogger {
+func NewMyLogger(config *pkgconfig.Config, logger *logger.Logger, name string) *MyLogger {
  o := &MyLogger{
   done:               make(chan bool),
   exit:               make(chan bool),
@@ -263,13 +263,13 @@ type MyCollector struct {
  done    chan bool
  exit    chan bool
  loggers []dnsutils.Worker
- config  *dnsutils.Config
+ config  *pkgconfig.Config
  logger  *logger.Logger
  name    string
 }
 
 // workaround for macos, not yet supported
-func NewMyCollector(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *MyCollector {
+func NewMyCollector(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *MyCollector {
  logger.Info("[%s] mycollector - enabled", name)
  s := &MyCollector{
   done:    make(chan bool),

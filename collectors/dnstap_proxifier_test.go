@@ -9,6 +9,8 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/loggers"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -24,19 +26,19 @@ func Test_DnstapProxifier(t *testing.T) {
 	}{
 		{
 			name:       "tcp_default",
-			mode:       dnsutils.SocketTCP,
+			mode:       netlib.SocketTCP,
 			address:    ":6000",
 			listenPort: 0,
 		},
 		{
 			name:       "tcp_custom_port",
-			mode:       dnsutils.SocketTCP,
+			mode:       netlib.SocketTCP,
 			address:    ":7100",
 			listenPort: 7100,
 		},
 		{
 			name:       "unix_default",
-			mode:       dnsutils.SocketUnix,
+			mode:       netlib.SocketUnix,
 			address:    "/tmp/dnscollector_relay.sock",
 			listenPort: 0,
 		},
@@ -46,11 +48,11 @@ func Test_DnstapProxifier(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			g := loggers.NewFakeLogger()
 
-			config := dnsutils.GetFakeConfig()
+			config := pkgconfig.GetFakeConfig()
 			if tc.listenPort > 0 {
 				config.Collectors.DnstapProxifier.ListenPort = tc.listenPort
 			}
-			if tc.mode == dnsutils.SocketUnix {
+			if tc.mode == netlib.SocketUnix {
 				config.Collectors.DnstapProxifier.SockPath = tc.address
 			}
 
@@ -111,7 +113,7 @@ func Test_DnstapProxifier(t *testing.T) {
 // func TestDnstapProxifier_TcpSocket(t *testing.T) {
 // 	g := loggers.NewFakeLogger()
 
-// 	config := dnsutils.GetFakeConfig()
+// 	config := pkgconfig.GetFakeConfig()
 // 	config.Collectors.DnstapProxifier.ListenPort = 6100
 // 	config.Collectors.DnstapProxifier.SockPath = "/tmp/dnscollector_relay.sock"
 
@@ -166,7 +168,7 @@ func Test_DnstapProxifier(t *testing.T) {
 
 // func TestDnstapProxifier_UnixSocket(t *testing.T) {
 // 	g := loggers.NewFakeLogger()
-// 	config := dnsutils.GetFakeConfig()
+// 	config := pkgconfig.GetFakeConfig()
 // 	config.Collectors.DnstapProxifier.SockPath = "/tmp/dnscollector_relay.sock"
 // 	c := NewDnstapProxifier([]dnsutils.Worker{g}, config, logger.New(false), "test")
 // 	if err := c.Listen(); err != nil {

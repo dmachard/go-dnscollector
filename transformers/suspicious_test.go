@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 func TestSuspicious_Json(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 
 	log := logger.New(false)
 	outChans := []chan dnsutils.DNSMessage{}
@@ -63,7 +64,7 @@ func TestSuspicious_Json(t *testing.T) {
 
 func TestSuspicious_MalformedPacket(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
 
 	log := logger.New(false)
@@ -92,7 +93,7 @@ func TestSuspicious_MalformedPacket(t *testing.T) {
 
 func TestSuspicious_LongDomain(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
 	config.Suspicious.ThresholdQnameLen = 4
 
@@ -122,7 +123,7 @@ func TestSuspicious_LongDomain(t *testing.T) {
 
 func TestSuspicious_SlowDomain(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
 	config.Suspicious.ThresholdSlow = 3.0
 
@@ -152,7 +153,7 @@ func TestSuspicious_SlowDomain(t *testing.T) {
 
 func TestSuspicious_LargePacket(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
 	config.Suspicious.ThresholdPacketLen = 4
 
@@ -182,7 +183,7 @@ func TestSuspicious_LargePacket(t *testing.T) {
 
 func TestSuspicious_UncommonQtype(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
 
 	log := logger.New(false)
@@ -211,7 +212,7 @@ func TestSuspicious_UncommonQtype(t *testing.T) {
 
 func TestSuspicious_ExceedMaxLabels(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
 	config.Suspicious.ThresholdMaxLabels = 2
 
@@ -241,7 +242,7 @@ func TestSuspicious_ExceedMaxLabels(t *testing.T) {
 
 func TestSuspicious_UnallowedChars(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
 
 	log := logger.New(false)
@@ -270,7 +271,7 @@ func TestSuspicious_UnallowedChars(t *testing.T) {
 
 func TestSuspicious_WhitelistDomains(t *testing.T) {
 	// config
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Suspicious.Enable = true
 
 	log := logger.New(false)
