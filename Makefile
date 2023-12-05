@@ -51,7 +51,7 @@ lint:
 	$(GOPATH)/bin/golangci-lint run --config=.golangci.yml ./...
 	
 tests:
-    @go test . -race -cover -v
+	@go test -race -cover -v
 	@go test ./pkgconfig/ -race -cover -v
 	@go test ./dnsutils/ -race -cover -v
 	@go test ./netlib/ -race -cover -v
