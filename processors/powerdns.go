@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
@@ -32,15 +33,15 @@ type PdnsProcessor struct {
 	stopMonitor  chan bool
 	recvFrom     chan []byte
 	logger       *logger.Logger
-	config       *dnsutils.Config
-	ConfigChan   chan *dnsutils.Config
+	config       *pkgconfig.Config
+	ConfigChan   chan *pkgconfig.Config
 	name         string
 	chanSize     int
 	dropped      chan string
 	droppedCount map[string]int
 }
 
-func NewPdnsProcessor(connID int, config *dnsutils.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
+func NewPdnsProcessor(connID int, config *pkgconfig.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
 	logger.Info("[%s] processor=pdns#%d - initialization...", name, connID)
 	d := PdnsProcessor{
 		ConnID:       connID,
@@ -52,7 +53,7 @@ func NewPdnsProcessor(connID int, config *dnsutils.Config, logger *logger.Logger
 		chanSize:     size,
 		logger:       logger,
 		config:       config,
-		ConfigChan:   make(chan *dnsutils.Config),
+		ConfigChan:   make(chan *pkgconfig.Config),
 		name:         name,
 		dropped:      make(chan string),
 		droppedCount: map[string]int{},
@@ -181,10 +182,10 @@ RUN_LOOP:
 			dm.DNSTap.Identity = string(pbdm.GetServerIdentity())
 			dm.DNSTap.Operation = ProtobufPowerDNSToDNSTap[pbdm.GetType().String()]
 
-			if ipVersion, valid := dnsutils.IPVersion[pbdm.GetSocketFamily().String()]; valid {
+			if ipVersion, valid := pkgconfig.IPVersion[pbdm.GetSocketFamily().String()]; valid {
 				dm.NetworkInfo.Family = ipVersion
 			} else {
-				dm.NetworkInfo.Family = dnsutils.StrUnknown
+				dm.NetworkInfo.Family = pkgconfig.StrUnknown
 			}
 			dm.NetworkInfo.Protocol = pbdm.GetSocketProtocol().String()
 

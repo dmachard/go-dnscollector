@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-logger"
@@ -56,15 +57,15 @@ type DNSTapProcessor struct {
 	stopMonitor  chan bool
 	recvFrom     chan []byte
 	logger       *logger.Logger
-	config       *dnsutils.Config
-	ConfigChan   chan *dnsutils.Config
+	config       *pkgconfig.Config
+	ConfigChan   chan *pkgconfig.Config
 	name         string
 	chanSize     int
 	dropped      chan string
 	droppedCount map[string]int
 }
 
-func NewDNSTapProcessor(connID int, config *dnsutils.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
+func NewDNSTapProcessor(connID int, config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
 	logger.Info("[%s] processor=dnstap#%d - initialization...", name, connID)
 
 	d := DNSTapProcessor{
@@ -77,7 +78,7 @@ func NewDNSTapProcessor(connID int, config *dnsutils.Config, logger *logger.Logg
 		chanSize:     size,
 		logger:       logger,
 		config:       config,
-		ConfigChan:   make(chan *dnsutils.Config),
+		ConfigChan:   make(chan *pkgconfig.Config),
 		name:         name,
 		dropped:      make(chan string),
 		droppedCount: map[string]int{},
@@ -209,10 +210,10 @@ RUN_LOOP:
 				dm.DNSTap.Extra = extra
 			}
 
-			if ipVersion, valid := dnsutils.IPVersion[dt.GetMessage().GetSocketFamily().String()]; valid {
+			if ipVersion, valid := pkgconfig.IPVersion[dt.GetMessage().GetSocketFamily().String()]; valid {
 				dm.NetworkInfo.Family = ipVersion
 			} else {
-				dm.NetworkInfo.Family = dnsutils.StrUnknown
+				dm.NetworkInfo.Family = pkgconfig.StrUnknown
 			}
 
 			dm.NetworkInfo.Protocol = dt.GetMessage().GetSocketProtocol().String()

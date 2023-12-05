@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -17,22 +18,22 @@ func Test_TcpClientRun(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.ModeText,
+			mode:    pkgconfig.ModeText,
 			pattern: " dns.collector ",
 		},
 		{
-			mode:    dnsutils.ModeJSON,
+			mode:    pkgconfig.ModeJSON,
 			pattern: "\"qname\":\"dns.collector\"",
 		},
 		{
-			mode:    dnsutils.ModeFlatJSON,
+			mode:    pkgconfig.ModeFlatJSON,
 			pattern: "\"dns.qname\":\"dns.collector\"",
 		},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.mode, func(t *testing.T) {
 			// init logger
-			cfg := dnsutils.GetFakeConfig()
+			cfg := pkgconfig.GetFakeConfig()
 			cfg.Loggers.TCPClient.FlushInterval = 1
 			cfg.Loggers.TCPClient.BufferSize = 0
 			cfg.Loggers.TCPClient.Mode = tc.mode
@@ -42,7 +43,7 @@ func Test_TcpClientRun(t *testing.T) {
 			g := NewTCPClient(cfg, logger.New(false), "test")
 
 			// fake json receiver
-			fakeRcvr, err := net.Listen(dnsutils.SocketTCP, ":9999")
+			fakeRcvr, err := net.Listen(pkgconfig.SocketTCP, ":9999")
 			if err != nil {
 				t.Fatal(err)
 			}

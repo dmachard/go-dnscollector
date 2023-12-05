@@ -7,12 +7,13 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 func TestExtract_Json(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	log := logger.New(false)
 	outChans := []chan dnsutils.DNSMessage{}
 	outChans = append(outChans, make(chan dnsutils.DNSMessage, 1))
@@ -57,7 +58,7 @@ func TestExtract_Json(t *testing.T) {
 
 func TestExtract_AddPayload(t *testing.T) {
 	// enable geoip
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Extract.Enable = true
 	config.Extract.AddPayload = true
 

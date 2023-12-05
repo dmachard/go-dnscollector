@@ -3,11 +3,11 @@ package main
 import (
 	"testing"
 
-	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 )
 
 func TestMuxIsDisabled(t *testing.T) {
-	config := &dnsutils.Config{}
+	config := &pkgconfig.Config{}
 	config.SetDefault()
 
 	if len(config.Multiplexer.Collectors) != 0 {
@@ -22,8 +22,8 @@ func TestMuxIsDisabled(t *testing.T) {
 }
 
 func TestMuxIsLoggerRouted(t *testing.T) {
-	config := dnsutils.GetFakeConfig()
-	config.Multiplexer.Routes = append(config.Multiplexer.Routes, dnsutils.MultiplexRoutes{Dst: []string{"logger1"}})
+	config := pkgconfig.GetFakeConfig()
+	config.Multiplexer.Routes = append(config.Multiplexer.Routes, pkgconfig.MultiplexRoutes{Dst: []string{"logger1"}})
 
 	if !IsLoggerRouted(config, "logger1") {
 		t.Error("Expected logger1 to be routed, but it wasn't.")
@@ -34,8 +34,8 @@ func TestMuxIsLoggerRouted(t *testing.T) {
 }
 
 func TestMuxIsCollectorRouted(t *testing.T) {
-	config := dnsutils.GetFakeConfig()
-	config.Multiplexer.Routes = append(config.Multiplexer.Routes, dnsutils.MultiplexRoutes{Src: []string{"collector1"}})
+	config := pkgconfig.GetFakeConfig()
+	config.Multiplexer.Routes = append(config.Multiplexer.Routes, pkgconfig.MultiplexRoutes{Src: []string{"collector1"}})
 
 	if !IsCollectorRouted(config, "collector1") {
 		t.Error("Expected collector1 to be routed, but it wasn't.")
@@ -46,8 +46,8 @@ func TestMuxIsCollectorRouted(t *testing.T) {
 }
 
 func TestMuxRouteIsInvalid(t *testing.T) {
-	config := dnsutils.GetFakeConfig()
-	config.Multiplexer.Routes = append(config.Multiplexer.Routes, dnsutils.MultiplexRoutes{Src: []string{"collector1"}})
+	config := pkgconfig.GetFakeConfig()
+	config.Multiplexer.Routes = append(config.Multiplexer.Routes, pkgconfig.MultiplexRoutes{Src: []string{"collector1"}})
 
 	err := AreRoutesValid(config)
 	if err == nil {

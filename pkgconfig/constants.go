@@ -1,4 +1,4 @@
-package dnsutils
+package pkgconfig
 
 import (
 	"crypto/tls"

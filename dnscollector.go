@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	"github.com/natefinch/lumberjack"
 	"github.com/prometheus/common/version"
@@ -27,7 +28,7 @@ func printUsage() {
 	fmt.Println("        Test config file")
 }
 
-func InitLogger(logger *logger.Logger, config *dnsutils.Config) {
+func InitLogger(logger *logger.Logger, config *pkgconfig.Config) {
 	// redirect app logs to file ?
 	if len(config.Global.Trace.Filename) > 0 {
 		logger.SetOutput(&lumberjack.Logger{
@@ -86,7 +87,7 @@ func main() {
 	logger := logger.New(true)
 
 	// load config
-	config, err := dnsutils.LoadConfig(configPath)
+	config, err := pkgconfig.LoadConfig(configPath)
 	if err != nil {
 		panic(fmt.Sprintf("main - config error:  %v", err))
 	}
@@ -120,7 +121,7 @@ func main() {
 				logger.Info("main - SIGHUP received")
 
 				// read config
-				err := dnsutils.ReloadConfig(configPath, config)
+				err := pkgconfig.ReloadConfig(configPath, config)
 				if err != nil {
 					panic(fmt.Sprintf("main - reload config error:  %v", err))
 				}

@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 func TestGeoIP_Json(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 
 	log := logger.New(false)
 	outChans := []chan dnsutils.DNSMessage{}
@@ -64,7 +65,7 @@ func TestGeoIP_Json(t *testing.T) {
 
 func TestGeoIP_LookupCountry(t *testing.T) {
 	// enable geoip
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.GeoIP.DBCountryFile = "../testsdata/GeoLite2-Country.mmdb"
 
 	log := logger.New(false)
@@ -95,7 +96,7 @@ func TestGeoIP_LookupCountry(t *testing.T) {
 
 func TestGeoIP_LookupAsn(t *testing.T) {
 	// enable geoip
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.GeoIP.DBASNFile = "../testsdata/GeoLite2-ASN.mmdb"
 
 	log := logger.New(false)

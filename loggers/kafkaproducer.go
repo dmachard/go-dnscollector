@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/segmentio/kafka-go"
@@ -25,8 +26,8 @@ type KafkaProducer struct {
 	doneRun        chan bool
 	inputChan      chan dnsutils.DNSMessage
 	outputChan     chan dnsutils.DNSMessage
-	config         *dnsutils.Config
-	configChan     chan *dnsutils.Config
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
 	logger         *logger.Logger
 	textFormat     []string
 	name           string
@@ -37,7 +38,7 @@ type KafkaProducer struct {
 	compressCodec  compress.Codec
 }
 
-func NewKafkaProducer(config *dnsutils.Config, logger *logger.Logger, name string) *KafkaProducer {
+func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name string) *KafkaProducer {
 	logger.Info("[%s] logger=kafka - enabled", name)
 	k := &KafkaProducer{
 		stopProcess:    make(chan bool),
@@ -48,7 +49,7 @@ func NewKafkaProducer(config *dnsutils.Config, logger *logger.Logger, name strin
 		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.KafkaProducer.ChannelBufferSize),
 		logger:         logger,
 		config:         config,
-		configChan:     make(chan *dnsutils.Config),
+		configChan:     make(chan *pkgconfig.Config),
 		kafkaReady:     make(chan bool),
 		kafkaReconnect: make(chan bool),
 		name:           name,
@@ -70,17 +71,17 @@ func (k *KafkaProducer) ReadConfig() {
 		k.textFormat = strings.Fields(k.config.Global.TextFormat)
 	}
 
-	if k.config.Loggers.KafkaProducer.Compression != dnsutils.CompressNone {
+	if k.config.Loggers.KafkaProducer.Compression != pkgconfig.CompressNone {
 		switch k.config.Loggers.KafkaProducer.Compression {
-		case dnsutils.CompressGzip:
+		case pkgconfig.CompressGzip:
 			k.compressCodec = &compress.GzipCodec
-		case dnsutils.CompressLz4:
+		case pkgconfig.CompressLz4:
 			k.compressCodec = &compress.Lz4Codec
-		case dnsutils.CompressSnappy:
+		case pkgconfig.CompressSnappy:
 			k.compressCodec = &compress.SnappyCodec
-		case dnsutils.CompressZstd:
+		case pkgconfig.CompressZstd:
 			k.compressCodec = &compress.ZstdCodec
-		case dnsutils.CompressNone:
+		case pkgconfig.CompressNone:
 			k.compressCodec = nil
 		default:
 			log.Fatal("kafka - invalid compress mode: ", k.config.Loggers.KafkaProducer.Compression)
@@ -88,7 +89,7 @@ func (k *KafkaProducer) ReadConfig() {
 	}
 }
 
-func (k *KafkaProducer) ReloadConfig(config *dnsutils.Config) {
+func (k *KafkaProducer) ReloadConfig(config *pkgconfig.Config) {
 	k.LogInfo("reload configuration!")
 	k.configChan <- config
 }
@@ -145,7 +146,7 @@ func (k *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Tim
 
 		// enable TLS
 		if k.config.Loggers.KafkaProducer.TLSSupport {
-			tlsOptions := dnsutils.TLSOptions{
+			tlsOptions := pkgconfig.TLSOptions{
 				InsecureSkipVerify: k.config.Loggers.KafkaProducer.TLSInsecure,
 				MinVersion:         k.config.Loggers.KafkaProducer.TLSMinVersion,
 				CAFile:             k.config.Loggers.KafkaProducer.CAFile,
@@ -153,7 +154,7 @@ func (k *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Tim
 				KeyFile:            k.config.Loggers.KafkaProducer.KeyFile,
 			}
 
-			tlsConfig, err := dnsutils.TLSClientConfig(tlsOptions)
+			tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
 			if err != nil {
 				k.logger.Fatal("logger=kafka - tls config failed:", err)
 			}
@@ -163,13 +164,13 @@ func (k *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Tim
 		// SASL Support
 		if k.config.Loggers.KafkaProducer.SaslSupport {
 			switch k.config.Loggers.KafkaProducer.SaslMechanism {
-			case dnsutils.SASLMechanismPlain:
+			case pkgconfig.SASLMechanismPlain:
 				mechanism := plain.Mechanism{
 					Username: k.config.Loggers.KafkaProducer.SaslUsername,
 					Password: k.config.Loggers.KafkaProducer.SaslPassword,
 				}
 				dialer.SASLMechanism = mechanism
-			case dnsutils.SASLMechanismScram:
+			case pkgconfig.SASLMechanismScram:
 				mechanism, err := scram.Mechanism(
 					scram.SHA512,
 					k.config.Loggers.KafkaProducer.SaslUsername,
@@ -207,13 +208,13 @@ func (k *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 
 	for _, dm := range *buf {
 		switch k.config.Loggers.KafkaProducer.Mode {
-		case dnsutils.ModeText:
+		case pkgconfig.ModeText:
 			strDm = dm.String(k.textFormat, k.config.Global.TextFormatDelimiter, k.config.Global.TextFormatBoundary)
-		case dnsutils.ModeJSON:
+		case pkgconfig.ModeJSON:
 			json.NewEncoder(buffer).Encode(dm)
 			strDm = buffer.String()
 			buffer.Reset()
-		case dnsutils.ModeFlatJSON:
+		case pkgconfig.ModeFlatJSON:
 			flat, err := dm.Flatten()
 			if err != nil {
 				k.LogError("flattening DNS message failed: %e", err)
@@ -233,7 +234,7 @@ func (k *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 
 	// add support for msg compression
 	var err error
-	if k.config.Loggers.KafkaProducer.Compression == dnsutils.CompressNone {
+	if k.config.Loggers.KafkaProducer.Compression == pkgconfig.CompressNone {
 		_, err = k.kafkaConn.WriteMessages(msgs...)
 	} else {
 		_, err = k.kafkaConn.WriteCompressedMessages(k.compressCodec, msgs...)

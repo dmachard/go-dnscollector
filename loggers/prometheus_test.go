@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 
 	dto "github.com/prometheus/client_model/go"
@@ -20,7 +21,7 @@ const (
 
 func TestPrometheus_BadAuth(t *testing.T) {
 	// init the logger
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 	g := NewPrometheus(config, logger.New(false), "test")
 
 	tt := []struct {
@@ -59,7 +60,7 @@ func TestPrometheus_BadAuth(t *testing.T) {
 
 func TestPrometheus_GetMetrics(t *testing.T) {
 	// init the logger
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 	config.Loggers.Prometheus.HistogramMetricsEnabled = true
 
 	// By default, prometheus uses 'stream_id' as the label
@@ -71,8 +72,8 @@ func TestPrometheus_GetMetrics(t *testing.T) {
 
 // This helper generates a set of DNS packes for logger to count
 // It then collects Prometheus metrics to verify they exist and have expected labels/values
-// func getMetricsHelper(config *dnsutils.Config, labels map[string]string, t *testing.T) {
-func getMetricsTestCase(config *dnsutils.Config, labels map[string]string) func(t *testing.T) {
+// func getMetricsHelper(config *pkgconfig.Config, labels map[string]string, t *testing.T) {
+func getMetricsTestCase(config *pkgconfig.Config, labels map[string]string) func(t *testing.T) {
 	return func(t *testing.T) {
 		g := NewPrometheus(config, logger.New(false), "test")
 
@@ -95,7 +96,7 @@ func getMetricsTestCase(config *dnsutils.Config, labels map[string]string) func(
 
 		nxRecord := dnsutils.GetFakeDNSMessage()
 		nxRecord.DNS.Type = dnsutils.DNSReply
-		nxRecord.DNS.Rcode = dnsutils.DNSRcodeNXDomain
+		nxRecord.DNS.Rcode = pkgconfig.DNSRcodeNXDomain
 		nxRecord.NetworkInfo.Protocol = UDP
 		nxRecord.NetworkInfo.Family = IPv4
 		nxRecord.DNS.Length = 123
@@ -107,7 +108,7 @@ func getMetricsTestCase(config *dnsutils.Config, labels map[string]string) func(
 
 		sfRecord := dnsutils.GetFakeDNSMessage()
 		sfRecord.DNS.Type = dnsutils.DNSReply
-		sfRecord.DNS.Rcode = dnsutils.DNSRcodeServFail
+		sfRecord.DNS.Rcode = pkgconfig.DNSRcodeServFail
 		sfRecord.NetworkInfo.Protocol = UDP
 		sfRecord.NetworkInfo.Family = IPv4
 		sfRecord.DNS.Length = 123
@@ -165,7 +166,7 @@ func getMetricsTestCase(config *dnsutils.Config, labels map[string]string) func(
 
 // Test that EPS (Events Per Second) Counters increment correctly
 func TestPrometheus_EPS_Counters(t *testing.T) {
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 	g := NewPrometheus(config, logger.New(false), "test")
 
 	// record one dns message to simulate some incoming data
@@ -205,7 +206,7 @@ func TestPrometheus_EPS_Counters(t *testing.T) {
 }
 
 func TestPrometheus_BuildInfo(t *testing.T) {
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 	// config.Loggers.Prometheus.HistogramMetricsEnabled = true
 	g := NewPrometheus(config, logger.New(false), "test")
 
@@ -218,7 +219,7 @@ func TestPrometheus_BuildInfo(t *testing.T) {
 }
 
 func TestPrometheus_ConfirmDifferentResolvers(t *testing.T) {
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 	config.Loggers.Prometheus.LabelsList = []string{"resolver"}
 	g := NewPrometheus(config, logger.New(false), "test")
 	noErrorRecord := dnsutils.GetFakeDNSMessage()
@@ -235,7 +236,7 @@ func TestPrometheus_ConfirmDifferentResolvers(t *testing.T) {
 }
 
 func TestPrometheus_etldplusone(t *testing.T) {
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 	config.Loggers.Prometheus.LabelsList = []string{"stream_id"}
 	g := NewPrometheus(config, logger.New(false), "test")
 

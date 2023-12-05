@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/vmihailenco/msgpack"
@@ -23,8 +24,8 @@ type FluentdClient struct {
 	doneRead           chan bool
 	inputChan          chan dnsutils.DNSMessage
 	outputChan         chan dnsutils.DNSMessage
-	config             *dnsutils.Config
-	configChan         chan *dnsutils.Config
+	config             *pkgconfig.Config
+	configChan         chan *pkgconfig.Config
 	logger             *logger.Logger
 	transport          string
 	transportConn      net.Conn
@@ -34,7 +35,7 @@ type FluentdClient struct {
 	name               string
 }
 
-func NewFluentdClient(config *dnsutils.Config, logger *logger.Logger, name string) *FluentdClient {
+func NewFluentdClient(config *pkgconfig.Config, logger *logger.Logger, name string) *FluentdClient {
 	logger.Info("[%s] logger=fluentd - enabled", name)
 	s := &FluentdClient{
 		stopProcess:        make(chan bool),
@@ -49,7 +50,7 @@ func NewFluentdClient(config *dnsutils.Config, logger *logger.Logger, name strin
 		transportReconnect: make(chan bool),
 		logger:             logger,
 		config:             config,
-		configChan:         make(chan *dnsutils.Config),
+		configChan:         make(chan *pkgconfig.Config),
 		name:               name,
 	}
 
@@ -67,15 +68,15 @@ func (c *FluentdClient) ReadConfig() {
 
 	// begin backward compatibility
 	if c.config.Loggers.Fluentd.TLSSupport {
-		c.transport = dnsutils.SocketTLS
+		c.transport = pkgconfig.SocketTLS
 	}
 	if len(c.config.Loggers.Fluentd.SockPath) > 0 {
-		c.transport = dnsutils.SocketUnix
+		c.transport = pkgconfig.SocketUnix
 	}
 	// end
 }
 
-func (c *FluentdClient) ReloadConfig(config *dnsutils.Config) {
+func (c *FluentdClient) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration!")
 	c.configChan <- config
 }
@@ -152,7 +153,7 @@ func (c *FluentdClient) ConnectToRemote() {
 		var err error
 
 		switch c.transport {
-		case dnsutils.SocketUnix:
+		case pkgconfig.SocketUnix:
 			address = c.config.Loggers.Fluentd.RemoteAddress
 			if len(c.config.Loggers.Fluentd.SockPath) > 0 {
 				address = c.config.Loggers.Fluentd.SockPath
@@ -160,16 +161,16 @@ func (c *FluentdClient) ConnectToRemote() {
 			c.LogInfo("connecting to %s://%s", c.transport, address)
 			conn, err = net.DialTimeout(c.transport, address, connTimeout)
 
-		case dnsutils.SocketTCP:
+		case pkgconfig.SocketTCP:
 			c.LogInfo("connecting to %s://%s", c.transport, address)
 			conn, err = net.DialTimeout(c.transport, address, connTimeout)
 
-		case dnsutils.SocketTLS:
+		case pkgconfig.SocketTLS:
 			c.LogInfo("connecting to %s://%s", c.transport, address)
 
 			var tlsConfig *tls.Config
 
-			tlsOptions := dnsutils.TLSOptions{
+			tlsOptions := pkgconfig.TLSOptions{
 				InsecureSkipVerify: c.config.Loggers.Fluentd.TLSInsecure,
 				MinVersion:         c.config.Loggers.Fluentd.TLSMinVersion,
 				CAFile:             c.config.Loggers.Fluentd.CAFile,
@@ -177,10 +178,10 @@ func (c *FluentdClient) ConnectToRemote() {
 				KeyFile:            c.config.Loggers.Fluentd.KeyFile,
 			}
 
-			tlsConfig, err = dnsutils.TLSClientConfig(tlsOptions)
+			tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
 			if err == nil {
 				dialer := &net.Dialer{Timeout: connTimeout}
-				conn, err = tls.DialWithDialer(dialer, dnsutils.SocketTCP, address, tlsConfig)
+				conn, err = tls.DialWithDialer(dialer, pkgconfig.SocketTCP, address, tlsConfig)
 			}
 		default:
 			c.logger.Fatal("logger=fluent - invalid transport:", c.transport)

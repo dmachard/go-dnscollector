@@ -8,13 +8,14 @@ import (
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	"gopkg.in/fsnotify.v1"
 	"inet.af/netaddr"
 )
 
 type FilteringProcessor struct {
-	config               *dnsutils.ConfigTransformers
+	config               *pkgconfig.ConfigTransformers
 	logger               *logger.Logger
 	dropDomains          bool
 	keepDomains          bool
@@ -37,7 +38,7 @@ type FilteringProcessor struct {
 	logError             func(msg string, v ...interface{})
 }
 
-func NewFilteringProcessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+func NewFilteringProcessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) FilteringProcessor {
@@ -69,7 +70,7 @@ func NewFilteringProcessor(config *dnsutils.ConfigTransformers, logger *logger.L
 	return d
 }
 
-func (p *FilteringProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+func (p *FilteringProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
 }
 

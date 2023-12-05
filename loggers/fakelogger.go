@@ -2,6 +2,7 @@ package loggers
 
 import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 )
 
 type FakeLogger struct {
@@ -25,7 +26,7 @@ func (c *FakeLogger) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *FakeLogger) ReadConfig() {}
 
-func (c *FakeLogger) ReloadConfig(config *dnsutils.Config) {}
+func (c *FakeLogger) ReloadConfig(config *pkgconfig.Config) {}
 
 func (c *FakeLogger) Stop() {}
 

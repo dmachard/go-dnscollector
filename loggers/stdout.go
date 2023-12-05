@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
@@ -20,10 +21,10 @@ import (
 func IsStdoutValidMode(mode string) bool {
 	switch mode {
 	case
-		dnsutils.ModeText,
-		dnsutils.ModeJSON,
-		dnsutils.ModeFlatJSON,
-		dnsutils.ModePCAP:
+		pkgconfig.ModeText,
+		pkgconfig.ModeJSON,
+		pkgconfig.ModeFlatJSON,
+		pkgconfig.ModePCAP:
 		return true
 	}
 	return false
@@ -37,15 +38,15 @@ type StdOut struct {
 	inputChan   chan dnsutils.DNSMessage
 	outputChan  chan dnsutils.DNSMessage
 	textFormat  []string
-	config      *dnsutils.Config
-	configChan  chan *dnsutils.Config
+	config      *pkgconfig.Config
+	configChan  chan *pkgconfig.Config
 	logger      *logger.Logger
 	writerText  *log.Logger
 	writerPcap  *pcapgo.Writer
 	name        string
 }
 
-func NewStdOut(config *dnsutils.Config, console *logger.Logger, name string) *StdOut {
+func NewStdOut(config *pkgconfig.Config, console *logger.Logger, name string) *StdOut {
 	console.Info("[%s] logger=stdout - enabled", name)
 	o := &StdOut{
 		stopProcess: make(chan bool),
@@ -56,7 +57,7 @@ func NewStdOut(config *dnsutils.Config, console *logger.Logger, name string) *St
 		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.Stdout.ChannelBufferSize),
 		logger:      console,
 		config:      config,
-		configChan:  make(chan *dnsutils.Config),
+		configChan:  make(chan *pkgconfig.Config),
 		writerText:  log.New(os.Stdout, "", 0),
 		name:        name,
 	}
@@ -80,7 +81,7 @@ func (c *StdOut) ReadConfig() {
 	}
 }
 
-func (c *StdOut) ReloadConfig(config *dnsutils.Config) {
+func (c *StdOut) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration!")
 	c.configChan <- config
 }
@@ -175,7 +176,7 @@ func (c *StdOut) Process() {
 	// standard output buffer
 	buffer := new(bytes.Buffer)
 
-	if c.config.Loggers.Stdout.Mode == dnsutils.ModePCAP && c.writerPcap == nil {
+	if c.config.Loggers.Stdout.Mode == pkgconfig.ModePCAP && c.writerPcap == nil {
 		c.SetPcapWriter(os.Stdout)
 	}
 
@@ -194,7 +195,7 @@ PROCESS_LOOP:
 			}
 
 			switch c.config.Loggers.Stdout.Mode {
-			case dnsutils.ModePCAP:
+			case pkgconfig.ModePCAP:
 				if len(dm.DNS.Payload) == 0 {
 					c.LogError("process: no dns payload to encode, drop it")
 					continue
@@ -224,17 +225,17 @@ PROCESS_LOOP:
 
 				c.writerPcap.WritePacket(ci, buf.Bytes())
 
-			case dnsutils.ModeText:
+			case pkgconfig.ModeText:
 				c.writerText.Print(dm.String(c.textFormat,
 					c.config.Global.TextFormatDelimiter,
 					c.config.Global.TextFormatBoundary))
 
-			case dnsutils.ModeJSON:
+			case pkgconfig.ModeJSON:
 				json.NewEncoder(buffer).Encode(dm)
 				c.writerText.Print(buffer.String())
 				buffer.Reset()
 
-			case dnsutils.ModeFlatJSON:
+			case pkgconfig.ModeFlatJSON:
 				flat, err := dm.Flatten()
 				if err != nil {
 					c.LogError("process: flattening DNS message failed: %e", err)

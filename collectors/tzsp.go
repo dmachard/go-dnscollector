@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
@@ -24,13 +25,13 @@ type TZSPSniffer struct {
 	exit     chan bool
 	listen   net.UDPConn
 	loggers  []dnsutils.Worker
-	config   *dnsutils.Config
+	config   *pkgconfig.Config
 	logger   *logger.Logger
 	name     string
 	identity string
 }
 
-func NewTZSP(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *TZSPSniffer {
+func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
 	logger.Info("[%s] collector=tzsp - enabled", name)
 	s := &TZSPSniffer{
 		done:    make(chan bool),
@@ -72,7 +73,7 @@ func (c *TZSPSniffer) ReadConfig() {
 	c.identity = c.config.GetServerIdentity()
 }
 
-func (c *TZSPSniffer) ReloadConfig(config *dnsutils.Config) {
+func (c *TZSPSniffer) ReloadConfig(config *pkgconfig.Config) {
 	// TODO implement reload configuration
 }
 
@@ -192,21 +193,21 @@ func (c *TZSPSniffer) Run() {
 			for _, layertyp := range decodedLayers {
 				switch layertyp {
 				case layers.LayerTypeIPv4:
-					dm.NetworkInfo.Family = dnsutils.ProtoIPv4
+					dm.NetworkInfo.Family = pkgconfig.ProtoIPv4
 					dm.NetworkInfo.QueryIP = ip4.SrcIP.String()
 					dm.NetworkInfo.ResponseIP = ip4.DstIP.String()
 
 				case layers.LayerTypeIPv6:
 					dm.NetworkInfo.QueryIP = ip6.SrcIP.String()
 					dm.NetworkInfo.ResponseIP = ip6.DstIP.String()
-					dm.NetworkInfo.Family = dnsutils.ProtoIPv6
+					dm.NetworkInfo.Family = pkgconfig.ProtoIPv6
 
 				case layers.LayerTypeUDP:
 					dm.NetworkInfo.QueryPort = fmt.Sprint(int(udp.SrcPort))
 					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(udp.DstPort))
 					dm.DNS.Payload = udp.Payload
 					dm.DNS.Length = len(udp.Payload)
-					dm.NetworkInfo.Protocol = dnsutils.ProtoUDP
+					dm.NetworkInfo.Protocol = pkgconfig.ProtoUDP
 
 				case layers.LayerTypeTCP:
 					// ignore SYN/ACK packet
@@ -230,7 +231,7 @@ func (c *TZSPSniffer) Run() {
 					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(tcp.DstPort))
 					dm.DNS.Payload = tcp.Payload[2:]
 					dm.DNS.Length = len(tcp.Payload[2:])
-					dm.NetworkInfo.Protocol = dnsutils.ProtoTCP
+					dm.NetworkInfo.Protocol = pkgconfig.ProtoTCP
 				}
 			}
 

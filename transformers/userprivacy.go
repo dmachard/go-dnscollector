@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	"golang.org/x/net/publicsuffix"
 )
@@ -17,7 +18,7 @@ var (
 )
 
 type UserPrivacyProcessor struct {
-	config      *dnsutils.ConfigTransformers
+	config      *pkgconfig.ConfigTransformers
 	v4Mask      net.IPMask
 	v6Mask      net.IPMask
 	instance    int
@@ -26,7 +27,7 @@ type UserPrivacyProcessor struct {
 	logError    func(msg string, v ...interface{})
 }
 
-func NewUserPrivacySubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
+func NewUserPrivacySubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) UserPrivacyProcessor {
@@ -43,7 +44,7 @@ func NewUserPrivacySubprocessor(config *dnsutils.ConfigTransformers, logger *log
 	return s
 }
 
-func (s *UserPrivacyProcessor) ReloadConfig(config *dnsutils.ConfigTransformers) {
+func (s *UserPrivacyProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	s.config = config
 }
 

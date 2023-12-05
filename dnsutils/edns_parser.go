@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net"
+
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 )
 
 var ErrDecodeEdnsBadRootDomain = errors.New("edns, name MUST be 0 (root domain)")
@@ -56,7 +58,7 @@ func OptCodeToString(rcode int) string {
 	if value, ok := OptCodes[rcode]; ok {
 		return value
 	}
-	return StrUnknown
+	return pkgconfig.StrUnknown
 }
 
 func DecodeEDNS(arcount int, startOffset int, payload []byte) (DNSExtended, int, error) {

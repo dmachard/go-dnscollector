@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket/pcapgo"
 )
 
 func Test_StdoutTextMode(t *testing.T) {
 
-	cfg := dnsutils.GetFakeConfig()
+	cfg := pkgconfig.GetFakeConfig()
 
 	testcases := []struct {
 		name      string
@@ -64,7 +65,7 @@ func Test_StdoutTextMode(t *testing.T) {
 			// init logger and redirect stdout output to bytes buffer
 			var stdout bytes.Buffer
 
-			cfg := dnsutils.GetFakeConfig()
+			cfg := pkgconfig.GetFakeConfig()
 			cfg.Global.TextFormatDelimiter = tc.delimiter
 			cfg.Global.TextFormatBoundary = tc.boundary
 
@@ -96,11 +97,11 @@ func Test_StdoutJsonMode(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.ModeJSON,
+			mode:    pkgconfig.ModeJSON,
 			pattern: "\"qname\":\"dns.collector\"",
 		},
 		{
-			mode:    dnsutils.ModeFlatJSON,
+			mode:    pkgconfig.ModeFlatJSON,
 			pattern: "\"dns.qname\":\"dns.collector\"",
 		},
 	}
@@ -110,7 +111,7 @@ func Test_StdoutJsonMode(t *testing.T) {
 			// init logger and redirect stdout output to bytes buffer
 			var stdout bytes.Buffer
 
-			cfg := dnsutils.GetFakeConfig()
+			cfg := pkgconfig.GetFakeConfig()
 			cfg.Loggers.Stdout.Mode = tc.mode
 			g := NewStdOut(cfg, logger.New(false), "test")
 			g.SetTextWriter(&stdout)
@@ -140,7 +141,7 @@ func Test_StdoutPcapMode(t *testing.T) {
 	var pcap bytes.Buffer
 
 	// init logger and run
-	cfg := dnsutils.GetFakeConfig()
+	cfg := pkgconfig.GetFakeConfig()
 	cfg.Loggers.Stdout.Mode = "pcap"
 
 	g := NewStdOut(cfg, logger.New(false), "test")
@@ -181,7 +182,7 @@ func Test_StdoutPcapMode_NoDNSPayload(t *testing.T) {
 	var pcap bytes.Buffer
 
 	// init logger and run
-	cfg := dnsutils.GetFakeConfig()
+	cfg := pkgconfig.GetFakeConfig()
 	cfg.Loggers.Stdout.Mode = "pcap"
 
 	g := NewStdOut(cfg, logger, "test")

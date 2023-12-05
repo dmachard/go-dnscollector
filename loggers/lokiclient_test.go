@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	"github.com/golang/snappy"
 	"github.com/prometheus/common/model"
@@ -22,15 +23,15 @@ func Test_LokiClientRun(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.ModeText,
+			mode:    pkgconfig.ModeText,
 			pattern: "0b dns.collector A",
 		},
 		{
-			mode:    dnsutils.ModeJSON,
+			mode:    pkgconfig.ModeJSON,
 			pattern: "\"qname\":\"dns.collector\"",
 		},
 		{
-			mode:    dnsutils.ModeFlatJSON,
+			mode:    pkgconfig.ModeFlatJSON,
 			pattern: "\"dns.qname\":\"dns.collector\"",
 		},
 	}
@@ -45,7 +46,7 @@ func Test_LokiClientRun(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.mode, func(t *testing.T) {
 			// init logger
-			cfg := dnsutils.GetFakeConfig()
+			cfg := pkgconfig.GetFakeConfig()
 			cfg.Loggers.LokiClient.Mode = tc.mode
 			cfg.Loggers.LokiClient.BatchSize = 0
 			g := NewLokiClient(cfg, logger.New(false), "test")
@@ -55,7 +56,7 @@ func Test_LokiClientRun(t *testing.T) {
 
 			// send fake dns message to logger
 			dm := dnsutils.GetFakeDNSMessage()
-			dm.DNSTap.Identity = dnsutils.DNSTapIdentityTest
+			dm.DNSTap.Identity = pkgconfig.DNSTapIdentityTest
 			g.Channel() <- dm
 
 			// accept conn
@@ -70,7 +71,7 @@ func Test_LokiClientRun(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			conn.Write([]byte(dnsutils.HTTPOK))
+			conn.Write([]byte(pkgconfig.HTTPOK))
 
 			// read payload from request body
 			protobuf, err := io.ReadAll(request.Body)
@@ -144,10 +145,10 @@ func Test_LokiClientRelabel(t *testing.T) {
 	defer fakeRcvr.Close()
 
 	for _, tc := range testcases {
-		for _, m := range []string{dnsutils.ModeText, dnsutils.ModeJSON, dnsutils.ModeFlatJSON} {
+		for _, m := range []string{pkgconfig.ModeText, pkgconfig.ModeJSON, pkgconfig.ModeFlatJSON} {
 			t.Run(fmt.Sprint(m, tc.relabelConfig, tc.labelsPattern), func(t *testing.T) {
 				// init logger
-				cfg := dnsutils.GetFakeConfig()
+				cfg := pkgconfig.GetFakeConfig()
 				cfg.Loggers.LokiClient.Mode = m
 				cfg.Loggers.LokiClient.BatchSize = 0
 				cfg.Loggers.LokiClient.RelabelConfigs = tc.relabelConfig
@@ -158,7 +159,7 @@ func Test_LokiClientRelabel(t *testing.T) {
 
 				// send fake dns message to logger
 				dm := dnsutils.GetFakeDNSMessage()
-				dm.DNSTap.Identity = dnsutils.DNSTapIdentityTest
+				dm.DNSTap.Identity = pkgconfig.DNSTapIdentityTest
 				g.Channel() <- dm
 
 				// accept conn
@@ -173,7 +174,7 @@ func Test_LokiClientRelabel(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				conn.Write([]byte(dnsutils.HTTPOK))
+				conn.Write([]byte(pkgconfig.HTTPOK))
 
 				// read payload from request body
 				protobuf, err := io.ReadAll(request.Body)

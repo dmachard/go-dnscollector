@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/hpcloud/tail"
@@ -20,19 +21,19 @@ type Tail struct {
 	stopRun    chan bool
 	tailf      *tail.Tail
 	loggers    []dnsutils.Worker
-	config     *dnsutils.Config
-	configChan chan *dnsutils.Config
+	config     *pkgconfig.Config
+	configChan chan *pkgconfig.Config
 	logger     *logger.Logger
 	name       string
 }
 
-func NewTail(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *Tail {
+func NewTail(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Tail {
 	logger.Info("[%s] collector=tail - enabled", name)
 	s := &Tail{
 		doneRun:    make(chan bool),
 		stopRun:    make(chan bool),
 		config:     config,
-		configChan: make(chan *dnsutils.Config),
+		configChan: make(chan *pkgconfig.Config),
 		loggers:    loggers,
 		logger:     logger,
 		name:       name,
@@ -57,7 +58,7 @@ func (c *Tail) Loggers() []chan dnsutils.DNSMessage {
 
 func (c *Tail) ReadConfig() {}
 
-func (c *Tail) ReloadConfig(config *dnsutils.Config) {
+func (c *Tail) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration...")
 	c.configChan <- config
 }
@@ -149,14 +150,14 @@ RUN_LOOP:
 				re = regexp.MustCompile(c.config.Collectors.Tail.PatternQuery)
 				matches = re.FindStringSubmatch(line.Text)
 				dm.DNS.Type = dnsutils.DNSQuery
-				dm.DNSTap.Operation = dnsutils.DNSTapOperationQuery
+				dm.DNSTap.Operation = pkgconfig.DNSTapOperationQuery
 			}
 
 			if len(c.config.Collectors.Tail.PatternReply) > 0 && len(matches) == 0 {
 				re = regexp.MustCompile(c.config.Collectors.Tail.PatternReply)
 				matches = re.FindStringSubmatch(line.Text)
 				dm.DNS.Type = dnsutils.DNSReply
-				dm.DNSTap.Operation = dnsutils.DNSTapOperationReply
+				dm.DNSTap.Operation = pkgconfig.DNSTapOperationReply
 			}
 
 			if len(matches) == 0 {
@@ -219,14 +220,14 @@ RUN_LOOP:
 			if familyIndex != -1 {
 				dm.NetworkInfo.Family = matches[familyIndex]
 			} else {
-				dm.NetworkInfo.Family = dnsutils.ProtoIPv4
+				dm.NetworkInfo.Family = pkgconfig.ProtoIPv4
 			}
 
 			protocolIndex := re.SubexpIndex("protocol")
 			if protocolIndex != -1 {
 				dm.NetworkInfo.Protocol = matches[protocolIndex]
 			} else {
-				dm.NetworkInfo.Protocol = dnsutils.ProtoUDP
+				dm.NetworkInfo.Protocol = pkgconfig.ProtoUDP
 			}
 
 			lengthIndex := re.SubexpIndex("length")

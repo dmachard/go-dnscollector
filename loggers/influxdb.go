@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 
@@ -18,15 +19,15 @@ type InfluxDBClient struct {
 	doneRun      chan bool
 	inputChan    chan dnsutils.DNSMessage
 	outputChan   chan dnsutils.DNSMessage
-	config       *dnsutils.Config
-	configChan   chan *dnsutils.Config
+	config       *pkgconfig.Config
+	configChan   chan *pkgconfig.Config
 	logger       *logger.Logger
 	influxdbConn influxdb2.Client
 	writeAPI     api.WriteAPI
 	name         string
 }
 
-func NewInfluxDBClient(config *dnsutils.Config, logger *logger.Logger, name string) *InfluxDBClient {
+func NewInfluxDBClient(config *pkgconfig.Config, logger *logger.Logger, name string) *InfluxDBClient {
 	logger.Info("[%s] logger=influxdb - enabled", name)
 
 	s := &InfluxDBClient{
@@ -38,7 +39,7 @@ func NewInfluxDBClient(config *dnsutils.Config, logger *logger.Logger, name stri
 		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.InfluxDB.ChannelBufferSize),
 		logger:      logger,
 		config:      config,
-		configChan:  make(chan *dnsutils.Config),
+		configChan:  make(chan *pkgconfig.Config),
 		name:        name,
 	}
 
@@ -53,7 +54,7 @@ func (i *InfluxDBClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (i *InfluxDBClient) ReadConfig() {}
 
-func (i *InfluxDBClient) ReloadConfig(config *dnsutils.Config) {
+func (i *InfluxDBClient) ReloadConfig(config *pkgconfig.Config) {
 	i.LogInfo("reload configuration!")
 	i.configChan <- config
 }
@@ -134,7 +135,7 @@ func (i *InfluxDBClient) Process() {
 	opts := influxdb2.DefaultOptions()
 	opts.SetUseGZip(true)
 	if i.config.Loggers.InfluxDB.TLSSupport {
-		tlsOptions := dnsutils.TLSOptions{
+		tlsOptions := pkgconfig.TLSOptions{
 			InsecureSkipVerify: i.config.Loggers.InfluxDB.TLSInsecure,
 			MinVersion:         i.config.Loggers.InfluxDB.TLSMinVersion,
 			CAFile:             i.config.Loggers.InfluxDB.CAFile,
@@ -142,7 +143,7 @@ func (i *InfluxDBClient) Process() {
 			KeyFile:            i.config.Loggers.InfluxDB.KeyFile,
 		}
 
-		tlsConfig, err := dnsutils.TLSClientConfig(tlsOptions)
+		tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
 		if err != nil {
 			i.logger.Fatal("logger=influxdb - tls config failed:", err)
 		}

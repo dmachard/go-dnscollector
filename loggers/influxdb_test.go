@@ -8,15 +8,16 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 func Test_InfluxDB(t *testing.T) {
 	// init logger
-	g := NewInfluxDBClient(dnsutils.GetFakeConfig(), logger.New(false), "test")
+	g := NewInfluxDBClient(pkgconfig.GetFakeConfig(), logger.New(false), "test")
 
 	// fake msgpack receiver
-	fakeRcvr, err := net.Listen(dnsutils.SocketTCP, "127.0.0.1:8086")
+	fakeRcvr, err := net.Listen(pkgconfig.SocketTCP, "127.0.0.1:8086")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +44,7 @@ func Test_InfluxDB(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	conn.Write([]byte(dnsutils.HTTPOK))
+	conn.Write([]byte(pkgconfig.HTTPOK))
 
 	payload, err := io.ReadAll(request.Body)
 	if err != nil {

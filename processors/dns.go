@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/miekg/dns"
@@ -23,14 +24,14 @@ type DNSProcessor struct {
 	stopMonitor  chan bool
 	recvFrom     chan dnsutils.DNSMessage
 	logger       *logger.Logger
-	config       *dnsutils.Config
-	ConfigChan   chan *dnsutils.Config
+	config       *pkgconfig.Config
+	ConfigChan   chan *pkgconfig.Config
 	name         string
 	dropped      chan string
 	droppedCount map[string]int
 }
 
-func NewDNSProcessor(config *dnsutils.Config, logger *logger.Logger, name string, size int) DNSProcessor {
+func NewDNSProcessor(config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSProcessor {
 	logger.Info("[%s] processor=dns - initialization...", name)
 	d := DNSProcessor{
 		doneMonitor:  make(chan bool),
@@ -40,7 +41,7 @@ func NewDNSProcessor(config *dnsutils.Config, logger *logger.Logger, name string
 		recvFrom:     make(chan dnsutils.DNSMessage, size),
 		logger:       logger,
 		config:       config,
-		ConfigChan:   make(chan *dnsutils.Config),
+		ConfigChan:   make(chan *pkgconfig.Config),
 		name:         name,
 		dropped:      make(chan string),
 		droppedCount: map[string]int{},
@@ -164,7 +165,7 @@ RUN_LOOP:
 				dm.NetworkInfo.ResponsePort = qport
 			} else {
 				dm.DNS.Type = dnsutils.DNSQuery
-				dm.DNSTap.Operation = dnsutils.DNSTapClientQuery
+				dm.DNSTap.Operation = pkgconfig.DNSTapClientQuery
 			}
 
 			if err = dnsutils.DecodePayload(&dm, &dnsHeader, d.config); err != nil {

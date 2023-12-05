@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
 	"github.com/miekg/dns"
@@ -12,11 +13,11 @@ import (
 
 func TestPowerDNS_Processor(t *testing.T) {
 	// init the dnstap consumer
-	consumer := NewPdnsProcessor(0, dnsutils.GetFakeConfig(), logger.New(false), "test", 512)
+	consumer := NewPdnsProcessor(0, pkgconfig.GetFakeConfig(), logger.New(false), "test", 512)
 	chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// init the powerdns processor
-	dnsQname := dnsutils.ValidDomain
+	dnsQname := pkgconfig.ValidDomain
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
 	dm := &powerdns_protobuf.PBDNSMessage{}
@@ -40,7 +41,7 @@ func TestPowerDNS_Processor(t *testing.T) {
 }
 
 func TestPowerDNS_Processor_AddDNSPayload_Valid(t *testing.T) {
-	cfg := dnsutils.GetFakeConfig()
+	cfg := pkgconfig.GetFakeConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the powerdns processor
@@ -48,7 +49,7 @@ func TestPowerDNS_Processor_AddDNSPayload_Valid(t *testing.T) {
 	chanTo := make(chan dnsutils.DNSMessage, 1)
 
 	// prepare powerdns message
-	dnsQname := dnsutils.ValidDomain
+	dnsQname := pkgconfig.ValidDomain
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
 	dm := &powerdns_protobuf.PBDNSMessage{}
@@ -82,13 +83,13 @@ func TestPowerDNS_Processor_AddDNSPayload_Valid(t *testing.T) {
 	if err != nil {
 		t.Errorf("unpack error %s", err)
 	}
-	if decodedPayload.Question[0].Name != dnsutils.ValidDomain {
+	if decodedPayload.Question[0].Name != pkgconfig.ValidDomain {
 		t.Errorf("invalid qname in payload: %s", decodedPayload.Question[0].Name)
 	}
 }
 
 func TestPowerDNS_Processor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
-	cfg := dnsutils.GetFakeConfig()
+	cfg := pkgconfig.GetFakeConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the dnstap consumer
@@ -96,7 +97,7 @@ func TestPowerDNS_Processor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
 	chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dnstap
-	dnsQname := dnsutils.BadDomainLabel
+	dnsQname := pkgconfig.BadDomainLabel
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
 	dm := &powerdns_protobuf.PBDNSMessage{}
@@ -121,7 +122,7 @@ func TestPowerDNS_Processor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
 }
 
 func TestPowerDNS_Processor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
-	cfg := dnsutils.GetFakeConfig()
+	cfg := pkgconfig.GetFakeConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the dnstap consumer
@@ -129,7 +130,7 @@ func TestPowerDNS_Processor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
 	chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dnstap
-	dnsQname := dnsutils.BadVeryLongDomain
+	dnsQname := pkgconfig.BadVeryLongDomain
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
 	dm := &powerdns_protobuf.PBDNSMessage{}
@@ -153,7 +154,7 @@ func TestPowerDNS_Processor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
 }
 
 func TestPowerDNS_Processor_AddDNSPayload_AnswersTooLongDomain(t *testing.T) {
-	cfg := dnsutils.GetFakeConfig()
+	cfg := pkgconfig.GetFakeConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the dnstap consumer
@@ -161,10 +162,10 @@ func TestPowerDNS_Processor_AddDNSPayload_AnswersTooLongDomain(t *testing.T) {
 	chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dnstap
-	dnsQname := dnsutils.ValidDomain
+	dnsQname := pkgconfig.ValidDomain
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
-	rrQname := dnsutils.BadVeryLongDomain
+	rrQname := pkgconfig.BadVeryLongDomain
 	rrDNS := powerdns_protobuf.PBDNSMessage_DNSResponse_DNSRR{
 		Name:  &rrQname,
 		Class: proto.Uint32(1),

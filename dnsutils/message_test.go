@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 )
 
 func TestDnsMessage_Json_Reference(t *testing.T) {
@@ -226,7 +228,7 @@ func TestDnsMessage_Json_Transforms_Reference(t *testing.T) {
 
 func TestDnsMessage_TextFormat_ToString(t *testing.T) {
 
-	config := GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 
 	testcases := []struct {
 		name      string
@@ -294,7 +296,7 @@ func TestDnsMessage_TextFormat_ToString(t *testing.T) {
 }
 
 func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
-	config := GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 
 	testcases := []struct {
 		name     string
@@ -380,7 +382,7 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 }
 
 func TestDnsMessage_TextFormat_Directives_PublicSuffix(t *testing.T) {
-	config := GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 
 	testcases := []struct {
 		name     string
@@ -417,7 +419,7 @@ func TestDnsMessage_TextFormat_Directives_PublicSuffix(t *testing.T) {
 }
 
 func TestDnsMessage_TextFormat_Directives_Geo(t *testing.T) {
-	config := GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 
 	testcases := []struct {
 		name     string
@@ -455,7 +457,7 @@ func TestDnsMessage_TextFormat_Directives_Geo(t *testing.T) {
 }
 
 func TestDnsMessage_TextFormat_Directives_Pdns(t *testing.T) {
-	config := GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 
 	testcases := []struct {
 		name     string
@@ -540,7 +542,7 @@ func TestDnsMessage_TextFormat_Directives_Pdns(t *testing.T) {
 }
 
 func TestDnsMessage_TextFormat_Directives_Suspicious(t *testing.T) {
-	config := GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 
 	testcases := []struct {
 		name     string
@@ -577,7 +579,7 @@ func TestDnsMessage_TextFormat_Directives_Suspicious(t *testing.T) {
 }
 
 func TestDnsMessage_TextFormat_Directives_Reducer(t *testing.T) {
-	config := GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 
 	testcases := []struct {
 		name     string
@@ -614,7 +616,7 @@ func TestDnsMessage_TextFormat_Directives_Reducer(t *testing.T) {
 }
 
 func TestDnsMessage_TextFormat_Directives_Extracted(t *testing.T) {
-	config := GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 
 	testcases := []struct {
 		name     string
@@ -666,7 +668,7 @@ func TestDnsMessage_TextFormat_Directives_Extracted(t *testing.T) {
 }
 
 func TestDnsMessage_TextFormat_Directives_Filtering(t *testing.T) {
-	config := GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 
 	testcases := []struct {
 		name     string

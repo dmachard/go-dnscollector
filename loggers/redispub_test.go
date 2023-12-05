@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -17,22 +18,22 @@ func Test_RedisPubRun(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.ModeText,
+			mode:    pkgconfig.ModeText,
 			pattern: " dns.collector ",
 		},
 		{
-			mode:    dnsutils.ModeJSON,
+			mode:    pkgconfig.ModeJSON,
 			pattern: `\\\"qname\\\":\\\"dns.collector\\\"`,
 		},
 		{
-			mode:    dnsutils.ModeFlatJSON,
+			mode:    pkgconfig.ModeFlatJSON,
 			pattern: `\\\"dns.qname\\\":\\\"dns.collector\\\"`,
 		},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.mode, func(t *testing.T) {
 			// init logger
-			cfg := dnsutils.GetFakeConfig()
+			cfg := pkgconfig.GetFakeConfig()
 			cfg.Loggers.RedisPub.FlushInterval = 1
 			cfg.Loggers.RedisPub.BufferSize = 0
 			cfg.Loggers.RedisPub.Mode = tc.mode
@@ -41,7 +42,7 @@ func Test_RedisPubRun(t *testing.T) {
 			g := NewRedisPub(cfg, logger.New(false), "test")
 
 			// fake json receiver
-			fakeRcvr, err := net.Listen(dnsutils.SocketTCP, ":6379")
+			fakeRcvr, err := net.Listen(pkgconfig.SocketTCP, ":6379")
 			if err != nil {
 				t.Fatal(err)
 			}

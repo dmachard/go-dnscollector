@@ -5,12 +5,13 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/loggers"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 func Test_FileIngestor_Pcap(t *testing.T) {
 	g := loggers.NewFakeLogger()
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 
 	// watch tests data folder
 	config.Collectors.FileIngestor.WatchDir = "./../testsdata/pcap/"
@@ -25,7 +26,7 @@ func Test_FileIngestor_Pcap(t *testing.T) {
 		msg := <-g.Channel()
 
 		// check qname
-		if msg.DNSTap.Operation == dnsutils.DNSTapClientQuery {
+		if msg.DNSTap.Operation == pkgconfig.DNSTapClientQuery {
 			break
 		}
 	}

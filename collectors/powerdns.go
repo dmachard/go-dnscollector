@@ -13,6 +13,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
@@ -28,8 +29,8 @@ type ProtobufPowerDNS struct {
 	connID         int
 	conns          []net.Conn
 	loggers        []dnsutils.Worker
-	config         *dnsutils.Config
-	configChan     chan *dnsutils.Config
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
 	logger         *logger.Logger
 	name           string
 	droppedCount   int
@@ -38,7 +39,7 @@ type ProtobufPowerDNS struct {
 	sync.RWMutex
 }
 
-func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *ProtobufPowerDNS {
+func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *ProtobufPowerDNS {
 	logger.Info("[%s] pdns collector - enabled", name)
 	s := &ProtobufPowerDNS{
 		doneRun:     make(chan bool),
@@ -48,7 +49,7 @@ func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *dnsutils.Config, log
 		cleanup:     make(chan bool),
 		dropped:     make(chan int),
 		config:      config,
-		configChan:  make(chan *dnsutils.Config),
+		configChan:  make(chan *pkgconfig.Config),
 		loggers:     loggers,
 		logger:      logger,
 		name:        name,
@@ -74,12 +75,12 @@ func (c *ProtobufPowerDNS) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 }
 
 func (c *ProtobufPowerDNS) ReadConfig() {
-	if !dnsutils.IsValidTLS(c.config.Collectors.PowerDNS.TLSMinVersion) {
+	if !pkgconfig.IsValidTLS(c.config.Collectors.PowerDNS.TLSMinVersion) {
 		c.logger.Fatal("collector=powerdns - invalid tls min version")
 	}
 }
 
-func (c *ProtobufPowerDNS) ReloadConfig(config *dnsutils.Config) {
+func (c *ProtobufPowerDNS) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration...")
 	c.configChan <- config
 }
@@ -250,11 +251,11 @@ func (c *ProtobufPowerDNS) Listen() error {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLSVersion[c.config.Collectors.PowerDNS.TLSMinVersion]
+		tlsConfig.MinVersion = pkgconfig.TLSVersion[c.config.Collectors.PowerDNS.TLSMinVersion]
 
-		listener, err = tls.Listen(dnsutils.SocketTCP, addrlisten, tlsConfig)
+		listener, err = tls.Listen(pkgconfig.SocketTCP, addrlisten, tlsConfig)
 	} else {
-		listener, err = net.Listen(dnsutils.SocketTCP, addrlisten)
+		listener, err = net.Listen(pkgconfig.SocketTCP, addrlisten)
 	}
 	// something is wrong ?
 	if err != nil {

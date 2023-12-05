@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/gogo/protobuf/proto"
@@ -36,7 +37,7 @@ import (
 
 type LokiStream struct {
 	labels      labels.Labels
-	config      *dnsutils.Config
+	config      *pkgconfig.Config
 	logger      *logger.Logger
 	stream      *logproto.Stream
 	pushrequest *logproto.PushRequest
@@ -78,8 +79,8 @@ type LokiClient struct {
 	doneRun     chan bool
 	inputChan   chan dnsutils.DNSMessage
 	outputChan  chan dnsutils.DNSMessage
-	config      *dnsutils.Config
-	configChan  chan *dnsutils.Config
+	config      *pkgconfig.Config
+	configChan  chan *pkgconfig.Config
 	logger      *logger.Logger
 	httpclient  *http.Client
 	textFormat  []string
@@ -87,7 +88,7 @@ type LokiClient struct {
 	name        string
 }
 
-func NewLokiClient(config *dnsutils.Config, logger *logger.Logger, name string) *LokiClient {
+func NewLokiClient(config *pkgconfig.Config, logger *logger.Logger, name string) *LokiClient {
 	logger.Info("[%s] logger=loki - enabled", name)
 
 	s := &LokiClient{
@@ -99,7 +100,7 @@ func NewLokiClient(config *dnsutils.Config, logger *logger.Logger, name string) 
 		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
 		logger:      logger,
 		config:      config,
-		configChan:  make(chan *dnsutils.Config),
+		configChan:  make(chan *pkgconfig.Config),
 		streams:     make(map[string]*LokiStream),
 		name:        name,
 	}
@@ -121,7 +122,7 @@ func (c *LokiClient) ReadConfig() {
 	}
 
 	// tls client config
-	tlsOptions := dnsutils.TLSOptions{
+	tlsOptions := pkgconfig.TLSOptions{
 		InsecureSkipVerify: c.config.Loggers.LokiClient.TLSInsecure,
 		MinVersion:         c.config.Loggers.LokiClient.TLSMinVersion,
 		CAFile:             c.config.Loggers.LokiClient.CAFile,
@@ -129,7 +130,7 @@ func (c *LokiClient) ReadConfig() {
 		KeyFile:            c.config.Loggers.LokiClient.KeyFile,
 	}
 
-	tlsConfig, err := dnsutils.TLSClientConfig(tlsOptions)
+	tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
 	if err != nil {
 		c.logger.Fatal("logger=loki - tls config failed:", err)
 	}
@@ -162,7 +163,7 @@ func (c *LokiClient) ReadConfig() {
 	}
 }
 
-func (c *LokiClient) ReloadConfig(config *dnsutils.Config) {
+func (c *LokiClient) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration!")
 	c.configChan <- config
 }
@@ -305,15 +306,15 @@ PROCESS_LOOP:
 			entry.Timestamp = time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec))
 
 			switch c.config.Loggers.LokiClient.Mode {
-			case dnsutils.ModeText:
+			case pkgconfig.ModeText:
 				entry.Line = string(dm.Bytes(c.textFormat,
 					c.config.Global.TextFormatDelimiter,
 					c.config.Global.TextFormatBoundary))
-			case dnsutils.ModeJSON:
+			case pkgconfig.ModeJSON:
 				json.NewEncoder(buffer).Encode(dm)
 				entry.Line = buffer.String()
 				buffer.Reset()
-			case dnsutils.ModeFlatJSON:
+			case pkgconfig.ModeFlatJSON:
 				if len(flat) == 0 {
 					flat, err = dm.Flatten()
 					if err != nil {
