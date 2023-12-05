@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
@@ -673,11 +674,11 @@ func (c *RestAPI) ListenAndServe() {
 		// update tls min version according to the user config
 		tlsConfig.MinVersion = pkgconfig.TLSVersion[c.config.Loggers.RestAPI.TLSMinVersion]
 
-		listener, err = tls.Listen(pkgconfig.SocketTCP, addrlisten, tlsConfig)
+		listener, err = tls.Listen(netlib.SocketTCP, addrlisten, tlsConfig)
 
 	} else {
 		// basic listening
-		listener, err = net.Listen(pkgconfig.SocketTCP, addrlisten)
+		listener, err = net.Listen(netlib.SocketTCP, addrlisten)
 	}
 
 	// something wrong ?

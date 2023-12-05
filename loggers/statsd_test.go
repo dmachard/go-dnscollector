@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
@@ -17,7 +18,7 @@ func TestStatsdRun(t *testing.T) {
 	g := NewStatsdClient(config, logger.New(false), "test")
 
 	// fake msgpack receiver
-	fakeRcvr, err := net.ListenPacket(pkgconfig.SocketUDP, "127.0.0.1:8125")
+	fakeRcvr, err := net.ListenPacket(netlib.SocketUDP, "127.0.0.1:8125")
 	if err != nil {
 		t.Fatal(err)
 	}

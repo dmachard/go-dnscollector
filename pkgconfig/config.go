@@ -3,6 +3,7 @@ package pkgconfig
 import (
 	"os"
 
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/prometheus/prometheus/model/relabel"
 	"gopkg.in/yaml.v3"
 )
@@ -610,7 +611,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.DNSTap.Enable = false
 	c.Loggers.DNSTap.RemoteAddress = LocalhostIP
 	c.Loggers.DNSTap.RemotePort = 6000
-	c.Loggers.DNSTap.Transport = SocketTCP
+	c.Loggers.DNSTap.Transport = netlib.SocketTCP
 	c.Loggers.DNSTap.ConnectTimeout = 5
 	c.Loggers.DNSTap.RetryInterval = 10
 	c.Loggers.DNSTap.FlushInterval = 30
@@ -673,7 +674,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.TCPClient.RemotePort = 9999
 	c.Loggers.TCPClient.SockPath = ""
 	c.Loggers.TCPClient.RetryInterval = 10
-	c.Loggers.TCPClient.Transport = SocketTCP
+	c.Loggers.TCPClient.Transport = netlib.SocketTCP
 	c.Loggers.TCPClient.TLSSupport = false
 	c.Loggers.TCPClient.TLSInsecure = false
 	c.Loggers.TCPClient.TLSMinVersion = TLSV12
@@ -718,7 +719,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Fluentd.RetryInterval = 10
 	c.Loggers.Fluentd.ConnectTimeout = 5
 	c.Loggers.Fluentd.FlushInterval = 30
-	c.Loggers.Fluentd.Transport = SocketTCP
+	c.Loggers.Fluentd.Transport = netlib.SocketTCP
 	c.Loggers.Fluentd.TLSSupport = false // deprecated
 	c.Loggers.Fluentd.TLSInsecure = false
 	c.Loggers.Fluentd.TLSMinVersion = TLSV12
@@ -766,7 +767,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.Statsd.Prefix = ProgName
 	c.Loggers.Statsd.RemoteAddress = LocalhostIP
 	c.Loggers.Statsd.RemotePort = 8125
-	c.Loggers.Statsd.Transport = SocketUDP
+	c.Loggers.Statsd.Transport = netlib.SocketUDP
 	c.Loggers.Statsd.ConnectTimeout = 5
 	c.Loggers.Statsd.FlushInterval = 10
 	c.Loggers.Statsd.TLSSupport = false // deprecated
@@ -789,7 +790,7 @@ func (c *Config) SetDefault() {
 	c.Loggers.RedisPub.RemotePort = 6379
 	c.Loggers.RedisPub.SockPath = ""
 	c.Loggers.RedisPub.RetryInterval = 10
-	c.Loggers.RedisPub.Transport = SocketTCP
+	c.Loggers.RedisPub.Transport = netlib.SocketTCP
 	c.Loggers.RedisPub.TLSSupport = false
 	c.Loggers.RedisPub.TLSInsecure = false
 	c.Loggers.RedisPub.TLSMinVersion = TLSV12

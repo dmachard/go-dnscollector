@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
@@ -193,14 +194,14 @@ func (c *TZSPSniffer) Run() {
 			for _, layertyp := range decodedLayers {
 				switch layertyp {
 				case layers.LayerTypeIPv4:
-					dm.NetworkInfo.Family = pkgconfig.ProtoIPv4
+					dm.NetworkInfo.Family = netlib.ProtoIPv4
 					dm.NetworkInfo.QueryIP = ip4.SrcIP.String()
 					dm.NetworkInfo.ResponseIP = ip4.DstIP.String()
 
 				case layers.LayerTypeIPv6:
 					dm.NetworkInfo.QueryIP = ip6.SrcIP.String()
 					dm.NetworkInfo.ResponseIP = ip6.DstIP.String()
-					dm.NetworkInfo.Family = pkgconfig.ProtoIPv6
+					dm.NetworkInfo.Family = netlib.ProtoIPv6
 
 				case layers.LayerTypeUDP:
 					dm.NetworkInfo.QueryPort = fmt.Sprint(int(udp.SrcPort))

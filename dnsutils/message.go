@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/google/gopacket"
@@ -658,7 +659,7 @@ func (dm *DNSMessage) ToDNSTap() ([]byte, error) {
 	mt := dnstap.Message_Type(dnstap.Message_Type_value[dm.DNSTap.Operation])
 
 	var sf dnstap.SocketFamily
-	if ipNet, valid := pkgconfig.IPToInet[dm.NetworkInfo.Family]; valid {
+	if ipNet, valid := netlib.IPToInet[dm.NetworkInfo.Family]; valid {
 		sf = dnstap.SocketFamily(dnstap.SocketFamily_value[ipNet])
 	}
 	sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.NetworkInfo.Protocol])
@@ -689,7 +690,7 @@ func (dm *DNSMessage) ToDNSTap() ([]byte, error) {
 	msg.SocketProtocol = &sp
 
 	reqIP := net.ParseIP(dm.NetworkInfo.QueryIP)
-	if dm.NetworkInfo.Family == pkgconfig.ProtoIPv4 {
+	if dm.NetworkInfo.Family == netlib.ProtoIPv4 {
 		msg.QueryAddress = reqIP.To4()
 	} else {
 		msg.QueryAddress = reqIP.To16()
@@ -697,7 +698,7 @@ func (dm *DNSMessage) ToDNSTap() ([]byte, error) {
 	msg.QueryPort = &qport
 
 	rspIP := net.ParseIP(dm.NetworkInfo.ResponseIP)
-	if dm.NetworkInfo.Family == pkgconfig.ProtoIPv4 {
+	if dm.NetworkInfo.Family == netlib.ProtoIPv4 {
 		msg.ResponseAddress = rspIP.To4()
 	} else {
 		msg.ResponseAddress = rspIP.To16()
@@ -744,11 +745,11 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 
 	// set source and destination IP
 	switch dm.NetworkInfo.Family {
-	case pkgconfig.ProtoIPv4:
+	case netlib.ProtoIPv4:
 		eth.EthernetType = layers.EthernetTypeIPv4
 		ip4.SrcIP = net.ParseIP(srcIP)
 		ip4.DstIP = net.ParseIP(dstIP)
-	case pkgconfig.ProtoIPv6:
+	case netlib.ProtoIPv6:
 		eth.EthernetType = layers.EthernetTypeIPv6
 		ip6.SrcIP = net.ParseIP(srcIP)
 		ip6.DstIP = net.ParseIP(dstIP)
@@ -766,11 +767,11 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 
 		// update iplayer
 		switch dm.NetworkInfo.Family {
-		case pkgconfig.ProtoIPv4:
+		case netlib.ProtoIPv4:
 			ip4.Protocol = layers.IPProtocolUDP
 			udp.SetNetworkLayerForChecksum(ip4)
 			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip4)
-		case pkgconfig.ProtoIPv6:
+		case netlib.ProtoIPv6:
 			ip6.NextHeader = layers.IPProtocolUDP
 			udp.SetNetworkLayerForChecksum(ip6)
 			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip6)
@@ -789,11 +790,11 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 
 		// update iplayer
 		switch dm.NetworkInfo.Family {
-		case pkgconfig.ProtoIPv4:
+		case netlib.ProtoIPv4:
 			ip4.Protocol = layers.IPProtocolTCP
 			tcp.SetNetworkLayerForChecksum(ip4)
 			pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.DNS.Payload...)), tcp, ip4)
-		case pkgconfig.ProtoIPv6:
+		case netlib.ProtoIPv6:
 			ip6.NextHeader = layers.IPProtocolTCP
 			tcp.SetNetworkLayerForChecksum(ip6)
 			pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.DNS.Payload...)), tcp, ip6)
@@ -807,11 +808,11 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 
 		// update iplayer
 		switch dm.NetworkInfo.Family {
-		case pkgconfig.ProtoIPv4:
+		case netlib.ProtoIPv4:
 			ip4.Protocol = layers.IPProtocolUDP
 			udp.SetNetworkLayerForChecksum(ip4)
 			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip4)
-		case pkgconfig.ProtoIPv6:
+		case netlib.ProtoIPv6:
 			ip6.NextHeader = layers.IPProtocolUDP
 			udp.SetNetworkLayerForChecksum(ip6)
 			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip6)
@@ -860,7 +861,7 @@ func GetFakeDNSMessageWithPayload() DNSMessage {
 	dnsquestion, _ := dnsmsg.Pack()
 
 	dm := GetFakeDNSMessage()
-	dm.NetworkInfo.Family = pkgconfig.ProtoIPv4
+	dm.NetworkInfo.Family = netlib.ProtoIPv4
 	dm.NetworkInfo.Protocol = pkgconfig.ProtoUDP
 	dm.DNS.Payload = dnsquestion
 	dm.DNS.Length = len(dnsquestion)

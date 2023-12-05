@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-dnstap-protobuf"
@@ -210,7 +211,7 @@ RUN_LOOP:
 				dm.DNSTap.Extra = extra
 			}
 
-			if ipVersion, valid := pkgconfig.IPVersion[dt.GetMessage().GetSocketFamily().String()]; valid {
+			if ipVersion, valid := netlib.IPVersion[dt.GetMessage().GetSocketFamily().String()]; valid {
 				dm.NetworkInfo.Family = ipVersion
 			} else {
 				dm.NetworkInfo.Family = pkgconfig.StrUnknown

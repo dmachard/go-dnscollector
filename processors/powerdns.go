@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
@@ -182,7 +183,7 @@ RUN_LOOP:
 			dm.DNSTap.Identity = string(pbdm.GetServerIdentity())
 			dm.DNSTap.Operation = ProtobufPowerDNSToDNSTap[pbdm.GetType().String()]
 
-			if ipVersion, valid := pkgconfig.IPVersion[pbdm.GetSocketFamily().String()]; valid {
+			if ipVersion, valid := netlib.IPVersion[pbdm.GetSocketFamily().String()]; valid {
 				dm.NetworkInfo.Family = ipVersion
 			} else {
 				dm.NetworkInfo.Family = pkgconfig.StrUnknown

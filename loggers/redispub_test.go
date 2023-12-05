@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
@@ -42,7 +43,7 @@ func Test_RedisPubRun(t *testing.T) {
 			g := NewRedisPub(cfg, logger.New(false), "test")
 
 			// fake json receiver
-			fakeRcvr, err := net.Listen(pkgconfig.SocketTCP, ":6379")
+			fakeRcvr, err := net.Listen(netlib.SocketTCP, ":6379")
 			if err != nil {
 				t.Fatal(err)
 			}

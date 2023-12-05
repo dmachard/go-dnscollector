@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
@@ -220,7 +221,7 @@ RUN_LOOP:
 			if familyIndex != -1 {
 				dm.NetworkInfo.Family = matches[familyIndex]
 			} else {
-				dm.NetworkInfo.Family = pkgconfig.ProtoIPv4
+				dm.NetworkInfo.Family = netlib.ProtoIPv4
 			}
 
 			protocolIndex := re.SubexpIndex("protocol")

@@ -44,20 +44,10 @@ const (
 
 	DNSTapIdentityTest = "test_id"
 
-	ProtoInet  = "INET"
-	ProtoInet6 = "INET6"
-	ProtoIPv6  = "IPv6"
-	ProtoIPv4  = "IPv4"
-
 	ProtoUDP = "UDP"
 	ProtoTCP = "TCP"
 	ProtoDoT = "DOT"
 	ProtoDoH = "DOH"
-
-	SocketTCP  = "tcp"
-	SocketUDP  = "udp"
-	SocketUnix = "unix"
-	SocketTLS  = "tcp+tls"
 
 	TLSV10 = "1.0"
 	TLSV11 = "1.1"
@@ -77,15 +67,5 @@ var (
 		TLSV11: tls.VersionTLS11,
 		TLSV12: tls.VersionTLS12,
 		TLSV13: tls.VersionTLS13,
-	}
-
-	IPVersion = map[string]string{
-		ProtoInet:  ProtoIPv4,
-		ProtoInet6: ProtoIPv6,
-	}
-
-	IPToInet = map[string]string{
-		ProtoIPv4: ProtoInet,
-		ProtoIPv6: ProtoInet6,
 	}
 )

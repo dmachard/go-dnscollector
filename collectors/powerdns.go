@@ -253,9 +253,9 @@ func (c *ProtobufPowerDNS) Listen() error {
 		// update tls min version according to the user config
 		tlsConfig.MinVersion = pkgconfig.TLSVersion[c.config.Collectors.PowerDNS.TLSMinVersion]
 
-		listener, err = tls.Listen(pkgconfig.SocketTCP, addrlisten, tlsConfig)
+		listener, err = tls.Listen(netlib.SocketTCP, addrlisten, tlsConfig)
 	} else {
-		listener, err = net.Listen(pkgconfig.SocketTCP, addrlisten)
+		listener, err = net.Listen(netlib.SocketTCP, addrlisten)
 	}
 	// something is wrong ?
 	if err != nil {

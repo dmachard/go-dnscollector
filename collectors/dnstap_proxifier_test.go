@@ -9,6 +9,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/loggers"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
@@ -25,19 +26,19 @@ func Test_DnstapProxifier(t *testing.T) {
 	}{
 		{
 			name:       "tcp_default",
-			mode:       pkgconfig.SocketTCP,
+			mode:       netlib.SocketTCP,
 			address:    ":6000",
 			listenPort: 0,
 		},
 		{
 			name:       "tcp_custom_port",
-			mode:       pkgconfig.SocketTCP,
+			mode:       netlib.SocketTCP,
 			address:    ":7100",
 			listenPort: 7100,
 		},
 		{
 			name:       "unix_default",
-			mode:       pkgconfig.SocketUnix,
+			mode:       netlib.SocketUnix,
 			address:    "/tmp/dnscollector_relay.sock",
 			listenPort: 0,
 		},
@@ -51,7 +52,7 @@ func Test_DnstapProxifier(t *testing.T) {
 			if tc.listenPort > 0 {
 				config.Collectors.DnstapProxifier.ListenPort = tc.listenPort
 			}
-			if tc.mode == pkgconfig.SocketUnix {
+			if tc.mode == netlib.SocketUnix {
 				config.Collectors.DnstapProxifier.SockPath = tc.address
 			}
 

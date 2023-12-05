@@ -14,6 +14,7 @@ import (
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/perf"
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-dnscollector/xdp"
@@ -239,9 +240,9 @@ func (c *XDPSniffer) Run() {
 			dm.NetworkInfo.ResponsePort = fmt.Sprint(pkt.DstPort)
 
 			if pkt.IpVersion == 0x0800 {
-				dm.NetworkInfo.Family = pkgconfig.ProtoIPv4
+				dm.NetworkInfo.Family = netlib.ProtoIPv4
 			} else {
-				dm.NetworkInfo.Family = pkgconfig.ProtoIPv6
+				dm.NetworkInfo.Family = netlib.ProtoIPv6
 			}
 
 			if pkt.IpProto == 0x11 {

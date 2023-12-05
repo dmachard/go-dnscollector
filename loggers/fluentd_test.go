@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	"github.com/vmihailenco/msgpack"
@@ -17,7 +18,7 @@ func Test_FluentdClient(t *testing.T) {
 		address   string
 	}{
 		{
-			transport: pkgconfig.SocketTCP,
+			transport: netlib.SocketTCP,
 			address:   ":24224",
 		},
 	}

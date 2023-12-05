@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
@@ -17,7 +18,7 @@ func Test_InfluxDB(t *testing.T) {
 	g := NewInfluxDBClient(pkgconfig.GetFakeConfig(), logger.New(false), "test")
 
 	// fake msgpack receiver
-	fakeRcvr, err := net.Listen(pkgconfig.SocketTCP, "127.0.0.1:8086")
+	fakeRcvr, err := net.Listen(netlib.SocketTCP, "127.0.0.1:8086")
 	if err != nil {
 		t.Fatal(err)
 	}

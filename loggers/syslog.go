@@ -12,6 +12,7 @@ import (
 	syslog "github.com/dmachard/go-clientsyslog"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
@@ -166,14 +167,14 @@ func (s *Syslog) ConnectToRemote() {
 		case "local":
 			s.LogInfo("connecting to local syslog...")
 			logWriter, err = syslog.New(s.facility|s.severity, "")
-		case pkgconfig.SocketUnix, pkgconfig.SocketUDP, pkgconfig.SocketTCP:
+		case netlib.SocketUnix, netlib.SocketUDP, netlib.SocketTCP:
 			s.LogInfo("connecting to %s://%s ...",
 				s.config.Loggers.Syslog.Transport,
 				s.config.Loggers.Syslog.RemoteAddress)
 			logWriter, err = syslog.Dial(s.config.Loggers.Syslog.Transport,
 				s.config.Loggers.Syslog.RemoteAddress, s.facility|s.severity,
 				s.config.Loggers.Syslog.Tag)
-		case pkgconfig.SocketTLS:
+		case netlib.SocketTLS:
 			s.LogInfo("connecting to %s://%s ...",
 				s.config.Loggers.Syslog.Transport,
 				s.config.Loggers.Syslog.RemoteAddress)

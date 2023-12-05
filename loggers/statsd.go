@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
@@ -311,11 +312,11 @@ PROCESS_LOOP:
 			var err error
 
 			switch c.config.Loggers.Statsd.Transport {
-			case pkgconfig.SocketTCP, pkgconfig.SocketUDP:
+			case netlib.SocketTCP, netlib.SocketUDP:
 				c.LogInfo("connecting to %s://%s", c.config.Loggers.Statsd.Transport, address)
 				conn, err = net.DialTimeout(c.config.Loggers.Statsd.Transport, address, connTimeout)
 
-			case pkgconfig.SocketTLS:
+			case netlib.SocketTLS:
 				c.LogInfo("connecting to %s://%s", c.config.Loggers.Statsd.Transport, address)
 
 				var tlsConfig *tls.Config
@@ -331,7 +332,7 @@ PROCESS_LOOP:
 				tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
 				if err == nil {
 					dialer := &net.Dialer{Timeout: connTimeout}
-					conn, err = tls.DialWithDialer(dialer, pkgconfig.SocketTCP, address, tlsConfig)
+					conn, err = tls.DialWithDialer(dialer, netlib.SocketTCP, address, tlsConfig)
 				}
 			default:
 				c.logger.Fatal("logger=statsd - invalid transport:", c.config.Loggers.Statsd.Transport)

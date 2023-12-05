@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -182,16 +183,16 @@ func (c *DnstapProxifier) Listen() error {
 		tlsConfig.MinVersion = pkgconfig.TLSVersion[c.config.Collectors.DnstapProxifier.TLSMinVersion]
 
 		if len(c.sockPath) > 0 {
-			listener, err = tls.Listen(pkgconfig.SocketUnix, c.sockPath, tlsConfig)
+			listener, err = tls.Listen(netlib.SocketUnix, c.sockPath, tlsConfig)
 		} else {
-			listener, err = tls.Listen(pkgconfig.SocketTCP, addrlisten, tlsConfig)
+			listener, err = tls.Listen(netlib.SocketTCP, addrlisten, tlsConfig)
 		}
 	} else {
 		// basic listening
 		if len(c.sockPath) > 0 {
-			listener, err = net.Listen(pkgconfig.SocketUnix, c.sockPath)
+			listener, err = net.Listen(netlib.SocketUnix, c.sockPath)
 		} else {
-			listener, err = net.Listen(pkgconfig.SocketTCP, addrlisten)
+			listener, err = net.Listen(netlib.SocketTCP, addrlisten)
 		}
 	}
 
