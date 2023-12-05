@@ -72,3 +72,66 @@ type ConfigCollectors struct {
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
 	} `yaml:"tzsp"`
 }
+
+func (c *ConfigCollectors) SetDefault() {
+	c.Tail.Enable = false
+	c.Tail.TimeLayout = ""
+	c.Tail.PatternQuery = ""
+	c.Tail.PatternReply = ""
+	c.Tail.FilePath = ""
+
+	c.Dnstap.Enable = false
+	c.Dnstap.ListenIP = AnyIP
+	c.Dnstap.ListenPort = 6000
+	c.Dnstap.SockPath = ""
+	c.Dnstap.TLSSupport = false
+	c.Dnstap.TLSMinVersion = TLSV12
+	c.Dnstap.CertFile = ""
+	c.Dnstap.KeyFile = ""
+	c.Dnstap.RcvBufSize = 0
+	c.Dnstap.ResetConn = true
+	c.Dnstap.ChannelBufferSize = 65535
+	c.Dnstap.DisableDNSParser = false
+
+	c.DnstapProxifier.Enable = false
+	c.DnstapProxifier.ListenIP = AnyIP
+	c.DnstapProxifier.ListenPort = 6000
+	c.DnstapProxifier.SockPath = ""
+	c.DnstapProxifier.TLSSupport = false
+	c.DnstapProxifier.TLSMinVersion = TLSV12
+	c.DnstapProxifier.CertFile = ""
+	c.DnstapProxifier.KeyFile = ""
+
+	c.XdpLiveCapture.Enable = false
+	c.XdpLiveCapture.Device = ""
+	c.XdpLiveCapture.ChannelBufferSize = 65535
+
+	c.AfpacketLiveCapture.Enable = false
+	c.AfpacketLiveCapture.Port = 53
+	c.AfpacketLiveCapture.Device = ""
+	c.AfpacketLiveCapture.ChannelBufferSize = 65535
+
+	c.PowerDNS.Enable = false
+	c.PowerDNS.ListenIP = AnyIP
+	c.PowerDNS.ListenPort = 6001
+	c.PowerDNS.TLSSupport = false
+	c.PowerDNS.TLSMinVersion = TLSV12
+	c.PowerDNS.CertFile = ""
+	c.PowerDNS.KeyFile = ""
+	c.PowerDNS.AddDNSPayload = false
+	c.PowerDNS.RcvBufSize = 0
+	c.PowerDNS.ResetConn = true
+	c.PowerDNS.ChannelBufferSize = 65535
+
+	c.FileIngestor.Enable = false
+	c.FileIngestor.WatchDir = ""
+	c.FileIngestor.PcapDNSPort = 53
+	c.FileIngestor.WatchMode = ModePCAP
+	c.FileIngestor.DeleteAfter = false
+	c.FileIngestor.ChannelBufferSize = 65535
+
+	c.Tzsp.Enable = false
+	c.Tzsp.ListenIP = AnyIP
+	c.Tzsp.ListenPort = 10000
+	c.Tzsp.ChannelBufferSize = 65535
+}

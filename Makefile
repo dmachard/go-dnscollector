@@ -39,7 +39,7 @@ dep:
 	@go mod tidy
 
 build:
-	CGO_ENABLED=0 go build -v -ldflags="$(LD_FLAGS)" -o ${BINARY_NAME} dnscollector.go
+	CGO_ENABLED=0 go build -v -ldflags="$(LD_FLAGS)" -o ${BINARY_NAME} dnscollector.go multiplexer.go
 
 run: build
 	./${BINARY_NAME}

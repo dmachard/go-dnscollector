@@ -6,6 +6,12 @@ type ConfigMultiplexer struct {
 	Routes     []MultiplexRoutes `yaml:"routes"`
 }
 
+func (c *ConfigMultiplexer) SetDefault() {
+	c.Collectors = []MultiplexInOut{}
+	c.Loggers = []MultiplexInOut{}
+	c.Routes = []MultiplexRoutes{}
+}
+
 type MultiplexInOut struct {
 	Name       string                 `yaml:"name"`
 	Transforms map[string]interface{} `yaml:"transforms"`

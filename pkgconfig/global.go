@@ -13,3 +13,17 @@ type ConfigGlobal struct {
 	} `yaml:"trace"`
 	ServerIdentity string `yaml:"server-identity"`
 }
+
+func (c *ConfigGlobal) SetDefault() {
+	// global config
+	c.TextFormat = "timestamp identity operation rcode queryip queryport family protocol length-unit qname qtype latency"
+	c.TextFormatDelimiter = " "
+	c.TextFormatBoundary = "\""
+
+	c.Trace.Verbose = false
+	c.Trace.LogMalformed = false
+	c.Trace.Filename = ""
+	c.Trace.MaxSize = 10
+	c.Trace.MaxBackups = 10
+	c.ServerIdentity = ""
+}
