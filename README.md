@@ -26,7 +26,7 @@ Run
 <img src="docs/_images/terminal.gif" alt="dnscollector"/>
 </p>
 
-Pipelining
+Multiplexer
 
 ![overview](./docs/_images/overview.png)
 
