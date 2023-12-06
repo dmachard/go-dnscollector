@@ -32,9 +32,15 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
   
-      - name: build binary from make file
+      - name: build binary from makefile
         run: make build
       
+      - name: dep from makefile
+        run: make dep
+
+      - name: dep+build from makefile
+        run: make
+        
   go-ubuntu:
     runs-on: ubuntu-latest
     
