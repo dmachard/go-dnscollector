@@ -1,6 +1,7 @@
 BINARY_NAME := go-dnscollector
 
-GO_VERSION := 1.21
+GO_VERSION := $(shell go env GOVERSION | sed -n 's/go\([0-9]\+\.[0-9]\+\).*/\1/p')
+
 GO_LOGGER := 0.4.0
 GO_POWERDNS_PROTOBUF := 0.2.0
 GO_DNSTAP_PROTOBUF := 0.6.0
@@ -25,11 +26,20 @@ ifndef $(GOPATH)
 	export GOPATH
 endif
 
-.PHONY: all dep lint build clean
+.PHONY: all check-go dep lint build clean goversion
 
-all: dep build
+# This target depends on dep and build.
+all: check-go dep build
 
-dep:
+check-go:
+	@command -v go > /dev/null 2>&1 || { echo >&2 "Go is not installed. Please install it before proceeding."; exit 1; }
+
+# Displays the Go version.
+goversion: check-go
+	@echo "Go version: $(GO_VERSION)"
+
+# Installs project dependencies.
+dep: check-go
 	@go get github.com/dmachard/go-logger@v$(GO_LOGGER)
 	@go get github.com/dmachard/go-powerdns-protobuf@v$(GO_POWERDNS_PROTOBUF)
 	@go get github.com/dmachard/go-dnstap-protobuf@v$(GO_DNSTAP_PROTOBUF)
@@ -38,19 +48,24 @@ dep:
 	@go mod edit -go=$(GO_VERSION)
 	@go mod tidy
 
-build:
+# Builds the project using go build.
+build: check-go
 	CGO_ENABLED=0 go build -v -ldflags="$(LD_FLAGS)" -o ${BINARY_NAME} dnscollector.go multiplexer.go
 
+# Builds and runs the project.
 run: build
 	./${BINARY_NAME}
 
+# Builds and runs the project with the -v flag.
 version: build
 	./${BINARY_NAME} -v
 
+# Runs linters.
 lint:
 	$(GOPATH)/bin/golangci-lint run --config=.golangci.yml ./...
-	
-tests:
+
+# Runs various tests for different packages.
+tests: check-go
 	@go test -race -cover -v
 	@go test ./pkgconfig/ -race -cover -v
 	@go test ./dnsutils/ -race -cover -v
@@ -60,5 +75,7 @@ tests:
 	@go test -timeout 90s ./loggers/ -race -cover -v
 	@go test -timeout 30s ./processors/ -race -cover -v
 
-clean:
+# Cleans the project using go clean.
+clean: check-go
 	@go clean
+	@rm -f $(BINARY_NAME)
