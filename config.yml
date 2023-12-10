@@ -95,7 +95,9 @@ pipelines:
     dnsmessage:
       matching:
         include:
-          dnstap.operation: "CLIENT_QUERY"
+          dns.flags.ad: true
+          #dnstap.operation: "CLIENT_QUERY"
+          dnstap.operation: "CLIENT_Q*"
       policy: "drop-unmatched" #passthrough
     routes: [ log-queries ]
 

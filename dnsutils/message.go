@@ -840,32 +840,48 @@ func (dm *DNSMessage) Flatten() (ret map[string]interface{}, err error) {
 
 func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
 
+	if len(matching) == 0 {
+		return nil, false
+	}
+
 	dmValue := reflect.ValueOf(dm)
 
 	if dmValue.Kind() == reflect.Ptr {
 		dmValue = dmValue.Elem()
 	}
 
+	var isMatch = true
+
 	for nestedKeys, value := range matching {
 
-		fieldValue, found := getFieldByJSONTagV2(dmValue, nestedKeys)
+		fieldValue, found := getFieldByJSONTag(dmValue, nestedKeys)
 		if !found {
 			fmt.Printf("pattern '%s' does not exist in the DNSMessage structure\n", nestedKeys)
 			return nil, false
 		}
 
-		if reflect.DeepEqual(value, fieldValue.Interface()) {
-			return nil, true
+		reflectedValue := reflect.ValueOf(value)
+
+		// regex support for string
+		if reflectedValue.Kind() == reflect.String {
+			pattern := regexp.MustCompile(reflectedValue.Interface().(string))
+			if !pattern.MatchString(fieldValue.Interface().(string)) {
+				isMatch = false
+				break
+			}
 		} else {
-			return nil, false
+			if value != fieldValue.Interface() {
+				isMatch = false
+				break
+			}
 		}
 
 	}
 
-	return nil, false
+	return nil, isMatch
 }
 
-func getFieldByJSONTagV2(value reflect.Value, nestedKeys string) (reflect.Value, bool) {
+func getFieldByJSONTag(value reflect.Value, nestedKeys string) (reflect.Value, bool) {
 	listKeys := strings.SplitN(nestedKeys, ".", 2)
 
 	for j, jsonKey := range listKeys {
@@ -878,7 +894,7 @@ func getFieldByJSONTagV2(value reflect.Value, nestedKeys string) (reflect.Value,
 			if tag == jsonKey {
 				// Recursively check nested fields if the current field is a struct
 				if field.Type.Kind() == reflect.Struct {
-					if fieldValue, found := getFieldByJSONTagV2(value.Field(i), listKeys[j+1]); found {
+					if fieldValue, found := getFieldByJSONTag(value.Field(i), listKeys[j+1]); found {
 						return fieldValue, true
 					}
 				} else {
