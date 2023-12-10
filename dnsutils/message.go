@@ -891,28 +891,6 @@ func getFieldByJSONTagV2(value reflect.Value, nestedKeys string) (reflect.Value,
 	return reflect.Value{}, false
 }
 
-func getFieldByJSONTag(value reflect.Value, jsonTag string) (reflect.Value, bool) {
-	// Iterate over the fields of the structure
-	for i := 0; i < value.NumField(); i++ {
-		field := value.Type().Field(i)
-
-		// Check if the JSON tag matches
-		tag := field.Tag.Get("json")
-		if tag == jsonTag {
-			return value.Field(i), true
-		}
-
-		// Recursively check nested fields if the current field is a struct
-		if field.Type.Kind() == reflect.Struct {
-			if fieldValue, found := getFieldByJSONTag(value.Field(i), jsonTag); found {
-				return fieldValue, true
-			}
-		}
-	}
-
-	return reflect.Value{}, false
-}
-
 func GetFakeDNSMessage() DNSMessage {
 	dm := DNSMessage{}
 	dm.Init()

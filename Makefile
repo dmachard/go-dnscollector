@@ -50,7 +50,7 @@ dep: check-go
 
 # Builds the project using go build.
 build: check-go
-	CGO_ENABLED=0 go build -v -ldflags="$(LD_FLAGS)" -o ${BINARY_NAME} dnscollector.go multiplexer.go
+	CGO_ENABLED=0 go build -v -ldflags="$(LD_FLAGS)" -o ${BINARY_NAME} dnscollector.go multiplexer.go pipeline.go
 
 # Builds and runs the project.
 run: build

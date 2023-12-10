@@ -47,8 +47,8 @@ func GetStageConfig(section string, config *pkgconfig.Config, item pkgconfig.Con
 }
 
 func InitPipelines(mapLoggers map[string]dnsutils.Worker, mapCollectors map[string]dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
-	//TODO stage name must be uniq
-	//TODO check if stages exists before continue
+	// TODO stage name must be uniq
+	// TODO check if stages exists before continue
 
 	// init loggers
 	for _, stage := range config.Pipelines {

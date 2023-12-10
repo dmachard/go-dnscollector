@@ -46,7 +46,7 @@ func NewFalcoClient(config *pkgconfig.Config, console *logger.Logger, name strin
 
 func (f *FalcoClient) GetName() string { return f.name }
 
-func (c *FalcoClient) AddRoute(wrk dnsutils.Worker) {}
+func (f *FalcoClient) AddRoute(wrk dnsutils.Worker) {}
 
 func (f *FalcoClient) SetLoggers(loggers []dnsutils.Worker) {}
 
