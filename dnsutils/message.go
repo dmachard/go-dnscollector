@@ -869,11 +869,9 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
 				isMatch = false
 				break
 			}
-		} else {
-			if value != fieldValue.Interface() {
-				isMatch = false
-				break
-			}
+		} else if value != fieldValue.Interface() {
+			isMatch = false
+			break
 		}
 
 	}
