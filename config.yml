@@ -65,24 +65,43 @@ global:
 
 # create your dns collector, please refer bellow to see the list
 # of supported collectors, loggers and transformers
-multiplexer:
-  collectors:
-    - name: tap
-      dnstap:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
-      transforms:
-        normalize:
-          qname-lowercase: false
+# multiplexer:
+#   collectors:
+#     - name: tap
+#       dnstap:
+#         listen-ip: 0.0.0.0
+#         listen-port: 6000
+#       transforms:
+#         normalize:
+#           qname-lowercase: false
 
-  loggers:
-    - name: console
-      stdout:
-        mode: text
+#   loggers:
+#     - name: console
+#       stdout:
+#         mode: text
 
-  routes:
-    - from: [ tap ]
-      to: [ console ]
+#   routes:
+#     - from: [ tap ]
+#       to: [ console ]
+
+pipelines:
+  - name: dnsdist-main
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routes: [ match-queries ]
+
+  - name: match-queries
+    dnsmessage:
+      matching:
+        include:
+          dnstap.operation: "CLIENT_QUERY"
+      policy: "drop-unmatched" #passthrough
+    routes: [ log-queries ]
+
+  - name: log-queries
+    stdout:
+      mode: text
 
 ################################################
 # list of supported collectors

@@ -61,6 +61,10 @@ func NewDnstap(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logg
 
 func (c *Dnstap) GetName() string { return c.name }
 
+func (c *Dnstap) AddRoute(wrk dnsutils.Worker) {
+	c.loggers = append(c.loggers, wrk)
+}
+
 func (c *Dnstap) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }

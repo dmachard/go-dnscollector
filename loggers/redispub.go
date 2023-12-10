@@ -67,6 +67,8 @@ func NewRedisPub(config *pkgconfig.Config, logger *logger.Logger, name string) *
 
 func (c *RedisPub) GetName() string { return c.name }
 
+func (c *RedisPub) AddRoute(wrk dnsutils.Worker) {}
+
 func (c *RedisPub) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *RedisPub) ReadConfig() {

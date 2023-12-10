@@ -113,6 +113,8 @@ func NewRestAPI(config *pkgconfig.Config, logger *logger.Logger, name string) *R
 
 func (c *RestAPI) GetName() string { return c.name }
 
+func (c *RestAPI) AddRoute(wrk dnsutils.Worker) {}
+
 func (c *RestAPI) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *RestAPI) ReadConfig() {

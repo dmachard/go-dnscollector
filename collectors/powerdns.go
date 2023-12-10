@@ -60,6 +60,10 @@ func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *pkgconfig.Config, lo
 
 func (c *ProtobufPowerDNS) GetName() string { return c.name }
 
+func (c *ProtobufPowerDNS) AddRoute(wrk dnsutils.Worker) {
+	c.loggers = append(c.loggers, wrk)
+}
+
 func (c *ProtobufPowerDNS) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }

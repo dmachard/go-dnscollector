@@ -19,13 +19,13 @@ type ConfigTransformers struct {
 		MeasureLatency    bool `yaml:"measure-latency"`
 		UnansweredQueries bool `yaml:"unanswered-queries"`
 		QueriesTimeout    int  `yaml:"queries-timeout"`
-	}
+	} `yaml:"latency"`
 	Reducer struct {
 		Enable                    bool `yaml:"enable"`
 		RepetitiveTrafficDetector bool `yaml:"repetitive-traffic-detector"`
 		QnamePlusOne              bool `yaml:"qname-plus-one"`
 		WatchInterval             int  `yaml:"watch-interval"`
-	}
+	} `yaml:"reducer"`
 	Filtering struct {
 		Enable          bool     `yaml:"enable"`
 		DropFqdnFile    string   `yaml:"drop-fqdn-file"`

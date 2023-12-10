@@ -51,6 +51,8 @@ func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, na
 
 func (c *ElasticSearchClient) GetName() string { return c.name }
 
+func (c *ElasticSearchClient) AddRoute(wrk dnsutils.Worker) {}
+
 func (c *ElasticSearchClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *ElasticSearchClient) ReadConfig() {

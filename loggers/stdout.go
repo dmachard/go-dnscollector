@@ -67,6 +67,8 @@ func NewStdOut(config *pkgconfig.Config, console *logger.Logger, name string) *S
 
 func (c *StdOut) GetName() string { return c.name }
 
+func (c *StdOut) AddRoute(wrk dnsutils.Worker) {}
+
 func (c *StdOut) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *StdOut) ReadConfig() {

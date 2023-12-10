@@ -58,6 +58,8 @@ func NewDnstapSender(config *pkgconfig.Config, logger *logger.Logger, name strin
 
 func (c *DnstapSender) GetName() string { return c.name }
 
+func (c *DnstapSender) AddRoute(wrk dnsutils.Worker) {}
+
 func (c *DnstapSender) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *DnstapSender) ReadConfig() {

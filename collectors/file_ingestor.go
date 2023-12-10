@@ -70,6 +70,10 @@ func NewFileIngestor(loggers []dnsutils.Worker, config *pkgconfig.Config, logger
 
 func (c *FileIngestor) GetName() string { return c.name }
 
+func (c *FileIngestor) AddRoute(wrk dnsutils.Worker) {
+	c.loggers = append(c.loggers, wrk)
+}
+
 func (c *FileIngestor) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }

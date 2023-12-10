@@ -77,6 +77,10 @@ func (c *XDPSniffer) LogError(msg string, v ...interface{}) {
 
 func (c *XDPSniffer) GetName() string { return c.name }
 
+func (c *XDPSniffer) AddRoute(wrk dnsutils.Worker) {
+	c.loggers = append(c.loggers, wrk)
+}
+
 func (c *XDPSniffer) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }

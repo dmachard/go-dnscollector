@@ -24,6 +24,7 @@ type Config struct {
 	Loggers              ConfigLoggers      `yaml:"loggers"`
 	OutgoingTransformers ConfigTransformers `yaml:"loggers-transformers"`
 	Multiplexer          ConfigMultiplexer  `yaml:"multiplexer"`
+	Pipelines            []ConfigPipelines  `yaml:"pipelines"`
 }
 
 func (c *Config) SetDefault() {

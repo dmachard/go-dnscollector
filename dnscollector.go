@@ -101,10 +101,17 @@ func main() {
 	mapLoggers := make(map[string]dnsutils.Worker)
 	mapCollectors := make(map[string]dnsutils.Worker)
 
-	// enable multiplexer mode
+	// running mode,
+	// multiplexer ?
 	if IsMuxEnabled(config) {
 		logger.Info("main - multiplexer mode enabled")
 		InitMultiplexer(mapLoggers, mapCollectors, config, logger)
+	}
+
+	// or pipeline ?
+	if len(config.Pipelines) > 0 {
+		logger.Info("main - pipelines mode enabled")
+		InitPipelines(mapLoggers, mapCollectors, config, logger)
 	}
 
 	// Handle Ctrl-C with SIG TERM and SIGHUP

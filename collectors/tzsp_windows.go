@@ -35,6 +35,10 @@ func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger
 
 func (c *TZSPSniffer) GetName() string { return c.name }
 
+func (c *TZSPSniffer) AddRoute(wrk dnsutils.Worker) {
+	c.loggers = append(c.loggers, wrk)
+}
+
 func (c *TZSPSniffer) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }

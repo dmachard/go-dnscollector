@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -835,6 +836,81 @@ func (dm *DNSMessage) Flatten() (ret map[string]interface{}, err error) {
 	json.Unmarshal(tmp, &ret)
 	ret, err = flat.Flatten(ret, nil)
 	return
+}
+
+func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
+
+	dmValue := reflect.ValueOf(dm)
+
+	if dmValue.Kind() == reflect.Ptr {
+		dmValue = dmValue.Elem()
+	}
+
+	for nestedKeys, value := range matching {
+
+		fieldValue, found := getFieldByJSONTagV2(dmValue, nestedKeys)
+		if !found {
+			fmt.Printf("pattern '%s' does not exist in the DNSMessage structure\n", nestedKeys)
+			return nil, false
+		}
+
+		if reflect.DeepEqual(value, fieldValue.Interface()) {
+			return nil, true
+		} else {
+			return nil, false
+		}
+
+	}
+
+	return nil, false
+}
+
+func getFieldByJSONTagV2(value reflect.Value, nestedKeys string) (reflect.Value, bool) {
+	listKeys := strings.SplitN(nestedKeys, ".", 2)
+
+	for j, jsonKey := range listKeys {
+		// Iterate over the fields of the structure
+		for i := 0; i < value.NumField(); i++ {
+			field := value.Type().Field(i)
+
+			// Check if the JSON tag matches
+			tag := field.Tag.Get("json")
+			if tag == jsonKey {
+				// Recursively check nested fields if the current field is a struct
+				if field.Type.Kind() == reflect.Struct {
+					if fieldValue, found := getFieldByJSONTagV2(value.Field(i), listKeys[j+1]); found {
+						return fieldValue, true
+					}
+				} else {
+					return value.Field(i), true
+				}
+			}
+		}
+	}
+
+	return reflect.Value{}, false
+}
+
+func getFieldByJSONTag(value reflect.Value, jsonTag string) (reflect.Value, bool) {
+	// Iterate over the fields of the structure
+	for i := 0; i < value.NumField(); i++ {
+		field := value.Type().Field(i)
+
+		// Check if the JSON tag matches
+		tag := field.Tag.Get("json")
+		if tag == jsonTag {
+			return value.Field(i), true
+		}
+
+		// Recursively check nested fields if the current field is a struct
+		if field.Type.Kind() == reflect.Struct {
+			if fieldValue, found := getFieldByJSONTag(value.Field(i), jsonTag); found {
+				return fieldValue, true
+			}
+		}
+	}
+
+	return reflect.Value{}, false
 }
 
 func GetFakeDNSMessage() DNSMessage {

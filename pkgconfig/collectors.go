@@ -1,6 +1,14 @@
 package pkgconfig
 
 type ConfigCollectors struct {
+	DNSMessage struct {
+		Enable            bool   `yaml:"enable"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size"`
+		Policy            string `yaml:"policy"`
+		Matching          struct {
+			Include map[string]interface{} `yaml:"include"`
+		} `yaml:"matching"`
+	} `yaml:"dnsmessage"`
 	Tail struct {
 		Enable       bool   `yaml:"enable"`
 		TimeLayout   string `yaml:"time-layout"`
@@ -74,6 +82,9 @@ type ConfigCollectors struct {
 }
 
 func (c *ConfigCollectors) SetDefault() {
+	c.DNSMessage.Enable = false
+	c.DNSMessage.ChannelBufferSize = 65535
+
 	c.Tail.Enable = false
 	c.Tail.TimeLayout = ""
 	c.Tail.PatternQuery = ""

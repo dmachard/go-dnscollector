@@ -62,6 +62,8 @@ func NewFluentdClient(config *pkgconfig.Config, logger *logger.Logger, name stri
 
 func (c *FluentdClient) GetName() string { return c.name }
 
+func (c *FluentdClient) AddRoute(wrk dnsutils.Worker) {}
+
 func (c *FluentdClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *FluentdClient) ReadConfig() {

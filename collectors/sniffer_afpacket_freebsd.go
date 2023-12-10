@@ -35,6 +35,10 @@ func NewAfpacketSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, log
 
 func (c *AfpacketSniffer) GetName() string { return c.name }
 
+func (c *AfpacketSniffer) AddRoute(wrk dnsutils.Worker) {
+	c.loggers = append(c.loggers, wrk)
+}
+
 func (c *AfpacketSniffer) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }

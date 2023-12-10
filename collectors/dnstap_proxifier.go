@@ -46,6 +46,10 @@ func NewDnstapProxifier(loggers []dnsutils.Worker, config *pkgconfig.Config, log
 
 func (c *DnstapProxifier) GetName() string { return c.name }
 
+func (c *DnstapProxifier) AddRoute(wrk dnsutils.Worker) {
+	c.loggers = append(c.loggers, wrk)
+}
+
 func (c *DnstapProxifier) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }

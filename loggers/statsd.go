@@ -84,6 +84,8 @@ func NewStatsdClient(config *pkgconfig.Config, logger *logger.Logger, name strin
 
 func (c *StatsdClient) GetName() string { return c.name }
 
+func (c *StatsdClient) AddRoute(wrk dnsutils.Worker) {}
+
 func (c *StatsdClient) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (c *StatsdClient) ReadConfig() {

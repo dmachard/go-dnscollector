@@ -62,6 +62,8 @@ func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name stri
 
 func (k *KafkaProducer) GetName() string { return k.name }
 
+func (k *KafkaProducer) AddRoute(wrk dnsutils.Worker) {}
+
 func (k *KafkaProducer) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (k *KafkaProducer) ReadConfig() {

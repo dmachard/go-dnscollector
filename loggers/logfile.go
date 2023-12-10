@@ -94,6 +94,8 @@ func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *L
 
 func (l *LogFile) GetName() string { return l.name }
 
+func (l *LogFile) AddRoute(wrk dnsutils.Worker) {}
+
 func (l *LogFile) SetLoggers(loggers []dnsutils.Worker) {}
 
 func (l *LogFile) Channel() chan dnsutils.DNSMessage {

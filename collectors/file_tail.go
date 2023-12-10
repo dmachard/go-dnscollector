@@ -45,6 +45,10 @@ func NewTail(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger
 
 func (c *Tail) GetName() string { return c.name }
 
+func (c *Tail) AddRoute(wrk dnsutils.Worker) {
+	c.loggers = append(c.loggers, wrk)
+}
+
 func (c *Tail) SetLoggers(loggers []dnsutils.Worker) {
 	c.loggers = loggers
 }
