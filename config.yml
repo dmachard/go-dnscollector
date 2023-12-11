@@ -95,17 +95,19 @@ pipelines:
     dnsmessage:
       matching:
         include:
-          dns.flags.ad: true
-          #dnstap.operation: "CLIENT_QUERY"
-          dnstap.operation: "CLIENT_Q.*"
+          dnstap.operation: "CLIENT_QUERY"
+          dns.qname: ".*\\.google\\.com"
         greater-than:
-          dns.length: 100
+          dns.length: 50
       policy: "drop-unmatched" #passthrough
+    transforms:
+      atags:
+        tags: [ "TAG-QUERIES" ]
     routes: [ log-queries ]
 
   - name: log-queries
     stdout:
-      mode: text
+      mode: flat-json
 
 ################################################
 # list of supported collectors

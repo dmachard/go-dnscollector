@@ -33,6 +33,7 @@ type Transforms struct {
 	ReducerTransform         *ReducerProcessor
 	ExtractProcessor         ExtractProcessor
 	MachineLearningTransform MlProcessor
+	ATagsTransform           ATagsProcessor
 
 	activeTransforms []func(dm *dnsutils.DNSMessage) int
 }
@@ -55,6 +56,7 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 	d.FilteringTransform = NewFilteringProcessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 	d.GeoipTransform = NewDNSGeoIPProcessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 	d.MachineLearningTransform = NewMachineLearningSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.ATagsTransform = NewATagsSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 
 	d.Prepare()
 	return d
@@ -71,6 +73,7 @@ func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.ReducerTransform.ReloadConfig(config)
 	p.ExtractProcessor.ReloadConfig(config)
 	p.MachineLearningTransform.ReloadConfig(config)
+	p.ATagsTransform.ReloadConfig(config)
 
 	p.Prepare()
 }
@@ -169,6 +172,11 @@ func (p *Transforms) Prepare() error {
 		p.LogInfo(prefixlog + enabled)
 	}
 
+	if p.config.ATags.Enable {
+		prefixlog := fmt.Sprintf("transformer=atags#%d - ", p.instance)
+		p.LogInfo(prefixlog + "subprocessor atags is enabled")
+	}
+
 	return nil
 }
 
@@ -203,6 +211,10 @@ func (p *Transforms) InitDNSMessageFormat(dm *dnsutils.DNSMessage) {
 
 	if p.config.MachineLearning.Enable {
 		p.MachineLearningTransform.InitDNSMessage(dm)
+	}
+
+	if p.config.ATags.Enable {
+		p.ATagsTransform.InitDNSMessage(dm)
 	}
 }
 
@@ -292,6 +304,11 @@ func (p *Transforms) ProcessMessage(dm *dnsutils.DNSMessage) int {
 	// Traffic reducer ?
 	if p.ReducerTransform.ProcessDNSMessage(dm) == ReturnDrop {
 		return ReturnDrop
+	}
+
+	// add tags
+	if p.config.ATags.Enable {
+		dm.ATags.Tags = append(dm.ATags.Tags, p.config.ATags.Tags...)
 	}
 
 	//  and finaly apply other transformation

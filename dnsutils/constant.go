@@ -15,4 +15,7 @@ const (
 	DNSTapClientQuery    = "CLIENT_QUERY"
 
 	DNSTapIdentityTest = "test_id"
+
+	MatchingModeInclude     = "include"
+	MatchingModeGreaterThan = "greater-than"
 )

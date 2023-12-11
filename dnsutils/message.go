@@ -206,6 +206,10 @@ type TransformML struct {
 	UncommonQtypes        int     `json:"uncommon-qtypes" msgpack:"uncommon-qtypes"`
 }
 
+type TransformATags struct {
+	Tags []string `json:"tags" msgpack:"tags"`
+}
+
 type DNSMessage struct {
 	NetworkInfo     DNSNetInfo             `json:"network" msgpack:"network"`
 	DNS             DNS                    `json:"dns" msgpack:"dns"`
@@ -219,6 +223,7 @@ type DNSMessage struct {
 	Reducer         *TransformReducer      `json:"reducer,omitempty" msgpack:"reducer"`
 	MachineLearning *TransformML           `json:"ml,omitempty" msgpack:"ml"`
 	Filtering       *TransformFiltering    `json:"filtering,omitempty" msgpack:"filtering"`
+	ATags           *TransformATags        `json:"atags,omitempty" msgpack:"atags"`
 }
 
 func (dm *DNSMessage) Init() {
@@ -863,7 +868,7 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}, operator string)
 		reflectedValue := reflect.ValueOf(value)
 
 		switch operator {
-		case "include":
+		case MatchingModeInclude:
 			// regex support for string
 			if reflectedValue.Kind() == reflect.String {
 				pattern := regexp.MustCompile(reflectedValue.Interface().(string))
@@ -877,7 +882,7 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}, operator string)
 				isMatch = false
 				break
 			}
-		case "greater-than":
+		case MatchingModeGreaterThan:
 			if reflectedValue.Kind() == reflect.Int {
 				if fieldValue.Interface().(int) < reflectedValue.Interface().(int) {
 					isMatch = false

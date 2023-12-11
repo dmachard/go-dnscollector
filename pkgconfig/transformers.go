@@ -64,6 +64,10 @@ type ConfigTransformers struct {
 		Enable      bool `yaml:"enable"`
 		AddFeatures bool `yaml:"add-features"`
 	} `yaml:"machine-learning"`
+	ATags struct {
+		Enable bool     `yaml:"enable"`
+		Tags   []string `yaml:"tags,flow"`
+	} `yaml:"atags"`
 }
 
 func (c *ConfigTransformers) SetDefault() {
@@ -119,6 +123,9 @@ func (c *ConfigTransformers) SetDefault() {
 
 	c.MachineLearning.Enable = false
 	c.MachineLearning.AddFeatures = false
+
+	c.ATags.Enable = false
+	c.ATags.Tags = []string{}
 }
 
 func GetFakeConfigTransformers() *ConfigTransformers {
