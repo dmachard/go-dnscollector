@@ -97,7 +97,9 @@ pipelines:
         include:
           dns.flags.ad: true
           #dnstap.operation: "CLIENT_QUERY"
-          dnstap.operation: "CLIENT_Q*"
+          dnstap.operation: "CLIENT_Q.*"
+        greater-than:
+          dns.length: 100
       policy: "drop-unmatched" #passthrough
     routes: [ log-queries ]
 

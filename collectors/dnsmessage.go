@@ -162,7 +162,13 @@ RUN_LOOP:
 			// matching enabled, filtering DNS messages ?
 			matched := false
 			if len(c.config.Collectors.DNSMessage.Matching.Include) > 0 {
-				err, matched = dm.Matching(c.config.Collectors.DNSMessage.Matching.Include)
+				err, matched = dm.Matching(c.config.Collectors.DNSMessage.Matching.Include, "include")
+				if err != nil {
+					c.LogError(err.Error())
+				}
+			}
+			if len(c.config.Collectors.DNSMessage.Matching.GreaterThan) > 0 {
+				err, matched = dm.Matching(c.config.Collectors.DNSMessage.Matching.GreaterThan, "greater-than")
 				if err != nil {
 					c.LogError(err.Error())
 				}

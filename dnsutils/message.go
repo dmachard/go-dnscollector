@@ -838,7 +838,7 @@ func (dm *DNSMessage) Flatten() (ret map[string]interface{}, err error) {
 	return
 }
 
-func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
+func (dm *DNSMessage) Matching(matching map[string]interface{}, operator string) (error, bool) {
 
 	if len(matching) == 0 {
 		return nil, false
@@ -862,16 +862,28 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
 
 		reflectedValue := reflect.ValueOf(value)
 
-		// regex support for string
-		if reflectedValue.Kind() == reflect.String {
-			pattern := regexp.MustCompile(reflectedValue.Interface().(string))
-			if !pattern.MatchString(fieldValue.Interface().(string)) {
+		switch operator {
+		case "include":
+			// regex support for string
+			if reflectedValue.Kind() == reflect.String {
+				pattern := regexp.MustCompile(reflectedValue.Interface().(string))
+				if !pattern.MatchString(fieldValue.Interface().(string)) {
+					isMatch = false
+					break
+				}
+
+				// other types
+			} else if value != fieldValue.Interface() {
 				isMatch = false
 				break
 			}
-		} else if value != fieldValue.Interface() {
-			isMatch = false
-			break
+		case "greater-than":
+			if reflectedValue.Kind() == reflect.Int {
+				if fieldValue.Interface().(int) < reflectedValue.Interface().(int) {
+					isMatch = false
+					break
+				}
+			}
 		}
 
 	}

@@ -6,7 +6,8 @@ type ConfigCollectors struct {
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		Policy            string `yaml:"policy"`
 		Matching          struct {
-			Include map[string]interface{} `yaml:"include"`
+			Include     map[string]interface{} `yaml:"include"`
+			GreaterThan map[string]interface{} `yaml:"greater-than"`
 		} `yaml:"matching"`
 	} `yaml:"dnsmessage"`
 	Tail struct {
