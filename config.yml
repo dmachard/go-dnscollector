@@ -84,29 +84,62 @@ global:
 #     - from: [ tap ]
 #       to: [ console ]
 
+
+  # - name: match-queries
+  #   dnsmessage:
+  #     matching:
+  #       include:
+  #         dnstap.operation: "CLIENT_QUERY"
+  #         dns.qname: ".*\\.google\\.com"
+  #       greater-than:
+  #         dns.length: 50
+  #     policy: "drop-unmatched" #passthrough
+  #   transforms:
+  #     atags:
+  #       tags: [ "TAG-QUERIES" ]
+  #   routes: [ log-queries ]
+
+  # - name: log-queries
+  #   stdout:
+  #     mode: flat-json
+
 pipelines:
   - name: dnsdist-main
     dnstap:
       listen-ip: 0.0.0.0
       listen-port: 6000
+    routes: [ tag-queries ]
+
+  - name: tag-queries
+    dnsmessage:
+      matching:
+        include:
+          dnstap.operation: "CLIENT_QUERY"
+          dns.qname: "^.*\\.google\\.com$"
+        greater-than:
+          dns.length: 50
+      policy: "drop-unmatched"
+    transforms:
+      atags:
+        tags: [ "TAG-QUERIES:tag-queries" ]
     routes: [ match-queries ]
 
   - name: match-queries
     dnsmessage:
       matching:
         include:
-          dnstap.operation: "CLIENT_QUERY"
-          dns.qname: ".*\\.google\\.com"
-        greater-than:
-          dns.length: 50
-      policy: "drop-unmatched" #passthrough
+          dns.qname: "^www\\.google\\.com$"
+      policy: "passthrough"
     transforms:
       atags:
-        tags: [ "TAG-QUERIES" ]
-    routes: [ log-queries ]
+        tags: [ "Le-Goog:website" ]
+    routes: [ outputfile ]
 
-  - name: log-queries
-    stdout:
+  - name: outputfile
+    logfile:
+      file-path:  "/tmp/dnstap.log"
+      max-size: 1000
+      max-files: 10
       mode: flat-json
 
 ################################################

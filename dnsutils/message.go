@@ -844,7 +844,6 @@ func (dm *DNSMessage) Flatten() (ret map[string]interface{}, err error) {
 }
 
 func (dm *DNSMessage) Matching(matching map[string]interface{}, operator string) (error, bool) {
-
 	if len(matching) == 0 {
 		return nil, false
 	}
@@ -858,15 +857,13 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}, operator string)
 	var isMatch = true
 
 	for nestedKeys, value := range matching {
-
 		fieldValue, found := getFieldByJSONTag(dmValue, nestedKeys)
 		if !found {
-			fmt.Printf("pattern '%s' does not exist in the DNSMessage structure\n", nestedKeys)
+			fmt.Printf("pattern '%s' does not exist in the DNSMessage struct\n", nestedKeys)
 			return nil, false
 		}
 
 		reflectedValue := reflect.ValueOf(value)
-
 		switch operator {
 		case MatchingModeInclude:
 			// regex support for string

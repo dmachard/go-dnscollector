@@ -173,6 +173,7 @@ func (p *Transforms) Prepare() error {
 	}
 
 	if p.config.ATags.Enable {
+		p.activeTransforms = append(p.activeTransforms, p.ATagsTransform.AddTags)
 		prefixlog := fmt.Sprintf("transformer=atags#%d - ", p.instance)
 		p.LogInfo(prefixlog + "subprocessor atags is enabled")
 	}
@@ -304,11 +305,6 @@ func (p *Transforms) ProcessMessage(dm *dnsutils.DNSMessage) int {
 	// Traffic reducer ?
 	if p.ReducerTransform.ProcessDNSMessage(dm) == ReturnDrop {
 		return ReturnDrop
-	}
-
-	// add tags
-	if p.config.ATags.Enable {
-		dm.ATags.Tags = append(dm.ATags.Tags, p.config.ATags.Tags...)
 	}
 
 	//  and finaly apply other transformation

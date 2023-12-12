@@ -160,24 +160,38 @@ RUN_LOOP:
 			}
 
 			// matching enabled, filtering DNS messages ?
+			matched := true
 			matchedInclude := false
 			matchedGreaterThan := false
+
 			if len(c.config.Collectors.DNSMessage.Matching.Include) > 0 {
-				err, matchedInclude = dm.Matching(c.config.Collectors.DNSMessage.Matching.Include, dnsutils.MatchingModeInclude)
+				err, matchedInclude = dm.Matching(c.config.Collectors.DNSMessage.Matching.Include,
+					dnsutils.MatchingModeInclude)
 				if err != nil {
 					c.LogError(err.Error())
 				}
+				if matched && matchedInclude {
+					matched = true
+				} else {
+					matched = false
+				}
 			}
 			if len(c.config.Collectors.DNSMessage.Matching.GreaterThan) > 0 {
-				err, matchedGreaterThan = dm.Matching(c.config.Collectors.DNSMessage.Matching.GreaterThan, dnsutils.MatchingModeGreaterThan)
+				err, matchedGreaterThan = dm.Matching(c.config.Collectors.DNSMessage.Matching.GreaterThan,
+					dnsutils.MatchingModeGreaterThan)
 				if err != nil {
 					c.LogError(err.Error())
+				}
+
+				if matched && matchedGreaterThan {
+					matched = true
+				} else {
+					matched = false
 				}
 			}
 
 			// apply tranforms on matched packets only
 			// init dns message with additionnals parts if necessary
-			matched := matchedInclude && matchedGreaterThan
 			if matched {
 				subprocessors.InitDNSMessageFormat(&dm)
 				if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {

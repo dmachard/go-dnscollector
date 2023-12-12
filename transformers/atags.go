@@ -48,3 +48,10 @@ func (p *ATagsProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 func (p *ATagsProcessor) IsEnabled() bool {
 	return p.config.ATags.Enable
 }
+
+func (p *ATagsProcessor) AddTags(dm *dnsutils.DNSMessage) int {
+	if p.config.ATags.Enable {
+		dm.ATags.Tags = append(dm.ATags.Tags, p.config.ATags.Tags...)
+	}
+	return ReturnSuccess
+}
