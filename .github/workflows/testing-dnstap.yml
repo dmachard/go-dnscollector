@@ -32,7 +32,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v4
@@ -64,7 +64,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v4
@@ -96,7 +96,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v4
@@ -141,7 +141,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v4
