@@ -1,4 +1,4 @@
-# DNS-collector
+![DNS-collector](./docs/dns-collector_logo.png)
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/dmachard/go-dns-collector)](https://goreportcard.com/report/dmachard/go-dns-collector)
 ![Go version](https://img.shields.io/badge/go%20version-min%201.20-blue)
