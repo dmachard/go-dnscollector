@@ -28,13 +28,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
   
-      - name: build binary from make file
+      - name: build binary from makefile
         run: make build
       
+      - name: dep from makefile
+        run: make dep
+
+      - name: dep+build from makefile
+        run: make
+        
   go-ubuntu:
     runs-on: ubuntu-latest
     
@@ -44,7 +50,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
 
@@ -60,7 +66,7 @@ jobs:
         
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
 
@@ -77,7 +83,7 @@ jobs:
         
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
 
@@ -93,7 +99,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
 
