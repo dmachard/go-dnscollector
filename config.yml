@@ -65,82 +65,64 @@ global:
 
 # create your dns collector, please refer bellow to see the list
 # of supported collectors, loggers and transformers
-# multiplexer:
-#   collectors:
-#     - name: tap
-#       dnstap:
-#         listen-ip: 0.0.0.0
-#         listen-port: 6000
-#       transforms:
-#         normalize:
-#           qname-lowercase: false
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+      transforms:
+        normalize:
+          qname-lowercase: false
 
-#   loggers:
-#     - name: console
-#       stdout:
-#         mode: text
+  loggers:
+    - name: console
+      stdout:
+        mode: text
 
-#   routes:
-#     - from: [ tap ]
-#       to: [ console ]
+  routes:
+    - from: [ tap ]
+      to: [ console ]
 
+# Experimental, not yet ready for production
+# pipelines:
+#   - name: dnsdist-main
+#     dnstap:
+#       listen-ip: 0.0.0.0
+#       listen-port: 6000
+#     routes: [ tag-queries ]
 
-  # - name: match-queries
-  #   dnsmessage:
-  #     matching:
-  #       include:
-  #         dnstap.operation: "CLIENT_QUERY"
-  #         dns.qname: ".*\\.google\\.com"
-  #       greater-than:
-  #         dns.length: 50
-  #     policy: "drop-unmatched" #passthrough
-  #   transforms:
-  #     atags:
-  #       tags: [ "TAG-QUERIES" ]
-  #   routes: [ log-queries ]
+#   - name: tag-queries
+#     dnsmessage:
+#       matching:
+#         include:
+#           dnstap.operation: "CLIENT_QUERY"
+#           dns.qname: "^.*\\.google\\.com$"
+#         greater-than:
+#           dns.length: 50
+#       policy: "drop-unmatched"
+#     transforms:
+#       atags:
+#         tags: [ "TAG-QUERIES:tag-queries" ]
+#     routes: [ match-queries ]
 
-  # - name: log-queries
-  #   stdout:
-  #     mode: flat-json
+#   - name: match-queries
+#     dnsmessage:
+#       matching:
+#         include:
+#           dns.qname: "^www\\.google\\.com$"
+#       policy: "passthrough"
+#     transforms:
+#       atags:
+#         tags: [ "Le-Goog:website" ]
+#     routes: [ outputfile ]
 
-pipelines:
-  - name: dnsdist-main
-    dnstap:
-      listen-ip: 0.0.0.0
-      listen-port: 6000
-    routes: [ tag-queries ]
-
-  - name: tag-queries
-    dnsmessage:
-      matching:
-        include:
-          dnstap.operation: "CLIENT_QUERY"
-          dns.qname: "^.*\\.google\\.com$"
-        greater-than:
-          dns.length: 50
-      policy: "drop-unmatched"
-    transforms:
-      atags:
-        tags: [ "TAG-QUERIES:tag-queries" ]
-    routes: [ match-queries ]
-
-  - name: match-queries
-    dnsmessage:
-      matching:
-        include:
-          dns.qname: "^www\\.google\\.com$"
-      policy: "passthrough"
-    transforms:
-      atags:
-        tags: [ "Le-Goog:website" ]
-    routes: [ outputfile ]
-
-  - name: outputfile
-    logfile:
-      file-path:  "/tmp/dnstap.log"
-      max-size: 1000
-      max-files: 10
-      mode: flat-json
+#   - name: outputfile
+#     logfile:
+#       file-path:  "/tmp/dnstap.log"
+#       max-size: 1000
+#       max-files: 10
+#       mode: flat-json
 
 ################################################
 # list of supported collectors
