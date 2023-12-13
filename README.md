@@ -1,10 +1,10 @@
-# DNS-collector
+
+![DNS-collector](./docs/dns-collector_logo.png)
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/dmachard/go-dns-collector)](https://goreportcard.com/report/dmachard/go-dns-collector)
 ![Go version](https://img.shields.io/badge/go%20version-min%201.20-blue)
-![Go tests](https://img.shields.io/badge/go%20tests-333-green)
-![Go lines](https://img.shields.io/badge/go%20lines-47871-red)
-
+![Go tests](https://img.shields.io/badge/go%20tests-348-green)
+![Go lines](https://img.shields.io/badge/go%20lines-49469-red)
 ![Go Tests](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-go.yml/badge.svg)
 ![Github Actions](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-dnstap.yml/badge.svg)
 ![Github Actions PDNS](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-powerdns.yml/badge.svg)
@@ -20,9 +20,13 @@
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
 
+Run
+
 <p align="center">
 <img src="docs/_images/terminal.gif" alt="dnscollector"/>
 </p>
+
+Multiplexer
 
 ![overview](./docs/_images/overview.png)
 
