@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -521,42 +522,42 @@ func (c *PrometheusCountersSet) Collect(ch chan<- prometheus.Metric) {
 	)
 	for _, r := range c.topDomains.Get() {
 		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopDomains, prometheus.GaugeValue,
-			float64(r.Hit), r.Name)
+			float64(r.Hit), strings.ToValidUTF8(r.Name, "�"))
 	}
 
 	for _, r := range c.topNxDomains.Get() {
 		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopNxDomains, prometheus.GaugeValue,
-			float64(r.Hit), r.Name)
+			float64(r.Hit), strings.ToValidUTF8(r.Name, "�"))
 	}
 
 	for _, r := range c.topSfDomains.Get() {
 		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopSfDomains, prometheus.GaugeValue,
-			float64(r.Hit), r.Name)
+			float64(r.Hit), strings.ToValidUTF8(r.Name, "�"))
 	}
 
 	for _, r := range c.topRequesters.Get() {
 		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopRequesters, prometheus.GaugeValue,
-			float64(r.Hit), r.Name)
+			float64(r.Hit), strings.ToValidUTF8(r.Name, "�"))
 	}
 
 	for _, r := range c.topTlds.Get() {
 		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopTlds, prometheus.GaugeValue,
-			float64(r.Hit), r.Name)
+			float64(r.Hit), strings.ToValidUTF8(r.Name, "�"))
 	}
 
 	for _, r := range c.topETLDPlusOne.Get() {
 		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopETldsPlusOne, prometheus.GaugeValue,
-			float64(r.Hit), r.Name)
+			float64(r.Hit), strings.ToValidUTF8(r.Name, "�"))
 	}
 
 	for _, r := range c.topSuspicious.Get() {
 		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopSuspicious, prometheus.GaugeValue,
-			float64(r.Hit), r.Name)
+			float64(r.Hit), strings.ToValidUTF8(r.Name, "�"))
 	}
 
 	for _, r := range c.topEvicted.Get() {
 		ch <- prometheus.MustNewConstMetric(c.prom.gaugeTopEvicted, prometheus.GaugeValue,
-			float64(r.Hit), r.Name)
+			float64(r.Hit), strings.ToValidUTF8(r.Name, "�"))
 	}
 
 	ch <- prometheus.MustNewConstMetric(c.prom.gaugeEps, prometheus.GaugeValue,
