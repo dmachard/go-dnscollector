@@ -323,3 +323,20 @@ func getMetrics(prom *Prometheus, t *testing.T) map[string]*dto.MetricFamily {
 	}
 	return mf
 }
+
+func TestPrometheus_QnameInvalidChars(t *testing.T) {
+	config := pkgconfig.GetFakeConfig()
+	// config.Loggers.Prometheus.HistogramMetricsEnabled = true
+	g := NewPrometheus(config, logger.New(false), "test")
+
+	// record one dns message to simulate some incoming data
+	query := dnsutils.GetFakeDNSMessage()
+	query.DNS.Qname = "lb._dns-sd._udp.\xd0\xdfP\x01"
+
+	g.Record(query)
+
+	// check metric
+	mf := getMetrics(g, t)
+	ensureMetricValue(t, mf, "dnscollector_top_domains", map[string]string{"domain": "dns.collector"}, 1)
+
+}
