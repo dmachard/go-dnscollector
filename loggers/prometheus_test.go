@@ -329,14 +329,35 @@ func TestPrometheus_QnameInvalidChars(t *testing.T) {
 	// config.Loggers.Prometheus.HistogramMetricsEnabled = true
 	g := NewPrometheus(config, logger.New(false), "test")
 
+	// prepare qname
+	qnameInvalid := "lb._dns-sd._udp.\xd0\xdfP\x01"
+	qnameValidUTF8 := strings.ToValidUTF8(qnameInvalid, "�")
+
 	// record one dns message to simulate some incoming data
-	query := dnsutils.GetFakeDNSMessage()
-	query.DNS.Qname = "lb._dns-sd._udp.\xd0\xdfP\x01"
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = qnameInvalid
+	g.Record(dm)
 
-	g.Record(query)
+	// record one dns message to simulate some incoming data
+	dmNx := dnsutils.GetFakeDNSMessage()
+	dmNx.DNS.Qname = qnameInvalid
+	dmNx.DNS.Rcode = "NXDOMAIN"
+	g.Record(dmNx)
 
-	// check metric
+	// record one dns message to simulate some incoming data
+	dmSf := dnsutils.GetFakeDNSMessage()
+	dmSf.DNS.Qname = qnameInvalid
+	dmSf.DNS.Rcode = "SERVFAIL"
+	g.Record(dmSf)
+
 	mf := getMetrics(g, t)
-	ensureMetricValue(t, mf, "dnscollector_top_domains", map[string]string{"domain": "dns.collector"}, 1)
-
+	if !ensureMetricValue(t, mf, "dnscollector_top_domains", map[string]string{"domain": qnameValidUTF8}, 1) {
+		t.Errorf("Cannot validate dnscollector_top_domains!")
+	}
+	if !ensureMetricValue(t, mf, "dnscollector_top_nxdomains", map[string]string{"domain": qnameValidUTF8}, 1) {
+		t.Errorf("Cannot validate dnscollector_top_nxdomains!")
+	}
+	if !ensureMetricValue(t, mf, "dnscollector_top_sfdomains", map[string]string{"domain": qnameValidUTF8}, 1) {
+		t.Errorf("Cannot validate dnscollector_top_sfdomains!")
+	}
 }
