@@ -379,7 +379,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.Syslog.Formatter = "rfc5424"
 	c.Syslog.Hostname = ""
 	c.Syslog.AppName = "DNScollector"
-	c.Syslog.ReplaceNullChar = "|"
+	c.Syslog.ReplaceNullChar = "�"
 	c.Syslog.FlushInterval = 30
 	c.Syslog.BufferSize = 100
 
