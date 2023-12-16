@@ -53,7 +53,7 @@ syslog:
   hostname: ""
   app-name: ""
   tag: ""
-  replace-null-char: "|"
+  replace-null-char: "�"
   flush-interval: 30
   buffer-size: 100
 ```
