@@ -130,8 +130,9 @@ pipelines:
         include:
           dns.qtype: [ "TXT", "MX" ]
           dns.qname: 
-            - "^*.apple.com$"
-            - "^*.google.com$"
+            - "www\\.apple\\.com"
+            - "^.*\\.google\\.com$"
+          dns.opcode: 0
       policy: "drop-unmatched"
     transforms:
       atags:

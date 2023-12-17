@@ -882,7 +882,11 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}, operator string)
 					pattern := regexp.MustCompile(reflectedValue.Index(i).Interface().(string))
 					subMatch = subMatch || pattern.MatchString(fieldValue.Interface().(string))
 				}
-				isMatch = subMatch
+				if isMatch && subMatch {
+					isMatch = true
+				} else {
+					isMatch = false
+				}
 
 			// other types
 			default:
