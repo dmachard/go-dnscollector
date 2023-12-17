@@ -46,118 +46,156 @@ func GetStageConfig(section string, config *pkgconfig.Config, item pkgconfig.Con
 	return subcfg
 }
 
-func InitPipelines(mapLoggers map[string]dnsutils.Worker, mapCollectors map[string]dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
-	// TODO stage name must be uniq
-	// TODO check if stages exists before continue
+func StanzaNameIsUniq(name string, config *pkgconfig.Config) (ret error) {
+	stanzaCounter := 0
+	for _, stanza := range config.Pipelines {
+		if name == stanza.Name {
+			stanzaCounter += 1
+		}
+	}
 
-	// init loggers
-	for _, stage := range config.Pipelines {
-		if len(stage.Routes) == 0 {
-			subcfg := GetStageConfig("loggers", config, stage)
+	if stanzaCounter > 1 {
+		return fmt.Errorf("stanza=%s allready exists", name)
+	}
+	return nil
+}
+
+func IsRouteExist(target string, config *pkgconfig.Config) (ret error) {
+	for _, stanza := range config.Pipelines {
+		if target == stanza.Name {
+			return nil
+		}
+	}
+	return fmt.Errorf("route=%s doest not exist", target)
+}
+
+func InitPipelines(mapLoggers map[string]dnsutils.Worker, mapCollectors map[string]dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
+	// check if the name of each stanza is uniq
+	for _, stanza := range config.Pipelines {
+		if err := StanzaNameIsUniq(stanza.Name, config); err != nil {
+			panic(fmt.Sprintf("[main] - pipeline stanza with name=%s is duplicated", stanza.Name))
+		}
+	}
+
+	// check if all routes exists before continue
+	for _, stanza := range config.Pipelines {
+		for _, route := range stanza.Routes {
+			if err := IsRouteExist(route, config); err != nil {
+				panic(fmt.Sprintf("[main] - pipeline stanza=%s route=%s doest not exist", stanza.Name, route))
+			}
+		}
+	}
+
+	// init stanza loggers
+	for _, stanza := range config.Pipelines {
+		if len(stanza.Routes) == 0 {
+			subcfg := GetStageConfig("loggers", config, stanza)
 
 			// registor the logger if enabled
 			if subcfg.Loggers.RestAPI.Enable {
-				mapLoggers[stage.Name] = loggers.NewRestAPI(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewRestAPI(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.Prometheus.Enable {
-				mapLoggers[stage.Name] = loggers.NewPrometheus(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewPrometheus(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.Stdout.Enable {
-				mapLoggers[stage.Name] = loggers.NewStdOut(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewStdOut(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.LogFile.Enable {
-				mapLoggers[stage.Name] = loggers.NewLogFile(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewLogFile(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.DNSTap.Enable {
-				mapLoggers[stage.Name] = loggers.NewDnstapSender(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewDnstapSender(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.TCPClient.Enable {
-				mapLoggers[stage.Name] = loggers.NewTCPClient(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewTCPClient(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.Syslog.Enable {
-				mapLoggers[stage.Name] = loggers.NewSyslog(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewSyslog(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.Fluentd.Enable {
-				mapLoggers[stage.Name] = loggers.NewFluentdClient(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewFluentdClient(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.InfluxDB.Enable {
-				mapLoggers[stage.Name] = loggers.NewInfluxDBClient(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewInfluxDBClient(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.LokiClient.Enable {
-				mapLoggers[stage.Name] = loggers.NewLokiClient(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewLokiClient(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.Statsd.Enable {
-				mapLoggers[stage.Name] = loggers.NewStatsdClient(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewStatsdClient(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.ElasticSearchClient.Enable {
-				mapLoggers[stage.Name] = loggers.NewElasticSearchClient(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewElasticSearchClient(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.ScalyrClient.Enable {
-				mapLoggers[stage.Name] = loggers.NewScalyrClient(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewScalyrClient(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.RedisPub.Enable {
-				mapLoggers[stage.Name] = loggers.NewRedisPub(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewRedisPub(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.KafkaProducer.Enable {
-				mapLoggers[stage.Name] = loggers.NewKafkaProducer(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewKafkaProducer(subcfg, logger, stanza.Name)
 			}
 			if subcfg.Loggers.FalcoClient.Enable {
-				mapLoggers[stage.Name] = loggers.NewFalcoClient(subcfg, logger, stage.Name)
+				mapLoggers[stanza.Name] = loggers.NewFalcoClient(subcfg, logger, stanza.Name)
 			}
 		}
 	}
 
-	// init collectors
-	for _, stage := range config.Pipelines {
-		if len(stage.Routes) > 0 {
-			subcfg := GetStageConfig("collectors", config, stage)
+	// init stanza collectors
+	for _, stanza := range config.Pipelines {
+		if len(stanza.Routes) > 0 {
+			subcfg := GetStageConfig("collectors", config, stanza)
 
 			if subcfg.Collectors.DNSMessage.Enable {
-				mapCollectors[stage.Name] = collectors.NewDNSMessage(nil, subcfg, logger, stage.Name)
+				mapCollectors[stanza.Name] = collectors.NewDNSMessage(nil, subcfg, logger, stanza.Name)
 			}
 			if subcfg.Collectors.Dnstap.Enable {
-				mapCollectors[stage.Name] = collectors.NewDnstap(nil, subcfg, logger, stage.Name)
+				mapCollectors[stanza.Name] = collectors.NewDnstap(nil, subcfg, logger, stanza.Name)
 			}
 			if subcfg.Collectors.DnstapProxifier.Enable {
-				mapCollectors[stage.Name] = collectors.NewDnstapProxifier(nil, subcfg, logger, stage.Name)
+				mapCollectors[stanza.Name] = collectors.NewDnstapProxifier(nil, subcfg, logger, stanza.Name)
 			}
 			if subcfg.Collectors.AfpacketLiveCapture.Enable {
-				mapCollectors[stage.Name] = collectors.NewAfpacketSniffer(nil, subcfg, logger, stage.Name)
+				mapCollectors[stanza.Name] = collectors.NewAfpacketSniffer(nil, subcfg, logger, stanza.Name)
 			}
 			if subcfg.Collectors.XdpLiveCapture.Enable {
-				mapCollectors[stage.Name] = collectors.NewXDPSniffer(nil, subcfg, logger, stage.Name)
+				mapCollectors[stanza.Name] = collectors.NewXDPSniffer(nil, subcfg, logger, stanza.Name)
 			}
 			if subcfg.Collectors.Tail.Enable {
-				mapCollectors[stage.Name] = collectors.NewTail(nil, subcfg, logger, stage.Name)
+				mapCollectors[stanza.Name] = collectors.NewTail(nil, subcfg, logger, stanza.Name)
 			}
 			if subcfg.Collectors.PowerDNS.Enable {
-				mapCollectors[stage.Name] = collectors.NewProtobufPowerDNS(nil, subcfg, logger, stage.Name)
+				mapCollectors[stanza.Name] = collectors.NewProtobufPowerDNS(nil, subcfg, logger, stanza.Name)
 			}
 			if subcfg.Collectors.FileIngestor.Enable {
-				mapCollectors[stage.Name] = collectors.NewFileIngestor(nil, subcfg, logger, stage.Name)
+				mapCollectors[stanza.Name] = collectors.NewFileIngestor(nil, subcfg, logger, stanza.Name)
 			}
 			if subcfg.Collectors.Tzsp.Enable {
-				mapCollectors[stage.Name] = collectors.NewTZSP(nil, subcfg, logger, stage.Name)
+				mapCollectors[stanza.Name] = collectors.NewTZSP(nil, subcfg, logger, stanza.Name)
 			}
 		}
 	}
 
-	// connect all stages
-	for _, stage := range config.Pipelines {
-		if len(stage.Routes) > 0 {
-			if _, ok := mapCollectors[stage.Name]; ok {
-				for _, route := range stage.Routes {
+	// connect all stanzas
+	for _, stanza := range config.Pipelines {
+		if len(stanza.Routes) > 0 {
+			if _, ok := mapCollectors[stanza.Name]; ok {
+				for _, route := range stanza.Routes {
 					// search in collectors
 					if _, ok := mapCollectors[route]; ok {
-						mapCollectors[stage.Name].AddRoute(mapCollectors[route])
+						mapCollectors[stanza.Name].AddRoute(mapCollectors[route])
+						logger.Info("[main] - pipeline routing stanza=%s to=%s", stanza.Name, route)
 					} else if _, ok := mapLoggers[route]; ok {
-						mapCollectors[stage.Name].AddRoute(mapLoggers[route])
+						mapCollectors[stanza.Name].AddRoute(mapLoggers[route])
+						logger.Info("[main] - pipeline routing stanza=%s to=%s", stanza.Name, route)
 					} else {
-						panic(fmt.Sprintf("main - routing error: stage %v doest not exist", route))
+						panic(fmt.Sprintf("[main] - pipeline routing error with stanza=%s to=%s doest not exist", stanza.Name, route))
 					}
 				}
 			} else {
-				logger.Info("main - stage=%v doest not exist", stage.Name)
+				logger.Info("main - stanza=%v doest not exist", stanza.Name)
 			}
 		}
 	}

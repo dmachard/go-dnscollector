@@ -65,24 +65,24 @@ global:
 
 # create your dns collector, please refer bellow to see the list
 # of supported collectors, loggers and transformers
-multiplexer:
-  collectors:
-    - name: tap
-      dnstap:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
-      transforms:
-        normalize:
-          qname-lowercase: false
+# multiplexer:
+#   collectors:
+#     - name: tap
+#       dnstap:
+#         listen-ip: 0.0.0.0
+#         listen-port: 6000
+#       transforms:
+#         normalize:
+#           qname-lowercase: false
 
-  loggers:
-    - name: console
-      stdout:
-        mode: text
+#   loggers:
+#     - name: console
+#       stdout:
+#         mode: text
 
-  routes:
-    - from: [ tap ]
-      to: [ console ]
+#   routes:
+#     - from: [ tap ]
+#       to: [ console ]
 
 # Experimental, not yet ready for production
 # pipelines:
@@ -90,39 +90,66 @@ multiplexer:
 #     dnstap:
 #       listen-ip: 0.0.0.0
 #       listen-port: 6000
-#     routes: [ tag-queries ]
+#     routes: [ apple-txt ]
 
-#   - name: tag-queries
-#     dnsmessage:
-#       matching:
-#         include:
-#           dnstap.operation: "CLIENT_QUERY"
-#           dns.qname: "^.*\\.google\\.com$"
-#         greater-than:
-#           dns.length: 50
-#       policy: "drop-unmatched"
-#     transforms:
-#       atags:
-#         tags: [ "TAG-QUERIES:tag-queries" ]
-#     routes: [ match-queries ]
+  # - name: tag-queries
+  #   dnsmessage:
+  #     matching:
+  #       include:
+  #         dnstap.operation: "CLIENT_QUERY"
+  #         dns.qname: "^.*\\.google\\.com$"
+  #       greater-than:
+  #         dns.length: 50
+  #     policy: "drop-unmatched"
+  #   transforms:
+  #     atags:
+  #       tags: [ "TAG-QUERIES:tag-queries" ]
+  #   routes: [ match-queries ]
 
-#   - name: match-queries
-#     dnsmessage:
-#       matching:
-#         include:
-#           dns.qname: "^www\\.google\\.com$"
-#       policy: "passthrough"
-#     transforms:
-#       atags:
-#         tags: [ "Le-Goog:website" ]
-#     routes: [ outputfile ]
+  # - name: match-queries
+  #   dnsmessage:
+  #     matching:
+  #       include:
+  #         dns.qname: "^www\\.google\\.com$"
+  #     policy: "passthrough"
+  #   transforms:
+  #     atags:
+  #       tags: [ "Le-Goog:website" ]
+  #   routes: [ outputfile ]
 
-#   - name: outputfile
-#     logfile:
-#       file-path:  "/tmp/dnstap.log"
-#       max-size: 1000
-#       max-files: 10
-#       mode: flat-json
+pipelines:
+  - name: dnsdist-main
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routes: [ apple-txt ]
+
+  - name: godnsconnector-next
+    dnstap:
+      remote-address: 192.168.1.210
+      remote-port: 6000
+  - name: godnsconnector-next
+    dnstap:
+      remote-address: 192.168.1.210
+      remote-port: 6000
+  - name: apple-txt
+    dnsmessage:
+      matching:
+        include:
+          dns.qtype: "TXT"
+          dns.qname: "^*.apple.com$"
+      policy: "drop-unmatched"
+    transforms:
+      atags:
+        tags: [ "TXT:apple" ]
+    routes: [ outputfile,godnsconnector-next ]
+
+  - name: outputfile
+    logfile:
+      file-path:  "/tmp/dnstap.log"
+      max-size: 1000
+      max-files: 10
+      mode: flat-json
 
 ################################################
 # list of supported collectors
