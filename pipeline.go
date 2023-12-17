@@ -73,7 +73,7 @@ func InitPipelines(mapLoggers map[string]dnsutils.Worker, mapCollectors map[stri
 	// check if the name of each stanza is uniq
 	for _, stanza := range config.Pipelines {
 		if err := StanzaNameIsUniq(stanza.Name, config); err != nil {
-			panic(fmt.Sprintf("[main] - pipeline stanza with name=%s is duplicated", stanza.Name))
+			panic(fmt.Sprintf("[pipeline] - stanza with name=%s is duplicated", stanza.Name))
 		}
 	}
 
@@ -81,7 +81,7 @@ func InitPipelines(mapLoggers map[string]dnsutils.Worker, mapCollectors map[stri
 	for _, stanza := range config.Pipelines {
 		for _, route := range stanza.Routes {
 			if err := IsRouteExist(route, config); err != nil {
-				panic(fmt.Sprintf("[main] - pipeline stanza=%s route=%s doest not exist", stanza.Name, route))
+				panic(fmt.Sprintf("[pipeline] - stanza=%s route=%s doest not exist", stanza.Name, route))
 			}
 		}
 	}
@@ -186,16 +186,16 @@ func InitPipelines(mapLoggers map[string]dnsutils.Worker, mapCollectors map[stri
 					// search in collectors
 					if _, ok := mapCollectors[route]; ok {
 						mapCollectors[stanza.Name].AddRoute(mapCollectors[route])
-						logger.Info("[main] - pipeline routing stanza=%s to=%s", stanza.Name, route)
+						logger.Info("[pipeline] - routing stanza=%s to=%s", stanza.Name, route)
 					} else if _, ok := mapLoggers[route]; ok {
 						mapCollectors[stanza.Name].AddRoute(mapLoggers[route])
-						logger.Info("[main] - pipeline routing stanza=%s to=%s", stanza.Name, route)
+						logger.Info("[pipeline] - routing stanza=%s to=%s", stanza.Name, route)
 					} else {
-						panic(fmt.Sprintf("[main] - pipeline routing error with stanza=%s to=%s doest not exist", stanza.Name, route))
+						panic(fmt.Sprintf("[pipeline] - routing error with stanza=%s to=%s doest not exist", stanza.Name, route))
 					}
 				}
 			} else {
-				logger.Info("main - stanza=%v doest not exist", stanza.Name)
+				logger.Info("[pipeline] - stanza=%v doest not exist", stanza.Name)
 			}
 		}
 	}

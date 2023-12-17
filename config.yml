@@ -124,25 +124,19 @@ pipelines:
       listen-port: 6000
     routes: [ apple-txt ]
 
-  - name: godnsconnector-next
-    dnstap:
-      remote-address: 192.168.1.210
-      remote-port: 6000
-  - name: godnsconnector-next
-    dnstap:
-      remote-address: 192.168.1.210
-      remote-port: 6000
   - name: apple-txt
     dnsmessage:
       matching:
         include:
           dns.qtype: "TXT"
-          dns.qname: "^*.apple.com$"
+          dns.qname: 
+            - "^*.apple.com$"
+            - "^*.google.com$"
       policy: "drop-unmatched"
     transforms:
       atags:
-        tags: [ "TXT:apple" ]
-    routes: [ outputfile,godnsconnector-next ]
+        tags: [ "TXT:apple", "TXT:google" ]
+    routes: [ outputfile, console ]
 
   - name: outputfile
     logfile:
@@ -150,6 +144,10 @@ pipelines:
       max-size: 1000
       max-files: 10
       mode: flat-json
+
+  - name: console
+    stdout:
+      mode: text
 
 ################################################
 # list of supported collectors
