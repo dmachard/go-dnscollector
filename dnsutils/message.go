@@ -866,16 +866,17 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}, operator string)
 		reflectedValue := reflect.ValueOf(value)
 		switch operator {
 		case MatchingModeInclude:
+			switch reflectedValue.Kind() {
 			// string
-			if reflectedValue.Kind() == reflect.String {
+			case reflect.String:
 				pattern := regexp.MustCompile(reflectedValue.Interface().(string))
 				if !pattern.MatchString(fieldValue.Interface().(string)) {
 					isMatch = false
 					break
 				}
 
-				// list
-			} else if reflectedValue.Kind() == reflect.Slice {
+			// list
+			case reflect.Slice:
 				subMatch := false
 				for i := 0; i < reflectedValue.Len(); i++ {
 					pattern := regexp.MustCompile(reflectedValue.Index(i).Interface().(string))
@@ -883,12 +884,15 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}, operator string)
 				}
 				isMatch = subMatch
 
-				// other types
-			} else if value != fieldValue.Interface() {
-				fmt.Println(reflectedValue.Kind())
-				isMatch = false
-				break
+			// other types
+			default:
+				if value != fieldValue.Interface() {
+					fmt.Println(reflectedValue.Kind())
+					isMatch = false
+					break
+				}
 			}
+
 		case MatchingModeGreaterThan:
 			if reflectedValue.Kind() == reflect.Int {
 				if fieldValue.Interface().(int) < reflectedValue.Interface().(int) {

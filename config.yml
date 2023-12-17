@@ -128,7 +128,7 @@ pipelines:
     dnsmessage:
       matching:
         include:
-          dns.qtype: "TXT"
+          dns.qtype: [ "TXT", "MX" ]
           dns.qname: 
             - "^*.apple.com$"
             - "^*.google.com$"
