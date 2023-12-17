@@ -512,7 +512,7 @@ pipelines:
 #   # Syslog tag or MSGID
 #   tag: ""
 #   # Replace NULl char in Qname with the specified character
-#   replace-null-char: |
+#   replace-null-char: �
 #   # how many DNS messages will be buffered before being sent
 #   buffer-size: 100
 #   # interval in second before to flush the buffer

@@ -21,18 +21,18 @@ require (
 	github.com/grafana/loki v1.6.2-0.20230503110102-9f809eda70ba
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb-client-go v1.4.0
-	github.com/klauspost/compress v1.17.3
+	github.com/klauspost/compress v1.17.4
 	github.com/miekg/dns v1.1.57
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/nqd/flat v0.2.0
 	github.com/oschwald/maxminddb-golang v1.12.0
 	github.com/prometheus/client_golang v1.17.0
 	github.com/rs/tzsp v0.0.0-20161230003637-8ce729c826b9
-	github.com/segmentio/kafka-go v0.4.45
+	github.com/segmentio/kafka-go v0.4.46
 	github.com/stretchr/testify v1.8.4
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	golang.org/x/net v0.18.0
-	golang.org/x/sys v0.14.1-0.20231108175955-e4099bfacb8c
+	golang.org/x/net v0.19.0
+	golang.org/x/sys v0.15.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.1
@@ -119,7 +119,7 @@ require (
 	go.uber.org/zap v1.21.0 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
-	golang.org/x/crypto v0.15.0 // indirect
+	golang.org/x/crypto v0.16.0 // indirect
 	golang.org/x/exp v0.0.0-20230307190834-24139beb5833 // indirect
 	golang.org/x/oauth2 v0.12.0 // indirect
 	golang.org/x/sync v0.4.0 // indirect
