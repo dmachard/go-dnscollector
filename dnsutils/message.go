@@ -879,8 +879,14 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}, operator string)
 			case reflect.Slice:
 				subMatch := false
 				for i := 0; i < reflectedValue.Len(); i++ {
-					pattern := regexp.MustCompile(reflectedValue.Index(i).Interface().(string))
-					subMatch = subMatch || pattern.MatchString(fieldValue.Interface().(string))
+					reflectedSub := reflect.ValueOf(reflectedValue.Index(i).Interface())
+
+					if reflectedSub.Kind() == reflect.Int {
+						subMatch = subMatch || (fieldValue.Interface().(int) == reflectedSub.Interface().(int))
+					} else {
+						pattern := regexp.MustCompile(reflectedSub.Interface().(string))
+						subMatch = subMatch || pattern.MatchString(fieldValue.Interface().(string))
+					}
 				}
 				if isMatch && subMatch {
 					isMatch = true
@@ -891,7 +897,6 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}, operator string)
 			// other types
 			default:
 				if value != fieldValue.Interface() {
-					fmt.Println(reflectedValue.Kind())
 					isMatch = false
 					break
 				}
