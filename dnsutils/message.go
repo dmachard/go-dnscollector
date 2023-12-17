@@ -843,7 +843,7 @@ func (dm *DNSMessage) Flatten() (ret map[string]interface{}, err error) {
 	return
 }
 
-func (dm *DNSMessage) Matching(matching map[string]interface{}, operator string) (error, bool) {
+func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
 	if len(matching) == 0 {
 		return nil, false
 	}
@@ -859,56 +859,84 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}, operator string)
 	for nestedKeys, value := range matching {
 		fieldValue, found := getFieldByJSONTag(dmValue, nestedKeys)
 		if !found {
-			fmt.Printf("pattern '%s' does not exist in the DNSMessage struct\n", nestedKeys)
-			return nil, false
+			return fmt.Errorf("nested key '%s' does not exist in the DNSMessage", nestedKeys), false
 		}
 
 		reflectedValue := reflect.ValueOf(value)
-		switch operator {
-		case MatchingModeInclude:
-			switch reflectedValue.Kind() {
-			// string
-			case reflect.String:
-				pattern := regexp.MustCompile(reflectedValue.Interface().(string))
-				if !pattern.MatchString(fieldValue.Interface().(string)) {
-					isMatch = false
-					break
+		switch reflectedValue.Kind() {
+		// integer
+		case reflect.Int:
+			if value != fieldValue.Interface().(int) {
+				return nil, false
+			}
+
+		// string
+		case reflect.String:
+			pattern := regexp.MustCompile(reflectedValue.Interface().(string))
+			if !pattern.MatchString(fieldValue.Interface().(string)) {
+				return nil, false
+			}
+
+		// map
+		case reflect.Map:
+			keys := reflectedValue.MapKeys()
+			for _, opKey := range keys {
+				opValue := reflectedValue.MapIndex(opKey)
+				switch opKey.Interface().(string) {
+				case "greater-than":
+					if intValue, ok := opValue.Interface().(int); ok {
+						if fieldValue.Interface().(int) < intValue {
+							return nil, false
+						}
+					} else {
+						return fmt.Errorf("integer is expected for greater-than operator"), false
+					}
+				case "file-list", "file-kind":
+					continue
+				case "domain_list":
+					domainList := opValue.Interface().(map[string]*regexp.Regexp)
+					subMatch := false
+					for _, domainPattern := range domainList {
+						if domainPattern.MatchString(fieldValue.Interface().(string)) {
+							subMatch = true
+							break
+						}
+					}
+					if !subMatch {
+						return nil, false
+					}
+				default:
+					return fmt.Errorf("invalid operator '%s', ignore it", opKey.Interface().(string)), false
 				}
 
-			// list
-			case reflect.Slice:
-				subMatch := false
-				for i := 0; i < reflectedValue.Len(); i++ {
-					reflectedSub := reflect.ValueOf(reflectedValue.Index(i).Interface())
+			}
 
-					if reflectedSub.Kind() == reflect.Int {
-						subMatch = subMatch || (fieldValue.Interface().(int) == reflectedSub.Interface().(int))
-					} else {
-						pattern := regexp.MustCompile(reflectedSub.Interface().(string))
-						subMatch = subMatch || pattern.MatchString(fieldValue.Interface().(string))
+		// list
+		case reflect.Slice:
+			subMatch := false
+			for i := 0; i < reflectedValue.Len(); i++ {
+				reflectedSub := reflect.ValueOf(reflectedValue.Index(i).Interface())
+
+				if reflectedSub.Kind() == reflect.Int {
+					if fieldValue.Interface().(int) == reflectedSub.Interface().(int) {
+						subMatch = true
+						break
+					}
+				} else {
+					pattern := regexp.MustCompile(reflectedSub.Interface().(string))
+					if pattern.MatchString(fieldValue.Interface().(string)) {
+						subMatch = true
+						break
 					}
 				}
-				if isMatch && subMatch {
-					isMatch = true
-				} else {
-					isMatch = false
-				}
-
-			// other types
-			default:
-				if value != fieldValue.Interface() {
-					isMatch = false
-					break
-				}
+			}
+			if !subMatch {
+				return nil, false
 			}
 
-		case MatchingModeGreaterThan:
-			if reflectedValue.Kind() == reflect.Int {
-				if fieldValue.Interface().(int) < reflectedValue.Interface().(int) {
-					isMatch = false
-					break
-				}
-			}
+		// other types
+		default:
+			return fmt.Errorf("unsupported type %s", reflect.Slice), false
 		}
 
 	}
