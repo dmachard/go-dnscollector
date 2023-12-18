@@ -88,19 +88,19 @@ func (c *DNSMessage) ReadConfigMatching(value interface{}) {
 	reflectedValue := reflect.ValueOf(value)
 	if reflectedValue.Kind() == reflect.Map {
 		keys := reflectedValue.MapKeys()
-		fileList := ""
-		srcKind := "string_list"
+		matchSrc := ""
+		srcKind := dnsutils.MatchKindString
 		for _, k := range keys {
 			v := reflectedValue.MapIndex(k)
 			if k.Interface().(string) == "match-source" {
-				fileList = v.Interface().(string)
+				matchSrc = v.Interface().(string)
 			}
 			if k.Interface().(string) == "source-kind" {
 				srcKind = v.Interface().(string)
 			}
 		}
-		if len(fileList) > 0 {
-			sourceData, err := c.LoadData(fileList, srcKind)
+		if len(matchSrc) > 0 {
+			sourceData, err := c.LoadData(matchSrc, srcKind)
 			if err != nil {
 				c.logger.Fatal(err)
 			}
@@ -162,12 +162,12 @@ func (c *DNSMessage) LoadFromURL(matchSource string, srcKind string) (MatchSourc
 	scanner := bufio.NewScanner(resp.Body)
 
 	switch srcKind {
-	case "regexp_list":
+	case dnsutils.MatchKindRegexp:
 		for scanner.Scan() {
 			matchSources.regexList = append(matchSources.regexList, regexp.MustCompile(scanner.Text()))
 		}
 		c.LogInfo("remote source loaded with %d entries kind=%s", len(matchSources.regexList), srcKind)
-	case "string_list":
+	case dnsutils.MatchKindString:
 		for scanner.Scan() {
 			matchSources.stringList = append(matchSources.stringList, scanner.Text())
 		}
@@ -190,12 +190,12 @@ func (c *DNSMessage) LoadFromFile(filePath string, srcKind string) (MatchSource,
 	scanner := bufio.NewScanner(file)
 
 	switch srcKind {
-	case "regexp_list":
+	case dnsutils.MatchKindRegexp:
 		for scanner.Scan() {
 			matchSources.regexList = append(matchSources.regexList, regexp.MustCompile(scanner.Text()))
 		}
 		c.LogInfo("file loaded with %d entries kind=%s", len(matchSources.regexList), srcKind)
-	case "string_list":
+	case dnsutils.MatchKindString:
 		for scanner.Scan() {
 			matchSources.stringList = append(matchSources.stringList, scanner.Text())
 		}
