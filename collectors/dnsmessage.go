@@ -3,6 +3,7 @@ package collectors
 import (
 	"bufio"
 	"fmt"
+	"net/http"
 	"os"
 	"reflect"
 	"regexp"
@@ -14,6 +15,19 @@ import (
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
+
+func isFileSource(matchSource string) bool {
+	return strings.HasPrefix(matchSource, "file://")
+}
+
+func isURLSource(matchSource string) bool {
+	return strings.HasPrefix(matchSource, "http://") || strings.HasPrefix(matchSource, "https://")
+}
+
+type MatchSource struct {
+	regexList  []*regexp.Regexp
+	stringList []string
+}
 
 type DNSMessage struct {
 	doneRun      chan bool
@@ -75,25 +89,26 @@ func (c *DNSMessage) ReadConfigMatching(value interface{}) {
 	if reflectedValue.Kind() == reflect.Map {
 		keys := reflectedValue.MapKeys()
 		fileList := ""
-		fileKind := "text_list"
+		srcKind := "string_list"
 		for _, k := range keys {
 			v := reflectedValue.MapIndex(k)
-			if k.Interface().(string) == "file-list" {
+			if k.Interface().(string) == "match-source" {
 				fileList = v.Interface().(string)
 			}
-			if k.Interface().(string) == "file-kind" {
-				fileKind = v.Interface().(string)
+			if k.Interface().(string) == "source-kind" {
+				srcKind = v.Interface().(string)
 			}
 		}
 		if len(fileList) > 0 {
-			if fileKind == "domain_list" {
-				reLines, err := c.LoadDomainList(fileList)
-				if err != nil {
-					c.logger.Fatal(err)
-				}
-				value.(map[interface{}]interface{})[fileKind] = reLines
-			} else {
-				c.logger.Fatal("file kind not yet supported: ", fileKind)
+			sourceData, err := c.LoadData(fileList, srcKind)
+			if err != nil {
+				c.logger.Fatal(err)
+			}
+			if len(sourceData.regexList) > 0 {
+				value.(map[interface{}]interface{})[srcKind] = sourceData.regexList
+			}
+			if len(sourceData.stringList) > 0 {
+				value.(map[interface{}]interface{})[srcKind] = sourceData.stringList
 			}
 		}
 	}
@@ -114,22 +129,80 @@ func (c *DNSMessage) ReadConfig() {
 	}
 }
 
-func (c *DNSMessage) LoadDomainList(filePath string) (map[string]*regexp.Regexp, error) {
-	c.LogInfo("loading domain list file=%s", filePath)
-	file, err := os.Open(filePath)
+func (c *DNSMessage) LoadData(matchSource string, srcKind string) (MatchSource, error) {
+	if isFileSource(matchSource) {
+		dataSource, err := c.LoadFromFile(matchSource, srcKind)
+		if err != nil {
+			c.logger.Fatal(err)
+		}
+		return dataSource, nil
+	} else if isURLSource(matchSource) {
+		dataSource, err := c.LoadFromURL(matchSource, srcKind)
+		if err != nil {
+			c.logger.Fatal(err)
+		}
+		return dataSource, nil
+	}
+	return MatchSource{}, fmt.Errorf("match source not supported %s", matchSource)
+}
+
+func (c *DNSMessage) LoadFromURL(matchSource string, srcKind string) (MatchSource, error) {
+	c.LogInfo("loading matching source from url=%s", matchSource)
+	resp, err := http.Get(matchSource)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open external file: %w", err)
+		return MatchSource{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return MatchSource{}, fmt.Errorf("invalid status code: %d", resp.StatusCode)
 	}
 
-	listRegexp := make(map[string]*regexp.Regexp)
+	matchSources := MatchSource{}
+	scanner := bufio.NewScanner(resp.Body)
 
+	switch srcKind {
+	case "regexp_list":
+		for scanner.Scan() {
+			matchSources.regexList = append(matchSources.regexList, regexp.MustCompile(scanner.Text()))
+		}
+		c.LogInfo("remote source loaded with %d entries kind=%s", len(matchSources.regexList), srcKind)
+	case "string_list":
+		for scanner.Scan() {
+			matchSources.stringList = append(matchSources.stringList, scanner.Text())
+		}
+		c.LogInfo("remote source loaded with %d entries kind=%s", len(matchSources.stringList), srcKind)
+	}
+
+	return matchSources, nil
+}
+
+func (c *DNSMessage) LoadFromFile(filePath string, srcKind string) (MatchSource, error) {
+	localFile := strings.TrimPrefix(filePath, "file://")
+
+	c.LogInfo("loading matching source from file=%s", localFile)
+	file, err := os.Open(localFile)
+	if err != nil {
+		return MatchSource{}, fmt.Errorf("unable to open file: %w", err)
+	}
+
+	matchSources := MatchSource{}
 	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.ToLower(scanner.Text())
-		listRegexp[line] = regexp.MustCompile(line)
+
+	switch srcKind {
+	case "regexp_list":
+		for scanner.Scan() {
+			matchSources.regexList = append(matchSources.regexList, regexp.MustCompile(scanner.Text()))
+		}
+		c.LogInfo("file loaded with %d entries kind=%s", len(matchSources.regexList), srcKind)
+	case "string_list":
+		for scanner.Scan() {
+			matchSources.stringList = append(matchSources.stringList, scanner.Text())
+		}
+		c.LogInfo("file loaded with %d entries kind=%s", len(matchSources.stringList), srcKind)
 	}
-	c.LogInfo("domain list loaded with %d lines", len(listRegexp))
-	return listRegexp, nil
+
+	return matchSources, nil
 }
 
 func (c *DNSMessage) ReloadConfig(config *pkgconfig.Config) {

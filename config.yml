@@ -132,10 +132,16 @@ pipelines:
           dns.length:
             greater-than: 50
           dns.qname:
-            file-list: "./testsdata/filtering_keep_domains_regex.txt"
-            file-kind: "domain_list"
+            match-source: "file://./testsdata/filtering_keep_domains_regex.txt"
+            source-kind: "regexp_list"
+          dnstap.operation:
+            match-source: "http://127.0.0.1/operation.txt"
+            source-kind: "string_list"
         exclude:
           dns.qtype: [ "TXT", "MX" ]
+          dns.qname:
+            - ".*\\.github\\.com$"
+            - "^www\\.google\\.com$"
       policy: "drop-unmatched"
     transforms:
       atags:

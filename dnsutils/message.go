@@ -891,13 +891,25 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
 					} else {
 						return fmt.Errorf("integer is expected for greater-than operator"), false
 					}
-				case "file-list", "file-kind":
+				case "match-source", "source-kind":
 					continue
-				case "domain_list":
-					domainList := opValue.Interface().(map[string]*regexp.Regexp)
+				case "regexp_list":
+					regexpList := opValue.Interface().([]*regexp.Regexp)
 					subMatch := false
-					for _, domainPattern := range domainList {
+					for _, domainPattern := range regexpList {
 						if domainPattern.MatchString(fieldValue.Interface().(string)) {
+							subMatch = true
+							break
+						}
+					}
+					if !subMatch {
+						return nil, false
+					}
+				case "string_list":
+					stringList := opValue.Interface().([]string)
+					subMatch := false
+					for _, item := range stringList {
+						if item == fieldValue.Interface().(string) {
 							subMatch = true
 							break
 						}
