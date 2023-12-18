@@ -946,9 +946,15 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
 				return nil, false
 			}
 
+		// bool
+		case reflect.Bool:
+			if value != fieldValue.Interface().(bool) {
+				return nil, false
+			}
+
 		// other types
 		default:
-			return fmt.Errorf("unsupported type %s", reflect.Slice), false
+			return fmt.Errorf("unsupported type value: %s", reflectedValue.Kind()), false
 		}
 
 	}

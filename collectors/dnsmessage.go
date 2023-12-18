@@ -127,6 +127,8 @@ func (c *DNSMessage) ReadConfig() {
 			c.ReadConfigMatching(value)
 		}
 	}
+
+	// TODO check drop policy
 }
 
 func (c *DNSMessage) LoadData(matchSource string, srcKind string) (MatchSource, error) {

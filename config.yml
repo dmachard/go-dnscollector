@@ -96,6 +96,7 @@ pipelines:
     dnsmessage:
       matching:
         include:
+          #dns.flags.qr: false
           dns.opcode: 0
           dns.length:
             greater-than: 50
