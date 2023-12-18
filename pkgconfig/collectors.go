@@ -4,7 +4,7 @@ type ConfigCollectors struct {
 	DNSMessage struct {
 		Enable            bool   `yaml:"enable"`
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
-		Policy            string `yaml:"policy"`
+		DropPolicy        string `yaml:"drop-policy"`
 		Matching          struct {
 			Include map[string]interface{} `yaml:"include"`
 			Exclude map[string]interface{} `yaml:"exclude"`
@@ -85,7 +85,7 @@ type ConfigCollectors struct {
 func (c *ConfigCollectors) SetDefault() {
 	c.DNSMessage.Enable = false
 	c.DNSMessage.ChannelBufferSize = 65535
-	c.DNSMessage.Policy = "drop-unmatched"
+	c.DNSMessage.DropPolicy = PolicyDropUnmatched
 
 	c.Tail.Enable = false
 	c.Tail.TimeLayout = ""

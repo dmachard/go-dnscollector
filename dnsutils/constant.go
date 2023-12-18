@@ -18,6 +18,6 @@ const (
 
 	MatchingModeInclude     = "include"
 	MatchingModeGreaterThan = "greater-than"
-	MatchKindString         = "string_list"
-	MatchKindRegexp         = "regexp_list"
+	MatchingKindString      = "string_list"
+	MatchingKindRegexp      = "regexp_list"
 )

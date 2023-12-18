@@ -89,7 +89,7 @@ func (c *DNSMessage) ReadConfigMatching(value interface{}) {
 	if reflectedValue.Kind() == reflect.Map {
 		keys := reflectedValue.MapKeys()
 		matchSrc := ""
-		srcKind := dnsutils.MatchKindString
+		srcKind := dnsutils.MatchingKindString
 		for _, k := range keys {
 			v := reflectedValue.MapIndex(k)
 			if k.Interface().(string) == "match-source" {
@@ -162,12 +162,12 @@ func (c *DNSMessage) LoadFromURL(matchSource string, srcKind string) (MatchSourc
 	scanner := bufio.NewScanner(resp.Body)
 
 	switch srcKind {
-	case dnsutils.MatchKindRegexp:
+	case dnsutils.MatchingKindRegexp:
 		for scanner.Scan() {
 			matchSources.regexList = append(matchSources.regexList, regexp.MustCompile(scanner.Text()))
 		}
 		c.LogInfo("remote source loaded with %d entries kind=%s", len(matchSources.regexList), srcKind)
-	case dnsutils.MatchKindString:
+	case dnsutils.MatchingKindString:
 		for scanner.Scan() {
 			matchSources.stringList = append(matchSources.stringList, scanner.Text())
 		}
@@ -190,12 +190,12 @@ func (c *DNSMessage) LoadFromFile(filePath string, srcKind string) (MatchSource,
 	scanner := bufio.NewScanner(file)
 
 	switch srcKind {
-	case dnsutils.MatchKindRegexp:
+	case dnsutils.MatchingKindRegexp:
 		for scanner.Scan() {
 			matchSources.regexList = append(matchSources.regexList, regexp.MustCompile(scanner.Text()))
 		}
 		c.LogInfo("file loaded with %d entries kind=%s", len(matchSources.regexList), srcKind)
-	case dnsutils.MatchKindString:
+	case dnsutils.MatchingKindString:
 		for scanner.Scan() {
 			matchSources.stringList = append(matchSources.stringList, scanner.Text())
 		}
@@ -336,9 +336,14 @@ RUN_LOOP:
 				}
 			}
 
-			// drop unmatched packet ?
-			if c.config.Collectors.DNSMessage.Policy == "drop-unmatched" && !matched {
-				continue
+			// drop packet ?
+			if c.config.Collectors.DNSMessage.DropPolicy != pkgconfig.PolicyDropDisabled {
+				if c.config.Collectors.DNSMessage.DropPolicy == pkgconfig.PolicyDropMatched && matched {
+					continue
+				}
+				if c.config.Collectors.DNSMessage.DropPolicy == pkgconfig.PolicyDropUnmatched && !matched {
+					continue
+				}
 			}
 
 			// send to next

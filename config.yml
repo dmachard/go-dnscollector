@@ -84,39 +84,7 @@ global:
 #     - from: [ tap ]
 #       to: [ console ]
 
-# Experimental, not yet ready for production
-# pipelines:
-#   - name: dnsdist-main
-#     dnstap:
-#       listen-ip: 0.0.0.0
-#       listen-port: 6000
-#     routes: [ apple-txt ]
-
-  # - name: tag-queries
-  #   dnsmessage:
-  #     matching:
-  #       include:
-  #         dnstap.operation: "CLIENT_QUERY"
-  #         dns.qname: "^.*\\.google\\.com$"
-  #       greater-than:
-  #         dns.length: 50
-  #     policy: "drop-unmatched"
-  #   transforms:
-  #     atags:
-  #       tags: [ "TAG-QUERIES:tag-queries" ]
-  #   routes: [ match-queries ]
-
-  # - name: match-queries
-  #   dnsmessage:
-  #     matching:
-  #       include:
-  #         dns.qname: "^www\\.google\\.com$"
-  #     policy: "passthrough"
-  #   transforms:
-  #     atags:
-  #       tags: [ "Le-Goog:website" ]
-  #   routes: [ outputfile ]
-
+# EXPERIMENTAL: pipeline mode
 pipelines:
   - name: dnsdist-main
     dnstap:
@@ -142,7 +110,7 @@ pipelines:
           dns.qname:
             - ".*\\.github\\.com$"
             - "^www\\.google\\.com$"
-      policy: "drop-unmatched"
+      drop-policy: "unmatched" # unmatchted, matched or disabled
     transforms:
       atags:
         tags: [ "TXT:apple", "TXT:google" ]
