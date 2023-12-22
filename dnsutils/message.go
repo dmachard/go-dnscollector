@@ -863,7 +863,7 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
 		}
 
 		expectedValue := reflect.ValueOf(value)
-		//fmt.Println(nestedKeys, realValue, realValue.Kind(), expectedValue.Kind())
+		// fmt.Println(nestedKeys, realValue, realValue.Kind(), expectedValue.Kind())
 
 		switch expectedValue.Kind() {
 		// integer
@@ -1228,29 +1228,31 @@ func getFieldByJSONTag(value reflect.Value, nestedKeys string) (reflect.Value, b
 			tag := field.Tag.Get("json")
 			tagClean := strings.TrimSuffix(tag, ",omitempty")
 
-			//Check if the JSON tag matches
+			// Check if the JSON tag matches
 			if tagClean == jsonKey {
 				// ptr
-				if field.Type.Kind() == reflect.Ptr {
+				switch field.Type.Kind() {
+				// integer
+				case reflect.Ptr:
 					if fieldValue, found := getFieldByJSONTag(value.Field(i).Elem(), listKeys[j+1]); found {
 						return fieldValue, true
 					}
 
-					// struct
-				} else if field.Type.Kind() == reflect.Struct {
+				// struct
+				case reflect.Struct:
 					if fieldValue, found := getFieldByJSONTag(value.Field(i), listKeys[j+1]); found {
 						return fieldValue, true
 					}
 
-					// slice if a list
-				} else if field.Type.Kind() == reflect.Slice {
+				// slice if a list
+				case reflect.Slice:
 					if fieldValue, leftKey, found := getSliceElement(value.Field(i), listKeys[j+1]); found {
-
-						if fieldValue.Kind() == reflect.Struct {
+						switch field.Type.Kind() {
+						case reflect.Struct:
 							if fieldValue, found := getFieldByJSONTag(fieldValue, leftKey); found {
 								return fieldValue, true
 							}
-						} else if fieldValue.Kind() == reflect.Slice {
+						case reflect.Slice:
 							var result []interface{}
 							for i := 0; i < fieldValue.Len(); i++ {
 
@@ -1266,11 +1268,13 @@ func getFieldByJSONTag(value reflect.Value, nestedKeys string) (reflect.Value, b
 							if len(result) > 0 {
 								return reflect.ValueOf(result), true
 							}
-						} else {
+						default:
 							return value.Field(i), true
 						}
 					}
-				} else {
+
+				// int, string
+				default:
 					return value.Field(i), true
 				}
 			}
