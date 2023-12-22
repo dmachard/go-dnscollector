@@ -16,8 +16,11 @@ const (
 
 	DNSTapIdentityTest = "test_id"
 
-	MatchingModeInclude     = "include"
-	MatchingModeGreaterThan = "greater-than"
-	MatchingKindString      = "string_list"
-	MatchingKindRegexp      = "regexp_list"
+	MatchingModeInclude   = "include"
+	MatchingOpGreaterThan = "greater-than"
+	MatchingOpLowerThan   = "lower-than"
+	MatchingOpSource      = "match-source"
+	MatchingOpSourceKind  = "source-kind"
+	MatchingKindString    = "string_list"
+	MatchingKindRegexp    = "regexp_list"
 )

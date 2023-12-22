@@ -90,31 +90,25 @@ pipelines:
     dnstap:
       listen-ip: 0.0.0.0
       listen-port: 6000
-    routes: [ apple-txt ]
+    routes: [ goog ]
 
-  - name: apple-txt
+  - name: goog
     dnsmessage:
       matching:
         include:
-          #dns.flags.qr: false
-          dns.opcode: 0
-          dns.length:
-            greater-than: 50
-          dns.qname:
-            match-source: "file://./testsdata/filtering_keep_domains_regex.txt"
-            source-kind: "regexp_list"
-          dnstap.operation:
-            match-source: "http://127.0.0.1/operation.txt"
-            source-kind: "string_list"
-        exclude:
-          dns.qtype: [ "TXT", "MX" ]
-          dns.qname:
-            - ".*\\.github\\.com$"
-            - "^www\\.google\\.com$"
-      drop-policy: "unmatched" # unmatchted, matched or disabled
+          dns.qname: "^.*\\.google\\.com$"
+      drop-policy: "unmatched" # unmatched, matched or disabled
     transforms:
       atags:
-        tags: [ "TXT:apple", "TXT:google" ]
+        tags: [ "google", "web" ]
+    routes: [ match-tag ]
+
+  - name: match-tag
+    dnsmessage:
+      matching:
+        include:
+          atags.tags.*: google
+      drop-policy: "unmatched"
     routes: [ outputfile, console ]
 
   - name: outputfile
