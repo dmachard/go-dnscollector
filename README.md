@@ -3,8 +3,8 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/dmachard/go-dns-collector)](https://goreportcard.com/report/dmachard/go-dns-collector)
 ![Go version](https://img.shields.io/badge/go%20version-min%201.20-blue)
-![Go tests](https://img.shields.io/badge/go%20tests-359-green)
-![Go lines](https://img.shields.io/badge/go%20lines-49536-red)
+![Go tests](https://img.shields.io/badge/go%20tests-366-green)
+![Go lines](https://img.shields.io/badge/go%20lines-50283-red)
 ![Go Tests](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-go.yml/badge.svg)
 ![Github Actions](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-dnstap.yml/badge.svg)
 ![Github Actions PDNS](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-powerdns.yml/badge.svg)
@@ -83,7 +83,7 @@ Multiplexer
 
 Download the latest [`release`](https://github.com/dmachard/go-dns-collector/releases) binary and start the DNS-collector with the provided configuration file. The default configuration listens on `tcp/6000` for a DNSTap stream and DNS logs are printed on standard output.
 
-```go
+```bash
 ./go-dnscollector -config config.yml
 ```
 
@@ -92,6 +92,13 @@ If you prefer run it from docker, follow this [guide](./docs/docker.md).
 ## Configuration
 
 The configuration of DNS-collector is done through a file named [`config.yml`](config.yml). When the DNS-collector starts, it will look for the config.yml from the current working directory.
+
+Run the `DNS-collector` in dry mode to verify the configuration.
+
+```bash
+./go-dnscollector -config config.yml -test-config
+INFO: 2023/12/24 14:43:29.043730 main - config OK!
+```
 
 See the full [configuration guide](./docs/configuration.md) for more details.
 
