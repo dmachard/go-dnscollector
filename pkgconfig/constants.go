@@ -12,6 +12,9 @@ const (
 	AnyIP       = "0.0.0.0"
 	HTTPOK      = "HTTP/1.1 200 OK\r\n\r\n"
 
+	KeyCollectors = "collectors"
+	KeyLoggers    = "loggers"
+
 	ValidDomain       = "dnscollector.dev."
 	BadDomainLabel    = "ultramegaverytoolonglabel-ultramegaverytoolonglabel-ultramegaverytoolonglabel.dnscollector.dev."
 	badLongLabel      = "ultramegaverytoolonglabel-ultramegaverytoolonglabel-"
