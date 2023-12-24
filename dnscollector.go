@@ -89,7 +89,8 @@ func main() {
 	// load config
 	config, err := pkgconfig.LoadConfig(configPath)
 	if err != nil {
-		panic(fmt.Sprintf("main - config error:  %v", err))
+		fmt.Printf("config error: %v\n", err)
+		os.Exit(1)
 	}
 
 	// init logger
