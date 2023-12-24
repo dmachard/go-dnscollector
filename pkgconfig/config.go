@@ -1,6 +1,7 @@
 package pkgconfig
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"reflect"
@@ -139,6 +140,109 @@ func CheckConfig(userConfigPath string) error {
 		}
 	}
 
+	// detect bad keyword position
+	err = checkKeywordsPosition(userConfigMap, defaultConfigMap, defaultConfigMap, "")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func checkKeywordsPosition(nextUserCfg, nextDefCfg map[string]interface{}, defaultConf map[string]interface{}, sectionName string) error {
+	for k, v := range nextUserCfg {
+		// Check if the key is present in the default config
+		if _, ok := nextDefCfg[k]; !ok {
+			if sectionName == "" {
+				return errors.Errorf("invalid key `%s` at root", k)
+			}
+			return errors.Errorf("invalid key `%s` in section `%s`", k, sectionName)
+		}
+
+		// If the value is a map, recursively check for invalid keywords
+		// Recursive call ?
+		val := reflect.ValueOf(v)
+		if val.Kind() == reflect.Map {
+			nextSectionName := fmt.Sprintf("%s.%s", sectionName, k)
+			if err := checkKeywordsPosition(v.(map[string]interface{}), nextDefCfg[k].(map[string]interface{}), defaultConf, nextSectionName); err != nil {
+				return err
+			}
+		}
+
+		// If the value is a slice and we are in the multiplexer part
+		// Multiplixer part is dynamic, we need specific function to check it
+		if val.Kind() == reflect.Slice && sectionName == ".multiplexer" {
+			if err := checkMultiplexerConfig(val, nextDefCfg[k].([]interface{}), defaultConf, k); err != nil {
+				return err
+			}
+		}
+
+	}
+	return nil
+}
+
+func checkMultiplexerConfig(currentVal reflect.Value, currentRef []interface{}, defaultConf map[string]interface{}, k string) error {
+	refLoggers := defaultConf[KeyLoggers].(map[string]interface{})
+	refCollectors := defaultConf[KeyCollectors].(map[string]interface{})
+	refTransforms := defaultConf["collectors-transformers"].(map[string]interface{})
+
+	// iter over the slice
+	for pos, item := range currentVal.Interface().([]interface{}) {
+		valReflect := reflect.ValueOf(item)
+		refItem := currentRef[0].(map[string]interface{})
+		if valReflect.Kind() == reflect.Map {
+			for _, key := range valReflect.MapKeys() {
+				strKey := key.Interface().(string)
+				mapVal := valReflect.MapIndex(key)
+
+				// First, check in the initial configuration reference.
+				// If not found, then look in the logger and collector references.
+				if _, ok := refItem[strKey]; !ok {
+					// we are in routes section ?
+					if !(k == KeyCollectors || k == KeyLoggers) {
+						return errors.Errorf("invalid `%s` in `%s` list at position %d", strKey, k, pos)
+					}
+
+					// Check if the key exists in neither loggers nor collectors
+					loggerExists := refLoggers[strKey] != nil
+					collectorExists := refCollectors[strKey] != nil
+					if !loggerExists && !collectorExists {
+						return errors.Errorf("invalid `%s` in `%s` list at position %d", strKey, k, pos)
+					}
+
+					// check logger
+					if k == KeyLoggers || k == KeyCollectors {
+						nextSectionName := fmt.Sprintf("%s[%d].%s", k, pos, strKey)
+						refMap := refLoggers
+						if k == KeyCollectors {
+							refMap = refCollectors
+						}
+
+						// Type assertion to check if the value is a map
+						if value, ok := mapVal.Interface().(map[string]interface{}); ok {
+							if err := checkKeywordsPosition(value, refMap[strKey].(map[string]interface{}), defaultConf, nextSectionName); err != nil {
+								return err
+							}
+						} else {
+							return errors.Errorf("invalid `%s` value in `%s` list at position %d", strKey, k, pos)
+						}
+					}
+				}
+
+				// Check transforms section
+				// Type assertion to check if the value is a map
+				if strKey == "transforms" {
+					nextSectionName := fmt.Sprintf("%s.%s", k, strKey)
+					if value, ok := mapVal.Interface().(map[string]interface{}); ok {
+						if err := checkKeywordsPosition(value, refTransforms, defaultConf, nextSectionName); err != nil {
+							return err
+						}
+					} else {
+						return errors.Errorf("invalid `%s` value in `%s` list at position %d", strKey, k, pos)
+					}
+				}
+			}
+		}
+	}
 	return nil
 }
 
