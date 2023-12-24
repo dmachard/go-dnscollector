@@ -71,6 +71,11 @@ func ReloadConfig(configPath string, config *Config) error {
 	}
 	defer configFile.Close()
 
+	// Check config to detect unknown keywords
+	if err := CheckConfig(configPath); err != nil {
+		return err
+	}
+
 	// Init new YAML decode
 	d := yaml.NewDecoder(configFile)
 
