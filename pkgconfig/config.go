@@ -183,11 +183,13 @@ func CheckConfig(userConfigPath string, dmRef map[string]interface{}) error {
 func checkKeywordsPosition(nextUserCfg, nextDefCfg map[string]interface{}, defaultConf map[string]interface{}, sectionName string) error {
 	for k, v := range nextUserCfg {
 		// Check if the key is present in the default config
-		if _, ok := nextDefCfg[k]; !ok {
-			if sectionName == "" {
-				return errors.Errorf("invalid key `%s` at root", k)
+		if len(nextDefCfg) > 0 {
+			if _, ok := nextDefCfg[k]; !ok {
+				if sectionName == "" {
+					return errors.Errorf("invalid key `%s` at root", k)
+				}
+				return errors.Errorf("invalid key `%s` in section `%s`", k, sectionName)
 			}
-			return errors.Errorf("invalid key `%s` in section `%s`", k, sectionName)
 		}
 
 		// If the value is a map, recursively check for invalid keywords
@@ -238,6 +240,23 @@ func checkPipelinesConfig(currentVal reflect.Value, currentRef []interface{}, de
 					if !loggerExists && !collectorExists {
 						return errors.Errorf("invalid `%s` in `%s` pipelines at position %d", strKey, k, pos)
 					}
+
+					// check logger or collectors
+					if loggerExists || collectorExists {
+						nextSectionName := fmt.Sprintf("%s[%d].%s", k, pos, strKey)
+						refMap := refLoggers
+						if collectorExists {
+							refMap = refCollectors
+						}
+						// Type assertion to check if the value is a map
+						if value, ok := mapVal.Interface().(map[string]interface{}); ok {
+							if err := checkKeywordsPosition(value, refMap[strKey].(map[string]interface{}), defaultConf, nextSectionName); err != nil {
+								return err
+							}
+						} else {
+							return errors.Errorf("invalid `%s` value in `%s` pipelines at position %d", strKey, k, pos)
+						}
+					}
 				}
 
 				// Check transforms section
@@ -249,12 +268,12 @@ func checkPipelinesConfig(currentVal reflect.Value, currentRef []interface{}, de
 							return err
 						}
 					} else {
-						return errors.Errorf("invalid `%s` value in `%s` list at position %d", strKey, k, pos)
+						return errors.Errorf("invalid `%s` value in `%s` pipelines at position %d", strKey, k, pos)
 					}
 				}
 			}
 		} else {
-			return errors.Errorf("invalid item type in pipeline list: %s", valReflect.Kind())
+			return errors.Errorf("invalid item type in pipelines list: %s", valReflect.Kind())
 		}
 	}
 	return nil
@@ -289,7 +308,7 @@ func checkMultiplexerConfig(currentVal reflect.Value, currentRef []interface{}, 
 						return errors.Errorf("invalid `%s` in `%s` list at position %d", strKey, k, pos)
 					}
 
-					// check logger
+					// check logger or collectors
 					if k == KeyLoggers || k == KeyCollectors {
 						nextSectionName := fmt.Sprintf("%s[%d].%s", k, pos, strKey)
 						refMap := refLoggers
