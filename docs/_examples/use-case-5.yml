@@ -20,7 +20,7 @@ multiplexer:
   # Sends to another DNSTap collector with TLS
   loggers:
     - name: tap_tls
-      dnstap:
+      dnstapclient:
         remote-address: 127.0.0.1
         remote-port:  6000
         tls-support: true

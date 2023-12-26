@@ -16,7 +16,7 @@ multiplexer:
   # Redirect output to a remote DNStap collector
   loggers:
     - name: tap
-      dnstap:
+      dnstapclient:
         remote-address: 127.0.0.1
         remote-port: 6002
 
