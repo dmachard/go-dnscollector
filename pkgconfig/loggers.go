@@ -77,7 +77,7 @@ type ConfigLoggers struct {
 		OverwriteIdentity bool   `yaml:"overwrite-identity"`
 		BufferSize        int    `yaml:"buffer-size"`
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
-	} `yaml:"dnstap"`
+	} `yaml:"dnstapclient"`
 	TCPClient struct {
 		Enable            bool   `yaml:"enable"`
 		RemoteAddress     string `yaml:"remote-address"`

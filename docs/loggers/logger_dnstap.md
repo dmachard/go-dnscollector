@@ -25,7 +25,7 @@ Options:
 Default values:
 
 ```yaml
-dnstap:
+dnstapclient:
   transport: tcp
   remote-address: 10.0.0.1
   remote-port: 6000

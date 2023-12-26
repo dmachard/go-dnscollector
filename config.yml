@@ -306,7 +306,7 @@ multiplexer:
 #   chan-buffer-size: 65535
 
 # # resend captured dns traffic to another dnstap collector or to unix socket
-# dnstap:
+# dnstapclient:
 #   # network transport to use: unix|tcp|tcp+tls
 #   transport: tcp
 #   # remote address
