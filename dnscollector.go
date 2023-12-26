@@ -86,8 +86,14 @@ func main() {
 	// create logger
 	logger := logger.New(true)
 
-	// load config
-	config, err := pkgconfig.LoadConfig(configPath)
+	// get DNSMessage flat model
+	dmRef, err := dnsutils.GetFlatDNSMessage()
+	if err != nil {
+		fmt.Printf("config error: unable to get DNSMessage reference %v\n", err)
+		os.Exit(1)
+	}
+
+	config, err := pkgconfig.LoadConfig(configPath, dmRef)
 	if err != nil {
 		fmt.Printf("config error: %v\n", err)
 		os.Exit(1)
@@ -129,7 +135,7 @@ func main() {
 				logger.Info("main - SIGHUP received")
 
 				// read config
-				err := pkgconfig.ReloadConfig(configPath, config)
+				err := pkgconfig.ReloadConfig(configPath, config, dmRef)
 				if err != nil {
 					panic(fmt.Sprintf("main - reload config error:  %v", err))
 				}

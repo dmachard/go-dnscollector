@@ -266,6 +266,18 @@ func (dm *DNSMessage) Init() {
 	}
 }
 
+func (dm *DNSMessage) InitTransforms() {
+	dm.ATags = &TransformATags{}
+	dm.Filtering = &TransformFiltering{}
+	dm.MachineLearning = &TransformML{}
+	dm.Reducer = &TransformReducer{}
+	dm.Extracted = &TransformExtracted{}
+	dm.PublicSuffix = &TransformPublicSuffix{}
+	dm.Suspicious = &TransformSuspicious{}
+	dm.PowerDNS = &PowerDNS{}
+	dm.Geo = &TransformDNSGeo{}
+}
+
 func (dm *DNSMessage) handleGeoIPDirectives(directives []string, s *strings.Builder) {
 	if dm.Geo == nil {
 		s.WriteString("-")
@@ -1340,4 +1352,12 @@ func GetFakeDNSMessageWithPayload() DNSMessage {
 	dm.DNS.Payload = dnsquestion
 	dm.DNS.Length = len(dnsquestion)
 	return dm
+}
+
+func GetFlatDNSMessage() (ret map[string]interface{}, err error) {
+	dm := DNSMessage{}
+	dm.Init()
+	dm.InitTransforms()
+	ret, err = dm.Flatten()
+	return
 }
