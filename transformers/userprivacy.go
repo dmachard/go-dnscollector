@@ -81,14 +81,14 @@ func (s *UserPrivacyProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers
 	s.config = config
 }
 
-func (p *UserPrivacyProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=userprivacy#%d - ", p.instance)
-	p.logInfo(log+msg, v...)
+func (s *UserPrivacyProcessor) LogInfo(msg string, v ...interface{}) {
+	log := fmt.Sprintf("transformer=userprivacy#%d - ", s.instance)
+	s.logInfo(log+msg, v...)
 }
 
-func (p *UserPrivacyProcessor) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=userprivacy#%d - ", p.instance)
-	p.logError(log+msg, v...)
+func (s *UserPrivacyProcessor) LogError(msg string, v ...interface{}) {
+	log := fmt.Sprintf("transformer=userprivacy#%d - ", s.instance)
+	s.logError(log+msg, v...)
 }
 
 func (s *UserPrivacyProcessor) MinimazeQname(qname string) string {
