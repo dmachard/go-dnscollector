@@ -57,7 +57,7 @@ Multiplexer
   - *Send to remote host with generic transport protocol*
     - [`TCP`](docs/loggers/logger_tcp.md)
     - [`Syslog`](docs/loggers/logger_syslog.md) with TLS support
-    - [`DNSTap`](docs/loggers/logger_dnstap.md) protobuf messages
+    - [`DNSTap`](docs/loggers/logger_dnstap.md) protobuf messages with TLS support
   - *Send to various sinks*
     - [`Fluentd`](docs/loggers/logger_fluentd.md)
     - [`InfluxDB`](docs/loggers/logger_influxdb.md)

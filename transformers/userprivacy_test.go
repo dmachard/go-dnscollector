@@ -8,7 +8,7 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func TestReduceQname(t *testing.T) {
+func TestUserPrivacy_ReduceQname(t *testing.T) {
 	// enable feature
 	config := pkgconfig.GetFakeConfigTransformers()
 	config.UserPrivacy.Enable = true
@@ -39,7 +39,48 @@ func TestReduceQname(t *testing.T) {
 	}
 }
 
-func TestAnonymizeIPv4(t *testing.T) {
+func TestUserPrivacy_HashIPDefault(t *testing.T) {
+	// enable feature
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.HashIP = true
+
+	log := logger.New(false)
+	outChans := []chan dnsutils.DNSMessage{}
+
+	// init the processor
+	userPrivacy := NewUserPrivacySubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+
+	ip := "192.168.1.2"
+
+	ret := userPrivacy.HashIP(ip)
+	if ret != "c0ca1efec6aaf505e943397662c28f89ac8f3bc2" {
+		t.Errorf("IP hashing failed, got %s", ret)
+	}
+}
+
+func TestUserPrivacy_HashIPSha512(t *testing.T) {
+	// enable feature
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.HashIP = true
+	config.UserPrivacy.HashIPAlgo = "sha512"
+
+	log := logger.New(false)
+	outChans := []chan dnsutils.DNSMessage{}
+
+	// init the processor
+	userPrivacy := NewUserPrivacySubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+
+	ip := "192.168.1.2"
+
+	ret := userPrivacy.HashIP(ip)
+	if ret != "800e8f97a29404b7031dfb8d7185b2d30a3cd326b535cda3dcec20a0f4749b1099f98e49245d67eb188091adfba9a45dc0c15e612b554ae7181d8f8a479b67a0" {
+		t.Errorf("IP hashing failed, got %s", ret)
+	}
+}
+
+func TestUserPrivacy_AnonymizeIPv4DefaultMask(t *testing.T) {
 	// enable feature
 	config := pkgconfig.GetFakeConfigTransformers()
 	config.UserPrivacy.Enable = true
@@ -59,7 +100,7 @@ func TestAnonymizeIPv4(t *testing.T) {
 	}
 }
 
-func TestAnonymizeIPv6(t *testing.T) {
+func TestUserPrivacy_AnonymizeIPv6DefaultMask(t *testing.T) {
 	// enable feature
 	config := pkgconfig.GetFakeConfigTransformers()
 	config.UserPrivacy.Enable = true
@@ -75,6 +116,48 @@ func TestAnonymizeIPv6(t *testing.T) {
 
 	ret := userPrivacy.AnonymizeIP(ip)
 	if ret != "fe80::" {
+		t.Errorf("Ipv6 anonymization failed, got %s", ret)
+	}
+}
+
+func TestUserPrivacy_AnonymizeIPv4RemoveIP(t *testing.T) {
+	// enable feature
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.AnonymizeIP = true
+	config.UserPrivacy.AnonymizeIPV4Bits = "/0"
+
+	log := logger.New(false)
+	outChans := []chan dnsutils.DNSMessage{}
+
+	// init the processor
+	userPrivacy := NewUserPrivacySubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+
+	ip := "192.168.1.2"
+
+	ret := userPrivacy.AnonymizeIP(ip)
+	if ret != "0.0.0.0" {
+		t.Errorf("Ipv4 anonymization failed with mask %s, got %s", config.UserPrivacy.AnonymizeIPV4Bits, ret)
+	}
+}
+
+func TestUserPrivacy_AnonymizeIPv6RemoveIP(t *testing.T) {
+	// enable feature
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.AnonymizeIP = true
+	config.UserPrivacy.AnonymizeIPV6Bits = "::/0"
+
+	log := logger.New(false)
+	outChans := []chan dnsutils.DNSMessage{}
+
+	// init the processor
+	userPrivacy := NewUserPrivacySubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+
+	ip := "fe80::6111:626:c1b2:2353"
+
+	ret := userPrivacy.AnonymizeIP(ip)
+	if ret != "::" {
 		t.Errorf("Ipv6 anonymization failed, got %s", ret)
 	}
 }

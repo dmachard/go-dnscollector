@@ -9,13 +9,19 @@ For example:
 Options:
 
 - `anonymize-ip`: (boolean) enable or disable anomymiser ip
-- `hash-ip`: (boolean) hash query and response IP with sha1
+- `anonymize-v4bits`: (string) summarize IPv4 down to the /integer level, default is `/16`
+- `anonymize-v6bits`: (string) summarize IPv6 down to the /integer level, default is `::/64`
+- `hash-ip`: (boolean) hashes the query and response IP with the specified algorithm.
+- `hash-ip-algo`: (string) algorithm to use for IP hashing, currently supported `sha1` (default), `sha256`, `sha512`
 - `minimaze-qname`: (boolean) keep only the second level domain
 
 ```yaml
 transforms:
   user-privacy:
     anonymize-ip: false
+    anonymize-v4bits: "/16"
+    anonymize-v6bits: "::/64"
     hash-ip: false
+    hash-ip-algo: "sha1"
     minimaze-qname: false
 ```
