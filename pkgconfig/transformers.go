@@ -2,10 +2,13 @@ package pkgconfig
 
 type ConfigTransformers struct {
 	UserPrivacy struct {
-		Enable        bool `yaml:"enable"`
-		AnonymizeIP   bool `yaml:"anonymize-ip"`
-		MinimazeQname bool `yaml:"minimaze-qname"`
-		HashIP        bool `yaml:"hash-ip"`
+		Enable            bool   `yaml:"enable"`
+		AnonymizeIP       bool   `yaml:"anonymize-ip"`
+		AnonymizeIPV4Bits string `yaml:"anonymize-v4bits"`
+		AnonymizeIPV6Bits string `yaml:"anonymize-v6bits"`
+		MinimazeQname     bool   `yaml:"minimaze-qname"`
+		HashIP            bool   `yaml:"hash-ip"`
+		HashIPAlgo        string `yaml:"hash-ip-algo"`
 	} `yaml:"user-privacy"`
 	Normalize struct {
 		Enable         bool `yaml:"enable"`
@@ -83,8 +86,11 @@ func (c *ConfigTransformers) SetDefault() {
 
 	c.UserPrivacy.Enable = false
 	c.UserPrivacy.AnonymizeIP = false
+	c.UserPrivacy.AnonymizeIPV4Bits = "0.0.0.0/16"
+	c.UserPrivacy.AnonymizeIPV6Bits = "::/64"
 	c.UserPrivacy.MinimazeQname = false
 	c.UserPrivacy.HashIP = false
+	c.UserPrivacy.HashIPAlgo = "sha1"
 
 	c.Normalize.Enable = false
 	c.Normalize.QnameLowerCase = false
