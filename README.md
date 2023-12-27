@@ -3,8 +3,8 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/dmachard/go-dns-collector)](https://goreportcard.com/report/dmachard/go-dns-collector)
 ![Go version](https://img.shields.io/badge/go%20version-min%201.20-blue)
-![Go tests](https://img.shields.io/badge/go%20tests-366-green)
-![Go lines](https://img.shields.io/badge/go%20lines-32797-red)
+![Go tests](https://img.shields.io/badge/go%20tests-370-green)
+![Go lines](https://img.shields.io/badge/go%20lines-32932-red)
 ![Go Tests](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-go.yml/badge.svg)
 ![Github Actions](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-dnstap.yml/badge.svg)
 ![Github Actions PDNS](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-powerdns.yml/badge.svg)
@@ -57,7 +57,7 @@ Multiplexer
   - *Send to remote host with generic transport protocol*
     - [`TCP`](docs/loggers/logger_tcp.md)
     - [`Syslog`](docs/loggers/logger_syslog.md) with TLS support
-    - [`DNSTap`](docs/loggers/logger_dnstap.md) protobuf messages
+    - [`DNSTap`](docs/loggers/logger_dnstap.md) protobuf messages with TLS support
   - *Send to various sinks*
     - [`Fluentd`](docs/loggers/logger_fluentd.md)
     - [`InfluxDB`](docs/loggers/logger_influxdb.md)

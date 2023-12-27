@@ -2,8 +2,11 @@ package transformers
 
 import (
 	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -12,10 +15,25 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
-var (
-	defaultIPv4Mask = net.IPv4Mask(255, 255, 0, 0)                                                       // /24
-	defaultIPv6Mask = net.IPMask{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0} // /64
-)
+func parseCIDRMask(mask string) (net.IPMask, error) {
+	parts := strings.Split(mask, "/")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid mask format, expected /integer: %s", mask)
+	}
+
+	ones, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return nil, fmt.Errorf("invalid /%s cidr", mask)
+	}
+
+	if strings.Contains(parts[0], ":") {
+		ipv6Mask := net.CIDRMask(ones, 128)
+		return ipv6Mask, nil
+	}
+
+	ipv4Mask := net.CIDRMask(ones, 32)
+	return ipv4Mask, nil
+}
 
 type UserPrivacyProcessor struct {
 	config      *pkgconfig.ConfigTransformers
@@ -33,19 +51,44 @@ func NewUserPrivacySubprocessor(config *pkgconfig.ConfigTransformers, logger *lo
 ) UserPrivacyProcessor {
 	s := UserPrivacyProcessor{
 		config:      config,
-		v4Mask:      defaultIPv4Mask,
-		v6Mask:      defaultIPv6Mask,
 		instance:    instance,
 		outChannels: outChannels,
 		logInfo:     logInfo,
 		logError:    logError,
 	}
-
+	s.ReadConfig()
 	return s
+}
+
+func (s *UserPrivacyProcessor) ReadConfig() {
+
+	var err error
+	s.v4Mask, err = parseCIDRMask(s.config.UserPrivacy.AnonymizeIPV4Bits)
+	if err != nil {
+		s.LogError("unable to init v4 mask: %v", err)
+	}
+
+	if !strings.Contains(s.config.UserPrivacy.AnonymizeIPV6Bits, ":") {
+		s.LogError("invalid v6 mask, expect format ::/integer")
+	}
+	s.v6Mask, err = parseCIDRMask(s.config.UserPrivacy.AnonymizeIPV6Bits)
+	if err != nil {
+		s.LogError("unable to init v6 mask: %v", err)
+	}
 }
 
 func (s *UserPrivacyProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	s.config = config
+}
+
+func (s *UserPrivacyProcessor) LogInfo(msg string, v ...interface{}) {
+	log := fmt.Sprintf("transformer=userprivacy#%d - ", s.instance)
+	s.logInfo(log+msg, v...)
+}
+
+func (s *UserPrivacyProcessor) LogError(msg string, v ...interface{}) {
+	log := fmt.Sprintf("transformer=userprivacy#%d - ", s.instance)
+	s.logError(log+msg, v...)
 }
 
 func (s *UserPrivacyProcessor) MinimazeQname(qname string) string {
@@ -57,6 +100,14 @@ func (s *UserPrivacyProcessor) MinimazeQname(qname string) string {
 }
 
 func (s *UserPrivacyProcessor) AnonymizeIP(ip string) string {
+	// if mask is nil, something is wrong
+	if s.v4Mask == nil {
+		return ip
+	}
+	if s.v6Mask == nil {
+		return ip
+	}
+
 	ipaddr := net.ParseIP(ip)
 	isipv4 := strings.LastIndex(ip, ".")
 
@@ -70,7 +121,20 @@ func (s *UserPrivacyProcessor) AnonymizeIP(ip string) string {
 }
 
 func (s *UserPrivacyProcessor) HashIP(ip string) string {
-	hash := sha1.New()
-	hash.Write([]byte(ip))
-	return fmt.Sprintf("%x", hash.Sum(nil))
+	switch s.config.UserPrivacy.HashIPAlgo {
+	case "sha1":
+		hash := sha1.New()
+		hash.Write([]byte(ip))
+		return fmt.Sprintf("%x", hash.Sum(nil))
+	case "sha256":
+		hash := sha256.New()
+		hash.Write([]byte(ip))
+		return fmt.Sprintf("%x", hash.Sum(nil))
+	case "sha512":
+		hash := sha512.New()
+		hash.Write([]byte(ip))
+		return fmt.Sprintf("%x", hash.Sum(nil))
+	default:
+		return ip
+	}
 }

@@ -705,10 +705,16 @@ multiplexer:
 # user-privacy:
 #   # IP-Addresses are anonymities by zeroing the host-part of an address.
 #   anonymize-ip: false
+#   # summarize IPv4 down to the /integer level, default is /16
+#   anonymize-v4bits: "/8"
+#   # summarize IPv6 down to the /integer level, default is /64
+#   anonymize-v6bits: "::/64"
 #   # Reduce Qname to second level only, for exemple mail.google.com be replaced by google.com
 #   minimaze-qname: false
-#   # Hash query and response IP
+#   # Hashes the query and response IP with the specified algorithm.
 #   hash-ip: false
+#   # Algorithm to use for IP hashing, currently supported `sha1` (default), `sha256`, `sha512`
+#   hash-ip-algo: sha1
 
 # # Use this option to add top level domain and tld+1, based on public suffix list https://publicsuffix.org/
 # # or convert all domain to lowercase
