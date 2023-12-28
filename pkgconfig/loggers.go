@@ -29,8 +29,8 @@ type ConfigLoggers struct {
 		BasicAuthEnabled        bool     `yaml:"basic-auth-enable"`
 		ChannelBufferSize       int      `yaml:"chan-buffer-size"`
 		HistogramMetricsEnabled bool     `yaml:"histogram-metrics-enabled"`
-		RequestersCacheTTL      int      `yaml:"requeters-cache-ttl"`
-		RequestersCacheSize     int      `yaml:"requeters-cache-size"`
+		RequestersCacheTTL      int      `yaml:"requesters-cache-ttl"`
+		RequestersCacheSize     int      `yaml:"requesters-cache-size"`
 		DomainsCacheTTL         int      `yaml:"domains-cache-ttl"`
 		DomainsCacheSize        int      `yaml:"domains-cache-size"`
 	} `yaml:"prometheus"`
