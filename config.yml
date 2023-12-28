@@ -77,10 +77,28 @@ multiplexer:
     - name: console
       stdout:
         mode: text
+    - name: prom
+      prometheus:
+        listen-ip: 0.0.0.0
+        listen-port: 8081
+        basic-auth-login: adminx
+        basic-auth-pwd: changeme
+        basic-auth-enable: false
+        tls-support: false
+        tls-mutual: false
+        tls-min-version: 1.2
+        cert-file: ""
+        key-file: ""
+        prometheus-prefix: "dnscollector"
+        top-n: 10
+        chan-buffer-size: 65535
+        histogram-metrics-enabled: false
+        domains-cache-size: 50000
+        domains-cache-ttl: 3600
 
   routes:
     - from: [ tap ]
-      to: [ console ]
+      to: [ prom ]
 
 ################################################
 # list of supported collectors

@@ -462,7 +462,6 @@ func (c *PrometheusCountersSet) Collect(ch chan<- prometheus.Metric) {
 	defer c.Unlock()
 	// Update number of domains
 	ch <- prometheus.MustNewConstMetric(c.prom.gaugeDomains, prometheus.GaugeValue,
-		//float64(c.domains.Len()),
 		float64(c.domains.Len()),
 	)
 	// Count NX domains
