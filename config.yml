@@ -63,62 +63,62 @@ global:
 
 # create your dns collector, please refer bellow to see the list
 # of supported collectors, loggers and transformers
-multiplexer:
-  collectors:
-    - name: tap
-      powerdns:
-        listen-ip: 0.0.0.0
-        listen-port: 6001
-      transforms:
-        normalize:
-          qname-lowercase: false
+# multiplexer:
+#   collectors:
+#     - name: tap
+#       powerdns:
+#         listen-ip: 0.0.0.0
+#         listen-port: 6001
+#       transforms:
+#         normalize:
+#           qname-lowercase: false
 
-  loggers:
-    - name: console
-      stdout:
-        mode: text
+#   loggers:
+#     - name: console
+#       stdout:
+#         mode: text
 
-  routes:
-    - from: [ tap ]
-      to: [ console ]
+#   routes:
+#     - from: [ tap ]
+#       to: [ console ]
 
 # EXPERIMENTAL: pipeline mode
-# pipelines:
-#   - name: dnsdist-main
-#     dnstap:
-#       listen-ip: 0.0.0.0
-#       listen-port: 6000
-#     routes: [ goog ]
+pipelines:
+  - name: dnsdist-main
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routes: [ goog ]
 
-#   - name: goog
-#     dnsmessage:
-#       matching:
-#         include:
-#           dns.qname: "^.*\\.google\\.com$"
-#       drop-policy: "unmatched" # unmatched, matched or disabled
-#     transforms:
-#       atags:
-#         tags: [ "google", "web" ]
-#     routes: [ match-tag ]
+  - name: goog
+    dnsmessage:
+      matching:
+        include:
+          dns.qname: "^.*\\.google\\.com$"
+      drop-policy: "unmatched" # unmatched, matched or disabled
+    transforms:
+      atags:
+        tags: [ "google", "web" ]
+    routes: [ match-tag ]
 
-#   - name: match-tag
-#     dnsmessage:
-#       matching:
-#         include:
-#           atags.tags.*: google
-#       drop-policy: "unmatched"
-#     routes: [ outputfile, console ]
+  - name: match-tag
+    dnsmessage:
+      matching:
+        include:
+          atags.tags.*: google
+      drop-policy: "unmatched"
+    routes: [ outputfile, console ]
 
-#   - name: outputfile
-#     logfile:
-#       file-path:  "/tmp/dnstap.log"
-#       max-size: 1000
-#       max-files: 10
-#       mode: flat-json
+  - name: outputfile
+    logfile:
+      file-path:  "/tmp/dnstap.log"
+      max-size: 1000
+      max-files: 10
+      mode: flat-json
 
-#   - name: console
-#     stdout:
-#       mode: text
+  - name: console
+    stdout:
+      mode: text
 
 ################################################
 # list of supported collectors
