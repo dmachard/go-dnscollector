@@ -29,6 +29,10 @@ type ConfigLoggers struct {
 		BasicAuthEnabled        bool     `yaml:"basic-auth-enable"`
 		ChannelBufferSize       int      `yaml:"chan-buffer-size"`
 		HistogramMetricsEnabled bool     `yaml:"histogram-metrics-enabled"`
+		RequestersCacheTTL      int      `yaml:"requesters-cache-ttl"`
+		RequestersCacheSize     int      `yaml:"requesters-cache-size"`
+		DomainsCacheTTL         int      `yaml:"domains-cache-ttl"`
+		DomainsCacheSize        int      `yaml:"domains-cache-size"`
 	} `yaml:"prometheus"`
 	RestAPI struct {
 		Enable            bool   `yaml:"enable"`
@@ -327,6 +331,10 @@ func (c *ConfigLoggers) SetDefault() {
 	c.Prometheus.BasicAuthEnabled = true
 	c.Prometheus.ChannelBufferSize = 65535
 	c.Prometheus.HistogramMetricsEnabled = false
+	c.Prometheus.RequestersCacheTTL = 3600
+	c.Prometheus.RequestersCacheSize = 250000
+	c.Prometheus.DomainsCacheTTL = 3600
+	c.Prometheus.DomainsCacheSize = 500000
 
 	c.RestAPI.Enable = false
 	c.RestAPI.ListenIP = LocalhostIP
