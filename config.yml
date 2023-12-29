@@ -63,42 +63,62 @@ global:
 
 # create your dns collector, please refer bellow to see the list
 # of supported collectors, loggers and transformers
-multiplexer:
-  collectors:
-    - name: tap
-      dnstap:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
-      transforms:
-        normalize:
-          qname-lowercase: false
+# multiplexer:
+#   collectors:
+#     - name: tap
+#       dnstap:
+#         listen-ip: 0.0.0.0
+#         listen-port: 6000
+#       transforms:
+#         normalize:
+#           qname-lowercase: false
 
-  loggers:
-    - name: console
-      stdout:
-        mode: text
-    - name: prom
-      prometheus:
-        listen-ip: 0.0.0.0
-        listen-port: 8081
-        basic-auth-login: adminx
-        basic-auth-pwd: changeme
-        basic-auth-enable: false
-        tls-support: false
-        tls-mutual: false
-        tls-min-version: 1.2
-        cert-file: ""
-        key-file: ""
-        prometheus-prefix: "dnscollector"
-        top-n: 10
-        chan-buffer-size: 65535
-        histogram-metrics-enabled: false
-        domains-cache-size: 50000
-        domains-cache-ttl: 3600
+#   loggers:
+#     - name: console
+#       stdout:
+#         mode: text
 
-  routes:
-    - from: [ tap ]
-      to: [ prom ]
+#   routes:
+#     - from: [ tap ]
+#       to: [ console ]
+
+# EXPERIMENTAL: pipeline mode
+pipelines:
+  - name: dnsdist-main
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routes: [ goog ]
+
+  - name: goog
+    dnsmessage:
+      matching:
+        include:
+          dns.qname: "^.*\\.google\\.com$"
+      drop-policy: "unmatched" # unmatched, matched or disabled
+    transforms:
+      atags:
+        tags: [ "google", "web" ]
+    routes: [ match-tag ]
+
+  - name: match-tag
+    dnsmessage:
+      matching:
+        include:
+          atags.tags.*: google
+      drop-policy: "unmatched"
+    routes: [ outputfile, console ]
+
+  - name: outputfile
+    logfile:
+      file-path:  "/tmp/dnstap.log"
+      max-size: 1000
+      max-files: 10
+      mode: flat-json
+
+  - name: console
+    stdout:
+      mode: text
 
 ################################################
 # list of supported collectors

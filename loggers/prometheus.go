@@ -862,50 +862,50 @@ func (c *Prometheus) InitProm() {
 
 	// Counter metrics
 	c.gaugeDomains = prometheus.NewDesc(
-		fmt.Sprintf("%s_domains", promPrefix),
-		"Number of domains per stream identity",
+		fmt.Sprintf("%s_total_domains_lru", promPrefix),
+		"Total number of domains most recently observed per stream identity ",
 		nil, nil,
 	)
 
 	c.gaugeDomainsNx = prometheus.NewDesc(
-		fmt.Sprintf("%s_nxdomains", promPrefix),
-		"Number of unknown domains per stream identity",
+		fmt.Sprintf("%s_total_nxdomains_lru", promPrefix),
+		"Total number of unknown domains most recently observed per stream identity",
 		nil, nil,
 	)
 
 	c.gaugeDomainsSf = prometheus.NewDesc(
-		fmt.Sprintf("%s_sfdomains", promPrefix),
-		"Number of serverfail domains per stream identity",
+		fmt.Sprintf("%s_sfdomains_lru", promPrefix),
+		"Total number of serverfail domains most recently observed per stream identity",
 		nil, nil,
 	)
 
 	c.gaugeRequesters = prometheus.NewDesc(
-		fmt.Sprintf("%s_requesters", promPrefix),
-		"Number of DNS clients per stream identity",
+		fmt.Sprintf("%s_total_requesters_lru", promPrefix),
+		"Total number of DNS clients most recently observed per stream identity.",
 		nil, nil,
 	)
 
 	c.gaugeTlds = prometheus.NewDesc(
-		fmt.Sprintf("%s_tlds", promPrefix),
-		"Number of tld per stream identity",
+		fmt.Sprintf("%s_total_tlds_lru", promPrefix),
+		"Total number of tld most recently observed per stream identity",
 		nil, nil,
 	)
 
 	c.gaugeETldPlusOne = prometheus.NewDesc(
-		fmt.Sprintf("%s_etldplusone", promPrefix),
-		"Number of tld per stream identity",
+		fmt.Sprintf("%s_total_etldsplusone_lru", promPrefix),
+		"Total number of etlds+one most recently observed per stream identity",
 		nil, nil,
 	)
 
 	c.gaugeSuspicious = prometheus.NewDesc(
-		fmt.Sprintf("%s_suspicious", promPrefix),
-		"Number of suspicious domain per stream identity",
+		fmt.Sprintf("%s_total_suspicious_lru", promPrefix),
+		"Total number of suspicious domains most recently observed per stream identity",
 		nil, nil,
 	)
 
 	c.gaugeEvicted = prometheus.NewDesc(
-		fmt.Sprintf("%s_unanswered", promPrefix),
-		"Number of unanswered domains per stream identity",
+		fmt.Sprintf("%s_total_unanswered_lru", promPrefix),
+		"Total number of unanswered domains most recently observed per stream identity",
 		nil, nil,
 	)
 
