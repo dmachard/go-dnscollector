@@ -312,6 +312,8 @@ pipelines:
 #   chan-buffer-size: 65535
 #   # compute histogram for qnames length, latencies, queries and replies size repartition
 #   histogram-metrics-enabled: false
+#   prometheus-labels: (list of strings) labels to add to metrics. Currently supported labels: stream_id, resolver, stream_global
+#   prometheus-labels: ["stream_id"]
 
 # # write captured dns traffic to text or binary files with rotation and compression support
 # logfile:
