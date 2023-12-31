@@ -722,9 +722,9 @@ func CreateSystemCatalogue(o *Prometheus) ([]string, *PromCounterCatalogueContai
 	lbls := o.config.Loggers.Prometheus.LabelsList
 
 	// Default configuration is label with stream_id, to keep us backward compatible
-	// if len(lbls) == 0 {
-	// 	lbls = []string{"stream_id"}
-	// }
+	if len(lbls) == 0 {
+		lbls = []string{"stream_id"}
+	}
 	return lbls, NewPromCounterCatalogueContainer(
 		o,
 		lbls,
