@@ -82,7 +82,7 @@ multiplexer:
         listen-ip: 0.0.0.0
         listen-port: 8081
         basic-auth-enable: false
-        prometheus-labels: ["stream_global"]
+        prometheus-labels: ["stream_id"]
         requesters-cache-size: 50000
         requesters-cache-ttl: 3600
         domains-cache-size: 50000
@@ -284,8 +284,16 @@ multiplexer:
 #   chan-buffer-size: 65535
 #   # compute histogram for qnames length, latencies, queries and replies size repartition
 #   histogram-metrics-enabled: false
-#   prometheus-labels: (list of strings) labels to add to metrics. Currently supported labels: stream_id, resolver, stream_global
+#   # prometheus-labels: (list of strings) labels to add to metrics. Currently supported labels: stream_id, resolver, stream_global
 #   prometheus-labels: ["stream_id"]
+#   # LRU (least-recently-used) cache size for observed clients DNS
+#   requesters-cache-size: 250000
+#   # maximum time (in seconds) before eviction from the LRU cache
+#   requesters-cache-ttl: 3600
+#   # LRU (least-recently-used) cache size for observed domains
+#   domains-cache-size: 500000
+#   # maximum time (in seconds) before eviction from the LRU cache
+#   domains-cache-ttl: 3600
 
 # # write captured dns traffic to text or binary files with rotation and compression support
 # logfile:

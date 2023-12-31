@@ -19,7 +19,11 @@ Options:
 - `top-n`: (string) default number of items on top
 - `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 - `histogram-metrics-enabled`: (boolean) compute histogram for qnames length, latencies, queries and replies size repartition
-- `prometheus-labels`: (list of strings) labels to add to metrics. Currently supported labels: `stream_id`, `resolver`
+- `prometheus-labels`: (list of strings) labels to add to metrics. Currently supported labels: `stream_id` (default), `stream_global`, `resolver`
+- `requesters-cache-size`: (integer) LRU (least-recently-used) cache size for observed clients DNS
+- `requesters-cache-ttl`: (integer) maximum time (in seconds) before eviction from the LRU cache
+- `domains-cache-size`: (integer) LRU (least-recently-used) cache size for observed domains
+- `domains-cache-ttl`: (integer) maximum time (in seconds) before eviction from the LRU cache
 
 Default values:
 
@@ -40,6 +44,10 @@ prometheus:
   chan-buffer-size: 65535
   histogram-metrics-enabled: false
   prometheus-labels: ["stream_id"]
+  requesters-cache-size: 250000
+  requesters-cache-ttl: 3600
+  domains-cache-size: 500000
+  domains-cache-ttl: 3600
 ```
 
 Scrape metric with curl:
@@ -55,9 +63,10 @@ The full metrics can be found [here](./../metrics.txt).
 | Metric                                          | Notes
 |-------------------------------------------------|------------------------------------
 | dnscollector_build_info                         | Build info
-| dnscollector_requesters_total                   | The total number of requesters per stream identity
-| dnscollector_nxdomains_total                    | The total number of NX domains per stream identity
-| dnscollector_domains_total                      | The total number of domains per stream identity
+| dnscollector_total_requesters_lru               | Total number of DNS clients most recently observed per stream identity.
+| dnscollector_total_sfdomains_lru                | Total number of serverfail domains most recently observed per stream identity
+| dnscollector_total_nxdomains_lru                | Total number of NX domains most recently observed per stream identity
+| dnscollector_total_domains_lru                  | Total number of domains most recently observed per stream identity 
 | dnscollector_dnsmessage_total                   | Counter of total of DNS messages
 | dnscollector_queries_total                      | Counter of total of queries
 | dnscollector_replies_total                      | Counter of total of replies
@@ -77,15 +86,15 @@ The full metrics can be found [here](./../metrics.txt).
 | dnscollector_reassembled_total                  | Total of reassembled DNS messages (TCP level)
 | dnscollector_throughput_ops                     | Number of ops per second received, partitioned by stream
 | dnscollector_throughput_ops_max                 | Max number of ops per second observed, partitioned by stream
-| dnscollector_tlds_total                         | The total number of tld per stream identity
+| dnscollector_total_tlds_lru                     | Total number of tld most recently observed per stream identity
 | dnscollector_top_domains                        | Number of hit per domain topN, partitioned by stream and qname
 | dnscollector_top_nxdomains                      | Number of hit per nx domain topN, partitioned by stream and qname
 | dnscollector_top_sfdomains                      | Number of hit per servfail domain topN, partitioned by stream and qname
 | dnscollector_top_requesters                     | Number of hit per requester topN, partitioned by client IP
 | dnscollector_top_tlds                           | Number of hit per tld - topN
 | dnscollector_top_unanswered                     | Number of hit per unanswered domain - topN
-| dnscollector_unanswered_total                   | The total number of unanswered domains per stream identity
-| dnscollector_suspicious_total                   | The total number of unanswered domains per stream identity
+| dnscollector_total_unanswered_lru               | Total number of unanswered domains most recently observed per stream identity
+| dnscollector_total_suspicious_lru               | Total number of suspicious domains most recently observed per stream identity
 | dnscollector_qnames_size_bytes_bucket           | Histogram of the size of the qname in bytes
 | dnscollector_queries_size_bytes_bucket          | Histogram of the size of the queries in bytes.
 | dnscollector_replies_size_bytes_bucket          | Histogram of the size of the replies in bytes.
@@ -97,3 +106,13 @@ The following [build-in](https://grafana.com/grafana/dashboards/16630) dashboard
 <p align="center">
   <img src="../_images/dashboard_prometheus.png" alt="dnscollector"/>
 </p>
+
+# Merge streams for metrics computation
+
+If you want to compute metrics based on the merge of all streams instead of each one, use the following settings:
+
+```yaml
+prometheus:
+  ....
+  prometheus-labels: ["stream_global"]
+```
