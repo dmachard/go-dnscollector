@@ -109,7 +109,7 @@ The following [build-in](https://grafana.com/grafana/dashboards/16630) dashboard
 
 # Merge streams for metrics computation
 
-If you want to compute metrics based on the merge of all streams instead of each one, use the following settings:
+Use the following setting to consolidate all streams into one for metric computations.
 
 ```yaml
 prometheus:
