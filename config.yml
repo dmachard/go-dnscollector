@@ -77,48 +77,20 @@ multiplexer:
     - name: console
       stdout:
         mode: text
+    - name: prom
+      prometheus:
+        listen-ip: 0.0.0.0
+        listen-port: 8081
+        basic-auth-enable: false
+        prometheus-labels: ["stream_global"]
+        requesters-cache-size: 50000
+        requesters-cache-ttl: 3600
+        domains-cache-size: 50000
+        domains-cache-ttl: 3600
 
   routes:
     - from: [ tap ]
-      to: [ console ]
-
-# EXPERIMENTAL: pipeline mode
-# pipelines:
-#   - name: dnsdist-main
-#     dnstap:
-#       listen-ip: 0.0.0.0
-#       listen-port: 6000
-#     routes: [ goog ]
-
-#   - name: goog
-#     dnsmessage:
-#       matching:
-#         include:
-#           dns.qname: "^.*\\.google\\.com$"
-#       drop-policy: "unmatched" # unmatched, matched or disabled
-#     transforms:
-#       atags:
-#         tags: [ "google", "web" ]
-#     routes: [ match-tag ]
-
-#   - name: match-tag
-#     dnsmessage:
-#       matching:
-#         include:
-#           atags.tags.*: google
-#       drop-policy: "unmatched"
-#     routes: [ outputfile, console ]
-
-#   - name: outputfile
-#     logfile:
-#       file-path:  "/tmp/dnstap.log"
-#       max-size: 1000
-#       max-files: 10
-#       mode: flat-json
-
-#   - name: console
-#     stdout:
-#       mode: text
+      to: [ console, prom ]
 
 ################################################
 # list of supported collectors
@@ -312,6 +284,8 @@ multiplexer:
 #   chan-buffer-size: 65535
 #   # compute histogram for qnames length, latencies, queries and replies size repartition
 #   histogram-metrics-enabled: false
+#   prometheus-labels: (list of strings) labels to add to metrics. Currently supported labels: stream_id, resolver, stream_global
+#   prometheus-labels: ["stream_id"]
 
 # # write captured dns traffic to text or binary files with rotation and compression support
 # logfile:

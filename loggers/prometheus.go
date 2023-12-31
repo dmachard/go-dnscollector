@@ -35,8 +35,9 @@ Configuration may specifiy a list of lables to use for metrics.
 Any label in this catalogueSelectors can be specidied in config (prometheus-labels stanza)
 */
 var catalogueSelectors map[string]func(*dnsutils.DNSMessage) string = map[string]func(*dnsutils.DNSMessage) string{
-	"stream_id": GetStreamID,
-	"resolver":  GetResolverIP,
+	"stream_id":     GetStreamID,
+	"resolver":      GetResolverIP,
+	"stream_global": GetStreamGlobal,
 }
 
 /*
@@ -156,6 +157,10 @@ type PromCounterCatalogueContainer struct {
 /*
 Selectors
 */
+func GetStreamGlobal(dm *dnsutils.DNSMessage) string {
+	return "enabled"
+}
+
 func GetStreamID(dm *dnsutils.DNSMessage) string {
 	return dm.DNSTap.Identity
 }
@@ -717,9 +722,9 @@ func CreateSystemCatalogue(o *Prometheus) ([]string, *PromCounterCatalogueContai
 	lbls := o.config.Loggers.Prometheus.LabelsList
 
 	// Default configuration is label with stream_id, to keep us backward compatible
-	if len(lbls) == 0 {
-		lbls = []string{"stream_id"}
-	}
+	// if len(lbls) == 0 {
+	// 	lbls = []string{"stream_id"}
+	// }
 	return lbls, NewPromCounterCatalogueContainer(
 		o,
 		lbls,
