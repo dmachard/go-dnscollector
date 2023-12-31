@@ -77,6 +77,7 @@ type ConfigLoggers struct {
 		OverwriteIdentity bool   `yaml:"overwrite-identity"`
 		BufferSize        int    `yaml:"buffer-size"`
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
+		Compression       string `yaml:"compression"`
 	} `yaml:"dnstapclient"`
 	TCPClient struct {
 		Enable            bool   `yaml:"enable"`
@@ -297,6 +298,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.DNSTap.OverwriteIdentity = false
 	c.DNSTap.BufferSize = 100
 	c.DNSTap.ChannelBufferSize = 65535
+	c.DNSTap.Compression = CompressNone
 
 	c.LogFile.Enable = false
 	c.LogFile.FilePath = ""

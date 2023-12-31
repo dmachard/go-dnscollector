@@ -439,6 +439,12 @@ github.com/dmachard/go-dnstap-protobuf v0.6.0 h1:L3t+IdUTehkt+Rste7f2QRf5PX9ECHG
 github.com/dmachard/go-dnstap-protobuf v0.6.0/go.mod h1:GUKK5vMZTZW1gEtpSAdPeg8Egyn1p7pA1WE+FW+VW8I=
 github.com/dmachard/go-framestream v0.7.0 h1:fLwBLIBnG10wwGcS5y6qCoLg6WTD2yAxyezcAvpf61o=
 github.com/dmachard/go-framestream v0.7.0/go.mod h1:f0LF2Npbe4plNgzVJX1rUfoIUjTWZIpLLyhuG04RTo4=
+github.com/dmachard/go-framestream v0.8.0 h1:HqSdk6wgGaeNCEnuPhs0ofO3NkJNz6haEnmE9G1J64k=
+github.com/dmachard/go-framestream v0.8.0/go.mod h1:CiSK1RmU/7hVsM/NhsroqpBxDH3meawKIXR8x8O+LP4=
+github.com/dmachard/go-framestream v0.9.0 h1:EE0Zwf92PKu+FRGBpGcYVBYwTrum8qP7/PUke0x6XC8=
+github.com/dmachard/go-framestream v0.9.0/go.mod h1:CiSK1RmU/7hVsM/NhsroqpBxDH3meawKIXR8x8O+LP4=
+github.com/dmachard/go-framestream v0.10.0 h1:NzDOkpJOdrgV/c0XKCsVxijILbdTxsUcUlSwp4y34mw=
+github.com/dmachard/go-framestream v0.10.0/go.mod h1:CiSK1RmU/7hVsM/NhsroqpBxDH3meawKIXR8x8O+LP4=
 github.com/dmachard/go-logger v0.4.0 h1:JJJW8C5Ri6OaWIECAE6dUNqLs4ym1+WX3xD6h5MxLI4=
 github.com/dmachard/go-logger v0.4.0/go.mod h1:Gf6Au3CX5l3rZ+Tb3yX31u6h4lwVeZQSBklUI3h8gCA=
 github.com/dmachard/go-powerdns-protobuf v0.2.0 h1:YK3xcTxAe97BynwAv75Mcfvu+VSiwQEWoawfNI3bdnc=
@@ -858,6 +864,8 @@ github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 h1:nn5Wsu0esKSJiIVhscUt
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/segmentio/kafka-go v0.4.46 h1:Sx8/kvtY+/G8nM0roTNnFezSJj3bT2sW0Xy/YY3CgBI=
 github.com/segmentio/kafka-go v0.4.46/go.mod h1:HjF6XbOKh0Pjlkr5GVZxt6CsjjwnmhVOfURM5KMd8qg=
+github.com/segmentio/kafka-go v0.4.47 h1:IqziR4pA3vrZq7YdRxaT3w1/5fvIH5qpCwstUanQQB0=
+github.com/segmentio/kafka-go v0.4.47/go.mod h1:HjF6XbOKh0Pjlkr5GVZxt6CsjjwnmhVOfURM5KMd8qg=
 github.com/sercand/kuberesolver v2.4.0+incompatible h1:WE2OlRf6wjLxHwNkkFLQGaZcVLEXjMjBPjjEU5vksH8=
 github.com/sercand/kuberesolver v2.4.0+incompatible/go.mod h1:lWF3GL0xptCB/vCiJPl/ZshwPsX/n4Y7u0CW9E7aQIQ=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
