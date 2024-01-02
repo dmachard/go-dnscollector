@@ -20,10 +20,16 @@ Options:
 - `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 - `histogram-metrics-enabled`: (boolean) compute histogram for qnames length, latencies, queries and replies size repartition
 - `prometheus-labels`: (list of strings) labels to add to metrics. Currently supported labels: `stream_id` (default), `stream_global`, `resolver`
-- `requesters-cache-size`: (integer) LRU (least-recently-used) cache size for observed clients DNS
+- `requesters-cache-size`: (integer) LRU (least-recently-used) cache size for observed clients DNS per stream
 - `requesters-cache-ttl`: (integer) maximum time (in seconds) before eviction from the LRU cache
-- `domains-cache-size`: (integer) LRU (least-recently-used) cache size for observed domains
+- `domains-cache-size`: (integer) LRU (least-recently-used) cache size for observed domains per stream
 - `domains-cache-ttl`: (integer) maximum time (in seconds) before eviction from the LRU cache
+- `noerror-domains-cache-size`: (integer) LRU (least-recently-used) cache size for observed NOERROR domains per stream
+- `noerror-domains-cache-ttl`: (integer) maximum time (in seconds) before eviction from the LRU cache
+- `servfail-domains-cache-size`: (integer) LRU (least-recently-used) cache size for observed SERVFAIL domains per stream
+- `servfail-domains-cache-ttl`: (integer) maximum time (in seconds) before eviction from the LRU cache
+- `nonexistent-domains-cache-size`: (integer) LRU (least-recently-used) cache size for observed NX domains per stream
+- `nonexistent-domains-cache-ttl`: (integer) maximum time (in seconds) before eviction from the LRU cache
 
 Default values:
 
@@ -43,11 +49,25 @@ prometheus:
   top-n: 10
   chan-buffer-size: 65535
   histogram-metrics-enabled: false
+  requesters-metrics-enabled: true
+  domains-metrics-enabled: true
+  noerror-domains-metrics-enabled: true
+  servfail-domains-metrics-enabled: true
+  nonexistent-domains-metrics-enabled: true
+  timeout-domains-metrics-enabled: true
   prometheus-labels: ["stream_id"]
   requesters-cache-size: 250000
   requesters-cache-ttl: 3600
   domains-cache-size: 500000
   domains-cache-ttl: 3600
+  noerror-domains-cache-size: 100000
+  noerror-domains-cache-ttl: 3600
+  servfail-domains-cache-size: 10000
+  servfail-domains-cache-ttl: 3600
+  nonexistent-domains-cache-size: 10000
+  nonexistent-domains-cache-ttl: 3600
+  default-domains-cache-size: 1000
+  default-domains-cache-ttl: 3600
 ```
 
 Scrape metric with curl:
@@ -64,9 +84,10 @@ The full metrics can be found [here](./../metrics.txt).
 |-------------------------------------------------|------------------------------------
 | dnscollector_build_info                         | Build info
 | dnscollector_total_requesters_lru               | Total number of DNS clients most recently observed per stream identity.
-| dnscollector_total_sfdomains_lru                | Total number of serverfail domains most recently observed per stream identity
-| dnscollector_total_nxdomains_lru                | Total number of NX domains most recently observed per stream identity
-| dnscollector_total_domains_lru                  | Total number of domains most recently observed per stream identity 
+| dnscollector_total_domains_lru                | Total number of serverfail domains most recently observed per stream identity
+| dnscollector_total_noerror_domains_lru                | Total number of serverfail domains most recently observed per stream identity
+| dnscollector_total_servfail_domains_lru                | Total number of serverfail domains most recently observed per stream identity
+| dnscollector_total_nonexistentçdomains_lru                | Total number of NX domains most recently observed per stream identity
 | dnscollector_dnsmessage_total                   | Counter of total of DNS messages
 | dnscollector_queries_total                      | Counter of total of queries
 | dnscollector_replies_total                      | Counter of total of replies

@@ -13,26 +13,40 @@ type ConfigLoggers struct {
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
 	} `yaml:"stdout"`
 	Prometheus struct {
-		Enable                  bool     `yaml:"enable"`
-		ListenIP                string   `yaml:"listen-ip"`
-		ListenPort              int      `yaml:"listen-port"`
-		TLSSupport              bool     `yaml:"tls-support"`
-		TLSMutual               bool     `yaml:"tls-mutual"`
-		TLSMinVersion           string   `yaml:"tls-min-version"`
-		CertFile                string   `yaml:"cert-file"`
-		KeyFile                 string   `yaml:"key-file"`
-		PromPrefix              string   `yaml:"prometheus-prefix"`
-		LabelsList              []string `yaml:"prometheus-labels"`
-		TopN                    int      `yaml:"top-n"`
-		BasicAuthLogin          string   `yaml:"basic-auth-login"`
-		BasicAuthPwd            string   `yaml:"basic-auth-pwd"`
-		BasicAuthEnabled        bool     `yaml:"basic-auth-enable"`
-		ChannelBufferSize       int      `yaml:"chan-buffer-size"`
-		HistogramMetricsEnabled bool     `yaml:"histogram-metrics-enabled"`
-		RequestersCacheTTL      int      `yaml:"requesters-cache-ttl"`
-		RequestersCacheSize     int      `yaml:"requesters-cache-size"`
-		DomainsCacheTTL         int      `yaml:"domains-cache-ttl"`
-		DomainsCacheSize        int      `yaml:"domains-cache-size"`
+		Enable                    bool     `yaml:"enable"`
+		ListenIP                  string   `yaml:"listen-ip"`
+		ListenPort                int      `yaml:"listen-port"`
+		TLSSupport                bool     `yaml:"tls-support"`
+		TLSMutual                 bool     `yaml:"tls-mutual"`
+		TLSMinVersion             string   `yaml:"tls-min-version"`
+		CertFile                  string   `yaml:"cert-file"`
+		KeyFile                   string   `yaml:"key-file"`
+		PromPrefix                string   `yaml:"prometheus-prefix"`
+		LabelsList                []string `yaml:"prometheus-labels"`
+		TopN                      int      `yaml:"top-n"`
+		BasicAuthLogin            string   `yaml:"basic-auth-login"`
+		BasicAuthPwd              string   `yaml:"basic-auth-pwd"`
+		BasicAuthEnabled          bool     `yaml:"basic-auth-enable"`
+		ChannelBufferSize         int      `yaml:"chan-buffer-size"`
+		RequestersMetricsEnabled  bool     `yaml:"requesters-metrics-enabled"`
+		DomainsMetricsEnabled     bool     `yaml:"domains-metrics-enabled"`
+		NoErrorMetricsEnabled     bool     `yaml:"noerror-metrics-enabled"`
+		ServfailMetricsEnabled    bool     `yaml:"servfail-metrics-enabled"`
+		NonExistentMetricsEnabled bool     `yaml:"nonexistent-metrics-enabled"`
+		TimeoutMetricsEnabled     bool     `yaml:"timeout-metrics-enabled"`
+		HistogramMetricsEnabled   bool     `yaml:"histogram-metrics-enabled"`
+		RequestersCacheTTL        int      `yaml:"requesters-cache-ttl"`
+		RequestersCacheSize       int      `yaml:"requesters-cache-size"`
+		DomainsCacheTTL           int      `yaml:"domains-cache-ttl"`
+		DomainsCacheSize          int      `yaml:"domains-cache-size"`
+		NoErrorDomainsCacheTTL    int      `yaml:"noerror-domains-cache-ttl"`
+		NoErrorDomainsCacheSize   int      `yaml:"noerror-domains-cache-size"`
+		ServfailDomainsCacheTTL   int      `yaml:"servfail-domains-cache-ttl"`
+		ServfailDomainsCacheSize  int      `yaml:"servfail-domains-cache-size"`
+		NXDomainsCacheTTL         int      `yaml:"nonexistent-domains-cache-ttl"`
+		NXDomainsCacheSize        int      `yaml:"nonexistent-domains-cache-size"`
+		DefaultDomainsCacheTTL    int      `yaml:"default-domains-cache-ttl"`
+		DefaultDomainsCacheSize   int      `yaml:"default-domains-cache-size"`
 	} `yaml:"prometheus"`
 	RestAPI struct {
 		Enable            bool   `yaml:"enable"`
@@ -331,10 +345,24 @@ func (c *ConfigLoggers) SetDefault() {
 	c.Prometheus.BasicAuthEnabled = true
 	c.Prometheus.ChannelBufferSize = 65535
 	c.Prometheus.HistogramMetricsEnabled = false
+	c.Prometheus.RequestersMetricsEnabled = true
+	c.Prometheus.DomainsMetricsEnabled = true
+	c.Prometheus.NoErrorMetricsEnabled = true
+	c.Prometheus.ServfailMetricsEnabled = true
+	c.Prometheus.NonExistentMetricsEnabled = true
 	c.Prometheus.RequestersCacheTTL = 3600
 	c.Prometheus.RequestersCacheSize = 250000
 	c.Prometheus.DomainsCacheTTL = 3600
 	c.Prometheus.DomainsCacheSize = 500000
+	c.Prometheus.DomainsCacheTTL = 3600
+	c.Prometheus.NoErrorDomainsCacheSize = 100000
+	c.Prometheus.NoErrorDomainsCacheTTL = 3600
+	c.Prometheus.ServfailDomainsCacheSize = 10000
+	c.Prometheus.ServfailDomainsCacheTTL = 3600
+	c.Prometheus.NXDomainsCacheSize = 10000
+	c.Prometheus.NXDomainsCacheTTL = 3600
+	c.Prometheus.DefaultDomainsCacheSize = 1000
+	c.Prometheus.DefaultDomainsCacheTTL = 3600
 
 	c.RestAPI.Enable = false
 	c.RestAPI.ListenIP = LocalhostIP
