@@ -5,7 +5,7 @@ GO_VERSION := $(shell go env GOVERSION | sed -n 's/go\([0-9]\+\.[0-9]\+\).*/\1/p
 GO_LOGGER := 0.4.0
 GO_POWERDNS_PROTOBUF := 0.2.0
 GO_DNSTAP_PROTOBUF := 0.6.0
-GO_FRAMESTREAM := 0.7.0
+GO_FRAMESTREAM := 0.10.0
 GO_CLIENTSYSLOG := 0.3.0
 
 BUILD_TIME := $(shell LANG=en_US date +"%F_%T_%z")
