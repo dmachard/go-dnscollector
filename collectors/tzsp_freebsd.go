@@ -19,7 +19,7 @@ type TZSPSniffer struct {
 }
 
 // workaround for macos, not yet supported
-func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
+func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
 	logger.Info("[%s] tzsp collector - enabled", name)
 	s := &TZSPSniffer{
 		done:          make(chan bool),
