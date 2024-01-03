@@ -50,7 +50,7 @@ func NewInfluxDBClient(config *pkgconfig.Config, logger *logger.Logger, name str
 
 func (i *InfluxDBClient) GetName() string { return i.name }
 
-func (c *InfluxDBClient) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (i *InfluxDBClient) AddDroppedRoute(wrk dnsutils.Worker) {}
 
 func (i *InfluxDBClient) AddDefaultRoute(wrk dnsutils.Worker) {}
 

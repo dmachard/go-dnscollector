@@ -96,7 +96,7 @@ func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *S
 
 func (s *Syslog) GetName() string { return s.name }
 
-func (c *Syslog) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (s *Syslog) AddDroppedRoute(wrk dnsutils.Worker) {}
 
 func (s *Syslog) AddDefaultRoute(wrk dnsutils.Worker) {}
 

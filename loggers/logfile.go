@@ -94,7 +94,7 @@ func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *L
 
 func (l *LogFile) GetName() string { return l.name }
 
-func (c *LogFile) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (l *LogFile) AddDroppedRoute(wrk dnsutils.Worker) {}
 
 func (l *LogFile) AddDefaultRoute(wrk dnsutils.Worker) {}
 

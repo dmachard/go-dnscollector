@@ -357,7 +357,7 @@ RUN_LOOP:
 			}
 
 			// drop packet ?
-			if len(droppedRoutes) >= 0 && !matched {
+			if !matched {
 				for i := range droppedRoutes {
 					select {
 					case droppedRoutes[i] <- dm: // Successful send to logger channel
