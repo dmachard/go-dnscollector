@@ -57,7 +57,7 @@ func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
 
 func (c *AfpacketSniffer) Loggers() []chan dnsutils.DNSMessage {
 	channels := []chan dnsutils.DNSMessage{}
-	for _, p := range c.loggers {
+	for _, p := range c.defaultRoutes {
 		channels = append(channels, p.Channel())
 	}
 	return channels
