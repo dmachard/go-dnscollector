@@ -240,7 +240,8 @@ pipelines:
   dnstap:
     listen-ip: 0.0.0.0
     listen-port: 6000
-  routes: [ console ]
+  routing-policy: 
+    default: [ console ]
 
 - name: console
   stdout:
@@ -274,7 +275,8 @@ pipelines:
     transforms:
       normalize:
         qname-lowercase: true
-  routes: [ console ]
+  routing-policy: 
+    default: [ console ]
 `
 
 	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
