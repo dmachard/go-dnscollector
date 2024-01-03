@@ -10,24 +10,24 @@ import (
 )
 
 type XDPSniffer struct {
-	done     chan bool
-	exit     chan bool
-	identity string
-	loggers  []dnsutils.Worker
-	config   *pkgconfig.Config
-	logger   *logger.Logger
-	name     string
+	done          chan bool
+	exit          chan bool
+	identity      string
+	defaultRoutes []dnsutils.Worker
+	config        *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
 }
 
 func NewXDPSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
 	logger.Info("[%s] XDP collector enabled", name)
 	s := &XDPSniffer{
-		done:    make(chan bool),
-		exit:    make(chan bool),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+		done:          make(chan bool),
+		exit:          make(chan bool),
+		config:        config,
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
@@ -43,17 +43,21 @@ func (c *XDPSniffer) LogError(msg string, v ...interface{}) {
 
 func (c *XDPSniffer) GetName() string { return c.name }
 
-func (c *XDPSniffer) AddRoute(wrk dnsutils.Worker) {
-	c.loggers = append(c.loggers, wrk)
+func (c *XDPSniffer) AddDroppedRoute(wrk dnsutils.Worker) {
+	// TODO
+}
+
+func (c *XDPSniffer) AddDefaultRoute(wrk dnsutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
 func (c *XDPSniffer) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+	c.defaultRoutes = loggers
 }
 
 func (c *XDPSniffer) Loggers() []chan dnsutils.DNSMessage {
 	channels := []chan dnsutils.DNSMessage{}
-	for _, p := range c.loggers {
+	for _, p := range c.defaultRoutes {
 		channels = append(channels, p.Channel())
 	}
 	return channels

@@ -38,7 +38,7 @@ func IsValidMode(mode string) bool {
 type FileIngestor struct {
 	done            chan bool
 	exit            chan bool
-	loggers         []dnsutils.Worker
+	defaultRoutes   []dnsutils.Worker
 	config          *pkgconfig.Config
 	configChan      chan *pkgconfig.Config
 	logger          *logger.Logger
@@ -59,7 +59,7 @@ func NewFileIngestor(loggers []dnsutils.Worker, config *pkgconfig.Config, logger
 		exit:          make(chan bool),
 		config:        config,
 		configChan:    make(chan *pkgconfig.Config),
-		loggers:       loggers,
+		defaultRoutes: loggers,
 		logger:        logger,
 		name:          name,
 		watcherTimers: make(map[string]*time.Timer),
@@ -70,18 +70,22 @@ func NewFileIngestor(loggers []dnsutils.Worker, config *pkgconfig.Config, logger
 
 func (c *FileIngestor) GetName() string { return c.name }
 
-func (c *FileIngestor) AddRoute(wrk dnsutils.Worker) {
-	c.loggers = append(c.loggers, wrk)
+func (c *FileIngestor) AddDroppedRoute(wrk dnsutils.Worker) {
+	// TODO
+}
+
+func (c *FileIngestor) AddDefaultRoute(wrk dnsutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
 func (c *FileIngestor) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+	c.defaultRoutes = loggers
 }
 
 func (c *FileIngestor) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
-	for _, p := range c.loggers {
+	for _, p := range c.defaultRoutes {
 		channels = append(channels, p.Channel())
 		names = append(names, p.GetName())
 	}

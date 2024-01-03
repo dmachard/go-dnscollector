@@ -437,7 +437,9 @@ type response struct {
 
 func (c *ScalyrClient) GetName() string { return c.name }
 
-func (c *ScalyrClient) AddRoute(wrk dnsutils.Worker) {}
+func (c *ScalyrClient) AddDroppedRoute(wrk dnsutils.Worker) {}
+
+func (c *ScalyrClient) AddDefaultRoute(wrk dnsutils.Worker) {}
 
 func (c *ScalyrClient) SetLoggers(loggers []dnsutils.Worker) {}
 

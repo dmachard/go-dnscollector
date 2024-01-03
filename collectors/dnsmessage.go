@@ -30,35 +30,36 @@ type MatchSource struct {
 }
 
 type DNSMessage struct {
-	doneRun      chan bool
-	doneMonitor  chan bool
-	stopRun      chan bool
-	stopMonitor  chan bool
-	loggers      []dnsutils.Worker
-	config       *pkgconfig.Config
-	configChan   chan *pkgconfig.Config
-	inputChan    chan dnsutils.DNSMessage
-	logger       *logger.Logger
-	name         string
-	droppedCount map[string]int
-	dropped      chan string
+	doneRun       chan bool
+	doneMonitor   chan bool
+	stopRun       chan bool
+	stopMonitor   chan bool
+	droppedRoutes []dnsutils.Worker
+	defaultRoutes []dnsutils.Worker
+	config        *pkgconfig.Config
+	configChan    chan *pkgconfig.Config
+	inputChan     chan dnsutils.DNSMessage
+	logger        *logger.Logger
+	name          string
+	droppedCount  map[string]int
+	dropped       chan string
 }
 
 func NewDNSMessage(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DNSMessage {
 	logger.Info("[%s] collector=dnsmessage - enabled", name)
 	s := &DNSMessage{
-		doneRun:      make(chan bool),
-		doneMonitor:  make(chan bool),
-		stopRun:      make(chan bool),
-		stopMonitor:  make(chan bool),
-		config:       config,
-		configChan:   make(chan *pkgconfig.Config),
-		inputChan:    make(chan dnsutils.DNSMessage, config.Collectors.DNSMessage.ChannelBufferSize),
-		loggers:      loggers,
-		logger:       logger,
-		name:         name,
-		dropped:      make(chan string),
-		droppedCount: map[string]int{},
+		doneRun:       make(chan bool),
+		doneMonitor:   make(chan bool),
+		stopRun:       make(chan bool),
+		stopMonitor:   make(chan bool),
+		config:        config,
+		configChan:    make(chan *pkgconfig.Config),
+		inputChan:     make(chan dnsutils.DNSMessage, config.Collectors.DNSMessage.ChannelBufferSize),
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
+		dropped:       make(chan string),
+		droppedCount:  map[string]int{},
 	}
 	s.ReadConfig()
 	return s
@@ -66,18 +67,36 @@ func NewDNSMessage(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *
 
 func (c *DNSMessage) GetName() string { return c.name }
 
-func (c *DNSMessage) AddRoute(wrk dnsutils.Worker) {
-	c.loggers = append(c.loggers, wrk)
+func (c *DNSMessage) AddDroppedRoute(wrk dnsutils.Worker) {
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
+}
+
+func (c *DNSMessage) AddDefaultRoute(wrk dnsutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
 func (c *DNSMessage) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+	c.defaultRoutes = loggers
 }
 
 func (c *DNSMessage) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
-	for _, p := range c.loggers {
+	for _, p := range c.defaultRoutes {
+		channels = append(channels, p.Channel())
+		names = append(names, p.GetName())
+	}
+	return channels, names
+}
+
+func (c *DNSMessage) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
+	return c.Loggers()
+}
+
+func (c *DNSMessage) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
+	channels := []chan dnsutils.DNSMessage{}
+	names := []string{}
+	for _, p := range c.droppedRoutes {
 		channels = append(channels, p.Channel())
 		names = append(names, p.GetName())
 	}
@@ -127,8 +146,6 @@ func (c *DNSMessage) ReadConfig() {
 			c.ReadConfigMatching(value)
 		}
 	}
-
-	// TODO check drop policy
 }
 
 func (c *DNSMessage) LoadData(matchSource string, srcKind string) (MatchSource, error) {
@@ -273,10 +290,11 @@ func (c *DNSMessage) Run() {
 	var err error
 
 	// prepare next channels
-	loggersChannel, loggersName := c.Loggers()
+	defaultRoutes, defaultNames := c.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.GetDroppedRoutes()
 
 	// prepare transforms
-	subprocessors := transformers.NewTransforms(&c.config.IngoingTransformers, c.logger, c.name, loggersChannel, 0)
+	subprocessors := transformers.NewTransforms(&c.config.IngoingTransformers, c.logger, c.name, defaultRoutes, 0)
 
 	// start goroutine to count dropped messsages
 	go c.MonitorCollector()
@@ -339,21 +357,23 @@ RUN_LOOP:
 			}
 
 			// drop packet ?
-			if c.config.Collectors.DNSMessage.DropPolicy != pkgconfig.PolicyDropDisabled {
-				if c.config.Collectors.DNSMessage.DropPolicy == pkgconfig.PolicyDropMatched && matched {
-					continue
+			if len(droppedRoutes) >= 0 && !matched {
+				for i := range droppedRoutes {
+					select {
+					case droppedRoutes[i] <- dm: // Successful send to logger channel
+					default:
+						c.dropped <- droppedNames[i]
+					}
 				}
-				if c.config.Collectors.DNSMessage.DropPolicy == pkgconfig.PolicyDropUnmatched && !matched {
-					continue
-				}
+				continue
 			}
 
 			// send to next
-			for i := range loggersChannel {
+			for i := range defaultRoutes {
 				select {
-				case loggersChannel[i] <- dm: // Successful send to logger channel
+				case defaultRoutes[i] <- dm: // Successful send to logger channel
 				default:
-					c.dropped <- loggersName[i]
+					c.dropped <- defaultNames[i]
 				}
 			}
 

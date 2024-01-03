@@ -149,27 +149,27 @@ func RemoveBpfFilter(fd int) (err error) {
 }
 
 type AfpacketSniffer struct {
-	done       chan bool
-	exit       chan bool
-	fd         int
-	identity   string
-	loggers    []dnsutils.Worker
-	config     *pkgconfig.Config
-	configChan chan *pkgconfig.Config
-	logger     *logger.Logger
-	name       string
+	done          chan bool
+	exit          chan bool
+	fd            int
+	identity      string
+	defaultRoutes []dnsutils.Worker
+	config        *pkgconfig.Config
+	configChan    chan *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
 }
 
 func NewAfpacketSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
 	logger.Info("[%s] collector=afpacket - enabled", name)
 	s := &AfpacketSniffer{
-		done:       make(chan bool),
-		exit:       make(chan bool),
-		config:     config,
-		configChan: make(chan *pkgconfig.Config),
-		loggers:    loggers,
-		logger:     logger,
-		name:       name,
+		done:          make(chan bool),
+		exit:          make(chan bool),
+		config:        config,
+		configChan:    make(chan *pkgconfig.Config),
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
@@ -185,18 +185,22 @@ func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
 
 func (c *AfpacketSniffer) GetName() string { return c.name }
 
-func (c *AfpacketSniffer) AddRoute(wrk dnsutils.Worker) {
-	c.loggers = append(c.loggers, wrk)
+func (c *AfpacketSniffer) AddDroppedRoute(wrk dnsutils.Worker) {
+	// TODO
+}
+
+func (c *AfpacketSniffer) AddDefaultRoute(wrk dnsutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
 func (c *AfpacketSniffer) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+	c.defaultRoutes = loggers
 }
 
 func (c *AfpacketSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
-	for _, p := range c.loggers {
+	for _, p := range c.defaultRoutes {
 		channels = append(channels, p.Channel())
 		names = append(names, p.GetName())
 	}

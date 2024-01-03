@@ -3,7 +3,8 @@ package dnsutils
 import "github.com/dmachard/go-dnscollector/pkgconfig"
 
 type Worker interface {
-	AddRoute(wrk Worker)
+	AddDefaultRoute(wrk Worker)
+	AddDroppedRoute(wrk Worker)
 	SetLoggers(loggers []Worker)
 	GetName() string
 	Stop()

@@ -112,7 +112,9 @@ func NewLokiClient(config *pkgconfig.Config, logger *logger.Logger, name string)
 
 func (c *LokiClient) GetName() string { return c.name }
 
-func (c *LokiClient) AddRoute(wrk dnsutils.Worker) {}
+func (c *LokiClient) AddDroppedRoute(wrk dnsutils.Worker) {}
+
+func (c *LokiClient) AddDefaultRoute(wrk dnsutils.Worker) {}
 
 func (c *LokiClient) SetLoggers(loggers []dnsutils.Worker) {}
 

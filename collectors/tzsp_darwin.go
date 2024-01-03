@@ -10,12 +10,12 @@ import (
 )
 
 type TZSPSniffer struct {
-	done    chan bool
-	exit    chan bool
-	loggers []dnsutils.Worker
-	config  *pkgconfig.Config
-	logger  *logger.Logger
-	name    string
+	done          chan bool
+	exit          chan bool
+	defaultRoutes []dnsutils.Worker
+	config        *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
 }
 
 // workaround for macos, not yet supported
@@ -25,7 +25,7 @@ func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger
 		done:    make(chan bool),
 		exit:    make(chan bool),
 		config:  config,
-		loggers: loggers,
+		loggers: defaultRoutes,
 		logger:  logger,
 		name:    name,
 	}
@@ -35,12 +35,16 @@ func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger
 
 func (c *TZSPSniffer) GetName() string { return c.name }
 
-func (c *TZSPSniffer) AddRoute(wrk dnsutils.Worker) {
-	c.loggers = append(c.loggers, wrk)
+func (c *TZSPSniffer) AddDroppedRoute(wrk dnsutils.Worker) {
+	// TODO
+}
+
+func (c *TZSPSniffer) AddDefaultRoute(wrk dnsutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
 func (c *TZSPSniffer) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+	c.defaultRoutes = loggers
 }
 
 func (c *TZSPSniffer) LogInfo(msg string, v ...interface{}) {
@@ -53,7 +57,7 @@ func (c *TZSPSniffer) LogError(msg string, v ...interface{}) {
 
 func (c *TZSPSniffer) Loggers() []chan dnsutils.DNSMessage {
 	channels := []chan dnsutils.DNSMessage{}
-	for _, p := range c.loggers {
+	for _, p := range c.defaultRoutes {
 		channels = append(channels, p.Channel())
 	}
 	return channels

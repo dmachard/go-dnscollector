@@ -45,10 +45,6 @@ const (
 	CompressLz4    = "lz4"
 	CompressZstd   = "ztd"
 	CompressNone   = "none"
-
-	PolicyDropUnmatched = "unmatched"
-	PolicyDropMatched   = "matched"
-	PolicyDropDisabled  = "disabled"
 )
 
 var (

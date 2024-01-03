@@ -22,25 +22,25 @@ import (
 )
 
 type TZSPSniffer struct {
-	done     chan bool
-	exit     chan bool
-	listen   net.UDPConn
-	loggers  []dnsutils.Worker
-	config   *pkgconfig.Config
-	logger   *logger.Logger
-	name     string
-	identity string
+	done          chan bool
+	exit          chan bool
+	listen        net.UDPConn
+	defaultRoutes []dnsutils.Worker
+	config        *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
+	identity      string
 }
 
 func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
 	logger.Info("[%s] collector=tzsp - enabled", name)
 	s := &TZSPSniffer{
-		done:    make(chan bool),
-		exit:    make(chan bool),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+		done:          make(chan bool),
+		exit:          make(chan bool),
+		config:        config,
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
@@ -48,18 +48,22 @@ func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger
 
 func (c *TZSPSniffer) GetName() string { return c.name }
 
-func (c *TZSPSniffer) AddRoute(wrk dnsutils.Worker) {
-	c.loggers = append(c.loggers, wrk)
+func (c *TZSPSniffer) AddDroppedRoute(wrk dnsutils.Worker) {
+	// TODO
+}
+
+func (c *TZSPSniffer) AddDefaultRoute(wrk dnsutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
 func (c *TZSPSniffer) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+	c.defaultRoutes = loggers
 }
 
 func (c *TZSPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
-	for _, p := range c.loggers {
+	for _, p := range c.defaultRoutes {
 		channels = append(channels, p.Channel())
 		names = append(names, p.GetName())
 	}

@@ -28,7 +28,7 @@ type ProtobufPowerDNS struct {
 	listen         net.Listener
 	connID         int
 	conns          []net.Conn
-	loggers        []dnsutils.Worker
+	defaultRoutes  []dnsutils.Worker
 	config         *pkgconfig.Config
 	configChan     chan *pkgconfig.Config
 	logger         *logger.Logger
@@ -42,17 +42,17 @@ type ProtobufPowerDNS struct {
 func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *ProtobufPowerDNS {
 	logger.Info("[%s] pdns collector - enabled", name)
 	s := &ProtobufPowerDNS{
-		doneRun:     make(chan bool),
-		doneMonitor: make(chan bool),
-		stopRun:     make(chan bool),
-		stopMonitor: make(chan bool),
-		cleanup:     make(chan bool),
-		dropped:     make(chan int),
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		loggers:     loggers,
-		logger:      logger,
-		name:        name,
+		doneRun:       make(chan bool),
+		doneMonitor:   make(chan bool),
+		stopRun:       make(chan bool),
+		stopMonitor:   make(chan bool),
+		cleanup:       make(chan bool),
+		dropped:       make(chan int),
+		config:        config,
+		configChan:    make(chan *pkgconfig.Config),
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
@@ -60,18 +60,22 @@ func NewProtobufPowerDNS(loggers []dnsutils.Worker, config *pkgconfig.Config, lo
 
 func (c *ProtobufPowerDNS) GetName() string { return c.name }
 
-func (c *ProtobufPowerDNS) AddRoute(wrk dnsutils.Worker) {
-	c.loggers = append(c.loggers, wrk)
+func (c *ProtobufPowerDNS) AddDroppedRoute(wrk dnsutils.Worker) {
+	// TODO
+}
+
+func (c *ProtobufPowerDNS) AddDefaultRoute(wrk dnsutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
 func (c *ProtobufPowerDNS) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+	c.defaultRoutes = loggers
 }
 
 func (c *ProtobufPowerDNS) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
-	for _, p := range c.loggers {
+	for _, p := range c.defaultRoutes {
 		channels = append(channels, p.Channel())
 		names = append(names, p.GetName())
 	}

@@ -22,7 +22,9 @@ func NewFakeLogger() *FakeLogger {
 
 func (c *FakeLogger) GetName() string { return c.name }
 
-func (c *FakeLogger) AddRoute(wrk dnsutils.Worker) {}
+func (c *FakeLogger) AddDefaultRoute(wrk dnsutils.Worker) {}
+
+func (c *FakeLogger) AddDroppedRoute(wrk dnsutils.Worker) {}
 
 func (c *FakeLogger) SetLoggers(loggers []dnsutils.Worker) {}
 

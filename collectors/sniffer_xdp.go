@@ -42,26 +42,26 @@ func ConvertIP6(ip [4]uint32) net.IP {
 }
 
 type XDPSniffer struct {
-	done       chan bool
-	exit       chan bool
-	identity   string
-	loggers    []dnsutils.Worker
-	config     *pkgconfig.Config
-	configChan chan *pkgconfig.Config
-	logger     *logger.Logger
-	name       string
+	done          chan bool
+	exit          chan bool
+	identity      string
+	defaultRoutes []dnsutils.Worker
+	config        *pkgconfig.Config
+	configChan    chan *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
 }
 
 func NewXDPSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
 	logger.Info("[%s] collector=xdp - enabled", name)
 	s := &XDPSniffer{
-		done:       make(chan bool),
-		exit:       make(chan bool),
-		config:     config,
-		configChan: make(chan *pkgconfig.Config),
-		loggers:    loggers,
-		logger:     logger,
-		name:       name,
+		done:          make(chan bool),
+		exit:          make(chan bool),
+		config:        config,
+		configChan:    make(chan *pkgconfig.Config),
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
@@ -77,18 +77,22 @@ func (c *XDPSniffer) LogError(msg string, v ...interface{}) {
 
 func (c *XDPSniffer) GetName() string { return c.name }
 
-func (c *XDPSniffer) AddRoute(wrk dnsutils.Worker) {
-	c.loggers = append(c.loggers, wrk)
+func (c *XDPSniffer) AddDroppedRoute(wrk dnsutils.Worker) {
+	// TODO
+}
+
+func (c *XDPSniffer) AddDefaultRoute(wrk dnsutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
 func (c *XDPSniffer) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+	c.defaultRoutes = loggers
 }
 
 func (c *XDPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
-	for _, p := range c.loggers {
+	for _, p := range c.defaultRoutes {
 		channels = append(channels, p.Channel())
 		names = append(names, p.GetName())
 	}

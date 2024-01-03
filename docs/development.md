@@ -311,7 +311,7 @@ func NewNewCollector(loggers []dnsutils.Worker, config *pkgconfig.Config, logger
 
 func (c *MyNewCollector) GetName() string { return c.name }
 
-func (c *MyNewCollector) AddRoute(wrk dnsutils.Worker) {
+func (c *MyNewCollector) AddDefaultRoute(wrk dnsutils.Worker) {
     c.loggers = append(c.loggers, wrk)
 }
 

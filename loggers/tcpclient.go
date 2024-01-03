@@ -66,7 +66,9 @@ func NewTCPClient(config *pkgconfig.Config, logger *logger.Logger, name string) 
 
 func (c *TCPClient) GetName() string { return c.name }
 
-func (c *TCPClient) AddRoute(wrk dnsutils.Worker) {}
+func (c *TCPClient) AddDroppedRoute(wrk dnsutils.Worker) {}
+
+func (c *TCPClient) AddDefaultRoute(wrk dnsutils.Worker) {}
 
 func (c *TCPClient) SetLoggers(loggers []dnsutils.Worker) {}
 

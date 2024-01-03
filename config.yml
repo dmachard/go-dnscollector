@@ -88,26 +88,28 @@ pipelines:
     dnstap:
       listen-ip: 0.0.0.0
       listen-port: 6000
-    routes: [ goog ]
+    routing-policy:
+      default: [ goog ]
 
   - name: goog
     dnsmessage:
       matching:
         include:
           dns.qname: "^.*\\.google\\.com$"
-      drop-policy: "unmatched" # unmatched, matched or disabled
     transforms:
       atags:
-        tags: [ "google", "web" ]
-    routes: [ match-tag ]
+        tags: [ "google" ]
+    routing-policy:
+      dropped: [ outputfile ]
+      default: [ match-tag ]
 
   - name: match-tag
     dnsmessage:
       matching:
         include:
           atags.tags.*: google
-      drop-policy: "unmatched"
-    routes: [ outputfile, console ]
+    routing-policy:
+      default: [ console ]
 
   - name: outputfile
     logfile:

@@ -812,7 +812,9 @@ func NewPrometheus(config *pkgconfig.Config, logger *logger.Logger, name string)
 
 func (c *Prometheus) GetName() string { return c.name }
 
-func (c *Prometheus) AddRoute(wrk dnsutils.Worker) {}
+func (c *Prometheus) AddDroppedRoute(wrk dnsutils.Worker) {}
+
+func (c *Prometheus) AddDefaultRoute(wrk dnsutils.Worker) {}
 
 func (c *Prometheus) SetLoggers(loggers []dnsutils.Worker) {}
 

@@ -10,24 +10,24 @@ import (
 )
 
 type AfpacketSniffer struct {
-	done    chan bool
-	exit    chan bool
-	loggers []dnsutils.Worker
-	config  *pkgconfig.Config
-	logger  *logger.Logger
-	name    string
+	done          chan bool
+	exit          chan bool
+	defaultRoutes []dnsutils.Worker
+	config        *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
 }
 
 // workaround for freebsd, not yet supported
 func NewAfpacketSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
 	logger.Info("[%s] AFPACKET sniffer - enabled", name)
 	s := &AfpacketSniffer{
-		done:    make(chan bool),
-		exit:    make(chan bool),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+		done:          make(chan bool),
+		exit:          make(chan bool),
+		config:        config,
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
@@ -35,12 +35,16 @@ func NewAfpacketSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, log
 
 func (c *AfpacketSniffer) GetName() string { return c.name }
 
-func (c *AfpacketSniffer) AddRoute(wrk dnsutils.Worker) {
-	c.loggers = append(c.loggers, wrk)
+func (c *AfpacketSniffer) AddDroppedRoute(wrk dnsutils.Worker) {
+	// TODO
+}
+
+func (c *AfpacketSniffer) AddDefaultRoute(wrk dnsutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
 func (c *AfpacketSniffer) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+	c.defaultRoutes = loggers
 }
 
 func (c *AfpacketSniffer) LogInfo(msg string, v ...interface{}) {

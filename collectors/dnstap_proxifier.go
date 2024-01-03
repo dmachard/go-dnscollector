@@ -16,29 +16,29 @@ import (
 )
 
 type DnstapProxifier struct {
-	doneRun    chan bool
-	stopRun    chan bool
-	listen     net.Listener
-	conns      []net.Conn
-	sockPath   string
-	loggers    []dnsutils.Worker
-	config     *pkgconfig.Config
-	configChan chan *pkgconfig.Config
-	logger     *logger.Logger
-	name       string
-	stopping   bool
+	doneRun       chan bool
+	stopRun       chan bool
+	listen        net.Listener
+	conns         []net.Conn
+	sockPath      string
+	defaultRoutes []dnsutils.Worker
+	config        *pkgconfig.Config
+	configChan    chan *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
+	stopping      bool
 }
 
 func NewDnstapProxifier(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
 	logger.Info("[%s] collector=dnstaprelay - enabled", name)
 	s := &DnstapProxifier{
-		doneRun:    make(chan bool),
-		stopRun:    make(chan bool),
-		config:     config,
-		configChan: make(chan *pkgconfig.Config),
-		loggers:    loggers,
-		logger:     logger,
-		name:       name,
+		doneRun:       make(chan bool),
+		stopRun:       make(chan bool),
+		config:        config,
+		configChan:    make(chan *pkgconfig.Config),
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
@@ -46,17 +46,21 @@ func NewDnstapProxifier(loggers []dnsutils.Worker, config *pkgconfig.Config, log
 
 func (c *DnstapProxifier) GetName() string { return c.name }
 
-func (c *DnstapProxifier) AddRoute(wrk dnsutils.Worker) {
-	c.loggers = append(c.loggers, wrk)
+func (c *DnstapProxifier) AddDroppedRoute(wrk dnsutils.Worker) {
+	// TODO
+}
+
+func (c *DnstapProxifier) AddDefaultRoute(wrk dnsutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
 func (c *DnstapProxifier) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+	c.defaultRoutes = loggers
 }
 
 func (c *DnstapProxifier) Loggers() []chan dnsutils.DNSMessage {
 	channels := []chan dnsutils.DNSMessage{}
-	for _, p := range c.loggers {
+	for _, p := range c.defaultRoutes {
 		channels = append(channels, p.Channel())
 	}
 	return channels
