@@ -4,6 +4,7 @@ const (
 	ProtoDoT = "DOT"
 	ProtoDoH = "DOH"
 
+	DNSRcodeNoError  = "NOERROR"
 	DNSRcodeNXDomain = "NXDOMAIN"
 	DNSRcodeServFail = "SERVFAIL"
 	DNSRcodeTimeout  = "TIMEOUT"
