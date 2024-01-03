@@ -25,7 +25,7 @@ func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger
 		done:          make(chan bool),
 		exit:          make(chan bool),
 		config:        config,
-		defaultRoutes: defaultRoutes,
+		defaultRoutes: loggers,
 		logger:        logger,
 		name:          name,
 	}
