@@ -22,12 +22,12 @@ type TZSPSniffer struct {
 func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
 	logger.Info("[%s] tzsp collector - enabled", name)
 	s := &AfpacketSniffer{
-		done:    make(chan bool),
-		exit:    make(chan bool),
-		config:  config,
-		loggers: defaultRoutes,
-		logger:  logger,
-		name:    name,
+		done:          make(chan bool),
+		exit:          make(chan bool),
+		config:        config,
+		defaultRoutes: defaultRoutes,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
