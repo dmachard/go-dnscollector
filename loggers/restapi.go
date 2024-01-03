@@ -11,6 +11,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/dmachard/go-topmap"
@@ -113,11 +114,11 @@ func NewRestAPI(config *pkgconfig.Config, logger *logger.Logger, name string) *R
 
 func (c *RestAPI) GetName() string { return c.name }
 
-func (c *RestAPI) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (c *RestAPI) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (c *RestAPI) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (c *RestAPI) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (c *RestAPI) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *RestAPI) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *RestAPI) ReadConfig() {
 	if !pkgconfig.IsValidTLS(c.config.Loggers.RestAPI.TLSMinVersion) {
@@ -138,7 +139,7 @@ func (c *RestAPI) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=restapi - "+msg, v...)
 }
 
-func (c *RestAPI) Channel() chan dnsutils.DNSMessage {
+func (c *RestAPI) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -58,11 +59,11 @@ func NewDnstapSender(config *pkgconfig.Config, logger *logger.Logger, name strin
 
 func (c *DnstapSender) GetName() string { return c.name }
 
-func (c *DnstapSender) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (c *DnstapSender) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (c *DnstapSender) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (c *DnstapSender) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (c *DnstapSender) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *DnstapSender) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *DnstapSender) ReadConfig() {
 	c.transport = c.config.Loggers.DNSTap.Transport
@@ -99,7 +100,7 @@ func (c *DnstapSender) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=dnstap - "+msg, v...)
 }
 
-func (c *DnstapSender) Channel() chan dnsutils.DNSMessage {
+func (c *DnstapSender) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 

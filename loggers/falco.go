@@ -8,6 +8,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -46,11 +47,11 @@ func NewFalcoClient(config *pkgconfig.Config, console *logger.Logger, name strin
 
 func (f *FalcoClient) GetName() string { return f.name }
 
-func (f *FalcoClient) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (f *FalcoClient) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (f *FalcoClient) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (f *FalcoClient) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (f *FalcoClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (f *FalcoClient) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (f *FalcoClient) ReadConfig() {
 	f.url = f.config.Loggers.FalcoClient.URL
@@ -61,7 +62,7 @@ func (f *FalcoClient) ReloadConfig(config *pkgconfig.Config) {
 	f.configChan <- config
 }
 
-func (f *FalcoClient) Channel() chan dnsutils.DNSMessage {
+func (f *FalcoClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return f.inputChan
 }
 

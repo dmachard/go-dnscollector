@@ -18,6 +18,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -437,12 +438,12 @@ type response struct {
 
 func (c *ScalyrClient) GetName() string { return c.name }
 
-func (c *ScalyrClient) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (c *ScalyrClient) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (c *ScalyrClient) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (c *ScalyrClient) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (c *ScalyrClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *ScalyrClient) SetLoggers(loggers []pkgutils.Worker) {}
 
-func (c *ScalyrClient) Channel() chan dnsutils.DNSMessage {
+func (c *ScalyrClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }

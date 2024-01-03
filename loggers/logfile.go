@@ -18,6 +18,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
@@ -94,13 +95,13 @@ func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *L
 
 func (l *LogFile) GetName() string { return l.name }
 
-func (l *LogFile) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (l *LogFile) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (l *LogFile) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (l *LogFile) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (l *LogFile) SetLoggers(loggers []dnsutils.Worker) {}
+func (l *LogFile) SetLoggers(loggers []pkgutils.Worker) {}
 
-func (l *LogFile) Channel() chan dnsutils.DNSMessage {
+func (l *LogFile) GetInputChannel() chan dnsutils.DNSMessage {
 	return l.inputChan
 }
 

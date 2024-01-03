@@ -15,6 +15,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -67,11 +68,11 @@ func NewRedisPub(config *pkgconfig.Config, logger *logger.Logger, name string) *
 
 func (c *RedisPub) GetName() string { return c.name }
 
-func (c *RedisPub) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (c *RedisPub) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (c *RedisPub) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (c *RedisPub) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (c *RedisPub) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *RedisPub) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *RedisPub) ReadConfig() {
 
@@ -106,7 +107,7 @@ func (c *RedisPub) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=redispub - "+msg, v...)
 }
 
-func (c *RedisPub) Channel() chan dnsutils.DNSMessage {
+func (c *RedisPub) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 

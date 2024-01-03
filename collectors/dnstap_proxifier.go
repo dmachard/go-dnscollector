@@ -11,6 +11,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 )
@@ -21,7 +22,7 @@ type DnstapProxifier struct {
 	listen        net.Listener
 	conns         []net.Conn
 	sockPath      string
-	defaultRoutes []dnsutils.Worker
+	defaultRoutes []pkgutils.Worker
 	config        *pkgconfig.Config
 	configChan    chan *pkgconfig.Config
 	logger        *logger.Logger
@@ -29,7 +30,7 @@ type DnstapProxifier struct {
 	stopping      bool
 }
 
-func NewDnstapProxifier(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
+func NewDnstapProxifier(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
 	logger.Info("[%s] collector=dnstaprelay - enabled", name)
 	s := &DnstapProxifier{
 		doneRun:       make(chan bool),
@@ -46,22 +47,22 @@ func NewDnstapProxifier(loggers []dnsutils.Worker, config *pkgconfig.Config, log
 
 func (c *DnstapProxifier) GetName() string { return c.name }
 
-func (c *DnstapProxifier) AddDroppedRoute(wrk dnsutils.Worker) {
+func (c *DnstapProxifier) AddDroppedRoute(wrk pkgutils.Worker) {
 	// TODO
 }
 
-func (c *DnstapProxifier) AddDefaultRoute(wrk dnsutils.Worker) {
+func (c *DnstapProxifier) AddDefaultRoute(wrk pkgutils.Worker) {
 	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
-func (c *DnstapProxifier) SetLoggers(loggers []dnsutils.Worker) {
+func (c *DnstapProxifier) SetLoggers(loggers []pkgutils.Worker) {
 	c.defaultRoutes = loggers
 }
 
 func (c *DnstapProxifier) Loggers() []chan dnsutils.DNSMessage {
 	channels := []chan dnsutils.DNSMessage{}
 	for _, p := range c.defaultRoutes {
-		channels = append(channels, p.Channel())
+		channels = append(channels, p.GetInputChannel())
 	}
 	return channels
 }
@@ -138,7 +139,7 @@ func (c *DnstapProxifier) HandleConn(conn net.Conn) {
 	c.LogInfo("%s - connection closed\n", peer)
 }
 
-func (c *DnstapProxifier) Channel() chan dnsutils.DNSMessage {
+func (c *DnstapProxifier) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 

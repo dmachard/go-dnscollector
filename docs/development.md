@@ -193,7 +193,7 @@ func NewMyLogger(config *pkgconfig.Config, logger *logger.Logger, name string) *
 
 func (c *MyLogger) GetName() string { return c.name }
 
-func (c *MyLogger) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *MyLogger) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (o *MyLogger) ReadConfig() {}
 
@@ -216,7 +216,7 @@ func (o *MyLogger) Stop() {
  close(o.done)
 }
 
-func (o *MyLogger) Channel() chan dnsutils.DnsMessage {
+func (o *MyLogger) GetInputChannel() chan dnsutils.DnsMessage {
  return o.channel
 }
 
@@ -282,7 +282,7 @@ type MyNewCollector struct {
     doneMonitor  chan bool
     stopRun      chan bool
     stopMonitor  chan bool
-    loggers      []dnsutils.Worker
+    loggers      []pkgutils.Worker
     config       *pkgconfig.Config
     configChan   chan *pkgconfig.Config
     logger       *logger.Logger
@@ -291,7 +291,7 @@ type MyNewCollector struct {
     dropped      chan int
 }
 
-func NewNewCollector(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
+func NewNewCollector(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
     logger.Info("[%s] collector=mynewcollector - enabled", name)
     s := &MyNewCollector{
         doneRun:     make(chan bool),
@@ -311,11 +311,11 @@ func NewNewCollector(loggers []dnsutils.Worker, config *pkgconfig.Config, logger
 
 func (c *MyNewCollector) GetName() string { return c.name }
 
-func (c *MyNewCollector) AddDefaultRoute(wrk dnsutils.Worker) {
+func (c *MyNewCollector) AddDefaultRoute(wrk pkgutils.Worker) {
     c.loggers = append(c.loggers, wrk)
 }
 
-func (c *MyNewCollector) SetLoggers(loggers []dnsutils.Worker) {
+func (c *MyNewCollector) SetLoggers(loggers []pkgutils.Worker) {
     c.loggers = loggers
 }
 
@@ -323,7 +323,7 @@ func (c *MyNewCollector) Loggers() ([]chan dnsutils.DNSMessage, []string) {
     channels := []chan dnsutils.DNSMessage{}
     names := []string{}
     for _, p := range c.loggers {
-        channels = append(channels, p.Channel())
+        channels = append(channels,p.GetInputChannel())
         names = append(names, p.GetName())
     }
     return channels, names
@@ -344,7 +344,7 @@ func (c *MyNewCollector) LogError(msg string, v ...interface{}) {
     c.logger.Error("["+c.name+" collector=mynewcollector - "+msg, v...)
 }
 
-func (c *MyNewCollector) Channel() chan dnsutils.DNSMessage {
+func (c *MyNewCollector) GetInputChannel() chan dnsutils.DNSMessage {
     return nil
 }
 

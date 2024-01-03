@@ -1,12 +1,12 @@
-package main
+package routing
 
 import (
 	"fmt"
 
 	"github.com/dmachard/go-dnscollector/collectors"
-	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 	"gopkg.in/yaml.v2"
 )
@@ -81,7 +81,7 @@ func IsRouteExist(target string, config *pkgconfig.Config) (ret error) {
 	return fmt.Errorf("route=%s doest not exist", target)
 }
 
-func InitPipelines(mapLoggers map[string]dnsutils.Worker, mapCollectors map[string]dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
+func InitPipelines(mapLoggers map[string]pkgutils.Worker, mapCollectors map[string]pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
 	// check if the name of each stanza is uniq
 	for _, stanza := range config.Pipelines {
 		if err := StanzaNameIsUniq(stanza.Name, config); err != nil {
@@ -189,37 +189,35 @@ func InitPipelines(mapLoggers map[string]dnsutils.Worker, mapCollectors map[stri
 
 	// create routing
 	for _, stanza := range config.Pipelines {
-		if len(mapCollectors) > 0 {
-			if _, ok := mapCollectors[stanza.Name]; ok {
-				// default routing
-				for _, route := range stanza.RoutingPolicy.Default {
-					if _, ok := mapCollectors[route]; ok {
-						mapCollectors[stanza.Name].AddDefaultRoute(mapCollectors[route])
-						logger.Info("[pipeline] - default routing from stanza=%s to stanza=%s", stanza.Name, route)
-					} else if _, ok := mapLoggers[route]; ok {
-						mapCollectors[stanza.Name].AddDefaultRoute(mapLoggers[route])
-						logger.Info("[pipeline] - default routing from stanza=%s to stanza=%s", stanza.Name, route)
-					} else {
-						panic(fmt.Sprintf("[pipeline] - default routing error from stanza=%s to stanza=%s doest not exist", stanza.Name, route))
-					}
+		if _, ok := mapCollectors[stanza.Name]; ok {
+			// default routing
+			for _, route := range stanza.RoutingPolicy.Default {
+				if _, ok := mapCollectors[route]; ok {
+					mapCollectors[stanza.Name].AddDefaultRoute(mapCollectors[route])
+					logger.Info("[pipeline] - default routing from stanza=%s to stanza=%s", stanza.Name, route)
+				} else if _, ok := mapLoggers[route]; ok {
+					mapCollectors[stanza.Name].AddDefaultRoute(mapLoggers[route])
+					logger.Info("[pipeline] - default routing from stanza=%s to stanza=%s", stanza.Name, route)
+				} else {
+					panic(fmt.Sprintf("[pipeline] - default routing error from stanza=%s to stanza=%s doest not exist", stanza.Name, route))
 				}
-
-				// discarded routing
-				for _, route := range stanza.RoutingPolicy.Dropped {
-					if _, ok := mapCollectors[route]; ok {
-						mapCollectors[stanza.Name].AddDroppedRoute(mapCollectors[route])
-						logger.Info("[pipeline] - routing dropped messages from stanza=%s to stanza=%s", stanza.Name, route)
-					} else if _, ok := mapLoggers[route]; ok {
-						mapCollectors[stanza.Name].AddDroppedRoute(mapLoggers[route])
-						logger.Info("[pipeline] - routing dropped messages from stanza=%s to stanza=%s", stanza.Name, route)
-					} else {
-						panic(fmt.Sprintf("[pipeline] - routing error with dropped messages from stanza=%s to stanza=%s doest not exist", stanza.Name, route))
-					}
-				}
-
-			} else {
-				logger.Info("[pipeline] - stanza=%v doest not exist", stanza.Name)
 			}
+
+			// discarded routing
+			for _, route := range stanza.RoutingPolicy.Dropped {
+				if _, ok := mapCollectors[route]; ok {
+					mapCollectors[stanza.Name].AddDroppedRoute(mapCollectors[route])
+					logger.Info("[pipeline] - routing dropped messages from stanza=%s to stanza=%s", stanza.Name, route)
+				} else if _, ok := mapLoggers[route]; ok {
+					mapCollectors[stanza.Name].AddDroppedRoute(mapLoggers[route])
+					logger.Info("[pipeline] - routing dropped messages from stanza=%s to stanza=%s", stanza.Name, route)
+				} else {
+					panic(fmt.Sprintf("[pipeline] - routing error with dropped messages from stanza=%s to stanza=%s doest not exist", stanza.Name, route))
+				}
+			}
+
+		} else {
+			logger.Info("[pipeline] - stanza=%v doest not exist", stanza.Name)
 		}
 
 		// init logger

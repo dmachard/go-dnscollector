@@ -1,13 +1,13 @@
-package main
+package routing
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/collectors"
-	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 	"gopkg.in/yaml.v2"
 )
@@ -79,7 +79,7 @@ func GetItemConfig(section string, config *pkgconfig.Config, item pkgconfig.Mult
 	return subcfg
 }
 
-func InitMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[string]dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
+func InitMultiplexer(mapLoggers map[string]pkgutils.Worker, mapCollectors map[string]pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
 
 	// checking all routes before to continue
 	if err := AreRoutesValid(config); err != nil {
@@ -178,7 +178,7 @@ func InitMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[st
 	// here the multiplexer logic
 	// connect collectors between loggers
 	for _, route := range config.Multiplexer.Routes {
-		var logwrks []dnsutils.Worker
+		var logwrks []pkgutils.Worker
 		for _, dst := range route.Dst {
 			if _, ok := mapLoggers[dst]; ok {
 				logwrks = append(logwrks, mapLoggers[dst])
@@ -199,7 +199,7 @@ func InitMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[st
 	}
 }
 
-func ReloadMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[string]dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
+func ReloadMultiplexer(mapLoggers map[string]pkgutils.Worker, mapCollectors map[string]pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
 	for _, output := range config.Multiplexer.Loggers {
 		newcfg := GetItemConfig("loggers", config, output)
 		if _, ok := mapLoggers[output.Name]; ok {

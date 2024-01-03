@@ -14,6 +14,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	framestream "github.com/farsightsec/golang-framestream"
@@ -38,7 +39,7 @@ func IsValidMode(mode string) bool {
 type FileIngestor struct {
 	done            chan bool
 	exit            chan bool
-	defaultRoutes   []dnsutils.Worker
+	defaultRoutes   []pkgutils.Worker
 	config          *pkgconfig.Config
 	configChan      chan *pkgconfig.Config
 	logger          *logger.Logger
@@ -52,7 +53,7 @@ type FileIngestor struct {
 	mu              sync.Mutex
 }
 
-func NewFileIngestor(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
+func NewFileIngestor(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
 	logger.Info("[%s] collector=fileingestor - enabled", name)
 	s := &FileIngestor{
 		done:          make(chan bool),
@@ -70,15 +71,15 @@ func NewFileIngestor(loggers []dnsutils.Worker, config *pkgconfig.Config, logger
 
 func (c *FileIngestor) GetName() string { return c.name }
 
-func (c *FileIngestor) AddDroppedRoute(wrk dnsutils.Worker) {
+func (c *FileIngestor) AddDroppedRoute(wrk pkgutils.Worker) {
 	// TODO
 }
 
-func (c *FileIngestor) AddDefaultRoute(wrk dnsutils.Worker) {
+func (c *FileIngestor) AddDefaultRoute(wrk pkgutils.Worker) {
 	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
-func (c *FileIngestor) SetLoggers(loggers []dnsutils.Worker) {
+func (c *FileIngestor) SetLoggers(loggers []pkgutils.Worker) {
 	c.defaultRoutes = loggers
 }
 
@@ -86,7 +87,7 @@ func (c *FileIngestor) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
 	for _, p := range c.defaultRoutes {
-		channels = append(channels, p.Channel())
+		channels = append(channels, p.GetInputChannel())
 		names = append(names, p.GetName())
 	}
 	return channels, names
@@ -118,7 +119,7 @@ func (c *FileIngestor) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] collector=fileingestor - "+msg, v...)
 }
 
-func (c *FileIngestor) Channel() chan dnsutils.DNSMessage {
+func (c *FileIngestor) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 

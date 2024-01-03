@@ -6,6 +6,7 @@ package collectors
 import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/routing"
 	"github.com/dmachard/go-logger"
 )
 
@@ -13,13 +14,13 @@ type XDPSniffer struct {
 	done          chan bool
 	exit          chan bool
 	identity      string
-	defaultRoutes []dnsutils.Worker
+	defaultRoutes []pkgutils.Worker
 	config        *pkgconfig.Config
 	logger        *logger.Logger
 	name          string
 }
 
-func NewXDPSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
+func NewXDPSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
 	logger.Info("[%s] XDP collector enabled", name)
 	s := &XDPSniffer{
 		done:          make(chan bool),
@@ -43,22 +44,22 @@ func (c *XDPSniffer) LogError(msg string, v ...interface{}) {
 
 func (c *XDPSniffer) GetName() string { return c.name }
 
-func (c *XDPSniffer) AddDroppedRoute(wrk dnsutils.Worker) {
+func (c *XDPSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
 	// TODO
 }
 
-func (c *XDPSniffer) AddDefaultRoute(wrk dnsutils.Worker) {
+func (c *XDPSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
 	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
-func (c *XDPSniffer) SetLoggers(loggers []dnsutils.Worker) {
+func (c *XDPSniffer) SetLoggers(loggers []pkgutils.Worker) {
 	c.defaultRoutes = loggers
 }
 
 func (c *XDPSniffer) Loggers() []chan dnsutils.DNSMessage {
 	channels := []chan dnsutils.DNSMessage{}
 	for _, p := range c.defaultRoutes {
-		channels = append(channels, p.Channel())
+		channels = append(channels, p.GetInputChannel())
 	}
 	return channels
 }
@@ -67,7 +68,7 @@ func (c *XDPSniffer) ReadConfig() {}
 
 func (c *XDPSniffer) ReloadConfig(config *pkgconfig.Config) {}
 
-func (c *XDPSniffer) Channel() chan dnsutils.DNSMessage {
+func (c *XDPSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 

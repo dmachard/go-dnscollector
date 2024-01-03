@@ -1,6 +1,9 @@
-package dnsutils
+package pkgutils
 
-import "github.com/dmachard/go-dnscollector/pkgconfig"
+import (
+	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+)
 
 type Worker interface {
 	AddDefaultRoute(wrk Worker)
@@ -9,7 +12,7 @@ type Worker interface {
 	GetName() string
 	Stop()
 	Run()
-	Channel() chan DNSMessage
+	GetInputChannel() chan dnsutils.DNSMessage
 	ReadConfig()
 	ReloadConfig(config *pkgconfig.Config)
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/dmachard/go-topmap"
@@ -84,11 +85,11 @@ func NewStatsdClient(config *pkgconfig.Config, logger *logger.Logger, name strin
 
 func (c *StatsdClient) GetName() string { return c.name }
 
-func (c *StatsdClient) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (c *StatsdClient) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (c *StatsdClient) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (c *StatsdClient) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (c *StatsdClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *StatsdClient) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *StatsdClient) ReadConfig() {
 	if !pkgconfig.IsValidTLS(c.config.Loggers.Statsd.TLSMinVersion) {
@@ -109,7 +110,7 @@ func (c *StatsdClient) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=statsd - "+msg, v...)
 }
 
-func (c *StatsdClient) Channel() chan dnsutils.DNSMessage {
+func (c *StatsdClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 

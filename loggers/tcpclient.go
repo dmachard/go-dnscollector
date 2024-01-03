@@ -14,6 +14,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -66,11 +67,11 @@ func NewTCPClient(config *pkgconfig.Config, logger *logger.Logger, name string) 
 
 func (c *TCPClient) GetName() string { return c.name }
 
-func (c *TCPClient) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (c *TCPClient) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (c *TCPClient) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (c *TCPClient) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (c *TCPClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *TCPClient) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *TCPClient) ReadConfig() {
 	c.transport = c.config.Loggers.TCPClient.Transport
@@ -104,7 +105,7 @@ func (c *TCPClient) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=tcpclient - "+msg, v...)
 }
 
-func (c *TCPClient) Channel() chan dnsutils.DNSMessage {
+func (c *TCPClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 

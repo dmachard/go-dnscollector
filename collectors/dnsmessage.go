@@ -12,6 +12,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -34,8 +35,8 @@ type DNSMessage struct {
 	doneMonitor   chan bool
 	stopRun       chan bool
 	stopMonitor   chan bool
-	droppedRoutes []dnsutils.Worker
-	defaultRoutes []dnsutils.Worker
+	droppedRoutes []pkgutils.Worker
+	defaultRoutes []pkgutils.Worker
 	config        *pkgconfig.Config
 	configChan    chan *pkgconfig.Config
 	inputChan     chan dnsutils.DNSMessage
@@ -45,7 +46,7 @@ type DNSMessage struct {
 	dropped       chan string
 }
 
-func NewDNSMessage(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DNSMessage {
+func NewDNSMessage(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DNSMessage {
 	logger.Info("[%s] collector=dnsmessage - enabled", name)
 	s := &DNSMessage{
 		doneRun:       make(chan bool),
@@ -67,26 +68,20 @@ func NewDNSMessage(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *
 
 func (c *DNSMessage) GetName() string { return c.name }
 
-func (c *DNSMessage) AddDroppedRoute(wrk dnsutils.Worker) {
+func (c *DNSMessage) AddDroppedRoute(wrk pkgutils.Worker) {
 	c.droppedRoutes = append(c.droppedRoutes, wrk)
 }
 
-func (c *DNSMessage) AddDefaultRoute(wrk dnsutils.Worker) {
+func (c *DNSMessage) AddDefaultRoute(wrk pkgutils.Worker) {
 	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
-func (c *DNSMessage) SetLoggers(loggers []dnsutils.Worker) {
-	c.defaultRoutes = loggers
-}
+// deprecated function
+func (c *DNSMessage) SetLoggers(loggers []pkgutils.Worker) {}
 
+// deprecated function
 func (c *DNSMessage) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	channels := []chan dnsutils.DNSMessage{}
-	names := []string{}
-	for _, p := range c.defaultRoutes {
-		channels = append(channels, p.Channel())
-		names = append(names, p.GetName())
-	}
-	return channels, names
+	return nil, nil
 }
 
 func (c *DNSMessage) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
@@ -97,7 +92,7 @@ func (c *DNSMessage) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
 	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
 	for _, p := range c.droppedRoutes {
-		channels = append(channels, p.Channel())
+		channels = append(channels, p.GetInputChannel())
 		names = append(names, p.GetName())
 	}
 	return channels, names
@@ -131,6 +126,10 @@ func (c *DNSMessage) ReadConfigMatching(value interface{}) {
 			}
 		}
 	}
+}
+
+func (c *DNSMessage) GetInputChannel() chan dnsutils.DNSMessage {
+	return c.inputChan
 }
 
 func (c *DNSMessage) ReadConfig() {
@@ -235,10 +234,6 @@ func (c *DNSMessage) LogInfo(msg string, v ...interface{}) {
 
 func (c *DNSMessage) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] collector=dnsmessage - "+msg, v...)
-}
-
-func (c *DNSMessage) Channel() chan dnsutils.DNSMessage {
-	return c.inputChan
 }
 
 func (c *DNSMessage) Stop() {

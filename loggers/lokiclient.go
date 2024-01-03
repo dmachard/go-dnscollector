@@ -15,6 +15,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/gogo/protobuf/proto"
@@ -112,11 +113,11 @@ func NewLokiClient(config *pkgconfig.Config, logger *logger.Logger, name string)
 
 func (c *LokiClient) GetName() string { return c.name }
 
-func (c *LokiClient) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (c *LokiClient) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (c *LokiClient) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (c *LokiClient) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (c *LokiClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *LokiClient) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *LokiClient) ReadConfig() {
 	if len(c.config.Loggers.LokiClient.TextFormat) > 0 {
@@ -180,7 +181,7 @@ func (c *LokiClient) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=loki - "+msg, v...)
 }
 
-func (c *LokiClient) Channel() chan dnsutils.DNSMessage {
+func (c *LokiClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 

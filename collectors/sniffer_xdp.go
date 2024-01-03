@@ -16,6 +16,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-dnscollector/xdp"
 	"github.com/dmachard/go-logger"
@@ -45,14 +46,14 @@ type XDPSniffer struct {
 	done          chan bool
 	exit          chan bool
 	identity      string
-	defaultRoutes []dnsutils.Worker
+	defaultRoutes []pkgutils.Worker
 	config        *pkgconfig.Config
 	configChan    chan *pkgconfig.Config
 	logger        *logger.Logger
 	name          string
 }
 
-func NewXDPSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
+func NewXDPSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
 	logger.Info("[%s] collector=xdp - enabled", name)
 	s := &XDPSniffer{
 		done:          make(chan bool),
@@ -77,15 +78,15 @@ func (c *XDPSniffer) LogError(msg string, v ...interface{}) {
 
 func (c *XDPSniffer) GetName() string { return c.name }
 
-func (c *XDPSniffer) AddDroppedRoute(wrk dnsutils.Worker) {
+func (c *XDPSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
 	// TODO
 }
 
-func (c *XDPSniffer) AddDefaultRoute(wrk dnsutils.Worker) {
+func (c *XDPSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
 	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
-func (c *XDPSniffer) SetLoggers(loggers []dnsutils.Worker) {
+func (c *XDPSniffer) SetLoggers(loggers []pkgutils.Worker) {
 	c.defaultRoutes = loggers
 }
 
@@ -93,7 +94,7 @@ func (c *XDPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
 	for _, p := range c.defaultRoutes {
-		channels = append(channels, p.Channel())
+		channels = append(channels, p.GetInputChannel())
 		names = append(names, p.GetName())
 	}
 	return channels, names
@@ -108,7 +109,7 @@ func (c *XDPSniffer) ReloadConfig(config *pkgconfig.Config) {
 	c.configChan <- config
 }
 
-func (c *XDPSniffer) Channel() chan dnsutils.DNSMessage {
+func (c *XDPSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 

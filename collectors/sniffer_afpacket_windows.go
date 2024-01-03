@@ -6,20 +6,21 @@ package collectors
 import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/routing"
 	"github.com/dmachard/go-logger"
 )
 
 type AfpacketSniffer struct {
 	done          chan bool
 	exit          chan bool
-	defaultRoutes []dnsutils.Worker
+	defaultRoutes []pkgutils.Worker
 	config        *pkgconfig.Config
 	logger        *logger.Logger
 	name          string
 }
 
 // workaround for macos, not yet supported
-func NewAfpacketSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
+func NewAfpacketSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
 	logger.Info("[%s] AFPACKET sniffer - enabled", name)
 	s := &AfpacketSniffer{
 		done:          make(chan bool),
@@ -35,15 +36,15 @@ func NewAfpacketSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, log
 
 func (c *AfpacketSniffer) GetName() string { return c.name }
 
-func (c *AfpacketSniffer) AddDroppedRoute(wrk dnsutils.Worker) {
+func (c *AfpacketSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
 	// TODO
 }
 
-func (c *AfpacketSniffer) AddDefaultRoute(wrk dnsutils.Worker) {
+func (c *AfpacketSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
 	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
-func (c *AfpacketSniffer) SetLoggers(loggers []dnsutils.Worker) {
+func (c *AfpacketSniffer) SetLoggers(loggers []pkgutils.Worker) {
 	c.defaultRoutes = loggers
 }
 
@@ -58,7 +59,7 @@ func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
 func (c *AfpacketSniffer) Loggers() []chan dnsutils.DNSMessage {
 	channels := []chan dnsutils.DNSMessage{}
 	for _, p := range c.defaultRoutes {
-		channels = append(channels, p.Channel())
+		channels = append(channels, p.GetInputChannel())
 	}
 	return channels
 }
@@ -67,7 +68,7 @@ func (c *AfpacketSniffer) ReadConfig() {}
 
 func (c *AfpacketSniffer) ReloadConfig(config *pkgconfig.Config) {}
 
-func (c *AfpacketSniffer) Channel() chan dnsutils.DNSMessage {
+func (c *AfpacketSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 

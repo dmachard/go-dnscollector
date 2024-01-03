@@ -11,6 +11,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/vmihailenco/msgpack"
@@ -62,11 +63,11 @@ func NewFluentdClient(config *pkgconfig.Config, logger *logger.Logger, name stri
 
 func (c *FluentdClient) GetName() string { return c.name }
 
-func (c *FluentdClient) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (c *FluentdClient) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (c *FluentdClient) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (c *FluentdClient) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (c *FluentdClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *FluentdClient) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *FluentdClient) ReadConfig() {
 	c.transport = c.config.Loggers.Fluentd.Transport
@@ -94,7 +95,7 @@ func (c *FluentdClient) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=fluentd - "+msg, v...)
 }
 
-func (c *FluentdClient) Channel() chan dnsutils.DNSMessage {
+func (c *FluentdClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 

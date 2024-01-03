@@ -11,6 +11,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
@@ -67,11 +68,11 @@ func NewStdOut(config *pkgconfig.Config, console *logger.Logger, name string) *S
 
 func (c *StdOut) GetName() string { return c.name }
 
-func (c *StdOut) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (c *StdOut) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (c *StdOut) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (c *StdOut) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (c *StdOut) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *StdOut) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *StdOut) ReadConfig() {
 	if !IsStdoutValidMode(c.config.Loggers.Stdout.Mode) {
@@ -112,7 +113,7 @@ func (c *StdOut) SetPcapWriter(w io.Writer) {
 	}
 }
 
-func (c *StdOut) Channel() chan dnsutils.DNSMessage {
+func (c *StdOut) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 

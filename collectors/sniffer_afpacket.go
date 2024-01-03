@@ -15,6 +15,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
@@ -153,14 +154,14 @@ type AfpacketSniffer struct {
 	exit          chan bool
 	fd            int
 	identity      string
-	defaultRoutes []dnsutils.Worker
+	defaultRoutes []pkgutils.Worker
 	config        *pkgconfig.Config
 	configChan    chan *pkgconfig.Config
 	logger        *logger.Logger
 	name          string
 }
 
-func NewAfpacketSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
+func NewAfpacketSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
 	logger.Info("[%s] collector=afpacket - enabled", name)
 	s := &AfpacketSniffer{
 		done:          make(chan bool),
@@ -185,15 +186,15 @@ func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
 
 func (c *AfpacketSniffer) GetName() string { return c.name }
 
-func (c *AfpacketSniffer) AddDroppedRoute(wrk dnsutils.Worker) {
+func (c *AfpacketSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
 	// TODO
 }
 
-func (c *AfpacketSniffer) AddDefaultRoute(wrk dnsutils.Worker) {
+func (c *AfpacketSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
 	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
-func (c *AfpacketSniffer) SetLoggers(loggers []dnsutils.Worker) {
+func (c *AfpacketSniffer) SetLoggers(loggers []pkgutils.Worker) {
 	c.defaultRoutes = loggers
 }
 
@@ -201,7 +202,7 @@ func (c *AfpacketSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
 	for _, p := range c.defaultRoutes {
-		channels = append(channels, p.Channel())
+		channels = append(channels, p.GetInputChannel())
 		names = append(names, p.GetName())
 	}
 	return channels, names
@@ -216,7 +217,7 @@ func (c *AfpacketSniffer) ReloadConfig(config *pkgconfig.Config) {
 	c.configChan <- config
 }
 
-func (c *AfpacketSniffer) Channel() chan dnsutils.DNSMessage {
+func (c *AfpacketSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 

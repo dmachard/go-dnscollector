@@ -5,6 +5,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 
@@ -50,11 +51,11 @@ func NewInfluxDBClient(config *pkgconfig.Config, logger *logger.Logger, name str
 
 func (i *InfluxDBClient) GetName() string { return i.name }
 
-func (i *InfluxDBClient) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (i *InfluxDBClient) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (i *InfluxDBClient) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (i *InfluxDBClient) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (i *InfluxDBClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (i *InfluxDBClient) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (i *InfluxDBClient) ReadConfig() {}
 
@@ -71,7 +72,7 @@ func (i *InfluxDBClient) LogError(msg string, v ...interface{}) {
 	i.logger.Error("["+i.name+"] logger=influxdb - "+msg, v...)
 }
 
-func (i *InfluxDBClient) Channel() chan dnsutils.DNSMessage {
+func (i *InfluxDBClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return i.inputChan
 }
 

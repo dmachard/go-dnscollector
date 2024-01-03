@@ -8,6 +8,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 
@@ -51,11 +52,11 @@ func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, na
 
 func (c *ElasticSearchClient) GetName() string { return c.name }
 
-func (c *ElasticSearchClient) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (c *ElasticSearchClient) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (c *ElasticSearchClient) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (c *ElasticSearchClient) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (c *ElasticSearchClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *ElasticSearchClient) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *ElasticSearchClient) ReadConfig() {
 	c.server = c.config.Loggers.ElasticSearchClient.Server
@@ -74,7 +75,7 @@ func (c *ElasticSearchClient) ReloadConfig(config *pkgconfig.Config) {
 	c.configChan <- config
 }
 
-func (c *ElasticSearchClient) Channel() chan dnsutils.DNSMessage {
+func (c *ElasticSearchClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 

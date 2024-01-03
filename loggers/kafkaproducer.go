@@ -11,6 +11,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/segmentio/kafka-go"
@@ -62,11 +63,11 @@ func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name stri
 
 func (k *KafkaProducer) GetName() string { return k.name }
 
-func (k *KafkaProducer) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (k *KafkaProducer) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (k *KafkaProducer) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (k *KafkaProducer) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (k *KafkaProducer) SetLoggers(loggers []dnsutils.Worker) {}
+func (k *KafkaProducer) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (k *KafkaProducer) ReadConfig() {
 	if len(k.config.Loggers.RedisPub.TextFormat) > 0 {
@@ -106,7 +107,7 @@ func (k *KafkaProducer) LogError(msg string, v ...interface{}) {
 	k.logger.Error("["+k.name+"] logger=kafka - "+msg, v...)
 }
 
-func (k *KafkaProducer) Channel() chan dnsutils.DNSMessage {
+func (k *KafkaProducer) GetInputChannel() chan dnsutils.DNSMessage {
 	return k.inputChan
 }
 

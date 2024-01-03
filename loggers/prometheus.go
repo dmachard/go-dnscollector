@@ -16,6 +16,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/dmachard/go-topmap"
@@ -812,11 +813,11 @@ func NewPrometheus(config *pkgconfig.Config, logger *logger.Logger, name string)
 
 func (c *Prometheus) GetName() string { return c.name }
 
-func (c *Prometheus) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (c *Prometheus) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (c *Prometheus) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (c *Prometheus) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (c *Prometheus) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *Prometheus) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *Prometheus) InitProm() {
 
@@ -1117,7 +1118,7 @@ func (c *Prometheus) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=prometheus - "+msg, v...)
 }
 
-func (c *Prometheus) Channel() chan dnsutils.DNSMessage {
+func (c *Prometheus) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 

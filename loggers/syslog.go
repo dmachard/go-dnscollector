@@ -14,6 +14,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -96,11 +97,11 @@ func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *S
 
 func (s *Syslog) GetName() string { return s.name }
 
-func (s *Syslog) AddDroppedRoute(wrk dnsutils.Worker) {}
+func (s *Syslog) AddDroppedRoute(wrk pkgutils.Worker) {}
 
-func (s *Syslog) AddDefaultRoute(wrk dnsutils.Worker) {}
+func (s *Syslog) AddDefaultRoute(wrk pkgutils.Worker) {}
 
-func (s *Syslog) SetLoggers(loggers []dnsutils.Worker) {}
+func (s *Syslog) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (s *Syslog) ReadConfig() {
 	if !pkgconfig.IsValidTLS(s.config.Loggers.Syslog.TLSMinVersion) {
@@ -134,7 +135,7 @@ func (s *Syslog) ReloadConfig(config *pkgconfig.Config) {
 	s.configChan <- config
 }
 
-func (s *Syslog) Channel() chan dnsutils.DNSMessage {
+func (s *Syslog) GetInputChannel() chan dnsutils.DNSMessage {
 	return s.inputChan
 }
 
