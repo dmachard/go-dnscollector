@@ -77,21 +77,10 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-    - name: prom
-      prometheus:
-        listen-ip: 0.0.0.0
-        listen-port: 8081
-        basic-auth-enable: false
-        prometheus-labels: ["stream_id"]
-        requesters-cache-size: 50000
-        requesters-cache-ttl: 3600
-        domains-cache-size: 50000
-        domains-cache-ttl: 3600
-        histogram-metrics-enabled: true
 
   routes:
     - from: [ tap ]
-      to: [ console, prom ]
+      to: [ console ]
 
 ################################################
 # list of supported collectors
