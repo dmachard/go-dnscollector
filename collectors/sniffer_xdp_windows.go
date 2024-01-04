@@ -56,7 +56,7 @@ func (c *XDPSniffer) SetLoggers(loggers []pkgutils.Worker) {
 	c.defaultRoutes = loggers
 }
 
-func (c *XDPSniffer) Loggers() []chan dnsutils.DNSMessage {
+func (c *XDPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	return pkgutils.GetActiveRoutes(c.defaultRoutes)
 }
 

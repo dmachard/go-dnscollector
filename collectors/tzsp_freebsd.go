@@ -56,7 +56,7 @@ func (c *TZSPSniffer) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] tzsp collector - "+msg, v...)
 }
 
-func (c *TZSPSniffer) Loggers() []chan dnsutils.DNSMessage {
+func (c *TZSPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	return pkgutils.GetActiveRoutes(c.defaultRoutes)
 }
 

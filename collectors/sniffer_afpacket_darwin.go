@@ -56,7 +56,7 @@ func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] collector dns sniffer - "+msg, v...)
 }
 
-func (c *AfpacketSniffer) Loggers() []chan dnsutils.DNSMessage {
+func (c *AfpacketSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	return pkgutils.GetActiveRoutes(c.defaultRoutes)
 }
 
