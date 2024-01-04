@@ -33,6 +33,10 @@ type DnstapSender struct {
 	transportReady     chan bool
 	transportReconnect chan bool
 	name               string
+	droppedCount       map[string]int
+	dropped            chan string
+	droppedRoutes      []pkgutils.Worker
+	defaultRoutes      []pkgutils.Worker
 }
 
 func NewDnstapSender(config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapSender {
@@ -59,9 +63,21 @@ func NewDnstapSender(config *pkgconfig.Config, logger *logger.Logger, name strin
 
 func (c *DnstapSender) GetName() string { return c.name }
 
-func (c *DnstapSender) AddDroppedRoute(wrk pkgutils.Worker) {}
+func (c *DnstapSender) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
+}
 
-func (c *DnstapSender) AddDefaultRoute(wrk pkgutils.Worker) {}
+func (c *DnstapSender) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *DnstapSender) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
+	return pkgutils.GetActiveRoutes(c.defaultRoutes)
+}
+
+func (c *DnstapSender) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
+	return pkgutils.GetActiveRoutes(c.droppedRoutes)
+}
 
 func (c *DnstapSender) SetLoggers(loggers []pkgutils.Worker) {}
 
@@ -233,6 +249,10 @@ func (c *DnstapSender) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 func (c *DnstapSender) Run() {
 	c.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := c.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, c.outputChan)
@@ -272,7 +292,23 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				for i := range droppedRoutes {
+					select {
+					case droppedRoutes[i] <- dm: // Successful send to logger channel
+					default:
+						c.dropped <- droppedNames[i]
+					}
+				}
 				continue
+			}
+
+			// send to next ?
+			for i := range defaultRoutes {
+				select {
+				case defaultRoutes[i] <- dm: // Successful send to logger channel
+				default:
+					c.dropped <- defaultNames[i]
+				}
 			}
 
 			// send to output channel
@@ -290,6 +326,9 @@ func (c *DnstapSender) Process() {
 	flushInterval := time.Duration(c.config.Loggers.DNSTap.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
+	nextStanzaBufferInterval := 10 * time.Second
+	nextStanzaBufferFull := time.NewTimer(nextStanzaBufferInterval)
+
 	c.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
@@ -301,7 +340,14 @@ PROCESS_LOOP:
 			c.doneProcess <- true
 			break PROCESS_LOOP
 
-			// init framestream
+		case stanzaName := <-c.dropped:
+			if _, ok := c.droppedCount[stanzaName]; !ok {
+				c.droppedCount[stanzaName] = 1
+			} else {
+				c.droppedCount[stanzaName]++
+			}
+
+		// init framestream
 		case <-c.transportReady:
 			c.LogInfo("transport connected with success")
 			// frame stream library
@@ -349,6 +395,15 @@ PROCESS_LOOP:
 
 			// restart timer
 			flushTimer.Reset(flushInterval)
+
+		case <-nextStanzaBufferFull.C:
+			for v, k := range c.droppedCount {
+				if k > 0 {
+					c.LogError("stanza[%s] buffer is full, %d packet(s) dropped", v, k)
+					c.droppedCount[v] = 0
+				}
+			}
+			nextStanzaBufferFull.Reset(nextStanzaBufferInterval)
 		}
 	}
 	c.LogInfo("processing terminated")

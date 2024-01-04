@@ -57,11 +57,7 @@ func (c *XDPSniffer) SetLoggers(loggers []pkgutils.Worker) {
 }
 
 func (c *XDPSniffer) Loggers() []chan dnsutils.DNSMessage {
-	channels := []chan dnsutils.DNSMessage{}
-	for _, p := range c.defaultRoutes {
-		channels = append(channels, p.GetInputChannel())
-	}
-	return channels
+	return pkgutils.GetActiveRoutes(c.defaultRoutes)
 }
 
 func (c *XDPSniffer) ReadConfig() {}

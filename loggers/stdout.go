@@ -32,19 +32,23 @@ func IsStdoutValidMode(mode string) bool {
 }
 
 type StdOut struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DNSMessage
-	outputChan  chan dnsutils.DNSMessage
-	textFormat  []string
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	logger      *logger.Logger
-	writerText  *log.Logger
-	writerPcap  *pcapgo.Writer
-	name        string
+	stopProcess   chan bool
+	doneProcess   chan bool
+	stopRun       chan bool
+	doneRun       chan bool
+	inputChan     chan dnsutils.DNSMessage
+	outputChan    chan dnsutils.DNSMessage
+	textFormat    []string
+	config        *pkgconfig.Config
+	configChan    chan *pkgconfig.Config
+	logger        *logger.Logger
+	writerText    *log.Logger
+	writerPcap    *pcapgo.Writer
+	name          string
+	droppedCount  map[string]int
+	dropped       chan string
+	droppedRoutes []pkgutils.Worker
+	defaultRoutes []pkgutils.Worker
 }
 
 func NewStdOut(config *pkgconfig.Config, console *logger.Logger, name string) *StdOut {
@@ -68,9 +72,21 @@ func NewStdOut(config *pkgconfig.Config, console *logger.Logger, name string) *S
 
 func (c *StdOut) GetName() string { return c.name }
 
-func (c *StdOut) AddDroppedRoute(wrk pkgutils.Worker) {}
+func (c *StdOut) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
+}
 
-func (c *StdOut) AddDefaultRoute(wrk pkgutils.Worker) {}
+func (c *StdOut) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *StdOut) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
+	return pkgutils.GetActiveRoutes(c.defaultRoutes)
+}
+
+func (c *StdOut) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
+	return pkgutils.GetActiveRoutes(c.droppedRoutes)
+}
 
 func (c *StdOut) SetLoggers(loggers []pkgutils.Worker) {}
 
@@ -130,6 +146,10 @@ func (c *StdOut) Stop() {
 func (c *StdOut) Run() {
 	c.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := c.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, c.outputChan)
@@ -166,7 +186,23 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				for i := range droppedRoutes {
+					select {
+					case droppedRoutes[i] <- dm: // Successful send to logger channel
+					default:
+						c.dropped <- droppedNames[i]
+					}
+				}
 				continue
+			}
+
+			// send to next ?
+			for i := range defaultRoutes {
+				select {
+				case defaultRoutes[i] <- dm: // Successful send to logger channel
+				default:
+					c.dropped <- defaultNames[i]
+				}
 			}
 
 			// send to output channel
@@ -181,6 +217,9 @@ func (c *StdOut) Process() {
 	// standard output buffer
 	buffer := new(bytes.Buffer)
 
+	nextStanzaBufferInterval := 10 * time.Second
+	nextStanzaBufferFull := time.NewTimer(nextStanzaBufferInterval)
+
 	if c.config.Loggers.Stdout.Mode == pkgconfig.ModePCAP && c.writerPcap == nil {
 		c.SetPcapWriter(os.Stdout)
 	}
@@ -192,6 +231,13 @@ PROCESS_LOOP:
 		case <-c.stopProcess:
 			c.doneProcess <- true
 			break PROCESS_LOOP
+
+		case stanzaName := <-c.dropped:
+			if _, ok := c.droppedCount[stanzaName]; !ok {
+				c.droppedCount[stanzaName] = 1
+			} else {
+				c.droppedCount[stanzaName]++
+			}
 
 		case dm, opened := <-c.outputChan:
 			if !opened {
@@ -249,6 +295,15 @@ PROCESS_LOOP:
 				c.writerText.Print(buffer.String())
 				buffer.Reset()
 			}
+
+		case <-nextStanzaBufferFull.C:
+			for v, k := range c.droppedCount {
+				if k > 0 {
+					c.LogError("stanza[%s] buffer is full, %d packet(s) dropped", v, k)
+					c.droppedCount[v] = 0
+				}
+			}
+			nextStanzaBufferFull.Reset(nextStanzaBufferInterval)
 		}
 	}
 	c.LogInfo("processing terminated")

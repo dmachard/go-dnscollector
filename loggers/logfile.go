@@ -67,21 +67,27 @@ type LogFile struct {
 	commpressTimer *time.Timer
 	textFormat     []string
 	name           string
+	droppedCount   map[string]int
+	dropped        chan string
+	droppedRoutes  []pkgutils.Worker
+	defaultRoutes  []pkgutils.Worker
 }
 
 func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *LogFile {
 	logger.Info("[%s] logger=file - enabled", name)
 	l := &LogFile{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.LogFile.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.LogFile.ChannelBufferSize),
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		logger:      logger,
-		name:        name,
+		stopProcess:  make(chan bool),
+		doneProcess:  make(chan bool),
+		stopRun:      make(chan bool),
+		doneRun:      make(chan bool),
+		inputChan:    make(chan dnsutils.DNSMessage, config.Loggers.LogFile.ChannelBufferSize),
+		outputChan:   make(chan dnsutils.DNSMessage, config.Loggers.LogFile.ChannelBufferSize),
+		config:       config,
+		configChan:   make(chan *pkgconfig.Config),
+		logger:       logger,
+		name:         name,
+		dropped:      make(chan string),
+		droppedCount: map[string]int{},
 	}
 
 	l.ReadConfig()
@@ -95,9 +101,21 @@ func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *L
 
 func (l *LogFile) GetName() string { return l.name }
 
-func (l *LogFile) AddDroppedRoute(wrk pkgutils.Worker) {}
+func (l *LogFile) AddDroppedRoute(wrk pkgutils.Worker) {
+	l.droppedRoutes = append(l.droppedRoutes, wrk)
+}
 
-func (l *LogFile) AddDefaultRoute(wrk pkgutils.Worker) {}
+func (l *LogFile) AddDefaultRoute(wrk pkgutils.Worker) {
+	l.defaultRoutes = append(l.defaultRoutes, wrk)
+}
+
+func (l *LogFile) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
+	return pkgutils.GetActiveRoutes(l.defaultRoutes)
+}
+
+func (l *LogFile) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
+	return pkgutils.GetActiveRoutes(l.droppedRoutes)
+}
 
 func (l *LogFile) SetLoggers(loggers []pkgutils.Worker) {}
 
@@ -461,6 +479,10 @@ func (l *LogFile) WriteToDnstap(data []byte) {
 func (l *LogFile) Run() {
 	l.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := l.GetDefaultRoutes()
+	droppedRoutes, droppedNames := l.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, l.outputChan)
@@ -496,7 +518,23 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				for i := range droppedRoutes {
+					select {
+					case droppedRoutes[i] <- dm: // Successful send to logger channel
+					default:
+						l.dropped <- droppedNames[i]
+					}
+				}
 				continue
+			}
+
+			// send to next ?
+			for i := range defaultRoutes {
+				select {
+				case defaultRoutes[i] <- dm: // Successful send to logger channel
+				default:
+					l.dropped <- defaultNames[i]
+				}
 			}
 
 			// send to output channel
@@ -511,6 +549,9 @@ func (l *LogFile) Process() {
 	flushInterval := time.Duration(l.config.Loggers.LogFile.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 	l.commpressTimer = time.NewTimer(time.Duration(l.config.Loggers.LogFile.CompressInterval) * time.Second)
+
+	nextStanzaBufferInterval := 10 * time.Second
+	nextStanzaBufferFull := time.NewTimer(nextStanzaBufferInterval)
 
 	buffer := new(bytes.Buffer)
 	var data []byte
@@ -537,6 +578,13 @@ PROCESS_LOOP:
 
 			l.doneProcess <- true
 			break PROCESS_LOOP
+
+		case loggerName := <-l.dropped:
+			if _, ok := l.droppedCount[loggerName]; !ok {
+				l.droppedCount[loggerName] = 1
+			} else {
+				l.droppedCount[loggerName]++
+			}
 
 		case dm, opened := <-l.outputChan:
 			if !opened {
@@ -606,6 +654,15 @@ PROCESS_LOOP:
 			if l.config.Loggers.LogFile.Compress {
 				l.CompressFile()
 			}
+
+		case <-nextStanzaBufferFull.C:
+			for v, k := range l.droppedCount {
+				if k > 0 {
+					l.LogError("stanza[%s] buffer is full, %d packet(s) dropped", v, k)
+					l.droppedCount[v] = 0
+				}
+			}
+			nextStanzaBufferFull.Reset(nextStanzaBufferInterval)
 
 		}
 	}

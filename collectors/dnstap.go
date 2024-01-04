@@ -75,13 +75,7 @@ func (c *Dnstap) SetLoggers(loggers []pkgutils.Worker) {
 }
 
 func (c *Dnstap) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	channels := []chan dnsutils.DNSMessage{}
-	names := []string{}
-	for _, p := range c.defaultRoutes {
-		channels = append(channels, p.GetInputChannel())
-		names = append(names, p.GetName())
-	}
-	return channels, names
+	return pkgutils.GetActiveRoutes(c.defaultRoutes)
 }
 
 func (c *Dnstap) ReadConfig() {

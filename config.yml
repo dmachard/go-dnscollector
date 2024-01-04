@@ -82,7 +82,8 @@ global:
 #     - from: [ tap ]
 #       to: [ console ]
 
-# EXPERIMENTAL: pipeline mode
+# EXPERIMENTAL
+# New pipeline mode
 pipelines:
   - name: dnsdist-main
     dnstap:
@@ -117,8 +118,8 @@ pipelines:
       max-size: 1000
       max-files: 10
       mode: flat-json
-    # routing-policy:
-    #   default: [ console ]
+    routing-policy:
+      default: [ console ]
 
   - name: console
     stdout:

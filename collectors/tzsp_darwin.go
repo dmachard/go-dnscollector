@@ -57,11 +57,7 @@ func (c *TZSPSniffer) LogError(msg string, v ...interface{}) {
 }
 
 func (c *TZSPSniffer) Loggers() []chan dnsutils.DNSMessage {
-	channels := []chan dnsutils.DNSMessage{}
-	for _, p := range c.defaultRoutes {
-		channels = append(channels, p.GetInputChannel())
-	}
-	return channels
+	return pkgutils.GetActiveRoutes(c.defaultRoutes)
 }
 
 func (c *TZSPSniffer) ReadConfig() {}

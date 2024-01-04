@@ -17,19 +17,23 @@ import (
 )
 
 type ElasticSearchClient struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DNSMessage
-	outputChan  chan dnsutils.DNSMessage
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	logger      *logger.Logger
-	name        string
-	server      string
-	index       string
-	bulkURL     string
+	stopProcess   chan bool
+	doneProcess   chan bool
+	stopRun       chan bool
+	doneRun       chan bool
+	inputChan     chan dnsutils.DNSMessage
+	outputChan    chan dnsutils.DNSMessage
+	config        *pkgconfig.Config
+	configChan    chan *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
+	server        string
+	index         string
+	bulkURL       string
+	droppedCount  map[string]int
+	dropped       chan string
+	droppedRoutes []pkgutils.Worker
+	defaultRoutes []pkgutils.Worker
 }
 
 func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, name string) *ElasticSearchClient {
@@ -52,9 +56,21 @@ func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, na
 
 func (c *ElasticSearchClient) GetName() string { return c.name }
 
-func (c *ElasticSearchClient) AddDroppedRoute(wrk pkgutils.Worker) {}
+func (c *ElasticSearchClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
+}
 
-func (c *ElasticSearchClient) AddDefaultRoute(wrk pkgutils.Worker) {}
+func (c *ElasticSearchClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *ElasticSearchClient) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
+	return pkgutils.GetActiveRoutes(c.defaultRoutes)
+}
+
+func (c *ElasticSearchClient) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
+	return pkgutils.GetActiveRoutes(c.droppedRoutes)
+}
 
 func (c *ElasticSearchClient) SetLoggers(loggers []pkgutils.Worker) {}
 
@@ -100,6 +116,10 @@ func (c *ElasticSearchClient) Stop() {
 func (c *ElasticSearchClient) Run() {
 	c.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := c.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, c.outputChan)
@@ -136,7 +156,23 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				for i := range droppedRoutes {
+					select {
+					case droppedRoutes[i] <- dm: // Successful send to logger channel
+					default:
+						c.dropped <- droppedNames[i]
+					}
+				}
 				continue
+			}
+
+			// send to next ?
+			for i := range defaultRoutes {
+				select {
+				case defaultRoutes[i] <- dm: // Successful send to logger channel
+				default:
+					c.dropped <- defaultNames[i]
+				}
 			}
 
 			// send to output channel
@@ -180,12 +216,22 @@ func (c *ElasticSearchClient) Process() {
 	flushInterval := time.Duration(c.config.Loggers.ElasticSearchClient.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
+	nextStanzaBufferInterval := 10 * time.Second
+	nextStanzaBufferFull := time.NewTimer(nextStanzaBufferInterval)
+
 PROCESS_LOOP:
 	for {
 		select {
 		case <-c.stopProcess:
 			c.doneProcess <- true
 			break PROCESS_LOOP
+
+		case stanzaName := <-c.dropped:
+			if _, ok := c.droppedCount[stanzaName]; !ok {
+				c.droppedCount[stanzaName] = 1
+			} else {
+				c.droppedCount[stanzaName]++
+			}
 
 		// incoming dns message to process
 		case dm, opened := <-c.outputChan:
@@ -209,6 +255,15 @@ PROCESS_LOOP:
 
 			// restart timer
 			flushTimer.Reset(flushInterval)
+
+		case <-nextStanzaBufferFull.C:
+			for v, k := range c.droppedCount {
+				if k > 0 {
+					c.LogError("stanza[%s] buffer is full, %d packet(s) dropped", v, k)
+					c.droppedCount[v] = 0
+				}
+			}
+			nextStanzaBufferFull.Reset(nextStanzaBufferInterval)
 		}
 	}
 	c.LogInfo("processing terminated")

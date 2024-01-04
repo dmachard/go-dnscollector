@@ -8,6 +8,7 @@ import (
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -82,29 +83,39 @@ func IsRouteExist(target string, config *pkgconfig.Config) (ret error) {
 }
 
 func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]pkgutils.Worker, mapLoggers map[string]pkgutils.Worker, logger *logger.Logger) {
+	var currentStanza pkgutils.Worker
+	if collector, ok := mapCollectors[stanza.Name]; ok {
+		currentStanza = collector
+	}
+	if logger, ok := mapLoggers[stanza.Name]; ok {
+		currentStanza = logger
+	}
+
 	// default routing
 	for _, route := range stanza.RoutingPolicy.Default {
 		if _, ok := mapCollectors[route]; ok {
-			mapCollectors[stanza.Name].AddDefaultRoute(mapCollectors[route])
-			logger.Info("[pipeline] - default routing from stanza=%s to stanza=%s", stanza.Name, route)
+			currentStanza.AddDefaultRoute(mapCollectors[route])
+			logger.Info("main - routing (policy=default) stanza=[%s] to stanza=[%s]", stanza.Name, route)
 		} else if _, ok := mapLoggers[route]; ok {
-			mapCollectors[stanza.Name].AddDefaultRoute(mapLoggers[route])
-			logger.Info("[pipeline] - default routing from stanza=%s to stanza=%s", stanza.Name, route)
+			currentStanza.AddDefaultRoute(mapLoggers[route])
+			logger.Info("main - routing (policy=default) stanza=[%s] to stanza=[%s]", stanza.Name, route)
 		} else {
-			panic(fmt.Sprintf("[pipeline] - default routing error from stanza=%s to stanza=%s doest not exist", stanza.Name, route))
+			logger.Error("main - default routing error from stanza=%s to stanza=%s doest not exist", stanza.Name, route)
+			break
 		}
 	}
 
-	// discarded routing
+	// dropped routing
 	for _, route := range stanza.RoutingPolicy.Dropped {
 		if _, ok := mapCollectors[route]; ok {
-			mapCollectors[stanza.Name].AddDroppedRoute(mapCollectors[route])
-			logger.Info("[pipeline] - routing dropped messages from stanza=%s to stanza=%s", stanza.Name, route)
+			currentStanza.AddDroppedRoute(mapCollectors[route])
+			logger.Info("main - routing (policy=dropped) stanza=[%s] to stanza=[%s]", stanza.Name, route)
 		} else if _, ok := mapLoggers[route]; ok {
-			mapCollectors[stanza.Name].AddDroppedRoute(mapLoggers[route])
-			logger.Info("[pipeline] - routing dropped messages from stanza=%s to stanza=%s", stanza.Name, route)
+			currentStanza.AddDroppedRoute(mapLoggers[route])
+			logger.Info("main - routing (policy=dropped) stanza=[%s] to stanza=[%s]", stanza.Name, route)
 		} else {
-			panic(fmt.Sprintf("[pipeline] - routing error with dropped messages from stanza=%s to stanza=%s doest not exist", stanza.Name, route))
+			logger.Error("main - routing error with dropped messages from stanza=%s to stanza=%s doest not exist", stanza.Name, route)
+			break
 		}
 	}
 }
@@ -190,11 +201,11 @@ func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map
 	}
 }
 
-func InitPipelines(mapLoggers map[string]pkgutils.Worker, mapCollectors map[string]pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
+func InitPipelines(mapLoggers map[string]pkgutils.Worker, mapCollectors map[string]pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger) error {
 	// check if the name of each stanza is uniq
 	for _, stanza := range config.Pipelines {
 		if err := StanzaNameIsUniq(stanza.Name, config); err != nil {
-			panic(fmt.Sprintf("[pipeline] - stanza with name=%s is duplicated", stanza.Name))
+			return errors.Errorf("stanza with name=[%s] is duplicated", stanza.Name)
 		}
 	}
 
@@ -202,12 +213,12 @@ func InitPipelines(mapLoggers map[string]pkgutils.Worker, mapCollectors map[stri
 	for _, stanza := range config.Pipelines {
 		for _, route := range stanza.RoutingPolicy.Default {
 			if err := IsRouteExist(route, config); err != nil {
-				panic(fmt.Sprintf("[pipeline] - stanza=%s default route=%s doest not exist", stanza.Name, route))
+				return errors.Errorf("stanza=[%s] default route=[%s] doest not exist", stanza.Name, route)
 			}
 		}
 		for _, route := range stanza.RoutingPolicy.Dropped {
 			if err := IsRouteExist(route, config); err != nil {
-				panic(fmt.Sprintf("[pipeline] - stanza=%s dropped route=%s doest not exist", stanza.Name, route))
+				return errors.Errorf("stanza=[%s] dropped route=[%s] doest not exist", stanza.Name, route)
 			}
 		}
 	}
@@ -221,46 +232,12 @@ func InitPipelines(mapLoggers map[string]pkgutils.Worker, mapCollectors map[stri
 
 	// create routing
 	for _, stanza := range config.Pipelines {
-		if _, ok := mapCollectors[stanza.Name]; ok {
-			CreateRouting(stanza, mapCollectors, mapLoggers, logger)
-		} else if _, ok := mapLoggers[stanza.Name]; ok {
+		if mapCollectors[stanza.Name] != nil || mapLoggers[stanza.Name] != nil {
 			CreateRouting(stanza, mapCollectors, mapLoggers, logger)
 		} else {
-			logger.Info("[pipeline] - stanza=%v doest not exist", stanza.Name)
+			return errors.Errorf("stanza=[%v] doest not exist", stanza.Name)
 		}
-
-		// if _, ok := mapCollectors[stanza.Name]; ok {
-		// 	// default routing
-		// 	for _, route := range stanza.RoutingPolicy.Default {
-		// 		if _, ok := mapCollectors[route]; ok {
-		// 			mapCollectors[stanza.Name].AddDefaultRoute(mapCollectors[route])
-		// 			logger.Info("[pipeline] - default routing from stanza=%s to stanza=%s", stanza.Name, route)
-		// 		} else if _, ok := mapLoggers[route]; ok {
-		// 			mapCollectors[stanza.Name].AddDefaultRoute(mapLoggers[route])
-		// 			logger.Info("[pipeline] - default routing from stanza=%s to stanza=%s", stanza.Name, route)
-		// 		} else {
-		// 			panic(fmt.Sprintf("[pipeline] - default routing error from stanza=%s to stanza=%s doest not exist", stanza.Name, route))
-		// 		}
-		// 	}
-
-		// 	// discarded routing
-		// 	for _, route := range stanza.RoutingPolicy.Dropped {
-		// 		if _, ok := mapCollectors[route]; ok {
-		// 			mapCollectors[stanza.Name].AddDroppedRoute(mapCollectors[route])
-		// 			logger.Info("[pipeline] - routing dropped messages from stanza=%s to stanza=%s", stanza.Name, route)
-		// 		} else if _, ok := mapLoggers[route]; ok {
-		// 			mapCollectors[stanza.Name].AddDroppedRoute(mapLoggers[route])
-		// 			logger.Info("[pipeline] - routing dropped messages from stanza=%s to stanza=%s", stanza.Name, route)
-		// 		} else {
-		// 			panic(fmt.Sprintf("[pipeline] - routing error with dropped messages from stanza=%s to stanza=%s doest not exist", stanza.Name, route))
-		// 		}
-		// 	}
-
-		// } else {
-		// 	logger.Info("[pipeline] - stanza=%v doest not exist", stanza.Name)
-		// }
-
-		// init logger
-		// TODO
 	}
+
+	return nil
 }

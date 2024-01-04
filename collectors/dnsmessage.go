@@ -85,23 +85,11 @@ func (c *DNSMessage) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 }
 
 func (c *DNSMessage) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
-	channels := []chan dnsutils.DNSMessage{}
-	names := []string{}
-	for _, p := range c.defaultRoutes {
-		channels = append(channels, p.GetInputChannel())
-		names = append(names, p.GetName())
-	}
-	return channels, names
+	return pkgutils.GetActiveRoutes(c.defaultRoutes)
 }
 
 func (c *DNSMessage) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
-	channels := []chan dnsutils.DNSMessage{}
-	names := []string{}
-	for _, p := range c.droppedRoutes {
-		channels = append(channels, p.GetInputChannel())
-		names = append(names, p.GetName())
-	}
-	return channels, names
+	return pkgutils.GetActiveRoutes(c.droppedRoutes)
 }
 
 func (c *DNSMessage) ReadConfigMatching(value interface{}) {
@@ -353,6 +341,13 @@ RUN_LOOP:
 			if matched {
 				subprocessors.InitDNSMessageFormat(&dm)
 				if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+					for i := range droppedRoutes {
+						select {
+						case droppedRoutes[i] <- dm: // Successful send to logger channel
+						default:
+							c.dropped <- droppedNames[i]
+						}
+					}
 					continue
 				}
 			}

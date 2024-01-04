@@ -120,7 +120,11 @@ func main() {
 	// or pipeline ?
 	if len(config.Pipelines) > 0 {
 		logger.Info("main - pipelines mode enabled")
-		routing.InitPipelines(mapLoggers, mapCollectors, config, logger)
+		err := routing.InitPipelines(mapLoggers, mapCollectors, config, logger)
+		if err != nil {
+			logger.Error("main - %s", err.Error())
+			os.Exit(1)
+		}
 	}
 
 	// Handle Ctrl-C with SIG TERM and SIGHUP
