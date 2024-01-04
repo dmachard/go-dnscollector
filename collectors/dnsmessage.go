@@ -85,7 +85,13 @@ func (c *DNSMessage) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 }
 
 func (c *DNSMessage) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
-	return c.Loggers()
+	channels := []chan dnsutils.DNSMessage{}
+	names := []string{}
+	for _, p := range c.defaultRoutes {
+		channels = append(channels, p.GetInputChannel())
+		names = append(names, p.GetName())
+	}
+	return channels, names
 }
 
 func (c *DNSMessage) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
