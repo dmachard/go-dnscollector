@@ -81,6 +81,115 @@ func IsRouteExist(target string, config *pkgconfig.Config) (ret error) {
 	return fmt.Errorf("route=%s doest not exist", target)
 }
 
+func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]pkgutils.Worker, mapLoggers map[string]pkgutils.Worker, logger *logger.Logger) {
+	// default routing
+	for _, route := range stanza.RoutingPolicy.Default {
+		if _, ok := mapCollectors[route]; ok {
+			mapCollectors[stanza.Name].AddDefaultRoute(mapCollectors[route])
+			logger.Info("[pipeline] - default routing from stanza=%s to stanza=%s", stanza.Name, route)
+		} else if _, ok := mapLoggers[route]; ok {
+			mapCollectors[stanza.Name].AddDefaultRoute(mapLoggers[route])
+			logger.Info("[pipeline] - default routing from stanza=%s to stanza=%s", stanza.Name, route)
+		} else {
+			panic(fmt.Sprintf("[pipeline] - default routing error from stanza=%s to stanza=%s doest not exist", stanza.Name, route))
+		}
+	}
+
+	// discarded routing
+	for _, route := range stanza.RoutingPolicy.Dropped {
+		if _, ok := mapCollectors[route]; ok {
+			mapCollectors[stanza.Name].AddDroppedRoute(mapCollectors[route])
+			logger.Info("[pipeline] - routing dropped messages from stanza=%s to stanza=%s", stanza.Name, route)
+		} else if _, ok := mapLoggers[route]; ok {
+			mapCollectors[stanza.Name].AddDroppedRoute(mapLoggers[route])
+			logger.Info("[pipeline] - routing dropped messages from stanza=%s to stanza=%s", stanza.Name, route)
+		} else {
+			panic(fmt.Sprintf("[pipeline] - routing error with dropped messages from stanza=%s to stanza=%s doest not exist", stanza.Name, route))
+		}
+	}
+}
+
+func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map[string]pkgutils.Worker, mapLoggers map[string]pkgutils.Worker, logger *logger.Logger) {
+	// register the logger if enabled
+	if config.Loggers.RestAPI.Enable {
+		mapLoggers[stanzaName] = loggers.NewRestAPI(config, logger, stanzaName)
+	}
+	if config.Loggers.Prometheus.Enable {
+		mapLoggers[stanzaName] = loggers.NewPrometheus(config, logger, stanzaName)
+	}
+	if config.Loggers.Stdout.Enable {
+		mapLoggers[stanzaName] = loggers.NewStdOut(config, logger, stanzaName)
+	}
+	if config.Loggers.LogFile.Enable {
+		mapLoggers[stanzaName] = loggers.NewLogFile(config, logger, stanzaName)
+	}
+	if config.Loggers.DNSTap.Enable {
+		mapLoggers[stanzaName] = loggers.NewDnstapSender(config, logger, stanzaName)
+	}
+	if config.Loggers.TCPClient.Enable {
+		mapLoggers[stanzaName] = loggers.NewTCPClient(config, logger, stanzaName)
+	}
+	if config.Loggers.Syslog.Enable {
+		mapLoggers[stanzaName] = loggers.NewSyslog(config, logger, stanzaName)
+	}
+	if config.Loggers.Fluentd.Enable {
+		mapLoggers[stanzaName] = loggers.NewFluentdClient(config, logger, stanzaName)
+	}
+	if config.Loggers.InfluxDB.Enable {
+		mapLoggers[stanzaName] = loggers.NewInfluxDBClient(config, logger, stanzaName)
+	}
+	if config.Loggers.LokiClient.Enable {
+		mapLoggers[stanzaName] = loggers.NewLokiClient(config, logger, stanzaName)
+	}
+	if config.Loggers.Statsd.Enable {
+		mapLoggers[stanzaName] = loggers.NewStatsdClient(config, logger, stanzaName)
+	}
+	if config.Loggers.ElasticSearchClient.Enable {
+		mapLoggers[stanzaName] = loggers.NewElasticSearchClient(config, logger, stanzaName)
+	}
+	if config.Loggers.ScalyrClient.Enable {
+		mapLoggers[stanzaName] = loggers.NewScalyrClient(config, logger, stanzaName)
+	}
+	if config.Loggers.RedisPub.Enable {
+		mapLoggers[stanzaName] = loggers.NewRedisPub(config, logger, stanzaName)
+	}
+	if config.Loggers.KafkaProducer.Enable {
+		mapLoggers[stanzaName] = loggers.NewKafkaProducer(config, logger, stanzaName)
+	}
+	if config.Loggers.FalcoClient.Enable {
+		mapLoggers[stanzaName] = loggers.NewFalcoClient(config, logger, stanzaName)
+	}
+
+	// register the collector if enabled
+	if config.Collectors.DNSMessage.Enable {
+		mapCollectors[stanzaName] = collectors.NewDNSMessage(nil, config, logger, stanzaName)
+	}
+	if config.Collectors.Dnstap.Enable {
+		mapCollectors[stanzaName] = collectors.NewDnstap(nil, config, logger, stanzaName)
+	}
+	if config.Collectors.DnstapProxifier.Enable {
+		mapCollectors[stanzaName] = collectors.NewDnstapProxifier(nil, config, logger, stanzaName)
+	}
+	if config.Collectors.AfpacketLiveCapture.Enable {
+		mapCollectors[stanzaName] = collectors.NewAfpacketSniffer(nil, config, logger, stanzaName)
+	}
+	if config.Collectors.XdpLiveCapture.Enable {
+		mapCollectors[stanzaName] = collectors.NewXDPSniffer(nil, config, logger, stanzaName)
+	}
+	if config.Collectors.Tail.Enable {
+		mapCollectors[stanzaName] = collectors.NewTail(nil, config, logger, stanzaName)
+	}
+	if config.Collectors.PowerDNS.Enable {
+		mapCollectors[stanzaName] = collectors.NewProtobufPowerDNS(nil, config, logger, stanzaName)
+	}
+	if config.Collectors.FileIngestor.Enable {
+		mapCollectors[stanzaName] = collectors.NewFileIngestor(nil, config, logger, stanzaName)
+	}
+	if config.Collectors.Tzsp.Enable {
+		mapCollectors[stanzaName] = collectors.NewTZSP(nil, config, logger, stanzaName)
+	}
+}
+
 func InitPipelines(mapLoggers map[string]pkgutils.Worker, mapCollectors map[string]pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
 	// check if the name of each stanza is uniq
 	for _, stanza := range config.Pipelines {
@@ -106,119 +215,50 @@ func InitPipelines(mapLoggers map[string]pkgutils.Worker, mapCollectors map[stri
 	// read each stanza and init
 	for _, stanza := range config.Pipelines {
 		stanzaConfig := GetStanzaConfig(config, stanza)
+		CreateStanza(stanza.Name, stanzaConfig, mapCollectors, mapLoggers, logger)
 
-		// register the logger if enabled
-		if stanzaConfig.Loggers.RestAPI.Enable {
-			mapLoggers[stanza.Name] = loggers.NewRestAPI(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.Prometheus.Enable {
-			mapLoggers[stanza.Name] = loggers.NewPrometheus(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.Stdout.Enable {
-			mapLoggers[stanza.Name] = loggers.NewStdOut(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.LogFile.Enable {
-			mapLoggers[stanza.Name] = loggers.NewLogFile(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.DNSTap.Enable {
-			mapLoggers[stanza.Name] = loggers.NewDnstapSender(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.TCPClient.Enable {
-			mapLoggers[stanza.Name] = loggers.NewTCPClient(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.Syslog.Enable {
-			mapLoggers[stanza.Name] = loggers.NewSyslog(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.Fluentd.Enable {
-			mapLoggers[stanza.Name] = loggers.NewFluentdClient(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.InfluxDB.Enable {
-			mapLoggers[stanza.Name] = loggers.NewInfluxDBClient(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.LokiClient.Enable {
-			mapLoggers[stanza.Name] = loggers.NewLokiClient(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.Statsd.Enable {
-			mapLoggers[stanza.Name] = loggers.NewStatsdClient(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.ElasticSearchClient.Enable {
-			mapLoggers[stanza.Name] = loggers.NewElasticSearchClient(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.ScalyrClient.Enable {
-			mapLoggers[stanza.Name] = loggers.NewScalyrClient(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.RedisPub.Enable {
-			mapLoggers[stanza.Name] = loggers.NewRedisPub(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.KafkaProducer.Enable {
-			mapLoggers[stanza.Name] = loggers.NewKafkaProducer(stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Loggers.FalcoClient.Enable {
-			mapLoggers[stanza.Name] = loggers.NewFalcoClient(stanzaConfig, logger, stanza.Name)
-		}
-
-		// register the collector if enabled
-		if stanzaConfig.Collectors.DNSMessage.Enable {
-			mapCollectors[stanza.Name] = collectors.NewDNSMessage(nil, stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Collectors.Dnstap.Enable {
-			mapCollectors[stanza.Name] = collectors.NewDnstap(nil, stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Collectors.DnstapProxifier.Enable {
-			mapCollectors[stanza.Name] = collectors.NewDnstapProxifier(nil, stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Collectors.AfpacketLiveCapture.Enable {
-			mapCollectors[stanza.Name] = collectors.NewAfpacketSniffer(nil, stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Collectors.XdpLiveCapture.Enable {
-			mapCollectors[stanza.Name] = collectors.NewXDPSniffer(nil, stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Collectors.Tail.Enable {
-			mapCollectors[stanza.Name] = collectors.NewTail(nil, stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Collectors.PowerDNS.Enable {
-			mapCollectors[stanza.Name] = collectors.NewProtobufPowerDNS(nil, stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Collectors.FileIngestor.Enable {
-			mapCollectors[stanza.Name] = collectors.NewFileIngestor(nil, stanzaConfig, logger, stanza.Name)
-		}
-		if stanzaConfig.Collectors.Tzsp.Enable {
-			mapCollectors[stanza.Name] = collectors.NewTZSP(nil, stanzaConfig, logger, stanza.Name)
-		}
 	}
 
 	// create routing
 	for _, stanza := range config.Pipelines {
 		if _, ok := mapCollectors[stanza.Name]; ok {
-			// default routing
-			for _, route := range stanza.RoutingPolicy.Default {
-				if _, ok := mapCollectors[route]; ok {
-					mapCollectors[stanza.Name].AddDefaultRoute(mapCollectors[route])
-					logger.Info("[pipeline] - default routing from stanza=%s to stanza=%s", stanza.Name, route)
-				} else if _, ok := mapLoggers[route]; ok {
-					mapCollectors[stanza.Name].AddDefaultRoute(mapLoggers[route])
-					logger.Info("[pipeline] - default routing from stanza=%s to stanza=%s", stanza.Name, route)
-				} else {
-					panic(fmt.Sprintf("[pipeline] - default routing error from stanza=%s to stanza=%s doest not exist", stanza.Name, route))
-				}
-			}
-
-			// discarded routing
-			for _, route := range stanza.RoutingPolicy.Dropped {
-				if _, ok := mapCollectors[route]; ok {
-					mapCollectors[stanza.Name].AddDroppedRoute(mapCollectors[route])
-					logger.Info("[pipeline] - routing dropped messages from stanza=%s to stanza=%s", stanza.Name, route)
-				} else if _, ok := mapLoggers[route]; ok {
-					mapCollectors[stanza.Name].AddDroppedRoute(mapLoggers[route])
-					logger.Info("[pipeline] - routing dropped messages from stanza=%s to stanza=%s", stanza.Name, route)
-				} else {
-					panic(fmt.Sprintf("[pipeline] - routing error with dropped messages from stanza=%s to stanza=%s doest not exist", stanza.Name, route))
-				}
-			}
-
+			CreateRouting(stanza, mapCollectors, mapLoggers, logger)
+		} else if _, ok := mapLoggers[stanza.Name]; ok {
+			CreateRouting(stanza, mapCollectors, mapLoggers, logger)
 		} else {
 			logger.Info("[pipeline] - stanza=%v doest not exist", stanza.Name)
 		}
+
+		// if _, ok := mapCollectors[stanza.Name]; ok {
+		// 	// default routing
+		// 	for _, route := range stanza.RoutingPolicy.Default {
+		// 		if _, ok := mapCollectors[route]; ok {
+		// 			mapCollectors[stanza.Name].AddDefaultRoute(mapCollectors[route])
+		// 			logger.Info("[pipeline] - default routing from stanza=%s to stanza=%s", stanza.Name, route)
+		// 		} else if _, ok := mapLoggers[route]; ok {
+		// 			mapCollectors[stanza.Name].AddDefaultRoute(mapLoggers[route])
+		// 			logger.Info("[pipeline] - default routing from stanza=%s to stanza=%s", stanza.Name, route)
+		// 		} else {
+		// 			panic(fmt.Sprintf("[pipeline] - default routing error from stanza=%s to stanza=%s doest not exist", stanza.Name, route))
+		// 		}
+		// 	}
+
+		// 	// discarded routing
+		// 	for _, route := range stanza.RoutingPolicy.Dropped {
+		// 		if _, ok := mapCollectors[route]; ok {
+		// 			mapCollectors[stanza.Name].AddDroppedRoute(mapCollectors[route])
+		// 			logger.Info("[pipeline] - routing dropped messages from stanza=%s to stanza=%s", stanza.Name, route)
+		// 		} else if _, ok := mapLoggers[route]; ok {
+		// 			mapCollectors[stanza.Name].AddDroppedRoute(mapLoggers[route])
+		// 			logger.Info("[pipeline] - routing dropped messages from stanza=%s to stanza=%s", stanza.Name, route)
+		// 		} else {
+		// 			panic(fmt.Sprintf("[pipeline] - routing error with dropped messages from stanza=%s to stanza=%s doest not exist", stanza.Name, route))
+		// 		}
+		// 	}
+
+		// } else {
+		// 	logger.Info("[pipeline] - stanza=%v doest not exist", stanza.Name)
+		// }
 
 		// init logger
 		// TODO
