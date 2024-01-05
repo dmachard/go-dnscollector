@@ -63,67 +63,57 @@ global:
 
 # create your dns collector, please refer bellow to see the list
 # of supported collectors, loggers and transformers
-# multiplexer:
-#   collectors:
-#     - name: tap
-#       powerdns:
-#         listen-ip: 0.0.0.0
-#         listen-port: 6001
-#       transforms:
-#         normalize:
-#           qname-lowercase: false
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+      transforms:
+        normalize:
+          qname-lowercase: false
 
-#   loggers:
-#     - name: console
-#       stdout:
-#         mode: text
+  loggers:
+    - name: console
+      stdout:
+        mode: text
 
-#   routes:
-#     - from: [ tap ]
-#       to: [ console ]
+  routes:
+    - from: [ tap ]
+      to: [ console ]
 
-# EXPERIMENTAL
-# New pipeline mode
-pipelines:
-  - name: dnsdist-main
-    dnstap:
-      listen-ip: 0.0.0.0
-      listen-port: 6000
-    routing-policy:
-      default: [ goog ]
+# EXPERIMENTAL, not production ready /!\
+# Running with pipeling mode
+# pipelines:
+#   - name: main-input
+#     dnstap:
+#       listen-ip: 0.0.0.0
+#       listen-port: 6000
+#     routing-policy:
+#       default: [ filter ]
 
-  - name: goog
-    dnsmessage:
-      matching:
-        include:
-          dns.qname: "^.*\\.google\\.com$"
-    transforms:
-      atags:
-        tags: [ "google" ]
-    routing-policy:
-      dropped: [ outputfile ]
-      default: [ match-tag ]
+#   - name: filter
+#     dnsmessage:
+#       matching:
+#         include:
+#           dns.qname: "^.*\\.google\\.com$"
+#     transforms:
+#       atags:
+#         tags: [ "google"]
+#     routing-policy:
+#       dropped: [ outputfile ]
+#       default: [ console ]
 
-  - name: match-tag
-    dnsmessage:
-      matching:
-        include:
-          atags.tags.*: google
-    routing-policy:
-      default: [ console ]
+#   - name: console
+#     stdout:
+#       mode: text
 
-  - name: outputfile
-    logfile:
-      file-path:  "/tmp/dnstap.log"
-      max-size: 1000
-      max-files: 10
-      mode: flat-json
-
-  - name: console
-    stdout:
-      mode: text
-    routing-policy:
-      default: [ outputfile ]
+#   - name: outputfile
+#     logfile:
+#       file-path:  "/tmp/dnstap.log"
+#       max-size: 1000
+#       max-files: 10
+#       mode: flat-json
 
 ################################################
 # list of supported collectors
