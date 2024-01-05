@@ -5,7 +5,112 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-logger"
 )
+
+func TestLatency_MeasureLatency(t *testing.T) {
+	// enable feature
+	config := pkgconfig.GetFakeConfigTransformers()
+	log := logger.New(false)
+	outChannels := []chan dnsutils.DNSMessage{}
+
+	// init transformer
+	latencyProcessor := NewLatencySubprocessor(config, logger.New(true), "test", 0, outChannels, log.Info, log.Error)
+
+	testcases := []struct {
+		name string
+		cq   string
+		cr   string
+	}{
+		{
+			name: "standard_mode",
+			cq:   dnsutils.DNSQuery,
+			cr:   dnsutils.DNSReply,
+		},
+		{
+			name: "quiet_mode",
+			cq:   dnsutils.DNSQueryQuiet,
+			cr:   dnsutils.DNSReplyQuiet,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Register Query
+			CQ := dnsutils.GetFakeDNSMessage()
+			CQ.DNS.Type = tc.cq
+			CQ.DNSTap.Timestamp = 1704486841216166066
+
+			// Measure latency
+			latencyProcessor.MeasureLatency(&CQ)
+
+			// Register Query
+			CR := dnsutils.GetFakeDNSMessage()
+			CR.DNS.Type = tc.cr
+			CR.DNSTap.Timestamp = 1704486841227961611
+
+			// Measure latency
+			latencyProcessor.MeasureLatency(&CR)
+
+			if CR.DNSTap.Latency == 0.0 {
+				t.Errorf("incorrect latency, got 0.0")
+			}
+		})
+	}
+}
+
+func TestLatency_DetectEvictedTimeout(t *testing.T) {
+	// enable feature
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.Latency.Enable = true
+	config.Latency.QueriesTimeout = 1
+
+	log := logger.New(false)
+	outChannels := []chan dnsutils.DNSMessage{}
+	outChannels = append(outChannels, make(chan dnsutils.DNSMessage, 1))
+
+	// init transformer
+	latencyProcessor := NewLatencySubprocessor(config, logger.New(true), "test", 0, outChannels, log.Info, log.Error)
+
+	testcases := []struct {
+		name string
+		cq   string
+		cr   string
+	}{
+		{
+			name: "standard_mode",
+			cq:   dnsutils.DNSQuery,
+			cr:   dnsutils.DNSReply,
+		},
+		{
+			name: "quiet_mode",
+			cq:   dnsutils.DNSQueryQuiet,
+			cr:   dnsutils.DNSReplyQuiet,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Register Query
+			CQ := dnsutils.GetFakeDNSMessage()
+			CQ.DNS.Type = tc.cq
+			CQ.DNSTap.Timestamp = 1704486841216166066
+
+			// Measure latency
+			latencyProcessor.DetectEvictedTimeout(&CQ)
+
+			time.Sleep(2 * time.Second)
+
+			dmTimeout := <-outChannels[0]
+			if dmTimeout.DNS.Rcode != "TIMEOUT" {
+				t.Errorf("incorrect rcode, expected=TIMEOUT, got=%s", dmTimeout.DNS.Rcode)
+			}
+		})
+	}
+}
 
 func Test_HashQueries(t *testing.T) {
 	// init map
