@@ -26,14 +26,14 @@ jobs:
         package:
           - '.'
           - 'pkgconfig'
+          - 'pkglinker'
+          - 'pkgutils'
           - 'dnsutils'
           - 'collectors'
           - 'loggers'
           - 'transformers'
           - 'netlib'
           - 'processors'
-          - 'routing'
-          - 'pkgutils'
         exclude:
           - os-version: macos-latest
             go-version: '1.20'

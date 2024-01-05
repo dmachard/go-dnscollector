@@ -17,172 +17,167 @@ import (
 )
 
 type ElasticSearchClient struct {
-	stopProcess   chan bool
-	doneProcess   chan bool
-	stopRun       chan bool
-	doneRun       chan bool
-	inputChan     chan dnsutils.DNSMessage
-	outputChan    chan dnsutils.DNSMessage
-	config        *pkgconfig.Config
-	configChan    chan *pkgconfig.Config
-	logger        *logger.Logger
-	name          string
-	server        string
-	index         string
-	bulkURL       string
-	droppedCount  map[string]int
-	dropped       chan string
-	droppedRoutes []pkgutils.Worker
-	defaultRoutes []pkgutils.Worker
+	stopProcess chan bool
+	doneProcess chan bool
+	stopRun     chan bool
+	doneRun     chan bool
+	inputChan   chan dnsutils.DNSMessage
+	outputChan  chan dnsutils.DNSMessage
+	config      *pkgconfig.Config
+	configChan  chan *pkgconfig.Config
+	logger      *logger.Logger
+	name        string
+	server      string
+	index       string
+	bulkURL     string
+	// droppedCount  map[string]int
+	// dropped       chan string
+	// droppedRoutes []pkgutils.Worker
+	// defaultRoutes []pkgutils.Worker
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, name string) *ElasticSearchClient {
 	console.Info("[%s] logger=elasticsearch - enabled", name)
-	c := &ElasticSearchClient{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
-		logger:      console,
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		name:        name,
+	ec := &ElasticSearchClient{
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
+		logger:         console,
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, console, name),
 	}
-	c.ReadConfig()
-	return c
+	ec.ReadConfig()
+	return ec
 }
 
-func (c *ElasticSearchClient) GetName() string { return c.name }
+func (ec *ElasticSearchClient) GetName() string { return ec.name }
 
-func (c *ElasticSearchClient) AddDroppedRoute(wrk pkgutils.Worker) {
-	c.droppedRoutes = append(c.droppedRoutes, wrk)
+func (ec *ElasticSearchClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	// ec.droppedRoutes = append(ec.droppedRoutes, wrk)
+	ec.RoutingHandler.AddDroppedRoute(wrk)
 }
 
-func (c *ElasticSearchClient) AddDefaultRoute(wrk pkgutils.Worker) {
-	c.defaultRoutes = append(c.defaultRoutes, wrk)
+func (ec *ElasticSearchClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	// ec.defaultRoutes = append(ec.defaultRoutes, wrk)
+	ec.RoutingHandler.AddDefaultRoute(wrk)
 }
 
-func (c *ElasticSearchClient) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
-	return pkgutils.GetActiveRoutes(c.defaultRoutes)
-}
+// func (ec *ElasticSearchClient) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
+// 	return pkgutils.GetActiveRoutes(ec.defaultRoutes)
+// }
 
-func (c *ElasticSearchClient) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
-	return pkgutils.GetActiveRoutes(c.droppedRoutes)
-}
+// func (ec *ElasticSearchClient) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
+// 	return pkgutils.GetActiveRoutes(ec.droppedRoutes)
+// }
 
-func (c *ElasticSearchClient) SetLoggers(loggers []pkgutils.Worker) {}
+func (ec *ElasticSearchClient) SetLoggers(loggers []pkgutils.Worker) {}
 
-func (c *ElasticSearchClient) ReadConfig() {
-	c.server = c.config.Loggers.ElasticSearchClient.Server
-	c.index = c.config.Loggers.ElasticSearchClient.Index
+func (ec *ElasticSearchClient) ReadConfig() {
+	ec.server = ec.config.Loggers.ElasticSearchClient.Server
+	ec.index = ec.config.Loggers.ElasticSearchClient.Index
 
-	u, err := url.Parse(c.server)
+	u, err := url.Parse(ec.server)
 	if err != nil {
-		c.LogError(err.Error())
+		ec.LogError(err.Error())
 	}
-	u.Path = path.Join(u.Path, c.index, "_bulk")
-	c.bulkURL = u.String()
+	u.Path = path.Join(u.Path, ec.index, "_bulk")
+	ec.bulkURL = u.String()
 }
 
-func (c *ElasticSearchClient) ReloadConfig(config *pkgconfig.Config) {
-	c.LogInfo("reload configuration!")
-	c.configChan <- config
+func (ec *ElasticSearchClient) ReloadConfig(config *pkgconfig.Config) {
+	ec.LogInfo("reload configuration!")
+	ec.configChan <- config
 }
 
-func (c *ElasticSearchClient) GetInputChannel() chan dnsutils.DNSMessage {
-	return c.inputChan
+func (ec *ElasticSearchClient) GetInputChannel() chan dnsutils.DNSMessage {
+	return ec.inputChan
 }
 
-func (c *ElasticSearchClient) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger=elasticsearch - "+msg, v...)
+func (ec *ElasticSearchClient) LogInfo(msg string, v ...interface{}) {
+	ec.logger.Info("["+ec.name+"] logger=elasticsearch - "+msg, v...)
 }
 
-func (c *ElasticSearchClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger=elasticsearch - "+msg, v...)
+func (ec *ElasticSearchClient) LogError(msg string, v ...interface{}) {
+	ec.logger.Error("["+ec.name+"] logger=elasticsearch - "+msg, v...)
 }
 
-func (c *ElasticSearchClient) Stop() {
-	c.LogInfo("stopping to run...")
-	c.stopRun <- true
-	<-c.doneRun
+func (ec *ElasticSearchClient) Stop() {
+	ec.LogInfo("stopping routing handler...")
+	ec.RoutingHandler.Stop()
 
-	c.LogInfo("stopping to process...")
-	c.stopProcess <- true
-	<-c.doneProcess
+	ec.LogInfo("stopping to run...")
+	ec.stopRun <- true
+	<-ec.doneRun
+
+	ec.LogInfo("stopping to process...")
+	ec.stopProcess <- true
+	<-ec.doneProcess
 }
 
-func (c *ElasticSearchClient) Run() {
-	c.LogInfo("running in background...")
+func (ec *ElasticSearchClient) Run() {
+	ec.LogInfo("running in background...")
 
 	// prepare next channels
-	defaultRoutes, defaultNames := c.GetDefaultRoutes()
-	droppedRoutes, droppedNames := c.GetDroppedRoutes()
+	defaultRoutes, defaultNames := ec.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := ec.RoutingHandler.GetDroppedRoutes()
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
-	listChannel = append(listChannel, c.outputChan)
-	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
+	listChannel = append(listChannel, ec.outputChan)
+	subprocessors := transformers.NewTransforms(&ec.config.OutgoingTransformers, ec.logger, ec.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go c.Process()
+	go ec.Process()
 
 	// loop to process incoming messages
 RUN_LOOP:
 	for {
 		select {
-		case <-c.stopRun:
+		case <-ec.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
 
-			c.doneRun <- true
+			ec.doneRun <- true
 			break RUN_LOOP
 
-		case cfg, opened := <-c.configChan:
+		case cfg, opened := <-ec.configChan:
 			if !opened {
 				return
 			}
-			c.config = cfg
-			c.ReadConfig()
+			ec.config = cfg
+			ec.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-c.inputChan:
+		case dm, opened := <-ec.inputChan:
 			if !opened {
-				c.LogInfo("input channel closed!")
+				ec.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
-				for i := range droppedRoutes {
-					select {
-					case droppedRoutes[i] <- dm: // Successful send to logger channel
-					default:
-						c.dropped <- droppedNames[i]
-					}
-				}
+				ec.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
 			// send to next ?
-			for i := range defaultRoutes {
-				select {
-				case defaultRoutes[i] <- dm: // Successful send to logger channel
-				default:
-					c.dropped <- defaultNames[i]
-				}
-			}
+			ec.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
-			c.outputChan <- dm
+			ec.outputChan <- dm
 		}
 	}
-	c.LogInfo("run terminated")
+	ec.LogInfo("run terminated")
 }
 
-func (c *ElasticSearchClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
+func (ec *ElasticSearchClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	buffer := new(bytes.Buffer)
 
 	for _, dm := range *buf {
@@ -191,52 +186,52 @@ func (c *ElasticSearchClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 		// encode
 		flat, err := dm.Flatten()
 		if err != nil {
-			c.LogError("flattening DNS message failed: %e", err)
+			ec.LogError("flattening DNS message failed: %e", err)
 		}
 		json.NewEncoder(buffer).Encode(flat)
 	}
 
-	req, _ := http.NewRequest("POST", c.bulkURL, buffer)
+	req, _ := http.NewRequest("POST", ec.bulkURL, buffer)
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
 	_, err := client.Do(req)
 	if err != nil {
-		c.LogError(err.Error())
+		ec.LogError(err.Error())
 	}
 
 	*buf = nil
 }
 
-func (c *ElasticSearchClient) Process() {
+func (ec *ElasticSearchClient) Process() {
 	bufferDm := []dnsutils.DNSMessage{}
-	c.LogInfo("ready to process")
+	ec.LogInfo("ready to process")
 
-	flushInterval := time.Duration(c.config.Loggers.ElasticSearchClient.FlushInterval) * time.Second
+	flushInterval := time.Duration(ec.config.Loggers.ElasticSearchClient.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
-	nextStanzaBufferInterval := 10 * time.Second
-	nextStanzaBufferFull := time.NewTimer(nextStanzaBufferInterval)
+	// nextStanzaBufferInterval := 10 * time.Second
+	// nextStanzaBufferFull := time.NewTimer(nextStanzaBufferInterval)
 
 PROCESS_LOOP:
 	for {
 		select {
-		case <-c.stopProcess:
-			c.doneProcess <- true
+		case <-ec.stopProcess:
+			ec.doneProcess <- true
 			break PROCESS_LOOP
 
-		case stanzaName := <-c.dropped:
-			if _, ok := c.droppedCount[stanzaName]; !ok {
-				c.droppedCount[stanzaName] = 1
-			} else {
-				c.droppedCount[stanzaName]++
-			}
+		// case stanzaName := <-ec.dropped:
+		// 	if _, ok := ec.droppedCount[stanzaName]; !ok {
+		// 		ec.droppedCount[stanzaName] = 1
+		// 	} else {
+		// 		ec.droppedCount[stanzaName]++
+		// 	}
 
 		// incoming dns message to process
-		case dm, opened := <-c.outputChan:
+		case dm, opened := <-ec.outputChan:
 			if !opened {
-				c.LogInfo("output channel closed!")
+				ec.LogInfo("output channel closed!")
 				return
 			}
 
@@ -244,27 +239,27 @@ PROCESS_LOOP:
 			bufferDm = append(bufferDm, dm)
 
 			// buffer is full ?
-			if len(bufferDm) >= c.config.Loggers.ElasticSearchClient.BulkSize {
-				c.FlushBuffer(&bufferDm)
+			if len(bufferDm) >= ec.config.Loggers.ElasticSearchClient.BulkSize {
+				ec.FlushBuffer(&bufferDm)
 			}
 			// flush the buffer
 		case <-flushTimer.C:
 			if len(bufferDm) > 0 {
-				c.FlushBuffer(&bufferDm)
+				ec.FlushBuffer(&bufferDm)
 			}
 
 			// restart timer
 			flushTimer.Reset(flushInterval)
 
-		case <-nextStanzaBufferFull.C:
-			for v, k := range c.droppedCount {
-				if k > 0 {
-					c.LogError("stanza[%s] buffer is full, %d packet(s) dropped", v, k)
-					c.droppedCount[v] = 0
-				}
-			}
-			nextStanzaBufferFull.Reset(nextStanzaBufferInterval)
+			// case <-nextStanzaBufferFull.C:
+			// 	for v, k := range ec.droppedCount {
+			// 		if k > 0 {
+			// 			ec.LogError("stanza[%s] buffer is full, %d packet(s) dropped", v, k)
+			// 			ec.droppedCount[v] = 0
+			// 		}
+			// 	}
+			// 	nextStanzaBufferFull.Reset(nextStanzaBufferInterval)
 		}
 	}
-	c.LogInfo("processing terminated")
+	ec.LogInfo("processing terminated")
 }

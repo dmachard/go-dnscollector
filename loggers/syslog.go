@@ -73,6 +73,7 @@ type Syslog struct {
 	transportReconnect chan bool
 	textFormat         []string
 	name               string
+	RoutingHandler     pkgutils.RoutingHandler
 }
 
 func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *Syslog {
@@ -90,6 +91,7 @@ func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *S
 		config:             config,
 		configChan:         make(chan *pkgconfig.Config),
 		name:               name,
+		RoutingHandler:     pkgutils.NewRoutingHandler(config, console, name),
 	}
 	s.ReadConfig()
 	return s
@@ -148,6 +150,9 @@ func (s *Syslog) LogError(msg string, v ...interface{}) {
 }
 
 func (s *Syslog) Stop() {
+	s.LogInfo("stopping routing handler...")
+	s.RoutingHandler.Stop()
+
 	s.LogInfo("stopping to run...")
 	s.stopRun <- true
 	<-s.doneRun

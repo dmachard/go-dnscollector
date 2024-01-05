@@ -37,6 +37,7 @@ type KafkaProducer struct {
 	kafkaReconnect chan bool
 	kafkaConnected bool
 	compressCodec  compress.Codec
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name string) *KafkaProducer {
@@ -54,10 +55,10 @@ func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name stri
 		kafkaReady:     make(chan bool),
 		kafkaReconnect: make(chan bool),
 		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	k.ReadConfig()
-
 	return k
 }
 
@@ -112,6 +113,9 @@ func (k *KafkaProducer) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (k *KafkaProducer) Stop() {
+	k.LogInfo("stopping routing handler...")
+	k.RoutingHandler.Stop()
+
 	k.LogInfo("stopping to run...")
 	k.stopRun <- true
 	<-k.doneRun

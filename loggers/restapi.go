@@ -46,19 +46,20 @@ type KeyHit struct {
 }
 
 type RestAPI struct {
-	doneAPI     chan bool
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DNSMessage
-	outputChan  chan dnsutils.DNSMessage
-	httpserver  net.Listener
-	httpmux     *http.ServeMux
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	logger      *logger.Logger
-	name        string
+	doneAPI        chan bool
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	httpserver     net.Listener
+	httpmux        *http.ServeMux
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	name           string
+	RoutingHandler pkgutils.RoutingHandler
 
 	HitsStream HitsStream
 	HitsUniq   HitsUniq
@@ -77,17 +78,18 @@ type RestAPI struct {
 func NewRestAPI(config *pkgconfig.Config, logger *logger.Logger, name string) *RestAPI {
 	logger.Info("[%s] logger=restapi - enabled", name)
 	o := &RestAPI{
-		doneAPI:     make(chan bool),
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.RestAPI.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.RestAPI.ChannelBufferSize),
-		logger:      logger,
-		name:        name,
+		doneAPI:        make(chan bool),
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.RestAPI.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.RestAPI.ChannelBufferSize),
+		logger:         logger,
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 
 		HitsStream: HitsStream{
 			Streams: make(map[string]SearchBy),
@@ -144,6 +146,9 @@ func (c *RestAPI) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *RestAPI) Stop() {
+	c.LogInfo("stopping routing handler...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun

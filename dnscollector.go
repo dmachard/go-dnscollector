@@ -9,8 +9,8 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkglinker"
 	"github.com/dmachard/go-dnscollector/pkgutils"
-	"github.com/dmachard/go-dnscollector/routing"
 	"github.com/dmachard/go-logger"
 	"github.com/natefinch/lumberjack"
 	"github.com/prometheus/common/version"
@@ -112,15 +112,15 @@ func main() {
 
 	// running mode,
 	// multiplexer ?
-	if routing.IsMuxEnabled(config) {
+	if pkglinker.IsMuxEnabled(config) {
 		logger.Info("main - multiplexer mode enabled")
-		routing.InitMultiplexer(mapLoggers, mapCollectors, config, logger)
+		pkglinker.InitMultiplexer(mapLoggers, mapCollectors, config, logger)
 	}
 
 	// or pipeline ?
 	if len(config.Pipelines) > 0 {
 		logger.Info("main - pipelines mode enabled")
-		err := routing.InitPipelines(mapLoggers, mapCollectors, config, logger)
+		err := pkglinker.InitPipelines(mapLoggers, mapCollectors, config, logger)
 		if err != nil {
 			logger.Error("main - %s", err.Error())
 			os.Exit(1)
@@ -148,8 +148,8 @@ func main() {
 
 				// reload logger and multiplexer
 				InitLogger(logger, config)
-				if routing.IsMuxEnabled(config) {
-					routing.ReloadMultiplexer(mapLoggers, mapCollectors, config, logger)
+				if pkglinker.IsMuxEnabled(config) {
+					pkglinker.ReloadMultiplexer(mapLoggers, mapCollectors, config, logger)
 				}
 
 			case <-sigTerm:

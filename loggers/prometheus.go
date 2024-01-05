@@ -242,7 +242,8 @@ type Prometheus struct {
 	histogramQnamesLength  *prometheus.HistogramVec
 	histogramLatencies     *prometheus.HistogramVec
 
-	name string
+	name           string
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func newPrometheusCounterSet(p *Prometheus, labels prometheus.Labels) *PrometheusCountersSet {
@@ -760,18 +761,19 @@ func CreateSystemCatalogue(o *Prometheus) ([]string, *PromCounterCatalogueContai
 func NewPrometheus(config *pkgconfig.Config, logger *logger.Logger, name string) *Prometheus {
 	logger.Info("[%s] logger=prometheus - enabled", name)
 	o := &Prometheus{
-		doneAPI:      make(chan bool),
-		stopProcess:  make(chan bool),
-		doneProcess:  make(chan bool),
-		stopRun:      make(chan bool),
-		doneRun:      make(chan bool),
-		config:       config,
-		configChan:   make(chan *pkgconfig.Config),
-		inputChan:    make(chan dnsutils.DNSMessage, config.Loggers.Prometheus.ChannelBufferSize),
-		outputChan:   make(chan dnsutils.DNSMessage, config.Loggers.Prometheus.ChannelBufferSize),
-		logger:       logger,
-		promRegistry: prometheus.NewPedanticRegistry(),
-		name:         name,
+		doneAPI:        make(chan bool),
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.Prometheus.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.Prometheus.ChannelBufferSize),
+		logger:         logger,
+		promRegistry:   prometheus.NewPedanticRegistry(),
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	// This will create a catalogue of counters indexed by fileds requested by config
@@ -1123,6 +1125,9 @@ func (c *Prometheus) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *Prometheus) Stop() {
+	c.LogInfo("stopping routing handler...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun

@@ -45,16 +45,17 @@ type StreamStats struct {
 }
 
 type StatsdClient struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DNSMessage
-	outputChan  chan dnsutils.DNSMessage
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	logger      *logger.Logger
-	name        string
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	name           string
+	RoutingHandler pkgutils.RoutingHandler
 
 	Stats StreamStats
 	sync.RWMutex
@@ -64,17 +65,18 @@ func NewStatsdClient(config *pkgconfig.Config, logger *logger.Logger, name strin
 	logger.Info("[%s] logger=statsd - enabled", name)
 
 	s := &StatsdClient{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.Statsd.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.Statsd.ChannelBufferSize),
-		logger:      logger,
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		name:        name,
-		Stats:       StreamStats{Streams: make(map[string]*StatsPerStream)},
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.Statsd.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.Statsd.ChannelBufferSize),
+		logger:         logger,
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		name:           name,
+		Stats:          StreamStats{Streams: make(map[string]*StatsPerStream)},
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	// check config
@@ -115,6 +117,9 @@ func (c *StatsdClient) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *StatsdClient) Stop() {
+	c.LogInfo("stopping routing handler...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun

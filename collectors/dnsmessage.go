@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
@@ -31,36 +30,38 @@ type MatchSource struct {
 }
 
 type DNSMessage struct {
-	doneRun       chan bool
-	doneMonitor   chan bool
-	stopRun       chan bool
-	stopMonitor   chan bool
-	droppedRoutes []pkgutils.Worker
-	defaultRoutes []pkgutils.Worker
-	config        *pkgconfig.Config
-	configChan    chan *pkgconfig.Config
-	inputChan     chan dnsutils.DNSMessage
-	logger        *logger.Logger
-	name          string
-	droppedCount  map[string]int
-	dropped       chan string
+	doneRun     chan bool
+	doneMonitor chan bool
+	stopRun     chan bool
+	stopMonitor chan bool
+	// droppedRoutes []pkgutils.Worker
+	// defaultRoutes []pkgutils.Worker
+	config     *pkgconfig.Config
+	configChan chan *pkgconfig.Config
+	inputChan  chan dnsutils.DNSMessage
+	logger     *logger.Logger
+	name       string
+	// droppedCount  map[string]int
+	// dropped       chan string
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func NewDNSMessage(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DNSMessage {
 	logger.Info("[%s] collector=dnsmessage - enabled", name)
 	s := &DNSMessage{
-		doneRun:       make(chan bool),
-		doneMonitor:   make(chan bool),
-		stopRun:       make(chan bool),
-		stopMonitor:   make(chan bool),
-		config:        config,
-		configChan:    make(chan *pkgconfig.Config),
-		inputChan:     make(chan dnsutils.DNSMessage, config.Collectors.DNSMessage.ChannelBufferSize),
-		defaultRoutes: loggers,
-		logger:        logger,
-		name:          name,
-		dropped:       make(chan string),
-		droppedCount:  map[string]int{},
+		doneRun:     make(chan bool),
+		doneMonitor: make(chan bool),
+		stopRun:     make(chan bool),
+		stopMonitor: make(chan bool),
+		config:      config,
+		configChan:  make(chan *pkgconfig.Config),
+		inputChan:   make(chan dnsutils.DNSMessage, config.Collectors.DNSMessage.ChannelBufferSize),
+		// defaultRoutes: loggers,
+		logger: logger,
+		name:   name,
+		// dropped:       make(chan string),
+		// droppedCount:  map[string]int{},
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 	s.ReadConfig()
 	return s
@@ -69,11 +70,13 @@ func NewDNSMessage(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *
 func (c *DNSMessage) GetName() string { return c.name }
 
 func (c *DNSMessage) AddDroppedRoute(wrk pkgutils.Worker) {
-	c.droppedRoutes = append(c.droppedRoutes, wrk)
+	// c.droppedRoutes = append(c.droppedRoutes, wrk)
+	c.RoutingHandler.AddDroppedRoute(wrk)
 }
 
 func (c *DNSMessage) AddDefaultRoute(wrk pkgutils.Worker) {
-	c.defaultRoutes = append(c.defaultRoutes, wrk)
+	// c.defaultRoutes = append(c.defaultRoutes, wrk)
+	c.RoutingHandler.AddDefaultRoute(wrk)
 }
 
 // deprecated function
@@ -84,13 +87,13 @@ func (c *DNSMessage) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	return nil, nil
 }
 
-func (c *DNSMessage) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
-	return pkgutils.GetActiveRoutes(c.defaultRoutes)
-}
+// func (c *DNSMessage) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
+// 	return pkgutils.GetActiveRoutes(c.defaultRoutes)
+// }
 
-func (c *DNSMessage) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
-	return pkgutils.GetActiveRoutes(c.droppedRoutes)
-}
+// func (c *DNSMessage) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
+// 	return pkgutils.GetActiveRoutes(c.droppedRoutes)
+// }
 
 func (c *DNSMessage) ReadConfigMatching(value interface{}) {
 	reflectedValue := reflect.ValueOf(value)
@@ -232,9 +235,12 @@ func (c *DNSMessage) LogError(msg string, v ...interface{}) {
 
 func (c *DNSMessage) Stop() {
 	// stop monitor goroutine
-	c.LogInfo("stopping monitor...")
-	c.stopMonitor <- true
-	<-c.doneMonitor
+	// c.LogInfo("stopping monitor...")
+	// c.stopMonitor <- true
+	// <-c.doneMonitor
+
+	c.LogInfo("stopping routing handler...")
+	c.RoutingHandler.Stop()
 
 	// read done channel and block until run is terminated
 	c.LogInfo("stopping run...")
@@ -242,51 +248,51 @@ func (c *DNSMessage) Stop() {
 	<-c.doneRun
 }
 
-func (c *DNSMessage) MonitorCollector() {
-	watchInterval := 10 * time.Second
-	bufferFull := time.NewTimer(watchInterval)
-MONITOR_LOOP:
-	for {
-		select {
-		case <-c.stopMonitor:
-			close(c.dropped)
-			bufferFull.Stop()
-			c.doneMonitor <- true
-			break MONITOR_LOOP
+// func (c *DNSMessage) MonitorCollector() {
+// 	watchInterval := 10 * time.Second
+// 	bufferFull := time.NewTimer(watchInterval)
+// MONITOR_LOOP:
+// 	for {
+// 		select {
+// 		case <-c.stopMonitor:
+// 			close(c.dropped)
+// 			bufferFull.Stop()
+// 			c.doneMonitor <- true
+// 			break MONITOR_LOOP
 
-		case loggerName := <-c.dropped:
-			if _, ok := c.droppedCount[loggerName]; !ok {
-				c.droppedCount[loggerName] = 1
-			} else {
-				c.droppedCount[loggerName]++
-			}
+// 		case loggerName := <-c.dropped:
+// 			if _, ok := c.droppedCount[loggerName]; !ok {
+// 				c.droppedCount[loggerName] = 1
+// 			} else {
+// 				c.droppedCount[loggerName]++
+// 			}
 
-		case <-bufferFull.C:
-			for v, k := range c.droppedCount {
-				if k > 0 {
-					c.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
-					c.droppedCount[v] = 0
-				}
-			}
-			bufferFull.Reset(watchInterval)
-		}
-	}
-	c.LogInfo("monitor terminated")
-}
+// 		case <-bufferFull.C:
+// 			for v, k := range c.droppedCount {
+// 				if k > 0 {
+// 					c.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
+// 					c.droppedCount[v] = 0
+// 				}
+// 			}
+// 			bufferFull.Reset(watchInterval)
+// 		}
+// 	}
+// 	c.LogInfo("monitor terminated")
+// }
 
 func (c *DNSMessage) Run() {
 	c.LogInfo("starting collector...")
 	var err error
 
 	// prepare next channels
-	defaultRoutes, defaultNames := c.GetDefaultRoutes()
-	droppedRoutes, droppedNames := c.GetDroppedRoutes()
+	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&c.config.IngoingTransformers, c.logger, c.name, defaultRoutes, 0)
 
-	// start goroutine to count dropped messsages
-	go c.MonitorCollector()
+	// // start goroutine to count dropped messsages
+	// go c.MonitorCollector()
 
 RUN_LOOP:
 	for {
@@ -341,37 +347,19 @@ RUN_LOOP:
 			if matched {
 				subprocessors.InitDNSMessageFormat(&dm)
 				if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
-					for i := range droppedRoutes {
-						select {
-						case droppedRoutes[i] <- dm: // Successful send to logger channel
-						default:
-							c.dropped <- droppedNames[i]
-						}
-					}
+					c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 					continue
 				}
 			}
 
 			// drop packet ?
 			if !matched {
-				for i := range droppedRoutes {
-					select {
-					case droppedRoutes[i] <- dm: // Successful send to logger channel
-					default:
-						c.dropped <- droppedNames[i]
-					}
-				}
+				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
 			// send to next
-			for i := range defaultRoutes {
-				select {
-				case defaultRoutes[i] <- dm: // Successful send to logger channel
-				default:
-					c.dropped <- defaultNames[i]
-				}
-			}
+			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 		}
 

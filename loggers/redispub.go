@@ -40,6 +40,7 @@ type RedisPub struct {
 	transportReady     chan bool
 	transportReconnect chan bool
 	writerReady        bool
+	RoutingHandler     pkgutils.RoutingHandler
 }
 
 func NewRedisPub(config *pkgconfig.Config, logger *logger.Logger, name string) *RedisPub {
@@ -59,6 +60,7 @@ func NewRedisPub(config *pkgconfig.Config, logger *logger.Logger, name string) *
 		config:             config,
 		configChan:         make(chan *pkgconfig.Config),
 		name:               name,
+		RoutingHandler:     pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	s.ReadConfig()
@@ -112,6 +114,9 @@ func (c *RedisPub) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *RedisPub) Stop() {
+	c.LogInfo("stopping routing handler...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun

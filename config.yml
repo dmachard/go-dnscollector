@@ -118,12 +118,12 @@ pipelines:
       max-size: 1000
       max-files: 10
       mode: flat-json
-    routing-policy:
-      default: [ console ]
 
   - name: console
     stdout:
       mode: text
+    routing-policy:
+      default: [ outputfile ]
 
 ################################################
 # list of supported collectors

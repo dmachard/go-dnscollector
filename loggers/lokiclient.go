@@ -74,40 +74,41 @@ func (o *LokiStream) Encode2Proto() ([]byte, error) {
 }
 
 type LokiClient struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DNSMessage
-	outputChan  chan dnsutils.DNSMessage
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	logger      *logger.Logger
-	httpclient  *http.Client
-	textFormat  []string
-	streams     map[string]*LokiStream
-	name        string
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	httpclient     *http.Client
+	textFormat     []string
+	streams        map[string]*LokiStream
+	name           string
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func NewLokiClient(config *pkgconfig.Config, logger *logger.Logger, name string) *LokiClient {
 	logger.Info("[%s] logger=loki - enabled", name)
 
 	s := &LokiClient{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
-		logger:      logger,
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		streams:     make(map[string]*LokiStream),
-		name:        name,
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
+		logger:         logger,
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		streams:        make(map[string]*LokiStream),
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	s.ReadConfig()
-
 	return s
 }
 
@@ -186,6 +187,9 @@ func (c *LokiClient) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *LokiClient) Stop() {
+	c.LogInfo("stopping routing handler...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun

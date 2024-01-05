@@ -39,6 +39,7 @@ type TCPClient struct {
 	transportReady     chan bool
 	transportReconnect chan bool
 	writerReady        bool
+	RoutingHandler     pkgutils.RoutingHandler
 }
 
 func NewTCPClient(config *pkgconfig.Config, logger *logger.Logger, name string) *TCPClient {
@@ -58,6 +59,7 @@ func NewTCPClient(config *pkgconfig.Config, logger *logger.Logger, name string) 
 		config:             config,
 		configChan:         make(chan *pkgconfig.Config),
 		name:               name,
+		RoutingHandler:     pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	s.ReadConfig()
@@ -110,6 +112,9 @@ func (c *TCPClient) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *TCPClient) Stop() {
+	c.LogInfo("stopping routing handler...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun
