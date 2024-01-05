@@ -69,9 +69,13 @@ func NewTCPClient(config *pkgconfig.Config, logger *logger.Logger, name string) 
 
 func (c *TCPClient) GetName() string { return c.name }
 
-func (c *TCPClient) AddDroppedRoute(wrk pkgutils.Worker) {}
+func (c *TCPClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDroppedRoute(wrk)
+}
 
-func (c *TCPClient) AddDefaultRoute(wrk pkgutils.Worker) {}
+func (c *TCPClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDefaultRoute(wrk)
+}
 
 func (c *TCPClient) SetLoggers(loggers []pkgutils.Worker) {}
 
@@ -267,6 +271,10 @@ func (c *TCPClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 func (c *TCPClient) Run() {
 	c.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, c.outputChan)
@@ -303,8 +311,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			c.outputChan <- dm

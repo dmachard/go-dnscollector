@@ -64,9 +64,13 @@ func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name stri
 
 func (k *KafkaProducer) GetName() string { return k.name }
 
-func (k *KafkaProducer) AddDroppedRoute(wrk pkgutils.Worker) {}
+func (k *KafkaProducer) AddDroppedRoute(wrk pkgutils.Worker) {
+	k.RoutingHandler.AddDroppedRoute(wrk)
+}
 
-func (k *KafkaProducer) AddDefaultRoute(wrk pkgutils.Worker) {}
+func (k *KafkaProducer) AddDefaultRoute(wrk pkgutils.Worker) {
+	k.RoutingHandler.AddDefaultRoute(wrk)
+}
 
 func (k *KafkaProducer) SetLoggers(loggers []pkgutils.Worker) {}
 
@@ -262,6 +266,10 @@ func (k *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 func (k *KafkaProducer) Run() {
 	k.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := k.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := k.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, k.outputChan)
@@ -298,8 +306,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				k.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			k.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			k.outputChan <- dm

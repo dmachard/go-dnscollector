@@ -57,7 +57,7 @@ func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
 }
 
 func (c *AfpacketSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	return pkgutils.GetActiveRoutes(c.defaultRoutes)
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *AfpacketSniffer) ReadConfig() {}

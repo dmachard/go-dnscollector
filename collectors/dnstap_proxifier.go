@@ -17,29 +17,32 @@ import (
 )
 
 type DnstapProxifier struct {
-	doneRun       chan bool
-	stopRun       chan bool
-	listen        net.Listener
-	conns         []net.Conn
-	sockPath      string
-	defaultRoutes []pkgutils.Worker
-	config        *pkgconfig.Config
-	configChan    chan *pkgconfig.Config
-	logger        *logger.Logger
-	name          string
-	stopping      bool
+	doneRun        chan bool
+	stopRun        chan bool
+	listen         net.Listener
+	conns          []net.Conn
+	sockPath       string
+	defaultRoutes  []pkgutils.Worker
+	droppedRoutes  []pkgutils.Worker
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	name           string
+	stopping       bool
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func NewDnstapProxifier(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
 	logger.Info("[%s] collector=dnstaprelay - enabled", name)
 	s := &DnstapProxifier{
-		doneRun:       make(chan bool),
-		stopRun:       make(chan bool),
-		config:        config,
-		configChan:    make(chan *pkgconfig.Config),
-		defaultRoutes: loggers,
-		logger:        logger,
-		name:          name,
+		doneRun:        make(chan bool),
+		stopRun:        make(chan bool),
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		defaultRoutes:  loggers,
+		logger:         logger,
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 	s.ReadConfig()
 	return s
@@ -48,7 +51,7 @@ func NewDnstapProxifier(loggers []pkgutils.Worker, config *pkgconfig.Config, log
 func (c *DnstapProxifier) GetName() string { return c.name }
 
 func (c *DnstapProxifier) AddDroppedRoute(wrk pkgutils.Worker) {
-	// TODO
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
 }
 
 func (c *DnstapProxifier) AddDefaultRoute(wrk pkgutils.Worker) {

@@ -53,9 +53,13 @@ func NewInfluxDBClient(config *pkgconfig.Config, logger *logger.Logger, name str
 
 func (ic *InfluxDBClient) GetName() string { return ic.name }
 
-func (ic *InfluxDBClient) AddDroppedRoute(wrk pkgutils.Worker) {}
+func (ic *InfluxDBClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	ic.RoutingHandler.AddDroppedRoute(wrk)
+}
 
-func (ic *InfluxDBClient) AddDefaultRoute(wrk pkgutils.Worker) {}
+func (ic *InfluxDBClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	ic.RoutingHandler.AddDefaultRoute(wrk)
+}
 
 func (ic *InfluxDBClient) SetLoggers(loggers []pkgutils.Worker) {}
 
@@ -94,6 +98,10 @@ func (ic *InfluxDBClient) Stop() {
 func (ic *InfluxDBClient) Run() {
 	ic.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := ic.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := ic.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, ic.outputChan)
@@ -130,8 +138,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				ic.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			ic.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			ic.outputChan <- dm

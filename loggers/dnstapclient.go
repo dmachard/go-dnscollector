@@ -33,11 +33,7 @@ type DnstapSender struct {
 	transportReady     chan bool
 	transportReconnect chan bool
 	name               string
-	// droppedCount       map[string]int
-	// dropped            chan string
-	// droppedRoutes      []pkgutils.Worker
-	// defaultRoutes      []pkgutils.Worker
-	RoutingHandler pkgutils.RoutingHandler
+	RoutingHandler     pkgutils.RoutingHandler
 }
 
 func NewDnstapSender(config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapSender {
@@ -65,22 +61,12 @@ func NewDnstapSender(config *pkgconfig.Config, logger *logger.Logger, name strin
 func (ds *DnstapSender) GetName() string { return ds.name }
 
 func (ds *DnstapSender) AddDroppedRoute(wrk pkgutils.Worker) {
-	// ds.droppedRoutes = append(ds.droppedRoutes, wrk)
 	ds.RoutingHandler.AddDroppedRoute(wrk)
 }
 
 func (ds *DnstapSender) AddDefaultRoute(wrk pkgutils.Worker) {
-	// ds.defaultRoutes = append(ds.defaultRoutes, wrk)
 	ds.RoutingHandler.AddDefaultRoute(wrk)
 }
-
-// func (ds *DnstapSender) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
-// 	return pkgutils.GetActiveRoutes(ds.defaultRoutes)
-// }
-
-// func (ds *DnstapSender) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
-// 	return pkgutils.GetActiveRoutes(ds.droppedRoutes)
-// }
 
 func (ds *DnstapSender) SetLoggers(loggers []pkgutils.Worker) {}
 

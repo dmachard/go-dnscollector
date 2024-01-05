@@ -67,28 +67,22 @@ type LogFile struct {
 	commpressTimer *time.Timer
 	textFormat     []string
 	name           string
-	// droppedCount   map[string]int
-	// dropped        chan string
-	// droppedRoutes  []pkgutils.Worker
-	// defaultRoutes  []pkgutils.Worker
 	RoutingHandler pkgutils.RoutingHandler
 }
 
 func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *LogFile {
 	logger.Info("[%s] logger=file - enabled", name)
 	lf := &LogFile{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.LogFile.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.LogFile.ChannelBufferSize),
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		logger:      logger,
-		name:        name,
-		// dropped:      make(chan string),
-		// droppedCount: map[string]int{},
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.LogFile.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.LogFile.ChannelBufferSize),
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		logger:         logger,
+		name:           name,
 		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
@@ -104,22 +98,12 @@ func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *L
 func (lf *LogFile) GetName() string { return lf.name }
 
 func (lf *LogFile) AddDroppedRoute(wrk pkgutils.Worker) {
-	// lf.droppedRoutes = append(lf.droppedRoutes, wrk)
 	lf.RoutingHandler.AddDroppedRoute(wrk)
 }
 
 func (lf *LogFile) AddDefaultRoute(wrk pkgutils.Worker) {
-	// lf.defaultRoutes = append(lf.defaultRoutes, wrk)
 	lf.RoutingHandler.AddDefaultRoute(wrk)
 }
-
-// func (lf *LogFile) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
-// 	return pkgutils.GetActiveRoutes(lf.defaultRoutes)
-// }
-
-// func (lf *LogFile) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
-// 	return pkgutils.GetActiveRoutes(lf.droppedRoutes)
-// }
 
 func (lf *LogFile) SetLoggers(loggers []pkgutils.Worker) {}
 
@@ -545,9 +529,6 @@ func (lf *LogFile) Process() {
 	flushTimer := time.NewTimer(flushInterval)
 	lf.commpressTimer = time.NewTimer(time.Duration(lf.config.Loggers.LogFile.CompressInterval) * time.Second)
 
-	// nextStanzaBufferInterval := 10 * time.Second
-	// nextStanzaBufferFull := time.NewTimer(nextStanzaBufferInterval)
-
 	buffer := new(bytes.Buffer)
 	var data []byte
 	var err error
@@ -573,13 +554,6 @@ PROCESS_LOOP:
 
 			lf.doneProcess <- true
 			break PROCESS_LOOP
-
-		// case loggerName := <-lf.dropped:
-		// 	if _, ok := lf.droppedCount[loggerName]; !ok {
-		// 		lf.droppedCount[loggerName] = 1
-		// 	} else {
-		// 		lf.droppedCount[loggerName]++
-		// 	}
 
 		case dm, opened := <-lf.outputChan:
 			if !opened {
@@ -649,15 +623,6 @@ PROCESS_LOOP:
 			if lf.config.Loggers.LogFile.Compress {
 				lf.CompressFile()
 			}
-
-			// case <-nextStanzaBufferFullf.C:
-			// 	for v, k := range lf.droppedCount {
-			// 		if k > 0 {
-			// 			lf.LogError("stanza[%s] buffer is full, %d packet(s) dropped", v, k)
-			// 			lf.droppedCount[v] = 0
-			// 		}
-			// 	}
-			// 	nextStanzaBufferFullf.Reset(nextStanzaBufferInterval)
 
 		}
 	}

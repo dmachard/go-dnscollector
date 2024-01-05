@@ -32,23 +32,19 @@ func IsStdoutValidMode(mode string) bool {
 }
 
 type StdOut struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DNSMessage
-	outputChan  chan dnsutils.DNSMessage
-	textFormat  []string
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	logger      *logger.Logger
-	writerText  *log.Logger
-	writerPcap  *pcapgo.Writer
-	name        string
-	// droppedCount  map[string]int
-	// dropped       chan string
-	// droppedRoutes []pkgutils.Worker
-	// defaultRoutes []pkgutils.Worker
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	textFormat     []string
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	writerText     *log.Logger
+	writerPcap     *pcapgo.Writer
+	name           string
 	RoutingHandler pkgutils.RoutingHandler
 }
 
@@ -75,24 +71,12 @@ func NewStdOut(config *pkgconfig.Config, console *logger.Logger, name string) *S
 func (so *StdOut) GetName() string { return so.name }
 
 func (so *StdOut) AddDroppedRoute(wrk pkgutils.Worker) {
-	// so.droppedRoutes = append(so.droppedRoutes, wrk)
 	so.RoutingHandler.AddDroppedRoute(wrk)
 }
 
 func (so *StdOut) AddDefaultRoute(wrk pkgutils.Worker) {
-	// so.defaultRoutes = append(so.defaultRoutes, wrk)
 	so.RoutingHandler.AddDefaultRoute(wrk)
 }
-
-// func (so *StdOut) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
-// 	//return pkgutils.GetActiveRoutes(so.defaultRoutes)
-// 	return so.Routing.GetDefaultRoutes()
-// }
-
-// func (so *StdOut) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
-// 	//return pkgutils.GetActiveRoutes(so.droppedRoutes)
-// 	return so.Routing.GetDroppedRoutes()
-// }
 
 func (so *StdOut) SetLoggers(loggers []pkgutils.Worker) {}
 
@@ -214,9 +198,6 @@ func (so *StdOut) Process() {
 	// standard output buffer
 	buffer := new(bytes.Buffer)
 
-	// nextStanzaBufferInterval := 10 * time.Second
-	// nextStanzaBufferFull := time.NewTimer(nextStanzaBufferInterval)
-
 	if so.config.Loggers.Stdout.Mode == pkgconfig.ModePCAP && so.writerPcap == nil {
 		so.SetPcapWriter(os.Stdout)
 	}
@@ -228,13 +209,6 @@ PROCESS_LOOP:
 		case <-so.stopProcess:
 			so.doneProcess <- true
 			break PROCESS_LOOP
-
-		// case stanzaName := <-so.dropped:
-		// 	if _, ok := so.droppedCount[stanzaName]; !ok {
-		// 		so.droppedCount[stanzaName] = 1
-		// 	} else {
-		// 		so.droppedCount[stanzaName]++
-		// 	}
 
 		case dm, opened := <-so.outputChan:
 			if !opened {
@@ -292,15 +266,6 @@ PROCESS_LOOP:
 				so.writerText.Print(buffer.String())
 				buffer.Reset()
 			}
-
-			// case <-nextStanzaBufferFull.C:
-			// 	for v, k := range so.droppedCount {
-			// 		if k > 0 {
-			// 			so.LogError("stanza[%s] buffer is full, %d packet(s) dropped", v, k)
-			// 			so.droppedCount[v] = 0
-			// 		}
-			// 	}
-			// 	nextStanzaBufferFull.Reset(nextStanzaBufferInterval)
 		}
 	}
 	so.LogInfo("processing terminated")

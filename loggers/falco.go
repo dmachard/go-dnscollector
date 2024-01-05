@@ -49,9 +49,13 @@ func NewFalcoClient(config *pkgconfig.Config, console *logger.Logger, name strin
 
 func (fc *FalcoClient) GetName() string { return fc.name }
 
-func (fc *FalcoClient) AddDroppedRoute(wrk pkgutils.Worker) {}
+func (fc *FalcoClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	fc.RoutingHandler.AddDroppedRoute(wrk)
+}
 
-func (fc *FalcoClient) AddDefaultRoute(wrk pkgutils.Worker) {}
+func (fc *FalcoClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	fc.RoutingHandler.AddDefaultRoute(wrk)
+}
 
 func (fc *FalcoClient) SetLoggers(loggers []pkgutils.Worker) {}
 
@@ -92,6 +96,10 @@ func (fc *FalcoClient) Stop() {
 func (fc *FalcoClient) Run() {
 	fc.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := fc.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := fc.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, fc.outputChan)
@@ -128,8 +136,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				fc.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			fc.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			fc.outputChan <- dm

@@ -64,9 +64,13 @@ func NewFluentdClient(config *pkgconfig.Config, logger *logger.Logger, name stri
 
 func (fc *FluentdClient) GetName() string { return fc.name }
 
-func (fc *FluentdClient) AddDroppedRoute(wrk pkgutils.Worker) {}
+func (fc *FluentdClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	fc.RoutingHandler.AddDroppedRoute(wrk)
+}
 
-func (fc *FluentdClient) AddDefaultRoute(wrk pkgutils.Worker) {}
+func (fc *FluentdClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	fc.RoutingHandler.AddDefaultRoute(wrk)
+}
 
 func (fc *FluentdClient) SetLoggers(loggers []pkgutils.Worker) {}
 
@@ -80,7 +84,6 @@ func (fc *FluentdClient) ReadConfig() {
 	if len(fc.config.Loggers.Fluentd.SockPath) > 0 {
 		fc.transport = netlib.SocketUnix
 	}
-	// end
 }
 
 func (fc *FluentdClient) ReloadConfig(config *pkgconfig.Config) {
@@ -253,6 +256,10 @@ func (fc *FluentdClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 func (fc *FluentdClient) Run() {
 	fc.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := fc.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := fc.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, fc.outputChan)
@@ -292,8 +299,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				fc.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			fc.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			fc.outputChan <- dm

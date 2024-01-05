@@ -99,9 +99,13 @@ func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *S
 
 func (s *Syslog) GetName() string { return s.name }
 
-func (s *Syslog) AddDroppedRoute(wrk pkgutils.Worker) {}
+func (s *Syslog) AddDroppedRoute(wrk pkgutils.Worker) {
+	s.RoutingHandler.AddDroppedRoute(wrk)
+}
 
-func (s *Syslog) AddDefaultRoute(wrk pkgutils.Worker) {}
+func (s *Syslog) AddDefaultRoute(wrk pkgutils.Worker) {
+	s.RoutingHandler.AddDefaultRoute(wrk)
+}
 
 func (s *Syslog) SetLoggers(loggers []pkgutils.Worker) {}
 
@@ -255,6 +259,10 @@ func (s *Syslog) ConnectToRemote() {
 func (s *Syslog) Run() {
 	s.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := s.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := s.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, s.outputChan)
@@ -295,8 +303,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				s.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			s.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			s.outputChan <- dm

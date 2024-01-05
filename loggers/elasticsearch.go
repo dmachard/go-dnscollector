@@ -17,23 +17,19 @@ import (
 )
 
 type ElasticSearchClient struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DNSMessage
-	outputChan  chan dnsutils.DNSMessage
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	logger      *logger.Logger
-	name        string
-	server      string
-	index       string
-	bulkURL     string
-	// droppedCount  map[string]int
-	// dropped       chan string
-	// droppedRoutes []pkgutils.Worker
-	// defaultRoutes []pkgutils.Worker
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	name           string
+	server         string
+	index          string
+	bulkURL        string
 	RoutingHandler pkgutils.RoutingHandler
 }
 
@@ -59,22 +55,12 @@ func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, na
 func (ec *ElasticSearchClient) GetName() string { return ec.name }
 
 func (ec *ElasticSearchClient) AddDroppedRoute(wrk pkgutils.Worker) {
-	// ec.droppedRoutes = append(ec.droppedRoutes, wrk)
 	ec.RoutingHandler.AddDroppedRoute(wrk)
 }
 
 func (ec *ElasticSearchClient) AddDefaultRoute(wrk pkgutils.Worker) {
-	// ec.defaultRoutes = append(ec.defaultRoutes, wrk)
 	ec.RoutingHandler.AddDefaultRoute(wrk)
 }
-
-// func (ec *ElasticSearchClient) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
-// 	return pkgutils.GetActiveRoutes(ec.defaultRoutes)
-// }
-
-// func (ec *ElasticSearchClient) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
-// 	return pkgutils.GetActiveRoutes(ec.droppedRoutes)
-// }
 
 func (ec *ElasticSearchClient) SetLoggers(loggers []pkgutils.Worker) {}
 
@@ -211,22 +197,12 @@ func (ec *ElasticSearchClient) Process() {
 	flushInterval := time.Duration(ec.config.Loggers.ElasticSearchClient.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
-	// nextStanzaBufferInterval := 10 * time.Second
-	// nextStanzaBufferFull := time.NewTimer(nextStanzaBufferInterval)
-
 PROCESS_LOOP:
 	for {
 		select {
 		case <-ec.stopProcess:
 			ec.doneProcess <- true
 			break PROCESS_LOOP
-
-		// case stanzaName := <-ec.dropped:
-		// 	if _, ok := ec.droppedCount[stanzaName]; !ok {
-		// 		ec.droppedCount[stanzaName] = 1
-		// 	} else {
-		// 		ec.droppedCount[stanzaName]++
-		// 	}
 
 		// incoming dns message to process
 		case dm, opened := <-ec.outputChan:
@@ -250,15 +226,6 @@ PROCESS_LOOP:
 
 			// restart timer
 			flushTimer.Reset(flushInterval)
-
-			// case <-nextStanzaBufferFull.C:
-			// 	for v, k := range ec.droppedCount {
-			// 		if k > 0 {
-			// 			ec.LogError("stanza[%s] buffer is full, %d packet(s) dropped", v, k)
-			// 			ec.droppedCount[v] = 0
-			// 		}
-			// 	}
-			// 	nextStanzaBufferFull.Reset(nextStanzaBufferInterval)
 		}
 	}
 	ec.LogInfo("processing terminated")
