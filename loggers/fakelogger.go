@@ -3,6 +3,7 @@ package loggers
 import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 )
 
 type FakeLogger struct {
@@ -22,7 +23,11 @@ func NewFakeLogger() *FakeLogger {
 
 func (c *FakeLogger) GetName() string { return c.name }
 
-func (c *FakeLogger) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *FakeLogger) AddDefaultRoute(wrk pkgutils.Worker) {}
+
+func (c *FakeLogger) AddDroppedRoute(wrk pkgutils.Worker) {}
+
+func (c *FakeLogger) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *FakeLogger) ReadConfig() {}
 
@@ -30,7 +35,7 @@ func (c *FakeLogger) ReloadConfig(config *pkgconfig.Config) {}
 
 func (c *FakeLogger) Stop() {}
 
-func (c *FakeLogger) Channel() chan dnsutils.DNSMessage {
+func (c *FakeLogger) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 

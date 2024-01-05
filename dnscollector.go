@@ -9,6 +9,8 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkglinker"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 	"github.com/natefinch/lumberjack"
 	"github.com/prometheus/common/version"
@@ -86,8 +88,14 @@ func main() {
 	// create logger
 	logger := logger.New(true)
 
-	// load config
-	config, err := pkgconfig.LoadConfig(configPath)
+	// get DNSMessage flat model
+	dmRef, err := dnsutils.GetFlatDNSMessage()
+	if err != nil {
+		fmt.Printf("config error: unable to get DNSMessage reference %v\n", err)
+		os.Exit(1)
+	}
+
+	config, err := pkgconfig.LoadConfig(configPath, dmRef)
 	if err != nil {
 		fmt.Printf("config error: %v\n", err)
 		os.Exit(1)
@@ -99,13 +107,24 @@ func main() {
 	logger.Info("main - starting dns-collector...")
 
 	// init active collectors and loggers
-	mapLoggers := make(map[string]dnsutils.Worker)
-	mapCollectors := make(map[string]dnsutils.Worker)
+	mapLoggers := make(map[string]pkgutils.Worker)
+	mapCollectors := make(map[string]pkgutils.Worker)
 
-	// enable multiplexer mode
-	if IsMuxEnabled(config) {
+	// running mode,
+	// multiplexer ?
+	if pkglinker.IsMuxEnabled(config) {
 		logger.Info("main - multiplexer mode enabled")
-		InitMultiplexer(mapLoggers, mapCollectors, config, logger)
+		pkglinker.InitMultiplexer(mapLoggers, mapCollectors, config, logger)
+	}
+
+	// or pipeline ?
+	if len(config.Pipelines) > 0 {
+		logger.Info("main - pipelines mode enabled")
+		err := pkglinker.InitPipelines(mapLoggers, mapCollectors, config, logger)
+		if err != nil {
+			logger.Error("main - %s", err.Error())
+			os.Exit(1)
+		}
 	}
 
 	// Handle Ctrl-C with SIG TERM and SIGHUP
@@ -122,15 +141,15 @@ func main() {
 				logger.Info("main - SIGHUP received")
 
 				// read config
-				err := pkgconfig.ReloadConfig(configPath, config)
+				err := pkgconfig.ReloadConfig(configPath, config, dmRef)
 				if err != nil {
 					panic(fmt.Sprintf("main - reload config error:  %v", err))
 				}
 
 				// reload logger and multiplexer
 				InitLogger(logger, config)
-				if IsMuxEnabled(config) {
-					ReloadMultiplexer(mapLoggers, mapCollectors, config, logger)
+				if pkglinker.IsMuxEnabled(config) {
+					pkglinker.ReloadMultiplexer(mapLoggers, mapCollectors, config, logger)
 				}
 
 			case <-sigTerm:

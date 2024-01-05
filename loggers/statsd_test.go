@@ -29,7 +29,7 @@ func TestStatsdRun(t *testing.T) {
 
 	// send fake dns message to logger
 	dm := dnsutils.GetFakeDNSMessage()
-	g.Channel() <- dm
+	g.GetInputChannel() <- dm
 
 	// read data on fake server side
 	buf := make([]byte, 4096)

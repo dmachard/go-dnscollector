@@ -50,7 +50,7 @@ dep: check-go
 
 # Builds the project using go build.
 build: check-go
-	CGO_ENABLED=0 go build -v -ldflags="$(LD_FLAGS)" -o ${BINARY_NAME} dnscollector.go multiplexer.go
+	CGO_ENABLED=0 go build -v -ldflags="$(LD_FLAGS)" -o ${BINARY_NAME} dnscollector.go
 
 # Builds and runs the project.
 run: build
@@ -68,7 +68,9 @@ lint:
 tests: check-go
 	@go test -race -cover -v
 	@go test ./pkgconfig/ -race -cover -v
+	@go test ./pkgutils/ -race -cover -v
 	@go test ./dnsutils/ -race -cover -v
+	@go test ./routing/ -race -cover -v
 	@go test ./netlib/ -race -cover -v
 	@go test -timeout 30s ./transformers/ -race -cover -v
 	@go test -timeout 30s ./collectors/ -race -cover -v

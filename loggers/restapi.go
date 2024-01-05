@@ -11,6 +11,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/dmachard/go-topmap"
@@ -45,19 +46,20 @@ type KeyHit struct {
 }
 
 type RestAPI struct {
-	doneAPI     chan bool
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DNSMessage
-	outputChan  chan dnsutils.DNSMessage
-	httpserver  net.Listener
-	httpmux     *http.ServeMux
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	logger      *logger.Logger
-	name        string
+	doneAPI        chan bool
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	httpserver     net.Listener
+	httpmux        *http.ServeMux
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	name           string
+	RoutingHandler pkgutils.RoutingHandler
 
 	HitsStream HitsStream
 	HitsUniq   HitsUniq
@@ -76,17 +78,18 @@ type RestAPI struct {
 func NewRestAPI(config *pkgconfig.Config, logger *logger.Logger, name string) *RestAPI {
 	logger.Info("[%s] logger=restapi - enabled", name)
 	o := &RestAPI{
-		doneAPI:     make(chan bool),
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.RestAPI.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.RestAPI.ChannelBufferSize),
-		logger:      logger,
-		name:        name,
+		doneAPI:        make(chan bool),
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.RestAPI.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.RestAPI.ChannelBufferSize),
+		logger:         logger,
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 
 		HitsStream: HitsStream{
 			Streams: make(map[string]SearchBy),
@@ -113,7 +116,15 @@ func NewRestAPI(config *pkgconfig.Config, logger *logger.Logger, name string) *R
 
 func (c *RestAPI) GetName() string { return c.name }
 
-func (c *RestAPI) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *RestAPI) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDroppedRoute(wrk)
+}
+
+func (c *RestAPI) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (c *RestAPI) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *RestAPI) ReadConfig() {
 	if !pkgconfig.IsValidTLS(c.config.Loggers.RestAPI.TLSMinVersion) {
@@ -134,11 +145,14 @@ func (c *RestAPI) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=restapi - "+msg, v...)
 }
 
-func (c *RestAPI) Channel() chan dnsutils.DNSMessage {
+func (c *RestAPI) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 
 func (c *RestAPI) Stop() {
+	c.LogInfo("stopping routing handler...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun
@@ -697,6 +711,10 @@ func (c *RestAPI) ListenAndServe() {
 }
 
 func (c *RestAPI) Run() {
+	// prepare next channels
+	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, c.outputChan)
@@ -736,8 +754,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			c.outputChan <- dm

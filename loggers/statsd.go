@@ -12,6 +12,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/dmachard/go-topmap"
@@ -44,16 +45,17 @@ type StreamStats struct {
 }
 
 type StatsdClient struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DNSMessage
-	outputChan  chan dnsutils.DNSMessage
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	logger      *logger.Logger
-	name        string
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	name           string
+	RoutingHandler pkgutils.RoutingHandler
 
 	Stats StreamStats
 	sync.RWMutex
@@ -63,17 +65,18 @@ func NewStatsdClient(config *pkgconfig.Config, logger *logger.Logger, name strin
 	logger.Info("[%s] logger=statsd - enabled", name)
 
 	s := &StatsdClient{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.Statsd.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.Statsd.ChannelBufferSize),
-		logger:      logger,
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		name:        name,
-		Stats:       StreamStats{Streams: make(map[string]*StatsPerStream)},
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.Statsd.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.Statsd.ChannelBufferSize),
+		logger:         logger,
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		name:           name,
+		Stats:          StreamStats{Streams: make(map[string]*StatsPerStream)},
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	// check config
@@ -84,7 +87,15 @@ func NewStatsdClient(config *pkgconfig.Config, logger *logger.Logger, name strin
 
 func (c *StatsdClient) GetName() string { return c.name }
 
-func (c *StatsdClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *StatsdClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDroppedRoute(wrk)
+}
+
+func (c *StatsdClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (c *StatsdClient) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *StatsdClient) ReadConfig() {
 	if !pkgconfig.IsValidTLS(c.config.Loggers.Statsd.TLSMinVersion) {
@@ -105,11 +116,14 @@ func (c *StatsdClient) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=statsd - "+msg, v...)
 }
 
-func (c *StatsdClient) Channel() chan dnsutils.DNSMessage {
+func (c *StatsdClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 
 func (c *StatsdClient) Stop() {
+	c.LogInfo("stopping routing handler...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun
@@ -235,6 +249,10 @@ func (c *StatsdClient) RecordDNSMessage(dm dnsutils.DNSMessage) {
 func (c *StatsdClient) Run() {
 	c.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, c.outputChan)
@@ -271,8 +289,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			c.outputChan <- dm

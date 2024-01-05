@@ -47,7 +47,7 @@ func Test_ElasticSearchClient(t *testing.T) {
 			dm := dnsutils.GetFakeDNSMessage()
 
 			for i := 0; i < tc.inputSize; i++ {
-				g.Channel() <- dm
+				g.GetInputChannel() <- dm
 			}
 
 			for i := 0; i < tc.inputSize/tc.bulkSize; i++ {
@@ -130,7 +130,7 @@ func Test_ElasticSearchClientFlushINterval(t *testing.T) {
 			dm := dnsutils.GetFakeDNSMessage()
 
 			for i := 0; i < tc.inputSize; i++ {
-				g.Channel() <- dm
+				g.GetInputChannel() <- dm
 			}
 
 			conn, err := fakeRcvr.Accept()

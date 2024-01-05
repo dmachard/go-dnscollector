@@ -22,13 +22,13 @@ type ConfigTransformers struct {
 		MeasureLatency    bool `yaml:"measure-latency"`
 		UnansweredQueries bool `yaml:"unanswered-queries"`
 		QueriesTimeout    int  `yaml:"queries-timeout"`
-	}
+	} `yaml:"latency"`
 	Reducer struct {
 		Enable                    bool `yaml:"enable"`
 		RepetitiveTrafficDetector bool `yaml:"repetitive-traffic-detector"`
 		QnamePlusOne              bool `yaml:"qname-plus-one"`
 		WatchInterval             int  `yaml:"watch-interval"`
-	}
+	} `yaml:"reducer"`
 	Filtering struct {
 		Enable          bool     `yaml:"enable"`
 		DropFqdnFile    string   `yaml:"drop-fqdn-file"`
@@ -67,6 +67,10 @@ type ConfigTransformers struct {
 		Enable      bool `yaml:"enable"`
 		AddFeatures bool `yaml:"add-features"`
 	} `yaml:"machine-learning"`
+	ATags struct {
+		Enable bool     `yaml:"enable"`
+		Tags   []string `yaml:"tags,flow"`
+	} `yaml:"atags"`
 }
 
 func (c *ConfigTransformers) SetDefault() {
@@ -125,6 +129,9 @@ func (c *ConfigTransformers) SetDefault() {
 
 	c.MachineLearning.Enable = false
 	c.MachineLearning.AddFeatures = false
+
+	c.ATags.Enable = false
+	c.ATags.Tags = []string{}
 }
 
 func GetFakeConfigTransformers() *ConfigTransformers {

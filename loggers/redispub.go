@@ -15,6 +15,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -39,6 +40,7 @@ type RedisPub struct {
 	transportReady     chan bool
 	transportReconnect chan bool
 	writerReady        bool
+	RoutingHandler     pkgutils.RoutingHandler
 }
 
 func NewRedisPub(config *pkgconfig.Config, logger *logger.Logger, name string) *RedisPub {
@@ -58,6 +60,7 @@ func NewRedisPub(config *pkgconfig.Config, logger *logger.Logger, name string) *
 		config:             config,
 		configChan:         make(chan *pkgconfig.Config),
 		name:               name,
+		RoutingHandler:     pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	s.ReadConfig()
@@ -67,7 +70,15 @@ func NewRedisPub(config *pkgconfig.Config, logger *logger.Logger, name string) *
 
 func (c *RedisPub) GetName() string { return c.name }
 
-func (c *RedisPub) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *RedisPub) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDroppedRoute(wrk)
+}
+
+func (c *RedisPub) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (c *RedisPub) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *RedisPub) ReadConfig() {
 
@@ -102,11 +113,14 @@ func (c *RedisPub) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=redispub - "+msg, v...)
 }
 
-func (c *RedisPub) Channel() chan dnsutils.DNSMessage {
+func (c *RedisPub) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 
 func (c *RedisPub) Stop() {
+	c.LogInfo("stopping routing handler...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun
@@ -269,6 +283,10 @@ func (c *RedisPub) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 func (c *RedisPub) Run() {
 	c.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, c.outputChan)
@@ -305,8 +323,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			c.outputChan <- dm

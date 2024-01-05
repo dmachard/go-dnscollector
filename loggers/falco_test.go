@@ -39,7 +39,7 @@ func Test_FalcoClient(t *testing.T) {
 			go g.Run()
 
 			dm := dnsutils.GetFakeDNSMessage()
-			g.Channel() <- dm
+			g.GetInputChannel() <- dm
 
 			// accept conn
 			conn, err := fakeRcvr.Accept()

@@ -12,12 +12,27 @@ How to userguides:
 
 ## Build and run from source
 
-Building from source. Use the latest golang available on your target system.
+Building from source
+
+- The very fast way, go to the top of the project and run go command
 
 ```bash
-make build
+go run .
+```
+
+- Uses the `MakeFile` (prefered way)
+
+```bash
+make
+```
+
+Execute the binary
+
+```bash
 make run
 ```
+
+- From the `DockerFile`
 
 ## Run linters
 
@@ -178,7 +193,7 @@ func NewMyLogger(config *pkgconfig.Config, logger *logger.Logger, name string) *
 
 func (c *MyLogger) GetName() string { return c.name }
 
-func (c *MyLogger) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *MyLogger) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (o *MyLogger) ReadConfig() {}
 
@@ -201,7 +216,7 @@ func (o *MyLogger) Stop() {
  close(o.done)
 }
 
-func (o *MyLogger) Channel() chan dnsutils.DnsMessage {
+func (o *MyLogger) GetInputChannel() chan dnsutils.DnsMessage {
  return o.channel
 }
 
@@ -255,78 +270,144 @@ Create the following file `collectors/mycollector.go` and `collectors/mycollecto
 package collectors
 
 import (
- "github.com/dmachard/go-dnscollector/dnsutils"
- "github.com/dmachard/go-logger"
+    "time"
+
+    "github.com/dmachard/go-dnscollector/dnsutils"
+    "github.com/dmachard/go-dnscollector/pkgconfig"
+    "github.com/dmachard/go-logger"
 )
 
-type MyCollector struct {
- done    chan bool
- exit    chan bool
- loggers []dnsutils.Worker
- config  *pkgconfig.Config
- logger  *logger.Logger
- name    string
+type MyNewCollector struct {
+    doneRun      chan bool
+    doneMonitor  chan bool
+    stopRun      chan bool
+    stopMonitor  chan bool
+    loggers      []pkgutils.Worker
+    config       *pkgconfig.Config
+    configChan   chan *pkgconfig.Config
+    logger       *logger.Logger
+    name         string
+    droppedCount int
+    dropped      chan int
 }
 
-// workaround for macos, not yet supported
-func NewMyCollector(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *MyCollector {
- logger.Info("[%s] mycollector - enabled", name)
- s := &MyCollector{
-  done:    make(chan bool),
-  exit:    make(chan bool),
-  config:  config,
-  loggers: loggers,
-  logger:  logger,
-  name:    name,
- }
- s.ReadConfig()
- return s
+func NewNewCollector(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
+    logger.Info("[%s] collector=mynewcollector - enabled", name)
+    s := &MyNewCollector{
+        doneRun:     make(chan bool),
+        doneMonitor: make(chan bool),
+        stopRun:     make(chan bool),
+        stopMonitor: make(chan bool),
+        dropped:     make(chan int),
+        config:      config,
+        configChan:  make(chan *pkgconfig.Config),
+        loggers:     loggers,
+        logger:      logger,
+        name:        name,
+    }
+    s.ReadConfig()
+    return s
 }
 
-func (c *MyCollector) GetName() string { return c.name }
+func (c *MyNewCollector) GetName() string { return c.name }
 
-func (c *MyCollector) SetLoggers(loggers []dnsutils.Worker) {
- c.loggers = loggers
+func (c *MyNewCollector) AddDefaultRoute(wrk pkgutils.Worker) {
+    c.loggers = append(c.loggers, wrk)
 }
 
-func (c *MyCollector) LogInfo(msg string, v ...interface{}) {
- c.logger.Info("["+c.name+"] mycollector - "+msg, v...)
+func (c *MyNewCollector) SetLoggers(loggers []pkgutils.Worker) {
+    c.loggers = loggers
 }
 
-func (c *MyCollector) LogError(msg string, v ...interface{}) {
- c.logger.Error("["+c.name+"] mycollector - "+msg, v...)
+func (c *MyNewCollector) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+    channels := []chan dnsutils.DNSMessage{}
+    names := []string{}
+    for _, p := range c.loggers {
+        channels = append(channels,p.GetInputChannel())
+        names = append(names, p.GetName())
+    }
+    return channels, names
 }
 
-func (c *MyCollector) Loggers() []chan dnsutils.DnsMessage {
- channels := []chan dnsutils.DnsMessage{}
- for _, p := range c.loggers {
-  channels = append(channels, p.Channel())
- }
- return channels
+func (c *MyNewCollector) ReadConfig() {}
+
+func (c *MyNewCollector) ReloadConfig(config *pkgconfig.Config) {
+    c.LogInfo("reload configuration...")
+    c.configChan <- config
 }
 
-func (c *MyCollector) ReadConfig() {
+func (c *MyNewCollector) LogInfo(msg string, v ...interface{}) {
+    c.logger.Info("["+c.name+"] collector=mynewcollector - "+msg, v...)
 }
 
-func (c *MyCollector) Channel() chan dnsutils.DnsMessage {
- return nil
+func (c *MyNewCollector) LogError(msg string, v ...interface{}) {
+    c.logger.Error("["+c.name+" collector=mynewcollector - "+msg, v...)
 }
 
-func (c *MyCollector) Stop() {
- c.LogInfo("stopping...")
-
- // exit to close properly
- c.exit <- true
-
- // read done channel and block until run is terminated
- <-c.done
- close(c.done)
+func (c *MyNewCollector) GetInputChannel() chan dnsutils.DNSMessage {
+    return nil
 }
 
-func (c *MyCollector) Run() {
- c.LogInfo("run terminated")
- c.done <- true
+func (c *MyNewCollector) Stop() {
+    // stop monitor goroutine
+    c.LogInfo("stopping monitor...")
+    c.stopMonitor <- true
+    <-c.doneMonitor
+
+    // read done channel and block until run is terminated
+    c.LogInfo("stopping run...")
+    c.stopRun <- true
+    <-c.doneRun
 }
+
+func (c *MyNewCollector) MonitorCollector() {
+    watchInterval := 10 * time.Second
+    bufferFull := time.NewTimer(watchInterval)
+MONITOR_LOOP:
+    for {
+        select {
+            case <-c.dropped:
+                c.droppedCount++
+            case <-c.stopMonitor:
+                close(c.dropped)
+                bufferFull.Stop()
+                c.doneMonitor <- true
+                break MONITOR_LOOP
+            case <-bufferFull.C:
+                if c.droppedCount > 0 {
+                    c.LogError("recv buffer is full, %d packet(s) dropped", c.droppedCount)
+                    c.droppedCount = 0
+                }
+                bufferFull.Reset(watchInterval)
+        }
+    }
+    c.LogInfo("monitor terminated")
+}
+
+func (c *DNSMessage) Run() {
+    c.LogInfo("starting collector...")
+
+    // start goroutine to count dropped messsages
+    go c.MonitorCollector()
+
+RUN_LOOP:
+    for {
+        select {
+        case <-c.stopRun:
+            c.doneRun <- true
+            break RUN_LOOP
+
+        case cfg := <-c.configChan:
+
+            // save the new config
+            c.config = cfg
+            c.ReadConfig()
+        }
+
+    }
+    c.LogInfo("run terminated")
+}
+
 
 ```
 

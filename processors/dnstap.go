@@ -9,6 +9,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-logger"
@@ -51,38 +52,38 @@ func GetFakeDNSTap(dnsquery []byte) *dnstap.Dnstap {
 }
 
 type DNSTapProcessor struct {
-	ConnID       int
-	doneRun      chan bool
-	stopRun      chan bool
-	doneMonitor  chan bool
-	stopMonitor  chan bool
-	recvFrom     chan []byte
-	logger       *logger.Logger
-	config       *pkgconfig.Config
-	ConfigChan   chan *pkgconfig.Config
-	name         string
-	chanSize     int
-	dropped      chan string
-	droppedCount map[string]int
+	ConnID         int
+	doneRun        chan bool
+	stopRun        chan bool
+	doneMonitor    chan bool
+	stopMonitor    chan bool
+	recvFrom       chan []byte
+	logger         *logger.Logger
+	config         *pkgconfig.Config
+	ConfigChan     chan *pkgconfig.Config
+	name           string
+	chanSize       int
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func NewDNSTapProcessor(connID int, config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
 	logger.Info("[%s] processor=dnstap#%d - initialization...", name, connID)
 
 	d := DNSTapProcessor{
-		ConnID:       connID,
-		doneMonitor:  make(chan bool),
-		doneRun:      make(chan bool),
-		stopMonitor:  make(chan bool),
-		stopRun:      make(chan bool),
-		recvFrom:     make(chan []byte, size),
-		chanSize:     size,
-		logger:       logger,
-		config:       config,
-		ConfigChan:   make(chan *pkgconfig.Config),
-		name:         name,
-		dropped:      make(chan string),
-		droppedCount: map[string]int{},
+		ConnID:      connID,
+		doneMonitor: make(chan bool),
+		doneRun:     make(chan bool),
+		stopMonitor: make(chan bool),
+		stopRun:     make(chan bool),
+		recvFrom:    make(chan []byte, size),
+		chanSize:    size,
+		logger:      logger,
+		config:      config,
+		ConfigChan:  make(chan *pkgconfig.Config),
+		name:        name,
+		// dropped:      make(chan string),
+		// droppedCount: map[string]int{},
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	return d
@@ -113,56 +114,64 @@ func (d *DNSTapProcessor) GetChannel() chan []byte {
 }
 
 func (d *DNSTapProcessor) Stop() {
+	d.LogInfo("stopping routing handler...")
+	d.RoutingHandler.Stop()
+
 	d.LogInfo("stopping to process...")
 	d.stopRun <- true
 	<-d.doneRun
 
-	d.LogInfo("stopping to monitor loggers...")
-	d.stopMonitor <- true
-	<-d.doneMonitor
+	// d.LogInfo("stopping to monitor loggers...")
+	// d.stopMonitor <- true
+	// <-d.doneMonitor
 }
 
-func (d *DNSTapProcessor) MonitorLoggers() {
-	watchInterval := 10 * time.Second
-	bufferFull := time.NewTimer(watchInterval)
-MONITOR_LOOP:
-	for {
-		select {
-		case <-d.stopMonitor:
-			close(d.dropped)
-			bufferFull.Stop()
-			d.doneMonitor <- true
-			break MONITOR_LOOP
+// func (d *DNSTapProcessor) MonitorLoggers() {
+// 	// watchInterval := 10 * time.Second
+// 	// bufferFull := time.NewTimer(watchInterval)
+// MONITOR_LOOP:
+// 	for {
+// 		select {
+// 		case <-d.stopMonitor:
+// 			// close(d.dropped)
+// 			// bufferFull.Stop()
+// 			d.doneMonitor <- true
+// 			break MONITOR_LOOP
 
-		case loggerName := <-d.dropped:
-			if _, ok := d.droppedCount[loggerName]; !ok {
-				d.droppedCount[loggerName] = 1
-			} else {
-				d.droppedCount[loggerName]++
-			}
+// case loggerName := <-d.dropped:
+// 	if _, ok := d.droppedCount[loggerName]; !ok {
+// 		d.droppedCount[loggerName] = 1
+// 	} else {
+// 		d.droppedCount[loggerName]++
+// 	}
 
-		case <-bufferFull.C:
-			for v, k := range d.droppedCount {
-				if k > 0 {
-					d.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
-					d.droppedCount[v] = 0
-				}
-			}
-			bufferFull.Reset(watchInterval)
+// case <-bufferFull.C:
+// 	for v, k := range d.droppedCount {
+// 		if k > 0 {
+// 			d.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
+// 			d.droppedCount[v] = 0
+// 		}
+// 	}
+// 	bufferFull.Reset(watchInterval)
 
-		}
-	}
-	d.LogInfo("monitor terminated")
-}
+// 		}
+// 	}
+// 	d.LogInfo("monitor terminated")
+// }
 
-func (d *DNSTapProcessor) Run(loggersChannel []chan dnsutils.DNSMessage, loggersName []string) {
+// func (d *DNSTapProcessor) Run(loggersChannel []chan dnsutils.DNSMessage, loggersName []string) {
+func (d *DNSTapProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
 	dt := &dnstap.Dnstap{}
 
+	// prepare next channels
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(defaultWorkers)
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(droppedworkers)
+
 	// prepare enabled transformers
-	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, loggersChannel, d.ConnID)
+	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, defaultRoutes, d.ConnID)
 
 	// start goroutine to count dropped messsages
-	go d.MonitorLoggers()
+	// go d.MonitorLoggers()
 
 	// read incoming dns message
 	d.LogInfo("waiting dns message to process...")
@@ -283,20 +292,15 @@ RUN_LOOP:
 
 			// apply all enabled transformers
 			if transforms.ProcessMessage(&dm) == transformers.ReturnDrop {
+				d.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
 			// convert latency to human
 			dm.DNSTap.LatencySec = fmt.Sprintf("%.6f", dm.DNSTap.Latency)
 
-			// dispatch dns message to connected loggers
-			for i := range loggersChannel {
-				select {
-				case loggersChannel[i] <- dm: // Successful send to logger channel
-				default:
-					d.dropped <- loggersName[i]
-				}
-			}
+			// dispatch dns message to connected routes
+			d.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 		}
 	}

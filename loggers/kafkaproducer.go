@@ -11,6 +11,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/segmentio/kafka-go"
@@ -36,6 +37,7 @@ type KafkaProducer struct {
 	kafkaReconnect chan bool
 	kafkaConnected bool
 	compressCodec  compress.Codec
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name string) *KafkaProducer {
@@ -53,16 +55,24 @@ func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name stri
 		kafkaReady:     make(chan bool),
 		kafkaReconnect: make(chan bool),
 		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	k.ReadConfig()
-
 	return k
 }
 
 func (k *KafkaProducer) GetName() string { return k.name }
 
-func (k *KafkaProducer) SetLoggers(loggers []dnsutils.Worker) {}
+func (k *KafkaProducer) AddDroppedRoute(wrk pkgutils.Worker) {
+	k.RoutingHandler.AddDroppedRoute(wrk)
+}
+
+func (k *KafkaProducer) AddDefaultRoute(wrk pkgutils.Worker) {
+	k.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (k *KafkaProducer) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (k *KafkaProducer) ReadConfig() {
 	if len(k.config.Loggers.RedisPub.TextFormat) > 0 {
@@ -102,11 +112,14 @@ func (k *KafkaProducer) LogError(msg string, v ...interface{}) {
 	k.logger.Error("["+k.name+"] logger=kafka - "+msg, v...)
 }
 
-func (k *KafkaProducer) Channel() chan dnsutils.DNSMessage {
+func (k *KafkaProducer) GetInputChannel() chan dnsutils.DNSMessage {
 	return k.inputChan
 }
 
 func (k *KafkaProducer) Stop() {
+	k.LogInfo("stopping routing handler...")
+	k.RoutingHandler.Stop()
+
 	k.LogInfo("stopping to run...")
 	k.stopRun <- true
 	<-k.doneRun
@@ -253,6 +266,10 @@ func (k *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 func (k *KafkaProducer) Run() {
 	k.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := k.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := k.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, k.outputChan)
@@ -289,8 +306,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				k.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			k.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			k.outputChan <- dm

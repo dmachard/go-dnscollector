@@ -11,6 +11,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
@@ -31,179 +32,200 @@ func IsStdoutValidMode(mode string) bool {
 }
 
 type StdOut struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DNSMessage
-	outputChan  chan dnsutils.DNSMessage
-	textFormat  []string
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	logger      *logger.Logger
-	writerText  *log.Logger
-	writerPcap  *pcapgo.Writer
-	name        string
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	textFormat     []string
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	writerText     *log.Logger
+	writerPcap     *pcapgo.Writer
+	name           string
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func NewStdOut(config *pkgconfig.Config, console *logger.Logger, name string) *StdOut {
 	console.Info("[%s] logger=stdout - enabled", name)
-	o := &StdOut{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.Stdout.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.Stdout.ChannelBufferSize),
-		logger:      console,
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		writerText:  log.New(os.Stdout, "", 0),
-		name:        name,
+	so := &StdOut{
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.Stdout.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.Stdout.ChannelBufferSize),
+		logger:         console,
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		writerText:     log.New(os.Stdout, "", 0),
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, console, name),
 	}
-	o.ReadConfig()
-	return o
+	so.ReadConfig()
+	return so
 }
 
-func (c *StdOut) GetName() string { return c.name }
+func (so *StdOut) GetName() string { return so.name }
 
-func (c *StdOut) SetLoggers(loggers []dnsutils.Worker) {}
+func (so *StdOut) AddDroppedRoute(wrk pkgutils.Worker) {
+	so.RoutingHandler.AddDroppedRoute(wrk)
+}
 
-func (c *StdOut) ReadConfig() {
-	if !IsStdoutValidMode(c.config.Loggers.Stdout.Mode) {
-		c.logger.Fatal("["+c.name+"] logger=stdout - invalid mode: ", c.config.Loggers.Stdout.Mode)
+func (so *StdOut) AddDefaultRoute(wrk pkgutils.Worker) {
+	so.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (so *StdOut) SetLoggers(loggers []pkgutils.Worker) {}
+
+func (so *StdOut) ReadConfig() {
+	if !IsStdoutValidMode(so.config.Loggers.Stdout.Mode) {
+		so.logger.Fatal("["+so.name+"] logger=stdout - invalid mode: ", so.config.Loggers.Stdout.Mode)
 	}
 
-	if len(c.config.Loggers.Stdout.TextFormat) > 0 {
-		c.textFormat = strings.Fields(c.config.Loggers.Stdout.TextFormat)
+	if len(so.config.Loggers.Stdout.TextFormat) > 0 {
+		so.textFormat = strings.Fields(so.config.Loggers.Stdout.TextFormat)
 	} else {
-		c.textFormat = strings.Fields(c.config.Global.TextFormat)
+		so.textFormat = strings.Fields(so.config.Global.TextFormat)
 	}
 }
 
-func (c *StdOut) ReloadConfig(config *pkgconfig.Config) {
-	c.LogInfo("reload configuration!")
-	c.configChan <- config
+func (so *StdOut) ReloadConfig(config *pkgconfig.Config) {
+	so.LogInfo("reload configuration!")
+	so.configChan <- config
 }
 
-func (c *StdOut) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger=stdout - "+msg, v...)
+func (so *StdOut) LogInfo(msg string, v ...interface{}) {
+	so.logger.Info("["+so.name+"] logger=stdout - "+msg, v...)
 }
 
-func (c *StdOut) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger=stdout - "+msg, v...)
+func (so *StdOut) LogError(msg string, v ...interface{}) {
+	so.logger.Error("["+so.name+"] logger=stdout - "+msg, v...)
 }
 
-func (c *StdOut) SetTextWriter(b *bytes.Buffer) {
-	c.writerText = log.New(os.Stdout, "", 0)
-	c.writerText.SetOutput(b)
+func (so *StdOut) SetTextWriter(b *bytes.Buffer) {
+	so.writerText = log.New(os.Stdout, "", 0)
+	so.writerText.SetOutput(b)
 }
 
-func (c *StdOut) SetPcapWriter(w io.Writer) {
-	c.LogInfo("init pcap writer")
+func (so *StdOut) SetPcapWriter(w io.Writer) {
+	so.LogInfo("init pcap writer")
 
-	c.writerPcap = pcapgo.NewWriter(w)
-	if err := c.writerPcap.WriteFileHeader(65536, layers.LinkTypeEthernet); err != nil {
-		c.logger.Fatal("["+c.name+"] logger=stdout - pcap init error: %e", err)
+	so.writerPcap = pcapgo.NewWriter(w)
+	if err := so.writerPcap.WriteFileHeader(65536, layers.LinkTypeEthernet); err != nil {
+		so.logger.Fatal("["+so.name+"] logger=stdout - pcap init error: %e", err)
 	}
 }
 
-func (c *StdOut) Channel() chan dnsutils.DNSMessage {
-	return c.inputChan
+func (so *StdOut) GetInputChannel() chan dnsutils.DNSMessage {
+	return so.inputChan
 }
 
-func (c *StdOut) Stop() {
-	c.LogInfo("stopping to run...")
-	c.stopRun <- true
-	<-c.doneRun
+func (so *StdOut) Stop() {
+	so.LogInfo("stopping routing handler...")
+	so.RoutingHandler.Stop()
 
-	c.LogInfo("stopping to process...")
-	c.stopProcess <- true
-	<-c.doneProcess
+	so.LogInfo("stopping to run...")
+	so.stopRun <- true
+	<-so.doneRun
+
+	so.LogInfo("stopping to process...")
+	so.stopProcess <- true
+	<-so.doneProcess
 }
 
-func (c *StdOut) Run() {
-	c.LogInfo("running in background...")
+func (so *StdOut) Run() {
+	so.LogInfo("running in background...")
+
+	// prepare next channels
+	defaultRoutes, defaultNames := so.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := so.RoutingHandler.GetDroppedRoutes()
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
-	listChannel = append(listChannel, c.outputChan)
-	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
+	listChannel = append(listChannel, so.outputChan)
+	subprocessors := transformers.NewTransforms(&so.config.OutgoingTransformers, so.logger, so.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go c.Process()
+	go so.Process()
 
 	// loop to process incoming messages
 RUN_LOOP:
 	for {
 		select {
-		case <-c.stopRun:
+		case <-so.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
-			c.doneRun <- true
+			so.doneRun <- true
 			break RUN_LOOP
 
 		// new config provided?
-		case cfg, opened := <-c.configChan:
+		case cfg, opened := <-so.configChan:
 			if !opened {
 				return
 			}
-			c.config = cfg
-			c.ReadConfig()
+			so.config = cfg
+			so.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-c.inputChan:
+		case dm, opened := <-so.inputChan:
 			if !opened {
-				c.LogInfo("run: input channel closed!")
+				so.LogInfo("run: input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				so.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
+			// send to next ?
+			so.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
+
 			// send to output channel
-			c.outputChan <- dm
+			so.outputChan <- dm
 		}
 	}
-	c.LogInfo("run terminated")
+	so.LogInfo("run terminated")
 }
 
-func (c *StdOut) Process() {
+func (so *StdOut) Process() {
 
 	// standard output buffer
 	buffer := new(bytes.Buffer)
 
-	if c.config.Loggers.Stdout.Mode == pkgconfig.ModePCAP && c.writerPcap == nil {
-		c.SetPcapWriter(os.Stdout)
+	if so.config.Loggers.Stdout.Mode == pkgconfig.ModePCAP && so.writerPcap == nil {
+		so.SetPcapWriter(os.Stdout)
 	}
 
-	c.LogInfo("ready to process")
+	so.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {
-		case <-c.stopProcess:
-			c.doneProcess <- true
+		case <-so.stopProcess:
+			so.doneProcess <- true
 			break PROCESS_LOOP
 
-		case dm, opened := <-c.outputChan:
+		case dm, opened := <-so.outputChan:
 			if !opened {
-				c.LogInfo("process: output channel closed!")
+				so.LogInfo("process: output channel closed!")
 				return
 			}
 
-			switch c.config.Loggers.Stdout.Mode {
+			switch so.config.Loggers.Stdout.Mode {
 			case pkgconfig.ModePCAP:
 				if len(dm.DNS.Payload) == 0 {
-					c.LogError("process: no dns payload to encode, drop it")
+					so.LogError("process: no dns payload to encode, drop it")
 					continue
 				}
 
 				pkt, err := dm.ToPacketLayer()
 				if err != nil {
-					c.LogError("unable to pack layer: %s", err)
+					so.LogError("unable to pack layer: %s", err)
 					continue
 				}
 
@@ -223,28 +245,28 @@ PROCESS_LOOP:
 					Length:        bufSize,
 				}
 
-				c.writerPcap.WritePacket(ci, buf.Bytes())
+				so.writerPcap.WritePacket(ci, buf.Bytes())
 
 			case pkgconfig.ModeText:
-				c.writerText.Print(dm.String(c.textFormat,
-					c.config.Global.TextFormatDelimiter,
-					c.config.Global.TextFormatBoundary))
+				so.writerText.Print(dm.String(so.textFormat,
+					so.config.Global.TextFormatDelimiter,
+					so.config.Global.TextFormatBoundary))
 
 			case pkgconfig.ModeJSON:
 				json.NewEncoder(buffer).Encode(dm)
-				c.writerText.Print(buffer.String())
+				so.writerText.Print(buffer.String())
 				buffer.Reset()
 
 			case pkgconfig.ModeFlatJSON:
 				flat, err := dm.Flatten()
 				if err != nil {
-					c.LogError("process: flattening DNS message failed: %e", err)
+					so.LogError("process: flattening DNS message failed: %e", err)
 				}
 				json.NewEncoder(buffer).Encode(flat)
-				c.writerText.Print(buffer.String())
+				so.writerText.Print(buffer.String())
 				buffer.Reset()
 			}
 		}
 	}
-	c.LogInfo("processing terminated")
+	so.LogInfo("processing terminated")
 }

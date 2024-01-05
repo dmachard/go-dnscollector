@@ -18,6 +18,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -25,18 +26,20 @@ import (
 // ScalyrClient is a client for Scalyr(https://www.dataset.com/)
 // This client is using the addEvents endpoint, described here: https://app.scalyr.com/help/api#addEvents
 type ScalyrClient struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DNSMessage
-	outputChan  chan dnsutils.DNSMessage
-	logger      *logger.Logger
-	name        string
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	mode        string
-	textFormat  []string
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	logger         *logger.Logger
+	name           string
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	RoutingHandler pkgutils.RoutingHandler
+
+	mode       string
+	textFormat []string
 
 	session string // Session ID, used by scalyr, see API docs
 
@@ -54,17 +57,19 @@ type ScalyrClient struct {
 func NewScalyrClient(config *pkgconfig.Config, console *logger.Logger, name string) *ScalyrClient {
 	console.Info("[%s] logger=scalyr - starting", name)
 	c := &ScalyrClient{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
-		logger:      console,
-		name:        name,
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		mode:        pkgconfig.ModeText,
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
+		logger:         console,
+		name:           name,
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		RoutingHandler: pkgutils.NewRoutingHandler(config, console, name),
+
+		mode: pkgconfig.ModeText,
 
 		endpoint: makeEndpoint("app.scalyr.com"),
 		flush:    time.NewTicker(30 * time.Second),
@@ -153,6 +158,10 @@ func (c *ScalyrClient) ReloadConfig(config *pkgconfig.Config) {
 func (c *ScalyrClient) Run() {
 	c.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, c.outputChan)
@@ -189,8 +198,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			c.outputChan <- dm
@@ -289,6 +302,9 @@ PROCESS_LOOP:
 }
 
 func (c ScalyrClient) Stop() {
+	c.LogInfo("stopping routing handler...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun
@@ -437,8 +453,16 @@ type response struct {
 
 func (c *ScalyrClient) GetName() string { return c.name }
 
-func (c *ScalyrClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *ScalyrClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDroppedRoute(wrk)
+}
 
-func (c *ScalyrClient) Channel() chan dnsutils.DNSMessage {
+func (c *ScalyrClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (c *ScalyrClient) SetLoggers(loggers []pkgutils.Worker) {}
+
+func (c *ScalyrClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }

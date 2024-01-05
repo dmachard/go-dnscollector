@@ -8,160 +8,182 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
 
 type FalcoClient struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DNSMessage
-	outputChan  chan dnsutils.DNSMessage
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	logger      *logger.Logger
-	name        string
-	url         string
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	name           string
+	url            string
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func NewFalcoClient(config *pkgconfig.Config, console *logger.Logger, name string) *FalcoClient {
 	console.Info("[%s] logger=falco - enabled", name)
-	f := &FalcoClient{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.FalcoClient.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.FalcoClient.ChannelBufferSize),
-		logger:      console,
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		name:        name,
+	fc := &FalcoClient{
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.FalcoClient.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.FalcoClient.ChannelBufferSize),
+		logger:         console,
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, console, name),
 	}
-	f.ReadConfig()
-	return f
+	fc.ReadConfig()
+	return fc
 }
 
-func (f *FalcoClient) GetName() string { return f.name }
+func (fc *FalcoClient) GetName() string { return fc.name }
 
-func (f *FalcoClient) SetLoggers(loggers []dnsutils.Worker) {}
-
-func (f *FalcoClient) ReadConfig() {
-	f.url = f.config.Loggers.FalcoClient.URL
+func (fc *FalcoClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	fc.RoutingHandler.AddDroppedRoute(wrk)
 }
 
-func (f *FalcoClient) ReloadConfig(config *pkgconfig.Config) {
-	f.LogInfo("reload configuration!")
-	f.configChan <- config
+func (fc *FalcoClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	fc.RoutingHandler.AddDefaultRoute(wrk)
 }
 
-func (f *FalcoClient) Channel() chan dnsutils.DNSMessage {
-	return f.inputChan
+func (fc *FalcoClient) SetLoggers(loggers []pkgutils.Worker) {}
+
+func (fc *FalcoClient) ReadConfig() {
+	fc.url = fc.config.Loggers.FalcoClient.URL
 }
 
-func (f *FalcoClient) LogInfo(msg string, v ...interface{}) {
-	f.logger.Info("["+f.name+"] logger=falco - "+msg, v...)
+func (fc *FalcoClient) ReloadConfig(config *pkgconfig.Config) {
+	fc.LogInfo("reload configuration!")
+	fc.configChan <- config
 }
 
-func (f *FalcoClient) LogError(msg string, v ...interface{}) {
-	f.logger.Error("["+f.name+"] logger=falco - "+msg, v...)
+func (fc *FalcoClient) GetInputChannel() chan dnsutils.DNSMessage {
+	return fc.inputChan
 }
 
-func (f *FalcoClient) Stop() {
-	f.LogInfo("stopping to run...")
-	f.stopRun <- true
-	<-f.doneRun
-
-	f.LogInfo("stopping to process...")
-	f.stopProcess <- true
-	<-f.doneProcess
+func (fc *FalcoClient) LogInfo(msg string, v ...interface{}) {
+	fc.logger.Info("["+fc.name+"] logger=falco - "+msg, v...)
 }
 
-func (f *FalcoClient) Run() {
-	f.LogInfo("running in background...")
+func (fc *FalcoClient) LogError(msg string, v ...interface{}) {
+	fc.logger.Error("["+fc.name+"] logger=falco - "+msg, v...)
+}
+
+func (fc *FalcoClient) Stop() {
+	fc.LogInfo("stopping routing handler...")
+	fc.RoutingHandler.Stop()
+
+	fc.LogInfo("stopping to run...")
+	fc.stopRun <- true
+	<-fc.doneRun
+
+	fc.LogInfo("stopping to process...")
+	fc.stopProcess <- true
+	<-fc.doneProcess
+}
+
+func (fc *FalcoClient) Run() {
+	fc.LogInfo("running in background...")
+
+	// prepare next channels
+	defaultRoutes, defaultNames := fc.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := fc.RoutingHandler.GetDroppedRoutes()
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
-	listChannel = append(listChannel, f.outputChan)
-	subprocessors := transformers.NewTransforms(&f.config.OutgoingTransformers, f.logger, f.name, listChannel, 0)
+	listChannel = append(listChannel, fc.outputChan)
+	subprocessors := transformers.NewTransforms(&fc.config.OutgoingTransformers, fc.logger, fc.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go f.Process()
+	go fc.Process()
 
 	// loop to process incoming messages
 RUN_LOOP:
 	for {
 		select {
-		case <-f.stopRun:
+		case <-fc.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
 
-			f.doneRun <- true
+			fc.doneRun <- true
 			break RUN_LOOP
 
-		case cfg, opened := <-f.configChan:
+		case cfg, opened := <-fc.configChan:
 			if !opened {
 				return
 			}
-			f.config = cfg
-			f.ReadConfig()
+			fc.config = cfg
+			fc.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-f.inputChan:
+		case dm, opened := <-fc.inputChan:
 			if !opened {
-				f.LogInfo("input channel closed!")
+				fc.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				fc.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
+			// send to next ?
+			fc.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
+
 			// send to output channel
-			f.outputChan <- dm
+			fc.outputChan <- dm
 		}
 	}
-	f.LogInfo("run terminated")
+	fc.LogInfo("run terminated")
 }
 
-func (f *FalcoClient) Process() {
+func (fc *FalcoClient) Process() {
 	buffer := new(bytes.Buffer)
-	f.LogInfo("ready to process")
+	fc.LogInfo("ready to process")
 
 PROCESS_LOOP:
 	for {
 		select {
-		case <-f.stopProcess:
-			f.doneProcess <- true
+		case <-fc.stopProcess:
+			fc.doneProcess <- true
 			break PROCESS_LOOP
 
 			// incoming dns message to process
-		case dm, opened := <-f.outputChan:
+		case dm, opened := <-fc.outputChan:
 			if !opened {
-				f.LogInfo("output channel closed!")
+				fc.LogInfo("output channel closed!")
 				return
 			}
 
 			// encode
 			json.NewEncoder(buffer).Encode(dm)
 
-			req, _ := http.NewRequest("POST", f.url, buffer)
+			req, _ := http.NewRequest("POST", fc.url, buffer)
 			req.Header.Set("Content-Type", "application/json")
 			client := &http.Client{
 				Timeout: 5 * time.Second,
 			}
 			_, err := client.Do(req)
 			if err != nil {
-				f.LogError(err.Error())
+				fc.LogError(err.Error())
 			}
 
 			// finally reset the buffer for next iter
 			buffer.Reset()
 		}
 	}
-	f.LogInfo("processing terminated")
+	fc.LogInfo("processing terminated")
 }

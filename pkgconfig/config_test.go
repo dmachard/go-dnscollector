@@ -61,7 +61,8 @@ multiplexer:
 		t.Fatal("Error writing to user configuration file:", err)
 	}
 
-	if err := CheckConfig(userConfigFile.Name()); err != nil {
+	dm := make(map[string]interface{})
+	if err := CheckConfig(userConfigFile.Name(), dm); err != nil {
 		t.Errorf("failed: Unexpected error: %v", err)
 	}
 }
@@ -88,9 +89,44 @@ multiplexer:
 		t.Fatal("Error writing to user configuration file:", err)
 	}
 
+	dm := make(map[string]interface{})
 	expectedError := errors.Errorf("unknown YAML key `unknown-key` in configuration")
-	if err := CheckConfig(userConfigFile.Name()); err == nil || err.Error() != expectedError.Error() {
+	if err := CheckConfig(userConfigFile.Name(), dm); err == nil || err.Error() != expectedError.Error() {
 		t.Errorf("Expected error %v, but got %v", expectedError, err)
+	}
+}
+
+// Ignore dynamic keys
+func TestConfig_CheckConfig_IgnoreDynamicKeys(t *testing.T) {
+	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
+	if err != nil {
+		t.Fatal("Error creating temporary file:", err)
+	}
+	defer os.Remove(userConfigFile.Name())
+	defer userConfigFile.Close()
+
+	userConfigContent := `
+global:
+  trace: false
+pipelines:
+  - name: match
+    dnsmessage:
+      matching:
+        include:
+          atags.tags.*: test
+          atags.tags.2: test
+          dns.resources-records.*: test
+          dns.resources-records.10.rdata: test
+          dns.resources-records.*.ttl: test
+`
+	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
+	if err != nil {
+		t.Fatal("Error writing to user configuration file:", err)
+	}
+
+	dm := make(map[string]interface{})
+	if err := CheckConfig(userConfigFile.Name(), dm); err != nil {
+		t.Errorf("Expected no error, but got %v", err)
 	}
 }
 
@@ -112,7 +148,9 @@ global:
 	if err != nil {
 		t.Fatal("Error writing to user configuration file:", err)
 	}
-	if err := CheckConfig(userConfigFile.Name()); err == nil {
+
+	dm := make(map[string]interface{})
+	if err := CheckConfig(userConfigFile.Name(), dm); err == nil {
 		t.Errorf("Expected error, but got %v", err)
 	}
 }
@@ -148,7 +186,9 @@ multiplexer:
 	if err != nil {
 		t.Fatal("Error writing to user configuration file:", err)
 	}
-	if err := CheckConfig(userConfigFile.Name()); err != nil {
+
+	dm := make(map[string]interface{})
+	if err := CheckConfig(userConfigFile.Name(), dm); err != nil {
 		t.Errorf("failed: Unexpected error: %v", err)
 	}
 }
@@ -178,7 +218,74 @@ multiplexer:
 	if err != nil {
 		t.Fatal("Error writing to user configuration file:", err)
 	}
-	if err := CheckConfig(userConfigFile.Name()); err == nil {
+
+	dm := make(map[string]interface{})
+	if err := CheckConfig(userConfigFile.Name(), dm); err == nil {
+		t.Errorf("Expected error, but got %v", err)
+	}
+}
+
+// Valid pipeline configuration
+func TestConfig_CheckPipelinesConfig_Valid(t *testing.T) {
+	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
+	if err != nil {
+		t.Fatal("Error creating temporary file:", err)
+	}
+	defer os.Remove(userConfigFile.Name())
+	defer userConfigFile.Close()
+
+	userConfigContent := `
+pipelines:
+- name: dnsdist-main
+  dnstap:
+    listen-ip: 0.0.0.0
+    listen-port: 6000
+  routing-policy: 
+    default: [ console ]
+
+- name: console
+  stdout:
+    mode: text
+`
+	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
+	if err != nil {
+		t.Fatal("Error writing to user configuration file:", err)
+	}
+
+	dm := make(map[string]interface{})
+	if err := CheckConfig(userConfigFile.Name(), dm); err != nil {
+		t.Errorf("failed: Unexpected error: %v", err)
+	}
+}
+
+// Invalid pipeline configuration
+func TestConfig_CheckPipelinesConfig_Invalid(t *testing.T) {
+	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
+	if err != nil {
+		t.Fatal("Error creating temporary file:", err)
+	}
+	defer os.Remove(userConfigFile.Name())
+	defer userConfigFile.Close()
+
+	userConfigContent := `
+pipelines:
+- name: dnsdist-main
+  dnstap:
+    listen-ip: 0.0.0.0
+    transforms:
+      normalize:
+        qname-lowercase: true
+  routing-policy: 
+    default: [ console ]
+`
+
+	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
+	if err != nil {
+		t.Fatal("Error writing to user configuration file:", err)
+	}
+
+	dm := make(map[string]interface{})
+	if err := CheckConfig(userConfigFile.Name(), dm); err == nil {
 		t.Errorf("Expected error, but got %v", err)
 	}
 }

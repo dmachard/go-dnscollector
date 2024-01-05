@@ -14,6 +14,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -38,6 +39,7 @@ type TCPClient struct {
 	transportReady     chan bool
 	transportReconnect chan bool
 	writerReady        bool
+	RoutingHandler     pkgutils.RoutingHandler
 }
 
 func NewTCPClient(config *pkgconfig.Config, logger *logger.Logger, name string) *TCPClient {
@@ -57,6 +59,7 @@ func NewTCPClient(config *pkgconfig.Config, logger *logger.Logger, name string) 
 		config:             config,
 		configChan:         make(chan *pkgconfig.Config),
 		name:               name,
+		RoutingHandler:     pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	s.ReadConfig()
@@ -66,7 +69,15 @@ func NewTCPClient(config *pkgconfig.Config, logger *logger.Logger, name string) 
 
 func (c *TCPClient) GetName() string { return c.name }
 
-func (c *TCPClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *TCPClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDroppedRoute(wrk)
+}
+
+func (c *TCPClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (c *TCPClient) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *TCPClient) ReadConfig() {
 	c.transport = c.config.Loggers.TCPClient.Transport
@@ -100,11 +111,14 @@ func (c *TCPClient) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=tcpclient - "+msg, v...)
 }
 
-func (c *TCPClient) Channel() chan dnsutils.DNSMessage {
+func (c *TCPClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 
 func (c *TCPClient) Stop() {
+	c.LogInfo("stopping routing handler...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun
@@ -257,6 +271,10 @@ func (c *TCPClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 func (c *TCPClient) Run() {
 	c.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, c.outputChan)
@@ -293,8 +311,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			c.outputChan <- dm

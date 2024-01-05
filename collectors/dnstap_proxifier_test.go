@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -56,7 +56,7 @@ func Test_DnstapProxifier(t *testing.T) {
 				config.Collectors.DnstapProxifier.SockPath = tc.address
 			}
 
-			c := NewDnstapProxifier([]dnsutils.Worker{g}, config, logger.New(false), "test")
+			c := NewDnstapProxifier([]pkgutils.Worker{g}, config, logger.New(false), "test")
 			if err := c.Listen(); err != nil {
 				log.Fatal("collector dnstap relay error: ", err)
 			}
@@ -100,7 +100,7 @@ func Test_DnstapProxifier(t *testing.T) {
 			}
 
 			// waiting message in channel
-			msg := <-g.Channel()
+			msg := <-g.GetInputChannel()
 			if len(msg.DNSTap.Payload) == 0 {
 				t.Errorf("DNStap payload is empty")
 			}
@@ -117,7 +117,7 @@ func Test_DnstapProxifier(t *testing.T) {
 // 	config.Collectors.DnstapProxifier.ListenPort = 6100
 // 	config.Collectors.DnstapProxifier.SockPath = "/tmp/dnscollector_relay.sock"
 
-// 	c := NewDnstapProxifier([]dnsutils.Worker{g}, config, logger.New(false), "test")
+// 	c := NewDnstapProxifier([]pkgutils.Worker{g}, config, logger.New(false), "test")
 // 	if err := c.Listen(); err != nil {
 // 		log.Fatal("collector dnstap relay tcp listening error: ", err)
 // 	}
@@ -170,7 +170,7 @@ func Test_DnstapProxifier(t *testing.T) {
 // 	g := loggers.NewFakeLogger()
 // 	config := pkgconfig.GetFakeConfig()
 // 	config.Collectors.DnstapProxifier.SockPath = "/tmp/dnscollector_relay.sock"
-// 	c := NewDnstapProxifier([]dnsutils.Worker{g}, config, logger.New(false), "test")
+// 	c := NewDnstapProxifier([]pkgutils.Worker{g}, config, logger.New(false), "test")
 // 	if err := c.Listen(); err != nil {
 // 		log.Fatal("collector dnstap replay unix listening  error: ", err)
 // 	}

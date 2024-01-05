@@ -15,45 +15,47 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 )
 
 type Dnstap struct {
-	doneRun       chan bool
-	doneMonitor   chan bool
-	stopRun       chan bool
-	stopMonitor   chan bool
-	listen        net.Listener
-	conns         []net.Conn
-	sockPath      string
-	loggers       []dnsutils.Worker
-	config        *pkgconfig.Config
-	configChan    chan *pkgconfig.Config
-	logger        *logger.Logger
-	name          string
-	connMode      string
-	connID        int
-	droppedCount  int
-	dropped       chan int
-	tapProcessors []processors.DNSTapProcessor
+	doneRun          chan bool
+	doneMonitor      chan bool
+	stopRun          chan bool
+	stopMonitor      chan bool
+	listen           net.Listener
+	conns            []net.Conn
+	sockPath         string
+	defaultRoutes    []pkgutils.Worker
+	droppedRoutes    []pkgutils.Worker
+	config           *pkgconfig.Config
+	configChan       chan *pkgconfig.Config
+	logger           *logger.Logger
+	name             string
+	connMode         string
+	connID           int
+	droppedCount     int
+	droppedProcessor chan int
+	tapProcessors    []processors.DNSTapProcessor
 	sync.RWMutex
 }
 
-func NewDnstap(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
+func NewDnstap(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
 	logger.Info("[%s] collector=dnstap - enabled", name)
 	s := &Dnstap{
-		doneRun:     make(chan bool),
-		doneMonitor: make(chan bool),
-		stopRun:     make(chan bool),
-		stopMonitor: make(chan bool),
-		dropped:     make(chan int),
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		loggers:     loggers,
-		logger:      logger,
-		name:        name,
+		doneRun:          make(chan bool),
+		doneMonitor:      make(chan bool),
+		stopRun:          make(chan bool),
+		stopMonitor:      make(chan bool),
+		droppedProcessor: make(chan int),
+		config:           config,
+		configChan:       make(chan *pkgconfig.Config),
+		defaultRoutes:    loggers,
+		logger:           logger,
+		name:             name,
 	}
 	s.ReadConfig()
 	return s
@@ -61,18 +63,20 @@ func NewDnstap(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logg
 
 func (c *Dnstap) GetName() string { return c.name }
 
-func (c *Dnstap) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+func (c *Dnstap) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
+}
+
+func (c *Dnstap) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *Dnstap) SetLoggers(loggers []pkgutils.Worker) {
+	c.defaultRoutes = loggers
 }
 
 func (c *Dnstap) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	channels := []chan dnsutils.DNSMessage{}
-	names := []string{}
-	for _, p := range c.loggers {
-		channels = append(channels, p.Channel())
-		names = append(names, p.GetName())
-	}
-	return channels, names
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *Dnstap) ReadConfig() {
@@ -127,12 +131,20 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	peer := conn.RemoteAddr().String()
 	c.LogConnInfo(connID, "new connection from %s", peer)
 
-	// start dnstap subprocessor
-	dnstapProcessor := processors.NewDNSTapProcessor(connID, c.config, c.logger, c.name, c.config.Collectors.Dnstap.ChannelBufferSize)
+	// start dnstap processor
+	dnstapProcessor := processors.NewDNSTapProcessor(
+		connID,
+		c.config,
+		c.logger,
+		c.name,
+		c.config.Collectors.Dnstap.ChannelBufferSize,
+	)
 	c.Lock()
 	c.tapProcessors = append(c.tapProcessors, dnstapProcessor)
 	c.Unlock()
-	go dnstapProcessor.Run(c.Loggers())
+
+	// run processor
+	go dnstapProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	// frame stream library
 	r := bufio.NewReader(conn)
@@ -191,7 +203,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 		select {
 		case dnstapProcessor.GetChannel() <- frame.Data(): // Successful send to channel
 		default:
-			c.dropped <- 1
+			c.droppedProcessor <- 1
 		}
 	}
 
@@ -216,7 +228,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	c.LogConnInfo(connID, "connection handler terminated")
 }
 
-func (c *Dnstap) Channel() chan dnsutils.DNSMessage {
+func (c *Dnstap) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 
@@ -312,16 +324,16 @@ func (c *Dnstap) MonitorCollector() {
 MONITOR_LOOP:
 	for {
 		select {
-		case <-c.dropped:
+		case <-c.droppedProcessor:
 			c.droppedCount++
 		case <-c.stopMonitor:
-			close(c.dropped)
+			close(c.droppedProcessor)
 			bufferFull.Stop()
 			c.doneMonitor <- true
 			break MONITOR_LOOP
 		case <-bufferFull.C:
 			if c.droppedCount > 0 {
-				c.LogError("recv buffer is full, %d packet(s) dropped", c.droppedCount)
+				c.LogError("processor buffer is full, %d packet(s) dropped", c.droppedCount)
 				c.droppedCount = 0
 			}
 			bufferFull.Reset(watchInterval)

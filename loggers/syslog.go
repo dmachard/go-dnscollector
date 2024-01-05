@@ -14,6 +14,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -72,6 +73,7 @@ type Syslog struct {
 	transportReconnect chan bool
 	textFormat         []string
 	name               string
+	RoutingHandler     pkgutils.RoutingHandler
 }
 
 func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *Syslog {
@@ -89,6 +91,7 @@ func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *S
 		config:             config,
 		configChan:         make(chan *pkgconfig.Config),
 		name:               name,
+		RoutingHandler:     pkgutils.NewRoutingHandler(config, console, name),
 	}
 	s.ReadConfig()
 	return s
@@ -96,7 +99,15 @@ func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *S
 
 func (s *Syslog) GetName() string { return s.name }
 
-func (s *Syslog) SetLoggers(loggers []dnsutils.Worker) {}
+func (s *Syslog) AddDroppedRoute(wrk pkgutils.Worker) {
+	s.RoutingHandler.AddDroppedRoute(wrk)
+}
+
+func (s *Syslog) AddDefaultRoute(wrk pkgutils.Worker) {
+	s.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (s *Syslog) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (s *Syslog) ReadConfig() {
 	if !pkgconfig.IsValidTLS(s.config.Loggers.Syslog.TLSMinVersion) {
@@ -130,7 +141,7 @@ func (s *Syslog) ReloadConfig(config *pkgconfig.Config) {
 	s.configChan <- config
 }
 
-func (s *Syslog) Channel() chan dnsutils.DNSMessage {
+func (s *Syslog) GetInputChannel() chan dnsutils.DNSMessage {
 	return s.inputChan
 }
 
@@ -143,6 +154,9 @@ func (s *Syslog) LogError(msg string, v ...interface{}) {
 }
 
 func (s *Syslog) Stop() {
+	s.LogInfo("stopping routing handler...")
+	s.RoutingHandler.Stop()
+
 	s.LogInfo("stopping to run...")
 	s.stopRun <- true
 	<-s.doneRun
@@ -245,6 +259,10 @@ func (s *Syslog) ConnectToRemote() {
 func (s *Syslog) Run() {
 	s.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := s.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := s.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, s.outputChan)
@@ -285,8 +303,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				s.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			s.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			s.outputChan <- dm

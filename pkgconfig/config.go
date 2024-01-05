@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"regexp"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -28,6 +29,7 @@ type Config struct {
 	Loggers              ConfigLoggers      `yaml:"loggers"`
 	OutgoingTransformers ConfigTransformers `yaml:"loggers-transformers"`
 	Multiplexer          ConfigMultiplexer  `yaml:"multiplexer"`
+	Pipelines            []ConfigPipelines  `yaml:"pipelines"`
 }
 
 func (c *Config) SetDefault() {
@@ -63,7 +65,7 @@ func (c *Config) GetServerIdentity() string {
 	}
 }
 
-func ReloadConfig(configPath string, config *Config) error {
+func ReloadConfig(configPath string, config *Config, refDNSMessage map[string]interface{}) error {
 	// Open config file
 	configFile, err := os.Open(configPath)
 	if err != nil {
@@ -72,7 +74,7 @@ func ReloadConfig(configPath string, config *Config) error {
 	defer configFile.Close()
 
 	// Check config to detect unknown keywords
-	if err := CheckConfig(configPath); err != nil {
+	if err := CheckConfig(configPath, refDNSMessage); err != nil {
 		return err
 	}
 
@@ -86,7 +88,7 @@ func ReloadConfig(configPath string, config *Config) error {
 	return nil
 }
 
-func LoadConfig(configPath string) (*Config, error) {
+func LoadConfig(configPath string, refDNSMessage map[string]interface{}) (*Config, error) {
 	// Open config file
 	configFile, err := os.Open(configPath)
 	if err != nil {
@@ -95,7 +97,7 @@ func LoadConfig(configPath string) (*Config, error) {
 	defer configFile.Close()
 
 	// Check config to detect unknown keywords
-	if err := CheckConfig(configPath); err != nil {
+	if err := CheckConfig(configPath, refDNSMessage); err != nil {
 		return nil, err
 	}
 
@@ -113,14 +115,15 @@ func LoadConfig(configPath string) (*Config, error) {
 	return config, nil
 }
 
-func CheckConfig(userConfigPath string) error {
+func CheckConfig(userConfigPath string, dmRef map[string]interface{}) error {
 	// create default config
-	// and simulate one route, one collector and one logger
+	// and simulate items in multiplexer and pipelines mode
 	defaultConfig := &Config{}
 	defaultConfig.SetDefault()
 	defaultConfig.Multiplexer.Routes = append(defaultConfig.Multiplexer.Routes, MultiplexRoutes{})
 	defaultConfig.Multiplexer.Loggers = append(defaultConfig.Multiplexer.Loggers, MultiplexInOut{})
 	defaultConfig.Multiplexer.Collectors = append(defaultConfig.Multiplexer.Collectors, MultiplexInOut{})
+	defaultConfig.Pipelines = append(defaultConfig.Pipelines, ConfigPipelines{})
 
 	// Convert default config to map
 	// And get unique YAML keys
@@ -129,6 +132,11 @@ func CheckConfig(userConfigPath string) error {
 		return errors.Wrap(err, "error converting default config to map")
 	}
 	defaultKeywords := getUniqueKeywords(defaultConfigMap)
+
+	// add DNSMessage default keys
+	for k := range dmRef {
+		defaultKeywords[k] = true
+	}
 
 	// Read user configuration file
 	// And get unique YAML keys from user config
@@ -139,7 +147,26 @@ func CheckConfig(userConfigPath string) error {
 	userKeywords := getUniqueKeywords(userConfigMap)
 
 	// Check for unknown keys in user config
+	// ignore dynamic keys as atags.tags.*: google
+
+	// Define regular expressions to match dynamic keys
+	regexPatterns := []string{`\.\*(\.)?`, `\.(\d+)(\.)?`}
+
 	for key := range userKeywords {
+		// Ignore dynamic keys that contain ".*" or .[digits].
+		matched := false
+		for _, pattern := range regexPatterns {
+			match, _ := regexp.MatchString(pattern, key)
+			if match {
+				matched = true
+				break
+			}
+		}
+		if matched {
+			continue
+		}
+
+		// search in default keywords
 		if _, ok := defaultKeywords[key]; !ok {
 			return errors.Errorf("unknown YAML key `%s` in configuration", key)
 		}
@@ -156,11 +183,13 @@ func CheckConfig(userConfigPath string) error {
 func checkKeywordsPosition(nextUserCfg, nextDefCfg map[string]interface{}, defaultConf map[string]interface{}, sectionName string) error {
 	for k, v := range nextUserCfg {
 		// Check if the key is present in the default config
-		if _, ok := nextDefCfg[k]; !ok {
-			if sectionName == "" {
-				return errors.Errorf("invalid key `%s` at root", k)
+		if len(nextDefCfg) > 0 {
+			if _, ok := nextDefCfg[k]; !ok {
+				if sectionName == "" {
+					return errors.Errorf("invalid key `%s` at root", k)
+				}
+				return errors.Errorf("invalid key `%s` in section `%s`", k, sectionName)
 			}
-			return errors.Errorf("invalid key `%s` in section `%s`", k, sectionName)
 		}
 
 		// If the value is a map, recursively check for invalid keywords
@@ -181,6 +210,71 @@ func checkKeywordsPosition(nextUserCfg, nextDefCfg map[string]interface{}, defau
 			}
 		}
 
+		// If the value is a slice and we are in the pipelines part
+		if val.Kind() == reflect.Slice && k == "pipelines" {
+			if err := checkPipelinesConfig(val, nextDefCfg[k].([]interface{}), defaultConf, k); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func checkPipelinesConfig(currentVal reflect.Value, currentRef []interface{}, defaultConf map[string]interface{}, k string) error {
+	refLoggers := defaultConf[KeyLoggers].(map[string]interface{})
+	refCollectors := defaultConf[KeyCollectors].(map[string]interface{})
+	refTransforms := defaultConf["collectors-transformers"].(map[string]interface{})
+
+	for pos, item := range currentVal.Interface().([]interface{}) {
+		valReflect := reflect.ValueOf(item)
+		refItem := currentRef[0].(map[string]interface{})
+		if valReflect.Kind() == reflect.Map {
+			for _, key := range valReflect.MapKeys() {
+				strKey := key.Interface().(string)
+				mapVal := valReflect.MapIndex(key)
+
+				if _, ok := refItem[strKey]; !ok {
+					// Check if the key exists in neither loggers nor collectors
+					loggerExists := refLoggers[strKey] != nil
+					collectorExists := refCollectors[strKey] != nil
+					if !loggerExists && !collectorExists {
+						return errors.Errorf("invalid `%s` in `%s` pipelines at position %d", strKey, k, pos)
+					}
+
+					// check logger or collectors
+					if loggerExists || collectorExists {
+						nextSectionName := fmt.Sprintf("%s[%d].%s", k, pos, strKey)
+						refMap := refLoggers
+						if collectorExists {
+							refMap = refCollectors
+						}
+						// Type assertion to check if the value is a map
+						if value, ok := mapVal.Interface().(map[string]interface{}); ok {
+							if err := checkKeywordsPosition(value, refMap[strKey].(map[string]interface{}), defaultConf, nextSectionName); err != nil {
+								return err
+							}
+						} else {
+							return errors.Errorf("invalid `%s` value in `%s` pipelines at position %d", strKey, k, pos)
+						}
+					}
+				}
+
+				// Check transforms section
+				// Type assertion to check if the value is a map
+				if strKey == "transforms" {
+					nextSectionName := fmt.Sprintf("%s.%s", k, strKey)
+					if value, ok := mapVal.Interface().(map[string]interface{}); ok {
+						if err := checkKeywordsPosition(value, refTransforms, defaultConf, nextSectionName); err != nil {
+							return err
+						}
+					} else {
+						return errors.Errorf("invalid `%s` value in `%s` pipelines at position %d", strKey, k, pos)
+					}
+				}
+			}
+		} else {
+			return errors.Errorf("invalid item type in pipelines list: %s", valReflect.Kind())
+		}
 	}
 	return nil
 }
@@ -214,7 +308,7 @@ func checkMultiplexerConfig(currentVal reflect.Value, currentRef []interface{}, 
 						return errors.Errorf("invalid `%s` in `%s` list at position %d", strKey, k, pos)
 					}
 
-					// check logger
+					// check logger or collectors
 					if k == KeyLoggers || k == KeyCollectors {
 						nextSectionName := fmt.Sprintf("%s[%d].%s", k, pos, strKey)
 						refMap := refLoggers
@@ -246,6 +340,8 @@ func checkMultiplexerConfig(currentVal reflect.Value, currentRef []interface{}, 
 					}
 				}
 			}
+		} else {
+			return errors.Errorf("invalid item type in multiplexer list: %s", valReflect.Kind())
 		}
 	}
 	return nil

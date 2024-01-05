@@ -1,6 +1,8 @@
 package pkgconfig
 
 import (
+	"reflect"
+
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/prometheus/prometheus/model/relabel"
 )
@@ -539,5 +541,25 @@ func (c *ConfigLoggers) SetDefault() {
 	c.FalcoClient.Enable = false
 	c.FalcoClient.URL = "http://127.0.0.1:9200"
 	c.FalcoClient.ChannelBufferSize = 65535
+}
 
+func (c *ConfigLoggers) GetTags() (ret []string) {
+	cl := reflect.TypeOf(*c)
+
+	for i := 0; i < cl.NumField(); i++ {
+		field := cl.Field(i)
+		tag := field.Tag.Get("yaml")
+		ret = append(ret, tag)
+	}
+	return ret
+}
+
+func (c *ConfigLoggers) IsValid(name string) bool {
+	tags := c.GetTags()
+	for i := range tags {
+		if name == tags[i] {
+			return true
+		}
+	}
+	return false
 }

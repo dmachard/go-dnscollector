@@ -82,6 +82,38 @@ multiplexer:
     - from: [ tap ]
       to: [ console ]
 
+# /!\ experimental,  pipelling running mode /!\
+# pipelines:
+#   - name: main-input
+#     dnstap:
+#       listen-ip: 0.0.0.0
+#       listen-port: 6000
+#     routing-policy:
+#       default: [ filter ]
+
+#   - name: filter
+#     dnsmessage:
+#       matching:
+#         include:
+#           dns.qname: "^.*\\.google\\.com$"
+#     transforms:
+#       atags:
+#         tags: [ "google"]
+#     routing-policy:
+#       dropped: [ outputfile ]
+#       default: [ console ]
+
+#   - name: console
+#     stdout:
+#       mode: text
+
+#   - name: outputfile
+#     logfile:
+#       file-path:  "/tmp/dnstap.log"
+#       max-size: 1000
+#       max-files: 10
+#       mode: flat-json
+
 ################################################
 # list of supported collectors
 ################################################

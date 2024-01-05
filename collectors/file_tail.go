@@ -11,6 +11,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/hpcloud/tail"
@@ -18,26 +19,26 @@ import (
 )
 
 type Tail struct {
-	doneRun    chan bool
-	stopRun    chan bool
-	tailf      *tail.Tail
-	loggers    []dnsutils.Worker
-	config     *pkgconfig.Config
-	configChan chan *pkgconfig.Config
-	logger     *logger.Logger
-	name       string
+	doneRun       chan bool
+	stopRun       chan bool
+	tailf         *tail.Tail
+	defaultRoutes []pkgutils.Worker
+	config        *pkgconfig.Config
+	configChan    chan *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
 }
 
-func NewTail(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Tail {
+func NewTail(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Tail {
 	logger.Info("[%s] collector=tail - enabled", name)
 	s := &Tail{
-		doneRun:    make(chan bool),
-		stopRun:    make(chan bool),
-		config:     config,
-		configChan: make(chan *pkgconfig.Config),
-		loggers:    loggers,
-		logger:     logger,
-		name:       name,
+		doneRun:       make(chan bool),
+		stopRun:       make(chan bool),
+		config:        config,
+		configChan:    make(chan *pkgconfig.Config),
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
@@ -45,14 +46,22 @@ func NewTail(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger
 
 func (c *Tail) GetName() string { return c.name }
 
-func (c *Tail) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+func (c *Tail) AddDroppedRoute(wrk pkgutils.Worker) {
+	// TODO
+}
+
+func (c *Tail) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *Tail) SetLoggers(loggers []pkgutils.Worker) {
+	c.defaultRoutes = loggers
 }
 
 func (c *Tail) Loggers() []chan dnsutils.DNSMessage {
 	channels := []chan dnsutils.DNSMessage{}
-	for _, p := range c.loggers {
-		channels = append(channels, p.Channel())
+	for _, p := range c.defaultRoutes {
+		channels = append(channels, p.GetInputChannel())
 	}
 	return channels
 }
@@ -72,7 +81,7 @@ func (c *Tail) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] collector=tail - "+msg, v...)
 }
 
-func (c *Tail) Channel() chan dnsutils.DNSMessage {
+func (c *Tail) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 

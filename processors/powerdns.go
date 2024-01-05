@@ -10,6 +10,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
@@ -27,37 +28,35 @@ var (
 )
 
 type PdnsProcessor struct {
-	ConnID       int
-	doneRun      chan bool
-	stopRun      chan bool
-	doneMonitor  chan bool
-	stopMonitor  chan bool
-	recvFrom     chan []byte
-	logger       *logger.Logger
-	config       *pkgconfig.Config
-	ConfigChan   chan *pkgconfig.Config
-	name         string
-	chanSize     int
-	dropped      chan string
-	droppedCount map[string]int
+	ConnID         int
+	doneRun        chan bool
+	stopRun        chan bool
+	doneMonitor    chan bool
+	stopMonitor    chan bool
+	recvFrom       chan []byte
+	logger         *logger.Logger
+	config         *pkgconfig.Config
+	ConfigChan     chan *pkgconfig.Config
+	name           string
+	chanSize       int
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func NewPdnsProcessor(connID int, config *pkgconfig.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
 	logger.Info("[%s] processor=pdns#%d - initialization...", name, connID)
 	d := PdnsProcessor{
-		ConnID:       connID,
-		doneMonitor:  make(chan bool),
-		doneRun:      make(chan bool),
-		stopMonitor:  make(chan bool),
-		stopRun:      make(chan bool),
-		recvFrom:     make(chan []byte, size),
-		chanSize:     size,
-		logger:       logger,
-		config:       config,
-		ConfigChan:   make(chan *pkgconfig.Config),
-		name:         name,
-		dropped:      make(chan string),
-		droppedCount: map[string]int{},
+		ConnID:         connID,
+		doneMonitor:    make(chan bool),
+		doneRun:        make(chan bool),
+		stopMonitor:    make(chan bool),
+		stopRun:        make(chan bool),
+		recvFrom:       make(chan []byte, size),
+		chanSize:       size,
+		logger:         logger,
+		config:         config,
+		ConfigChan:     make(chan *pkgconfig.Config),
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 	return d
 }
@@ -87,57 +86,23 @@ func (p *PdnsProcessor) GetChannel() chan []byte {
 }
 
 func (p *PdnsProcessor) Stop() {
+	p.LogInfo("stopping routing handler...")
+	p.RoutingHandler.Stop()
+
 	p.LogInfo("stopping to process...")
 	p.stopRun <- true
 	<-p.doneRun
-
-	p.LogInfo("stopping to monitor loggers...")
-	p.stopMonitor <- true
-	<-p.doneMonitor
 }
 
-func (p *PdnsProcessor) MonitorLoggers() {
-	watchInterval := 10 * time.Second
-	bufferFull := time.NewTimer(watchInterval)
-FOLLOW_LOOP:
-	for {
-		select {
-		case <-p.stopMonitor:
-			close(p.dropped)
-			bufferFull.Stop()
-			p.doneMonitor <- true
-			break FOLLOW_LOOP
-
-		case loggerName := <-p.dropped:
-			if _, ok := p.droppedCount[loggerName]; !ok {
-				p.droppedCount[loggerName] = 1
-			} else {
-				p.droppedCount[loggerName]++
-			}
-
-		case <-bufferFull.C:
-
-			for v, k := range p.droppedCount {
-				if k > 0 {
-					p.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
-					p.droppedCount[v] = 0
-				}
-			}
-			bufferFull.Reset(watchInterval)
-
-		}
-	}
-	p.LogInfo("monitor terminated")
-}
-
-func (p *PdnsProcessor) Run(loggersChannel []chan dnsutils.DNSMessage, loggersName []string) {
+func (p *PdnsProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
 
-	// prepare enabled transformers
-	transforms := transformers.NewTransforms(&p.config.IngoingTransformers, p.logger, p.name, loggersChannel, p.ConnID)
+	// prepare next channels
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(defaultWorkers)
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(droppedworkers)
 
-	// start goroutine to count dropped messsages
-	go p.MonitorLoggers()
+	// prepare enabled transformers
+	transforms := transformers.NewTransforms(&p.config.IngoingTransformers, p.logger, p.name, defaultRoutes, p.ConnID)
 
 	// read incoming dns message
 	p.LogInfo("waiting dns message to process...")
@@ -354,17 +319,12 @@ RUN_LOOP:
 
 			// apply all enabled transformers
 			if transforms.ProcessMessage(&dm) == transformers.ReturnDrop {
+				p.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
 			// dispatch dns messages to connected loggers
-			for i := range loggersChannel {
-				select {
-				case loggersChannel[i] <- dm: // Successful send to logger channel
-				default:
-					p.dropped <- loggersName[i]
-				}
-			}
+			p.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
 	p.LogInfo("processing terminated")

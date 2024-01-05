@@ -15,6 +15,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/gogo/protobuf/proto"
@@ -73,46 +74,55 @@ func (o *LokiStream) Encode2Proto() ([]byte, error) {
 }
 
 type LokiClient struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DNSMessage
-	outputChan  chan dnsutils.DNSMessage
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	logger      *logger.Logger
-	httpclient  *http.Client
-	textFormat  []string
-	streams     map[string]*LokiStream
-	name        string
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	httpclient     *http.Client
+	textFormat     []string
+	streams        map[string]*LokiStream
+	name           string
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func NewLokiClient(config *pkgconfig.Config, logger *logger.Logger, name string) *LokiClient {
 	logger.Info("[%s] logger=loki - enabled", name)
 
 	s := &LokiClient{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
-		logger:      logger,
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		streams:     make(map[string]*LokiStream),
-		name:        name,
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
+		logger:         logger,
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		streams:        make(map[string]*LokiStream),
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	s.ReadConfig()
-
 	return s
 }
 
 func (c *LokiClient) GetName() string { return c.name }
 
-func (c *LokiClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *LokiClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDroppedRoute(wrk)
+}
+
+func (c *LokiClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (c *LokiClient) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *LokiClient) ReadConfig() {
 	if len(c.config.Loggers.LokiClient.TextFormat) > 0 {
@@ -176,11 +186,14 @@ func (c *LokiClient) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=loki - "+msg, v...)
 }
 
-func (c *LokiClient) Channel() chan dnsutils.DNSMessage {
+func (c *LokiClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 
 func (c *LokiClient) Stop() {
+	c.LogInfo("stopping routing handler...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun
@@ -192,6 +205,10 @@ func (c *LokiClient) Stop() {
 
 func (c *LokiClient) Run() {
 	c.LogInfo("running in background...")
+
+	// prepare next channels
+	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
@@ -229,8 +246,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			c.outputChan <- dm

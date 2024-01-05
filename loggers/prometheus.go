@@ -16,6 +16,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/dmachard/go-topmap"
@@ -241,7 +242,8 @@ type Prometheus struct {
 	histogramQnamesLength  *prometheus.HistogramVec
 	histogramLatencies     *prometheus.HistogramVec
 
-	name string
+	name           string
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func newPrometheusCounterSet(p *Prometheus, labels prometheus.Labels) *PrometheusCountersSet {
@@ -759,18 +761,19 @@ func CreateSystemCatalogue(o *Prometheus) ([]string, *PromCounterCatalogueContai
 func NewPrometheus(config *pkgconfig.Config, logger *logger.Logger, name string) *Prometheus {
 	logger.Info("[%s] logger=prometheus - enabled", name)
 	o := &Prometheus{
-		doneAPI:      make(chan bool),
-		stopProcess:  make(chan bool),
-		doneProcess:  make(chan bool),
-		stopRun:      make(chan bool),
-		doneRun:      make(chan bool),
-		config:       config,
-		configChan:   make(chan *pkgconfig.Config),
-		inputChan:    make(chan dnsutils.DNSMessage, config.Loggers.Prometheus.ChannelBufferSize),
-		outputChan:   make(chan dnsutils.DNSMessage, config.Loggers.Prometheus.ChannelBufferSize),
-		logger:       logger,
-		promRegistry: prometheus.NewPedanticRegistry(),
-		name:         name,
+		doneAPI:        make(chan bool),
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.Prometheus.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.Prometheus.ChannelBufferSize),
+		logger:         logger,
+		promRegistry:   prometheus.NewPedanticRegistry(),
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	// This will create a catalogue of counters indexed by fileds requested by config
@@ -812,7 +815,15 @@ func NewPrometheus(config *pkgconfig.Config, logger *logger.Logger, name string)
 
 func (c *Prometheus) GetName() string { return c.name }
 
-func (c *Prometheus) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *Prometheus) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDroppedRoute(wrk)
+}
+
+func (c *Prometheus) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (c *Prometheus) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *Prometheus) InitProm() {
 
@@ -1113,11 +1124,14 @@ func (c *Prometheus) LogError(msg string, v ...interface{}) {
 	c.logger.Error("["+c.name+"] logger=prometheus - "+msg, v...)
 }
 
-func (c *Prometheus) Channel() chan dnsutils.DNSMessage {
+func (c *Prometheus) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 
 func (c *Prometheus) Stop() {
+	c.LogInfo("stopping routing handler...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun
@@ -1219,6 +1233,10 @@ func (c *Prometheus) ListenAndServe() {
 func (c *Prometheus) Run() {
 	c.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, c.outputChan)
@@ -1257,8 +1275,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			c.outputChan <- dm

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -207,6 +208,10 @@ type TransformML struct {
 	UncommonQtypes        int     `json:"uncommon-qtypes" msgpack:"uncommon-qtypes"`
 }
 
+type TransformATags struct {
+	Tags []string `json:"tags" msgpack:"tags"`
+}
+
 type DNSMessage struct {
 	NetworkInfo     DNSNetInfo             `json:"network" msgpack:"network"`
 	DNS             DNS                    `json:"dns" msgpack:"dns"`
@@ -220,6 +225,7 @@ type DNSMessage struct {
 	Reducer         *TransformReducer      `json:"reducer,omitempty" msgpack:"reducer"`
 	MachineLearning *TransformML           `json:"ml,omitempty" msgpack:"ml"`
 	Filtering       *TransformFiltering    `json:"filtering,omitempty" msgpack:"filtering"`
+	ATags           *TransformATags        `json:"atags,omitempty" msgpack:"atags"`
 }
 
 func (dm *DNSMessage) Init() {
@@ -260,6 +266,18 @@ func (dm *DNSMessage) Init() {
 		Z:             0,
 		Options:       []DNSOption{},
 	}
+}
+
+func (dm *DNSMessage) InitTransforms() {
+	dm.ATags = &TransformATags{}
+	dm.Filtering = &TransformFiltering{}
+	dm.MachineLearning = &TransformML{}
+	dm.Reducer = &TransformReducer{}
+	dm.Extracted = &TransformExtracted{}
+	dm.PublicSuffix = &TransformPublicSuffix{}
+	dm.Suspicious = &TransformSuspicious{}
+	dm.PowerDNS = &PowerDNS{}
+	dm.Geo = &TransformDNSGeo{}
 }
 
 func (dm *DNSMessage) handleGeoIPDirectives(directives []string, s *strings.Builder) {
@@ -839,6 +857,475 @@ func (dm *DNSMessage) Flatten() (ret map[string]interface{}, err error) {
 	return
 }
 
+func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
+	if len(matching) == 0 {
+		return nil, false
+	}
+
+	dmValue := reflect.ValueOf(dm)
+
+	if dmValue.Kind() == reflect.Ptr {
+		dmValue = dmValue.Elem()
+	}
+
+	var isMatch = true
+
+	for nestedKeys, value := range matching {
+		realValue, found := getFieldByJSONTag(dmValue, nestedKeys)
+		if !found {
+			return nil, false
+		}
+
+		expectedValue := reflect.ValueOf(value)
+		// fmt.Println(nestedKeys, realValue, realValue.Kind(), expectedValue.Kind())
+
+		switch expectedValue.Kind() {
+		// integer
+		case reflect.Int:
+			if match, _ := matchUserInteger(realValue, expectedValue); !match {
+				return nil, false
+			}
+
+		// string
+		case reflect.String:
+			if match, _ := matchUserPattern(realValue, expectedValue); !match {
+				return nil, false
+			}
+
+		// bool
+		case reflect.Bool:
+			if match, _ := matchUserBoolean(realValue, expectedValue); !match {
+				return nil, false
+			}
+
+		// map
+		case reflect.Map:
+			if match, _ := matchUserMap(realValue, expectedValue); !match {
+				return nil, false
+			}
+
+		// list/slice
+		case reflect.Slice:
+			if match, _ := matchUserSlice(realValue, expectedValue); !match {
+				return nil, false
+			}
+
+		// other user types
+		default:
+			return fmt.Errorf("unsupported type value: %s", expectedValue.Kind()), false
+		}
+
+	}
+
+	return nil, isMatch
+}
+
+// map can be provided by user in the config
+// dns.qname:
+// match-source: "file://./testsdata/filtering_keep_domains_regex.txt"
+// source-kind: "regexp_list"
+func matchUserMap(realValue, expectedValue reflect.Value) (bool, error) {
+	for _, opKey := range expectedValue.MapKeys() {
+		opValue := expectedValue.MapIndex(opKey)
+		opName := opKey.Interface().(string)
+
+		switch opName {
+		// Integer great than ?
+		case MatchingOpGreaterThan:
+			if _, ok := opValue.Interface().(int); !ok {
+				return false, fmt.Errorf("integer is expected for greater-than operator")
+			}
+
+			// If realValue is a slice
+			if realValue.Kind() == reflect.Slice {
+				for i := 0; i < realValue.Len(); i++ {
+					elemValue := realValue.Index(i)
+
+					// Check if the element is a int
+					if _, ok := elemValue.Interface().(int); !ok {
+						continue
+					}
+
+					// Check for match
+					if elemValue.Interface().(int) > opValue.Interface().(int) {
+						return true, nil
+					}
+				}
+				return false, nil
+			}
+
+			if realValue.Kind() != reflect.Int {
+				return false, nil
+			}
+			if realValue.Interface().(int) > opValue.Interface().(int) {
+				return true, nil
+			}
+			return false, nil
+
+		// Integer lower than ?
+		case MatchingOpLowerThan:
+			if _, ok := opValue.Interface().(int); !ok {
+				return false, fmt.Errorf("integer is expected for lower-than operator")
+			}
+
+			// If realValue is a slice
+			if realValue.Kind() == reflect.Slice {
+				for i := 0; i < realValue.Len(); i++ {
+					elemValue := realValue.Index(i)
+
+					// Check if the element is a int
+					if _, ok := elemValue.Interface().(int); !ok {
+						continue
+					}
+
+					// Check for match
+					if elemValue.Interface().(int) < opValue.Interface().(int) {
+						return true, nil
+					}
+				}
+				return false, nil
+			}
+
+			if realValue.Kind() != reflect.Int {
+				return false, nil
+			}
+			if realValue.Interface().(int) < opValue.Interface().(int) {
+				return true, nil
+			}
+			return false, nil
+
+		// Ignore these operators
+		case MatchingOpSource, MatchingOpSourceKind:
+			continue
+
+		// List of pattern
+		case MatchingKindRegexp:
+			patternList := opValue.Interface().([]*regexp.Regexp)
+
+			// If realValue is a slice
+			if realValue.Kind() == reflect.Slice {
+				for i := 0; i < realValue.Len(); i++ {
+					elemValue := realValue.Index(i)
+
+					// Check if the element is a string
+					if _, ok := elemValue.Interface().(string); !ok {
+						continue
+					}
+
+					// Check for a match with the regex pattern
+					for _, pattern := range patternList {
+						if pattern.MatchString(elemValue.Interface().(string)) {
+							return true, nil
+						}
+					}
+				}
+				// No match found in the slice
+				return false, nil
+			}
+
+			if realValue.Kind() != reflect.String {
+				return false, nil
+			}
+			for _, pattern := range patternList {
+				if pattern.MatchString(realValue.Interface().(string)) {
+					return true, nil
+				}
+			}
+			// No match found in pattern list
+			return false, nil
+
+		// List of string
+		case MatchingKindString:
+			stringList := opValue.Interface().([]string)
+
+			// If realValue is a slice
+			if realValue.Kind() == reflect.Slice {
+				for i := 0; i < realValue.Len(); i++ {
+					elemValue := realValue.Index(i)
+
+					// Check if the element is a string
+					if _, ok := elemValue.Interface().(string); !ok {
+						continue
+					}
+
+					// Check for a match with the text
+					for _, textItem := range stringList {
+						if textItem == realValue.Interface().(string) {
+							return true, nil
+						}
+					}
+				}
+				// No match found in the slice
+				return false, nil
+			}
+
+			if realValue.Kind() != reflect.String {
+				return false, nil
+			}
+			for _, textItem := range stringList {
+				if textItem == realValue.Interface().(string) {
+					return true, nil
+				}
+			}
+
+			// No match found in string list
+			return false, nil
+
+		default:
+			return false, fmt.Errorf("invalid operator '%s', ignore it", opKey.Interface().(string))
+		}
+	}
+	return true, nil
+}
+
+// list can be provided by user in the config
+// dns.qname:
+//   - ".*\\.github\\.com$"
+//   - "^www\\.google\\.com$"
+func matchUserSlice(realValue, expectedValue reflect.Value) (bool, error) {
+	match := false
+	for i := 0; i < expectedValue.Len() && !match; i++ {
+		reflectedSub := reflect.ValueOf(expectedValue.Index(i).Interface())
+
+		switch reflectedSub.Kind() {
+		case reflect.Int:
+			if realValue.Kind() == reflect.Slice {
+				for i := 0; i < realValue.Len(); i++ {
+					elemValue := realValue.Index(i)
+					if _, ok := elemValue.Interface().(int); !ok {
+						continue
+					}
+					if reflectedSub.Interface().(int) == elemValue.Interface().(int) {
+						return true, nil
+					}
+				}
+			}
+
+			if realValue.Kind() != reflect.Int || realValue.Interface().(int) != reflectedSub.Interface().(int) {
+				continue
+			}
+			match = true
+		case reflect.String:
+			pattern := regexp.MustCompile(reflectedSub.Interface().(string))
+			if realValue.Kind() == reflect.Slice {
+				for i := 0; i < realValue.Len() && !match; i++ {
+					elemValue := realValue.Index(i)
+					if _, ok := elemValue.Interface().(string); !ok {
+						continue
+					}
+					// Check for a match with the regex pattern
+					if pattern.MatchString(elemValue.Interface().(string)) {
+						match = true
+					}
+				}
+			}
+
+			if realValue.Kind() != reflect.String {
+				continue
+			}
+
+			if pattern.MatchString(realValue.Interface().(string)) {
+				match = true
+			}
+		}
+	}
+	return match, nil
+}
+
+// boolean can be provided by user in the config
+// dns.flags.qr: true
+func matchUserBoolean(realValue, expectedValue reflect.Value) (bool, error) {
+	// If realValue is a slice
+	if realValue.Kind() == reflect.Slice {
+		for i := 0; i < realValue.Len(); i++ {
+			elemValue := realValue.Index(i)
+
+			// Check if the element is a int
+			if _, ok := elemValue.Interface().(bool); !ok {
+				continue
+			}
+
+			// Check for match
+			if expectedValue.Interface().(bool) == elemValue.Interface().(bool) {
+				return true, nil
+			}
+		}
+	}
+
+	if realValue.Kind() != reflect.Bool {
+		return false, nil
+	}
+
+	if expectedValue.Interface().(bool) != realValue.Interface().(bool) {
+		return false, nil
+	}
+	return true, nil
+}
+
+// integer can be provided by user in the config
+// dns.opcode: 0
+func matchUserInteger(realValue, expectedValue reflect.Value) (bool, error) {
+	// If realValue is a slice
+	if realValue.Kind() == reflect.Slice {
+		for i := 0; i < realValue.Len(); i++ {
+			elemValue := realValue.Index(i)
+
+			// Check if the element is a int
+			if _, ok := elemValue.Interface().(int); !ok {
+				continue
+			}
+
+			// Check for match
+			if expectedValue.Interface().(int) == elemValue.Interface().(int) {
+				return true, nil
+			}
+		}
+	}
+
+	if realValue.Kind() != reflect.Int {
+		return false, nil
+	}
+	if expectedValue.Interface().(int) != realValue.Interface().(int) {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// regexp can be provided by user in the config
+// dns.qname: "^.*\\.github\\.com$"
+func matchUserPattern(realValue, expectedValue reflect.Value) (bool, error) {
+	pattern := regexp.MustCompile(expectedValue.Interface().(string))
+
+	// If realValue is a slice
+	if realValue.Kind() == reflect.Slice {
+		for i := 0; i < realValue.Len(); i++ {
+			elemValue := realValue.Index(i)
+
+			// Check if the element is a string
+			if _, ok := elemValue.Interface().(string); !ok {
+				continue
+			}
+
+			// Check for a match with the regex pattern
+			if pattern.MatchString(elemValue.Interface().(string)) {
+				return true, nil
+			}
+		}
+		// No match found in the slice
+		return false, nil
+	}
+
+	// If realValue is not a string
+	if realValue.Kind() != reflect.String {
+		return false, nil
+	}
+
+	// Check for a match with the regex pattern
+	if !pattern.MatchString(realValue.String()) {
+		return false, nil
+	}
+
+	// Match found for a single value
+	return true, nil
+}
+
+func getFieldByJSONTag(value reflect.Value, nestedKeys string) (reflect.Value, bool) {
+	listKeys := strings.SplitN(nestedKeys, ".", 2)
+
+	for j, jsonKey := range listKeys {
+		// Iterate over the fields of the structure
+		for i := 0; i < value.NumField(); i++ {
+			field := value.Type().Field(i)
+
+			// Get JSON tag
+			tag := field.Tag.Get("json")
+			tagClean := strings.TrimSuffix(tag, ",omitempty")
+
+			// Check if the JSON tag matches
+			if tagClean == jsonKey {
+				// ptr
+				switch field.Type.Kind() {
+				// integer
+				case reflect.Ptr:
+					if fieldValue, found := getFieldByJSONTag(value.Field(i).Elem(), listKeys[j+1]); found {
+						return fieldValue, true
+					}
+
+				// struct
+				case reflect.Struct:
+					if fieldValue, found := getFieldByJSONTag(value.Field(i), listKeys[j+1]); found {
+						return fieldValue, true
+					}
+
+				// slice if a list
+				case reflect.Slice:
+					if fieldValue, leftKey, found := getSliceElement(value.Field(i), listKeys[j+1]); found {
+						switch field.Type.Kind() {
+						case reflect.Struct:
+							if fieldValue, found := getFieldByJSONTag(fieldValue, leftKey); found {
+								return fieldValue, true
+							}
+						case reflect.Slice:
+							var result []interface{}
+							for i := 0; i < fieldValue.Len(); i++ {
+
+								if fieldValue.Index(i).Kind() == reflect.String || fieldValue.Index(i).Kind() == reflect.Int {
+									result = append(result, fieldValue.Index(i).Interface())
+								} else {
+									if sliceValue, found := getFieldByJSONTag(fieldValue.Index(i), leftKey); found {
+										result = append(result, sliceValue.Interface())
+									}
+								}
+							}
+							// If the list is not empty, return the list
+							if len(result) > 0 {
+								return reflect.ValueOf(result), true
+							}
+						default:
+							return value.Field(i), true
+						}
+					}
+
+				// int, string
+				default:
+					return value.Field(i), true
+				}
+			}
+		}
+	}
+
+	return reflect.Value{}, false
+}
+
+func getSliceElement(sliceValue reflect.Value, nestedKeys string) (reflect.Value, string, bool) {
+	listKeys := strings.SplitN(nestedKeys, ".", 2)
+	leftKeys := ""
+	if len(listKeys) > 1 {
+		leftKeys = listKeys[1]
+	}
+	sliceIndex := listKeys[0]
+
+	if sliceIndex == "*" {
+		return sliceValue, leftKeys, true
+	}
+
+	// Convert the slice index from string to int
+	index, err := strconv.Atoi(sliceIndex)
+	if err != nil {
+		// Handle the error (e.g., invalid index format)
+		return reflect.Value{}, leftKeys, false
+	}
+
+	for i := 0; i < sliceValue.Len(); i++ {
+		if index == i {
+			return sliceValue.Index(i), leftKeys, true
+		}
+	}
+	// If no match is found, return an empty reflect.Value
+	return reflect.Value{}, leftKeys, false
+}
+
 func GetFakeDNSMessage() DNSMessage {
 	dm := DNSMessage{}
 	dm.Init()
@@ -867,4 +1354,12 @@ func GetFakeDNSMessageWithPayload() DNSMessage {
 	dm.DNS.Payload = dnsquestion
 	dm.DNS.Length = len(dnsquestion)
 	return dm
+}
+
+func GetFlatDNSMessage() (ret map[string]interface{}, err error) {
+	dm := DNSMessage{}
+	dm.Init()
+	dm.InitTransforms()
+	ret, err = dm.Flatten()
+	return
 }
