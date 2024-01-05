@@ -26,7 +26,9 @@ import (
 
 var (
 	DNSQuery                  = "QUERY"
+	DNSQueryQuiet             = "Q"
 	DNSReply                  = "REPLY"
+	DNSReplyQuiet             = "R"
 	PdnsDirectives            = regexp.MustCompile(`^powerdns-*`)
 	GeoIPDirectives           = regexp.MustCompile(`^geoip-*`)
 	SuspiciousDirectives      = regexp.MustCompile(`^suspicious-*`)
