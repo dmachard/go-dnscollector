@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 )
 
@@ -16,15 +18,15 @@ func Test_DnsProcessor(t *testing.T) {
 
 	// init and run the dns processor
 	consumer := NewDNSProcessor(pkgconfig.GetFakeConfig(), logger, "test", 512)
-	chanTo := make(chan dnsutils.DNSMessage, 512)
-	go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
+
+	fl := loggers.NewFakeLogger()
+	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	dm := dnsutils.GetFakeDNSMessageWithPayload()
 	consumer.GetChannel() <- dm
 
 	// read dns message from dnstap consumer
-	dmOut := <-chanTo
-
+	dmOut := <-fl.GetInputChannel()
 	if dmOut.DNS.Qname != "dnscollector.dev" {
 		t.Errorf("invalid qname in dns message: %s", dm.DNS.Qname)
 	}

@@ -47,6 +47,7 @@ type XDPSniffer struct {
 	exit          chan bool
 	identity      string
 	defaultRoutes []pkgutils.Worker
+	droppedRoutes []pkgutils.Worker
 	config        *pkgconfig.Config
 	configChan    chan *pkgconfig.Config
 	logger        *logger.Logger
@@ -79,7 +80,7 @@ func (c *XDPSniffer) LogError(msg string, v ...interface{}) {
 func (c *XDPSniffer) GetName() string { return c.name }
 
 func (c *XDPSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
-	// TODO
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
 }
 
 func (c *XDPSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
@@ -91,7 +92,7 @@ func (c *XDPSniffer) SetLoggers(loggers []pkgutils.Worker) {
 }
 
 func (c *XDPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	return pkgutils.GetActiveRoutes(c.defaultRoutes)
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *XDPSniffer) ReadConfig() {
@@ -121,8 +122,13 @@ func (c *XDPSniffer) Stop() {
 func (c *XDPSniffer) Run() {
 	c.LogInfo("starting collector...")
 
-	dnsProcessor := processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.XdpLiveCapture.ChannelBufferSize)
-	go dnsProcessor.Run(c.Loggers())
+	dnsProcessor := processors.NewDNSProcessor(
+		c.config,
+		c.logger,
+		c.name,
+		c.config.Collectors.XdpLiveCapture.ChannelBufferSize,
+	)
+	go dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	iface, err := net.InterfaceByName(c.config.Collectors.XdpLiveCapture.Device)
 	if err != nil {

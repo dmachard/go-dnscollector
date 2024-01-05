@@ -3,8 +3,9 @@ package processors
 import (
 	"testing"
 
-	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
 	"github.com/miekg/dns"
@@ -14,7 +15,6 @@ import (
 func TestPowerDNS_Processor(t *testing.T) {
 	// init the dnstap consumer
 	consumer := NewPdnsProcessor(0, pkgconfig.GetFakeConfig(), logger.New(false), "test", 512)
-	chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// init the powerdns processor
 	dnsQname := pkgconfig.ValidDomain
@@ -29,12 +29,15 @@ func TestPowerDNS_Processor(t *testing.T) {
 
 	data, _ := proto.Marshal(dm)
 
-	go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
+	// run the consumer with a fake logger
+	fl := loggers.NewFakeLogger()
+	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+
 	// add packet to consumer
 	consumer.GetChannel() <- data
 
 	// read dns message from dnstap consumer
-	msg := <-chanTo
+	msg := <-fl.GetInputChannel()
 	if msg.DNSTap.Identity != "powerdnspb" {
 		t.Errorf("invalid identity in dns message: %s", msg.DNSTap.Identity)
 	}
@@ -46,7 +49,6 @@ func TestPowerDNS_Processor_AddDNSPayload_Valid(t *testing.T) {
 
 	// init the powerdns processor
 	consumer := NewPdnsProcessor(0, cfg, logger.New(false), "test", 512)
-	chanTo := make(chan dnsutils.DNSMessage, 1)
 
 	// prepare powerdns message
 	dnsQname := pkgconfig.ValidDomain
@@ -63,11 +65,14 @@ func TestPowerDNS_Processor_AddDNSPayload_Valid(t *testing.T) {
 	data, _ := proto.Marshal(dm)
 
 	// start the consumer and add packet
-	go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
+	// run the consumer with a fake logger
+	fl := loggers.NewFakeLogger()
+	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+
 	consumer.GetChannel() <- data
 
 	// read dns message
-	msg := <-chanTo
+	msg := <-fl.GetInputChannel()
 
 	// checks
 	if msg.DNS.Length == 0 {
@@ -94,7 +99,6 @@ func TestPowerDNS_Processor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
 
 	// init the dnstap consumer
 	consumer := NewPdnsProcessor(0, cfg, logger.New(false), "test", 512)
-	chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dnstap
 	dnsQname := pkgconfig.BadDomainLabel
@@ -110,12 +114,15 @@ func TestPowerDNS_Processor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
 
 	data, _ := proto.Marshal(dm)
 
-	go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
+	// run the consumer with a fake logger
+	fl := loggers.NewFakeLogger()
+	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+
 	// add packet to consumer
 	consumer.GetChannel() <- data
 
 	// read dns message from dnstap consumer
-	msg := <-chanTo
+	msg := <-fl.GetInputChannel()
 	if !msg.DNS.MalformedPacket {
 		t.Errorf("DNS message should malformed")
 	}
@@ -127,7 +134,6 @@ func TestPowerDNS_Processor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
 
 	// init the dnstap consumer
 	consumer := NewPdnsProcessor(0, cfg, logger.New(false), "test", 512)
-	chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dnstap
 	dnsQname := pkgconfig.BadVeryLongDomain
@@ -142,12 +148,15 @@ func TestPowerDNS_Processor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
 
 	data, _ := proto.Marshal(dm)
 
-	go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
+	// run the consumer with a fake logger
+	fl := loggers.NewFakeLogger()
+	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+
 	// add packet to consumer
 	consumer.GetChannel() <- data
 
 	// read dns message from dnstap consumer
-	msg := <-chanTo
+	msg := <-fl.GetInputChannel()
 	if !msg.DNS.MalformedPacket {
 		t.Errorf("DNS message should malformed because of qname too long")
 	}
@@ -159,7 +168,6 @@ func TestPowerDNS_Processor_AddDNSPayload_AnswersTooLongDomain(t *testing.T) {
 
 	// init the dnstap consumer
 	consumer := NewPdnsProcessor(0, cfg, logger.New(false), "test", 512)
-	chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dnstap
 	dnsQname := pkgconfig.ValidDomain
@@ -185,12 +193,15 @@ func TestPowerDNS_Processor_AddDNSPayload_AnswersTooLongDomain(t *testing.T) {
 
 	data, _ := proto.Marshal(dm)
 
-	go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
+	// run the consumer with a fake logger
+	fl := loggers.NewFakeLogger()
+	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+
 	// add packet to consumer
 	consumer.GetChannel() <- data
 
 	// read dns message from dnstap consumer
-	msg := <-chanTo
+	msg := <-fl.GetInputChannel()
 
 	// tests verifications
 	if !msg.DNS.MalformedPacket {

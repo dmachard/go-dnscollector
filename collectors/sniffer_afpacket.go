@@ -155,6 +155,7 @@ type AfpacketSniffer struct {
 	fd            int
 	identity      string
 	defaultRoutes []pkgutils.Worker
+	droppedRoutes []pkgutils.Worker
 	config        *pkgconfig.Config
 	configChan    chan *pkgconfig.Config
 	logger        *logger.Logger
@@ -187,7 +188,7 @@ func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
 func (c *AfpacketSniffer) GetName() string { return c.name }
 
 func (c *AfpacketSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
-	// TODO
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
 }
 
 func (c *AfpacketSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
@@ -199,7 +200,7 @@ func (c *AfpacketSniffer) SetLoggers(loggers []pkgutils.Worker) {
 }
 
 func (c *AfpacketSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	return pkgutils.GetActiveRoutes(c.defaultRoutes)
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *AfpacketSniffer) ReadConfig() {
@@ -281,8 +282,13 @@ func (c *AfpacketSniffer) Run() {
 		}
 	}
 
-	dnsProcessor := processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.AfpacketLiveCapture.ChannelBufferSize)
-	go dnsProcessor.Run(c.Loggers())
+	dnsProcessor := processors.NewDNSProcessor(
+		c.config,
+		c.logger,
+		c.name,
+		c.config.Collectors.AfpacketLiveCapture.ChannelBufferSize,
+	)
+	go dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	dnsChan := make(chan netlib.DNSPacket)
 	udpChan := make(chan gopacket.Packet)

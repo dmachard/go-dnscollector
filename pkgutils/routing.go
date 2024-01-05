@@ -8,6 +8,20 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
+func GetRoutes(routes []Worker) ([]chan dnsutils.DNSMessage, []string) {
+	channels := []chan dnsutils.DNSMessage{}
+	names := []string{}
+	for _, p := range routes {
+		if c := p.GetInputChannel(); c != nil {
+			channels = append(channels, c)
+			names = append(names, p.GetName())
+		} else {
+			panic("default routing to stanza=[" + p.GetName() + "] not supported")
+		}
+	}
+	return channels, names
+}
+
 type RoutingHandler struct {
 	name          string
 	logger        *logger.Logger
@@ -51,26 +65,16 @@ func (rh *RoutingHandler) AddDefaultRoute(wrk Worker) {
 	rh.defaultRoutes = append(rh.defaultRoutes, wrk)
 }
 
+func (rh *RoutingHandler) SetDefaultRoutes(workers []Worker) {
+	rh.defaultRoutes = workers
+}
+
 func (rh *RoutingHandler) GetDefaultRoutes() ([]chan dnsutils.DNSMessage, []string) {
-	return rh.GetRoutes(rh.defaultRoutes)
+	return GetRoutes(rh.defaultRoutes)
 }
 
 func (rh *RoutingHandler) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []string) {
-	return rh.GetRoutes(rh.droppedRoutes)
-}
-
-func (rh *RoutingHandler) GetRoutes(routes []Worker) ([]chan dnsutils.DNSMessage, []string) {
-	channels := []chan dnsutils.DNSMessage{}
-	names := []string{}
-	for _, p := range routes {
-		if c := p.GetInputChannel(); c != nil {
-			channels = append(channels, c)
-			names = append(names, p.GetName())
-		} else {
-			panic("default routing to stanza=[" + p.GetName() + "] not supported")
-		}
-	}
-	return channels, names
+	return GetRoutes(rh.droppedRoutes)
 }
 
 func (rh *RoutingHandler) Stop() {

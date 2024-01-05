@@ -39,6 +39,7 @@ func IsValidMode(mode string) bool {
 type FileIngestor struct {
 	done            chan bool
 	exit            chan bool
+	droppedRoutes   []pkgutils.Worker
 	defaultRoutes   []pkgutils.Worker
 	config          *pkgconfig.Config
 	configChan      chan *pkgconfig.Config
@@ -72,7 +73,7 @@ func NewFileIngestor(loggers []pkgutils.Worker, config *pkgconfig.Config, logger
 func (c *FileIngestor) GetName() string { return c.name }
 
 func (c *FileIngestor) AddDroppedRoute(wrk pkgutils.Worker) {
-	// TODO
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
 }
 
 func (c *FileIngestor) AddDefaultRoute(wrk pkgutils.Worker) {
@@ -84,7 +85,7 @@ func (c *FileIngestor) SetLoggers(loggers []pkgutils.Worker) {
 }
 
 func (c *FileIngestor) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	return pkgutils.GetActiveRoutes(c.defaultRoutes)
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *FileIngestor) ReadConfig() {
@@ -377,11 +378,17 @@ func (c *FileIngestor) Run() {
 	c.LogInfo("starting collector...")
 
 	c.dnsProcessor = processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
-	go c.dnsProcessor.Run(c.Loggers())
+	go c.dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	// start dnstap subprocessor
-	c.dnstapProcessor = processors.NewDNSTapProcessor(0, c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
-	go c.dnstapProcessor.Run(c.Loggers())
+	c.dnstapProcessor = processors.NewDNSTapProcessor(
+		0,
+		c.config,
+		c.logger,
+		c.name,
+		c.config.Collectors.FileIngestor.ChannelBufferSize,
+	)
+	go c.dnstapProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	// read current folder content
 	entries, err := os.ReadDir(c.config.Collectors.FileIngestor.WatchDir)

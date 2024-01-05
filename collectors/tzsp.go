@@ -27,6 +27,7 @@ type TZSPSniffer struct {
 	exit          chan bool
 	listen        net.UDPConn
 	defaultRoutes []pkgutils.Worker
+	droppedRoutes []pkgutils.Worker
 	config        *pkgconfig.Config
 	logger        *logger.Logger
 	name          string
@@ -50,7 +51,7 @@ func NewTZSP(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger
 func (c *TZSPSniffer) GetName() string { return c.name }
 
 func (c *TZSPSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
-	// TODO
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
 }
 
 func (c *TZSPSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
@@ -62,7 +63,7 @@ func (c *TZSPSniffer) SetLoggers(loggers []pkgutils.Worker) {
 }
 
 func (c *TZSPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	return pkgutils.GetActiveRoutes(c.defaultRoutes)
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *TZSPSniffer) LogInfo(msg string, v ...interface{}) {
@@ -132,7 +133,7 @@ func (c *TZSPSniffer) Run() {
 	}
 
 	dnsProcessor := processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.Tzsp.ChannelBufferSize)
-	go dnsProcessor.Run(c.Loggers())
+	go dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	go func() {
 		buf := make([]byte, 65536)

@@ -29,6 +29,7 @@ type ProtobufPowerDNS struct {
 	listen         net.Listener
 	connID         int
 	conns          []net.Conn
+	droppedRoutes  []pkgutils.Worker
 	defaultRoutes  []pkgutils.Worker
 	config         *pkgconfig.Config
 	configChan     chan *pkgconfig.Config
@@ -62,7 +63,7 @@ func NewProtobufPowerDNS(loggers []pkgutils.Worker, config *pkgconfig.Config, lo
 func (c *ProtobufPowerDNS) GetName() string { return c.name }
 
 func (c *ProtobufPowerDNS) AddDroppedRoute(wrk pkgutils.Worker) {
-	// TODO
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
 }
 
 func (c *ProtobufPowerDNS) AddDefaultRoute(wrk pkgutils.Worker) {
@@ -74,7 +75,7 @@ func (c *ProtobufPowerDNS) SetLoggers(loggers []pkgutils.Worker) {
 }
 
 func (c *ProtobufPowerDNS) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	return pkgutils.GetActiveRoutes(c.defaultRoutes)
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *ProtobufPowerDNS) ReadConfig() {
@@ -125,7 +126,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	c.Lock()
 	c.pdnsProcessors = append(c.pdnsProcessors, &pdnsProc)
 	c.Unlock()
-	go pdnsProc.Run(c.Loggers())
+	go pdnsProc.Run(c.defaultRoutes, c.droppedRoutes)
 
 	r := bufio.NewReader(conn)
 	pbs := powerdns_protobuf.NewProtobufStream(r, conn, 5*time.Second)
