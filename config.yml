@@ -82,8 +82,7 @@ multiplexer:
     - from: [ tap ]
       to: [ console ]
 
-# EXPERIMENTAL, not production ready /!\
-# Running with pipeling mode
+# /!\ experimental,  pipelling running mode /!\
 # pipelines:
 #   - name: main-input
 #     dnstap:
