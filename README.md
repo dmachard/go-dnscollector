@@ -1,8 +1,9 @@
-
-[![Go Report Card](https://goreportcard.com/badge/github.com/dmachard/go-dns-collector)](https://goreportcard.com/report/dmachard/go-dns-collector)
-![Go version](https://img.shields.io/badge/go%20version-min%201.20-blue)
-![Go tests](https://img.shields.io/badge/go%20tests-377-green)
-![Go lines](https://img.shields.io/badge/go%20lines-36222-red)
+<p align="center">
+<img src="https://goreportcard.com/badge/github.com/dmachard/go-dns-collector" alt="Go Report"/>
+<img src="https://img.shields.io/badge/go%20version-min%201.20-green" alt="Go version"/>
+<img src="https://img.shields.io/badge/go%20tests-377-green" alt="Go tests"/>
+<img src="https://img.shields.io/badge/go%20lines-36222-green" alt="Go lines"/>
+</p>
 
 <p align="center">
 <img src="https://github.com/dmachard/go-dns-collector/actions/workflows/testing-dnstap.yml/badge.svg" alt="Go Tests"/>
