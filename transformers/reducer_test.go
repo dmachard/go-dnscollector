@@ -95,10 +95,10 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 			},
 			dnsMessagesOut: []dnsutils.DNSMessage{
 				{
-					Reducer: &dnsutils.TransformReducer{Occurences: 1},
+					Reducer: &dnsutils.TransformReducer{Occurrences: 1},
 				},
 				{
-					Reducer: &dnsutils.TransformReducer{Occurences: 1},
+					Reducer: &dnsutils.TransformReducer{Occurrences: 1},
 				},
 			},
 		},
@@ -118,7 +118,7 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 			},
 			dnsMessagesOut: []dnsutils.DNSMessage{
 				{
-					Reducer: &dnsutils.TransformReducer{Occurences: 2},
+					Reducer: &dnsutils.TransformReducer{Occurrences: 2},
 				},
 			},
 		},
@@ -138,10 +138,10 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 			},
 			dnsMessagesOut: []dnsutils.DNSMessage{
 				{
-					Reducer: &dnsutils.TransformReducer{Occurences: 1},
+					Reducer: &dnsutils.TransformReducer{Occurrences: 1},
 				},
 				{
-					Reducer: &dnsutils.TransformReducer{Occurences: 1},
+					Reducer: &dnsutils.TransformReducer{Occurrences: 1},
 				},
 			},
 		},
@@ -162,8 +162,8 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 
 			for _, dmRef := range tc.dnsMessagesOut {
 				newDm := <-outChan
-				if newDm.Reducer.Occurences != dmRef.Reducer.Occurences {
-					t.Errorf("DNS message invalid repeated: Want=%d, Get=%d", dmRef.Reducer.Occurences, newDm.Reducer.Occurences)
+				if newDm.Reducer.Occurrences != dmRef.Reducer.Occurrences {
+					t.Errorf("DNS message invalid repeated: Want=%d, Get=%d", dmRef.Reducer.Occurrences, newDm.Reducer.Occurrences)
 				}
 			}
 		})
@@ -208,7 +208,7 @@ func TestReducer_QnamePlusOne(t *testing.T) {
 			},
 			dnsMessagesOut: []dnsutils.DNSMessage{
 				{
-					Reducer: &dnsutils.TransformReducer{Occurences: 2},
+					Reducer: &dnsutils.TransformReducer{Occurrences: 2},
 				},
 			},
 		},
@@ -230,8 +230,8 @@ func TestReducer_QnamePlusOne(t *testing.T) {
 
 			for _, dmRef := range tc.dnsMessagesOut {
 				newDm := <-outChan
-				if newDm.Reducer.Occurences != dmRef.Reducer.Occurences {
-					t.Errorf("DNS message invalid repeated: Want=%d, Get=%d", dmRef.Reducer.Occurences, newDm.Reducer.Occurences)
+				if newDm.Reducer.Occurrences != dmRef.Reducer.Occurrences {
+					t.Errorf("DNS message invalid repeated: Want=%d, Get=%d", dmRef.Reducer.Occurrences, newDm.Reducer.Occurrences)
 				}
 			}
 		})

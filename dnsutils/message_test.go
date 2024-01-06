@@ -156,10 +156,10 @@ func TestDnsMessage_Json_Transforms_Reference(t *testing.T) {
 		},
 		{
 			transform: "reducer",
-			dmRef:     DNSMessage{Reducer: &TransformReducer{Occurences: 10, CumulativeLength: 47}},
+			dmRef:     DNSMessage{Reducer: &TransformReducer{Occurrences: 10, CumulativeLength: 47}},
 			jsonRef: `{
 						"reducer": {
-							"occurences": 10,
+							"occurrences": 10,
 							"cumulative-length": 47
 						}
 					}`,
@@ -589,14 +589,14 @@ func TestDnsMessage_TextFormat_Directives_Reducer(t *testing.T) {
 	}{
 		{
 			name:     "undefined",
-			format:   "reducer-occurences",
+			format:   "reducer-occurrences",
 			dm:       DNSMessage{},
 			expected: "-",
 		},
 		{
 			name:     "default",
-			format:   "reducer-occurences",
-			dm:       DNSMessage{Reducer: &TransformReducer{Occurences: 1}},
+			format:   "reducer-occurrences",
+			dm:       DNSMessage{Reducer: &TransformReducer{Occurrences: 1}},
 			expected: "1",
 		},
 	}

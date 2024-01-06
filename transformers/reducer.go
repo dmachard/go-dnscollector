@@ -49,12 +49,12 @@ func (mp *MapTraffic) Set(key string, dm *dnsutils.DNSMessage) {
 	defer mp.Unlock()
 
 	if v, ok := mp.kv.Load(key); ok {
-		v.(*dnsutils.DNSMessage).Reducer.Occurences++
+		v.(*dnsutils.DNSMessage).Reducer.Occurrences++
 		v.(*dnsutils.DNSMessage).Reducer.CumulativeLength += dm.DNS.Length
 		return
 	}
 
-	dm.Reducer.Occurences = 1
+	dm.Reducer.Occurrences = 1
 	dm.Reducer.CumulativeLength = dm.DNS.Length
 	mp.kv.Store(key, dm)
 
@@ -152,7 +152,7 @@ func (p *ReducerProcessor) LoadActiveReducers() {
 func (p *ReducerProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 	if dm.Reducer == nil {
 		dm.Reducer = &dnsutils.TransformReducer{
-			Occurences:       0,
+			Occurrences:      0,
 			CumulativeLength: 0,
 		}
 	}

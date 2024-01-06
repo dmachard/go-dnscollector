@@ -138,7 +138,7 @@ func (c *FileIngestor) ProcessFile(filePath string) {
 			go c.ProcessPcap(filePath)
 		}
 	case pkgconfig.ModeDNSTap:
-		// processs dnstap
+		// process dnstap
 		if filepath.Ext(filePath) == ".fstrm" {
 			c.LogInfo("file ready to process %s", filePath)
 			go c.ProcessDnstap(filePath)
@@ -412,7 +412,7 @@ func (c *FileIngestor) Run() {
 				go c.ProcessPcap(fn)
 			}
 		case pkgconfig.ModeDNSTap:
-			// processs dnstap
+			// process dnstap
 			if filepath.Ext(fn) == ".fstrm" {
 				go c.ProcessDnstap(fn)
 			}

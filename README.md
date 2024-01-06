@@ -3,9 +3,6 @@
 <img src="https://img.shields.io/badge/go%20version-min%201.20-green" alt="Go version"/>
 <img src="https://img.shields.io/badge/go%20tests-377-green" alt="Go tests"/>
 <img src="https://img.shields.io/badge/go%20lines-36222-green" alt="Go lines"/>
-</p>
-
-<p align="center">
 <img src="https://github.com/dmachard/go-dns-collector/actions/workflows/testing-dnstap.yml/badge.svg" alt="Go Tests"/>
 <img src="https://github.com/dmachard/go-dns-collector/actions/workflows/testing-go.yml/badge.svg" alt="Github Actions"/>
 <img src="https://github.com/dmachard/go-dns-collector/actions/workflows/testing-powerdns.yml/badge.svg" alt="Github Actions PDNS"/>
@@ -13,6 +10,7 @@
 
 <p align="center">
 <img src="docs/dns-collector_logo.png" alt="DNS-collector"/>
+<img src="https://img.shields.io/github/v/release/dmachard/go-dnscollector?logo=github&sort=semver" alt="release"/>
 </p>
 
 `DNS-collector` acts as a passive high speed **ingestor** with **pipelining** support for your DNS logs, written in **Golang**. It allows enhancing your DNS logs by adding metadata, extracting usage patterns, and facilitating security analysis. The DNS traffic can be collected and aggregated from simultaneously [sources](./docs/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](./docs/loggers.md) with some [transformations](./docs/transformers.md) on it ([traffic filtering](./docs/transformers.md#dns-filtering), [user privacy](./docs/transformers.md#user-privacy), ...).

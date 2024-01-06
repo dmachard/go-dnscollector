@@ -213,7 +213,7 @@ func (fc *FluentdClient) ConnectToRemote() {
 		// block until framestream is ready
 		fc.transportReady <- true
 
-		// block until an error occured, need to reconnect
+		// block until an error occurred, need to reconnect
 		fc.transportReconnect <- true
 	}
 }

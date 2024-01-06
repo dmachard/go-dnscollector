@@ -200,7 +200,7 @@ func (ds *DnstapSender) ConnectToRemote() {
 		// block until framestream is ready
 		ds.transportReady <- true
 
-		// block until an error occured, need to reconnect
+		// block until an error occurred, need to reconnect
 		ds.transportReconnect <- true
 	}
 }

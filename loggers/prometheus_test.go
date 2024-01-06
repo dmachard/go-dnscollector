@@ -171,7 +171,7 @@ func TestPrometheus_EPS_Counters(t *testing.T) {
 	noErrorRecord := dnsutils.GetFakeDNSMessage()
 	noErrorRecord.DNS.Type = dnsutils.DNSQuery
 	g.Record(noErrorRecord)
-	// Zero second elapsed, initalize EPS
+	// Zero second elapsed, initialize EPS
 	g.ComputeEventsPerSecond()
 	mf := getMetrics(g, t)
 	ensureMetricValue(t, mf, "dnscollector_throughput_ops", map[string]string{"stream_id": "collector"}, 0)
