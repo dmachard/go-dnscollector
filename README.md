@@ -2,13 +2,14 @@
 ![Go version](https://img.shields.io/badge/go%20version-min%201.20-blue)
 ![Go tests](https://img.shields.io/badge/go%20tests-377-green)
 ![Go lines](https://img.shields.io/badge/go%20lines-36222-red)
+
 ![Go Tests](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-go.yml/badge.svg)
 ![Github Actions](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-dnstap.yml/badge.svg)
 ![Github Actions PDNS](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-powerdns.yml/badge.svg)
 
-
-![DNS-collector](./docs/dns-collector_logo.png)
-
+<p align="center">
+<img src="docs/dns-collector_logo.png" alt="DNS-collector"/>
+</p>
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
