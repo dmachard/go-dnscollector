@@ -1,12 +1,13 @@
-<p align="center">
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/dmachard/go-dns-collector)](https://goreportcard.com/report/dmachard/go-dns-collector)
 ![Go version](https://img.shields.io/badge/go%20version-min%201.20-blue)
 ![Go tests](https://img.shields.io/badge/go%20tests-377-green)
 ![Go lines](https://img.shields.io/badge/go%20lines-36222-red)
 
-![Go Tests](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-go.yml/badge.svg)
-![Github Actions](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-dnstap.yml/badge.svg)
-![Github Actions PDNS](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-powerdns.yml/badge.svg)
+<p align="center">
+<img src="https://github.com/dmachard/go-dns-collector/actions/workflows/testing-dnstap.yml/badge.svg" alt="Go Tests"/>
+<img src="https://github.com/dmachard/go-dns-collector/actions/workflows/testing-go.yml/badge.svg" alt="Github Actions"/>
+<img src="https://github.com/dmachard/go-dns-collector/actions/workflows/testing-powerdns.yml/badge.svg" alt="Github Actions PDNS"/>
 </p>
 
 <p align="center">
@@ -22,9 +23,9 @@
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
 
-## Features
-
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
+
+## Features
 
 - **[Pipelining](./docs/running_mode.md)**
 
