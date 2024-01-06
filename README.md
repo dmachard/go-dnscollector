@@ -89,6 +89,8 @@ Download the latest [`release`](https://github.com/dmachard/go-dns-collector/rel
 
 If you prefer run it from docker, follow this [guide](./docs/docker.md).
 
+![run](docs/_images/terminal.gif)
+
 ## Configuration
 
 The configuration of DNS-collector is done through a file named [`config.yml`](config.yml). When the DNS-collector starts, it will look for the config.yml from the current working directory.
