@@ -20,11 +20,11 @@
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
 
-**Pipelining mode**
-
-![overview](./docs/_images/overview.png)
-
 ## Features
+
+- **[Pipelining/Multiplexer](./docs/collectors.md)**
+
+  - ![overview](./docs/_images/overview.png)
 
 - **[Collectors](./docs/collectors.md)**
 
