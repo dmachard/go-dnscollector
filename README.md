@@ -20,12 +20,6 @@
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
 
-**Run**
-
-<p align="center">
-<img src="docs/_images/terminal.gif" alt="dnscollector"/>
-</p>
-
 **Pipelining mode**
 
 ![overview](./docs/_images/overview.png)
@@ -87,9 +81,9 @@ Download the latest [`release`](https://github.com/dmachard/go-dns-collector/rel
 ./go-dnscollector -config config.yml
 ```
 
-If you prefer run it from docker, follow this [guide](./docs/docker.md).
-
 ![run](docs/_images/terminal.gif)
+
+If you prefer run it from docker, follow this [guide](./docs/docker.md).
 
 ## Configuration
 
