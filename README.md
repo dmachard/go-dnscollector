@@ -1,6 +1,3 @@
-
-![DNS-collector](./docs/dns-collector_logo.png)
-
 [![Go Report Card](https://goreportcard.com/badge/github.com/dmachard/go-dns-collector)](https://goreportcard.com/report/dmachard/go-dns-collector)
 ![Go version](https://img.shields.io/badge/go%20version-min%201.20-blue)
 ![Go tests](https://img.shields.io/badge/go%20tests-377-green)
@@ -8,6 +5,10 @@
 ![Go Tests](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-go.yml/badge.svg)
 ![Github Actions](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-dnstap.yml/badge.svg)
 ![Github Actions PDNS](https://github.com/dmachard/go-dns-collector/actions/workflows/testing-powerdns.yml/badge.svg)
+
+
+![DNS-collector](./docs/dns-collector_logo.png)
+
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
@@ -22,9 +23,9 @@
 
 ## Features
 
-- **[Pipelining/Multiplexer](./docs/collectors.md)**
+- **[Pipelining](./docs/running_mode.md)**
 
-  - ![overview](./docs/_images/overview.png)
+  [![overview](./docs/_images/overview.png)](./docs/running_mode.md)
 
 - **[Collectors](./docs/collectors.md)**
 
@@ -67,7 +68,7 @@
 
   - Traffic [Filtering](docs/transformers/transform_trafficfiltering.md) and [Reducer](docs/transformers/transform_trafficreducer.md)
   - Latency [Computing](docs/transformers/transform_latency.md)
-  - Apply user [Privacy](docs/transformers/transform_userprivacy.md)
+  - Apply [User Privacy](docs/transformers/transform_userprivacy.md)
   - [Normalize](docs/transformers/transform_normalize.md) DNS messages
   - Add [Geographical](docs/transformers/transform_geoip.md) metadata
   - Various data [Extractor](docs/transformers/transform_dataextractor.md)

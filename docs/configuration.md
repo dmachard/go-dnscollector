@@ -2,17 +2,14 @@
 
 The configuration of DNS-collector is done through one yaml file named [`config.yml`](https://github.com/dmachard/go-dnscollector/blob/main/config.yml). When the DNS-collector starts, it will look for the config.yml from the current working directory.
 
-A typically configuration would have one or more collector to receive DNS traffic, and severals loggers to process the
-incoming traffics. You can take a look to the list of config [`examples`](examples.md).
+A typically configuration in [multiplexer](./docs/running_mode.md) mode would have one or more collector to receive DNS traffic, and severals loggers to process the incoming traffics. You can take a look to the list of config [`examples`](examples.md).
+
+You can find the global settings below
 
 - [Global](#global)
   - [Trace](#trace)
   - [Custom text format](#custom-text-format)
   - [Server identity](#server-identity)
-- [Multiplexer](#multiplexer)
-  - [Collectors](#collectors)
-  - [Loggers](#loggers)
-  - [Routes](#routes)
 
 ## Global
 
@@ -117,49 +114,4 @@ Output example:
 2023-04-08T18:27:29.268575Z unbound FORWARDER_QUERY NOERROR 0.0.0.0 20817 IPv4 UDP 38b google.fr A 0.000000
 2023-04-08T18:27:29.278929Z unbound FORWARDER_RESPONSE NOERROR 0.0.0.0 20817 IPv4 UDP 54b google.fr A 0.000000
 2023-04-08T18:27:29.279039Z unbound CLIENT_RESPONSE NOERROR 127.0.0.1 39028 IPv4 UDP 54b google.fr A 0.000000
-```
-
-## Multiplexer
-
-The dns collector can be configured with multiple loggers and collectors at the same time.
-
-You must defined the list of
-
-- `collectors`: list of running inputs
-- `loggers`: list of running outputs
-- `routes`: routing definition
-
-### Collectors
-
-List of supported [collectors](./collectors.md)
-
-```yaml
-multiplexer:
-  collectors: 
-    - name: <collector_name>
-      .....
-```
-
-### Loggers
-
-List of supported [loggers](./loggers.md)
-
-```yaml
-multiplexer:
-  loggers: 
-    - name: <logger_name>
-      ...
-```
-
-### Routes
-
-Then defines the routing to use between all of them according to the name.
-You can connect one collector to multiple loggers and you can also
-connect multiple collectors to the same logger.
-
-```yaml
-multiplexer:
-  routes: ...
-    - from: [ list of collectors by name ]
-      to: [ list of loggers by name ]
 ```
