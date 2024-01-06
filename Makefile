@@ -69,8 +69,8 @@ tests: check-go
 	@go test -race -cover -v
 	@go test ./pkgconfig/ -race -cover -v
 	@go test ./pkgutils/ -race -cover -v
+	@go test ./pkglinker/ -race -cover -v
 	@go test ./dnsutils/ -race -cover -v
-	@go test ./routing/ -race -cover -v
 	@go test ./netlib/ -race -cover -v
 	@go test -timeout 30s ./transformers/ -race -cover -v
 	@go test -timeout 30s ./collectors/ -race -cover -v
