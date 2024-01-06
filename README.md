@@ -20,13 +20,13 @@
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
 
-Run
+**Run**
 
 <p align="center">
 <img src="docs/_images/terminal.gif" alt="dnscollector"/>
 </p>
 
-Pipelining
+**Pipelining mode**
 
 ![overview](./docs/_images/overview.png)
 
