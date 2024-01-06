@@ -32,7 +32,7 @@ var metricNameRegex = regexp.MustCompile(`_*[^0-9A-Za-z_]+_*`)
 
 /*
 This is the list of available label values selectors.
-Configuration may specifiy a list of lables to use for metrics.
+Configuration may specify a list of lables to use for metrics.
 Any label in this catalogueSelectors can be specidied in config (prometheus-labels stanza)
 */
 var catalogueSelectors map[string]func(*dnsutils.DNSMessage) string = map[string]func(*dnsutils.DNSMessage) string{
@@ -93,7 +93,7 @@ type PrometheusCountersCatalogue interface {
 
 // This type represents a set of counters for a unique set of label name=value pairs.
 // By default, we create a set per setream_id for backward compatibility
-// However, we can allow slicing and dicing data using more dimentions.
+// However, we can allow slicing and dicing data using more dimensions.
 // Each CounterSet is registered with Prometheus collection independently (wrapping label values)
 type PrometheusCountersSet struct {
 	prom *Prometheus
@@ -742,7 +742,7 @@ func (c *PromCounterCatalogueContainer) GetCountersSet(dm *dnsutils.DNSMessage) 
 	return c.stats[lbl].GetCountersSet(dm)
 }
 
-// This function checks the configuration, to determine which label dimentions were requested
+// This function checks the configuration, to determine which label dimensions were requested
 // by configuration, and returns correct implementation of Catalogue.
 func CreateSystemCatalogue(o *Prometheus) ([]string, *PromCounterCatalogueContainer) {
 	lbls := o.config.Loggers.Prometheus.LabelsList
@@ -1322,7 +1322,7 @@ PROCESS_LOOP:
 }
 
 /*
-This is an implementation of variadic dimentions map of label values.
+This is an implementation of variadic dimensions map of label values.
 Having nested structure offers the fastest operations, compared to super-flexibile approach that prom client
 uses with arbitrary set of labels.
 

@@ -12,7 +12,7 @@ func Close(conn io.Closer, reset bool) error {
 		CloseRead() error
 	}
 
-	// Agressive closing, send TCP RESET instead of FIN
+	// Aggressive closing, send TCP RESET instead of FIN
 	if reset {
 		if tcpConn, ok := conn.(*net.TCPConn); ok {
 			tcpConn.SetLinger(0)

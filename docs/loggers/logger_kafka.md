@@ -1,6 +1,6 @@
 # Logger: Kafka Producer
 
-Kafka producer
+Kafka producer, based on [kafka-go](https://github.com/segmentio/kafka-go) library.
 
 Options:
 

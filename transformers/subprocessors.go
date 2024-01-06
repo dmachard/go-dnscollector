@@ -307,7 +307,7 @@ func (p *Transforms) ProcessMessage(dm *dnsutils.DNSMessage) int {
 		return ReturnDrop
 	}
 
-	//  and finaly apply other transformation
+	//  and finally apply other transformation
 	var rCode int
 	for _, fn := range p.activeTransforms {
 		rCode = fn(dm)

@@ -178,7 +178,7 @@ type TransformExtracted struct {
 }
 
 type TransformReducer struct {
-	Occurences       int `json:"occurences" msgpack:"occurences"`
+	Occurrences      int `json:"occurrences" msgpack:"occurrences"`
 	CumulativeLength int `json:"cumulative-length" msgpack:"cumulative-length"`
 }
 
@@ -204,7 +204,7 @@ type TransformML struct {
 	ConsecutiveDigits     int     `json:"consecutive-digits" msgpack:"consecutive-digits"`
 	ConsecutiveConsonants int     `json:"consecutive-consonants" msgpack:"consecutive-consonants"`
 	Size                  int     `json:"size" msgpack:"size"`
-	Occurences            int     `json:"occurences" msgpack:"occurences"`
+	Occurrences           int     `json:"occurrences" msgpack:"occurrences"`
 	UncommonQtypes        int     `json:"uncommon-qtypes" msgpack:"uncommon-qtypes"`
 }
 
@@ -421,8 +421,8 @@ func (dm *DNSMessage) handleReducerDirectives(directives []string, s *strings.Bu
 		s.WriteString("-")
 	} else {
 		switch directive := directives[0]; {
-		case directive == "reducer-occurences":
-			s.WriteString(strconv.Itoa(dm.Reducer.Occurences))
+		case directive == "reducer-occurrences":
+			s.WriteString(strconv.Itoa(dm.Reducer.Occurrences))
 		case directive == "reducer-cumulative-length":
 			s.WriteString(strconv.Itoa(dm.Reducer.CumulativeLength))
 		}
@@ -468,8 +468,8 @@ func (dm *DNSMessage) handleMachineLearningDirectives(directives []string, s *st
 			s.WriteString(strconv.Itoa(dm.MachineLearning.ConsecutiveConsonants))
 		case directive == "ml-size":
 			s.WriteString(strconv.Itoa(dm.MachineLearning.Size))
-		case directive == "ml-occurences":
-			s.WriteString(strconv.Itoa(dm.MachineLearning.Occurences))
+		case directive == "ml-occurrences":
+			s.WriteString(strconv.Itoa(dm.MachineLearning.Occurrences))
 		case directive == "ml-uncommon-qtypes":
 			s.WriteString(strconv.Itoa(dm.MachineLearning.UncommonQtypes))
 		}

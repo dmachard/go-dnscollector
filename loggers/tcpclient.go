@@ -225,7 +225,7 @@ func (c *TCPClient) ConnectToRemote() {
 		// block until framestream is ready
 		c.transportReady <- true
 
-		// block until an error occured, need to reconnect
+		// block until an error occurred, need to reconnect
 		c.transportReconnect <- true
 	}
 }

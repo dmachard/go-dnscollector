@@ -78,7 +78,7 @@ func (p *MlProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 			ConsecutiveDigits:     0,
 			ConsecutiveConsonants: 0,
 			Size:                  0,
-			Occurences:            0,
+			Occurrences:           0,
 			UncommonQtypes:        0,
 		}
 	}
@@ -200,7 +200,7 @@ func (p *MlProcessor) AddFeatures(dm *dnsutils.DNSMessage) {
 
 	// occurences
 	if dm.Reducer != nil {
-		dm.MachineLearning.Occurences = dm.Reducer.Occurences
+		dm.MachineLearning.Occurrences = dm.Reducer.Occurrences
 	}
 
 	// qtypes
