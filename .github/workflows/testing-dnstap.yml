@@ -26,7 +26,7 @@ jobs:
     strategy:
       matrix:
         go-version: [ '1.21' ]
-        unbound: [ '1.17.0', '1.18.0' ]
+        unbound: [ '1.17.0', '1.18.0', '1.19.0' ]
 
         mode: [ 'tcp' ]
 
