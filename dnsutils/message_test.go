@@ -7,7 +7,35 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnstap-protobuf"
+	"google.golang.org/protobuf/proto"
 )
+
+func TestDnsMessage_Encode_ToDNSTap(t *testing.T) {
+	dm := GetFakeDNSMessageWithPayload()
+	dm.DNSTap.Extra = "extra:value"
+
+	// encode to dnstap
+	tapMsg, err := dm.ToDNSTap()
+	if err != nil {
+		t.Fatalf("could not encode to dnstap: %v\n", err)
+	}
+
+	// decode dnstap message
+	dt := &dnstap.Dnstap{}
+	err = proto.Unmarshal(tapMsg, dt)
+	if err != nil {
+		t.Fatalf("error to decode dnstap: %v", err)
+	}
+
+	if string(dt.GetIdentity()) != dm.DNSTap.Identity {
+		t.Errorf("identify field should be equal got=%s", string(dt.GetIdentity()))
+	}
+
+	if string(dt.GetExtra()) != dm.DNSTap.Extra {
+		t.Errorf("extra field should be equal got=%s", string(dt.GetExtra()))
+	}
+}
 
 func TestDnsMessage_Json_Reference(t *testing.T) {
 	dm := DNSMessage{}
