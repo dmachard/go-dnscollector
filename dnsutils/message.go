@@ -736,6 +736,11 @@ func (dm *DNSMessage) ToDNSTap() ([]byte, error) {
 
 	dt.Message = msg
 
+	// add dnstap extra
+	if len(dm.DNSTap.Extra) > 0 {
+		dt.Extra = []byte(dm.DNSTap.Extra)
+	}
+
 	data, err := proto.Marshal(dt)
 	if err != nil {
 		return nil, err

@@ -120,46 +120,8 @@ func (d *DNSTapProcessor) Stop() {
 	d.LogInfo("stopping to process...")
 	d.stopRun <- true
 	<-d.doneRun
-
-	// d.LogInfo("stopping to monitor loggers...")
-	// d.stopMonitor <- true
-	// <-d.doneMonitor
 }
 
-// func (d *DNSTapProcessor) MonitorLoggers() {
-// 	// watchInterval := 10 * time.Second
-// 	// bufferFull := time.NewTimer(watchInterval)
-// MONITOR_LOOP:
-// 	for {
-// 		select {
-// 		case <-d.stopMonitor:
-// 			// close(d.dropped)
-// 			// bufferFull.Stop()
-// 			d.doneMonitor <- true
-// 			break MONITOR_LOOP
-
-// case loggerName := <-d.dropped:
-// 	if _, ok := d.droppedCount[loggerName]; !ok {
-// 		d.droppedCount[loggerName] = 1
-// 	} else {
-// 		d.droppedCount[loggerName]++
-// 	}
-
-// case <-bufferFull.C:
-// 	for v, k := range d.droppedCount {
-// 		if k > 0 {
-// 			d.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
-// 			d.droppedCount[v] = 0
-// 		}
-// 	}
-// 	bufferFull.Reset(watchInterval)
-
-// 		}
-// 	}
-// 	d.LogInfo("monitor terminated")
-// }
-
-// func (d *DNSTapProcessor) Run(loggersChannel []chan dnsutils.DNSMessage, loggersName []string) {
 func (d *DNSTapProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
 	dt := &dnstap.Dnstap{}
 
@@ -169,9 +131,6 @@ func (d *DNSTapProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers [
 
 	// prepare enabled transformers
 	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, defaultRoutes, d.ConnID)
-
-	// start goroutine to count dropped messsages
-	// go d.MonitorLoggers()
 
 	// read incoming dns message
 	d.LogInfo("waiting dns message to process...")
