@@ -41,7 +41,7 @@ type ConfigCollectors struct {
 		TLSMinVersion string `yaml:"tls-min-version"`
 		CertFile      string `yaml:"cert-file"`
 		KeyFile       string `yaml:"key-file"`
-	} `yaml:"dnstap-proxifier"`
+	} `yaml:"dnstap-relay"`
 	AfpacketLiveCapture struct {
 		Enable            bool   `yaml:"enable"`
 		Port              int    `yaml:"port"`
