@@ -132,9 +132,6 @@ func (d *DNSTapProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers [
 	// prepare enabled transformers
 	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, defaultRoutes, d.ConnID)
 
-	// start goroutine to count dropped messsages
-	// go d.MonitorLoggers()
-
 	// read incoming dns message
 	d.LogInfo("waiting dns message to process...")
 RUN_LOOP:
