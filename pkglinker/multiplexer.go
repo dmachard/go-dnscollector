@@ -12,6 +12,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	Transformers = "-transformers"
+)
+
 func IsMuxEnabled(config *pkgconfig.Config) bool {
 	if len(config.Multiplexer.Collectors) > 0 && len(config.Multiplexer.Loggers) > 0 && len(config.Multiplexer.Routes) > 0 {
 		return true
@@ -54,7 +58,7 @@ func GetItemConfig(section string, config *pkgconfig.Config, item pkgconfig.Mult
 	// load config
 	cfg := make(map[string]interface{})
 	cfg[section] = item.Params
-	cfg[section+"-transformers"] = make(map[string]interface{})
+	cfg[section+Transformers] = make(map[string]interface{})
 	for _, p := range item.Params {
 		p.(map[string]interface{})["enable"] = true
 	}
@@ -66,7 +70,7 @@ func GetItemConfig(section string, config *pkgconfig.Config, item pkgconfig.Mult
 	// add transformer
 	for k, v := range item.Transforms {
 		v.(map[string]interface{})["enable"] = true
-		cfg[section+"-transformers"].(map[string]interface{})[k] = v
+		cfg[section+Transformers].(map[string]interface{})[k] = v
 	}
 
 	// copy global config

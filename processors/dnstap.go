@@ -124,7 +124,7 @@ func (d *DNSTapProcessor) Stop() {
 
 func (d *DNSTapProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
 	dt := &dnstap.Dnstap{}
-	edt := &dnsutils.ExtendedDnstap{} //TODO DnstapExtended
+	edt := &dnsutils.ExtendedDnstap{}
 
 	// prepare next channels
 	defaultRoutes, defaultNames := pkgutils.GetRoutes(defaultWorkers)
