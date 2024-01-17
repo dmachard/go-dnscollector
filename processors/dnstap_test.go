@@ -262,9 +262,9 @@ func Test_DnstapProcessor_Extended(t *testing.T) {
 	if dm.DNSTap.Extra != "originalextrafield" {
 		t.Errorf("invalid extra field: %s", dm.DNSTap.Extra)
 	}
-	// if dm.ATags.Tags[0] != "atags:value" {
-	// 	t.Errorf("invalid atags: %s", dm.ATags.Tags[0])
-	// }
+	if dm.ATags.Tags[0] != "atags:value" {
+		t.Errorf("invalid atags: %s", dm.ATags.Tags[0])
+	}
 	// if dm.PublicSuffix.QnameEffectiveTLDPlusOne != "dnscollector.org" {
 	// 	t.Errorf("invalid etld+1: %s", dm.PublicSuffix.QnameEffectiveTLDPlusOne)
 	// }
