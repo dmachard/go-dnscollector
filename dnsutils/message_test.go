@@ -11,12 +11,45 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func TestDnsMessage_Encode_ToDNSTap(t *testing.T) {
+func TestDnsMessage_ToExtendedDNSTap(t *testing.T) {
+	dm := GetFakeDNSMessageWithPayload()
+	dm.DNSTap.Extra = "tag0:value0"
+
+	dm.ATags = &TransformATags{
+		Tags: []string{"tag1:value1"},
+	}
+
+	// encode to extended dnstap
+	tapMsg, err := dm.ToDNSTap(true)
+	if err != nil {
+		t.Fatalf("could not encode to extended dnstap: %v\n", err)
+	}
+
+	// decode dnstap message
+	dt := &dnstap.Dnstap{}
+	err = proto.Unmarshal(tapMsg, dt)
+	if err != nil {
+		t.Fatalf("error to decode dnstap: %v", err)
+	}
+
+	// decode extended part
+	edt := &ExtendedDnstap{}
+	err = proto.Unmarshal(dt.GetExtra(), edt)
+	if err != nil {
+		t.Fatalf("error to decode extended dnstap: %v", err)
+	}
+
+	if string(edt.GetOriginalDnstapExtra()) != dm.DNSTap.Extra {
+		t.Errorf("extra field should be equal to the original value got=%v", string(dt.GetExtra()))
+	}
+}
+
+func TestDnsMessage_ToDNSTap(t *testing.T) {
 	dm := GetFakeDNSMessageWithPayload()
 	dm.DNSTap.Extra = "extra:value"
 
 	// encode to dnstap
-	tapMsg, err := dm.ToDNSTap()
+	tapMsg, err := dm.ToDNSTap(false)
 	if err != nil {
 		t.Fatalf("could not encode to dnstap: %v\n", err)
 	}

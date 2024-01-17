@@ -18,3 +18,5 @@
 __pycache__/
 
 go-dnscollector
+bin/
+include/

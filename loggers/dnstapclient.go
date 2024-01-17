@@ -218,7 +218,7 @@ func (ds *DnstapSender) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 		}
 
 		// encode dns message to dnstap protobuf binary
-		data, err = dm.ToDNSTap()
+		data, err = dm.ToDNSTap(ds.config.Loggers.DNSTap.ExtendedSupport)
 		if err != nil {
 			ds.LogError("failed to encode to DNStap protobuf: %s", err)
 			continue

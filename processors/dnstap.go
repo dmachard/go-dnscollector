@@ -124,6 +124,7 @@ func (d *DNSTapProcessor) Stop() {
 
 func (d *DNSTapProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
 	dt := &dnstap.Dnstap{}
+	edt := &dnsutils.ExtendedDnstap{} //TODO DnstapExtended
 
 	// prepare next channels
 	defaultRoutes, defaultNames := pkgutils.GetRoutes(defaultWorkers)
@@ -174,9 +175,32 @@ RUN_LOOP:
 			}
 			dm.DNSTap.Operation = dt.GetMessage().GetType().String()
 
-			extra := string(dt.GetExtra())
-			if len(extra) > 0 {
-				dm.DNSTap.Extra = extra
+			// extended extra field ?
+			if d.config.Collectors.Dnstap.ExtendedSupport {
+				err := proto.Unmarshal(dt.GetExtra(), edt)
+				if err != nil {
+					continue
+				}
+
+				// get original extra value
+				originalExtra := string(edt.GetOriginalDnstapExtra())
+				if len(originalExtra) > 0 {
+					dm.DNSTap.Extra = originalExtra
+				}
+
+				// get atags
+				atags := edt.GetAtags()
+				if len(atags.GetTags()) > 0 {
+					dm.ATags = &dnsutils.TransformATags{
+						Tags: atags.GetTags(),
+					}
+				}
+
+			} else {
+				extra := string(dt.GetExtra())
+				if len(extra) > 0 {
+					dm.DNSTap.Extra = extra
+				}
 			}
 
 			if ipVersion, valid := netlib.IPVersion[dt.GetMessage().GetSocketFamily().String()]; valid {

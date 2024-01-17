@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+// ../bin/protoc --proto_path=. --go_out=. --go_opt=paths=source_relative --plugin protoc-gen-go=${GOBIN}/protoc-gen-go extended_dnstap.proto 
+
+option go_package = "github.com/dmachard/go-dnscollector;dnsutils";
+
+message ExtendedATags {
+  repeated string tags = 1;
+}
+
+message ExtendedPublicSuffix {
+  string tld = 1;
+  string etld_plus_one = 2;
+}
+
+message ExtendedDnstap {
+  string version = 1;
+  bytes original_dnstap_extra = 2;
+  ExtendedATags atags = 3;
+  ExtendedPublicSuffix public_suffix = 4;
+}

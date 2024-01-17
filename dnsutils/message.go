@@ -664,7 +664,7 @@ func (dm *DNSMessage) ToFlatJSON() (string, error) {
 	return buffer.String(), nil
 }
 
-func (dm *DNSMessage) ToDNSTap() ([]byte, error) {
+func (dm *DNSMessage) ToDNSTap(extended bool) ([]byte, error) {
 	if len(dm.DNSTap.Payload) > 0 {
 		return dm.DNSTap.Payload, nil
 	}
@@ -739,6 +739,30 @@ func (dm *DNSMessage) ToDNSTap() ([]byte, error) {
 	// add dnstap extra
 	if len(dm.DNSTap.Extra) > 0 {
 		dt.Extra = []byte(dm.DNSTap.Extra)
+	}
+
+	// contruct new dnstap field with all tranformations
+	// the original extra field is kept if exist
+	if extended {
+		ednstap := &ExtendedDnstap{}
+
+		// add original dnstap value if exist
+		if len(dm.DNSTap.Extra) > 0 {
+			ednstap.OriginalDnstapExtra = []byte(dm.DNSTap.Extra)
+		}
+
+		// add additionnals tags ?
+		if dm.ATags != nil {
+			ednstap.Atags = &ExtendedATags{
+				Tags: dm.ATags.Tags,
+			}
+		}
+
+		extendedData, err := proto.Marshal(ednstap)
+		if err != nil {
+			return nil, err
+		}
+		dt.Extra = extendedData
 	}
 
 	data, err := proto.Marshal(dt)
