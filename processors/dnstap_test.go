@@ -20,7 +20,6 @@ func Test_DnstapProcessor(t *testing.T) {
 
 	// init the dnstap consumer
 	consumer := NewDNSTapProcessor(0, pkgconfig.GetFakeConfig(), logger, "test", 512)
-	// chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
@@ -198,7 +197,6 @@ func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
 	fl := loggers.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
-	// go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 

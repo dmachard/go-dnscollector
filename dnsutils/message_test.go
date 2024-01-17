@@ -11,14 +11,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func TestDnsMessage_ToExtendedDNSTap(t *testing.T) {
-	dm := GetFakeDNSMessageWithPayload()
-	dm.DNSTap.Extra = "tag0:value0"
-
-	dm.ATags = &TransformATags{
-		Tags: []string{"tag1:value1"},
-	}
-
+// Tests for DNSTap format
+func encodeToDNSTap(dm DNSMessage, t *testing.T) *ExtendedDnstap {
 	// encode to extended dnstap
 	tapMsg, err := dm.ToDNSTap(true)
 	if err != nil {
@@ -38,9 +32,91 @@ func TestDnsMessage_ToExtendedDNSTap(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error to decode extended dnstap: %v", err)
 	}
+	return edt
+}
 
+func TestDnsMessage_ToExtendedDNSTap_GetOriginalDnstapExtra(t *testing.T) {
+	dm := GetFakeDNSMessageWithPayload()
+	dm.DNSTap.Extra = "tag0:value0"
+
+	// encode to DNSTap and decode extended
+	edt := encodeToDNSTap(dm, t)
+
+	// check
 	if string(edt.GetOriginalDnstapExtra()) != dm.DNSTap.Extra {
-		t.Errorf("extra field should be equal to the original value got=%v", string(dt.GetExtra()))
+		t.Errorf("extra field should be equal to the original value")
+	}
+}
+
+func TestDnsMessage_ToExtendedDNSTap_TransformAtags(t *testing.T) {
+	dm := GetFakeDNSMessageWithPayload()
+	dm.ATags = &TransformATags{
+		Tags: []string{"tag1:value1"},
+	}
+
+	// encode to DNSTap and decode extended
+	edt := encodeToDNSTap(dm, t)
+
+	// check
+	if edt.GetAtags().Tags[0] != "tag1:value1" {
+		t.Errorf("invalid value on atags")
+	}
+}
+
+func TestDnsMessage_ToExtendedDNSTap_TransformNormalize(t *testing.T) {
+	dm := GetFakeDNSMessageWithPayload()
+	dm.PublicSuffix = &TransformPublicSuffix{
+		QnamePublicSuffix:        "com",
+		QnameEffectiveTLDPlusOne: "dnscollector.com",
+	}
+
+	// encode to DNSTap and decode extended
+	edt := encodeToDNSTap(dm, t)
+
+	// checks
+	if edt.GetNormalize().GetTld() != "com" {
+		t.Errorf("invalid value on tld")
+	}
+
+	if edt.GetNormalize().GetEtldPlusOne() != "dnscollector.com" {
+		t.Errorf("invalid value on etld+1")
+	}
+}
+
+func TestDnsMessage_ToExtendedDNSTap_TransformFiltering(t *testing.T) {
+	dm := GetFakeDNSMessageWithPayload()
+	dm.Filtering = &TransformFiltering{
+		SampleRate: 20,
+	}
+
+	// encode to DNSTap and decode extended
+	edt := encodeToDNSTap(dm, t)
+
+	// checks
+	if edt.GetFiltering().GetSampleRate() != 20 {
+		t.Errorf("invalid value sample rate")
+	}
+}
+
+func TestDnsMessage_ToExtendedDNSTap_TransformGeo(t *testing.T) {
+	dm := GetFakeDNSMessageWithPayload()
+	dm.Geo = &TransformDNSGeo{
+		City:                   "France",
+		Continent:              "Europe",
+		CountryIsoCode:         "44444",
+		AutonomousSystemNumber: "3333",
+		AutonomousSystemOrg:    "Test",
+	}
+
+	// encode to DNSTap and decode extended
+	edt := encodeToDNSTap(dm, t)
+
+	// checks
+	if edt.GetGeo().GetCity() != "France" {
+		t.Errorf("invalid value for city")
+	}
+	if edt.GetGeo().GetContinent() != "Europe" {
+		t.Errorf("invalid value for continent")
 	}
 }
 
@@ -70,6 +146,7 @@ func TestDnsMessage_ToDNSTap(t *testing.T) {
 	}
 }
 
+// Tests for JSON format
 func TestDnsMessage_Json_Reference(t *testing.T) {
 	dm := DNSMessage{}
 	dm.Init()
@@ -287,6 +364,7 @@ func TestDnsMessage_Json_Transforms_Reference(t *testing.T) {
 	}
 }
 
+// Tests for TEXT format
 func TestDnsMessage_TextFormat_ToString(t *testing.T) {
 
 	config := pkgconfig.GetFakeConfig()

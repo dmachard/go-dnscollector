@@ -13,9 +13,9 @@ Options:
 * `retry-interval`: (integer) interval in second between retry reconnect
 * `flush-interval`: (integer) interval in second before to flush the buffer
 * `tls-support`: (boolean) enable tls
-    > DEPRECATED, replaced with `tcp+tls flag` on `transport` settings
+    > DEPRECATED, replaced with `tcp+tls` flag on `transport` settings
 * `tls-insecure`: (boolean) insecure skip verify
-* `tls-min-version`: (string) min tls version, default to 1.2
+* `tls-min-version`: (string) minimum tls version to use
 * `ca-file`: (string) provide CA file to verify the server certificate
 * `cert-file`: (string) provide client certificate file for mTLS
 * `key-file`: (string) provide client private key file for mTLS

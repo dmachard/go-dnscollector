@@ -758,6 +758,32 @@ func (dm *DNSMessage) ToDNSTap(extended bool) ([]byte, error) {
 			}
 		}
 
+		// add public suffix
+		if dm.PublicSuffix != nil {
+			ednstap.Normalize = &ExtendedNormalize{
+				Tld:         dm.PublicSuffix.QnamePublicSuffix,
+				EtldPlusOne: dm.PublicSuffix.QnameEffectiveTLDPlusOne,
+			}
+		}
+
+		// add filtering
+		if dm.Filtering != nil {
+			ednstap.Filtering = &ExtendedFiltering{
+				SampleRate: uint32(dm.Filtering.SampleRate),
+			}
+		}
+
+		// add geo
+		if dm.Geo != nil {
+			ednstap.Geo = &ExtendedGeo{
+				City:      dm.Geo.City,
+				Continent: dm.Geo.Continent,
+				Isocode:   dm.Geo.CountryIsoCode,
+				AsNumber:  dm.Geo.AutonomousSystemNumber,
+				AsOrg:     dm.Geo.AutonomousSystemOrg,
+			}
+		}
+
 		extendedData, err := proto.Marshal(ednstap)
 		if err != nil {
 			return nil, err
