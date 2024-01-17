@@ -21,7 +21,7 @@ Options:
 * `overwrite-identity`: (boolean) overwrite original identity
 * `buffer-size`: (integer) how many DNS messages will be buffered before being sent
 * `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
-* `extended-extra-field`: (boolen) Extend the DNStap message by incorporating additional transformations, such as filtering and ATags, into the extra field.
+* `extended-support`: (boolen) Extend the DNStap message by incorporating additional transformations, such as filtering and ATags, into the extra field.
 
 Default values:
 
@@ -42,5 +42,5 @@ dnstapclient:
   overwrite-identity: false
   buffer-size: 100
   chan-buffer-size: 65535
-  extended-extra-field: false
+  extended-support: false
 ```

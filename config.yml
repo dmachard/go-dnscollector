@@ -95,7 +95,7 @@ multiplexer:
 #     dnstap:
 #       listen-ip: 0.0.0.0
 #       listen-port: 6002
-#       extended-extra-field: true
+#       extended-support: true
 #     routing-policy:
 #       default: [ console ]
 
@@ -117,7 +117,7 @@ multiplexer:
 #       remote-address: 127.0.0.1
 #       remote-port: 6002
 #       flush-interval: 5
-#       extended-extra-field: true
+#       extended-support: true
 
 #   - name: console
 #     stdout:
