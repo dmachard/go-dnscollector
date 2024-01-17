@@ -7,11 +7,13 @@ Options:
 * `transport`: (string) network transport to use: `unix`|`tcp`|`tcp+tls`
 * `remote-address`: (string) remote address
 * `remote-port`: (integer) remote tcp port
-* `sock-path` **DEPRECATED, replaced by remote-address**: (string) unix socket path
+* `sock-path`: (string) unix socket path
+    > DEPRECATED, replaced by `remote-address` setting
 * `connect-timeout`: (integer) connect timeout in second
 * `retry-interval`: (integer) interval in second between retry reconnect
 * `flush-interval`: (integer) interval in second before to flush the buffer
-* `tls-support` **DEPRECATED, replaced with tcp+tls flag on transport**: (boolean) enable tls
+* `tls-support`: (boolean) enable tls
+    > DEPRECATED, replaced with `tcp+tls flag` on `transport` settings
 * `tls-insecure`: (boolean) insecure skip verify
 * `tls-min-version`: (string) min tls version, default to 1.2
 * `ca-file`: (string) provide CA file to verify the server certificate
