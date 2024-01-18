@@ -136,4 +136,5 @@ This JSON message can be also extended by transformer(s):
 - [GeoIP](transformers/transformer_geoip.md)
 - [Suspicious traffic detector](transformers/transform_suspiciousdetector.md)
 - [Public suffix](transformers/transform_normalize.md)
-- [Traffic Reducer](transformers/transform_trafficreducer.md)
+- [Traffic reducer](transformers/transform_trafficreducer.md)
+- [Traffic filtering](transformers/transformer_trafficfiltering.md)

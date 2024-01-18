@@ -77,6 +77,7 @@ type ConfigLoggers struct {
 		PostRotateDelete    bool   `yaml:"postrotate-delete-success"`
 		TextFormat          string `yaml:"text-format"`
 		ChannelBufferSize   int    `yaml:"chan-buffer-size"`
+		ExtendedSupport     bool   `yaml:"extended-support"`
 	} `yaml:"logfile"`
 	DNSTap struct {
 		Enable            bool   `yaml:"enable"`
@@ -97,6 +98,7 @@ type ConfigLoggers struct {
 		OverwriteIdentity bool   `yaml:"overwrite-identity"`
 		BufferSize        int    `yaml:"buffer-size"`
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
+		ExtendedSupport   bool   `yaml:"extended-support"`
 	} `yaml:"dnstapclient"`
 	TCPClient struct {
 		Enable            bool   `yaml:"enable"`
@@ -317,6 +319,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.DNSTap.OverwriteIdentity = false
 	c.DNSTap.BufferSize = 100
 	c.DNSTap.ChannelBufferSize = 65535
+	c.DNSTap.ExtendedSupport = false
 
 	c.LogFile.Enable = false
 	c.LogFile.FilePath = ""
@@ -331,6 +334,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.LogFile.PostRotateDelete = false
 	c.LogFile.TextFormat = ""
 	c.LogFile.ChannelBufferSize = 65535
+	c.LogFile.ExtendedSupport = false
 
 	c.Prometheus.Enable = false
 	c.Prometheus.ListenIP = LocalhostIP

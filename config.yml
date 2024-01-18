@@ -91,6 +91,14 @@ multiplexer:
 #     routing-policy:
 #       default: [ filter ]
 
+#   - name: second-input
+#     dnstap:
+#       listen-ip: 0.0.0.0
+#       listen-port: 6002
+#       extended-support: true
+#     routing-policy:
+#       default: [ console ]
+
 #   - name: filter
 #     dnsmessage:
 #       matching:
@@ -101,18 +109,26 @@ multiplexer:
 #         tags: [ "google"]
 #     routing-policy:
 #       dropped: [ outputfile ]
-#       default: [ console ]
+#       default: [ central ]
+
+#   - name: central
+#     dnstapclient:
+#       transport: tcp
+#       remote-address: 127.0.0.1
+#       remote-port: 6002
+#       flush-interval: 5
+#       extended-support: true
 
 #   - name: console
 #     stdout:
-#       mode: text
+#       mode: flat-json
 
 #   - name: outputfile
 #     logfile:
 #       file-path:  "/tmp/dnstap.log"
 #       max-size: 1000
 #       max-files: 10
-#       mode: flat-json
+#       mode: text
 
 ################################################
 # list of supported collectors
@@ -142,9 +158,11 @@ multiplexer:
 #   chan-buffer-size: 65535
 #   # Disable the minimalist DNS parser
 #   disable-dnsparser: true
+#   # Decode the extended extra field sent by DNScollector
+#   extended-support: false
 
 # # dnstap proxifier with no protobuf decoding.
-# dnstap-proxifier:
+# dnstap-relay:
 #   # listen on ip
 #   listen-ip: 0.0.0.0
 #   # listening on port
@@ -407,6 +425,8 @@ multiplexer:
 #   buffer-size: 100
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
+#   # Extend the DNStap message by incorporating additional transformations, such as filtering and ATags, into the extra field.
+#   extended-support: false
 
 # # resend captured dns traffic to a tcp remote destination or to unix socket
 # tcpclient:

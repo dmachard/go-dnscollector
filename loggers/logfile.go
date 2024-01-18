@@ -592,7 +592,7 @@ PROCESS_LOOP:
 
 			// with dnstap mode
 			case pkgconfig.ModeDNSTap:
-				data, err = dm.ToDNSTap()
+				data, err = dm.ToDNSTap(lf.config.Loggers.LogFile.ExtendedSupport)
 				if err != nil {
 					lf.LogError("failed to encode to DNStap protobuf: %s", err)
 					continue

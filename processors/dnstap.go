@@ -124,6 +124,7 @@ func (d *DNSTapProcessor) Stop() {
 
 func (d *DNSTapProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
 	dt := &dnstap.Dnstap{}
+	edt := &dnsutils.ExtendedDnstap{}
 
 	// prepare next channels
 	defaultRoutes, defaultNames := pkgutils.GetRoutes(defaultWorkers)
@@ -174,9 +175,50 @@ RUN_LOOP:
 			}
 			dm.DNSTap.Operation = dt.GetMessage().GetType().String()
 
-			extra := string(dt.GetExtra())
-			if len(extra) > 0 {
-				dm.DNSTap.Extra = extra
+			// extended extra field ?
+			if d.config.Collectors.Dnstap.ExtendedSupport {
+				err := proto.Unmarshal(dt.GetExtra(), edt)
+				if err != nil {
+					continue
+				}
+
+				// get original extra value
+				originalExtra := string(edt.GetOriginalDnstapExtra())
+				if len(originalExtra) > 0 {
+					dm.DNSTap.Extra = originalExtra
+				}
+
+				// get atags
+				atags := edt.GetAtags()
+				if atags != nil {
+					dm.ATags = &dnsutils.TransformATags{
+						Tags: atags.GetTags(),
+					}
+				}
+
+				// get public suffix
+				norm := edt.GetNormalize()
+				if norm != nil {
+					dm.PublicSuffix = &dnsutils.TransformPublicSuffix{}
+					if len(norm.GetTld()) > 0 {
+						dm.PublicSuffix.QnamePublicSuffix = norm.GetTld()
+					}
+					if len(norm.GetEtldPlusOne()) > 0 {
+						dm.PublicSuffix.QnameEffectiveTLDPlusOne = norm.GetEtldPlusOne()
+					}
+				}
+
+				// filtering
+				sampleRate := edt.GetFiltering()
+				if sampleRate != nil {
+					dm.Filtering = &dnsutils.TransformFiltering{}
+					dm.Filtering.SampleRate = int(sampleRate.SampleRate)
+				}
+			} else {
+				extra := string(dt.GetExtra())
+				if len(extra) > 0 {
+					dm.DNSTap.Extra = extra
+				}
 			}
 
 			if ipVersion, valid := netlib.IPVersion[dt.GetMessage().GetSocketFamily().String()]; valid {
