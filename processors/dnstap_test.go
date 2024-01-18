@@ -177,7 +177,6 @@ func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
 	cfg.Collectors.Dnstap.DisableDNSParser = true
 
 	consumer := NewDNSTapProcessor(0, cfg, logger, "test", 512)
-	// chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
@@ -208,6 +207,7 @@ func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
 	}
 }
 
+// test to decode the extended part
 func Test_DnstapProcessor_Extended(t *testing.T) {
 	logger := logger.New(true)
 	var o bytes.Buffer
@@ -218,7 +218,6 @@ func Test_DnstapProcessor_Extended(t *testing.T) {
 	cfg.Collectors.Dnstap.ExtendedSupport = true
 
 	consumer := NewDNSTapProcessor(0, cfg, logger, "test", 512)
-	// chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
