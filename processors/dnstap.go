@@ -190,12 +190,30 @@ RUN_LOOP:
 
 				// get atags
 				atags := edt.GetAtags()
-				if len(atags.GetTags()) > 0 {
+				if atags != nil {
 					dm.ATags = &dnsutils.TransformATags{
 						Tags: atags.GetTags(),
 					}
 				}
 
+				// get public suffix
+				norm := edt.GetNormalize()
+				if norm != nil {
+					dm.PublicSuffix = &dnsutils.TransformPublicSuffix{}
+					if len(norm.GetTld()) > 0 {
+						dm.PublicSuffix.QnamePublicSuffix = norm.GetTld()
+					}
+					if len(norm.GetEtldPlusOne()) > 0 {
+						dm.PublicSuffix.QnameEffectiveTLDPlusOne = norm.GetEtldPlusOne()
+					}
+				}
+
+				// filtering
+				sampleRate := edt.GetFiltering()
+				if sampleRate != nil {
+					dm.Filtering = &dnsutils.TransformFiltering{}
+					dm.Filtering.SampleRate = int(sampleRate.SampleRate)
+				}
 			} else {
 				extra := string(dt.GetExtra())
 				if len(extra) > 0 {

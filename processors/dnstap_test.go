@@ -265,13 +265,13 @@ func Test_DnstapProcessor_Extended(t *testing.T) {
 	if dm.ATags.Tags[0] != "atags:value" {
 		t.Errorf("invalid atags: %s", dm.ATags.Tags[0])
 	}
-	// if dm.PublicSuffix.QnameEffectiveTLDPlusOne != "dnscollector.org" {
-	// 	t.Errorf("invalid etld+1: %s", dm.PublicSuffix.QnameEffectiveTLDPlusOne)
-	// }
-	// if dm.PublicSuffix.QnamePublicSuffix != "org" {
-	// 	t.Errorf("invalid tld: %s", dm.PublicSuffix.QnamePublicSuffix)
-	// }
-	// if dm.Filtering.SampleRate != 30 {
-	// 	t.Errorf("invalid sample rate: %d", dm.Filtering.SampleRate)
-	// }
+	if dm.PublicSuffix.QnameEffectiveTLDPlusOne != "dnscollector.org" {
+		t.Errorf("invalid etld+1: %s", dm.PublicSuffix.QnameEffectiveTLDPlusOne)
+	}
+	if dm.PublicSuffix.QnamePublicSuffix != "org" {
+		t.Errorf("invalid tld: %s", dm.PublicSuffix.QnamePublicSuffix)
+	}
+	if dm.Filtering.SampleRate != 30 {
+		t.Errorf("invalid sample rate: %d", dm.Filtering.SampleRate)
+	}
 }
