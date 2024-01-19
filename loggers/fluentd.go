@@ -362,7 +362,6 @@ PROCESS_LOOP:
 		case <-flushTimer.C:
 			if !fc.writerReady {
 				bufferDm = nil
-				continue
 			}
 
 			if len(bufferDm) > 0 {

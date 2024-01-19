@@ -389,9 +389,7 @@ PROCESS_LOOP:
 		// flush the buffer
 		case <-flushTimer.C:
 			if !c.writerReady {
-				c.LogInfo("Buffer cleared!")
 				bufferDm = nil
-				continue
 			}
 
 			if len(bufferDm) > 0 {
