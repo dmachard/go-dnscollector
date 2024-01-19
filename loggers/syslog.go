@@ -371,8 +371,8 @@ func (s *Syslog) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 		if err != nil {
 			s.LogError("write error %s", err)
 			s.syslogReady = false
-			s.syslogWriter.Close()
 			<-s.transportReconnect
+			break
 		}
 	}
 
@@ -426,9 +426,7 @@ PROCESS_LOOP:
 			// flush the buffer
 		case <-flushTimer.C:
 			if !s.syslogReady {
-				s.LogInfo("buffer cleared!")
 				bufferDm = nil
-				continue
 			}
 
 			if len(bufferDm) > 0 {
