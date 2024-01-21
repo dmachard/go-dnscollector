@@ -29,7 +29,7 @@ require (
 	github.com/oschwald/maxminddb-golang v1.12.0
 	github.com/prometheus/client_golang v1.17.0
 	github.com/rs/tzsp v0.0.0-20161230003637-8ce729c826b9
-	github.com/segmentio/kafka-go v0.4.46
+	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.8.4
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	golang.org/x/net v0.19.0
