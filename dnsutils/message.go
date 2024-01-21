@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"net"
 	"reflect"
 	"regexp"
@@ -690,6 +691,8 @@ func (dm *DNSMessage) ToDNSTap(extended bool) ([]byte, error) {
 	if dm.NetworkInfo.ResponsePort != "-" {
 		if port, err := strconv.Atoi(dm.NetworkInfo.ResponsePort); err != nil {
 			return nil, err
+		} else if port < 0 || port > math.MaxUint32 {
+			return nil, errors.New("invalid response port value")
 		} else {
 			rport = uint32(port)
 		}
@@ -698,6 +701,8 @@ func (dm *DNSMessage) ToDNSTap(extended bool) ([]byte, error) {
 	if dm.NetworkInfo.QueryPort != "-" {
 		if port, err := strconv.Atoi(dm.NetworkInfo.QueryPort); err != nil {
 			return nil, err
+		} else if port < 0 || port > math.MaxUint32 {
+			return nil, errors.New("invalid query port value")
 		} else {
 			qport = uint32(port)
 		}
@@ -813,6 +818,12 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 
 	// prepare ip
 	srcIP, srcPort, dstIP, dstPort := GetIPPort(dm)
+	if srcPort < 0 || srcPort > math.MaxUint16 {
+		return nil, errors.New("invalid source port value")
+	}
+	if dstPort < 0 || dstPort > math.MaxUint16 {
+		return nil, errors.New("invalid destination port value")
+	}
 
 	// packet layer array
 	pkt := []gopacket.SerializableLayer{}
