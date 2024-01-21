@@ -24,10 +24,13 @@ import (
 
 	/*
 		install loki with tags
-		go get github.com/grafana/loki@1dfdc432cf7aa6909d94492cbdb30d07109db1c9
-		https://github.com/grafana/loki/releases/tag/v2.8.7
 
-		go get github.com/prometheus/prometheus@v0.43.1
+		go get github.com/grafana/loki@2535f9bedeae5f27abdbfaf0cc1a8e9f91b6c96d
+		https://github.com/grafana/loki/releases/tag/v2.9.3
+
+		go get github.com/grafana/loki/pkg/push@2535f9bedeae5f27abdbfaf0cc1a8e9f91b6c96d
+
+		go get github.com/prometheus/prometheus@v0.43.1-0.20230419161410-69155c6ba1e9
 		go mod tidy
 	*/
 	"github.com/grafana/loki/pkg/logproto"
@@ -305,6 +308,7 @@ PROCESS_LOOP:
 				}
 				sb.Sort()
 				lbls, _ = relabel.Process(sb.Labels(), c.config.Loggers.LokiClient.RelabelConfigs...)
+
 				// Drop all labels starting with __ from the map if a relabel config is used.
 				// These labels are just exposed to relabel for the user and should not be
 				// shipped to loki by default.
@@ -314,7 +318,8 @@ PROCESS_LOOP:
 						lb.Del(l.Name)
 					}
 				})
-				lbls = lb.Labels(lbls)
+				lbls = lb.Labels()
+
 				if len(lbls) == 0 {
 					c.LogInfo("dropping %v since it has no labels", dm)
 					continue
