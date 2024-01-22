@@ -18,7 +18,7 @@ RUN apk add --no-cache tzdata \
 USER dnscollector
 
 COPY --from=builder /build/go-dnscollector /bin/go-dnscollector
-COPY --from=builder /build/config.yml ./etc/dnscollector/config.yml
+COPY --from=builder /build/docker-config.yml ./etc/dnscollector/config.yml
 
 EXPOSE 6000/tcp 8080/tcp
 
