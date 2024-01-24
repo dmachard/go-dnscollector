@@ -40,6 +40,8 @@ type PdnsProcessor struct {
 	name           string
 	chanSize       int
 	RoutingHandler pkgutils.RoutingHandler
+	dropped        chan string
+	droppedCount   map[string]int
 }
 
 func NewPdnsProcessor(connID int, config *pkgconfig.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
@@ -57,6 +59,8 @@ func NewPdnsProcessor(connID int, config *pkgconfig.Config, logger *logger.Logge
 		ConfigChan:     make(chan *pkgconfig.Config),
 		name:           name,
 		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
+		dropped:        make(chan string),
+		droppedCount:   map[string]int{},
 	}
 	return d
 }
@@ -92,6 +96,10 @@ func (p *PdnsProcessor) Stop() {
 	p.LogInfo("stopping to process...")
 	p.stopRun <- true
 	<-p.doneRun
+
+	p.LogInfo("stopping to monitor loggers...")
+	p.stopMonitor <- true
+	<-p.doneMonitor
 }
 
 func (p *PdnsProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
@@ -103,6 +111,9 @@ func (p *PdnsProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []p
 
 	// prepare enabled transformers
 	transforms := transformers.NewTransforms(&p.config.IngoingTransformers, p.logger, p.name, defaultRoutes, p.ConnID)
+
+	// start goroutine to count dropped messsages
+	go p.MonitorLoggers()
 
 	// read incoming dns message
 	p.LogInfo("waiting dns message to process...")
@@ -319,13 +330,59 @@ RUN_LOOP:
 
 			// apply all enabled transformers
 			if transforms.ProcessMessage(&dm) == transformers.ReturnDrop {
-				p.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
+				for i := range droppedRoutes {
+					select {
+					case droppedRoutes[i] <- dm: // Successful send to logger channel
+					default:
+						p.dropped <- droppedNames[i]
+					}
+				}
 				continue
 			}
 
 			// dispatch dns messages to connected loggers
-			p.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
+			for i := range defaultRoutes {
+				select {
+				case defaultRoutes[i] <- dm: // Successful send to logger channel
+				default:
+					p.dropped <- defaultNames[i]
+				}
+			}
 		}
 	}
 	p.LogInfo("processing terminated")
+}
+
+func (p *PdnsProcessor) MonitorLoggers() {
+	watchInterval := 10 * time.Second
+	bufferFull := time.NewTimer(watchInterval)
+FOLLOW_LOOP:
+	for {
+		select {
+		case <-p.stopMonitor:
+			close(p.dropped)
+			bufferFull.Stop()
+			p.doneMonitor <- true
+			break FOLLOW_LOOP
+
+		case loggerName := <-p.dropped:
+			if _, ok := p.droppedCount[loggerName]; !ok {
+				p.droppedCount[loggerName] = 1
+			} else {
+				p.droppedCount[loggerName]++
+			}
+
+		case <-bufferFull.C:
+
+			for v, k := range p.droppedCount {
+				if k > 0 {
+					p.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
+					p.droppedCount[v] = 0
+				}
+			}
+			bufferFull.Reset(watchInterval)
+
+		}
+	}
+	p.LogInfo("monitor terminated")
 }

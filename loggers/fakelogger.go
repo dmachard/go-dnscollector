@@ -21,6 +21,15 @@ func NewFakeLogger() *FakeLogger {
 	return o
 }
 
+func NewFakeLoggerWithBufferSize(bufferSize int) *FakeLogger {
+	o := &FakeLogger{
+		inputChan:  make(chan dnsutils.DNSMessage, bufferSize),
+		outputChan: make(chan dnsutils.DNSMessage, bufferSize),
+		name:       "fake",
+	}
+	return o
+}
+
 func (c *FakeLogger) GetName() string { return c.name }
 
 func (c *FakeLogger) AddDefaultRoute(wrk pkgutils.Worker) {}

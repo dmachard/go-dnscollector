@@ -1,7 +1,10 @@
 package processors
 
 import (
+	"fmt"
+	"regexp"
 	"testing"
+	"time"
 
 	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
@@ -12,7 +15,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func TestPowerDNS_Processor(t *testing.T) {
+func Test_PowerDNSProcessor(t *testing.T) {
 	// init the dnstap consumer
 	consumer := NewPdnsProcessor(0, pkgconfig.GetFakeConfig(), logger.New(false), "test", 512)
 
@@ -21,7 +24,7 @@ func TestPowerDNS_Processor(t *testing.T) {
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
 	dm := &powerdns_protobuf.PBDNSMessage{}
-	dm.ServerIdentity = []byte("powerdnspb")
+	dm.ServerIdentity = []byte(ExpectedIdentity)
 	dm.Type = powerdns_protobuf.PBDNSMessage_DNSQueryType.Enum()
 	dm.SocketProtocol = powerdns_protobuf.PBDNSMessage_DNSCryptUDP.Enum()
 	dm.SocketFamily = powerdns_protobuf.PBDNSMessage_INET.Enum()
@@ -38,12 +41,12 @@ func TestPowerDNS_Processor(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	msg := <-fl.GetInputChannel()
-	if msg.DNSTap.Identity != "powerdnspb" {
+	if msg.DNSTap.Identity != ExpectedIdentity {
 		t.Errorf("invalid identity in dns message: %s", msg.DNSTap.Identity)
 	}
 }
 
-func TestPowerDNS_Processor_AddDNSPayload_Valid(t *testing.T) {
+func Test_PowerDNSProcessor_AddDNSPayload_Valid(t *testing.T) {
 	cfg := pkgconfig.GetFakeConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
@@ -55,7 +58,7 @@ func TestPowerDNS_Processor_AddDNSPayload_Valid(t *testing.T) {
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
 	dm := &powerdns_protobuf.PBDNSMessage{}
-	dm.ServerIdentity = []byte("powerdnspb")
+	dm.ServerIdentity = []byte(ExpectedIdentity)
 	dm.Id = proto.Uint32(2000)
 	dm.Type = powerdns_protobuf.PBDNSMessage_DNSQueryType.Enum()
 	dm.SocketProtocol = powerdns_protobuf.PBDNSMessage_DNSCryptUDP.Enum()
@@ -93,7 +96,7 @@ func TestPowerDNS_Processor_AddDNSPayload_Valid(t *testing.T) {
 	}
 }
 
-func TestPowerDNS_Processor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
+func Test_PowerDNSProcessor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
 	cfg := pkgconfig.GetFakeConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
@@ -128,7 +131,7 @@ func TestPowerDNS_Processor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
 	}
 }
 
-func TestPowerDNS_Processor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
+func Test_PowerDNSProcessor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
 	cfg := pkgconfig.GetFakeConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
@@ -162,7 +165,7 @@ func TestPowerDNS_Processor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
 	}
 }
 
-func TestPowerDNS_Processor_AddDNSPayload_AnswersTooLongDomain(t *testing.T) {
+func Test_PowerDNSProcessor_AddDNSPayload_AnswersTooLongDomain(t *testing.T) {
 	cfg := pkgconfig.GetFakeConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
@@ -206,5 +209,77 @@ func TestPowerDNS_Processor_AddDNSPayload_AnswersTooLongDomain(t *testing.T) {
 	// tests verifications
 	if !msg.DNS.MalformedPacket {
 		t.Errorf("DNS message is not malformed")
+	}
+}
+
+// test for issue https://github.com/dmachard/go-dnscollector/issues/568
+func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
+	// redirect stdout output to bytes buffer
+	logsChan := make(chan logger.LogEntry, 10)
+	lg := logger.New(true)
+	lg.SetOutputChannel((logsChan))
+
+	// init the dnstap consumer
+	cfg := pkgconfig.GetFakeConfig()
+	consumer := NewPdnsProcessor(0, cfg, lg, "test", 512)
+
+	// init the powerdns processor
+	dnsQname := pkgconfig.ValidDomain
+	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
+
+	dm := &powerdns_protobuf.PBDNSMessage{}
+	dm.ServerIdentity = []byte(ExpectedIdentity)
+	dm.Type = powerdns_protobuf.PBDNSMessage_DNSQueryType.Enum()
+	dm.SocketProtocol = powerdns_protobuf.PBDNSMessage_DNSCryptUDP.Enum()
+	dm.SocketFamily = powerdns_protobuf.PBDNSMessage_INET.Enum()
+	dm.Question = &dnsQuestion
+
+	data, _ := proto.Marshal(dm)
+
+	// run the consumer with a fake logger
+	fl := loggers.NewFakeLoggerWithBufferSize(1)
+	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+
+	// add packets to consumer
+	for i := 0; i < 512; i++ {
+		consumer.GetChannel() <- data
+	}
+
+	// waiting monitor to run in consumer
+	time.Sleep(12 * time.Second)
+
+	for entry := range logsChan {
+		fmt.Println(entry)
+		pattern := regexp.MustCompile(ExpectedBufferMsg511)
+		if pattern.MatchString(entry.Message) {
+			break
+		}
+	}
+
+	// read dns message from dnstap consumer
+	msg := <-fl.GetInputChannel()
+	if msg.DNSTap.Identity != ExpectedIdentity {
+		t.Errorf("invalid identity in dns message: %s", msg.DNSTap.Identity)
+	}
+
+	// send second shot of packets to consumer
+	for i := 0; i < 1024; i++ {
+		consumer.GetChannel() <- data
+	}
+
+	// waiting monitor to run in consumer
+	time.Sleep(12 * time.Second)
+	for entry := range logsChan {
+		fmt.Println(entry)
+		pattern := regexp.MustCompile(ExpectedBufferMsg1023)
+		if pattern.MatchString(entry.Message) {
+			break
+		}
+	}
+
+	// read just one dns message from dnstap consumer
+	msg2 := <-fl.GetInputChannel()
+	if msg2.DNSTap.Identity != ExpectedIdentity {
+		t.Errorf("invalid identity in second dns message: %s", msg2.DNSTap.Identity)
 	}
 }
