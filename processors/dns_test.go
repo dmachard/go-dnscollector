@@ -30,10 +30,9 @@ func Test_DnsProcessor(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dmOut := <-fl.GetInputChannel()
-	if dmOut.DNS.Qname != "dnscollector.dev" {
+	if dmOut.DNS.Qname != ExpectedQname {
 		t.Errorf("invalid qname in dns message: %s", dm.DNS.Qname)
 	}
-
 }
 
 func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
@@ -58,10 +57,9 @@ func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
 	// waiting monitor to run in consumer
 	time.Sleep(12 * time.Second)
 
-	regxp := ".*buffer is full, 511.*"
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(regxp)
+		pattern := regexp.MustCompile(ExpectedBufferMsg511)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -69,7 +67,7 @@ func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dmOut := <-fl.GetInputChannel()
-	if dmOut.DNS.Qname != "dnscollector.dev" {
+	if dmOut.DNS.Qname != ExpectedQname {
 		t.Errorf("invalid qname in dns message: %s", dmOut.DNS.Qname)
 	}
 
@@ -81,10 +79,9 @@ func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
 	// waiting monitor to run in consumer
 	time.Sleep(12 * time.Second)
 
-	regxp = ".*buffer is full, 1023.*"
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(regxp)
+		pattern := regexp.MustCompile(ExpectedBufferMsg1023)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -92,7 +89,7 @@ func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm2 := <-fl.GetInputChannel()
-	if dm2.DNS.Qname != "dnscollector.dev" {
+	if dm2.DNS.Qname != ExpectedQname {
 		t.Errorf("invalid qname in second dns message: %s", dm2.DNS.Qname)
 	}
 }

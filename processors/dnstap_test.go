@@ -27,7 +27,7 @@ func Test_DnstapProcessor(t *testing.T) {
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
-	dnsmsg.SetQuestion("www.google.fr.", dns.TypeA)
+	dnsmsg.SetQuestion(ExpectedQname+".", dns.TypeA)
 	dnsquestion, _ := dnsmsg.Pack()
 
 	// prepare dnstap
@@ -49,7 +49,7 @@ func Test_DnstapProcessor(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm := <-fl.GetInputChannel()
-	if dm.DNS.Qname != "www.google.fr" {
+	if dm.DNS.Qname != ExpectedQname {
 		t.Errorf("invalid qname in dns message: %s", dm.DNS.Qname)
 	}
 }
@@ -290,7 +290,7 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
-	dnsmsg.SetQuestion("www.google.fr.", dns.TypeA)
+	dnsmsg.SetQuestion(ExpectedQname+".", dns.TypeA)
 	dnsquestion, _ := dnsmsg.Pack()
 
 	// prepare dnstap
@@ -315,10 +315,9 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 	// waiting monitor to run in consumer
 	time.Sleep(12 * time.Second)
 
-	regxp := ".*buffer is full, 511.*"
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(regxp)
+		pattern := regexp.MustCompile(ExpectedBufferMsg511)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -326,7 +325,7 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm := <-fl.GetInputChannel()
-	if dm.DNS.Qname != "www.google.fr" {
+	if dm.DNS.Qname != ExpectedQname {
 		t.Errorf("invalid qname in dns message: %s", dm.DNS.Qname)
 	}
 
@@ -338,10 +337,9 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 	// waiting monitor to run in consumer
 	time.Sleep(12 * time.Second)
 
-	regxp = ".*buffer is full, 1023.*"
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(regxp)
+		pattern := regexp.MustCompile(ExpectedBufferMsg1023)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -349,7 +347,7 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm2 := <-fl.GetInputChannel()
-	if dm2.DNS.Qname != "www.google.fr" {
+	if dm2.DNS.Qname != ExpectedQname {
 		t.Errorf("invalid qname in second dns message: %s", dm2.DNS.Qname)
 	}
 }
