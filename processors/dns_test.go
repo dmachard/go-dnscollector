@@ -2,7 +2,10 @@ package processors
 
 import (
 	"bytes"
+	"fmt"
+	"regexp"
 	"testing"
+	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/loggers"
@@ -31,4 +34,65 @@ func Test_DnsProcessor(t *testing.T) {
 		t.Errorf("invalid qname in dns message: %s", dm.DNS.Qname)
 	}
 
+}
+
+func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
+	// redirect stdout output to bytes buffer
+	logsChan := make(chan logger.LogEntry, 10)
+	lg := logger.New(true)
+	lg.SetOutputChannel((logsChan))
+
+	// init and run the dns processor
+	consumer := NewDNSProcessor(pkgconfig.GetFakeConfig(), lg, "test", 512)
+
+	fl := loggers.NewFakeLoggerWithBufferSize(1)
+	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+
+	dm := dnsutils.GetFakeDNSMessageWithPayload()
+
+	// add packets to consumer
+	for i := 0; i < 512; i++ {
+		consumer.GetChannel() <- dm
+	}
+
+	// waiting monitor to run in consumer
+	time.Sleep(12 * time.Second)
+
+	regxp := ".*buffer is full, 511.*"
+	for entry := range logsChan {
+		fmt.Println(entry)
+		pattern := regexp.MustCompile(regxp)
+		if pattern.MatchString(entry.Message) {
+			break
+		}
+	}
+
+	// read dns message from dnstap consumer
+	dmOut := <-fl.GetInputChannel()
+	if dmOut.DNS.Qname != "dnscollector.dev" {
+		t.Errorf("invalid qname in dns message: %s", dmOut.DNS.Qname)
+	}
+
+	// send second shot of packets to consumer
+	for i := 0; i < 1024; i++ {
+		consumer.GetChannel() <- dm
+	}
+
+	// waiting monitor to run in consumer
+	time.Sleep(12 * time.Second)
+
+	regxp = ".*buffer is full, 1023.*"
+	for entry := range logsChan {
+		fmt.Println(entry)
+		pattern := regexp.MustCompile(regxp)
+		if pattern.MatchString(entry.Message) {
+			break
+		}
+	}
+
+	// read dns message from dnstap consumer
+	dm2 := <-fl.GetInputChannel()
+	if dm2.DNS.Qname != "dnscollector.dev" {
+		t.Errorf("invalid qname in second dns message: %s", dm2.DNS.Qname)
+	}
 }
