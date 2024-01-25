@@ -49,7 +49,7 @@ func Test_DnsMessage_BufferLoggerIsFull(t *testing.T) {
 
 	// read dnsmessage from next logger
 	dmOut := <-nxt.GetInputChannel()
-	if dmOut.DNS.Qname != "dns.collector" {
+	if dmOut.DNS.Qname != processors.ExpectedQname2 {
 		t.Errorf("invalid qname in dns message: %s", dmOut.DNS.Qname)
 	}
 
@@ -70,7 +70,7 @@ func Test_DnsMessage_BufferLoggerIsFull(t *testing.T) {
 	}
 	// read dnsmessage from next logger
 	dm2 := <-nxt.GetInputChannel()
-	if dm2.DNS.Qname != "dns.collector" {
+	if dm2.DNS.Qname != processors.ExpectedQname2 {
 		t.Errorf("invalid qname in dns message: %s", dm2.DNS.Qname)
 	}
 

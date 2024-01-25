@@ -59,7 +59,7 @@ func NewDNSMessage(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *
 		inputChan:   make(chan dnsutils.DNSMessage, config.Collectors.DNSMessage.ChannelBufferSize),
 		logger:      logger,
 		name:        name,
-		//RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
+		//  RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 		dropped:      make(chan string),
 		droppedCount: map[string]int{},
 	}
@@ -70,12 +70,12 @@ func NewDNSMessage(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *
 func (c *DNSMessage) GetName() string { return c.name }
 
 func (c *DNSMessage) AddDroppedRoute(wrk pkgutils.Worker) {
-	//c.RoutingHandler.AddDroppedRoute(wrk)
+	//  c.RoutingHandler.AddDroppedRoute(wrk)
 	c.droppedRoutes = append(c.droppedRoutes, wrk)
 }
 
 func (c *DNSMessage) AddDefaultRoute(wrk pkgutils.Worker) {
-	//c.RoutingHandler.AddDefaultRoute(wrk)
+	//  c.RoutingHandler.AddDefaultRoute(wrk)
 	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
@@ -244,8 +244,8 @@ func (c *DNSMessage) Run() {
 	var err error
 
 	// prepare next channels
-	//defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
-	//droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
+	// defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
+	// droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
 	defaultRoutes, defaultNames := pkgutils.GetRoutes(c.defaultRoutes)
 	droppedRoutes, droppedNames := pkgutils.GetRoutes(c.droppedRoutes)
 
@@ -310,7 +310,7 @@ RUN_LOOP:
 			if matched {
 				subprocessors.InitDNSMessageFormat(&dm)
 				if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
-					//c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
+					// c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 					for i := range droppedRoutes {
 						select {
 						case droppedRoutes[i] <- dm:
@@ -324,7 +324,7 @@ RUN_LOOP:
 
 			// drop packet ?
 			if !matched {
-				//c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
+				//  c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				for i := range droppedRoutes {
 					select {
 					case droppedRoutes[i] <- dm:
@@ -336,7 +336,7 @@ RUN_LOOP:
 			}
 
 			// send to next
-			//c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
+			//  c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 			for i := range defaultRoutes {
 				select {
 				case defaultRoutes[i] <- dm:
@@ -351,36 +351,36 @@ RUN_LOOP:
 	c.LogInfo("run terminated")
 }
 
-func (p *DNSMessage) MonitorNextStanzas() {
+func (c *DNSMessage) MonitorNextStanzas() {
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 FOLLOW_LOOP:
 	for {
 		select {
-		case <-p.stopMonitor:
-			close(p.dropped)
+		case <-c.stopMonitor:
+			close(c.dropped)
 			bufferFull.Stop()
-			p.doneMonitor <- true
+			c.doneMonitor <- true
 			break FOLLOW_LOOP
 
-		case loggerName := <-p.dropped:
-			if _, ok := p.droppedCount[loggerName]; !ok {
-				p.droppedCount[loggerName] = 1
+		case loggerName := <-c.dropped:
+			if _, ok := c.droppedCount[loggerName]; !ok {
+				c.droppedCount[loggerName] = 1
 			} else {
-				p.droppedCount[loggerName]++
+				c.droppedCount[loggerName]++
 			}
 
 		case <-bufferFull.C:
 
-			for v, k := range p.droppedCount {
+			for v, k := range c.droppedCount {
 				if k > 0 {
-					p.LogError("stanza[%s] buffer is full, %d dnsmessage(s) dropped", v, k)
-					p.droppedCount[v] = 0
+					c.LogError("stanza[%s] buffer is full, %d dnsmessage(s) dropped", v, k)
+					c.droppedCount[v] = 0
 				}
 			}
 			bufferFull.Reset(watchInterval)
 
 		}
 	}
-	p.LogInfo("monitor terminated")
+	c.LogInfo("monitor terminated")
 }
