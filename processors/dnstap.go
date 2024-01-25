@@ -122,6 +122,10 @@ func (d *DNSTapProcessor) Stop() {
 	d.LogInfo("stopping to process...")
 	d.stopRun <- true
 	<-d.doneRun
+
+	d.LogInfo("stopping monitor...")
+	d.stopMonitor <- true
+	<-d.doneMonitor
 }
 
 func (d *DNSTapProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
