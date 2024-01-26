@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
@@ -52,7 +51,7 @@ func Test_DnstapCollector(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			g := loggers.NewFakeLogger()
+			g := pkgutils.NewFakeLogger()
 
 			config := pkgconfig.GetFakeConfig()
 			if tc.listenPort > 0 {
@@ -128,7 +127,7 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	config.Collectors.Dnstap.SockPath = "/tmp/dnscollector.sock"
 
 	// start the collector in unix mode
-	g := loggers.NewFakeLogger()
+	g := pkgutils.NewFakeLogger()
 	c := NewDnstap([]pkgutils.Worker{g}, config, lg, "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector listening  error: ", err)

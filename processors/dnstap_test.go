@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnstap-protobuf"
@@ -41,7 +40,7 @@ func Test_DnstapProcessor(t *testing.T) {
 	data, _ := proto.Marshal(dt)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// add packet to consumer
@@ -79,7 +78,7 @@ func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
 	data, _ := proto.Marshal(dt)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
@@ -117,7 +116,7 @@ func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 	data, _ := proto.Marshal(dt)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
@@ -156,7 +155,7 @@ func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 	data, _ := proto.Marshal(dt)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
@@ -197,7 +196,7 @@ func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
 	data, _ := proto.Marshal(dt)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// add packet to consumer
@@ -253,7 +252,7 @@ func Test_DnstapProcessor_Extended(t *testing.T) {
 	data, _ := proto.Marshal(dt)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// add packet to consumer
@@ -304,7 +303,7 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 	data, _ := proto.Marshal(dt)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLoggerWithBufferSize(1)
+	fl := pkgutils.NewFakeLoggerWithBufferSize(1)
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// add packets to consumer

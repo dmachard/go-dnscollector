@@ -36,15 +36,18 @@ type RoutingHandler struct {
 
 func NewRoutingHandler(config *pkgconfig.Config, console *logger.Logger, name string) RoutingHandler {
 	rh := RoutingHandler{
-		name:    name,
-		logger:  console,
-		config:  config,
-		stopRun: make(chan bool),
-		doneRun: make(chan bool),
+		name:         name,
+		logger:       console,
+		config:       config,
+		stopRun:      make(chan bool),
+		doneRun:      make(chan bool),
+		dropped:      make(chan string),
+		droppedCount: map[string]int{},
 	}
 	go rh.Run()
 	return rh
 }
+
 func (rh *RoutingHandler) LogInfo(msg string, v ...interface{}) {
 	rh.logger.Info("["+rh.name+"] "+msg, v...)
 }
@@ -105,7 +108,7 @@ RUN_LOOP:
 		case <-nextBufferFull.C:
 			for v, k := range rh.droppedCount {
 				if k > 0 {
-					rh.LogError("stanza[%s] buffer is full, %d packet(s) dropped", v, k)
+					rh.LogError("stanza=%s buffer is full, %d packet(s) dropped", v, k)
 					rh.droppedCount[v] = 0
 				}
 			}

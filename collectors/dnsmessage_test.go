@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 )
@@ -24,7 +24,7 @@ func Test_DnsMessage_BufferLoggerIsFull(t *testing.T) {
 	c := NewDNSMessage(nil, config, lg, "test")
 
 	// init next logger with a buffer of one element
-	nxt := loggers.NewFakeLoggerWithBufferSize(1)
+	nxt := pkgutils.NewFakeLoggerWithBufferSize(1)
 	c.AddDefaultRoute(nxt)
 
 	// run collector

@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
@@ -33,7 +32,7 @@ func Test_PowerDNSProcessor(t *testing.T) {
 	data, _ := proto.Marshal(dm)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// add packet to consumer
@@ -69,7 +68,7 @@ func Test_PowerDNSProcessor_AddDNSPayload_Valid(t *testing.T) {
 
 	// start the consumer and add packet
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	consumer.GetChannel() <- data
@@ -118,7 +117,7 @@ func Test_PowerDNSProcessor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
 	data, _ := proto.Marshal(dm)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// add packet to consumer
@@ -152,7 +151,7 @@ func Test_PowerDNSProcessor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
 	data, _ := proto.Marshal(dm)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// add packet to consumer
@@ -197,7 +196,7 @@ func Test_PowerDNSProcessor_AddDNSPayload_AnswersTooLongDomain(t *testing.T) {
 	data, _ := proto.Marshal(dm)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// add packet to consumer
@@ -237,7 +236,7 @@ func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
 	data, _ := proto.Marshal(dm)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLoggerWithBufferSize(1)
+	fl := pkgutils.NewFakeLoggerWithBufferSize(1)
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// add packets to consumer
