@@ -318,6 +318,9 @@ func checkMultiplexerConfig(currentVal reflect.Value, currentRef []interface{}, 
 
 						// Type assertion to check if the value is a map
 						if value, ok := mapVal.Interface().(map[string]interface{}); ok {
+							if _, ok := refMap[strKey]; !ok {
+								return errors.Errorf("invalid logger `%s`", strKey)
+							}
 							if err := checkKeywordsPosition(value, refMap[strKey].(map[string]interface{}), defaultConf, nextSectionName); err != nil {
 								return err
 							}
