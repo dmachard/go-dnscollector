@@ -77,6 +77,10 @@ func (d *DNSProcessor) Stop() {
 	d.LogInfo("stopping to process...")
 	d.stopRun <- true
 	<-d.doneRun
+
+	d.LogInfo("stopping monitor...")
+	d.stopMonitor <- true
+	<-d.doneMonitor
 }
 
 func (d *DNSProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {

@@ -2,12 +2,15 @@ package loggers
 
 import (
 	"bytes"
+	"fmt"
 	"regexp"
 	"testing"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket/pcapgo"
 )
@@ -205,4 +208,72 @@ func Test_StdoutPcapMode_NoDNSPayload(t *testing.T) {
 	if !pattern.MatchString(ret) {
 		t.Errorf("stdout error want %s, got: %s", regxp, ret)
 	}
+}
+
+// test for issue https://github.com/dmachard/go-dnscollector/issues/568
+func Test_StdoutBufferLoggerIsFull(t *testing.T) {
+	// redirect stdout output to bytes buffer
+	logsChan := make(chan logger.LogEntry, 10)
+	lg := logger.New(true)
+	lg.SetOutputChannel((logsChan))
+
+	// init logger and redirect stdout output to bytes buffer
+	var stdout bytes.Buffer
+	cfg := pkgconfig.GetFakeConfig()
+	g := NewStdOut(cfg, lg, "test")
+	g.SetTextWriter(&stdout)
+
+	// init next logger with a buffer of one element
+	nxt := pkgutils.NewFakeLoggerWithBufferSize(1)
+	g.AddDefaultRoute(nxt)
+
+	// run collector
+	go g.Run()
+
+	// add a shot of dnsmessages to collector
+	dmIn := dnsutils.GetFakeDNSMessage()
+	for i := 0; i < 512; i++ {
+		g.GetInputChannel() <- dmIn
+	}
+
+	// waiting monitor to run in consumer
+	time.Sleep(12 * time.Second)
+
+	for entry := range logsChan {
+		fmt.Println(entry)
+		pattern := regexp.MustCompile(processors.ExpectedBufferMsg511)
+		if pattern.MatchString(entry.Message) {
+			break
+		}
+	}
+
+	// read dns message from dnstap consumer
+	dmOut := <-nxt.GetInputChannel()
+	if dmOut.DNS.Qname != processors.ExpectedQname2 {
+		t.Errorf("invalid qname in dns message: %s", dmOut.DNS.Qname)
+	}
+
+	// send second shot of packets to consumer
+	for i := 0; i < 1024; i++ {
+		g.GetInputChannel() <- dmIn
+	}
+
+	// waiting monitor to run in consumer
+	time.Sleep(12 * time.Second)
+	for entry := range logsChan {
+		fmt.Println(entry)
+		pattern := regexp.MustCompile(processors.ExpectedBufferMsg1023)
+		if pattern.MatchString(entry.Message) {
+			break
+		}
+	}
+
+	// read dns message from dnstap consumer
+	dmOut2 := <-nxt.GetInputChannel()
+	if dmOut2.DNS.Qname != processors.ExpectedQname2 {
+		t.Errorf("invalid qname in second dns message: %s", dmOut2.DNS.Qname)
+	}
+
+	// stop loggers
+	g.Stop()
 }

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
@@ -22,7 +21,7 @@ func Test_DnsProcessor(t *testing.T) {
 	// init and run the dns processor
 	consumer := NewDNSProcessor(pkgconfig.GetFakeConfig(), logger, "test", 512)
 
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	dm := dnsutils.GetFakeDNSMessageWithPayload()
@@ -44,7 +43,7 @@ func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
 	// init and run the dns processor
 	consumer := NewDNSProcessor(pkgconfig.GetFakeConfig(), lg, "test", 512)
 
-	fl := loggers.NewFakeLoggerWithBufferSize(1)
+	fl := pkgutils.NewFakeLoggerWithBufferSize(1)
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	dm := dnsutils.GetFakeDNSMessageWithPayload()
