@@ -225,6 +225,44 @@ multiplexer:
 	}
 }
 
+// https://github.com/dmachard/go-dnscollector/issues/565
+func TestConfig_CheckMultiplexerConfig_InvalidLogger(t *testing.T) {
+	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
+	if err != nil {
+		t.Fatal("Error creating temporary file:", err)
+	}
+	defer os.Remove(userConfigFile.Name())
+	defer userConfigFile.Close()
+
+	// all keywords in this config are valid but the logger dnstap is not valid in this context
+	userConfigContent := `
+global:
+  trace: false
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+  loggers:
+    - name: tapOut
+      dnstap:
+        listen-ip: 0.0.0.0
+  routes:
+    - from: [ tapIn ]
+      to: [ tapOut ]
+`
+
+	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
+	if err != nil {
+		t.Fatal("Error writing to user configuration file:", err)
+	}
+
+	dm := make(map[string]interface{})
+	if err := CheckConfig(userConfigFile.Name(), dm); err == nil {
+		t.Errorf("Expected error, but got %v", err)
+	}
+}
+
 // Valid pipeline configuration
 func TestConfig_CheckPipelinesConfig_Valid(t *testing.T) {
 	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
