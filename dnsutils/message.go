@@ -281,7 +281,7 @@ func (dm *DNSMessage) InitTransforms() {
 	dm.Geo = &TransformDNSGeo{}
 }
 
-func (dm *DNSMessage) handleGeoIPDirectives(directives []string, s *strings.Builder) {
+func (dm *DNSMessage) handleGeoIPDirectives(directives []string, s *strings.Builder) error {
 	if dm.Geo == nil {
 		s.WriteString("-")
 	} else {
@@ -296,11 +296,14 @@ func (dm *DNSMessage) handleGeoIPDirectives(directives []string, s *strings.Buil
 			s.WriteString(dm.Geo.AutonomousSystemNumber)
 		case directive == "geoip-as-owner":
 			s.WriteString(dm.Geo.AutonomousSystemOrg)
+		default:
+			return errors.New(ErrorUnexpectedDirective + directive)
 		}
 	}
+	return nil
 }
 
-func (dm *DNSMessage) handlePdnsDirectives(directives []string, s *strings.Builder) {
+func (dm *DNSMessage) handlePdnsDirectives(directives []string, s *strings.Builder) error {
 	if dm.PowerDNS == nil {
 		s.WriteString("-")
 	} else {
@@ -363,19 +366,28 @@ func (dm *DNSMessage) handlePdnsDirectives(directives []string, s *strings.Build
 					s.WriteString("-")
 				}
 			}
+		default:
+			return errors.New(ErrorUnexpectedDirective + directive)
 		}
 	}
+	return nil
 }
 
-func (dm *DNSMessage) handleSuspiciousDirectives(directives []string, s *strings.Builder) {
+func (dm *DNSMessage) handleSuspiciousDirectives(directives []string, s *strings.Builder) error {
 	if dm.Suspicious == nil {
 		s.WriteString("-")
-	} else if directives[0] == "suspicious-score" {
-		s.WriteString(strconv.Itoa(int(dm.Suspicious.Score)))
+	} else {
+		switch directive := directives[0]; {
+		case directive == "suspicious-score":
+			s.WriteString(strconv.Itoa(int(dm.Suspicious.Score)))
+		default:
+			return errors.New(ErrorUnexpectedDirective + directive)
+		}
 	}
+	return nil
 }
 
-func (dm *DNSMessage) handlePublicSuffixDirectives(directives []string, s *strings.Builder) {
+func (dm *DNSMessage) handlePublicSuffixDirectives(directives []string, s *strings.Builder) error {
 	if dm.PublicSuffix == nil {
 		s.WriteString("-")
 	} else {
@@ -384,16 +396,20 @@ func (dm *DNSMessage) handlePublicSuffixDirectives(directives []string, s *strin
 			s.WriteString(dm.PublicSuffix.QnamePublicSuffix)
 		case directive == "publixsuffix-etld+1":
 			s.WriteString(dm.PublicSuffix.QnameEffectiveTLDPlusOne)
+		default:
+			return errors.New(ErrorUnexpectedDirective + directive)
 		}
 	}
+	return nil
 }
 
-func (dm *DNSMessage) handleExtractedDirectives(directives []string, s *strings.Builder) {
+func (dm *DNSMessage) handleExtractedDirectives(directives []string, s *strings.Builder) error {
 	if dm.Extracted == nil {
 		s.WriteString("-")
-		return
+		return nil
 	}
-	if directives[0] == "extracted-dns-payload" {
+	switch directive := directives[0]; {
+	case directive == "extracted-dns-payload":
 		if len(dm.DNS.Payload) > 0 {
 			dst := make([]byte, base64.StdEncoding.EncodedLen(len(dm.DNS.Payload)))
 			base64.StdEncoding.Encode(dst, dm.DNS.Payload)
@@ -401,10 +417,13 @@ func (dm *DNSMessage) handleExtractedDirectives(directives []string, s *strings.
 		} else {
 			s.WriteString("-")
 		}
+	default:
+		return errors.New(ErrorUnexpectedDirective + directive)
 	}
+	return nil
 }
 
-func (dm *DNSMessage) handleFilteringDirectives(directives []string, s *strings.Builder) {
+func (dm *DNSMessage) handleFilteringDirectives(directives []string, s *strings.Builder) error {
 	if dm.Filtering == nil {
 		s.WriteString("-")
 	} else {
@@ -412,12 +431,13 @@ func (dm *DNSMessage) handleFilteringDirectives(directives []string, s *strings.
 		case directive == "filtering-sample-rate":
 			s.WriteString(strconv.Itoa(dm.Filtering.SampleRate))
 		default:
-			log.Fatalf("unsupport directive for text format: %s", directive)
+			return errors.New(ErrorUnexpectedDirective + directive)
 		}
 	}
+	return nil
 }
 
-func (dm *DNSMessage) handleReducerDirectives(directives []string, s *strings.Builder) {
+func (dm *DNSMessage) handleReducerDirectives(directives []string, s *strings.Builder) error {
 	if dm.Reducer == nil {
 		s.WriteString("-")
 	} else {
@@ -426,11 +446,14 @@ func (dm *DNSMessage) handleReducerDirectives(directives []string, s *strings.Bu
 			s.WriteString(strconv.Itoa(dm.Reducer.Occurrences))
 		case directive == "reducer-cumulative-length":
 			s.WriteString(strconv.Itoa(dm.Reducer.CumulativeLength))
+		default:
+			return errors.New(ErrorUnexpectedDirective + directive)
 		}
 	}
+	return nil
 }
 
-func (dm *DNSMessage) handleMachineLearningDirectives(directives []string, s *strings.Builder) {
+func (dm *DNSMessage) handleMachineLearningDirectives(directives []string, s *strings.Builder) error {
 	if dm.MachineLearning == nil {
 		s.WriteString("-")
 	} else {
@@ -473,11 +496,26 @@ func (dm *DNSMessage) handleMachineLearningDirectives(directives []string, s *st
 			s.WriteString(strconv.Itoa(dm.MachineLearning.Occurrences))
 		case directive == "ml-uncommon-qtypes":
 			s.WriteString(strconv.Itoa(dm.MachineLearning.UncommonQtypes))
+		default:
+			return errors.New(ErrorUnexpectedDirective + directive)
 		}
 	}
+	return nil
 }
 
 func (dm *DNSMessage) Bytes(format []string, fieldDelimiter string, fieldBoundary string) []byte {
+	line, err := dm.ToTextLine(format, fieldDelimiter, fieldBoundary)
+	if err != nil {
+		log.Fatalf("unsupport directive for text format: %s", err)
+	}
+	return line
+}
+
+func (dm *DNSMessage) String(format []string, fieldDelimiter string, fieldBoundary string) string {
+	return string(dm.Bytes(format, fieldDelimiter, fieldBoundary))
+}
+
+func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBoundary string) ([]byte, error) {
 	var s strings.Builder
 
 	for i, word := range format {
@@ -614,27 +652,51 @@ func (dm *DNSMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 			}
 		// more directives from collectors
 		case PdnsDirectives.MatchString(directive):
-			dm.handlePdnsDirectives(directives, &s)
+			err := dm.handlePdnsDirectives(directives, &s)
+			if err != nil {
+				return nil, err
+			}
 
 		// more directives from transformers
 		case ReducerDirectives.MatchString(directive):
-			dm.handleReducerDirectives(directives, &s)
+			err := dm.handleReducerDirectives(directives, &s)
+			if err != nil {
+				return nil, err
+			}
 		case GeoIPDirectives.MatchString(directive):
-			dm.handleGeoIPDirectives(directives, &s)
+			err := dm.handleGeoIPDirectives(directives, &s)
+			if err != nil {
+				return nil, err
+			}
 		case SuspiciousDirectives.MatchString(directive):
-			dm.handleSuspiciousDirectives(directives, &s)
+			err := dm.handleSuspiciousDirectives(directives, &s)
+			if err != nil {
+				return nil, err
+			}
 		case PublicSuffixDirectives.MatchString(directive):
-			dm.handlePublicSuffixDirectives(directives, &s)
+			err := dm.handlePublicSuffixDirectives(directives, &s)
+			if err != nil {
+				return nil, err
+			}
 		case ExtractedDirectives.MatchString(directive):
-			dm.handleExtractedDirectives(directives, &s)
+			err := dm.handleExtractedDirectives(directives, &s)
+			if err != nil {
+				return nil, err
+			}
 		case MachineLearningDirectives.MatchString(directive):
-			dm.handleMachineLearningDirectives(directives, &s)
+			err := dm.handleMachineLearningDirectives(directives, &s)
+			if err != nil {
+				return nil, err
+			}
 		case FilteringDirectives.MatchString(directive):
-			dm.handleFilteringDirectives(directives, &s)
+			err := dm.handleFilteringDirectives(directives, &s)
+			if err != nil {
+				return nil, err
+			}
 
 		// error unsupport directive for text format
 		default:
-			log.Fatalf("unsupport directive for text format: %s", word)
+			return nil, errors.New(ErrorUnexpectedDirective + word)
 		}
 
 		if i < len(format)-1 {
@@ -642,11 +704,7 @@ func (dm *DNSMessage) Bytes(format []string, fieldDelimiter string, fieldBoundar
 		}
 	}
 
-	return []byte(s.String())
-}
-
-func (dm *DNSMessage) String(format []string, fieldDelimiter string, fieldBoundary string) string {
-	return string(dm.Bytes(format, fieldDelimiter, fieldBoundary))
+	return []byte(s.String()), nil
 }
 
 func (dm *DNSMessage) ToJSON() string {
