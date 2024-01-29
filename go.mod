@@ -22,7 +22,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb-client-go v1.4.0
-	github.com/klauspost/compress v1.17.4
+	github.com/klauspost/compress v1.17.5
 	github.com/miekg/dns v1.1.58
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/nqd/flat v0.2.0
