@@ -24,4 +24,6 @@ const (
 	MatchingOpSourceKind  = "source-kind"
 	MatchingKindString    = "string_list"
 	MatchingKindRegexp    = "regexp_list"
+
+	ErrorUnexpectedDirective = "unexpected text format directive: "
 )
