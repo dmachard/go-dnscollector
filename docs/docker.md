@@ -1,7 +1,7 @@
 # DNS-collector - Docker
 
 - [Docker](#docker)
-- [Docker Compose](#docker-compose)
+- [Docker Compose](#docker-compose-recommended)
 
 ## Docker
 
