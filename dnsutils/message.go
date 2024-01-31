@@ -1487,3 +1487,10 @@ func GetFlatDNSMessage() (ret map[string]interface{}, err error) {
 	ret, err = dm.Flatten()
 	return
 }
+
+func GetReferenceDNSMessage() DNSMessage {
+	dm := DNSMessage{}
+	dm.Init()
+	dm.InitTransforms()
+	return dm
+}
