@@ -1,6 +1,9 @@
 # DNS-collector - Docker
 
-## Docker run
+- [Docker](#docker)
+- [Docker Compose](#docker-compose-recommended)
+
+## Docker
 
 Docker run with a custom configuration:
 
@@ -8,69 +11,28 @@ Docker run with a custom configuration:
 docker run -d dmachard/go-dnscollector -v $(pwd)/config.yml:/etc/dnscollector/config.yml
 ```
 
-## Docker-compose
+## Docker-compose (Recommended)
 
-Example with docker-compose
+Create a directory of your choice (e.g. ./dnscollector) to hold the docker-compose.yml and .env files.
 
-```ini
-version: "3.8"
-
-services:
-  dnscollector:
-    image: dmachard/go-dnscollector:v0.25.0
-    environment:
-      - "TZ=Europe/Paris"
-    volumes:
-      - ${APP_CONFIG}/dnscollector/config.yml:/etc/dnscollector/config.yml
-      - ${COLLECTOR_DATA}/:/var/dnscollector/
-    ports:
-      - "8080:8080/tcp"
-      - "8081:8081/tcp"
-      - "6000:6000/tcp"
+```bash
+mkdir ./dnscollector
+cd ./dnscollector
 ```
 
-DNS-collector configuration:
+Download docker-compose.yml and docker-example.env, either by running the following commands:
 
-```ini
-global:
-  trace:
-    verbose: true
-    log-malformed: true
+```bash
+wget https://github.com/dmachard/go-dnscollector/releases/latest/download/docker-compose.yml
+wget -O .env https://github.com/dmachard/go-dnscollector/releases/latest/download/docker-example.env
+```
 
-multiplexer:
-  collectors:
-    - name: tap
-      powerdns:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
-      transforms:
-        normalize:
-          qname-lowercase: true
-          add-tld: true
-        suspicious:
-          enable: true
+Populate the .env file with custom values:
 
-  loggers:
-    - name: console
-      stdout:
-        mode: text
+- Update DNSCOLLECTOR_DATA with your preferred location for storing DNS logs.
 
-    - name: json
-      logfile:
-        file-path:  /var/dnscollector/dnstap.log 
-        mode: text
+Start the containers using docker compose command
 
-    - name: api
-      restapi:
-        listen-ip: 0.0.0.0
-        listen-port: 8080
-
-    - name: prom
-      prometheus:
-        listen-ip: 0.0.0.0
-        listen-port: 8081
- 
-  routes:
-    - from: [ tap ]
-      to: [ console, json, api, prom ]
+```bash
+docker compose up -d
 ```
