@@ -164,6 +164,7 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 				  "tcp-reassembled": false
 				},
 				"dns": {
+				  "id": 0,
 				  "length": 0,
 				  "opcode": 0,
 				  "rcode": "-",
@@ -231,6 +232,7 @@ func TestDnsMessage_JsonFlatten_Reference(t *testing.T) {
 					"dns.flags.tc": false,
 					"dns.length": 0,
 					"dns.malformed-packet": false,
+					"dns.id": 0,
 					"dns.opcode": 0,
 					"dns.qname": "-",
 					"dns.qtype": "-",
