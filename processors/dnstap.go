@@ -64,25 +64,27 @@ type DNSTapProcessor struct {
 	name           string
 	chanSize       int
 	RoutingHandler pkgutils.RoutingHandler
+	dropped        chan string
+	droppedCount   map[string]int
 }
 
 func NewDNSTapProcessor(connID int, config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
 	logger.Info("[%s] processor=dnstap#%d - initialization...", name, connID)
 
 	d := DNSTapProcessor{
-		ConnID:      connID,
-		doneMonitor: make(chan bool),
-		doneRun:     make(chan bool),
-		stopMonitor: make(chan bool),
-		stopRun:     make(chan bool),
-		recvFrom:    make(chan []byte, size),
-		chanSize:    size,
-		logger:      logger,
-		config:      config,
-		ConfigChan:  make(chan *pkgconfig.Config),
-		name:        name,
-		// dropped:      make(chan string),
-		// droppedCount: map[string]int{},
+		ConnID:         connID,
+		doneMonitor:    make(chan bool),
+		doneRun:        make(chan bool),
+		stopMonitor:    make(chan bool),
+		stopRun:        make(chan bool),
+		recvFrom:       make(chan []byte, size),
+		chanSize:       size,
+		logger:         logger,
+		config:         config,
+		ConfigChan:     make(chan *pkgconfig.Config),
+		name:           name,
+		dropped:        make(chan string),
+		droppedCount:   map[string]int{},
 		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
@@ -120,6 +122,10 @@ func (d *DNSTapProcessor) Stop() {
 	d.LogInfo("stopping to process...")
 	d.stopRun <- true
 	<-d.doneRun
+
+	d.LogInfo("stopping monitor...")
+	d.stopMonitor <- true
+	<-d.doneMonitor
 }
 
 func (d *DNSTapProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
@@ -132,6 +138,9 @@ func (d *DNSTapProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers [
 
 	// prepare enabled transformers
 	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, defaultRoutes, d.ConnID)
+
+	// start goroutine to count dropped messsages
+	go d.MonitorLoggers()
 
 	// read incoming dns message
 	d.LogInfo("waiting dns message to process...")
@@ -293,7 +302,13 @@ RUN_LOOP:
 
 			// apply all enabled transformers
 			if transforms.ProcessMessage(&dm) == transformers.ReturnDrop {
-				d.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
+				for i := range droppedRoutes {
+					select {
+					case droppedRoutes[i] <- dm: // Successful send to logger channel
+					default:
+						d.dropped <- droppedNames[i]
+					}
+				}
 				continue
 			}
 
@@ -301,10 +316,49 @@ RUN_LOOP:
 			dm.DNSTap.LatencySec = fmt.Sprintf("%.6f", dm.DNSTap.Latency)
 
 			// dispatch dns message to connected routes
-			d.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
+			for i := range defaultRoutes {
+				select {
+				case defaultRoutes[i] <- dm: // Successful send to logger channel
+				default:
+					d.dropped <- defaultNames[i]
+				}
+			}
 
 		}
 	}
 
 	d.LogInfo("processing terminated")
+}
+
+func (d *DNSTapProcessor) MonitorLoggers() {
+	watchInterval := 10 * time.Second
+	bufferFull := time.NewTimer(watchInterval)
+MONITOR_LOOP:
+	for {
+		select {
+		case <-d.stopMonitor:
+			close(d.dropped)
+			bufferFull.Stop()
+			d.doneMonitor <- true
+			break MONITOR_LOOP
+
+		case loggerName := <-d.dropped:
+			if _, ok := d.droppedCount[loggerName]; !ok {
+				d.droppedCount[loggerName] = 1
+			} else {
+				d.droppedCount[loggerName]++
+			}
+
+		case <-bufferFull.C:
+			for v, k := range d.droppedCount {
+				if k > 0 {
+					d.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
+					d.droppedCount[v] = 0
+				}
+			}
+			bufferFull.Reset(watchInterval)
+
+		}
+	}
+	d.LogInfo("monitor terminated")
 }

@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
@@ -28,7 +27,7 @@ func TestTailRun(t *testing.T) {
 	config.Collectors.Tail.PatternQuery = "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_QUERY) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
 
 	// init collector
-	g := loggers.NewFakeLogger()
+	g := pkgutils.NewFakeLogger()
 	c := NewTail([]pkgutils.Worker{g}, config, logger.New(false), "test")
 	if err := c.Follow(); err != nil {
 		t.Errorf("collector tail following error: %e", err)

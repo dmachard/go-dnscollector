@@ -520,6 +520,70 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 	}
 }
 
+func TestDnsMessage_TextFormat_InvalidDirectives(t *testing.T) {
+	testcases := []struct {
+		name   string
+		dm     DNSMessage
+		format string
+	}{
+		{
+			name:   "default",
+			dm:     DNSMessage{},
+			format: "invalid",
+		},
+		{
+			name:   "publicsuffix",
+			dm:     DNSMessage{PublicSuffix: &TransformPublicSuffix{}},
+			format: "publixsuffix-invalid",
+		},
+		{
+			name:   "powerdns",
+			dm:     DNSMessage{PowerDNS: &PowerDNS{}},
+			format: "powerdns-invalid",
+		},
+		{
+			name:   "geoip",
+			dm:     DNSMessage{Geo: &TransformDNSGeo{}},
+			format: "geoip-invalid",
+		},
+		{
+			name:   "suspicious",
+			dm:     DNSMessage{Suspicious: &TransformSuspicious{}},
+			format: "suspicious-invalid",
+		},
+		{
+			name:   "extracted",
+			dm:     DNSMessage{Extracted: &TransformExtracted{}},
+			format: "extracted-invalid",
+		},
+		{
+			name:   "filtering",
+			dm:     DNSMessage{Filtering: &TransformFiltering{}},
+			format: "filtering-invalid",
+		},
+		{
+			name:   "reducer",
+			dm:     DNSMessage{Reducer: &TransformReducer{}},
+			format: "reducer-invalid",
+		},
+		{
+			name:   "ml",
+			dm:     DNSMessage{MachineLearning: &TransformML{}},
+			format: "ml-invalid",
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := tc.dm.ToTextLine(strings.Fields(tc.format), " ", "")
+			if err == nil {
+				t.Errorf("Want err, got nil")
+			} else if err.Error() != ErrorUnexpectedDirective+tc.format {
+				t.Errorf("Unexpected error: %s", err.Error())
+			}
+		})
+	}
+}
+
 func TestDnsMessage_TextFormat_Directives_PublicSuffix(t *testing.T) {
 	config := pkgconfig.GetFakeConfig()
 

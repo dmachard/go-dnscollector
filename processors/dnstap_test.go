@@ -2,10 +2,12 @@ package processors
 
 import (
 	"bytes"
+	"fmt"
+	"regexp"
 	"testing"
+	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnstap-protobuf"
@@ -24,7 +26,7 @@ func Test_DnstapProcessor(t *testing.T) {
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
-	dnsmsg.SetQuestion("www.google.fr.", dns.TypeA)
+	dnsmsg.SetQuestion(ExpectedQname+".", dns.TypeA)
 	dnsquestion, _ := dnsmsg.Pack()
 
 	// prepare dnstap
@@ -38,7 +40,7 @@ func Test_DnstapProcessor(t *testing.T) {
 	data, _ := proto.Marshal(dt)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// add packet to consumer
@@ -46,7 +48,7 @@ func Test_DnstapProcessor(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm := <-fl.GetInputChannel()
-	if dm.DNS.Qname != "www.google.fr" {
+	if dm.DNS.Qname != ExpectedQname {
 		t.Errorf("invalid qname in dns message: %s", dm.DNS.Qname)
 	}
 }
@@ -76,7 +78,7 @@ func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
 	data, _ := proto.Marshal(dt)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
@@ -114,7 +116,7 @@ func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 	data, _ := proto.Marshal(dt)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
@@ -153,7 +155,7 @@ func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 	data, _ := proto.Marshal(dt)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
@@ -194,7 +196,7 @@ func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
 	data, _ := proto.Marshal(dt)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// add packet to consumer
@@ -250,7 +252,7 @@ func Test_DnstapProcessor_Extended(t *testing.T) {
 	data, _ := proto.Marshal(dt)
 
 	// run the consumer with a fake logger
-	fl := loggers.NewFakeLogger()
+	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	// add packet to consumer
@@ -272,5 +274,79 @@ func Test_DnstapProcessor_Extended(t *testing.T) {
 	}
 	if dm.Filtering.SampleRate != 30 {
 		t.Errorf("invalid sample rate: %d", dm.Filtering.SampleRate)
+	}
+}
+
+// test for issue https://github.com/dmachard/go-dnscollector/issues/568
+func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
+	// redirect stdout output to bytes buffer
+	logsChan := make(chan logger.LogEntry, 10)
+	lg := logger.New(true)
+	lg.SetOutputChannel((logsChan))
+
+	// init the dnstap consumer
+	consumer := NewDNSTapProcessor(0, pkgconfig.GetFakeConfig(), lg, "test", 512)
+
+	// prepare dns query
+	dnsmsg := new(dns.Msg)
+	dnsmsg.SetQuestion(ExpectedQname+".", dns.TypeA)
+	dnsquestion, _ := dnsmsg.Pack()
+
+	// prepare dnstap
+	dt := &dnstap.Dnstap{}
+	dt.Type = dnstap.Dnstap_Type.Enum(1)
+
+	dt.Message = &dnstap.Message{}
+	dt.Message.Type = dnstap.Message_Type.Enum(5)
+	dt.Message.QueryMessage = dnsquestion
+
+	data, _ := proto.Marshal(dt)
+
+	// run the consumer with a fake logger
+	fl := pkgutils.NewFakeLoggerWithBufferSize(1)
+	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+
+	// add packets to consumer
+	for i := 0; i < 512; i++ {
+		consumer.GetChannel() <- data
+	}
+
+	// waiting monitor to run in consumer
+	time.Sleep(12 * time.Second)
+
+	for entry := range logsChan {
+		fmt.Println(entry)
+		pattern := regexp.MustCompile(ExpectedBufferMsg511)
+		if pattern.MatchString(entry.Message) {
+			break
+		}
+	}
+
+	// read dns message from dnstap consumer
+	dm := <-fl.GetInputChannel()
+	if dm.DNS.Qname != ExpectedQname {
+		t.Errorf("invalid qname in dns message: %s", dm.DNS.Qname)
+	}
+
+	// send second shot of packets to consumer
+	for i := 0; i < 1024; i++ {
+		consumer.GetChannel() <- data
+	}
+
+	// waiting monitor to run in consumer
+	time.Sleep(12 * time.Second)
+
+	for entry := range logsChan {
+		fmt.Println(entry)
+		pattern := regexp.MustCompile(ExpectedBufferMsg1023)
+		if pattern.MatchString(entry.Message) {
+			break
+		}
+	}
+
+	// read dns message from dnstap consumer
+	dm2 := <-fl.GetInputChannel()
+	if dm2.DNS.Qname != ExpectedQname {
+		t.Errorf("invalid qname in second dns message: %s", dm2.DNS.Qname)
 	}
 }

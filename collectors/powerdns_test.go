@@ -5,7 +5,6 @@ import (
 	"net"
 	"testing"
 
-	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
@@ -13,7 +12,7 @@ import (
 )
 
 func TestPowerDNS_Run(t *testing.T) {
-	g := loggers.NewFakeLogger()
+	g := pkgutils.NewFakeLogger()
 
 	c := NewProtobufPowerDNS([]pkgutils.Worker{g}, pkgconfig.GetFakeConfig(), logger.New(false), "test")
 	if err := c.Listen(); err != nil {

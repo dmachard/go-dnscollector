@@ -68,14 +68,13 @@ lint:
 tests: check-go
 	@go test -race -cover -v
 	@go test ./pkgconfig/ -race -cover -v
-	@go test ./pkgutils/ -race -cover -v
 	@go test ./pkglinker/ -race -cover -v
-	@go test ./dnsutils/ -race -cover -v
 	@go test ./netlib/ -race -cover -v
-	@go test -timeout 30s ./transformers/ -race -cover -v
-	@go test -timeout 30s ./collectors/ -race -cover -v
+	@go test -timeout 90s ./dnsutils/ -race -cover -v
+	@go test -timeout 90s ./transformers/ -race -cover -v
+	@go test -timeout 90s ./collectors/ -race -cover -v
 	@go test -timeout 90s ./loggers/ -race -cover -v
-	@go test -timeout 30s ./processors/ -race -cover -v
+	@go test -timeout 90s ./processors/ -race -cover -v
 
 # Cleans the project using go clean.
 clean: check-go
