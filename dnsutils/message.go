@@ -102,7 +102,7 @@ type DNS struct {
 	Type    string `json:"-" msgpack:"-"`
 	Payload []byte `json:"-" msgpack:"-"`
 	Length  int    `json:"length" msgpack:"-"`
-	ID      int    `json:"-" msgpack:"-"`
+	ID      int    `json:"id" msgpack:"id"`
 	Opcode  int    `json:"opcode" msgpack:"opcode"`
 	Rcode   string `json:"rcode" msgpack:"rcode"`
 	Qname   string `json:"qname" msgpack:"qname"`
@@ -251,6 +251,7 @@ func (dm *DNSMessage) Init() {
 	}
 
 	dm.DNS = DNS{
+		ID:              0,
 		Type:            "-",
 		MalformedPacket: false,
 		Rcode:           "-",
