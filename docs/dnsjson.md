@@ -27,12 +27,15 @@ Example:
     "rcode": "NOERROR",
     "qname": "eu.org",
     "qtype": "A",
+    "id": 23455,
     "flags": {
       "qr": true,
       "tc": false,
       "aa": false,
       "ra": true,
-      "ad": true
+      "ad": true,
+      "rd": true,
+      "cd": true
     },
     "resource-records": {
       "an": [
@@ -89,8 +92,11 @@ Using flat-json requires more processing on the host running go-dnscollector but
   "dns.flags.qr": true,
   "dns.flags.ra": true,
   "dns.flags.tc": false,
+  "dns.flags.rd": false,
+  "dns.flags.cd": false,
   "dns.length": 82,
   "dns.malformed-packet": false,
+  "dns.id": 34555,
   "dns.opcode": 0,
   "dns.qname": "google.nl",
   "dns.qtype": "A",
