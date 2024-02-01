@@ -4,8 +4,10 @@ Collector to logging protobuf streams from PowerDNS servers.
 
 Options:
 
-- `listen-ip`: (string) listen on ip
-  > default value to `0.0.0.0`
+- `listen-ip`: listen on local ip
+  > - string
+  > - default: 0.0.0.0
+
 - `listen-port`: (integer) listening on port
   > default value to `6001`
 - `tls-support:`: (boolean) to enable, set to true
