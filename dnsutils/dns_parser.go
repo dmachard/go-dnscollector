@@ -263,6 +263,9 @@ func DecodePayload(dm *DNSMessage, header *DNSHeader, config *pkgconfig.Config) 
 	if header.Ad == 1 {
 		dm.DNS.Flags.AD = true
 	}
+	if header.Rd == 1 {
+		dm.DNS.Flags.RD = true
+	}
 
 	var payloadOffset int
 	// decode DNS question

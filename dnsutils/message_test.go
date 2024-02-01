@@ -175,7 +175,8 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 					"tc": false,
 					"aa": false,
 					"ra": false,
-					"ad": false
+					"ad": false,
+					"rd": false
 				  },
 				  "resource-records": {
 					"an": [],
@@ -230,6 +231,7 @@ func TestDnsMessage_JsonFlatten_Reference(t *testing.T) {
 					"dns.flags.qr": false,
 					"dns.flags.ra": false,
 					"dns.flags.tc": false,
+					"dns.flags.rd": false,
 					"dns.length": 0,
 					"dns.malformed-packet": false,
 					"dns.id": 0,
