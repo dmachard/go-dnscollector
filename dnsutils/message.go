@@ -80,6 +80,7 @@ type DNSFlags struct {
 	RA bool `json:"ra" msgpack:"ra"`
 	AD bool `json:"ad" msgpack:"ad"`
 	RD bool `json:"rd" msgpack:"rd"`
+	CD bool `json:"cd" msgpack:"cd"`
 }
 
 type DNSNetInfo struct {
