@@ -5,31 +5,25 @@ Collector to logging protobuf streams from PowerDNS servers.
 Options:
 
 - `listen-ip`: (string) listen on ip
+  > default value to `0.0.0.0`
 - `listen-port`: (integer) listening on port
+  > default value to `6001`
 - `tls-support:`: (boolean) to enable, set to true
+  > default value to `false`
 - `tls-min-version`: (string) min tls version
-- `cert-file`: (string) certificate server file
-- `key-file`: (string) private key server file
+  > default value to `1.2`
+- `cert-file`: (string) certificate server file to use
+  > default value is empty
+- `key-file`: (string) private key server file to use
+  > default value is empty
 - `sock-rcvbuf`: (integer) sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
+  > default value to `0`
 - `reset-conn`: (bool) Reset TCP connection on exit
+  > default value to `true`
 - `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
+  > default value to `65535`
 - `add-dns-payload`: (boolean) generate and add fake DNS payload
-
-Default values:
-
-```yaml
-powerdns:
-  listen-ip: 0.0.0.0
-  listen-port: 6001
-  tls-support: false
-  tls-min-version: 1.2
-  cert-file: ""
-  key-file: ""
-  add-dns-payload: false
-  sock-rcvbuf: 0
-  reset-conn: true
-  chan-buffer-size: 65535
-```
+  > default value to `false`
 
 The DNS-collector has a full [Protobuf Logging](https://dnsdist.org/reference/protobuf.html) support for PowerDNS's products.
 
