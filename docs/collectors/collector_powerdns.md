@@ -1,8 +1,8 @@
 # Collector: Protobuf PowerDNS
 
-Collector to logging protobuf streams from PowerDNS servers.
+Collector to logging protobuf streams from PowerDNS servers. The DNS-collector has a full [Protobuf Logging](https://dnsdist.org/reference/protobuf.html) support for PowerDNS's products.
 
-Options:
+Settings:
 
 - `listen-ip`: local address to bind to
   - string
@@ -43,8 +43,6 @@ Options:
 - `add-dns-payload`: generate and add fake DNS payload
   - boolean
   - default: false
-
-The DNS-collector has a full [Protobuf Logging](https://dnsdist.org/reference/protobuf.html) support for PowerDNS's products.
 
 ## Custom text format
 
