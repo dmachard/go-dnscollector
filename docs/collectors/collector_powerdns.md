@@ -12,22 +12,37 @@ Options:
   - integer
   - default: 6001
 
-- `tls-support:`: (boolean) to enable, set to true
-  > default value to `false`
-- `tls-min-version`: (string) min tls version
-  > default value to `1.2`
-- `cert-file`: (string) certificate server file to use
-  > default value is empty
-- `key-file`: (string) private key server file to use
-  > default value is empty
-- `sock-rcvbuf`: (integer) sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
-  > default value to `0`
-- `reset-conn`: (bool) Reset TCP connection on exit
-  > default value to `true`
-- `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
-  > default value to `65535`
-- `add-dns-payload`: (boolean) generate and add fake DNS payload
-  > default value to `false`
+- `tls-support:`: set to true to enable TLS
+  - boolean
+  - default: false
+
+- `tls-min-version`: minimun TLS version to use
+  - string
+  - default: 1.2
+
+- `cert-file`: path to a certificate server file to use
+  - string
+  - default: (empty)
+
+- `key-file`: path to a key server file to use
+  - string
+  - default: (empty)
+
+- `sock-rcvbuf`: sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
+  - integer
+  - default: 0
+
+- `reset-conn`: reset TCP connection on exit
+  - boolean
+  - default: true
+
+- `chan-buffer-size`: channel buffer size used on incoming packet, number of packet before to drop it.
+  - integer
+  - default: 65535
+
+- `add-dns-payload`: generate and add fake DNS payload
+  - boolean
+  - default: false
 
 The DNS-collector has a full [Protobuf Logging](https://dnsdist.org/reference/protobuf.html) support for PowerDNS's products.
 
