@@ -28,9 +28,10 @@ Settings:
   - string
   - default: (empty)
 
-- `sock-rcvbuf`: sets the socket receive buffer in bytes SO_RCVBUF, set to zero to use the default system value
+- `sock-rcvbuf`: sets the socket receive buffer in bytes SO_RCVBUF.
   - integer
   - default: 0
+  > set to zero to use the default system value
 
 - `reset-conn`: reset TCP connection on exit
   - boolean
