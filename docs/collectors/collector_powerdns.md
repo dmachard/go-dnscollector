@@ -11,7 +11,7 @@ Settings:
 - `tls-support` (bool) set to true to enable TLS. Defaults to `false`.
   > Enables or disables TLS (Transport Layer Security) support. If set to true, TLS will be used for secure communication.
 - `tls-min-version` (str) Minimun TLS version to use. Default to `1.2`.
-  > Specifies the minimum TLS version that the server will support. Defaults to TLS version 1.2.
+  > Specifies the minimum TLS version that the server will support.
 - `cert-file` (str) path to a certificate server file to use. Default to `(empty)`.
   > Specifies the path to the certificate file to be used for TLS. This is a required parameter if TLS support is enabled.
 - `key-file`(str) path to a key server file to use. Default to `(empty)`.
@@ -32,6 +32,10 @@ If you logs your DNS traffic in basic text format, you can use the specific dire
 - `powerdns-tags[:INDEX]`: get all tags separated by comma, or the tag according to the provided INDEX
 - `powerdns-original-request-subnet`: get original request subnet like edns subclient
 - `powerdns-applied-policy`: get applied policy
+- `powerdns-applied-policy-hit`: get applied policy hit
+- `powerdns-applied-policy-kind`: get applied policy kind
+- `powerdns-applied-policy-trigger`: get applied policy trigger
+- `powerdns-applied-policy-type`: get applied policy type
 - `powerdns-metadata[:KEY]`: get  all metadata separated by comma or specific one if a valid [KEY](https://dnsdist.org/rules-actions.html#RemoteLogAction) is provided
 
 Configuration example:
@@ -51,7 +55,11 @@ If you logs your DNS traffic in JSON output, the following part will be added in
   "powerdns": {
     "tags": [],
     "original-request-subnet": "",
-    "applied-policy": "",
+    "applied-policy": "rpzbasic",
+    "applied-policy-hit": "local-a.org",
+    "applied-policy-kind": "Custom",
+    "applied-policy-trigger": "local-a.org.",
+    "applied-policy-type": "QNAME",
     "metadata": {
         "agent":"Go-http-client/1.1",
         "selected_pool":"pool_internet"

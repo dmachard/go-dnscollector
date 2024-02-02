@@ -229,6 +229,10 @@ RUN_LOOP:
 
 			// get PowerDNS policy applied
 			pdns.AppliedPolicy = pbdm.GetResponse().GetAppliedPolicy()
+			pdns.AppliedPolicyHit = pbdm.GetResponse().GetAppliedPolicyHit()
+			pdns.AppliedPolicyKind = pbdm.GetResponse().GetAppliedPolicyKind().String()
+			pdns.AppliedPolicyTrigger = pbdm.GetResponse().GetAppliedPolicyTrigger()
+			pdns.AppliedPolicyType = pbdm.GetResponse().GetAppliedPolicyType().String()
 
 			// get PowerDNS metadata
 			metas := make(map[string]string)
