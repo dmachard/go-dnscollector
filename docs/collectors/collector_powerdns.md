@@ -4,25 +4,25 @@ Collector to logging protobuf streams from PowerDNS servers. The DNS-collector h
 
 Settings:
 
-- `listen-ip` (str) Local address to bind to. Defaults to `0.0.0.0`.
+- `listen-ip` (str) local address to bind to. Defaults to `0.0.0.0`.
   > Set the local address that the server will bind to. If not provided, the server will bind to all available network interfaces (0.0.0.0).
-- `listen-port` (int) Local port to bind to. Defaults to `6001`.
+- `listen-port` (int) local port to bind to. Defaults to `6001`.
   > Set the local port that the server will listen on. If not provided, the default port is 6001.
-- `tls-support` (bool) Set to true to enable TLS. Defaults to `false`.
+- `tls-support` (bool) set to true to enable TLS. Defaults to `false`.
   > Enables or disables TLS (Transport Layer Security) support. If set to true, TLS will be used for secure communication.
 - `tls-min-version` (str) Minimun TLS version to use. Default to `1.2`.
   > Specifies the minimum TLS version that the server will support. Defaults to TLS version 1.2.
-- `cert-file` (str) Path to a certificate server file to use. Default to `(empty)`.
+- `cert-file` (str) path to a certificate server file to use. Default to `(empty)`.
   > Specifies the path to the certificate file to be used for TLS. This is a required parameter if TLS support is enabled.
-- `key-file`(str) Path to a key server file to use. Default to `(empty)`.
+- `key-file`(str) path to a key server file to use. Default to `(empty)`.
   > Specifies the path to the key file corresponding to the certificate file. This is a required parameter if TLS support is enabled.
-- `sock-rcvbuf` (int) Sets the socket receive buffer in bytes SO_RCVBUF. Default to `0`.
+- `sock-rcvbuf` (int) sets the socket receive buffer in bytes SO_RCVBUF. Default to `0`.
   > Set to zero to use the default system value.
-- `reset-conn` (bool) Reset TCP connection on exit. Default to `true`.
+- `reset-conn` (bool) reset TCP connection on exit. Default to `true`.
   > Set whether to send a TCP Reset to force the cleanup of the connection on the remote side when the server exits.
-- `chan-buffer-size` (int) Incoming channel size, number of packet before to drop it. Default to `65535`.
+- `chan-buffer-size` (int) incoming channel size, number of packet before to drop it. Default to `65535`.
   > Specifies the maximum number of packets that can be buffered before dropping additional packets.
-- `add-dns-payload` (bool) Generate and add fake DNS payload. Default to `false`.
+- `add-dns-payload` (bool) generate and add fake DNS payload. Default to `false`.
   > PowerDNS protobuf message does not contain a DNS payload; use this setting to add a fake DNS payload.
 
 ## Custom text format
