@@ -148,6 +148,10 @@ type PowerDNS struct {
 	Tags                  []string          `json:"tags" msgpack:"tags"`
 	OriginalRequestSubnet string            `json:"original-request-subnet" msgpack:"original-request-subnet"`
 	AppliedPolicy         string            `json:"applied-policy" msgpack:"applied-policy"`
+	AppliedPolicyHit      string            `json:"applied-policy-hit" msgpack:"applied-policy-hit"`
+	AppliedPolicyKind     string            `json:"applied-policy-kind" msgpack:"applied-policy-kind"`
+	AppliedPolicyTrigger  string            `json:"applied-policy-trigger" msgpack:"applied-policy-trigger"`
+	AppliedPolicyType     string            `json:"applied-policy-type" msgpack:"applied-policy-type"`
 	Metadata              map[string]string `json:"metadata" msgpack:"metadata"`
 }
 
@@ -342,6 +346,30 @@ func (dm *DNSMessage) handlePdnsDirectives(directives []string, s *strings.Build
 		case directive == "powerdns-applied-policy":
 			if len(dm.PowerDNS.AppliedPolicy) > 0 {
 				s.WriteString(dm.PowerDNS.AppliedPolicy)
+			} else {
+				s.WriteString("-")
+			}
+		case directive == "powerdns-applied-hit":
+			if len(dm.PowerDNS.AppliedPolicyHit) > 0 {
+				s.WriteString(dm.PowerDNS.AppliedPolicyHit)
+			} else {
+				s.WriteString("-")
+			}
+		case directive == "powerdns-applied-kind":
+			if len(dm.PowerDNS.AppliedPolicyKind) > 0 {
+				s.WriteString(dm.PowerDNS.AppliedPolicyKind)
+			} else {
+				s.WriteString("-")
+			}
+		case directive == "powerdns-applied-trigger":
+			if len(dm.PowerDNS.AppliedPolicyTrigger) > 0 {
+				s.WriteString(dm.PowerDNS.AppliedPolicyTrigger)
+			} else {
+				s.WriteString("-")
+			}
+		case directive == "powerdns-applied-type":
+			if len(dm.PowerDNS.AppliedPolicyType) > 0 {
+				s.WriteString(dm.PowerDNS.AppliedPolicyType)
 			} else {
 				s.WriteString("-")
 			}
