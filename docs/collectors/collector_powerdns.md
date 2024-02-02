@@ -4,45 +4,16 @@ Collector to logging protobuf streams from PowerDNS servers. The DNS-collector h
 
 Settings:
 
-- `listen-ip`: local address to bind to
-  - string
-  - default: 0.0.0.0
-
-- `listen-port`: local port to bind to
-  - integer
-  - default: 6001
-
-- `tls-support:`: set to true to enable TLS
-  - boolean
-  - default: false
-
-- `tls-min-version`: minimun TLS version to use
-  - string
-  - default: 1.2
-
-- `cert-file`: path to a certificate server file to use
-  - string
-  - default: (empty)
-
-- `key-file`: path to a key server file to use
-  - string
-  - default: (empty)
-
-- `sock-rcvbuf`: sets the socket receive buffer in bytes SO_RCVBUF. Set to zero to use the default system value
-  - integer
-  - default: 0
-
-- `reset-conn`: reset TCP connection on exit
-  - boolean
-  - default: true
-
-- `chan-buffer-size`: channel buffer size used on incoming packet, number of packet before to drop it.
-  - integer
-  - default: 65535
-
-- `add-dns-payload`: generate and add fake DNS payload
-  - boolean
-  - default: false
+- `listen-ip` (String) Local address to bind to. Defaults to `0.0.0.0`.
+- `listen-port` (Integer) Local port to bind to. Defaults to `6001`.
+- `tls-support:` (Boolean) Set to true to enable TLS. Defaults to `false`.
+- `tls-min-version` (String) Minimun TLS version to use. Default to `1.2`.
+- `cert-file` (String) path to a certificate server file to use. Default to `(empty)`.
+- `key-file`(String) path to a key server file to use. Default to `(empty)`.
+- `sock-rcvbuf` (Integer) Sets the socket receive buffer in bytes SO_RCVBUF. Default to `0`. Set to zero to use the default system value.
+- `reset-conn` (Boolean) Reset TCP connection on exit. Default to `true`.
+- `chan-buffer-size` (Integer) Channel buffer size used on incoming packet, number of packet before to drop it. Default to `65535`.
+- `add-dns-payload` (Boolean) Generate and add fake DNS payload. Default to `false`.
 
 ## Custom text format
 
