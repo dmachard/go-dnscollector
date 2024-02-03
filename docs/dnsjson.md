@@ -75,7 +75,12 @@ Example:
     "version": "-",
     "extra": "-",
     "timestamp-rfc3339ns": "2021-12-27T14:33:44.559002118Z",
-    "latency": "0.014617"
+    "latency": "0.014617",
+    "policy-rule": "-",
+    "policy-type": "-",
+    "policy-action": "-",
+    "policy-match": "-",
+    "policy-value": "-",
   }
 }
 ```
@@ -113,6 +118,11 @@ Using flat-json requires more processing on the host running go-dnscollector but
   "dnstap.timestamp-rfc3339ns": "2023-03-31T10:14:46.664534902Z",
   "dnstap.version": "BIND 9.18.13-1+ubuntu20.04.1+isc+1-Ubuntu",
   "dnstap.extra": "-",
+  "dnstap.policy-rule": "-",
+  "dnstap.policy-type": "-",
+  "dnstap.policy-action": "-",
+  "dnstap.policy-match": "-",
+  "dnstap.policy-value": "-",
   "edns.dnssec-ok": 0,
   "edns.options.0.code": 10,
   "edns.options.0.data": "-",

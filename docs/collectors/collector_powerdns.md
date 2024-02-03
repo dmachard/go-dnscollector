@@ -7,7 +7,7 @@ Settings:
 - `listen-ip` (str) local address to bind to. Defaults to `0.0.0.0`.
   > Set the local address that the server will bind to. If not provided, the server will bind to all available network interfaces (0.0.0.0).
 - `listen-port` (int) local port to bind to. Defaults to `6001`.
-  > Set the local port that the server will listen on. If not provided, the default port is 6001.
+  > Set the local port that the server will listen on. If not provided, use the default port.
 - `tls-support` (bool) set to true to enable TLS. Defaults to `false`.
   > Enables or disables TLS (Transport Layer Security) support. If set to true, TLS will be used for secure communication.
 - `tls-min-version` (str) Minimun TLS version to use. Default to `1.2`.
@@ -17,6 +17,7 @@ Settings:
 - `key-file`(str) path to a key server file to use. Default to `(empty)`.
   > Specifies the path to the key file corresponding to the certificate file. This is a required parameter if TLS support is enabled.
 - `sock-rcvbuf` (int) sets the socket receive buffer in bytes SO_RCVBUF. Default to `0`.
+  > This advanced parameter allows fine-tuning of network performance by adjusting the amount of data the socket can receive before signaling to the sender to slow down.
   > Set to zero to use the default system value.
 - `reset-conn` (bool) reset TCP connection on exit. Default to `true`.
   > Set whether to send a TCP Reset to force the cleanup of the connection on the remote side when the server exits.
