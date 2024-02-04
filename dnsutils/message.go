@@ -607,6 +607,16 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			s.WriteString(dm.DNSTap.Version)
 		case directive == "extra":
 			s.WriteString(dm.DNSTap.Extra)
+		case directive == "policy-rule":
+			s.WriteString(dm.DNSTap.PolicyRule)
+		case directive == "policy-type":
+			s.WriteString(dm.DNSTap.PolicyType)
+		case directive == "policy-action":
+			s.WriteString(dm.DNSTap.PolicyAction)
+		case directive == "policy-match":
+			s.WriteString(dm.DNSTap.PolicyMatch)
+		case directive == "policy-value":
+			s.WriteString(dm.DNSTap.PolicyValue)
 		case directive == "operation":
 			s.WriteString(dm.DNSTap.Operation)
 		case directive == "rcode":

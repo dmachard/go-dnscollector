@@ -350,6 +350,7 @@ func TestDnsMessage_Json_Collectors_Reference(t *testing.T) {
 		})
 	}
 }
+
 func TestDnsMessage_Json_Transforms_Reference(t *testing.T) {
 
 	testcases := []struct {
@@ -581,6 +582,13 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 			format:   "responseip responseport",
 			dm:       DNSMessage{NetworkInfo: DNSNetInfo{ResponseIP: "1.2.3.4", ResponsePort: "4200"}},
 			expected: "1.2.3.4 4200",
+		},
+		{
+			format: "policy-rule policy-type policy-action policy-match policy-value",
+			dm: DNSMessage{DNSTap: DNSTap{PolicyRule: "rule", PolicyType: "type",
+				PolicyAction: "action", PolicyMatch: "match",
+				PolicyValue: "value"}},
+			expected: "rule type action match value",
 		},
 	}
 
