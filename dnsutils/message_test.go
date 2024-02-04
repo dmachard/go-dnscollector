@@ -199,7 +199,12 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 				  "version": "-",
 				  "timestamp-rfc3339ns": "-",
 				  "latency": "-",
-				  "extra": "-"
+				  "extra": "-",
+				  "policy-type": "-",
+				  "policy-action": "-",
+				  "policy-match": "-",
+				  "policy-value": "-",
+				  "policy-rule": "-"
 				}
 			}
 			`
@@ -250,6 +255,11 @@ func TestDnsMessage_JsonFlatten_Reference(t *testing.T) {
 					"dnstap.timestamp-rfc3339ns": "-",
 					"dnstap.version": "-",
 					"dnstap.extra": "-",
+					"dnstap.policy-rule": "-",
+					"dnstap.policy-type": "-",
+					"dnstap.policy-action": "-",
+					"dnstap.policy-match": "-",
+					"dnstap.policy-value": "-",
 					"edns.dnssec-ok": 0,
 					"edns.options": [],
 					"edns.rcode": 0,
@@ -279,6 +289,65 @@ func TestDnsMessage_JsonFlatten_Reference(t *testing.T) {
 
 	if !reflect.DeepEqual(dmFlat, refMap) {
 		t.Errorf("flatten json format different from reference")
+	}
+}
+
+func TestDnsMessage_Json_Collectors_Reference(t *testing.T) {
+	testcases := []struct {
+		collector string
+		dmRef     DNSMessage
+		jsonRef   string
+	}{
+		{
+			collector: "powerdns",
+			dmRef: DNSMessage{PowerDNS: &PowerDNS{
+				OriginalRequestSubnet: "subnet",
+				AppliedPolicy:         "basicrpz",
+				AppliedPolicyHit:      "hit",
+				AppliedPolicyKind:     "kind",
+				AppliedPolicyTrigger:  "trigger",
+				AppliedPolicyType:     "type",
+				Tags:                  []string{"tag1"},
+				Metadata:              map[string]string{"stream_id": "collector"},
+			}},
+
+			jsonRef: `{
+						"powerdns": {
+							"original-request-subnet": "subnet",
+							"applied-policy": "basicrpz",
+							"applied-policy-hit": "hit",
+							"applied-policy-kind": "kind",
+							"applied-policy-trigger": "trigger",
+							"applied-policy-type": "type",
+							"tags": ["tag1"],
+							"metadata": {
+								"stream_id": "collector"
+							}
+						}
+					}`,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.collector, func(t *testing.T) {
+
+			tc.dmRef.Init()
+
+			var dmMap map[string]interface{}
+			err := json.Unmarshal([]byte(tc.dmRef.ToJSON()), &dmMap)
+			if err != nil {
+				t.Fatalf("could not unmarshal dm json: %s\n", err)
+			}
+
+			var refMap map[string]interface{}
+			err = json.Unmarshal([]byte(tc.jsonRef), &refMap)
+			if err != nil {
+				t.Fatalf("could not unmarshal ref json: %s\n", err)
+			}
+
+			if !reflect.DeepEqual(dmMap[tc.collector], refMap[tc.collector]) {
+				t.Errorf("json format different from reference, Get=%s Want=%s", dmMap[tc.collector], refMap[tc.collector])
+			}
+		})
 	}
 }
 
@@ -514,6 +583,13 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 			dm:       DNSMessage{NetworkInfo: DNSNetInfo{ResponseIP: "1.2.3.4", ResponsePort: "4200"}},
 			expected: "1.2.3.4 4200",
 		},
+		{
+			format: "policy-rule policy-type policy-action policy-match policy-value",
+			dm: DNSMessage{DNSTap: DNSTap{PolicyRule: "rule", PolicyType: "type",
+				PolicyAction: "action", PolicyMatch: "match",
+				PolicyValue: "value"}},
+			expected: "rule type action match value",
+		},
 	}
 
 	for _, tc := range testcases {
@@ -687,10 +763,16 @@ func TestDnsMessage_TextFormat_Directives_Pdns(t *testing.T) {
 			expected: "- - - -",
 		},
 		{
-			name:     "applied_policy",
-			format:   "powerdns-applied-policy",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{AppliedPolicy: "test"}},
-			expected: "test",
+			name:   "applied_policy",
+			format: "powerdns-applied-policy powerdns-applied-policy-hit powerdns-applied-policy-kind powerdns-applied-policy-trigger powerdns-applied-policy-type",
+			dm: DNSMessage{PowerDNS: &PowerDNS{
+				AppliedPolicy:        "policy",
+				AppliedPolicyHit:     "hit",
+				AppliedPolicyKind:    "kind",
+				AppliedPolicyTrigger: "trigger",
+				AppliedPolicyType:    "type",
+			}},
+			expected: "policy hit kind trigger type",
 		},
 		{
 			name:     "original_request_subnet",

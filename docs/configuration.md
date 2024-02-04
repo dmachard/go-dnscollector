@@ -70,6 +70,11 @@ Default directives:
 - `version`: dnstap version
 - `extra`: dnstap extra as string
 - `operation`: dnstap operation
+- `policy-rule`: dnstap policy rule
+- `policy-type`: dnstap policy type
+- `policy-action`: dnstap policy action
+- `policy-match`: dnstap policy match
+- `policy-value`: dnstap policy value
 - `opcode`: dns opcode (integer)
 - `rcode`: dns return code
 - `queryip`: dns query ip

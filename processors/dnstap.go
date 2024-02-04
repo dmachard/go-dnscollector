@@ -276,6 +276,32 @@ RUN_LOOP:
 				dm.DNSTap.TimeNsec = int(dt.GetMessage().GetResponseTimeNsec())
 			}
 
+			// policy
+			policyType := dt.GetMessage().GetPolicy().GetType()
+			if len(policyType) > 0 {
+				dm.DNSTap.PolicyType = policyType
+			}
+
+			policyRule := string(dt.GetMessage().GetPolicy().GetRule())
+			if len(policyRule) > 0 {
+				dm.DNSTap.PolicyRule = policyRule
+			}
+
+			policyAction := dt.GetMessage().GetPolicy().GetAction().String()
+			if len(policyAction) > 0 {
+				dm.DNSTap.PolicyAction = policyAction
+			}
+
+			policyMatch := dt.GetMessage().GetPolicy().GetMatch().String()
+			if len(policyMatch) > 0 {
+				dm.DNSTap.PolicyMatch = policyMatch
+			}
+
+			policyValue := string(dt.GetMessage().GetPolicy().GetValue())
+			if len(policyValue) > 0 {
+				dm.DNSTap.PolicyValue = policyValue
+			}
+
 			// compute timestamp
 			ts := time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec))
 			dm.DNSTap.Timestamp = ts.UnixNano()

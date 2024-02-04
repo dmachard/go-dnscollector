@@ -142,6 +142,11 @@ type DNSTap struct {
 	LatencySec       string  `json:"latency" msgpack:"latency"`
 	Payload          []byte  `json:"-" msgpack:"-"`
 	Extra            string  `json:"extra" msgpack:"extra"`
+	PolicyRule       string  `json:"policy-rule" msgpack:"policy-rule"`
+	PolicyType       string  `json:"policy-type" msgpack:"policy-type"`
+	PolicyMatch      string  `json:"policy-match" msgpack:"policy-match"`
+	PolicyAction     string  `json:"policy-action" msgpack:"policy-action"`
+	PolicyValue      string  `json:"policy-value" msgpack:"policy-value"`
 }
 
 type PowerDNS struct {
@@ -254,6 +259,11 @@ func (dm *DNSMessage) Init() {
 		TimestampRFC3339: "-",
 		LatencySec:       "-",
 		Extra:            "-",
+		PolicyRule:       "-",
+		PolicyType:       "-",
+		PolicyMatch:      "-",
+		PolicyAction:     "-",
+		PolicyValue:      "-",
 	}
 
 	dm.DNS = DNS{
@@ -349,25 +359,25 @@ func (dm *DNSMessage) handlePdnsDirectives(directives []string, s *strings.Build
 			} else {
 				s.WriteString("-")
 			}
-		case directive == "powerdns-applied-hit":
+		case directive == "powerdns-applied-policy-hit":
 			if len(dm.PowerDNS.AppliedPolicyHit) > 0 {
 				s.WriteString(dm.PowerDNS.AppliedPolicyHit)
 			} else {
 				s.WriteString("-")
 			}
-		case directive == "powerdns-applied-kind":
+		case directive == "powerdns-applied-policy-kind":
 			if len(dm.PowerDNS.AppliedPolicyKind) > 0 {
 				s.WriteString(dm.PowerDNS.AppliedPolicyKind)
 			} else {
 				s.WriteString("-")
 			}
-		case directive == "powerdns-applied-trigger":
+		case directive == "powerdns-applied-policy-trigger":
 			if len(dm.PowerDNS.AppliedPolicyTrigger) > 0 {
 				s.WriteString(dm.PowerDNS.AppliedPolicyTrigger)
 			} else {
 				s.WriteString("-")
 			}
-		case directive == "powerdns-applied-type":
+		case directive == "powerdns-applied-policy-type":
 			if len(dm.PowerDNS.AppliedPolicyType) > 0 {
 				s.WriteString(dm.PowerDNS.AppliedPolicyType)
 			} else {
@@ -597,6 +607,16 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			s.WriteString(dm.DNSTap.Version)
 		case directive == "extra":
 			s.WriteString(dm.DNSTap.Extra)
+		case directive == "policy-rule":
+			s.WriteString(dm.DNSTap.PolicyRule)
+		case directive == "policy-type":
+			s.WriteString(dm.DNSTap.PolicyType)
+		case directive == "policy-action":
+			s.WriteString(dm.DNSTap.PolicyAction)
+		case directive == "policy-match":
+			s.WriteString(dm.DNSTap.PolicyMatch)
+		case directive == "policy-value":
+			s.WriteString(dm.DNSTap.PolicyValue)
 		case directive == "operation":
 			s.WriteString(dm.DNSTap.Operation)
 		case directive == "rcode":
