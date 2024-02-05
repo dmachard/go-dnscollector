@@ -49,15 +49,15 @@ func NewRoutingHandler(config *pkgconfig.Config, console *logger.Logger, name st
 }
 
 func (rh *RoutingHandler) LogInfo(msg string, v ...interface{}) {
-	rh.logger.Info("["+rh.name+"] "+msg, v...)
+	rh.logger.Info("routing - ["+rh.name+"] "+msg, v...)
 }
 
 func (rh *RoutingHandler) LogError(msg string, v ...interface{}) {
-	rh.logger.Error("["+rh.name+"] "+msg, v...)
+	rh.logger.Error("routing - ["+rh.name+"] "+msg, v...)
 }
 
 func (rh *RoutingHandler) LogFatal(msg string) {
-	rh.logger.Error("[" + rh.name + "] " + msg)
+	rh.logger.Error("routing - [" + rh.name + "] " + msg)
 }
 
 func (rh *RoutingHandler) AddDroppedRoute(wrk Worker) {
@@ -81,7 +81,7 @@ func (rh *RoutingHandler) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []stri
 }
 
 func (rh *RoutingHandler) Stop() {
-	rh.LogInfo("stopping routing handler...")
+	rh.LogInfo("stopping routing handler... ")
 	rh.stopRun <- true
 	<-rh.doneRun
 
@@ -97,6 +97,7 @@ RUN_LOOP:
 	for {
 		select {
 		case <-rh.stopRun:
+			nextBufferFull.Stop()
 			rh.doneRun <- true
 			break RUN_LOOP
 		case stanzaName := <-rh.dropped:
@@ -115,6 +116,8 @@ RUN_LOOP:
 			nextBufferFull.Reset(nextBufferInterval)
 		}
 	}
+
+	rh.LogInfo("routing handler - run terminated")
 }
 
 func (rh *RoutingHandler) SendTo(routes []chan dnsutils.DNSMessage, routesName []string, dm dnsutils.DNSMessage) {

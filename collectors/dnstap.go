@@ -26,6 +26,7 @@ type Dnstap struct {
 	doneMonitor      chan bool
 	stopRun          chan bool
 	stopMonitor      chan bool
+	stopCalled       bool
 	listen           net.Listener
 	conns            []net.Conn
 	sockPath         string
@@ -44,7 +45,7 @@ type Dnstap struct {
 }
 
 func NewDnstap(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
-	logger.Info("[%s] collector=dnstap - enabled", name)
+	logger.Info("collector - [%s] dnstap - enabled", name)
 	s := &Dnstap{
 		doneRun:          make(chan bool),
 		doneMonitor:      make(chan bool),
@@ -100,20 +101,20 @@ func (c *Dnstap) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *Dnstap) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=dnstap - "+msg, v...)
+	c.logger.Info("collector - ["+c.name+"] dnstap - "+msg, v...)
 }
 
 func (c *Dnstap) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+" collector=dnstap - "+msg, v...)
+	c.logger.Error("collector - ["+c.name+" dnstap - "+msg, v...)
 }
 
 func (c *Dnstap) LogConnInfo(connID int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf("[%s] collector=dnstap#%d - ", c.name, connID)
+	prefix := fmt.Sprintf("collector - [%s] dnstap#%d - ", c.name, connID)
 	c.logger.Info(prefix+msg, v...)
 }
 
 func (c *Dnstap) LogConnError(connID int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf("[%s] collector=dnstap#%d - ", c.name, connID)
+	prefix := fmt.Sprintf("collector - [%s] dnstap#%d - ", c.name, connID)
 	c.logger.Error(prefix+msg, v...)
 }
 
@@ -182,8 +183,10 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 				c.LogConnError(connID, "framestream reader error: %s", err)
 			}
 
-			// stop processor and exit the loop
-			dnstapProcessor.Stop()
+			// the Stop function is already called ,don't stop again
+			if !c.stopCalled {
+				dnstapProcessor.Stop()
+			}
 			break
 		}
 
@@ -205,6 +208,12 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 		default:
 			c.droppedProcessor <- 1
 		}
+	}
+
+	// to avoid lock if the Stop function is already called
+	if c.stopCalled {
+		c.LogConnInfo(connID, "connection handler exited")
+		return
 	}
 
 	// here the connection is closed,
@@ -235,6 +244,8 @@ func (c *Dnstap) GetInputChannel() chan dnsutils.DNSMessage {
 func (c *Dnstap) Stop() {
 	c.Lock()
 	defer c.Unlock()
+
+	c.stopCalled = true
 
 	// stop all powerdns processors
 	c.LogInfo("stopping processors...")
@@ -401,6 +412,11 @@ RUN_LOOP:
 				}
 				c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before,
 					c.config.Collectors.Dnstap.RcvBufSize, actual)
+			}
+
+			// to avoid lock if the Stop function is already called
+			if c.stopCalled {
+				continue
 			}
 
 			c.Lock()
