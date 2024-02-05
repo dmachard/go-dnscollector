@@ -183,7 +183,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 				c.LogConnError(connID, "framestream reader error: %s", err)
 			}
 
-			// the Stop function is already called ,don't stop again
+			// the Stop function is already called, don't stop again
 			if !c.stopCalled {
 				dnstapProcessor.Stop()
 			}

@@ -8,6 +8,10 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
+var (
+	RoutingPrefixLog = "routing - "
+)
+
 func GetRoutes(routes []Worker) ([]chan dnsutils.DNSMessage, []string) {
 	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
@@ -49,15 +53,15 @@ func NewRoutingHandler(config *pkgconfig.Config, console *logger.Logger, name st
 }
 
 func (rh *RoutingHandler) LogInfo(msg string, v ...interface{}) {
-	rh.logger.Info("routing - ["+rh.name+"] "+msg, v...)
+	rh.logger.Info(RoutingPrefixLog+"["+rh.name+"] "+msg, v...)
 }
 
 func (rh *RoutingHandler) LogError(msg string, v ...interface{}) {
-	rh.logger.Error("routing - ["+rh.name+"] "+msg, v...)
+	rh.logger.Error(RoutingPrefixLog+"["+rh.name+"] "+msg, v...)
 }
 
 func (rh *RoutingHandler) LogFatal(msg string) {
-	rh.logger.Error("routing - [" + rh.name + "] " + msg)
+	rh.logger.Error(RoutingPrefixLog + "[" + rh.name + "] " + msg)
 }
 
 func (rh *RoutingHandler) AddDroppedRoute(wrk Worker) {
