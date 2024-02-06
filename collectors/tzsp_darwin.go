@@ -21,7 +21,7 @@ type TZSPSniffer struct {
 
 // workaround for macos, not yet supported
 func NewTZSP(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
-	logger.Info("[%s] tzsp collector - enabled", name)
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] tzsp - enabled", name)
 	s := &TZSPSniffer{
 		done:          make(chan bool),
 		exit:          make(chan bool),
@@ -49,11 +49,11 @@ func (c *TZSPSniffer) SetLoggers(loggers []pkgutils.Worker) {
 }
 
 func (c *TZSPSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] tzsp collector - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] tzsp - "+msg, v...)
 }
 
 func (c *TZSPSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] tzsp collector - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] tzsp - "+msg, v...)
 }
 
 func (c *TZSPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
@@ -69,7 +69,7 @@ func (c *TZSPSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *TZSPSniffer) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// exit to close properly
 	c.exit <- true

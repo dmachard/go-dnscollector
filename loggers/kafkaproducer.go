@@ -41,7 +41,7 @@ type KafkaProducer struct {
 }
 
 func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name string) *KafkaProducer {
-	logger.Info("[%s] logger=kafka - enabled", name)
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] kafka - enabled", name)
 	k := &KafkaProducer{
 		stopProcess:    make(chan bool),
 		doneProcess:    make(chan bool),
@@ -94,7 +94,7 @@ func (k *KafkaProducer) ReadConfig() {
 		case pkgconfig.CompressNone:
 			k.compressCodec = nil
 		default:
-			log.Fatal("kafka - invalid compress mode: ", k.config.Loggers.KafkaProducer.Compression)
+			log.Fatal(pkgutils.PrefixLogLogger+"["+k.name+"] kafka - invalid compress mode: ", k.config.Loggers.KafkaProducer.Compression)
 		}
 	}
 }
@@ -105,11 +105,11 @@ func (k *KafkaProducer) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (k *KafkaProducer) LogInfo(msg string, v ...interface{}) {
-	k.logger.Info("["+k.name+"] logger=kafka - "+msg, v...)
+	k.logger.Info(pkgutils.PrefixLogLogger+"["+k.name+"] kafka - "+msg, v...)
 }
 
 func (k *KafkaProducer) LogError(msg string, v ...interface{}) {
-	k.logger.Error("["+k.name+"] logger=kafka - "+msg, v...)
+	k.logger.Error(pkgutils.PrefixLogLogger+"["+k.name+"] kafka - "+msg, v...)
 }
 
 func (k *KafkaProducer) GetInputChannel() chan dnsutils.DNSMessage {
@@ -117,7 +117,7 @@ func (k *KafkaProducer) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (k *KafkaProducer) Stop() {
-	k.LogInfo("stopping routing handler...")
+	k.LogInfo("stopping logger...")
 	k.RoutingHandler.Stop()
 
 	k.LogInfo("stopping to run...")

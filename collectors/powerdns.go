@@ -26,6 +26,7 @@ type ProtobufPowerDNS struct {
 	doneMonitor    chan bool
 	stopMonitor    chan bool
 	cleanup        chan bool
+	stopCalled     bool
 	listen         net.Listener
 	connID         int
 	conns          []net.Conn
@@ -42,7 +43,7 @@ type ProtobufPowerDNS struct {
 }
 
 func NewProtobufPowerDNS(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *ProtobufPowerDNS {
-	logger.Info("[%s] pdns collector - enabled", name)
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] powerdns - enabled", name)
 	s := &ProtobufPowerDNS{
 		doneRun:       make(chan bool),
 		doneMonitor:   make(chan bool),
@@ -80,7 +81,7 @@ func (c *ProtobufPowerDNS) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 
 func (c *ProtobufPowerDNS) ReadConfig() {
 	if !pkgconfig.IsValidTLS(c.config.Collectors.PowerDNS.TLSMinVersion) {
-		c.logger.Fatal("collector=powerdns - invalid tls min version")
+		c.logger.Fatal(pkgutils.PrefixLogCollector + "[" + c.name + "] powerdns - invalid tls min version")
 	}
 }
 
@@ -90,22 +91,22 @@ func (c *ProtobufPowerDNS) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *ProtobufPowerDNS) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=powerdns - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] powerdns - "+msg, v...)
 }
 
 func (c *ProtobufPowerDNS) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=powerdns - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] powerdns - "+msg, v...)
 }
 
-func (c *ProtobufPowerDNS) LogConnInfo(connID int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf("[%s] collector=powerdns#%d - ", c.name, connID)
-	c.logger.Info(prefix+msg, v...)
-}
+// func (c *ProtobufPowerDNS) LogConnInfo(connID int, msg string, v ...interface{}) {
+// 	prefix := fmt.Sprintf(pkgutils.PrefixLogCollector+"[%s] powerdns#%d - ", c.name, connID)
+// 	c.logger.Info(prefix+msg, v...)
+// }
 
-func (c *ProtobufPowerDNS) LogConnError(connID int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf("[%s] collector=powerdns#%d - ", c.name, connID)
-	c.logger.Error(prefix+msg, v...)
-}
+// func (c *ProtobufPowerDNS) LogConnError(connID int, msg string, v ...interface{}) {
+// 	prefix := fmt.Sprintf(pkgutils.PrefixLogCollector+"[%s] powerdns#%d - ", c.name, connID)
+// 	c.logger.Error(prefix+msg, v...)
+// }
 
 func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	// close connection on function exit
@@ -119,7 +120,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogConnInfo(connID, "new connection from %s", peer)
+	c.LogInfo("new connection #%d from %s", connID, peer)
 
 	// start protobuf subprocessor
 	pdnsProc := processors.NewPdnsProcessor(connID, c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
@@ -150,13 +151,16 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 			}
 
 			if connClosed {
-				c.LogConnInfo(connID, "connection closed with peer %s", peer)
+				c.LogInfo("conn #%d - connection closed with peer %s", connID, peer)
 			} else {
-				c.LogConnError(connID, "powerdns reader error: %s", err)
+				c.LogError("conn #%d - powerdns reader error: %s", connID, err)
 			}
 
 			// stop processor
-			pdnsProc.Stop()
+			// the Stop function is already called, don't stop again
+			if !c.stopCalled {
+				pdnsProc.Stop()
+			}
 			break
 		}
 
@@ -166,7 +170,12 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 		default:
 			c.dropped <- 1
 		}
-		// }
+	}
+
+	// to avoid lock if the Stop function is already called
+	if c.stopCalled {
+		c.LogInfo("conn #%d - connection handler exited", connID)
+		return
 	}
 
 	// here the connection is closed,
@@ -187,7 +196,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	}
 	c.Unlock()
 
-	c.LogConnInfo(connID, "connection handler terminated")
+	c.LogInfo("conn #%d - connection handler terminated", connID)
 }
 
 func (c *ProtobufPowerDNS) GetInputChannel() chan dnsutils.DNSMessage {
@@ -198,10 +207,13 @@ func (c *ProtobufPowerDNS) Stop() {
 	c.Lock()
 	defer c.Unlock()
 
-	c.LogInfo("stopping...")
+	// to avoid some lock situations when the remose side closes
+	// the connection at the same time of this Stop function
+	c.stopCalled = true
+	c.LogInfo("stopping collector...")
 
 	// stop all powerdns processors
-	c.LogInfo("stopping processors...")
+	c.LogInfo("cleanup all active processors...")
 	for _, pdnsProc := range c.pdnsProcessors {
 		pdnsProc.Stop()
 	}
@@ -357,6 +369,11 @@ RUN_LOOP:
 					before,
 					c.config.Collectors.Dnstap.RcvBufSize,
 					actual)
+			}
+
+			// to avoid lock if the Stop function is already called
+			if c.stopCalled {
+				continue
 			}
 
 			c.Lock()

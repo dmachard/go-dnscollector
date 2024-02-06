@@ -34,7 +34,7 @@ type DNSProcessor struct {
 }
 
 func NewDNSProcessor(config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSProcessor {
-	logger.Info("[%s] processor=dns - initialization...", name)
+	logger.Info(pkgutils.PrefixLogProcessor+"[%s] dns - initialization...", name)
 	d := DNSProcessor{
 		doneMonitor:    make(chan bool),
 		doneRun:        make(chan bool),
@@ -53,11 +53,11 @@ func NewDNSProcessor(config *pkgconfig.Config, logger *logger.Logger, name strin
 }
 
 func (d *DNSProcessor) LogInfo(msg string, v ...interface{}) {
-	d.logger.Info("["+d.name+"] processor=dns - "+msg, v...)
+	d.logger.Info(pkgutils.PrefixLogProcessor+"["+d.name+"] dns - "+msg, v...)
 }
 
 func (d *DNSProcessor) LogError(msg string, v ...interface{}) {
-	d.logger.Error("["+d.name+"] processor=dns - "+msg, v...)
+	d.logger.Error(pkgutils.PrefixLogProcessor+"["+d.name+"] dns - "+msg, v...)
 }
 
 func (d *DNSProcessor) GetChannel() chan dnsutils.DNSMessage {
@@ -71,7 +71,7 @@ func (d *DNSProcessor) GetChannelList() []chan dnsutils.DNSMessage {
 }
 
 func (d *DNSProcessor) Stop() {
-	d.LogInfo("stopping routing handler...")
+	d.LogInfo("stopping processor...")
 	d.RoutingHandler.Stop()
 
 	d.LogInfo("stopping to process...")

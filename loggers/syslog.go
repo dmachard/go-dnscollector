@@ -77,7 +77,7 @@ type Syslog struct {
 }
 
 func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *Syslog {
-	console.Info("[%s] logger=syslog - enabled", name)
+	console.Info(pkgutils.PrefixLogLogger+"[%s] syslog - enabled", name)
 	s := &Syslog{
 		stopProcess:        make(chan bool),
 		doneProcess:        make(chan bool),
@@ -111,21 +111,21 @@ func (s *Syslog) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (s *Syslog) ReadConfig() {
 	if !pkgconfig.IsValidTLS(s.config.Loggers.Syslog.TLSMinVersion) {
-		s.logger.Fatal("logger=syslog - invalid tls min version")
+		s.logger.Fatal(pkgutils.PrefixLogLogger + "[" + s.name + "] syslog - invalid tls min version")
 	}
 
 	if !pkgconfig.IsValidMode(s.config.Loggers.Syslog.Mode) {
-		s.logger.Fatal("logger=syslog - invalid mode text or json expected")
+		s.logger.Fatal(pkgutils.PrefixLogLogger + "[" + s.name + "] syslog - invalid mode text or json expected")
 	}
 	severity, err := GetPriority(s.config.Loggers.Syslog.Severity)
 	if err != nil {
-		s.logger.Fatal("logger=syslog - invalid severity")
+		s.logger.Fatal(pkgutils.PrefixLogLogger + "[" + s.name + "] syslog - invalid severity")
 	}
 	s.severity = severity
 
 	facility, err := GetPriority(s.config.Loggers.Syslog.Facility)
 	if err != nil {
-		s.logger.Fatal("logger=syslog - invalid facility")
+		s.logger.Fatal(pkgutils.PrefixLogLogger + "[" + s.name + "] syslog - invalid facility")
 	}
 	s.facility = facility
 
@@ -146,15 +146,15 @@ func (s *Syslog) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (s *Syslog) LogInfo(msg string, v ...interface{}) {
-	s.logger.Info("["+s.name+"] logger=syslog - "+msg, v...)
+	s.logger.Info(pkgutils.PrefixLogLogger+"["+s.name+"] syslog - "+msg, v...)
 }
 
 func (s *Syslog) LogError(msg string, v ...interface{}) {
-	s.logger.Error("["+s.name+"] logger=syslog - "+msg, v...)
+	s.logger.Error(pkgutils.PrefixLogLogger+"["+s.name+"] syslog - "+msg, v...)
 }
 
 func (s *Syslog) Stop() {
-	s.LogInfo("stopping routing handler...")
+	s.LogInfo("stopping logger...")
 	s.RoutingHandler.Stop()
 
 	s.LogInfo("stopping to run...")

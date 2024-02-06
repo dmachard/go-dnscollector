@@ -39,7 +39,7 @@ type FluentdClient struct {
 }
 
 func NewFluentdClient(config *pkgconfig.Config, logger *logger.Logger, name string) *FluentdClient {
-	logger.Info("[%s] logger=fluentd - enabled", name)
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] fluentd - enabled", name)
 	fc := &FluentdClient{
 		stopProcess:        make(chan bool),
 		doneProcess:        make(chan bool),
@@ -92,11 +92,11 @@ func (fc *FluentdClient) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (fc *FluentdClient) LogInfo(msg string, v ...interface{}) {
-	fc.logger.Info("["+fc.name+"] logger=fluentd - "+msg, v...)
+	fc.logger.Info(pkgutils.PrefixLogLogger+"["+fc.name+"] fluentd - "+msg, v...)
 }
 
 func (fc *FluentdClient) LogError(msg string, v ...interface{}) {
-	fc.logger.Error("["+fc.name+"] logger=fluentd - "+msg, v...)
+	fc.logger.Error(pkgutils.PrefixLogLogger+"["+fc.name+"] fluentd - "+msg, v...)
 }
 
 func (fc *FluentdClient) GetInputChannel() chan dnsutils.DNSMessage {
@@ -104,7 +104,7 @@ func (fc *FluentdClient) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (fc *FluentdClient) Stop() {
-	fc.LogInfo("stopping routing handler...")
+	fc.LogInfo("stopping logger...")
 	fc.RoutingHandler.Stop()
 
 	fc.LogInfo("stopping to run...")

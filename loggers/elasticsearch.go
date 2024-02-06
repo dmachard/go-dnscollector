@@ -34,7 +34,7 @@ type ElasticSearchClient struct {
 }
 
 func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, name string) *ElasticSearchClient {
-	console.Info("[%s] logger=elasticsearch - enabled", name)
+	console.Info(pkgutils.PrefixLogLogger+"[%s] elasticsearch - enabled", name)
 	ec := &ElasticSearchClient{
 		stopProcess:    make(chan bool),
 		doneProcess:    make(chan bool),
@@ -86,15 +86,15 @@ func (ec *ElasticSearchClient) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (ec *ElasticSearchClient) LogInfo(msg string, v ...interface{}) {
-	ec.logger.Info("["+ec.name+"] logger=elasticsearch - "+msg, v...)
+	ec.logger.Info(pkgutils.PrefixLogLogger+"["+ec.name+"] elasticsearch - "+msg, v...)
 }
 
 func (ec *ElasticSearchClient) LogError(msg string, v ...interface{}) {
-	ec.logger.Error("["+ec.name+"] logger=elasticsearch - "+msg, v...)
+	ec.logger.Error(pkgutils.PrefixLogLogger+"["+ec.name+"] elasticsearch - "+msg, v...)
 }
 
 func (ec *ElasticSearchClient) Stop() {
-	ec.LogInfo("stopping routing handler...")
+	ec.LogInfo("stopping logger...")
 	ec.RoutingHandler.Stop()
 
 	ec.LogInfo("stopping to run...")

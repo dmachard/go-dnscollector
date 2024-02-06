@@ -21,7 +21,7 @@ type AfpacketSniffer struct {
 
 // workaround for macos, not yet supported
 func NewAfpacketSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	logger.Info("[%s] AFPACKET sniffer - enabled", name)
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] AFPACKET sniffer - enabled", name)
 	s := &AfpacketSniffer{
 		done:          make(chan bool),
 		exit:          make(chan bool),
@@ -49,11 +49,11 @@ func (c *AfpacketSniffer) SetLoggers(loggers []pkgutils.Worker) {
 }
 
 func (c *AfpacketSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector dns sniffer - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] dnssniffer - "+msg, v...)
 }
 
 func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector dns sniffer - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] dnssniffer - "+msg, v...)
 }
 
 func (c *AfpacketSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
@@ -69,7 +69,7 @@ func (c *AfpacketSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *AfpacketSniffer) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// exit to close properly
 	c.exit <- true

@@ -76,7 +76,7 @@ type RestAPI struct {
 }
 
 func NewRestAPI(config *pkgconfig.Config, logger *logger.Logger, name string) *RestAPI {
-	logger.Info("[%s] logger=restapi - enabled", name)
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] restapi - enabled", name)
 	o := &RestAPI{
 		doneAPI:        make(chan bool),
 		stopProcess:    make(chan bool),
@@ -128,7 +128,7 @@ func (c *RestAPI) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *RestAPI) ReadConfig() {
 	if !pkgconfig.IsValidTLS(c.config.Loggers.RestAPI.TLSMinVersion) {
-		c.logger.Fatal("logger rest api - invalid tls min version")
+		c.logger.Fatal(pkgutils.PrefixLogLogger + "[" + c.name + "]restapi - invalid tls min version")
 	}
 }
 
@@ -138,11 +138,11 @@ func (c *RestAPI) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *RestAPI) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger=restapi - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogLogger+"["+c.name+"] restapi - "+msg, v...)
 }
 
 func (c *RestAPI) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger=restapi - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogLogger+"["+c.name+"] restapi - "+msg, v...)
 }
 
 func (c *RestAPI) GetInputChannel() chan dnsutils.DNSMessage {
@@ -150,7 +150,7 @@ func (c *RestAPI) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *RestAPI) Stop() {
-	c.LogInfo("stopping routing handler...")
+	c.LogInfo("stopping logger...")
 	c.RoutingHandler.Stop()
 
 	c.LogInfo("stopping to run...")

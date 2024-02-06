@@ -759,7 +759,7 @@ func CreateSystemCatalogue(o *Prometheus) ([]string, *PromCounterCatalogueContai
 }
 
 func NewPrometheus(config *pkgconfig.Config, logger *logger.Logger, name string) *Prometheus {
-	logger.Info("[%s] logger=prometheus - enabled", name)
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] prometheus - enabled", name)
 	o := &Prometheus{
 		doneAPI:        make(chan bool),
 		stopProcess:    make(chan bool),
@@ -1107,7 +1107,7 @@ func (c *Prometheus) InitProm() {
 
 func (c *Prometheus) ReadConfig() {
 	if !pkgconfig.IsValidTLS(c.config.Loggers.Prometheus.TLSMinVersion) {
-		c.logger.Fatal("logger prometheus - invalid tls min version")
+		c.logger.Fatal(pkgutils.PrefixLogLogger + "[" + c.name + "] prometheus - invalid tls min version")
 	}
 }
 
@@ -1117,11 +1117,11 @@ func (c *Prometheus) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *Prometheus) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger=prometheus - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogLogger+"["+c.name+"] prometheus - "+msg, v...)
 }
 
 func (c *Prometheus) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger=prometheus - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogLogger+"["+c.name+"] prometheus - "+msg, v...)
 }
 
 func (c *Prometheus) GetInputChannel() chan dnsutils.DNSMessage {
@@ -1129,7 +1129,7 @@ func (c *Prometheus) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *Prometheus) Stop() {
-	c.LogInfo("stopping routing handler...")
+	c.LogInfo("stopping logger...")
 	c.RoutingHandler.Stop()
 
 	c.LogInfo("stopping to run...")
@@ -1154,7 +1154,7 @@ func (c *Prometheus) Record(dm dnsutils.DNSMessage) {
 	counterSet, ok := v.(*PrometheusCountersSet)
 	c.Unlock()
 	if !ok {
-		c.LogError(fmt.Sprintf("Prometheus logger - GetCountersSet returned an invalid value of %T, expected *PrometheusCountersSet", v))
+		c.LogError(fmt.Sprintf("GetCountersSet returned an invalid value of %T, expected *PrometheusCountersSet", v))
 	} else {
 		counterSet.Record(dm)
 	}

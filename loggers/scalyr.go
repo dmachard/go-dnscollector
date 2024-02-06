@@ -55,7 +55,7 @@ type ScalyrClient struct {
 }
 
 func NewScalyrClient(config *pkgconfig.Config, console *logger.Logger, name string) *ScalyrClient {
-	console.Info("[%s] logger=scalyr - starting", name)
+	console.Info(pkgutils.PrefixLogLogger+"[%s] scalyr - starting", name)
 	c := &ScalyrClient{
 		stopProcess:    make(chan bool),
 		doneProcess:    make(chan bool),
@@ -302,7 +302,7 @@ PROCESS_LOOP:
 }
 
 func (c ScalyrClient) Stop() {
-	c.LogInfo("stopping routing handler...")
+	c.LogInfo("stopping logger...")
 	c.RoutingHandler.Stop()
 
 	c.LogInfo("stopping to run...")
@@ -406,11 +406,11 @@ func parseServerResponse(body io.ReadCloser) (response, error) {
 }
 
 func (c *ScalyrClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger=scalyr - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogLogger+"["+c.name+"] scalyr - "+msg, v...)
 }
 
 func (c *ScalyrClient) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger=scalyr - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogLogger+"["+c.name+"] scalyr - "+msg, v...)
 }
 
 // Models

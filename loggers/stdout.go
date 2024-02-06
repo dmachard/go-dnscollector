@@ -49,7 +49,7 @@ type StdOut struct {
 }
 
 func NewStdOut(config *pkgconfig.Config, console *logger.Logger, name string) *StdOut {
-	console.Info("[%s] logger=stdout - enabled", name)
+	console.Info(pkgutils.PrefixLogLogger+"[%s] stdout - enabled", name)
 	so := &StdOut{
 		stopProcess:    make(chan bool),
 		doneProcess:    make(chan bool),
@@ -98,11 +98,11 @@ func (so *StdOut) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (so *StdOut) LogInfo(msg string, v ...interface{}) {
-	so.logger.Info("["+so.name+"] logger=stdout - "+msg, v...)
+	so.logger.Info(pkgutils.PrefixLogLogger+"["+so.name+"] stdout - "+msg, v...)
 }
 
 func (so *StdOut) LogError(msg string, v ...interface{}) {
-	so.logger.Error("["+so.name+"] logger=stdout - "+msg, v...)
+	so.logger.Error(pkgutils.PrefixLogLogger+"["+so.name+"] stdout - "+msg, v...)
 }
 
 func (so *StdOut) SetTextWriter(b *bytes.Buffer) {
@@ -124,7 +124,7 @@ func (so *StdOut) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (so *StdOut) Stop() {
-	so.LogInfo("stopping routing handler...")
+	so.LogInfo("stopping logger...")
 	so.RoutingHandler.Stop()
 
 	so.LogInfo("stopping to run...")

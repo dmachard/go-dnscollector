@@ -37,7 +37,7 @@ type DnstapSender struct {
 }
 
 func NewDnstapSender(config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapSender {
-	logger.Info("[%s] logger=dnstap - enabled", name)
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] dnstap - enabled", name)
 	ds := &DnstapSender{
 		stopProcess:        make(chan bool),
 		doneProcess:        make(chan bool),
@@ -88,7 +88,7 @@ func (ds *DnstapSender) ReadConfig() {
 	}
 
 	if !pkgconfig.IsValidTLS(ds.config.Loggers.DNSTap.TLSMinVersion) {
-		ds.logger.Fatal("logger=dnstap - invalid tls min version")
+		ds.logger.Fatal(pkgutils.PrefixLogLogger + "[" + ds.name + "] dnstap - invalid tls min version")
 	}
 }
 
@@ -98,11 +98,11 @@ func (ds *DnstapSender) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (ds *DnstapSender) LogInfo(msg string, v ...interface{}) {
-	ds.logger.Info("["+ds.name+"] logger=dnstap - "+msg, v...)
+	ds.logger.Info(pkgutils.PrefixLogLogger+"["+ds.name+"] dnstap - "+msg, v...)
 }
 
 func (ds *DnstapSender) LogError(msg string, v ...interface{}) {
-	ds.logger.Error("["+ds.name+"] logger=dnstap - "+msg, v...)
+	ds.logger.Error(pkgutils.PrefixLogLogger+"["+ds.name+"] dnstap - "+msg, v...)
 }
 
 func (ds *DnstapSender) GetInputChannel() chan dnsutils.DNSMessage {
@@ -110,7 +110,7 @@ func (ds *DnstapSender) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (ds *DnstapSender) Stop() {
-	ds.LogInfo("stopping routing handler...")
+	ds.LogInfo("stopping logger...")
 	ds.RoutingHandler.Stop()
 
 	ds.LogInfo("stopping to run...")

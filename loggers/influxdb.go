@@ -30,7 +30,7 @@ type InfluxDBClient struct {
 }
 
 func NewInfluxDBClient(config *pkgconfig.Config, logger *logger.Logger, name string) *InfluxDBClient {
-	logger.Info("[%s] logger=influxdb - enabled", name)
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] influxdb - enabled", name)
 
 	ic := &InfluxDBClient{
 		stopProcess:    make(chan bool),
@@ -71,11 +71,11 @@ func (ic *InfluxDBClient) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (ic *InfluxDBClient) LogInfo(msg string, v ...interface{}) {
-	ic.logger.Info("["+ic.name+"] logger=influxdb - "+msg, v...)
+	ic.logger.Info(pkgutils.PrefixLogLogger+"["+ic.name+"] influxdb - "+msg, v...)
 }
 
 func (ic *InfluxDBClient) LogError(msg string, v ...interface{}) {
-	ic.logger.Error("["+ic.name+"] logger=influxdb - "+msg, v...)
+	ic.logger.Error(pkgutils.PrefixLogLogger+"["+ic.name+"] influxdb - "+msg, v...)
 }
 
 func (ic *InfluxDBClient) GetInputChannel() chan dnsutils.DNSMessage {
@@ -83,7 +83,7 @@ func (ic *InfluxDBClient) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (ic *InfluxDBClient) Stop() {
-	ic.LogInfo("stopping routing handler...")
+	ic.LogInfo("stopping logger...")
 	ic.RoutingHandler.Stop()
 
 	ic.LogInfo("stopping to run...")

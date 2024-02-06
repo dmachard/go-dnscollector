@@ -55,7 +55,7 @@ type FileIngestor struct {
 }
 
 func NewFileIngestor(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
-	logger.Info("[%s] collector=fileingestor - enabled", name)
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] fileingestor - enabled", name)
 	s := &FileIngestor{
 		done:          make(chan bool),
 		exit:          make(chan bool),
@@ -90,7 +90,7 @@ func (c *FileIngestor) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 
 func (c *FileIngestor) ReadConfig() {
 	if !IsValidMode(c.config.Collectors.FileIngestor.WatchMode) {
-		c.logger.Fatal("collector file ingestor - invalid mode: ", c.config.Collectors.FileIngestor.WatchMode)
+		c.logger.Fatal(pkgutils.PrefixLogCollector+"["+c.name+"]fileingestor - invalid mode: ", c.config.Collectors.FileIngestor.WatchMode)
 	}
 
 	c.identity = c.config.GetServerIdentity()
@@ -107,11 +107,11 @@ func (c *FileIngestor) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *FileIngestor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=fileingestor - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] fileingestor - "+msg, v...)
 }
 
 func (c *FileIngestor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=fileingestor - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] fileingestor - "+msg, v...)
 }
 
 func (c *FileIngestor) GetInputChannel() chan dnsutils.DNSMessage {
@@ -119,7 +119,7 @@ func (c *FileIngestor) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *FileIngestor) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// exit to close properly
 	c.exit <- true
