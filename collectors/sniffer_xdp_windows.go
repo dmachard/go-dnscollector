@@ -69,7 +69,7 @@ func (c *XDPSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *XDPSniffer) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// exit to close properly
 	c.exit <- true

@@ -71,7 +71,7 @@ func (d *DNSProcessor) GetChannelList() []chan dnsutils.DNSMessage {
 }
 
 func (d *DNSProcessor) Stop() {
-	d.LogInfo("stopping routing handler...")
+	d.LogInfo("stopping processor...")
 	d.RoutingHandler.Stop()
 
 	d.LogInfo("stopping to process...")

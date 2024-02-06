@@ -115,7 +115,7 @@ func (c *TZSPSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *TZSPSniffer) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// Finally close the listener to unblock accept
 	c.exit <- true

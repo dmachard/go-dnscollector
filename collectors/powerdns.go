@@ -98,15 +98,15 @@ func (c *ProtobufPowerDNS) LogError(msg string, v ...interface{}) {
 	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] powerdns - "+msg, v...)
 }
 
-func (c *ProtobufPowerDNS) LogConnInfo(connID int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf(pkgutils.PrefixLogCollector+"[%s] powerdns#%d - ", c.name, connID)
-	c.logger.Info(prefix+msg, v...)
-}
+// func (c *ProtobufPowerDNS) LogConnInfo(connID int, msg string, v ...interface{}) {
+// 	prefix := fmt.Sprintf(pkgutils.PrefixLogCollector+"[%s] powerdns#%d - ", c.name, connID)
+// 	c.logger.Info(prefix+msg, v...)
+// }
 
-func (c *ProtobufPowerDNS) LogConnError(connID int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf(pkgutils.PrefixLogCollector+"[%s] powerdns#%d - ", c.name, connID)
-	c.logger.Error(prefix+msg, v...)
-}
+// func (c *ProtobufPowerDNS) LogConnError(connID int, msg string, v ...interface{}) {
+// 	prefix := fmt.Sprintf(pkgutils.PrefixLogCollector+"[%s] powerdns#%d - ", c.name, connID)
+// 	c.logger.Error(prefix+msg, v...)
+// }
 
 func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	// close connection on function exit
@@ -151,9 +151,9 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 			}
 
 			if connClosed {
-				c.LogConnInfo(connID, "connection closed with peer %s", peer)
+				c.LogInfo("conn #%d - connection closed with peer %s", connID, peer)
 			} else {
-				c.LogConnError(connID, "powerdns reader error: %s", err)
+				c.LogError("conn #%d - powerdns reader error: %s", connID, err)
 			}
 
 			// stop processor
@@ -174,7 +174,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 
 	// to avoid lock if the Stop function is already called
 	if c.stopCalled {
-		c.LogConnInfo(connID, "connection handler exited")
+		c.LogInfo("conn #%d - connection handler exited", connID)
 		return
 	}
 
@@ -196,7 +196,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 	}
 	c.Unlock()
 
-	c.LogConnInfo(connID, "connection handler terminated")
+	c.LogInfo("conn #%d - connection handler terminated", connID)
 }
 
 func (c *ProtobufPowerDNS) GetInputChannel() chan dnsutils.DNSMessage {
@@ -210,10 +210,10 @@ func (c *ProtobufPowerDNS) Stop() {
 	// to avoid some lock situations when the remose side closes
 	// the connection at the same time of this Stop function
 	c.stopCalled = true
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// stop all powerdns processors
-	c.LogInfo("stopping processors...")
+	c.LogInfo("cleanup all active processors...")
 	for _, pdnsProc := range c.pdnsProcessors {
 		pdnsProc.Stop()
 	}

@@ -111,13 +111,13 @@ func (p *Transforms) Prepare() error {
 		if p.config.UserPrivacy.MinimazeQname {
 			p.activeTransforms = append(p.activeTransforms, p.minimazeQname)
 			prefixlog := fmt.Sprintf("userprivacy#%d - ", p.instance)
-			p.LogInfo(prefixlog + "subprocessor minimaze qnam is  enabled")
+			p.LogInfo(prefixlog + "subprocessor minimaze qname is  enabled")
 		}
 
 		if p.config.UserPrivacy.HashIP {
 			p.activeTransforms = append(p.activeTransforms, p.hashIP)
 			prefixlog := fmt.Sprintf("userprivacy#%d - ", p.instance)
-			p.LogInfo(prefixlog + "subprocessor hashIP is enabled")
+			p.LogInfo(prefixlog + "subprocessor hash ip is enabled")
 		}
 	}
 

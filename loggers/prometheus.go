@@ -1129,7 +1129,7 @@ func (c *Prometheus) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *Prometheus) Stop() {
-	c.LogInfo("stopping routing handler...")
+	c.LogInfo("stopping logger...")
 	c.RoutingHandler.Stop()
 
 	c.LogInfo("stopping to run...")

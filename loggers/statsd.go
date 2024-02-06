@@ -121,7 +121,7 @@ func (c *StatsdClient) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *StatsdClient) Stop() {
-	c.LogInfo("stopping routing handler...")
+	c.LogInfo("stopping logger...")
 	c.RoutingHandler.Stop()
 
 	c.LogInfo("stopping to run...")

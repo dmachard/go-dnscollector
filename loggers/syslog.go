@@ -154,7 +154,7 @@ func (s *Syslog) LogError(msg string, v ...interface{}) {
 }
 
 func (s *Syslog) Stop() {
-	s.LogInfo("stopping routing handler...")
+	s.LogInfo("stopping logger...")
 	s.RoutingHandler.Stop()
 
 	s.LogInfo("stopping to run...")

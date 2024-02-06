@@ -83,7 +83,7 @@ func (ic *InfluxDBClient) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (ic *InfluxDBClient) Stop() {
-	ic.LogInfo("stopping routing handler...")
+	ic.LogInfo("stopping logger...")
 	ic.RoutingHandler.Stop()
 
 	ic.LogInfo("stopping to run...")

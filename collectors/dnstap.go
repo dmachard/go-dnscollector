@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"crypto/tls"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"os"
@@ -108,15 +107,15 @@ func (c *Dnstap) LogError(msg string, v ...interface{}) {
 	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+" dnstap - "+msg, v...)
 }
 
-func (c *Dnstap) LogConnInfo(connID int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf(pkgutils.PrefixLogCollector+"[%s] dnstap#%d - ", c.name, connID)
-	c.logger.Info(prefix+msg, v...)
-}
+// func (c *Dnstap) LogConnInfo(connID int, msg string, v ...interface{}) {
+// 	prefix := fmt.Sprintf(pkgutils.PrefixLogCollector+"[%s] dnstap#%d - ", c.name, connID)
+// 	c.logger.Info(prefix+msg, v...)
+// }
 
-func (c *Dnstap) LogConnError(connID int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf(pkgutils.PrefixLogCollector+"[%s] dnstap#%d - ", c.name, connID)
-	c.logger.Error(prefix+msg, v...)
-}
+// func (c *Dnstap) LogConnError(connID int, msg string, v ...interface{}) {
+// 	prefix := fmt.Sprintf(pkgutils.PrefixLogCollector+"[%s] dnstap#%d - ", c.name, connID)
+// 	c.logger.Error(prefix+msg, v...)
+// }
 
 func (c *Dnstap) HandleConn(conn net.Conn) {
 	// close connection on function exit
@@ -154,9 +153,9 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// init framestream receiver
 	if err := fs.InitReceiver(); err != nil {
-		c.LogConnError(connID, "stream initialization: %s", err)
+		c.LogError("conn #%d - stream initialization: %s", connID, err)
 	} else {
-		c.LogConnInfo(connID, "receiver framestream initialized")
+		c.LogInfo("conn #%d - receiver framestream initialized", connID)
 	}
 
 	// process incoming frame and send it to dnstap consumer channel
@@ -178,9 +177,9 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 			}
 
 			if connClosed {
-				c.LogConnInfo(connID, "connection closed with peer %s", peer)
+				c.LogInfo("conn #%d - connection closed with peer %s", connID, peer)
 			} else {
-				c.LogConnError(connID, "framestream reader error: %s", err)
+				c.LogError("conn #%d - framestream reader error: %s", connID, err)
 			}
 
 			// the Stop function is already called, don't stop again
@@ -193,9 +192,9 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 		if frame.IsControl() {
 			if err := fs.ResetReceiver(frame); err != nil {
 				if errors.Is(err, io.EOF) {
-					c.LogConnInfo(connID, "framestream reseted by sender")
+					c.LogInfo("conn #%d - framestream reseted by sender", connID)
 				} else {
-					c.LogConnError(connID, "unexpected control framestream - %s", err)
+					c.LogError("conn #%d - unexpected control framestream: %s", connID, err)
 				}
 
 			}
@@ -212,7 +211,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// to avoid lock if the Stop function is already called
 	if c.stopCalled {
-		c.LogConnInfo(connID, "connection handler exited")
+		c.LogInfo("conn #%d - connection handler exited", connID)
 		return
 	}
 
@@ -234,7 +233,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	}
 	c.Unlock()
 
-	c.LogConnInfo(connID, "connection handler terminated")
+	c.LogInfo("conn #%d - connection handler terminated", connID)
 }
 
 func (c *Dnstap) GetInputChannel() chan dnsutils.DNSMessage {
@@ -248,10 +247,10 @@ func (c *Dnstap) Stop() {
 	// to avoid some lock situations when the remose side closes
 	// the connection at the same time of this Stop function
 	c.stopCalled = true
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// stop all powerdns processors
-	c.LogInfo("stopping processors...")
+	c.LogInfo("cleanup all active processors...")
 	for _, tapProc := range c.tapProcessors {
 		tapProc.Stop()
 	}
@@ -360,8 +359,7 @@ func (c *Dnstap) Run() {
 	c.LogInfo("starting collector...")
 	if c.listen == nil {
 		if err := c.Listen(); err != nil {
-			prefixlog := fmt.Sprintf("[%s] ", c.name)
-			c.logger.Fatal(prefixlog+"collector=dnstap listening failed: ", err)
+			c.logger.Fatal(pkgutils.PrefixLogCollector+"["+c.name+"] dnstap listening failed: ", err)
 		}
 	}
 

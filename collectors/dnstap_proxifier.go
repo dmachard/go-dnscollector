@@ -147,7 +147,7 @@ func (c *DnstapProxifier) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *DnstapProxifier) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 	c.stopping = true
 
 	// closing properly current connections if exists

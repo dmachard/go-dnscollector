@@ -94,7 +94,7 @@ func (ec *ElasticSearchClient) LogError(msg string, v ...interface{}) {
 }
 
 func (ec *ElasticSearchClient) Stop() {
-	ec.LogInfo("stopping routing handler...")
+	ec.LogInfo("stopping logger...")
 	ec.RoutingHandler.Stop()
 
 	ec.LogInfo("stopping to run...")

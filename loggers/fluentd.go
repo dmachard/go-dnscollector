@@ -104,7 +104,7 @@ func (fc *FluentdClient) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (fc *FluentdClient) Stop() {
-	fc.LogInfo("stopping routing handler...")
+	fc.LogInfo("stopping logger...")
 	fc.RoutingHandler.Stop()
 
 	fc.LogInfo("stopping to run...")

@@ -150,7 +150,7 @@ func (c *RestAPI) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *RestAPI) Stop() {
-	c.LogInfo("stopping routing handler...")
+	c.LogInfo("stopping logger...")
 	c.RoutingHandler.Stop()
 
 	c.LogInfo("stopping to run...")

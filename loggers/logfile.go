@@ -143,7 +143,7 @@ func (lf *LogFile) LogError(msg string, v ...interface{}) {
 }
 
 func (lf *LogFile) Stop() {
-	lf.LogInfo("stopping routing handler...")
+	lf.LogInfo("stopping logger...")
 	lf.RoutingHandler.Stop()
 
 	lf.LogInfo("stopping to run...")

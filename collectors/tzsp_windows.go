@@ -69,7 +69,7 @@ func (c *TZSPSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *TZSPSniffer) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// exit to close properly
 	c.exit <- true

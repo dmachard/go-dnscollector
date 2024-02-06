@@ -302,7 +302,7 @@ PROCESS_LOOP:
 }
 
 func (c ScalyrClient) Stop() {
-	c.LogInfo("stopping routing handler...")
+	c.LogInfo("stopping logger...")
 	c.RoutingHandler.Stop()
 
 	c.LogInfo("stopping to run...")

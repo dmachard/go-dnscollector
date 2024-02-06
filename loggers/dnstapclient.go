@@ -110,7 +110,7 @@ func (ds *DnstapSender) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (ds *DnstapSender) Stop() {
-	ds.LogInfo("stopping routing handler...")
+	ds.LogInfo("stopping logger...")
 	ds.RoutingHandler.Stop()
 
 	ds.LogInfo("stopping to run...")

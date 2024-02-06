@@ -45,7 +45,7 @@ type PdnsProcessor struct {
 }
 
 func NewPdnsProcessor(connID int, config *pkgconfig.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
-	logger.Info(pkgutils.PrefixLogProcessor+"[%s] pdns#%d - initialization...", name, connID)
+	logger.Info(pkgutils.PrefixLogProcessor+"[%s] powerdns - conn #%d - initialization...", name, connID)
 	d := PdnsProcessor{
 		ConnID:         connID,
 		doneMonitor:    make(chan bool),
@@ -70,7 +70,7 @@ func (p *PdnsProcessor) LogInfo(msg string, v ...interface{}) {
 	if p.ConnID == 0 {
 		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - ", p.name)
 	} else {
-		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns#%d - ", p.name, p.ConnID)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - conn #%d - ", p.name, p.ConnID)
 	}
 	p.logger.Info(log+msg, v...)
 }
@@ -80,7 +80,7 @@ func (p *PdnsProcessor) LogError(msg string, v ...interface{}) {
 	if p.ConnID == 0 {
 		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - ", p.name)
 	} else {
-		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns#%d - ", p.name, p.ConnID)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - conn #%d - ", p.name, p.ConnID)
 	}
 	p.logger.Error(log+msg, v...)
 }
@@ -90,7 +90,7 @@ func (p *PdnsProcessor) GetChannel() chan []byte {
 }
 
 func (p *PdnsProcessor) Stop() {
-	p.LogInfo("stopping routing handler...")
+	p.LogInfo("stopping processor...")
 	p.RoutingHandler.Stop()
 
 	p.LogInfo("stopping to process...")

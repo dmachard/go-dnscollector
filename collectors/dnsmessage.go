@@ -226,11 +226,10 @@ func (c *DNSMessage) LogError(msg string, v ...interface{}) {
 }
 
 func (c *DNSMessage) Stop() {
-	// c.LogInfo("stopping routing handler...")
-	// c.RoutingHandler.Stop()
+	c.LogInfo("stopping collector...")
 
 	// read done channel and block until run is terminated
-	c.LogInfo("stopping run...")
+	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun
 

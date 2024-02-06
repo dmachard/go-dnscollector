@@ -217,7 +217,7 @@ func (c *AfpacketSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *AfpacketSniffer) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// exit to close properly
 	c.exit <- true

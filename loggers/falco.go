@@ -81,7 +81,7 @@ func (fc *FalcoClient) LogError(msg string, v ...interface{}) {
 }
 
 func (fc *FalcoClient) Stop() {
-	fc.LogInfo("stopping routing handler...")
+	fc.LogInfo("stopping logger...")
 	fc.RoutingHandler.Stop()
 
 	fc.LogInfo("stopping to run...")

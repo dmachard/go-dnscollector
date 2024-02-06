@@ -124,7 +124,7 @@ func (so *StdOut) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (so *StdOut) Stop() {
-	so.LogInfo("stopping routing handler...")
+	so.LogInfo("stopping logger...")
 	so.RoutingHandler.Stop()
 
 	so.LogInfo("stopping to run...")

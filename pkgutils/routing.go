@@ -50,15 +50,15 @@ func NewRoutingHandler(config *pkgconfig.Config, console *logger.Logger, name st
 }
 
 func (rh *RoutingHandler) LogInfo(msg string, v ...interface{}) {
-	rh.logger.Info(PrefixLogRouting+"["+rh.name+"] "+msg, v...)
+	rh.logger.Info(PrefixLogRouting+"["+rh.name+"] - "+msg, v...)
 }
 
 func (rh *RoutingHandler) LogError(msg string, v ...interface{}) {
-	rh.logger.Error(PrefixLogRouting+"["+rh.name+"] "+msg, v...)
+	rh.logger.Error(PrefixLogRouting+"["+rh.name+"] - "+msg, v...)
 }
 
 func (rh *RoutingHandler) LogFatal(msg string) {
-	rh.logger.Error(PrefixLogRouting + "[" + rh.name + "] " + msg)
+	rh.logger.Error(PrefixLogRouting + "[" + rh.name + "] - " + msg)
 }
 
 func (rh *RoutingHandler) AddDroppedRoute(wrk Worker) {
@@ -82,15 +82,13 @@ func (rh *RoutingHandler) GetDroppedRoutes() ([]chan dnsutils.DNSMessage, []stri
 }
 
 func (rh *RoutingHandler) Stop() {
-	rh.LogInfo("stopping routing handler... ")
+	rh.LogInfo("stopping to run...")
 	rh.stopRun <- true
 	<-rh.doneRun
-
-	rh.LogInfo("routing handler stopped")
 }
 
 func (rh *RoutingHandler) Run() {
-	rh.LogInfo("run handler...")
+	rh.LogInfo("running in background...")
 	nextBufferInterval := 10 * time.Second
 	nextBufferFull := time.NewTimer(nextBufferInterval)
 
@@ -118,7 +116,7 @@ RUN_LOOP:
 		}
 	}
 
-	rh.LogInfo("routing handler - run terminated")
+	rh.LogInfo("run terminated")
 }
 
 func (rh *RoutingHandler) SendTo(routes []chan dnsutils.DNSMessage, routesName []string, dm dnsutils.DNSMessage) {

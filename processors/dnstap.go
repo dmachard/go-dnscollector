@@ -69,7 +69,7 @@ type DNSTapProcessor struct {
 }
 
 func NewDNSTapProcessor(connID int, config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
-	logger.Info(pkgutils.PrefixLogProcessor+"[%s] dnstap#%d - initialization...", name, connID)
+	logger.Info(pkgutils.PrefixLogProcessor+"[%s] dnstap - conn #%d - initialization...", name, connID)
 
 	d := DNSTapProcessor{
 		ConnID:         connID,
@@ -96,7 +96,7 @@ func (d *DNSTapProcessor) LogInfo(msg string, v ...interface{}) {
 	if d.ConnID == 0 {
 		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] dnstap - ", d.name)
 	} else {
-		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] dnstap#%d - ", d.name, d.ConnID)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] dnstap - conn #%d - ", d.name, d.ConnID)
 	}
 	d.logger.Info(log+msg, v...)
 }
@@ -106,7 +106,7 @@ func (d *DNSTapProcessor) LogError(msg string, v ...interface{}) {
 	if d.ConnID == 0 {
 		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] dnstap - ", d.name)
 	} else {
-		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] dnstap#%d - ", d.name, d.ConnID)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] dnstap - conn #%d - ", d.name, d.ConnID)
 	}
 	d.logger.Error(log+msg, v...)
 }
@@ -116,7 +116,7 @@ func (d *DNSTapProcessor) GetChannel() chan []byte {
 }
 
 func (d *DNSTapProcessor) Stop() {
-	d.LogInfo("stopping routing handler...")
+	d.LogInfo("stopping processor...")
 	d.RoutingHandler.Stop()
 
 	d.LogInfo("stopping to process...")

@@ -193,7 +193,7 @@ func (c *LokiClient) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *LokiClient) Stop() {
-	c.LogInfo("stopping routing handler...")
+	c.LogInfo("stopping logger...")
 	c.RoutingHandler.Stop()
 
 	c.LogInfo("stopping to run...")

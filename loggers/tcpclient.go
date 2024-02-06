@@ -116,7 +116,7 @@ func (c *TCPClient) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *TCPClient) Stop() {
-	c.LogInfo("stopping routing handler...")
+	c.LogInfo("stopping logger...")
 	c.RoutingHandler.Stop()
 
 	c.LogInfo("stopping to run...")

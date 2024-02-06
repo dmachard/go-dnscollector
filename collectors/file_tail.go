@@ -86,7 +86,7 @@ func (c *Tail) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (c *Tail) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// Stop to follow file
 	c.LogInfo("stop following file...")

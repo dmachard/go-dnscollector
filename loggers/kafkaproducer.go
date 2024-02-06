@@ -117,7 +117,7 @@ func (k *KafkaProducer) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (k *KafkaProducer) Stop() {
-	k.LogInfo("stopping routing handler...")
+	k.LogInfo("stopping logger...")
 	k.RoutingHandler.Stop()
 
 	k.LogInfo("stopping to run...")
