@@ -44,7 +44,7 @@ type RedisPub struct {
 }
 
 func NewRedisPub(config *pkgconfig.Config, logger *logger.Logger, name string) *RedisPub {
-	logger.Info("[%s] logger=redispub - enabled", name)
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] redispub - enabled", name)
 	s := &RedisPub{
 		stopProcess:        make(chan bool),
 		doneProcess:        make(chan bool),
@@ -106,11 +106,11 @@ func (c *RedisPub) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *RedisPub) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger=redispub - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogLogger+"["+c.name+"] redispub - "+msg, v...)
 }
 
 func (c *RedisPub) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger=redispub - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogLogger+"["+c.name+"] redispub - "+msg, v...)
 }
 
 func (c *RedisPub) GetInputChannel() chan dnsutils.DNSMessage {

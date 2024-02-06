@@ -75,12 +75,12 @@ func (p *FilteringProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) 
 }
 
 func (p *FilteringProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=filtering#%d - ", p.instance)
+	log := fmt.Sprintf("filtering#%d - ", p.instance)
 	p.logInfo(log+msg, v...)
 }
 
 func (p *FilteringProcessor) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=filtering#%d - ", p.instance)
+	log := fmt.Sprintf("filtering#%d - ", p.instance)
 	p.logError(log+msg, v...)
 }
 

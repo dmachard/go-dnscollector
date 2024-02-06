@@ -69,7 +69,7 @@ type DNSTapProcessor struct {
 }
 
 func NewDNSTapProcessor(connID int, config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
-	logger.Info("processor - [%s] dnstap#%d - initialization...", name, connID)
+	logger.Info(pkgutils.PrefixLogProcessor+"[%s] dnstap#%d - initialization...", name, connID)
 
 	d := DNSTapProcessor{
 		ConnID:         connID,
@@ -94,9 +94,9 @@ func NewDNSTapProcessor(connID int, config *pkgconfig.Config, logger *logger.Log
 func (d *DNSTapProcessor) LogInfo(msg string, v ...interface{}) {
 	var log string
 	if d.ConnID == 0 {
-		log = fmt.Sprintf("processor - [%s] dnstap - ", d.name)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] dnstap - ", d.name)
 	} else {
-		log = fmt.Sprintf("processor - [%s] dnstap#%d - ", d.name, d.ConnID)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] dnstap#%d - ", d.name, d.ConnID)
 	}
 	d.logger.Info(log+msg, v...)
 }
@@ -104,9 +104,9 @@ func (d *DNSTapProcessor) LogInfo(msg string, v ...interface{}) {
 func (d *DNSTapProcessor) LogError(msg string, v ...interface{}) {
 	var log string
 	if d.ConnID == 0 {
-		log = fmt.Sprintf("processor - [%s] dnstap - ", d.name)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] dnstap - ", d.name)
 	} else {
-		log = fmt.Sprintf("processor - [%s] dnstap#%d - ", d.name, d.ConnID)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] dnstap#%d - ", d.name, d.ConnID)
 	}
 	d.logger.Error(log+msg, v...)
 }

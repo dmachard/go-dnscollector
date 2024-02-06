@@ -30,7 +30,7 @@ type Tail struct {
 }
 
 func NewTail(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Tail {
-	logger.Info("[%s] collector=tail - enabled", name)
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] tail - enabled", name)
 	s := &Tail{
 		doneRun:       make(chan bool),
 		stopRun:       make(chan bool),
@@ -74,11 +74,11 @@ func (c *Tail) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *Tail) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=tail - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] tail - "+msg, v...)
 }
 
 func (c *Tail) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=tail - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] tail - "+msg, v...)
 }
 
 func (c *Tail) GetInputChannel() chan dnsutils.DNSMessage {

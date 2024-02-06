@@ -29,7 +29,7 @@ type FalcoClient struct {
 }
 
 func NewFalcoClient(config *pkgconfig.Config, console *logger.Logger, name string) *FalcoClient {
-	console.Info("[%s] logger=falco - enabled", name)
+	console.Info(pkgutils.PrefixLogLogger+"[%s] falco - enabled", name)
 	fc := &FalcoClient{
 		stopProcess:    make(chan bool),
 		doneProcess:    make(chan bool),
@@ -73,11 +73,11 @@ func (fc *FalcoClient) GetInputChannel() chan dnsutils.DNSMessage {
 }
 
 func (fc *FalcoClient) LogInfo(msg string, v ...interface{}) {
-	fc.logger.Info("["+fc.name+"] logger=falco - "+msg, v...)
+	fc.logger.Info(pkgutils.PrefixLogLogger+"["+fc.name+"] falco - "+msg, v...)
 }
 
 func (fc *FalcoClient) LogError(msg string, v ...interface{}) {
-	fc.logger.Error("["+fc.name+"] logger=falco - "+msg, v...)
+	fc.logger.Error(pkgutils.PrefixLogLogger+"["+fc.name+"] falco - "+msg, v...)
 }
 
 func (fc *FalcoClient) Stop() {

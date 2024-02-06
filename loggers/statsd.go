@@ -62,7 +62,7 @@ type StatsdClient struct {
 }
 
 func NewStatsdClient(config *pkgconfig.Config, logger *logger.Logger, name string) *StatsdClient {
-	logger.Info("[%s] logger=statsd - enabled", name)
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] statsd - enabled", name)
 
 	s := &StatsdClient{
 		stopProcess:    make(chan bool),
@@ -99,7 +99,7 @@ func (c *StatsdClient) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *StatsdClient) ReadConfig() {
 	if !pkgconfig.IsValidTLS(c.config.Loggers.Statsd.TLSMinVersion) {
-		c.logger.Fatal("logger=statd - invalid tls min version")
+		c.logger.Fatal(pkgutils.PrefixLogLogger + "[" + c.name + "]statd - invalid tls min version")
 	}
 }
 
@@ -109,11 +109,11 @@ func (c *StatsdClient) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *StatsdClient) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger=statsd - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogLogger+"["+c.name+"] statsd - "+msg, v...)
 }
 
 func (c *StatsdClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger=statsd - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogLogger+"["+c.name+"] statsd - "+msg, v...)
 }
 
 func (c *StatsdClient) GetInputChannel() chan dnsutils.DNSMessage {

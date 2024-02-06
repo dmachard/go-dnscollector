@@ -45,7 +45,7 @@ type Dnstap struct {
 }
 
 func NewDnstap(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
-	logger.Info("collector - [%s] dnstap - enabled", name)
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] dnstap - enabled", name)
 	s := &Dnstap{
 		doneRun:          make(chan bool),
 		doneMonitor:      make(chan bool),
@@ -101,20 +101,20 @@ func (c *Dnstap) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *Dnstap) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("collector - ["+c.name+"] dnstap - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] dnstap - "+msg, v...)
 }
 
 func (c *Dnstap) LogError(msg string, v ...interface{}) {
-	c.logger.Error("collector - ["+c.name+" dnstap - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+" dnstap - "+msg, v...)
 }
 
 func (c *Dnstap) LogConnInfo(connID int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf("collector - [%s] dnstap#%d - ", c.name, connID)
+	prefix := fmt.Sprintf(pkgutils.PrefixLogCollector+"[%s] dnstap#%d - ", c.name, connID)
 	c.logger.Info(prefix+msg, v...)
 }
 
 func (c *Dnstap) LogConnError(connID int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf("collector - [%s] dnstap#%d - ", c.name, connID)
+	prefix := fmt.Sprintf(pkgutils.PrefixLogCollector+"[%s] dnstap#%d - ", c.name, connID)
 	c.logger.Error(prefix+msg, v...)
 }
 
@@ -130,7 +130,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogConnInfo(connID, "new connection from %s", peer)
+	c.LogInfo("new connection #%d from %s", connID, peer)
 
 	// start dnstap processor
 	dnstapProcessor := processors.NewDNSTapProcessor(
@@ -245,7 +245,10 @@ func (c *Dnstap) Stop() {
 	c.Lock()
 	defer c.Unlock()
 
+	// to avoid some lock situations when the remose side closes
+	// the connection at the same time of this Stop function
 	c.stopCalled = true
+	c.LogInfo("stopping...")
 
 	// stop all powerdns processors
 	c.LogInfo("stopping processors...")

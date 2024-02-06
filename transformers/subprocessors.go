@@ -5,6 +5,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 )
 
@@ -83,7 +84,7 @@ func (p *Transforms) Prepare() error {
 	p.activeTransforms = p.activeTransforms[:0]
 
 	if p.config.Normalize.Enable {
-		prefixlog := fmt.Sprintf("transformer=normalize#%d ", p.instance)
+		prefixlog := fmt.Sprintf("normalize#%d ", p.instance)
 		p.LogInfo(prefixlog + enabled)
 
 		p.NormalizeTransform.LoadActiveProcessors()
@@ -91,7 +92,7 @@ func (p *Transforms) Prepare() error {
 
 	if p.config.GeoIP.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.geoipTransform)
-		prefixlog := fmt.Sprintf("transformer=geoip#%d ", p.instance)
+		prefixlog := fmt.Sprintf("geoip#%d ", p.instance)
 		p.LogInfo(prefixlog + enabled)
 
 		if err := p.GeoipTransform.Open(); err != nil {
@@ -103,25 +104,25 @@ func (p *Transforms) Prepare() error {
 		// Apply user privacy on qname and query ip
 		if p.config.UserPrivacy.AnonymizeIP {
 			p.activeTransforms = append(p.activeTransforms, p.anonymizeIP)
-			prefixlog := fmt.Sprintf("transformer=userprivacy#%d - ", p.instance)
+			prefixlog := fmt.Sprintf("userprivacy#%d - ", p.instance)
 			p.LogInfo(prefixlog + "subprocessor anonymizeIP is enabled")
 		}
 
 		if p.config.UserPrivacy.MinimazeQname {
 			p.activeTransforms = append(p.activeTransforms, p.minimazeQname)
-			prefixlog := fmt.Sprintf("transformer=userprivacy#%d - ", p.instance)
+			prefixlog := fmt.Sprintf("userprivacy#%d - ", p.instance)
 			p.LogInfo(prefixlog + "subprocessor minimaze qnam is  enabled")
 		}
 
 		if p.config.UserPrivacy.HashIP {
 			p.activeTransforms = append(p.activeTransforms, p.hashIP)
-			prefixlog := fmt.Sprintf("transformer=userprivacy#%d - ", p.instance)
+			prefixlog := fmt.Sprintf("userprivacy#%d - ", p.instance)
 			p.LogInfo(prefixlog + "subprocessor hashIP is enabled")
 		}
 	}
 
 	if p.config.Filtering.Enable {
-		prefixlog := fmt.Sprintf("transformer=filtering#%d ", p.instance)
+		prefixlog := fmt.Sprintf("filtering#%d ", p.instance)
 		p.LogInfo(prefixlog + enabled)
 
 		p.FilteringTransform.LoadRcodes()
@@ -135,24 +136,24 @@ func (p *Transforms) Prepare() error {
 	if p.config.Latency.Enable {
 		if p.config.Latency.MeasureLatency {
 			p.activeTransforms = append(p.activeTransforms, p.measureLatency)
-			prefixlog := fmt.Sprintf("transformer=latency#%d - ", p.instance)
+			prefixlog := fmt.Sprintf("latency#%d - ", p.instance)
 			p.LogInfo(prefixlog + "subprocessor measure latency is enabled")
 		}
 		if p.config.Latency.UnansweredQueries {
 			p.activeTransforms = append(p.activeTransforms, p.detectEvictedTimeout)
-			prefixlog := fmt.Sprintf("transformer=latency#%d - ", p.instance)
+			prefixlog := fmt.Sprintf("latency#%d - ", p.instance)
 			p.LogInfo(prefixlog + "subprocessor unanswered queries is enabled")
 		}
 	}
 
 	if p.config.Suspicious.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.suspiciousTransform)
-		prefixlog := fmt.Sprintf("transformer=suspicious#%d - ", p.instance)
+		prefixlog := fmt.Sprintf("suspicious#%d - ", p.instance)
 		p.LogInfo(prefixlog + enabled)
 	}
 
 	if p.config.Reducer.Enable {
-		prefixlog := fmt.Sprintf("transformer=reducer#%d - ", p.instance)
+		prefixlog := fmt.Sprintf("reducer#%d - ", p.instance)
 		p.LogInfo(prefixlog + enabled)
 
 		p.ReducerTransform.LoadActiveReducers()
@@ -161,20 +162,20 @@ func (p *Transforms) Prepare() error {
 	if p.config.Extract.Enable {
 		if p.config.Extract.AddPayload {
 			p.activeTransforms = append(p.activeTransforms, p.addBase64Payload)
-			prefixlog := fmt.Sprintf("transformer=extract#%d - ", p.instance)
+			prefixlog := fmt.Sprintf("extract#%d - ", p.instance)
 			p.LogInfo(prefixlog + "subprocessor add base64 payload is enabled")
 		}
 	}
 
 	if p.config.MachineLearning.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.machineLearningTransform)
-		prefixlog := fmt.Sprintf("transformer=ml#%d - ", p.instance)
+		prefixlog := fmt.Sprintf("ml#%d - ", p.instance)
 		p.LogInfo(prefixlog + enabled)
 	}
 
 	if p.config.ATags.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.ATagsTransform.AddTags)
-		prefixlog := fmt.Sprintf("transformer=atags#%d - ", p.instance)
+		prefixlog := fmt.Sprintf("atags#%d - ", p.instance)
 		p.LogInfo(prefixlog + "subprocessor atags is enabled")
 	}
 
@@ -226,11 +227,11 @@ func (p *Transforms) Reset() {
 }
 
 func (p *Transforms) LogInfo(msg string, v ...interface{}) {
-	p.logger.Info("["+p.name+"] "+msg, v...)
+	p.logger.Info(pkgutils.PrefixLogTransformer+"["+p.name+"] "+msg, v...)
 }
 
 func (p *Transforms) LogError(msg string, v ...interface{}) {
-	p.logger.Error("["+p.name+"] "+msg, v...)
+	p.logger.Error(pkgutils.PrefixLogTransformer+"["+p.name+"] "+msg, v...)
 }
 
 // transform functions: return code

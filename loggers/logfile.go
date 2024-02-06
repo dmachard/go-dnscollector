@@ -71,7 +71,7 @@ type LogFile struct {
 }
 
 func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *LogFile {
-	logger.Info("[%s] logger=file - enabled", name)
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] file - enabled", name)
 	lf := &LogFile{
 		stopProcess:    make(chan bool),
 		doneProcess:    make(chan bool),
@@ -89,7 +89,7 @@ func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *L
 	lf.ReadConfig()
 
 	if err := lf.OpenFile(); err != nil {
-		lf.logger.Fatal("["+name+"] logger=file - unable to open output file:", err)
+		lf.logger.Fatal(pkgutils.PrefixLogLogger+"["+name+"] file - unable to open output file:", err)
 	}
 
 	return lf
@@ -135,11 +135,11 @@ func (lf *LogFile) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (lf *LogFile) LogInfo(msg string, v ...interface{}) {
-	lf.logger.Info("["+lf.name+"] logger=file - "+msg, v...)
+	lf.logger.Info(pkgutils.PrefixLogLogger+"["+lf.name+"] file - "+msg, v...)
 }
 
 func (lf *LogFile) LogError(msg string, v ...interface{}) {
-	lf.logger.Error("["+lf.name+"] logger=file - "+msg, v...)
+	lf.logger.Error(pkgutils.PrefixLogLogger+"["+lf.name+"] file - "+msg, v...)
 }
 
 func (lf *LogFile) Stop() {

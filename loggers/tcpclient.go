@@ -43,7 +43,7 @@ type TCPClient struct {
 }
 
 func NewTCPClient(config *pkgconfig.Config, logger *logger.Logger, name string) *TCPClient {
-	logger.Info("[%s] logger=tcpclient - enabled", name)
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] tcpclient - enabled", name)
 	s := &TCPClient{
 		stopProcess:        make(chan bool),
 		doneProcess:        make(chan bool),
@@ -104,11 +104,11 @@ func (c *TCPClient) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *TCPClient) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger=tcpclient - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogLogger+"["+c.name+"] tcpclient - "+msg, v...)
 }
 
 func (c *TCPClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger=tcpclient - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogLogger+"["+c.name+"] tcpclient - "+msg, v...)
 }
 
 func (c *TCPClient) GetInputChannel() chan dnsutils.DNSMessage {

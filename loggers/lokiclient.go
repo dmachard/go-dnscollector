@@ -93,7 +93,7 @@ type LokiClient struct {
 }
 
 func NewLokiClient(config *pkgconfig.Config, logger *logger.Logger, name string) *LokiClient {
-	logger.Info("[%s] logger=loki - enabled", name)
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] loki - enabled", name)
 
 	s := &LokiClient{
 		stopProcess:    make(chan bool),
@@ -144,7 +144,7 @@ func (c *LokiClient) ReadConfig() {
 
 	tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
 	if err != nil {
-		c.logger.Fatal("logger=loki - tls config failed:", err)
+		c.logger.Fatal(pkgutils.PrefixLogLogger+"["+c.name+"] loki - tls config failed:", err)
 	}
 
 	// prepare http client
@@ -181,11 +181,11 @@ func (c *LokiClient) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *LokiClient) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger=loki - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogLogger+"["+c.name+"] loki - "+msg, v...)
 }
 
 func (c *LokiClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger=loki - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogLogger+"["+c.name+"] loki - "+msg, v...)
 }
 
 func (c *LokiClient) GetInputChannel() chan dnsutils.DNSMessage {

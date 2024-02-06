@@ -48,7 +48,7 @@ type DNSMessage struct {
 }
 
 func NewDNSMessage(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DNSMessage {
-	logger.Info("[%s] collector=dnsmessage - enabled", name)
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] dnsmessage - enabled", name)
 	s := &DNSMessage{
 		doneRun:     make(chan bool),
 		doneMonitor: make(chan bool),
@@ -218,11 +218,11 @@ func (c *DNSMessage) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *DNSMessage) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=dnsmessage - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] dnsmessage - "+msg, v...)
 }
 
 func (c *DNSMessage) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=dnsmessage - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] dnsmessage - "+msg, v...)
 }
 
 func (c *DNSMessage) Stop() {

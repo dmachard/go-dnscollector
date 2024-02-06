@@ -55,7 +55,7 @@ type XDPSniffer struct {
 }
 
 func NewXDPSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
-	logger.Info("[%s] collector=xdp - enabled", name)
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] xdp sniffer - enabled", name)
 	s := &XDPSniffer{
 		done:          make(chan bool),
 		exit:          make(chan bool),
@@ -70,11 +70,11 @@ func NewXDPSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *
 }
 
 func (c *XDPSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=xdp - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] xdp sniffer - "+msg, v...)
 }
 
 func (c *XDPSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=xdp - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] xdp sniffer - "+msg, v...)
 }
 
 func (c *XDPSniffer) GetName() string { return c.name }

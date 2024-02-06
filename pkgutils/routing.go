@@ -8,10 +8,6 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-var (
-	RoutingPrefixLog = "routing - "
-)
-
 func GetRoutes(routes []Worker) ([]chan dnsutils.DNSMessage, []string) {
 	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}
@@ -39,6 +35,7 @@ type RoutingHandler struct {
 }
 
 func NewRoutingHandler(config *pkgconfig.Config, console *logger.Logger, name string) RoutingHandler {
+	console.Info("routing - [%s] - initialization...", name)
 	rh := RoutingHandler{
 		name:         name,
 		logger:       console,
@@ -53,15 +50,15 @@ func NewRoutingHandler(config *pkgconfig.Config, console *logger.Logger, name st
 }
 
 func (rh *RoutingHandler) LogInfo(msg string, v ...interface{}) {
-	rh.logger.Info(RoutingPrefixLog+"["+rh.name+"] "+msg, v...)
+	rh.logger.Info(PrefixLogRouting+"["+rh.name+"] "+msg, v...)
 }
 
 func (rh *RoutingHandler) LogError(msg string, v ...interface{}) {
-	rh.logger.Error(RoutingPrefixLog+"["+rh.name+"] "+msg, v...)
+	rh.logger.Error(PrefixLogRouting+"["+rh.name+"] "+msg, v...)
 }
 
 func (rh *RoutingHandler) LogFatal(msg string) {
-	rh.logger.Error(RoutingPrefixLog + "[" + rh.name + "] " + msg)
+	rh.logger.Error(PrefixLogRouting + "[" + rh.name + "] " + msg)
 }
 
 func (rh *RoutingHandler) AddDroppedRoute(wrk Worker) {
@@ -93,7 +90,7 @@ func (rh *RoutingHandler) Stop() {
 }
 
 func (rh *RoutingHandler) Run() {
-	rh.LogInfo("starting routing handler...")
+	rh.LogInfo("run handler...")
 	nextBufferInterval := 10 * time.Second
 	nextBufferFull := time.NewTimer(nextBufferInterval)
 

@@ -69,12 +69,12 @@ func (p *GeoIPProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 }
 
 func (p *GeoIPProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=geoip#%d - ", p.instance)
+	log := fmt.Sprintf("geoip#%d - ", p.instance)
 	p.logInfo(log+msg, v...)
 }
 
 func (p *GeoIPProcessor) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=geoip#%d - ", p.instance)
+	log := fmt.Sprintf("geoip#%d - ", p.instance)
 	p.logError(log+msg, v...)
 }
 

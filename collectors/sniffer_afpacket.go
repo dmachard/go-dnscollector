@@ -163,7 +163,7 @@ type AfpacketSniffer struct {
 }
 
 func NewAfpacketSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	logger.Info("[%s] collector=afpacket - enabled", name)
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] afpacket sniffer - enabled", name)
 	s := &AfpacketSniffer{
 		done:          make(chan bool),
 		exit:          make(chan bool),
@@ -178,11 +178,11 @@ func NewAfpacketSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, log
 }
 
 func (c *AfpacketSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=afpacket - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] afpacket sniffer- "+msg, v...)
 }
 
 func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=afpacket - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] afpacket sniffer - "+msg, v...)
 }
 
 func (c *AfpacketSniffer) GetName() string { return c.name }

@@ -45,7 +45,7 @@ type PdnsProcessor struct {
 }
 
 func NewPdnsProcessor(connID int, config *pkgconfig.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
-	logger.Info("[%s] processor=pdns#%d - initialization...", name, connID)
+	logger.Info(pkgutils.PrefixLogProcessor+"[%s] pdns#%d - initialization...", name, connID)
 	d := PdnsProcessor{
 		ConnID:         connID,
 		doneMonitor:    make(chan bool),
@@ -68,9 +68,9 @@ func NewPdnsProcessor(connID int, config *pkgconfig.Config, logger *logger.Logge
 func (p *PdnsProcessor) LogInfo(msg string, v ...interface{}) {
 	var log string
 	if p.ConnID == 0 {
-		log = fmt.Sprintf("[%s] processor=powerdns - ", p.name)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - ", p.name)
 	} else {
-		log = fmt.Sprintf("[%s] processor=powerdns#%d - ", p.name, p.ConnID)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns#%d - ", p.name, p.ConnID)
 	}
 	p.logger.Info(log+msg, v...)
 }
@@ -78,9 +78,9 @@ func (p *PdnsProcessor) LogInfo(msg string, v ...interface{}) {
 func (p *PdnsProcessor) LogError(msg string, v ...interface{}) {
 	var log string
 	if p.ConnID == 0 {
-		log = fmt.Sprintf("[%s] processor=powerdns - ", p.name)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - ", p.name)
 	} else {
-		log = fmt.Sprintf("[%s] processor=powerdns#%d - ", p.name, p.ConnID)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns#%d - ", p.name, p.ConnID)
 	}
 	p.logger.Error(log+msg, v...)
 }

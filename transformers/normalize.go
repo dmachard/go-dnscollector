@@ -97,12 +97,12 @@ func (p *NormalizeProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) 
 }
 
 func (p *NormalizeProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=normalize#%d - ", p.instance)
+	log := fmt.Sprintf("normalize#%d - ", p.instance)
 	p.logInfo(log+msg, v...)
 }
 
 func (p *NormalizeProcessor) LogError(msg string, v ...interface{}) {
-	p.logError("transformer=normalize - "+msg, v...)
+	p.logError("normalize - "+msg, v...)
 }
 
 func (p *NormalizeProcessor) LoadActiveProcessors() {

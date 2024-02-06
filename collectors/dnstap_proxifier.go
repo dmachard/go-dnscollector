@@ -33,7 +33,7 @@ type DnstapProxifier struct {
 }
 
 func NewDnstapProxifier(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
-	logger.Info("[%s] collector=dnstaprelay - enabled", name)
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] dnstaprelay - enabled", name)
 	s := &DnstapProxifier{
 		doneRun:        make(chan bool),
 		stopRun:        make(chan bool),
@@ -72,7 +72,7 @@ func (c *DnstapProxifier) Loggers() []chan dnsutils.DNSMessage {
 
 func (c *DnstapProxifier) ReadConfig() {
 	if !pkgconfig.IsValidTLS(c.config.Collectors.DnstapProxifier.TLSMinVersion) {
-		c.logger.Fatal("collector=dnstaprelay - invalid tls min version")
+		c.logger.Fatal(pkgutils.PrefixLogCollector + "[" + c.name + "] dnstaprelay - invalid tls min version")
 	}
 
 	c.sockPath = c.config.Collectors.DnstapProxifier.SockPath
@@ -84,11 +84,11 @@ func (c *DnstapProxifier) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *DnstapProxifier) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=dnstaprelay - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] dnstaprelay - "+msg, v...)
 }
 
 func (c *DnstapProxifier) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=dnstaprelay - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] dnstaprelay - "+msg, v...)
 }
 
 func (c *DnstapProxifier) HandleFrame(recvFrom chan []byte, sendTo []chan dnsutils.DNSMessage) {
