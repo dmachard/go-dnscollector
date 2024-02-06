@@ -181,7 +181,14 @@ func (s *Syslog) ConnectToRemote() {
 		case "local":
 			s.LogInfo("connecting to local syslog...")
 			logWriter, err = syslog.New(s.facility|s.severity, "")
-		case netlib.SocketUnix, netlib.SocketUDP, netlib.SocketTCP:
+		case netlib.SocketUnix:
+			s.LogInfo("connecting to %s://%s ...",
+				s.config.Loggers.Syslog.Transport,
+				s.config.Loggers.Syslog.RemoteAddress)
+			logWriter, err = syslog.Dial("",
+				s.config.Loggers.Syslog.RemoteAddress, s.facility|s.severity,
+				s.config.Loggers.Syslog.Tag)
+		case netlib.SocketUDP, netlib.SocketTCP:
 			s.LogInfo("connecting to %s://%s ...",
 				s.config.Loggers.Syslog.Transport,
 				s.config.Loggers.Syslog.RemoteAddress)
