@@ -409,7 +409,7 @@ RUN_LOOP:
 					c.config.Collectors.Dnstap.TLSSupport,
 				)
 				if err != nil {
-					c.logger.Fatal("Unable to set SO_RCVBUF: ", err)
+					c.logger.Fatal(pkgutils.PrefixLogCollector+"["+c.name+"] dnstap - unable to set SO_RCVBUF: ", err)
 				}
 				c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before,
 					c.config.Collectors.Dnstap.RcvBufSize, actual)

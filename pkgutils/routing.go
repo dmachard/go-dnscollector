@@ -22,6 +22,10 @@ func GetRoutes(routes []Worker) ([]chan dnsutils.DNSMessage, []string) {
 	return channels, names
 }
 
+func GetName(name string) string {
+	return "[" + name + "] - "
+}
+
 type RoutingHandler struct {
 	name          string
 	logger        *logger.Logger
@@ -50,15 +54,15 @@ func NewRoutingHandler(config *pkgconfig.Config, console *logger.Logger, name st
 }
 
 func (rh *RoutingHandler) LogInfo(msg string, v ...interface{}) {
-	rh.logger.Info(PrefixLogRouting+"["+rh.name+"] - "+msg, v...)
+	rh.logger.Info(PrefixLogRouting+GetName(rh.name)+msg, v...)
 }
 
 func (rh *RoutingHandler) LogError(msg string, v ...interface{}) {
-	rh.logger.Error(PrefixLogRouting+"["+rh.name+"] - "+msg, v...)
+	rh.logger.Error(PrefixLogRouting+GetName(rh.name)+msg, v...)
 }
 
 func (rh *RoutingHandler) LogFatal(msg string) {
-	rh.logger.Error(PrefixLogRouting + "[" + rh.name + "] - " + msg)
+	rh.logger.Error(PrefixLogRouting + GetName(rh.name) + msg)
 }
 
 func (rh *RoutingHandler) AddDroppedRoute(wrk Worker) {
