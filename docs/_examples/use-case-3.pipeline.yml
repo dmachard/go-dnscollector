@@ -1,0 +1,18 @@
+# This configuration sets up DNS traffic monitoring through DNStap on port 6000
+# and logging in JSON format.
+
+global:
+  trace:
+    verbose: false
+
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routing-policy:
+      default: [ console ]
+
+  - name: console
+    stdout:
+      mode: json
