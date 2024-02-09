@@ -1,0 +1,19 @@
+# This configuration sets up DNS traffic monitoring through DNStap unix socket;
+# and logging to a remote DNSTap server with TLS enabled.
+
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tap_unix
+    dnstap:
+      sock-path: /tmp/dnstap.sock
+    routing-policy:
+      default: [ tap_tls ]
+  
+  - name: tap_tls
+    dnstapclient:
+      remote-address: 127.0.0.1
+      remote-port:  6000
+      tls-support: true

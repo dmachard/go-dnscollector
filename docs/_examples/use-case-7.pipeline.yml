@@ -1,0 +1,21 @@
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tap1
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+
+  - name: tap2
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6001
+
+  - name: file
+    logfile:
+      file-path:  "/tmp/dnstap.log"
+      max-size: 100
+      max-files: 10
+      mode: text

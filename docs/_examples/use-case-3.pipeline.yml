@@ -1,5 +1,5 @@
 # This configuration sets up DNS traffic monitoring through DNStap on port 6000
-# and logging in JSON format.
+# and logging to the console in JSON format.
 
 global:
   trace:

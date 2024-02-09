@@ -91,6 +91,8 @@ func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]pk
 		currentStanza = logger
 	}
 
+	// TODO raise error when no routes are defined
+
 	// default routing
 	for _, route := range stanza.RoutingPolicy.Default {
 		if _, ok := mapCollectors[route]; ok {
