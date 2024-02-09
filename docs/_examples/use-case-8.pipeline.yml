@@ -1,0 +1,29 @@
+# This configuration sets up DNS traffic monitoring through PowerDNS Protobuf on port 6000 and port 6001;
+# and save-it in specific log files as text format.
+
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: pdns_internal
+    powerdns:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routing-policy:
+      default: [ file_internal ]
+
+  - name: pdns_internet
+    powerdns:
+      listen-ip: 0.0.0.0
+      listen-port: 6001
+    routing-policy:
+      default: [ file_internet ]
+
+  - name: file_internal
+    logfile:
+      file-path:  "/tmp/dnscollector_internal.log"
+
+  - name: file_internet
+    logfile:
+      file-path:  "/tmp/dnscollector_internet.log"
