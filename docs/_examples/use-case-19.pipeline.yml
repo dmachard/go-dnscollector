@@ -1,0 +1,30 @@
+# This configuration sets up DNS traffic monitoring through DNStap on port 6000;
+# applies tranformations on dnstap collector and the console logger
+
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    transforms:
+      normalize:
+        qname-lowercase: true
+      latency:
+        measure-latency: true
+        queries-timeout: 2
+    routing-policy:
+      default: [ console ]
+
+  - name: console
+    stdout:
+      mode: text
+      text-format: timestamp-rfc3339ns identity operation rcode qname qtype latency suspicious-score
+    transforms:
+      filtering:
+        log-queries : false
+      suspicious:
+        threshold-qname-len: 4

@@ -1,0 +1,24 @@
+# This configuration sets up DNS traffic monitoring through DNStap on port 6000;
+# removes duplicate traffic and log to the console
+
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    transforms:
+      reducer:
+        repetitive-traffic-detector: true
+        qname-plus-one: false
+        watch-interval: 5
+    routing-policy:
+      default: [ console ]
+
+  - name: console
+    stdout:
+      mode: text
+      text-format: "timestamp-rfc3339ns identity operation rcode queryip qname qtype reducer-occurrences reducer-cumulative-length"

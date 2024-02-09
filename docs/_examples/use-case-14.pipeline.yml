@@ -1,0 +1,31 @@
+# This configuration sets up watch and read DNStap files;
+# and logging to the console in text format.
+
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routing-policy:
+      default: [ out-dnstap ]
+
+  - name: out-dnstap
+    logfile:
+      file-path:  /tmp/dnstap.fstrm
+      flush-interval: 1
+      mode: dnstap
+
+  - name: file-dnstap
+    file-ingestor:
+      watch-dir: /tmp
+      watch-mode: dnstap
+    routing-policy:
+      default: [ console ]
+
+  - name: console
+    stdout:
+      mode: text

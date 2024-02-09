@@ -1,0 +1,22 @@
+# This configuration sets up DNS traffic monitoring through DNStap on port 6000;
+# applies transformations, and logs the processed data to the console in text format.
+
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    transforms:
+      user-privacy:
+        anonymize-ip: true
+        minimaze-qname: true
+    routing-policy:
+      default: [ console ]
+  
+  - name: console
+    stdout:
+     mode: text
