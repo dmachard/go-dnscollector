@@ -16,7 +16,7 @@ require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/snappy v0.0.4
 	github.com/google/gopacket v1.1.19
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/grafana/dskit v0.0.0-20230804003603-740f56bd2934
 	github.com/grafana/loki v1.6.2-0.20231211180320-2535f9bedeae
 	github.com/hashicorp/golang-lru/v2 v2.0.7
