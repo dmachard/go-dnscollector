@@ -1,0 +1,19 @@
+# This configuration sets up DNS traffic monitoring through TZSP protocol on port 1000;
+# and logging to the console in JSON format.
+
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tzsp
+    tzsp:
+        enable: true
+        listen-ip: "0.0.0.0"
+        listen-port: 10000
+    routing-policy:
+      default: [ console ]
+
+  - name: console
+    stdout:
+      mode: json

@@ -15,7 +15,7 @@ multiplexer:
   loggers:
     - name: console
       stdout:
-        mode: pcap
+        mode: text
         text-format: ml-size ml-entropy ml-length ml-digits ml-lowers ml-uppers
               
   routes:

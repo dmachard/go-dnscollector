@@ -1,0 +1,23 @@
+# This configuration sets up DNS traffic monitoring through DNStap on port 6000;
+# applies  machine learning transformation on it
+
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    transforms:
+      machine-learning:
+        add-features: true
+    routing-policy:
+      default: [ console ]
+
+  - name: console
+    stdout:
+      mode: text
+      text-format: ml-size ml-entropy ml-length ml-digits ml-lowers ml-uppers
+             

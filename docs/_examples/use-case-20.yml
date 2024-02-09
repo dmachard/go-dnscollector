@@ -22,7 +22,7 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-        text-format: "timestamp-rfc3339ns identity operation rcode queryip qname qtype reducer-occurences reducer-cumulative-length"
+        text-format: "timestamp-rfc3339ns identity operation rcode queryip qname qtype reducer-occurrences reducer-cumulative-length"
 
   routes:
     - from: [ tap ]
