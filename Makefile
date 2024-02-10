@@ -3,10 +3,11 @@ BINARY_NAME := go-dnscollector
 GO_VERSION := $(shell go env GOVERSION | sed -n 's/go\([0-9]\+\.[0-9]\+\).*/\1/p')
 
 GO_LOGGER := 0.4.0
-GO_POWERDNS_PROTOBUF := 1.0.0
+GO_POWERDNS_PROTOBUF := 1.1.0
 GO_DNSTAP_PROTOBUF := 1.0.0
 GO_FRAMESTREAM := 0.7.0
 GO_CLIENTSYSLOG := 0.3.0
+GO_TOPMAP := 1.0.0
 
 BUILD_TIME := $(shell LANG=en_US date +"%F_%T_%z")
 COMMIT := $(shell git rev-parse --short HEAD)
@@ -45,6 +46,7 @@ dep: check-go
 	@go get github.com/dmachard/go-dnstap-protobuf@v$(GO_DNSTAP_PROTOBUF)
 	@go get github.com/dmachard/go-framestream@v$(GO_FRAMESTREAM)
 	@go get github.com/dmachard/go-clientsyslog@v$(GO_CLIENTSYSLOG)
+	@go get github.com/dmachard/go-topmap@v$(GO_TOPMAP)
 	@go mod edit -go=$(GO_VERSION)
 	@go mod tidy
 
