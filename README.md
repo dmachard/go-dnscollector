@@ -35,6 +35,7 @@
   - *Listen for logging traffic with streaming network protocols*
     - [`DNStap`](docs/collectors/collector_dnstap.md#dns-tap) with `tls`|`tcp`|`unix` transports support and [`proxifier`](docs/collectors/collector_dnstap.md#dns-tap-proxifier)
     - [`PowerDNS`](docs/collectors/collector_powerdns.md) streams with full  support
+    - [`DNSMessage`](docs/collectors/collector_dnsmessage.md) internal DNS model
     - [`TZSP`](docs/collectors/collector_tzsp.md) protocol support
   - *Live capture on a network interface*
     - [`AF_PACKET`](docs/collectors/collector_afpacket.md) socket with BPF filter
@@ -69,6 +70,7 @@
 
 - **[Transformers](./docs/transformers.md)**
 
+  - Add additionnal [Tags](docs/transformers/transform_atags.md)
   - Traffic [Filtering](docs/transformers/transform_trafficfiltering.md) and [Reducer](docs/transformers/transform_trafficreducer.md)
   - Latency [Computing](docs/transformers/transform_latency.md)
   - Apply [User Privacy](docs/transformers/transform_userprivacy.md)

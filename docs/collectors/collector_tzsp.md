@@ -5,18 +5,11 @@ Its primary purpose is to suppport DNS packet capture from Mikrotik brand device
 
 Options:
 
-- `listen-ip`: (string) listen on ip
-- `listen-port`: (integer) listening on port
-- `chan-buffer-size`: (integer) channel buffer size used on incoming packet, number of packet before to drop it.
+- `listen-ip` (str) listen on ip. Defaults to `0.0.0.0`.
+- `listen-port` (int) listening on port. Defaults to `10000`.
+- `chan-buffer-size` (int) incoming channel size, number of packet before to drop it. Default to `65535`.
+  > Specifies the maximum number of packets that can be buffered before dropping additional packets.
 
-Default values:
-
-```yaml
-tzsp:
-  listen-ip: "0.0.0.0"
-  listen-port: 10000
-  chan-buffer-size: 65535
-```
 
 Example rules for Mikrotik brand devices to send the traffic (only works if routed or the device serves as DNS server).
 
