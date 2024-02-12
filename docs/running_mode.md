@@ -7,7 +7,7 @@
 
 > NOTE: EXPERIMENTAL, NOT YET SUITABLE FOR PRODUCTION
 
-The `pipelining` mode is akin to the multiplexer but offers several enhancements:
+The `pipelining` mode offers several enhancements:
 
 - a simplified syntax,
 - conditional statement-based log routing,

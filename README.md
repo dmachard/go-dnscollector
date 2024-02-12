@@ -35,7 +35,7 @@
   - *Listen for logging traffic with streaming network protocols*
     - [`DNStap`](docs/collectors/collector_dnstap.md#dns-tap) with `tls`|`tcp`|`unix` transports support and [`proxifier`](docs/collectors/collector_dnstap.md#dns-tap-proxifier)
     - [`PowerDNS`](docs/collectors/collector_powerdns.md) streams with full  support
-    - [`DNSMessage`](docs/collectors/collector_dnsmessage.md) internal DNS model
+    - [`DNSMessage`](docs/collectors/collector_dnsmessage.md) internal DNS model for pipelining
     - [`TZSP`](docs/collectors/collector_tzsp.md) protocol support
   - *Live capture on a network interface*
     - [`AF_PACKET`](docs/collectors/collector_afpacket.md) socket with BPF filter
