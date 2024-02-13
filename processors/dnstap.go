@@ -53,6 +53,7 @@ func GetFakeDNSTap(dnsquery []byte) *dnstap.Dnstap {
 
 type DNSTapProcessor struct {
 	ConnID         int
+	PeerName       string
 	doneRun        chan bool
 	stopRun        chan bool
 	doneMonitor    chan bool

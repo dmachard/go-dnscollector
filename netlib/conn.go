@@ -31,3 +31,30 @@ func Close(conn io.Closer, reset bool) error {
 	}
 	return nil
 }
+
+// GetPeerName returns the hostname associated with the given peer address.
+// If the peer address cannot be split into IP and port or if the hostname lookup fails,
+// it returns the peer address or IP itself.
+func GetPeerName(peerAddr string) string {
+	// Split the peer address into IP and port
+	peerIp, _, errIp := net.SplitHostPort(peerAddr)
+	if errIp != nil {
+		// If splitting fails, return the original peer address
+		return peerAddr
+	}
+
+	// Lookup hostname associated with the IP address
+	names, errIp := net.LookupAddr(peerIp)
+	if errIp != nil {
+		// If hostname lookup fails, return the IP address
+		return peerIp
+	}
+
+	// If hostname is found, return the first name in the list
+	if len(names) > 0 {
+		return names[0]
+	}
+
+	// If no hostname is found, return the IP address
+	return peerIp
+}
