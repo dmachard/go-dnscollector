@@ -25,3 +25,4 @@ Transformers processing is currently in this order :
 | [GeoIP metadata](transformers/transform_geoip.md)                 | Country and City                         |
 | [Data Extractor](transformers/transform_dataextractor.md)         | Add base64 encoded dns payload                        |
 | [Traffic Prediction](transformers/transform_trafficprediction.md) | Features to train machine learning models              |
+| [Additionnal Tags](transformers/transform_atags.md) | Add additionnal tags |
