@@ -22,7 +22,7 @@ func Test_DnstapProcessor(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewDNSTapProcessor(0, pkgconfig.GetFakeConfig(), logger, "test", 512)
+	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), logger, "test", 512)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
@@ -59,7 +59,7 @@ func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewDNSTapProcessor(0, pkgconfig.GetFakeConfig(), logger, "test", 512)
+	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), logger, "test", 512)
 	// chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dns query
@@ -98,7 +98,7 @@ func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewDNSTapProcessor(0, pkgconfig.GetFakeConfig(), logger, "test", 512)
+	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), logger, "test", 512)
 	// chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dns query
@@ -136,7 +136,7 @@ func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init the dnstap consumer
-	consumer := NewDNSTapProcessor(0, pkgconfig.GetFakeConfig(), logger, "test", 512)
+	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), logger, "test", 512)
 	// chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dns query
@@ -178,7 +178,7 @@ func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
 	cfg := pkgconfig.GetFakeConfig()
 	cfg.Collectors.Dnstap.DisableDNSParser = true
 
-	consumer := NewDNSTapProcessor(0, cfg, logger, "test", 512)
+	consumer := NewDNSTapProcessor(0, "peertest", cfg, logger, "test", 512)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
@@ -219,7 +219,7 @@ func Test_DnstapProcessor_Extended(t *testing.T) {
 	cfg := pkgconfig.GetFakeConfig()
 	cfg.Collectors.Dnstap.ExtendedSupport = true
 
-	consumer := NewDNSTapProcessor(0, cfg, logger, "test", 512)
+	consumer := NewDNSTapProcessor(0, "peertest", cfg, logger, "test", 512)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
@@ -285,7 +285,7 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 	lg.SetOutputChannel((logsChan))
 
 	// init the dnstap consumer
-	consumer := NewDNSTapProcessor(0, pkgconfig.GetFakeConfig(), lg, "test", 512)
+	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), lg, "test", 512)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)

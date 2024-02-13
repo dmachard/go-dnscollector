@@ -383,6 +383,7 @@ func (c *FileIngestor) Run() {
 	// start dnstap subprocessor
 	c.dnstapProcessor = processors.NewDNSTapProcessor(
 		0,
+		"",
 		c.config,
 		c.logger,
 		c.name,

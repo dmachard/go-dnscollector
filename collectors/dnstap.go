@@ -125,6 +125,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	// start dnstap processor
 	dnstapProcessor := processors.NewDNSTapProcessor(
 		connID,
+		peerName,
 		c.config,
 		c.logger,
 		c.name,
