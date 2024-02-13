@@ -181,6 +181,8 @@ RUN_LOOP:
 			dm := dnsutils.DNSMessage{}
 			dm.Init()
 
+			dm.DNSTap.PeerName = d.PeerName
+
 			// init dns message with additionnals parts
 			transforms.InitDNSMessageFormat(&dm)
 

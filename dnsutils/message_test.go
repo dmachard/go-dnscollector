@@ -204,7 +204,8 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 				  "policy-action": "-",
 				  "policy-match": "-",
 				  "policy-value": "-",
-				  "policy-rule": "-"
+				  "policy-rule": "-",
+				  "peer-name": "-"
 				}
 			}
 			`
@@ -260,6 +261,7 @@ func TestDnsMessage_JsonFlatten_Reference(t *testing.T) {
 					"dnstap.policy-action": "-",
 					"dnstap.policy-match": "-",
 					"dnstap.policy-value": "-",
+					"dnstap.peer-name": "-",
 					"edns.dnssec-ok": 0,
 					"edns.options": [],
 					"edns.rcode": 0,
@@ -589,6 +591,11 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 				PolicyAction: "action", PolicyMatch: "match",
 				PolicyValue: "value"}},
 			expected: "rule type action match value",
+		},
+		{
+			format:   "peer-name",
+			dm:       DNSMessage{DNSTap: DNSTap{PeerName: "testpeer"}},
+			expected: "testpeer",
 		},
 	}
 

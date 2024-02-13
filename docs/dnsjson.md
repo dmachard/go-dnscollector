@@ -72,6 +72,7 @@ Example:
   "dnstap": {
     "operation": "CLIENT_RESPONSE",
     "identity": "dnsdist1",
+    "peer-name": "172.16.0.2",
     "version": "-",
     "extra": "-",
     "timestamp-rfc3339ns": "2021-12-27T14:33:44.559002118Z",
@@ -113,6 +114,7 @@ Using flat-json requires more processing on the host running go-dnscollector but
   "dns.resource-records.ar": [],
   "dns.resource-records.ns": [],
   "dnstap.identity": "foo",
+  "dnstap.peer-name": "172.16.0.2",
   "dnstap.latency": "0.000000",
   "dnstap.operation": "CLIENT_RESPONSE",
   "dnstap.timestamp-rfc3339ns": "2023-03-31T10:14:46.664534902Z",
