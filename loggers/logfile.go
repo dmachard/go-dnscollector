@@ -115,15 +115,19 @@ func (lf *LogFile) ReadConfig() {
 	if !IsValidMode(lf.config.Loggers.LogFile.Mode) {
 		lf.logger.Fatal("["+lf.name+"] logger=file - invalid mode: ", lf.config.Loggers.LogFile.Mode)
 	}
+	TextFormatSplitter := lf.config.Global.TextFormatSplitter
+
 	lf.fileDir = filepath.Dir(lf.config.Loggers.LogFile.FilePath)
 	lf.fileName = filepath.Base(lf.config.Loggers.LogFile.FilePath)
 	lf.fileExt = filepath.Ext(lf.fileName)
 	lf.filePrefix = strings.TrimSuffix(lf.fileName, lf.fileExt)
 
 	if len(lf.config.Loggers.LogFile.TextFormat) > 0 {
-		lf.textFormat = strings.Fields(lf.config.Loggers.LogFile.TextFormat)
+		// lf.textFormat = strings.Fields(lf.config.Loggers.LogFile.TextFormat)
+		lf.textFormat = strings.Split(lf.config.Loggers.LogFile.TextFormat,TextFormatSplitter)
 	} else {
-		lf.textFormat = strings.Fields(lf.config.Global.TextFormat)
+		// lf.textFormat = strings.Fields(lf.config.Global.TextFormat)
+		lf.textFormat = strings.Split(lf.config.Global.TextFormat,TextFormatSplitter)
 	}
 
 	lf.LogInfo("running in mode: %s", lf.config.Loggers.LogFile.Mode)
