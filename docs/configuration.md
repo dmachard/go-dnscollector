@@ -67,6 +67,7 @@ Default directives:
 - `timestamp-unixns`: unix timestamp with nano support
 - `localtime`: local time
 - `identity`: dnstap identity
+- `peer-name`: hostname or ip address of the dnstap sender
 - `version`: dnstap version
 - `extra`: dnstap extra as string
 - `operation`: dnstap operation

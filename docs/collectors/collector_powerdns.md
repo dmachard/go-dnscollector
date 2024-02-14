@@ -24,7 +24,7 @@ Settings:
 - `chan-buffer-size` (int) incoming channel size, number of packet before to drop it. Default to `65535`.
   > Specifies the maximum number of packets that can be buffered before dropping additional packets.
 - `add-dns-payload` (bool) generate and add fake DNS payload. Default to `false`.
-  > PowerDNS protobuf message does not contain a DNS payload; use this setting to add a fake DNS payload.
+  > PowerDNS protobuf message does not contain a DNS payload; use this setting to add a raw DNS payload.
 
 ## Custom text format
 

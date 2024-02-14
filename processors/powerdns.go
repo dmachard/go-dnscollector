@@ -29,6 +29,7 @@ var (
 
 type PdnsProcessor struct {
 	ConnID         int
+	PeerName       string
 	doneRun        chan bool
 	stopRun        chan bool
 	doneMonitor    chan bool
@@ -44,10 +45,11 @@ type PdnsProcessor struct {
 	droppedCount   map[string]int
 }
 
-func NewPdnsProcessor(connID int, config *pkgconfig.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
+func NewPdnsProcessor(connID int, peerName string, config *pkgconfig.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
 	logger.Info(pkgutils.PrefixLogProcessor+"[%s] powerdns - conn #%d - initialization...", name, connID)
 	d := PdnsProcessor{
 		ConnID:         connID,
+		PeerName:       peerName,
 		doneMonitor:    make(chan bool),
 		doneRun:        make(chan bool),
 		stopMonitor:    make(chan bool),

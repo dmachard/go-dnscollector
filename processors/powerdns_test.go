@@ -16,7 +16,7 @@ import (
 
 func Test_PowerDNSProcessor(t *testing.T) {
 	// init the dnstap consumer
-	consumer := NewPdnsProcessor(0, pkgconfig.GetFakeConfig(), logger.New(false), "test", 512)
+	consumer := NewPdnsProcessor(0, "peername", pkgconfig.GetFakeConfig(), logger.New(false), "test", 512)
 
 	// init the powerdns processor
 	dnsQname := pkgconfig.ValidDomain
@@ -50,7 +50,7 @@ func Test_PowerDNSProcessor_AddDNSPayload_Valid(t *testing.T) {
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the powerdns processor
-	consumer := NewPdnsProcessor(0, cfg, logger.New(false), "test", 512)
+	consumer := NewPdnsProcessor(0, "peername", cfg, logger.New(false), "test", 512)
 
 	// prepare powerdns message
 	dnsQname := pkgconfig.ValidDomain
@@ -100,7 +100,7 @@ func Test_PowerDNSProcessor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the dnstap consumer
-	consumer := NewPdnsProcessor(0, cfg, logger.New(false), "test", 512)
+	consumer := NewPdnsProcessor(0, "peername", cfg, logger.New(false), "test", 512)
 
 	// prepare dnstap
 	dnsQname := pkgconfig.BadDomainLabel
@@ -135,7 +135,7 @@ func Test_PowerDNSProcessor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the dnstap consumer
-	consumer := NewPdnsProcessor(0, cfg, logger.New(false), "test", 512)
+	consumer := NewPdnsProcessor(0, "peername", cfg, logger.New(false), "test", 512)
 
 	// prepare dnstap
 	dnsQname := pkgconfig.BadVeryLongDomain
@@ -169,7 +169,7 @@ func Test_PowerDNSProcessor_AddDNSPayload_AnswersTooLongDomain(t *testing.T) {
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the dnstap consumer
-	consumer := NewPdnsProcessor(0, cfg, logger.New(false), "test", 512)
+	consumer := NewPdnsProcessor(0, "peername", cfg, logger.New(false), "test", 512)
 
 	// prepare dnstap
 	dnsQname := pkgconfig.ValidDomain
@@ -220,7 +220,7 @@ func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// init the dnstap consumer
 	cfg := pkgconfig.GetFakeConfig()
-	consumer := NewPdnsProcessor(0, cfg, lg, "test", 512)
+	consumer := NewPdnsProcessor(0, "peername", cfg, lg, "test", 512)
 
 	// init the powerdns processor
 	dnsQname := pkgconfig.ValidDomain

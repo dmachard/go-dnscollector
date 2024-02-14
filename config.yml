@@ -26,6 +26,7 @@ global:
   # - timestamp-unixns: unix timestamp with nano support
   # - localtime: local time
   # - identity: dnstap identity
+  # - peer-name: hostname or ip address of the dnstap sender
   # - version: dnstap version
   # - extra: dnstap extra as string
   # - operation: dnstap operation
@@ -248,7 +249,7 @@ multiplexer:
 #   reset-conn: true
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
-#   # Reconstruct DNS payload
+#   # Reconstruct and add raw DNS payload
 #   add-dns-payload: false
 
 # # tzsp (TaZmen Sniffer Protocol)

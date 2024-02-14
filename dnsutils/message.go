@@ -147,6 +147,7 @@ type DNSTap struct {
 	PolicyMatch      string  `json:"policy-match" msgpack:"policy-match"`
 	PolicyAction     string  `json:"policy-action" msgpack:"policy-action"`
 	PolicyValue      string  `json:"policy-value" msgpack:"policy-value"`
+	PeerName         string  `json:"peer-name" msgpack:"peer-name"`
 }
 
 type PowerDNS struct {
@@ -264,6 +265,7 @@ func (dm *DNSMessage) Init() {
 		PolicyMatch:      "-",
 		PolicyAction:     "-",
 		PolicyValue:      "-",
+		PeerName:         "-",
 	}
 
 	dm.DNS = DNS{
@@ -603,6 +605,8 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			s.WriteString(ts.Format("2006-01-02 15:04:05.999999999"))
 		case directive == "identity":
 			s.WriteString(dm.DNSTap.Identity)
+		case directive == "peer-name":
+			s.WriteString(dm.DNSTap.PeerName)
 		case directive == "version":
 			s.WriteString(dm.DNSTap.Version)
 		case directive == "extra":

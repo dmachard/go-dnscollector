@@ -107,16 +107,6 @@ func (c *Dnstap) LogError(msg string, v ...interface{}) {
 	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+" dnstap - "+msg, v...)
 }
 
-// func (c *Dnstap) LogConnInfo(connID int, msg string, v ...interface{}) {
-// 	prefix := fmt.Sprintf(pkgutils.PrefixLogCollector+"[%s] dnstap#%d - ", c.name, connID)
-// 	c.logger.Info(prefix+msg, v...)
-// }
-
-// func (c *Dnstap) LogConnError(connID int, msg string, v ...interface{}) {
-// 	prefix := fmt.Sprintf(pkgutils.PrefixLogCollector+"[%s] dnstap#%d - ", c.name, connID)
-// 	c.logger.Error(prefix+msg, v...)
-// }
-
 func (c *Dnstap) HandleConn(conn net.Conn) {
 	// close connection on function exit
 	defer conn.Close()
@@ -129,11 +119,13 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogInfo("new connection #%d from %s", connID, peer)
+	peerName := netlib.GetPeerName(peer)
+	c.LogInfo("new connection #%d from %s (%s)", connID, peer, peerName)
 
 	// start dnstap processor
 	dnstapProcessor := processors.NewDNSTapProcessor(
 		connID,
+		peerName,
 		c.config,
 		c.logger,
 		c.name,
