@@ -122,7 +122,7 @@ Example to enable output similiar to ISC bind format:
   text-format-splitter: "/"
   text-format: "timestamp-rfc3339ns/{ }/identity/{ daemon.info named: client HEX }/queryip/{#}/queryport/{ (}/qname/{): query: }/qname/{ IN }/qtype/{ +E(}/answercount/{)DV (/responseip/{) }"
 
-...
+```
 
 Output example:
 
