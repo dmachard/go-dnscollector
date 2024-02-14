@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"strings"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -129,11 +130,18 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogInfo("new connection #%d from %s", connID, peer)
+	peerName := netlib.GetPeerName(peer)
+    if peerName == "" {
+		peerName = peer
+	} else {
+		peerName = strings.Split(peerName,".")[0]
+	}
+	c.LogInfo("new connection #%d from %s (%s)", connID, peer , peerName)
 
 	// start dnstap processor
 	dnstapProcessor := processors.NewDNSTapProcessor(
 		connID,
+		peerName,
 		c.config,
 		c.logger,
 		c.name,
