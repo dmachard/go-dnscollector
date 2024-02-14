@@ -86,10 +86,13 @@ func (so *StdOut) ReadConfig() {
 	}
 
 	if len(so.config.Loggers.Stdout.TextFormat) > 0 {
-		so.textFormat = strings.Fields(so.config.Loggers.Stdout.TextFormat)
+		//  so.textFormat = strings.Fields(so.config.Loggers.Stdout.TextFormat)
+		so.textFormat = strings.Split(so.config.Loggers.Stdout.TextFormat,so.config.Global.TextFormatSplitter)
 	} else {
-		so.textFormat = strings.Fields(so.config.Global.TextFormat)
+		// so.textFormat = strings.Fields(so.config.Global.TextFormat)
+		so.textFormat = strings.Split(so.config.Global.TextFormat,so.config.Global.TextFormatSplitter)
 	}
+	so.logger.Info("textFormat = "+so.config.Global.TextFormat)
 }
 
 func (so *StdOut) ReloadConfig(config *pkgconfig.Config) {
