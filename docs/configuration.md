@@ -108,6 +108,7 @@ global:
   text-format-delimiter: " "
   text-format-splitter: " "
   text-format-boundary: "\""
+
 ```
 
 If you require a output format like CSV, the delimiter can be configured with the `text-format-delimiter` option.
@@ -119,8 +120,7 @@ Example to enable output similiar to ISC bind format:
 
 ```yaml
   text-format-splitter: "/"
-  text-format: "timestamp-rfc3339ns/{ }/identity/{ daemon.info named: client HEX }/queryip/{#}/queryport/{ (}/qname/{): query: }/qname/{ IN }/qtype/{ +E(}/answercount/{)D
-V (/responseip/{) }"
+  text-format: "timestamp-rfc3339ns/{ }/identity/{ daemon.info named: client HEX }/queryip/{#}/queryport/{ (}/qname/{): query: }/qname/{ IN }/qtype/{ +E(}/answercount/{)DV (/responseip/{) }"
 ...
 
 Output example:
@@ -130,4 +130,5 @@ Output example:
 2023-04-08T18:27:29.268575Z unbound FORWARDER_QUERY NOERROR 0.0.0.0 20817 IPv4 UDP 38b google.fr A 0.000000
 2023-04-08T18:27:29.278929Z unbound FORWARDER_RESPONSE NOERROR 0.0.0.0 20817 IPv4 UDP 54b google.fr A 0.000000
 2023-04-08T18:27:29.279039Z unbound CLIENT_RESPONSE NOERROR 127.0.0.1 39028 IPv4 UDP 54b google.fr A 0.000000
+
 ```
