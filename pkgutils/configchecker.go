@@ -14,6 +14,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var TextFormatSplitter string = " "
+
 func ReloadConfig(configPath string, config *pkgconfig.Config, dmRef dnsutils.DNSMessage) error {
 	// Open config file
 	configFile, err := os.Open(configPath)
@@ -139,6 +141,7 @@ func CheckConfig(userConfigPath string, dmRef dnsutils.DNSMessage) error {
 	// search this key on all keys
 	err = checkTextFormatKey(userConfigMap, dmRef)
 	if err != nil {
+		fmt.Printf("checkTextFormatKey returned: %v\n", err)
 		return err
 	}
 
@@ -148,9 +151,21 @@ func CheckConfig(userConfigPath string, dmRef dnsutils.DNSMessage) error {
 func checkTextFormatKey(data map[string]interface{}, dmRef dnsutils.DNSMessage) error {
 	key := "text-format"
 	for k, v := range data {
+		if k == "global" {
+			if rec, ok := v.(map[string]interface{}); ok {
+				for k2, v2 := range rec {
+					// fmt.Printf("k2: %s , v2 : %s\n" , k2 , v2 )
+					if k2 == "text-format-splitter" {
+						TextFormatSplitter=v2.(string) 
+					}
+				}
+			}
+		}
+
 		if k == key {
 			if str, ok := v.(string); ok {
-				_, err := dmRef.ToTextLine(strings.Fields(str), "", "")
+				myarray := strings.Split(str,TextFormatSplitter)
+				_, err := dmRef.ToTextLine(myarray , "", "")
 				if err != nil {
 					return err
 				}
