@@ -106,11 +106,22 @@ Default directives:
 global:
   text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length-unit qname qtype latency ttl"
   text-format-delimiter: " "
+  text-format-splitter: " "
   text-format-boundary: "\""
 ```
 
-If you require a format like CSV, the delimiter can be configured with the `text-format-delimiter` option.
+If you require a output format like CSV, the delimiter can be configured with the `text-format-delimiter` option.
 The default separator is [space].
+text-format can contain raw text enclosed by curly braces, eg
+	text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport qname qtype {DNSTAP}"
+To enable use of spaces in that raw text , you can split the text-format using a custom text-format-splitter character.
+Example to enable output similiar to ISC bind format:
+
+```yaml
+  text-format-splitter: "/"
+  text-format: "timestamp-rfc3339ns/{ }/identity/{ daemon.info named: client HEX }/queryip/{#}/queryport/{ (}/qname/{): query: }/qname/{ IN }/qtype/{ +E(}/answercount/{)D
+V (/responseip/{) }"
+...
 
 Output example:
 
