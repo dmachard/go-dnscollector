@@ -120,10 +120,18 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogInfo("new connection #%d from %s", connID, peer)
+	peerName := netlib.GetPeerName(peer)
+	c.LogInfo("new connection #%d from %s (%s)", connID, peer, peerName)
 
 	// start protobuf subprocessor
-	pdnsProc := processors.NewPdnsProcessor(connID, c.config, c.logger, c.name, c.config.Collectors.PowerDNS.ChannelBufferSize)
+	pdnsProc := processors.NewPdnsProcessor(
+		connID,
+		peerName,
+		c.config,
+		c.logger,
+		c.name,
+		c.config.Collectors.PowerDNS.ChannelBufferSize,
+	)
 	c.Lock()
 	c.pdnsProcessors = append(c.pdnsProcessors, &pdnsProc)
 	c.Unlock()
