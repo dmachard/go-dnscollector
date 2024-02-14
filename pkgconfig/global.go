@@ -3,6 +3,7 @@ package pkgconfig
 type ConfigGlobal struct {
 	TextFormat          string `yaml:"text-format"`
 	TextFormatDelimiter string `yaml:"text-format-delimiter"`
+	TextFormatSplitter string `yaml:"text-format-splitter"`
 	TextFormatBoundary  string `yaml:"text-format-boundary"`
 	Trace               struct {
 		Verbose      bool   `yaml:"verbose"`
@@ -18,6 +19,7 @@ func (c *ConfigGlobal) SetDefault() {
 	// global config
 	c.TextFormat = "timestamp identity operation rcode queryip queryport family protocol length-unit qname qtype latency"
 	c.TextFormatDelimiter = " "
+	c.TextFormatSplitter = " "
 	c.TextFormatBoundary = "\""
 
 	c.Trace.Verbose = false
