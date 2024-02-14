@@ -53,6 +53,7 @@ func GetFakeDNSTap(dnsquery []byte) *dnstap.Dnstap {
 
 type DNSTapProcessor struct {
 	ConnID         int
+	PeerName		string
 	doneRun        chan bool
 	stopRun        chan bool
 	doneMonitor    chan bool
@@ -68,11 +69,21 @@ type DNSTapProcessor struct {
 	droppedCount   map[string]int
 }
 
-func NewDNSTapProcessor(connID int, config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
+// func NewDNSTapProcessor(connID int, config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
+func NewDNSTapProcessor(
+	connID int,
+	peerName string,
+	config *pkgconfig.Config,
+	logger *logger.Logger,
+	name string,
+	size int,
+) DNSTapProcessor {
+
 	logger.Info(pkgutils.PrefixLogProcessor+"[%s] dnstap - conn #%d - initialization...", name, connID)
 
 	d := DNSTapProcessor{
 		ConnID:         connID,
+		PeerName:       peerName,
 		doneMonitor:    make(chan bool),
 		doneRun:        make(chan bool),
 		stopMonitor:    make(chan bool),
@@ -130,6 +141,7 @@ func (d *DNSTapProcessor) Stop() {
 
 func (d *DNSTapProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
 	dt := &dnstap.Dnstap{}
+    d.LogInfo(dt.String())
 	edt := &dnsutils.ExtendedDnstap{}
 
 	// prepare next channels
@@ -170,6 +182,7 @@ RUN_LOOP:
 			// init dns message
 			dm := dnsutils.DNSMessage{}
 			dm.Init()
+			dm.DNSTap.PeerName = d.PeerName
 
 			// init dns message with additionnals parts
 			transforms.InitDNSMessageFormat(&dm)
