@@ -38,6 +38,8 @@ var (
 	ReducerDirectives         = regexp.MustCompile(`^reducer-*`)
 	MachineLearningDirectives = regexp.MustCompile(`^ml-*`)
 	FilteringDirectives       = regexp.MustCompile(`^filtering-*`)
+	// RawTextDirective       = regexp.MustCompile(`^ *\{.*\}`)
+	RawTextDirective       = regexp.MustCompile(`^ *\{.*`)
 )
 
 func GetIPPort(dm *DNSMessage) (string, int, string, int) {
@@ -147,6 +149,7 @@ type DNSTap struct {
 	PolicyMatch      string  `json:"policy-match" msgpack:"policy-match"`
 	PolicyAction     string  `json:"policy-action" msgpack:"policy-action"`
 	PolicyValue      string  `json:"policy-value" msgpack:"policy-value"`
+	PeerName         string  `json:"peer-name" msgpack:"peer-name"`
 }
 
 type PowerDNS struct {
@@ -264,6 +267,7 @@ func (dm *DNSMessage) Init() {
 		PolicyMatch:      "-",
 		PolicyAction:     "-",
 		PolicyValue:      "-",
+		PeerName:         "-",
 	}
 
 	dm.DNS = DNS{
@@ -561,6 +565,10 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 
 	for i, word := range format {
 		directives := strings.SplitN(word, ":", 2)
+		if RawTextDirective.MatchString(word) {
+			directives[0]=word
+		}
+		// fmt.Printf("ToTextLine: directive >%v<\n",directives[0])
 		switch directive := directives[0]; {
 		// default directives
 		case directive == "ttl":
@@ -601,6 +609,8 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 		case directive == "localtime":
 			ts := time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec))
 			s.WriteString(ts.Format("2006-01-02 15:04:05.999999999"))
+		case directive == "peer-name":
+			s.WriteString(dm.DNSTap.PeerName)
 		case directive == "identity":
 			s.WriteString(dm.DNSTap.Identity)
 		case directive == "version":
@@ -641,12 +651,16 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			if len(dm.DNS.Qname) == 0 {
 				s.WriteString(".")
 			} else {
-				if strings.Contains(dm.DNS.Qname, fieldDelimiter) {
-					qname := dm.DNS.Qname
-					if strings.Contains(qname, fieldBoundary) {
-						qname = strings.ReplaceAll(qname, fieldBoundary, "\\"+fieldBoundary)
+				if len(fieldDelimiter) > 0 {
+					if strings.Contains(dm.DNS.Qname, fieldDelimiter) {
+						qname := dm.DNS.Qname
+						if strings.Contains(qname, fieldBoundary) {
+							qname = strings.ReplaceAll(qname, fieldBoundary, "\\"+fieldBoundary)
+						}
+						s.WriteString(fmt.Sprintf(fieldBoundary+"%s"+fieldBoundary, qname))
+					} else {
+						s.WriteString(dm.DNS.Qname)
 					}
-					s.WriteString(fmt.Sprintf(fieldBoundary+"%s"+fieldBoundary, qname))
 				} else {
 					s.WriteString(dm.DNS.Qname)
 				}
@@ -744,14 +758,20 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			if err != nil {
 				return nil, err
 			}
-
-		// error unsupport directive for text format
+		case RawTextDirective.MatchString(directive):
+			// fmt.Printf("directive (%v) is RawTextDirective\n", directive)
+			// error unsupport directive for text format
+			directive = strings.Replace(directive, "{", "", -1)
+			directive = strings.Replace(directive, "}", "", -1)
+			s.WriteString(directive)
 		default:
 			return nil, errors.New(ErrorUnexpectedDirective + word)
 		}
 
 		if i < len(format)-1 {
-			s.WriteString(fieldDelimiter)
+			if len(fieldDelimiter) > 0 {
+				s.WriteString(fieldDelimiter)
+			}
 		}
 	}
 
