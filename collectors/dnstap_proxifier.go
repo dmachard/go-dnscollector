@@ -133,8 +133,12 @@ func (c *DnstapProxifier) HandleConn(conn net.Conn) {
 
 	// process incoming frame and send it to recv channel
 	err := fs.ProcessFrame(recvChan)
-	if err != nil && !c.stopping {
-		c.LogError("transport error: %s", err)
+	// if err != nil && !c.stopping {
+	// 	c.LogError("transport error: %s", err)
+	if err != nil {
+		if !c.stopping {
+			c.LogError("transport error: %s", err)
+		}
 	}
 
 	close(recvChan)
