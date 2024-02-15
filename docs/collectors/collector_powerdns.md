@@ -38,6 +38,7 @@ If you logs your DNS traffic in basic text format, you can use the specific dire
 - `powerdns-applied-policy-trigger`: get applied policy trigger
 - `powerdns-applied-policy-type`: get applied policy type
 - `powerdns-metadata[:KEY]`: get  all metadata separated by comma or specific one if a valid [KEY](https://dnsdist.org/rules-actions.html#RemoteLogAction) is provided
+- `powerdns-http-version`: http version used with DoH queries
 
 Configuration example:
 
@@ -64,7 +65,8 @@ If you logs your DNS traffic in JSON output, the following part will be added in
     "metadata": {
         "agent":"Go-http-client/1.1",
         "selected_pool":"pool_internet"
-    }
+    },
+    "http-version": "HTTP3"
   }
 ```
 

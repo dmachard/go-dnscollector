@@ -243,6 +243,11 @@ RUN_LOOP:
 			}
 			pdns.Metadata = metas
 
+			// get http protocol version
+			if pbdm.GetSocketProtocol().String() == "DOH" {
+				pdns.HttpVersion = pbdm.GetHttpVersion().String()
+			}
+
 			// finally set pdns to dns message
 			dm.PowerDNS = &pdns
 
