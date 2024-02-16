@@ -326,7 +326,7 @@ func TestDnsMessage_Json_Collectors_Reference(t *testing.T) {
 							"metadata": {
 								"stream_id": "collector"
 							},
-							"http-version": "HTTP3"
+							"http-version": "http3"
 						}
 					}`,
 		},
