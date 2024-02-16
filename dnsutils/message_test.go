@@ -311,7 +311,7 @@ func TestDnsMessage_Json_Collectors_Reference(t *testing.T) {
 				AppliedPolicyType:     "type",
 				Tags:                  []string{"tag1"},
 				Metadata:              map[string]string{"stream_id": "collector"},
-				HttpVersion:           "http3",
+				HTTPVersion:           "http3",
 			}},
 
 			jsonRef: `{
@@ -828,7 +828,7 @@ func TestDnsMessage_TextFormat_Directives_Pdns(t *testing.T) {
 		{
 			name:     "http_version",
 			format:   "powerdns-http-version",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{HttpVersion: "HTTP2"}},
+			dm:       DNSMessage{PowerDNS: &PowerDNS{HTTPVersion: "HTTP2"}},
 			expected: "HTTP2",
 		},
 	}

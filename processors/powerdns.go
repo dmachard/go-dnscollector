@@ -245,7 +245,7 @@ RUN_LOOP:
 
 			// get http protocol version
 			if pbdm.GetSocketProtocol().String() == "DOH" {
-				pdns.HttpVersion = pbdm.GetHttpVersion().String()
+				pdns.HTTPVersion = pbdm.GetHttpVersion().String()
 			}
 
 			// finally set pdns to dns message

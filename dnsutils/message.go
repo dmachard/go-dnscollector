@@ -159,7 +159,7 @@ type PowerDNS struct {
 	AppliedPolicyTrigger  string            `json:"applied-policy-trigger" msgpack:"applied-policy-trigger"`
 	AppliedPolicyType     string            `json:"applied-policy-type" msgpack:"applied-policy-type"`
 	Metadata              map[string]string `json:"metadata" msgpack:"metadata"`
-	HttpVersion           string            `json:"http-version" msgpack:"http-version"`
+	HTTPVersion           string            `json:"http-version" msgpack:"http-version"`
 }
 
 type TransformDNSGeo struct {
@@ -411,8 +411,8 @@ func (dm *DNSMessage) handlePdnsDirectives(directives []string, s *strings.Build
 				}
 			}
 		case directive == "powerdns-http-version":
-			if len(dm.PowerDNS.HttpVersion) > 0 {
-				s.WriteString(dm.PowerDNS.HttpVersion)
+			if len(dm.PowerDNS.HTTPVersion) > 0 {
+				s.WriteString(dm.PowerDNS.HTTPVersion)
 			} else {
 				s.WriteString("-")
 			}
