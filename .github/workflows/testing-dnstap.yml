@@ -166,3 +166,47 @@ jobs:
         sudo python3 -m pip install dnstap_pb fstrm dnspython
         sudo python3 -m pip install --upgrade protobuf
         sudo -E python3 -m unittest tests.dnsquery_${{ matrix.mode }} -v
+
+  dnsdist_doq:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      matrix:
+        go-version: [ '1.21' ]
+        dnsdist: [ '19' ]
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+    - uses: actions/setup-python@v5
+      with:
+        python-version: 3.12
+
+    - name: build binary
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+
+    - name: download q
+      run: |
+        wget -o q.tar.gz https://github.com/natesales/q/releases/download/v0.19.2/q_0.19.2_linux_amd64.tar.gz
+        tar xvf q.tar.gz
+
+    - name: Generate certificate
+      run: |
+        openssl rand -base64 48 > passphrase.txt
+        openssl genrsa -aes128 -passout file:passphrase.txt -out server.key 2048
+        openssl req -new -passin file:passphrase.txt -key server.key -out server.csr -subj "/C=FR/O=krkr/OU=Domain Control Validated/CN=*.krkr.io"
+        openssl rsa -in server.key -passin file:passphrase.txt -out dnscollector.key
+        openssl x509 -req -days 36500 -in server.csr -signkey dnscollector.key -out dnscollector.crt
+        mv dnscollector.key ./testsdata/
+        mv dnscollector.crt ./testsdata/
+
+    - name: Deploy dnsdist docker image
+      run: |
+        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/testsdata/powerdns/dnsdist_doqdoh.conf:/etc/dnsdist/conf.d/dnsdist.conf:z --volume=$PWD/testsdata/dnscollector.key:/etc/dnsdist/key.pem:z --volume=$PWD/testsdata/dnscollector.crt:/etc/dnsdist/cert.pem:z powerdns/dnsdist-${{ matrix.dnsdist }}
+        until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
+
+    - name: Tests
+      run: |
+        sudo python3 -m unittest tests.dnsquery_dnstapdoq -v

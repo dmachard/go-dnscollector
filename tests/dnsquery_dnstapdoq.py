@@ -21,7 +21,7 @@ class CollectorProc(asyncio.SubprocessProtocol):
             self.is_ready.set_result(True)
 
         if not self.is_clientresponse.done():
-            if b"CLIENT_RESPONSE NOERROR" in data:
+            if b" DOQ " in data:
                 self.is_clientresponse.set_result(True)
                 self.kill()
 
@@ -51,31 +51,22 @@ class DoQClient(asyncio.SubprocessProtocol):
             self.proc.kill()
         except ProcessLookupError: pass
 
-class TestBench(unittest.TestCase):
+class TestDnstap(unittest.TestCase):
     def setUp(self):
         self.loop = asyncio.get_event_loop()
 
     def test_stdout_recv(self):
-        """benchmark"""
+        """test to receive dnstap DOQ response in stdou"""
         async def run():
             # run collector
             is_ready = asyncio.Future()
             is_clientresponse = asyncio.Future()
-            args = ( "./go-dnscollector", "-config", "./testsdata/config_stdout_dnstap_doq.yml",)
+            args = ( "./go-dnscollector", "-config", "./testsdata/config_stdout_dnstaptcp.yml",)
             transport_collector, protocol_collector =  await self.loop.subprocess_exec(lambda: CollectorProc(is_ready, is_clientresponse),
                                                                                        *args, stdout=asyncio.subprocess.PIPE)
 
-            # wait if is listening
-            try:
-                await asyncio.wait_for(is_ready, timeout=1.5)
-            except asyncio.TimeoutError:
-                protocol_collector.kill()
-                self.fail("collector listening timeout")
-            
-
-            nb_packets = [10]
-            for nb in nb_packets:
-                # start gen
+            # make doq resolution
+            for i in range(10):
                 is_existed = asyncio.Future()
                 args = ( "./q", "www.github.com", "A", "@quic://127.0.0.1:853", "--tls-insecure-skip-verify")
                 transport_client, protocol_client =  await self.loop.subprocess_exec(lambda: DoQClient(is_existed), *args, stdout=asyncio.subprocess.PIPE)
@@ -83,6 +74,32 @@ class TestBench(unittest.TestCase):
 
                 protocol_client.kill()
                 transport_client.close()
+
+            # waiting for connection between collector and dns server is ok
+            try:
+                await asyncio.wait_for(is_ready, timeout=5.0)
+            except asyncio.TimeoutError:
+                protocol_collector.kill()
+                transport_collector.close()
+                self.fail("collector framestream timeout")
+
+            # make again doq resolution
+            for i in range(10):
+                is_existed = asyncio.Future()
+                args = ( "./q", "www.github.com", "A", "@quic://127.0.0.1:853", "--tls-insecure-skip-verify")
+                transport_client, protocol_client =  await self.loop.subprocess_exec(lambda: DoQClient(is_existed), *args, stdout=asyncio.subprocess.PIPE)
+                await is_existed
+
+                protocol_client.kill()
+                transport_client.close()
+
+            # wait client response on collector
+            try:
+                await asyncio.wait_for(is_clientresponse, timeout=30.0)
+            except asyncio.TimeoutError:
+                protocol_collector.kill()
+                transport_collector.close()
+                self.fail("dnstap client response expected")
 
             # Shutdown all
             protocol_collector.kill()
