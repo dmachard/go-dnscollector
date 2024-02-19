@@ -79,8 +79,8 @@ func Test_FluentdClient(t *testing.T) {
 				fullBuffer = append(fullBuffer, buf[:n]...)
 			}
 
+			// code msgpack
 			msgpr := msgp.NewReader(bytes.NewReader(fullBuffer[:bytesSize]))
-
 			for {
 				sz, err := msgpr.ReadArrayHeader()
 				if err != nil {
