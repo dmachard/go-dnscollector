@@ -66,88 +66,88 @@ func GetIPPort(dm *DNSMessage) (string, int, string, int) {
 }
 
 type DNSAnswer struct {
-	Name      string `json:"name" msgpack:"name"`
-	Rdatatype string `json:"rdatatype" msgpack:"rdatatype"`
-	Class     int    `json:"-" msgpack:"-"`
-	TTL       int    `json:"ttl" msgpack:"ttl"`
-	Rdata     string `json:"rdata" msgpack:"rdata"`
+	Name      string `json:"name"`
+	Rdatatype string `json:"rdatatype"`
+	Class     int    `json:"-"`
+	TTL       int    `json:"ttl"`
+	Rdata     string `json:"rdata"`
 }
 
 type DNSFlags struct {
-	QR bool `json:"qr" msgpack:"qr"`
-	TC bool `json:"tc" msgpack:"tc"`
-	AA bool `json:"aa" msgpack:"aa"`
-	RA bool `json:"ra" msgpack:"ra"`
-	AD bool `json:"ad" msgpack:"ad"`
-	RD bool `json:"rd" msgpack:"rd"`
-	CD bool `json:"cd" msgpack:"cd"`
+	QR bool `json:"qr"`
+	TC bool `json:"tc"`
+	AA bool `json:"aa"`
+	RA bool `json:"ra"`
+	AD bool `json:"ad"`
+	RD bool `json:"rd"`
+	CD bool `json:"cd"`
 }
 
 type DNSNetInfo struct {
-	Family         string `json:"family" msgpack:"family"`
-	Protocol       string `json:"protocol" msgpack:"protocol"`
-	QueryIP        string `json:"query-ip" msgpack:"query-ip"`
-	QueryPort      string `json:"query-port" msgpack:"query-port"`
-	ResponseIP     string `json:"response-ip" msgpack:"response-ip"`
-	ResponsePort   string `json:"response-port" msgpack:"response-port"`
-	IPDefragmented bool   `json:"ip-defragmented" msgpack:"ip-defragmented"`
-	TCPReassembled bool   `json:"tcp-reassembled" msgpack:"tcp-reassembled"`
+	Family         string `json:"family"`
+	Protocol       string `json:"protocol"`
+	QueryIP        string `json:"query-ip"`
+	QueryPort      string `json:"query-port"`
+	ResponseIP     string `json:"response-ip"`
+	ResponsePort   string `json:"response-port"`
+	IPDefragmented bool   `json:"ip-defragmented"`
+	TCPReassembled bool   `json:"tcp-reassembled"`
 }
 
 type DNSRRs struct {
-	Answers     []DNSAnswer `json:"an" msgpack:"an"`
-	Nameservers []DNSAnswer `json:"ns" msgpack:"ns"`
-	Records     []DNSAnswer `json:"ar" msgpack:"ar"`
+	Answers     []DNSAnswer `json:"an"`
+	Nameservers []DNSAnswer `json:"ns"`
+	Records     []DNSAnswer `json:"ar"`
 }
 
 type DNS struct {
-	Type    string `json:"-" msgpack:"-"`
-	Payload []byte `json:"-" msgpack:"-"`
-	Length  int    `json:"length" msgpack:"-"`
-	ID      int    `json:"id" msgpack:"id"`
-	Opcode  int    `json:"opcode" msgpack:"opcode"`
-	Rcode   string `json:"rcode" msgpack:"rcode"`
-	Qname   string `json:"qname" msgpack:"qname"`
+	Type    string `json:"-"`
+	Payload []byte `json:"-"`
+	Length  int    `json:"length"`
+	ID      int    `json:"id"`
+	Opcode  int    `json:"opcode"`
+	Rcode   string `json:"rcode"`
+	Qname   string `json:"qname"`
 
-	Qtype           string   `json:"qtype" msgpack:"qtype"`
-	Flags           DNSFlags `json:"flags" msgpack:"flags"`
-	DNSRRs          DNSRRs   `json:"resource-records" msgpack:"resource-records"`
-	MalformedPacket bool     `json:"malformed-packet" msgpack:"malformed-packet"`
+	Qtype           string   `json:"qtype"`
+	Flags           DNSFlags `json:"flags"`
+	DNSRRs          DNSRRs   `json:"resource-records"`
+	MalformedPacket bool     `json:"malformed-packet"`
 }
 
 type DNSOption struct {
-	Code int    `json:"code" msgpack:"code"`
-	Name string `json:"name" msgpack:"name"`
-	Data string `json:"data" msgpack:"data"`
+	Code int    `json:"code"`
+	Name string `json:"name"`
+	Data string `json:"data"`
 }
 
 type DNSExtended struct {
-	UDPSize       int         `json:"udp-size" msgpack:"udp-size"`
-	ExtendedRcode int         `json:"rcode" msgpack:"rcode"`
-	Version       int         `json:"version" msgpack:"version"`
-	Do            int         `json:"dnssec-ok" msgpack:"dnssec-ok"`
-	Z             int         `json:"-" msgpack:"-"`
-	Options       []DNSOption `json:"options" msgpack:"options"`
+	UDPSize       int         `json:"udp-size"`
+	ExtendedRcode int         `json:"rcode"`
+	Version       int         `json:"version"`
+	Do            int         `json:"dnssec-ok"`
+	Z             int         `json:"-"`
+	Options       []DNSOption `json:"options"`
 }
 
 type DNSTap struct {
-	Operation        string  `json:"operation" msgpack:"operation"`
-	Identity         string  `json:"identity" msgpack:"identity"`
-	Version          string  `json:"version" msgpack:"version"`
-	TimestampRFC3339 string  `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
-	Timestamp        int64   `json:"-" msgpack:"-"`
-	TimeSec          int     `json:"-" msgpack:"-"`
-	TimeNsec         int     `json:"-" msgpack:"-"`
-	Latency          float64 `json:"-" msgpack:"-"`
-	LatencySec       string  `json:"latency" msgpack:"latency"`
-	Payload          []byte  `json:"-" msgpack:"-"`
-	Extra            string  `json:"extra" msgpack:"extra"`
-	PolicyRule       string  `json:"policy-rule" msgpack:"policy-rule"`
-	PolicyType       string  `json:"policy-type" msgpack:"policy-type"`
-	PolicyMatch      string  `json:"policy-match" msgpack:"policy-match"`
-	PolicyAction     string  `json:"policy-action" msgpack:"policy-action"`
-	PolicyValue      string  `json:"policy-value" msgpack:"policy-value"`
-	PeerName         string  `json:"peer-name" msgpack:"peer-name"`
+	Operation        string  `json:"operation"`
+	Identity         string  `json:"identity"`
+	Version          string  `json:"version"`
+	TimestampRFC3339 string  `json:"timestamp-rfc3339ns"`
+	Timestamp        int64   `json:"-"`
+	TimeSec          int     `json:"-"`
+	TimeNsec         int     `json:"-"`
+	Latency          float64 `json:"-"`
+	LatencySec       string  `json:"latency"`
+	Payload          []byte  `json:"-"`
+	Extra            string  `json:"extra"`
+	PolicyRule       string  `json:"policy-rule"`
+	PolicyType       string  `json:"policy-type"`
+	PolicyMatch      string  `json:"policy-match"`
+	PolicyAction     string  `json:"policy-action"`
+	PolicyValue      string  `json:"policy-value"`
+	PeerName         string  `json:"peer-name"`
 }
 
 type PowerDNS struct {
@@ -159,7 +159,7 @@ type PowerDNS struct {
 	AppliedPolicyTrigger  string            `json:"applied-policy-trigger"`
 	AppliedPolicyType     string            `json:"applied-policy-type"`
 	Metadata              map[string]string `json:"metadata"`
-	HTTPVersion           string            `json:"http-version" msgpack:"http-version"`
+	HTTPVersion           string            `json:"http-version"`
 }
 
 type TransformDNSGeo struct {
