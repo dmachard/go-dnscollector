@@ -3,6 +3,7 @@ module github.com/dmachard/go-dnscollector
 go 1.21
 
 require (
+	github.com/IBM/fluent-forward-go v0.2.2
 	github.com/Shopify/sarama v1.38.1
 	github.com/cilium/ebpf v0.12.3
 	github.com/dmachard/go-clientsyslog v0.3.0
@@ -31,7 +32,7 @@ require (
 	github.com/rs/tzsp v0.0.0-20161230003637-8ce729c826b9
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.8.4
-	github.com/vmihailenco/msgpack v4.0.4+incompatible
+	github.com/vmihailenco/msgpack/v5 v5.4.1
 	golang.org/x/net v0.20.0
 	golang.org/x/sys v0.16.0
 	google.golang.org/protobuf v1.32.0
@@ -61,6 +62,7 @@ require (
 	github.com/gogo/status v1.1.1 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/grafana/loki/pkg/push v0.0.0-20231211180320-2535f9bedeae // indirect
 	github.com/grafana/regexp v0.0.0-20221122212121-6b5c0a4cb7fd // indirect
 	github.com/hashicorp/consul/api v1.20.0 // indirect
@@ -94,6 +96,7 @@ require (
 	github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e // indirect
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/exporter-toolkit v0.9.1 // indirect
@@ -103,8 +106,10 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/soheilhy/cmux v0.1.5 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/tinylib/msgp v1.1.9 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/weaveworks/promrus v1.2.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
