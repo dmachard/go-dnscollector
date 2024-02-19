@@ -84,7 +84,9 @@ jobs:
         python-version: '3.12'
  
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+      run: |
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 
     - name: Test ${{ matrix.package }}
       run: |
