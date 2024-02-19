@@ -41,6 +41,7 @@ jobs:
 
     - name: build binary
       run: |
+        go mod edit -go=${{ matrix.go-version }}
         go mod tidy 
         CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
@@ -75,6 +76,7 @@ jobs:
 
     - name: build binary
       run: |
+        go mod edit -go=${{ matrix.go-version }}
         go mod tidy 
         CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
@@ -109,6 +111,7 @@ jobs:
 
     - name: build binary
       run: |
+        go mod edit -go=${{ matrix.go-version }}
         go mod tidy 
         CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
@@ -156,6 +159,7 @@ jobs:
 
     - name: build binary
       run: |
+        go mod edit -go=${{ matrix.go-version }}
         go mod tidy 
         CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
@@ -194,6 +198,7 @@ jobs:
 
     - name: build binary
       run: |
+        go mod edit -go=${{ matrix.go-version }}
         go mod tidy 
         CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 

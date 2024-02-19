@@ -112,6 +112,7 @@ jobs:
     - name: build binary
       run: |
         set CGO_ENABLED=0
+        go mod edit -go=${{ matrix.go-version }}
         go mod tidy
         go build -ldflags="-s -w" -o go-dnscollector.exe .
       
