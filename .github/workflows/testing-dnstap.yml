@@ -199,8 +199,8 @@ jobs:
 
     - name: download q
       run: |
-        wget -o q.tar.gz https://github.com/natesales/q/releases/download/v0.19.2/q_0.19.2_linux_amd64.tar.gz
-        tar xvf q.tar.gz
+        wget https://github.com/natesales/q/releases/download/v0.19.2/q_0.19.2_linux_amd64.tar.gz
+        tar xvf q_0.19.2_linux_amd64.tar.gz
 
     - name: Generate certificate
       run: |
