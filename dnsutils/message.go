@@ -151,95 +151,95 @@ type DNSTap struct {
 }
 
 type PowerDNS struct {
-	Tags                  []string          `json:"tags" msgpack:"tags"`
-	OriginalRequestSubnet string            `json:"original-request-subnet" msgpack:"original-request-subnet"`
-	AppliedPolicy         string            `json:"applied-policy" msgpack:"applied-policy"`
-	AppliedPolicyHit      string            `json:"applied-policy-hit" msgpack:"applied-policy-hit"`
-	AppliedPolicyKind     string            `json:"applied-policy-kind" msgpack:"applied-policy-kind"`
-	AppliedPolicyTrigger  string            `json:"applied-policy-trigger" msgpack:"applied-policy-trigger"`
-	AppliedPolicyType     string            `json:"applied-policy-type" msgpack:"applied-policy-type"`
-	Metadata              map[string]string `json:"metadata" msgpack:"metadata"`
+	Tags                  []string          `json:"tags"`
+	OriginalRequestSubnet string            `json:"original-request-subnet"`
+	AppliedPolicy         string            `json:"applied-policy"`
+	AppliedPolicyHit      string            `json:"applied-policy-hit"`
+	AppliedPolicyKind     string            `json:"applied-policy-kind"`
+	AppliedPolicyTrigger  string            `json:"applied-policy-trigger"`
+	AppliedPolicyType     string            `json:"applied-policy-type"`
+	Metadata              map[string]string `json:"metadata"`
 	HTTPVersion           string            `json:"http-version" msgpack:"http-version"`
 }
 
 type TransformDNSGeo struct {
-	City                   string `json:"city" msgpack:"city"`
-	Continent              string `json:"continent" msgpack:"continent"`
-	CountryIsoCode         string `json:"country-isocode" msgpack:"country-isocode"`
-	AutonomousSystemNumber string `json:"as-number" msgpack:"as-number"`
-	AutonomousSystemOrg    string `json:"as-owner" msgpack:"as-owner"`
+	City                   string `json:"city"`
+	Continent              string `json:"continent"`
+	CountryIsoCode         string `json:"country-isocode"`
+	AutonomousSystemNumber string `json:"as-number"`
+	AutonomousSystemOrg    string `json:"as-owner"`
 }
 
 type TransformSuspicious struct {
-	Score                 float64 `json:"score" msgpack:"score"`
-	MalformedPacket       bool    `json:"malformed-pkt" msgpack:"malformed-pkt"`
-	LargePacket           bool    `json:"large-pkt" msgpack:"large-pkt"`
-	LongDomain            bool    `json:"long-domain" msgpack:"long-domain"`
-	SlowDomain            bool    `json:"slow-domain" msgpack:"slow-domain"`
-	UnallowedChars        bool    `json:"unallowed-chars" msgpack:"unallowed-chars"`
-	UncommonQtypes        bool    `json:"uncommon-qtypes" msgpack:"uncommon-qtypes"`
-	ExcessiveNumberLabels bool    `json:"excessive-number-labels" msgpack:"excessive-number-labels"`
-	Domain                string  `json:"domain,omitempty" msgpack:"-"`
+	Score                 float64 `json:"score"`
+	MalformedPacket       bool    `json:"malformed-pkt"`
+	LargePacket           bool    `json:"large-pkt"`
+	LongDomain            bool    `json:"long-domain"`
+	SlowDomain            bool    `json:"slow-domain"`
+	UnallowedChars        bool    `json:"unallowed-chars"`
+	UncommonQtypes        bool    `json:"uncommon-qtypes"`
+	ExcessiveNumberLabels bool    `json:"excessive-number-labels"`
+	Domain                string  `json:"domain,omitempty"`
 }
 
 type TransformPublicSuffix struct {
-	QnamePublicSuffix        string `json:"tld" msgpack:"qname-public-suffix"`
-	QnameEffectiveTLDPlusOne string `json:"etld+1" msgpack:"qname-effective-tld-plus-one"`
+	QnamePublicSuffix        string `json:"tld"`
+	QnameEffectiveTLDPlusOne string `json:"etld+1"`
 }
 
 type TransformExtracted struct {
-	Base64Payload []byte `json:"dns_payload" msgpack:"dns_payload"`
+	Base64Payload []byte `json:"dns_payload"`
 }
 
 type TransformReducer struct {
-	Occurrences      int `json:"occurrences" msgpack:"occurrences"`
-	CumulativeLength int `json:"cumulative-length" msgpack:"cumulative-length"`
+	Occurrences      int `json:"occurrences"`
+	CumulativeLength int `json:"cumulative-length"`
 }
 
 type TransformFiltering struct {
-	SampleRate int `json:"sample-rate" msgpack:"sample-rate"`
+	SampleRate int `json:"sample-rate"`
 }
 
 type TransformML struct {
-	Entropy               float64 `json:"entropy" msgpack:"entropy"`   // Entropy of query name
-	Length                int     `json:"length" msgpack:"length"`     // Length of domain
-	Labels                int     `json:"labels" msgpack:"labels"`     // Number of labels in the query name  separated by dots
-	Digits                int     `json:"digits" msgpack:"digits"`     // Count of numerical characters
-	Lowers                int     `json:"lowers" msgpack:"lowers"`     // Count of lowercase characters
-	Uppers                int     `json:"uppers" msgpack:"uppers"`     // Count of uppercase characters
-	Specials              int     `json:"specials" msgpack:"specials"` // Number of special characters; special characters such as dash, underscore, equal sign,...
-	Others                int     `json:"others" msgpack:"others"`
-	RatioDigits           float64 `json:"ratio-digits" msgpack:"ratio-digits"`
-	RatioLetters          float64 `json:"ratio-letters" msgpack:"ratio-letters"`
-	RatioSpecials         float64 `json:"ratio-specials" msgpack:"ratio-specials"`
-	RatioOthers           float64 `json:"ratio-others" msgpack:"ratio-others"`
-	ConsecutiveChars      int     `json:"consecutive-chars" msgpack:"consecutive-chars"`
-	ConsecutiveVowels     int     `json:"consecutive-vowels" msgpack:"consecutive-vowels"`
-	ConsecutiveDigits     int     `json:"consecutive-digits" msgpack:"consecutive-digits"`
-	ConsecutiveConsonants int     `json:"consecutive-consonants" msgpack:"consecutive-consonants"`
-	Size                  int     `json:"size" msgpack:"size"`
-	Occurrences           int     `json:"occurrences" msgpack:"occurrences"`
-	UncommonQtypes        int     `json:"uncommon-qtypes" msgpack:"uncommon-qtypes"`
+	Entropy               float64 `json:"entropy"`  // Entropy of query name
+	Length                int     `json:"length"`   // Length of domain
+	Labels                int     `json:"labels"`   // Number of labels in the query name  separated by dots
+	Digits                int     `json:"digits"`   // Count of numerical characters
+	Lowers                int     `json:"lowers"`   // Count of lowercase characters
+	Uppers                int     `json:"uppers"`   // Count of uppercase characters
+	Specials              int     `json:"specials"` // Number of special characters; special characters such as dash, underscore, equal sign,...
+	Others                int     `json:"others"`
+	RatioDigits           float64 `json:"ratio-digits"`
+	RatioLetters          float64 `json:"ratio-letters"`
+	RatioSpecials         float64 `json:"ratio-specials"`
+	RatioOthers           float64 `json:"ratio-others"`
+	ConsecutiveChars      int     `json:"consecutive-chars"`
+	ConsecutiveVowels     int     `json:"consecutive-vowels"`
+	ConsecutiveDigits     int     `json:"consecutive-digits"`
+	ConsecutiveConsonants int     `json:"consecutive-consonants"`
+	Size                  int     `json:"size"`
+	Occurrences           int     `json:"occurrences"`
+	UncommonQtypes        int     `json:"uncommon-qtypes"`
 }
 
 type TransformATags struct {
-	Tags []string `json:"tags" msgpack:"tags"`
+	Tags []string `json:"tags"`
 }
 
 type DNSMessage struct {
-	NetworkInfo     DNSNetInfo             `json:"network" msgpack:"network"`
-	DNS             DNS                    `json:"dns" msgpack:"dns"`
-	EDNS            DNSExtended            `json:"edns" msgpack:"edns"`
-	DNSTap          DNSTap                 `json:"dnstap" msgpack:"dnstap"`
-	Geo             *TransformDNSGeo       `json:"geoip,omitempty" msgpack:"geo"`
-	PowerDNS        *PowerDNS              `json:"powerdns,omitempty" msgpack:"powerdns"`
-	Suspicious      *TransformSuspicious   `json:"suspicious,omitempty" msgpack:"suspicious"`
-	PublicSuffix    *TransformPublicSuffix `json:"publicsuffix,omitempty" msgpack:"publicsuffix"`
-	Extracted       *TransformExtracted    `json:"extracted,omitempty" msgpack:"extracted"`
-	Reducer         *TransformReducer      `json:"reducer,omitempty" msgpack:"reducer"`
-	MachineLearning *TransformML           `json:"ml,omitempty" msgpack:"ml"`
-	Filtering       *TransformFiltering    `json:"filtering,omitempty" msgpack:"filtering"`
-	ATags           *TransformATags        `json:"atags,omitempty" msgpack:"atags"`
+	NetworkInfo     DNSNetInfo             `json:"network"`
+	DNS             DNS                    `json:"dns"`
+	EDNS            DNSExtended            `json:"edns"`
+	DNSTap          DNSTap                 `json:"dnstap"`
+	Geo             *TransformDNSGeo       `json:"geoip,omitempty"`
+	PowerDNS        *PowerDNS              `json:"powerdns,omitempty"`
+	Suspicious      *TransformSuspicious   `json:"suspicious,omitempty"`
+	PublicSuffix    *TransformPublicSuffix `json:"publicsuffix,omitempty"`
+	Extracted       *TransformExtracted    `json:"extracted,omitempty"`
+	Reducer         *TransformReducer      `json:"reducer,omitempty"`
+	MachineLearning *TransformML           `json:"ml,omitempty"`
+	Filtering       *TransformFiltering    `json:"filtering,omitempty"`
+	ATags           *TransformATags        `json:"atags,omitempty"`
 }
 
 func (dm *DNSMessage) Init() {
