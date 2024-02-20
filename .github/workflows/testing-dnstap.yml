@@ -211,7 +211,7 @@ jobs:
       run: |
         openssl genrsa 2048 > ca.key
         openssl req -days 365 -new -x509 -nodes -key ca.key -out ca.crt -config <(echo -e "[ req ]\nprompt = no\ndistinguished_name = req_distinguished_name\n[ req_distinguished_name ]\ncountryName = LU\nstateOrProvinceName = Space\nlocalityName = Moon\norganizationName = Github\norganizationalUnitName = Lab\ncommonName = dnscollector.dev\nemailAddress = admin@dnscollector.dev")
-        echo -e "[ req ]\nprompt = no\ndi.1")stinguished_name = req_distinguished_name\nreq_extensions = req_ext\n[ req_distinguished_name ]\ncountryName = LU\nstateOrProvinceName = Space\nlocalityName = Moon\norganizationName = Github\norganizationalUnitName = DNScollector\ncommonName = dnscollector.dev\nemailAddress = admin@dnscollector.dev\n[ req_ext ]\nsubjectAltName = DNS: dnscollector.dev, IP: 127.0.0.1" > server.conf
+        echo -e "[ req ]\nprompt = no\ndistinguished_name = req_distinguished_name\nreq_extensions = req_ext\n[ req_distinguished_name ]\ncountryName = LU\nstateOrProvinceName = Space\nlocalityName = Moon\norganizationName = Github\norganizationalUnitName = DNScollector\ncommonName = dnscollector.dev\nemailAddress = admin@dnscollector.dev\n[ req_ext ]\nsubjectAltName = DNS: dnscollector.dev, IP: 127.0.0.1" > server.conf
         openssl req -newkey rsa:2048 -nodes -keyout server.key -out server.csr --config server.conf 
         openssl x509 -req -days 365 -in server.csr -out server.crt -CA ca.crt -CAkey ca.key -extensions req_ext -extfile server.conf
 
