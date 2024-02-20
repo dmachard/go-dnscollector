@@ -84,7 +84,10 @@ jobs:
         python-version: '3.12'
  
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 
     - name: Test ${{ matrix.package }}
       run: |
@@ -106,7 +109,10 @@ jobs:
         go-version: ${{ matrix.go-version }}
  
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }} 
+        go mod tidy
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: run collector
       run: ./go-dnscollector -config ./testsdata/config_prom.yml &
