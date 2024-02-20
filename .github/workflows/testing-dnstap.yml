@@ -214,11 +214,12 @@ jobs:
         echo -e "[ req ]\nprompt = no\ndistinguished_name = req_distinguished_name\nreq_extensions = req_ext\n[ req_distinguished_name ]\ncountryName = LU\nstateOrProvinceName = Space\nlocalityName = Moon\norganizationName = Github\norganizationalUnitName = DNScollector\ncommonName = dnscollector.dev\nemailAddress = admin@dnscollector.dev\n[ req_ext ]\nsubjectAltName = DNS: dnscollector.dev, IP: 127.0.0.1" > server.conf
         openssl req -newkey rsa:2048 -nodes -keyout server.key -out server.csr --config server.conf 
         openssl x509 -req -days 365 -in server.csr -out server.crt -CA ca.crt -CAkey ca.key -extensions req_ext -extfile server.conf
-
+        chmod 644 server.key
+        
     - name: Deploy dnsdist docker image
       run: |
         ls -alrt
-        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/testsdata/powerdns/dnsdist_doqdoh.conf:/etc/dnsdist/conf.d/dnsdist.conf:z --volume=$PWD/server.key:/etc/dnsdist/conf.d/key.pem:z --volume=$PWD/server.crt:/etc/dnsdist/conf.d/cert.pem:z powerdns/dnsdist-${{ matrix.dnsdist }}
+        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/testsdata/powerdns/dnsdist_doqdoh.conf:/etc/dnsdist/conf.d/dnsdist.conf:z --volume=$PWD/server.key:/etc/dnsdist/conf.d/server.key:z --volume=$PWD/server.crt:/etc/dnsdist/conf.d/server.crt:z powerdns/dnsdist-${{ matrix.dnsdist }}
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Tests
