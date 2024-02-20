@@ -68,7 +68,7 @@ class TestDnstap(unittest.TestCase):
             # make doq resolution
             for i in range(10):
                 is_existed = asyncio.Future()
-                args = ( "./q", "www.github.com", "A", "@quic://127.0.0.1:8853", "--tls-insecure-skip-verify")
+                args = ( "./q", "www.github.com", "A", "@quic://127.0.0.1:5853", "--tls-insecure-skip-verify")
                 transport_client, protocol_client =  await self.loop.subprocess_exec(lambda: DoQClient(is_existed), *args, stdout=asyncio.subprocess.PIPE)
                 await is_existed
 
@@ -86,7 +86,7 @@ class TestDnstap(unittest.TestCase):
             # make again doq resolution
             for i in range(10):
                 is_existed = asyncio.Future()
-                args = ( "./q", "www.github.com", "A", "@quic://127.0.0.1:853", "--tls-insecure-skip-verify")
+                args = ( "./q", "www.github.com", "A", "@quic://127.0.0.1:5853", "--tls-insecure-skip-verify")
                 transport_client, protocol_client =  await self.loop.subprocess_exec(lambda: DoQClient(is_existed), *args, stdout=asyncio.subprocess.PIPE)
                 await is_existed
 
