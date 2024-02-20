@@ -218,7 +218,6 @@ jobs:
 
     - name: Deploy dnsdist docker image
       run: |
-        ls -alrt
         sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/testsdata/powerdns/dnsdist_doqdoh.conf:/etc/dnsdist/conf.d/dnsdist.conf:z --volume=$PWD/server.key:/etc/dnsdist/conf.d/server.key:z --volume=$PWD/server.crt:/etc/dnsdist/conf.d/server.crt:z powerdns/dnsdist-${{ matrix.dnsdist }}
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
