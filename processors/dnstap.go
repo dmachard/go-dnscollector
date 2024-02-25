@@ -314,6 +314,7 @@ RUN_LOOP:
 				dm.DNSTap.PolicyValue = policyValue
 			}
 
+			// decode query zone if provided
 			queryZone := dt.GetMessage().GetQueryZone()
 			if len(queryZone) > 0 {
 				qz, _, err := dnsutils.ParseLabels(0, queryZone)
@@ -328,20 +329,25 @@ RUN_LOOP:
 			dm.DNSTap.Timestamp = ts.UnixNano()
 			dm.DNSTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
-			if !d.config.Collectors.Dnstap.DisableDNSParser {
+			// decode payload if provided
+			if !d.config.Collectors.Dnstap.DisableDNSParser && len(dm.DNS.Payload) > 0 {
 				// decode the dns payload to get id, rcode and the number of question
 				// number of answer, ignore invalid packet
 				dnsHeader, err := dnsutils.DecodeDNS(dm.DNS.Payload)
 				if err != nil {
-					// parser error
 					dm.DNS.MalformedPacket = true
-					d.LogInfo("dns parser malformed packet: %s", err)
+					d.LogInfo("dns header parser stopped: %s", err)
+					if d.config.Global.Trace.LogMalformed {
+						d.LogError("%v", dm)
+						d.LogError("dump invalid dns headr: %v", dm.DNS.Payload)
+					}
 				}
 
 				if err = dnsutils.DecodePayload(&dm, &dnsHeader, d.config); err != nil {
-					// decoding error
+					dm.DNS.MalformedPacket = true
+					d.LogInfo("dns payload parser stopped: %s", err)
 					if d.config.Global.Trace.LogMalformed {
-						d.LogError("%v - %v", err, dm)
+						d.LogError("%v", dm)
 						d.LogError("dump invalid dns payload: %v", dm.DNS.Payload)
 					}
 				}

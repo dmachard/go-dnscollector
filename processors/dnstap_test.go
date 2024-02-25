@@ -54,13 +54,9 @@ func Test_DnstapProcessor(t *testing.T) {
 }
 
 func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
-	logger := logger.New(true)
-	var o bytes.Buffer
-	logger.SetOutput(&o)
-
 	// init the dnstap consumer
+	logger := logger.New(false)
 	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), logger, "test", 512)
-	// chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
@@ -81,7 +77,6 @@ func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
 	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
-	// go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 
@@ -93,13 +88,9 @@ func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
 }
 
 func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
-	logger := logger.New(true)
-	var o bytes.Buffer
-	logger.SetOutput(&o)
-
 	// init the dnstap consumer
+	logger := logger.New(false)
 	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), logger, "test", 512)
-	// chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dns query
 	dnsquestion := []byte{88, 27, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 15, 100, 110, 115, 116, 97, 112,
@@ -119,7 +110,6 @@ func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
-	// go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 
@@ -131,13 +121,9 @@ func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 }
 
 func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
-	logger := logger.New(true)
-	var o bytes.Buffer
-	logger.SetOutput(&o)
-
 	// init the dnstap consumer
+	logger := logger.New(false)
 	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), logger, "test", 512)
-	// chanTo := make(chan dnsutils.DNSMessage, 512)
 
 	// prepare dns query
 	dnsanswer := []byte{46, 172, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 15, 100, 110, 115, 116, 97, 112, 99, 111, 108, 108, 101, 99, 116,
@@ -158,7 +144,6 @@ func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 	fl := pkgutils.NewFakeLogger()
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
-	// go consumer.Run([]chan dnsutils.DNSMessage{chanTo}, []string{"test"})
 	// add packet to consumer
 	consumer.GetChannel() <- data
 
@@ -169,15 +154,40 @@ func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 	}
 }
 
-func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
-	logger := logger.New(true)
-	var o bytes.Buffer
-	logger.SetOutput(&o)
+func Test_DnstapProcessor_EmptyDnsPayload(t *testing.T) {
+	// init the dnstap consumer
+	logger := logger.New(false)
+	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), logger, "test", 512)
 
+	// prepare dnstap
+	dt := &dnstap.Dnstap{}
+	dt.Type = dnstap.Dnstap_Type.Enum(1)
+
+	dt.Message = &dnstap.Message{}
+	dt.Message.Type = dnstap.Message_Type.Enum(5)
+
+	data, _ := proto.Marshal(dt)
+
+	// run the consumer with a fake logger
+	fl := pkgutils.NewFakeLogger()
+	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+
+	// add packet to consumer
+	consumer.GetChannel() <- data
+
+	// read dns message from dnstap consumer
+	dm := <-fl.GetInputChannel()
+	if dm.DNS.MalformedPacket == true {
+		t.Errorf("malformed packet detected, should not with empty payload")
+	}
+}
+
+func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
 	// init the dnstap consumer
 	cfg := pkgconfig.GetFakeConfig()
 	cfg.Collectors.Dnstap.DisableDNSParser = true
 
+	logger := logger.New(false)
 	consumer := NewDNSTapProcessor(0, "peertest", cfg, logger, "test", 512)
 
 	// prepare dns query
