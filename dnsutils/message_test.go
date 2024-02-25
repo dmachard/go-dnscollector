@@ -263,7 +263,7 @@ func TestDnsMessage_JsonFlatten_Reference(t *testing.T) {
 					"dnstap.policy-match": "-",
 					"dnstap.policy-value": "-",
 					"dnstap.peer-name": "-",
-					"dnstap.query-zone: "-",
+					"dnstap.query-zone": "-",
 					"edns.dnssec-ok": 0,
 					"edns.options": [],
 					"edns.rcode": 0,
