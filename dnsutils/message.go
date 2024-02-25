@@ -811,7 +811,7 @@ func (dm *DNSMessage) ToDNSTap(extended bool) ([]byte, error) {
 	if dm.NetworkInfo.ResponsePort != "-" {
 		if port, err := strconv.Atoi(dm.NetworkInfo.ResponsePort); err != nil {
 			return nil, err
-		} else if port < 0 || port > math.MaxUint32 {
+		} else if port < 0 || port > 65535 {
 			return nil, errors.New("invalid response port value")
 		} else {
 			rport = uint32(port)
@@ -821,7 +821,7 @@ func (dm *DNSMessage) ToDNSTap(extended bool) ([]byte, error) {
 	if dm.NetworkInfo.QueryPort != "-" {
 		if port, err := strconv.Atoi(dm.NetworkInfo.QueryPort); err != nil {
 			return nil, err
-		} else if port < 0 || port > math.MaxUint32 {
+		} else if port < 0 || port > 65535 {
 			return nil, errors.New("invalid query port value")
 		} else {
 			qport = uint32(port)
