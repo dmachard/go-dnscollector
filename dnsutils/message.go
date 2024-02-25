@@ -148,6 +148,7 @@ type DNSTap struct {
 	PolicyAction     string  `json:"policy-action"`
 	PolicyValue      string  `json:"policy-value"`
 	PeerName         string  `json:"peer-name"`
+	QueryZone        string  `json:"query-zone"`
 }
 
 type PowerDNS struct {
@@ -267,6 +268,7 @@ func (dm *DNSMessage) Init() {
 		PolicyAction:     "-",
 		PolicyValue:      "-",
 		PeerName:         "-",
+		QueryZone:        "-",
 	}
 
 	dm.DNS = DNS{

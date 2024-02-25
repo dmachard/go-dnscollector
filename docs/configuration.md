@@ -76,6 +76,7 @@ Default directives:
 - `policy-action`: dnstap policy action
 - `policy-match`: dnstap policy match
 - `policy-value`: dnstap policy value
+- `query-zone`: dnstap query zone
 - `opcode`: dns opcode (integer)
 - `rcode`: dns return code
 - `queryip`: dns query ip

@@ -205,7 +205,8 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 				  "policy-match": "-",
 				  "policy-value": "-",
 				  "policy-rule": "-",
-				  "peer-name": "-"
+				  "peer-name": "-",
+				  "query-zone": "-"
 				}
 			}
 			`
@@ -262,6 +263,7 @@ func TestDnsMessage_JsonFlatten_Reference(t *testing.T) {
 					"dnstap.policy-match": "-",
 					"dnstap.policy-value": "-",
 					"dnstap.peer-name": "-",
+					"dnstap.query-zone: "-",
 					"edns.dnssec-ok": 0,
 					"edns.options": [],
 					"edns.rcode": 0,
@@ -598,6 +600,11 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 			format:   "peer-name",
 			dm:       DNSMessage{DNSTap: DNSTap{PeerName: "testpeer"}},
 			expected: "testpeer",
+		},
+		{
+			format:   "query-zone",
+			dm:       DNSMessage{DNSTap: DNSTap{QueryZone: "queryzone.test"}},
+			expected: "queryzone.test",
 		},
 	}
 
