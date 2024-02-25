@@ -314,6 +314,15 @@ RUN_LOOP:
 				dm.DNSTap.PolicyValue = policyValue
 			}
 
+			queryZone := dt.GetMessage().GetQueryZone()
+			if len(queryZone) > 0 {
+				qz, _, err := dnsutils.ParseLabels(0, queryZone)
+				if err != nil {
+					d.LogError("invalid query zone: %v - %v", err, queryZone)
+				}
+				dm.DNSTap.QueryZone = qz
+			}
+
 			// compute timestamp
 			ts := time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec))
 			dm.DNSTap.Timestamp = ts.UnixNano()

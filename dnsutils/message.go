@@ -148,6 +148,7 @@ type DNSTap struct {
 	PolicyAction     string  `json:"policy-action"`
 	PolicyValue      string  `json:"policy-value"`
 	PeerName         string  `json:"peer-name"`
+	QueryZone        string  `json:"query-zone"`
 }
 
 type PowerDNS struct {
@@ -267,6 +268,7 @@ func (dm *DNSMessage) Init() {
 		PolicyAction:     "-",
 		PolicyValue:      "-",
 		PeerName:         "-",
+		QueryZone:        "-",
 	}
 
 	dm.DNS = DNS{
@@ -628,6 +630,8 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			s.WriteString(dm.DNSTap.PolicyMatch)
 		case directive == "policy-value":
 			s.WriteString(dm.DNSTap.PolicyValue)
+		case directive == "query-zone":
+			s.WriteString(dm.DNSTap.QueryZone)
 		case directive == "operation":
 			s.WriteString(dm.DNSTap.Operation)
 		case directive == "rcode":

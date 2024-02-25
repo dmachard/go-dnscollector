@@ -82,6 +82,7 @@ Example:
     "policy-action": "-",
     "policy-match": "-",
     "policy-value": "-",
+    "query-zone": "-",
   }
 }
 ```
@@ -125,6 +126,7 @@ Using flat-json requires more processing on the host running go-dnscollector but
   "dnstap.policy-action": "-",
   "dnstap.policy-match": "-",
   "dnstap.policy-value": "-",
+  "dnstap.query-zone": "-",
   "edns.dnssec-ok": 0,
   "edns.options.0.code": 10,
   "edns.options.0.data": "-",

@@ -1,8 +1,8 @@
 <p align="center">
 <img src="https://goreportcard.com/badge/github.com/dmachard/go-dns-collector" alt="Go Report"/>
 <img src="https://img.shields.io/badge/go%20version-min%201.20-green" alt="Go version"/>
-<img src="https://img.shields.io/badge/go%20tests-414-green" alt="Go tests"/>
-<img src="https://img.shields.io/badge/go%20lines-38159-green" alt="Go lines"/>
+<img src="https://img.shields.io/badge/go%20tests-417-green" alt="Go tests"/>
+<img src="https://img.shields.io/badge/go%20lines-38329-green" alt="Go lines"/>
 </p>
 
 <p align="center">
@@ -50,7 +50,7 @@
     - [`Stdout`](docs/loggers/logger_stdout.md) console in text or binary output
     - [`File`](docs/loggers/logger_file.md) with automatic rotation and compression
   - *Provide metrics and API*
-    - [`Prometheus`](docs/loggers/logger_prometheus.md) metrics
+    - [`Prometheus`](docs/loggers/logger_prometheus.md) exporter
     - [`Statsd`](docs/loggers/logger_statsd.md) support
     - [`REST API`](docs/loggers/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/docs/swagger.yml) to search DNS domains
   - *Send to remote host with generic transport protocol*
