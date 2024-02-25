@@ -127,3 +127,12 @@ jobs:
     - name: Build the Docker image
       run: |
         docker build --build-arg VERSION=dev . --file Dockerfile -t go-dnscollector
+
+  docker32b:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build the Docker image
+      run: |
+        docker build --build-arg VERSION=dev . --platform linux/386 --file Dockerfile -t go-dnscollector
