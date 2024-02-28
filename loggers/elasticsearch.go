@@ -182,12 +182,17 @@ func (ec *ElasticSearchClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
-	_, err := client.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		ec.LogError(err.Error())
 	}
+	defer resp.Body.Close()
 
-	*buf = nil
+	// Close the buffer to release its resources
+	buffer.Reset()
+
+	// Empty the slice to release memory of its elements
+	*buf = (*buf)[:0]
 }
 
 func (ec *ElasticSearchClient) Process() {
