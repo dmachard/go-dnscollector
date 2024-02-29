@@ -9,13 +9,14 @@ multiplexer:
       dnstap:
         listen-ip: 0.0.0.0
         listen-port: 6000
+        chan-buffer-size: 2048
   loggers:
     - name: elastic
       elasticsearch:
         server: "http://127.0.0.1:9200/"
         index:  "dnscollector"
         chan-buffer-size: 2048
-        bulk-size: 1048576
+        bulk-size: 6291456
         flush-interval: 10
 
   routes:

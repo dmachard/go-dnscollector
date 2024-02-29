@@ -1,17 +1,20 @@
 
-# Start elastic and kibana
+# DNS-collector with Elastic and Kibana
 
-```bash
-sudo docker compose up -d
-```
+- Copy folder [./docs/_integration/elasticsearch] and start the docker stack:
 
-Go to kibana web interface through `http://127.0.0.1:5601`
+    ```bash
+    sudo docker compose up -d
+    ```
 
-Click on `Explore on my own` and `Discover`
-Finally create index pattern `dnscollector` and choose `dnstap.timestamp-rfc33939ns`
+- Go to kibana web interface through `http://127.0.0.1:5601`
 
-Run DNScollector from source:
+- Click on `Explore on my own` and `Discover`
 
-```bash
-go run . -config docs/_integration/elasticsearch/config.yml
-```
+- Finally create index pattern `dnscollector` and choose `dnstap.timestamp-rfc33939ns`
+
+- Run DNScollector from source:
+
+    ```bash
+    go run . -config docs/_integration/elasticsearch/config.yml
+    ```

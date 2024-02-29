@@ -217,7 +217,7 @@ PROCESS_LOOP:
 
 			// Send data and reset buffer
 			if buffer.Len() >= ec.config.Loggers.ElasticSearchClient.BulkSize {
-				ec.send(buffer.Bytes())
+				go ec.send(buffer.Bytes())
 				buffer.Reset()
 			}
 
@@ -225,7 +225,7 @@ PROCESS_LOOP:
 		case <-flushTimer.C:
 			// Send data and reset buffer
 			if buffer.Len() > 0 {
-				ec.send(buffer.Bytes())
+				go ec.send(buffer.Bytes())
 				buffer.Reset()
 			}
 
