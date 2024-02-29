@@ -551,7 +551,8 @@ multiplexer:
 #   # interval in second before to flush the buffer
 #   flush-interval: 30
 
-# # elasticsearch backend, basic support
+# # ElasticSearch logger
+# # DNSMessage are exported with flat-json format
 # elasticsearch:
 #   # remote server url
 #   server: "http://127.0.0.1:9200/"

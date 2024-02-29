@@ -1,0 +1,23 @@
+
+global:
+  trace:
+    verbose: true
+
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+  loggers:
+    - name: elastic
+      elasticsearch:
+        server: "http://127.0.0.1:9200/"
+        index:  "dnscollector"
+        chan-buffer-size: 65535
+        bulk-size: 100
+        flush-interval: 1
+
+  routes:
+    - from: [ tap ]
+      to: [ elastic ]

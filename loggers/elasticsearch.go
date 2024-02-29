@@ -3,6 +3,7 @@ package loggers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"path"
 	"time"
 
@@ -14,6 +15,8 @@ import (
 
 	"net/http"
 	"net/url"
+
+	_ "net/http/pprof"
 )
 
 type ElasticSearchClient struct {
@@ -49,6 +52,11 @@ func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, na
 		RoutingHandler: pkgutils.NewRoutingHandler(config, console, name),
 	}
 	ec.ReadConfig()
+
+	// Server for pprof
+	go func() {
+		fmt.Println(http.ListenAndServe("localhost:9999", nil))
+	}()
 	return ec
 }
 
@@ -164,6 +172,9 @@ RUN_LOOP:
 }
 
 func (ec *ElasticSearchClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
+	//ec.bufferMutex.Lock()
+	//defer ec.bufferMutex.Unlock()
+
 	buffer := new(bytes.Buffer)
 
 	for _, dm := range *buf {
@@ -182,17 +193,19 @@ func (ec *ElasticSearchClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
-	resp, err := client.Do(req)
+	_, err := client.Do(req)
 	if err != nil {
 		ec.LogError(err.Error())
 	}
-	defer resp.Body.Close()
+	//fmt.Println(resp, resp.Body)
+	//defer resp.Body.Close()
 
 	// Close the buffer to release its resources
-	buffer.Reset()
+	//buffer.Reset()
 
 	// Empty the slice to release memory of its elements
-	*buf = (*buf)[:0]
+	//*buf = (*buf)[:0]
+	*buf = nil
 }
 
 func (ec *ElasticSearchClient) Process() {
