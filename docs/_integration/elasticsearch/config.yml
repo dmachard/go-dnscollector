@@ -14,7 +14,7 @@ multiplexer:
       elasticsearch:
         server: "http://127.0.0.1:9200/"
         index:  "dnscollector"
-        chan-buffer-size: 65535
+        chan-buffer-size: 2048
         bulk-size: 1048576
         flush-interval: 10
 

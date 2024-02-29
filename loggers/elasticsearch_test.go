@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
@@ -110,7 +111,7 @@ func Test_ElasticSearchClient_FlushInterval_Exceeded(t *testing.T) {
 			mode:          pkgconfig.ModeFlatJSON,
 			bulkSize:      1048576,
 			inputSize:     50,
-			flushInterval: 1,
+			flushInterval: 5,
 		},
 	}
 
@@ -130,14 +131,18 @@ func Test_ElasticSearchClient_FlushInterval_Exceeded(t *testing.T) {
 			conf.Loggers.ElasticSearchClient.FlushInterval = tc.flushInterval
 			g := NewElasticSearchClient(conf, logger.New(true), "test")
 
+			// run logger
 			go g.Run()
+			time.Sleep(1 * time.Second)
 
+			// send DNSmessage
 			dm := dnsutils.GetFakeDNSMessage()
-
 			for i := 0; i < tc.inputSize; i++ {
 				g.GetInputChannel() <- dm
 			}
-			// accept the connection
+			time.Sleep(6 * time.Second)
+
+			// accept the new connection from logger
 			// the connection should contains all packets
 			conn, err := fakeRcvr.Accept()
 			if err != nil {
@@ -156,7 +161,7 @@ func Test_ElasticSearchClient_FlushInterval_Exceeded(t *testing.T) {
 			// read payload from request body
 			payload, err := io.ReadAll(request.Body)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatal("no body in request:", err)
 			}
 
 			scanner := bufio.NewScanner(strings.NewReader(string(payload)))
@@ -174,6 +179,8 @@ func Test_ElasticSearchClient_FlushInterval_Exceeded(t *testing.T) {
 				}
 				cnt++
 			}
+
+			g.Stop()
 
 		})
 		assert.Equal(t, tc.inputSize, totalDm)

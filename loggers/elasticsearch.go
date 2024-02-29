@@ -31,6 +31,7 @@ type ElasticSearchClient struct {
 	index          string
 	bulkURL        string
 	RoutingHandler pkgutils.RoutingHandler
+	httpClient     *http.Client
 }
 
 func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, name string) *ElasticSearchClient {
@@ -49,6 +50,10 @@ func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, na
 		RoutingHandler: pkgutils.NewRoutingHandler(config, console, name),
 	}
 	ec.ReadConfig()
+
+	ec.httpClient = &http.Client{
+		Timeout: 5 * time.Second,
+	}
 
 	return ec
 }
@@ -168,10 +173,7 @@ func (ec *ElasticSearchClient) send(buf []byte) {
 	post, _ := http.NewRequest("POST", ec.bulkURL, bytes.NewReader(buf))
 	post.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
-	resp, err := client.Do(post)
+	resp, err := ec.httpClient.Do(post)
 	if err != nil {
 		ec.LogError(err.Error())
 	}
@@ -179,9 +181,13 @@ func (ec *ElasticSearchClient) send(buf []byte) {
 		resp.Body.Close()
 	}
 }
+
 func (ec *ElasticSearchClient) Process() {
 	ec.LogInfo("start to process")
+	// buffer
 	buffer := bytes.NewBuffer(nil)
+	// create a new encoder that writes to the buffer
+	encoder := json.NewEncoder(buffer)
 
 	flushInterval := time.Duration(ec.config.Loggers.ElasticSearchClient.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
@@ -207,10 +213,10 @@ PROCESS_LOOP:
 			}
 			buffer.WriteString("{ \"create\" : {}}")
 			buffer.WriteString("\n")
-			json.NewEncoder(buffer).Encode(flat)
+			encoder.Encode(flat)
 
+			// Send data and reset buffer
 			if buffer.Len() >= ec.config.Loggers.ElasticSearchClient.BulkSize {
-				// Send data and reset buffer
 				ec.send(buffer.Bytes())
 				buffer.Reset()
 			}
