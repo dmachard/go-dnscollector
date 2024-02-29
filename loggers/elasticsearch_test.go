@@ -128,7 +128,7 @@ func Test_ElasticSearchClient_FlushInterval_Exceeded(t *testing.T) {
 			conf.Loggers.ElasticSearchClient.Server = "http://127.0.0.1:59200/"
 			conf.Loggers.ElasticSearchClient.BulkSize = tc.bulkSize
 			conf.Loggers.ElasticSearchClient.FlushInterval = tc.flushInterval
-			g := NewElasticSearchClient(conf, logger.New(false), "test")
+			g := NewElasticSearchClient(conf, logger.New(true), "test")
 
 			go g.Run()
 
