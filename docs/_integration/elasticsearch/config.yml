@@ -15,8 +15,8 @@ multiplexer:
         server: "http://127.0.0.1:9200/"
         index:  "dnscollector"
         chan-buffer-size: 65535
-        bulk-size: 100
-        flush-interval: 1
+        bulk-size: 1048576
+        flush-interval: 10
 
   routes:
     - from: [ tap ]

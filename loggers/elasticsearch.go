@@ -3,7 +3,6 @@ package loggers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"path"
 	"time"
 
@@ -15,8 +14,6 @@ import (
 
 	"net/http"
 	"net/url"
-
-	_ "net/http/pprof"
 )
 
 type ElasticSearchClient struct {
@@ -53,10 +50,6 @@ func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, na
 	}
 	ec.ReadConfig()
 
-	// Server for pprof
-	go func() {
-		fmt.Println(http.ListenAndServe("localhost:9999", nil))
-	}()
 	return ec
 }
 
@@ -171,46 +164,24 @@ RUN_LOOP:
 	ec.LogInfo("run terminated")
 }
 
-func (ec *ElasticSearchClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
-	//ec.bufferMutex.Lock()
-	//defer ec.bufferMutex.Unlock()
+func (ec *ElasticSearchClient) send(buf []byte) {
+	post, _ := http.NewRequest("POST", ec.bulkURL, bytes.NewReader(buf))
+	post.Header.Set("Content-Type", "application/json")
 
-	buffer := new(bytes.Buffer)
-
-	for _, dm := range *buf {
-		buffer.WriteString("{ \"create\" : {}}")
-		buffer.WriteString("\n")
-		// encode
-		flat, err := dm.Flatten()
-		if err != nil {
-			ec.LogError("flattening DNS message failed: %e", err)
-		}
-		json.NewEncoder(buffer).Encode(flat)
-	}
-
-	req, _ := http.NewRequest("POST", ec.bulkURL, buffer)
-	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
-	_, err := client.Do(req)
+	resp, err := client.Do(post)
 	if err != nil {
 		ec.LogError(err.Error())
 	}
-	//fmt.Println(resp, resp.Body)
-	//defer resp.Body.Close()
-
-	// Close the buffer to release its resources
-	//buffer.Reset()
-
-	// Empty the slice to release memory of its elements
-	//*buf = (*buf)[:0]
-	*buf = nil
+	if resp != nil {
+		resp.Body.Close()
+	}
 }
-
 func (ec *ElasticSearchClient) Process() {
-	bufferDm := []dnsutils.DNSMessage{}
-	ec.LogInfo("ready to process")
+	ec.LogInfo("start to process")
+	buffer := bytes.NewBuffer(nil)
 
 	flushInterval := time.Duration(ec.config.Loggers.ElasticSearchClient.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
@@ -230,16 +201,26 @@ PROCESS_LOOP:
 			}
 
 			// append dns message to buffer
-			bufferDm = append(bufferDm, dm)
-
-			// buffer is full ?
-			if len(bufferDm) >= ec.config.Loggers.ElasticSearchClient.BulkSize {
-				ec.FlushBuffer(&bufferDm)
+			flat, err := dm.Flatten()
+			if err != nil {
+				ec.LogError("flattening DNS message failed: %e", err)
 			}
-			// flush the buffer
+			buffer.WriteString("{ \"create\" : {}}")
+			buffer.WriteString("\n")
+			json.NewEncoder(buffer).Encode(flat)
+
+			if buffer.Len() >= ec.config.Loggers.ElasticSearchClient.BulkSize {
+				// Send data and reset buffer
+				ec.send(buffer.Bytes())
+				buffer.Reset()
+			}
+
+		// flush the buffer every ?
 		case <-flushTimer.C:
-			if len(bufferDm) > 0 {
-				ec.FlushBuffer(&bufferDm)
+			// Send data and reset buffer
+			if buffer.Len() > 0 {
+				ec.send(buffer.Bytes())
+				buffer.Reset()
 			}
 
 			// restart timer
