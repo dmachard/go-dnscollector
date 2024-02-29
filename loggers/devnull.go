@@ -59,11 +59,11 @@ func (so *DevNull) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (so *DevNull) LogInfo(msg string, v ...interface{}) {
-	so.logger.Info(pkgutils.PrefixLogLogger+"["+so.name+"] stdout - "+msg, v...)
+	so.logger.Info(pkgutils.PrefixLogLogger+"["+so.name+"] devnull - "+msg, v...)
 }
 
 func (so *DevNull) LogError(msg string, v ...interface{}) {
-	so.logger.Error(pkgutils.PrefixLogLogger+"["+so.name+"] stdout - "+msg, v...)
+	so.logger.Error(pkgutils.PrefixLogLogger+"["+so.name+"] devnull - "+msg, v...)
 }
 
 func (so *DevNull) GetInputChannel() chan dnsutils.DNSMessage {
