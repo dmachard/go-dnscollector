@@ -559,7 +559,7 @@ multiplexer:
 #   # Elasticsearch index for ingestion
 #   index:  "dnscollector"
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
-#   chan-buffer-size: 2048
+#   chan-buffer-size: 4096
 #   # Size of batches sent to ES via _bulk in bytes, default to 1MB
 #   bulk-size: 1048576
 #   # interval in seconds before to flush the buffer

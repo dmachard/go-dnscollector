@@ -499,7 +499,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.ElasticSearchClient.Enable = false
 	c.ElasticSearchClient.Server = "http://127.0.0.1:9200/"
 	c.ElasticSearchClient.Index = "dnscollector"
-	c.ElasticSearchClient.ChannelBufferSize = 2048
+	c.ElasticSearchClient.ChannelBufferSize = 4096
 	c.ElasticSearchClient.BulkSize = 1048576
 	c.ElasticSearchClient.FlushInterval = 10
 

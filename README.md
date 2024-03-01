@@ -112,6 +112,10 @@ The [`_integration`](./docs/_integration) folder contains configuration file and
 
 - [Elasticsearch](./docs/_integration/elasticsearch/README.md)
 
+## Performance
+
+Tuning may be neccesary to deal with a large traffic loads. Please refer to the [perforamnce tuning](./docs/performance.md) guide if needed.
+
 ## Contributing
 
 See the [development guide](./docs/development.md) for more information on how to build it yourself.
