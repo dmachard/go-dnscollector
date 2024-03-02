@@ -1036,7 +1036,7 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 	return pkt, nil
 }
 
-func (dm *DNSMessage) Flatten() (ret map[string]interface{}, err error) {
+func (dm *DNSMessage) FlattenV0() (ret map[string]interface{}, err error) {
 	// TODO perhaps panic when flattening fails, as it should always work.
 	var tmp []byte
 	if tmp, err = json.Marshal(dm); err != nil {
@@ -1045,6 +1045,66 @@ func (dm *DNSMessage) Flatten() (ret map[string]interface{}, err error) {
 	json.Unmarshal(tmp, &ret)
 	ret, err = flat.Flatten(ret, nil)
 	return
+}
+
+func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
+	flatMap := map[string]interface{}{
+		"dns.flags.aa":               dm.DNS.Flags.AA,
+		"dns.flags.ad":               dm.DNS.Flags.AD,
+		"dns.flags.qr":               dm.DNS.Flags.QR,
+		"dns.flags.ra":               dm.DNS.Flags.RA,
+		"dns.flags.tc":               dm.DNS.Flags.TC,
+		"dns.flags.rd":               dm.DNS.Flags.RD,
+		"dns.flags.cd":               dm.DNS.Flags.CD,
+		"dns.length":                 dm.DNS.Length,
+		"dns.malformed-packet":       dm.DNS.MalformedPacket,
+		"dns.id":                     dm.DNS.ID,
+		"dns.opcode":                 dm.DNS.Opcode,
+		"dns.qname":                  dm.DNS.Qname,
+		"dns.qtype":                  dm.DNS.Qtype,
+		"dns.rcode":                  dm.DNS.Rcode,
+		"dnstap.identity":            dm.DNSTap.Identity,
+		"dnstap.latency":             dm.DNSTap.LatencySec,
+		"dnstap.operation":           dm.DNSTap.Operation,
+		"dnstap.timestamp-rfc3339ns": dm.DNSTap.TimestampRFC3339,
+		"dnstap.version":             dm.DNSTap.Version,
+		"dnstap.extra":               dm.DNSTap.Extra,
+		"dnstap.policy-rule":         dm.DNSTap.PolicyRule,
+		"dnstap.policy-type":         dm.DNSTap.PolicyType,
+		"dnstap.policy-action":       dm.DNSTap.PolicyAction,
+		"dnstap.policy-match":        dm.DNSTap.PolicyMatch,
+		"dnstap.policy-value":        dm.DNSTap.PolicyValue,
+		"dnstap.peer-name":           dm.DNSTap.PeerName,
+		"dnstap.query-zone":          dm.DNSTap.QueryZone,
+		"edns.dnssec-ok":             dm.EDNS.Do,
+		"edns.rcode":                 dm.EDNS.ExtendedRcode,
+		"edns.udp-size":              dm.EDNS.UDPSize,
+		"edns.version":               dm.EDNS.Version,
+		"network.family":             dm.NetworkInfo.Family,
+		"network.ip-defragmented":    dm.NetworkInfo.IPDefragmented,
+		"network.protocol":           dm.NetworkInfo.Protocol,
+		"network.query-ip":           dm.NetworkInfo.QueryIP,
+		"network.query-port":         dm.NetworkInfo.QueryPort,
+		"network.response-ip":        dm.NetworkInfo.ResponseIP,
+		"network.response-port":      dm.NetworkInfo.ResponsePort,
+		"network.tcp-reassembled":    dm.NetworkInfo.TCPReassembled,
+	}
+
+	// check slice
+	if len(dm.DNS.DNSRRs.Answers) == 0 {
+		flatMap["dns.resource-records.an"] = "-"
+	}
+	if len(dm.DNS.DNSRRs.Records) == 0 {
+		flatMap["dns.resource-records.ar"] = "-"
+	}
+	if len(dm.DNS.DNSRRs.Nameservers) == 0 {
+		flatMap["dns.resource-records.ns"] = "-"
+	}
+	if len(dm.EDNS.Options) == 0 {
+		flatMap["edns.options"] = "-"
+	}
+
+	return flatMap, nil
 }
 
 func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
