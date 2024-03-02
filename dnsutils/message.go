@@ -21,7 +21,6 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/miekg/dns"
-	"github.com/nqd/flat"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -1036,19 +1035,8 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 	return pkt, nil
 }
 
-func (dm *DNSMessage) FlattenV0() (ret map[string]interface{}, err error) {
-	// TODO perhaps panic when flattening fails, as it should always work.
-	var tmp []byte
-	if tmp, err = json.Marshal(dm); err != nil {
-		return
-	}
-	json.Unmarshal(tmp, &ret)
-	ret, err = flat.Flatten(ret, nil)
-	return
-}
-
 func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
-	flatMap := map[string]interface{}{
+	dnsFields := map[string]interface{}{
 		"dns.flags.aa":               dm.DNS.Flags.AA,
 		"dns.flags.ad":               dm.DNS.Flags.AD,
 		"dns.flags.qr":               dm.DNS.Flags.QR,
@@ -1090,21 +1078,145 @@ func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
 		"network.tcp-reassembled":    dm.NetworkInfo.TCPReassembled,
 	}
 
-	// check slice
+	// Add empty slices
 	if len(dm.DNS.DNSRRs.Answers) == 0 {
-		flatMap["dns.resource-records.an"] = "-"
+		dnsFields["dns.resource-records.an"] = "-"
 	}
 	if len(dm.DNS.DNSRRs.Records) == 0 {
-		flatMap["dns.resource-records.ar"] = "-"
+		dnsFields["dns.resource-records.ar"] = "-"
 	}
 	if len(dm.DNS.DNSRRs.Nameservers) == 0 {
-		flatMap["dns.resource-records.ns"] = "-"
+		dnsFields["dns.resource-records.ns"] = "-"
 	}
 	if len(dm.EDNS.Options) == 0 {
-		flatMap["edns.options"] = "-"
+		dnsFields["edns.options"] = "-"
 	}
 
-	return flatMap, nil
+	// Add DNSAnswer fields: "dns.resource-records.an.0.name": "google.nl",
+	for i, an := range dm.DNS.DNSRRs.Answers {
+		dnsFields[fmt.Sprintf("dns.resource-records.an.%d.name", i)] = an.Name
+		dnsFields[fmt.Sprintf("dns.resource-records.an.%d.rdata", i)] = an.Rdata
+		dnsFields[fmt.Sprintf("dns.resource-records.an.%d.rdatatype", i)] = an.Rdatatype
+		dnsFields[fmt.Sprintf("dns.resource-records.an.%d.ttl", i)] = an.TTL
+	}
+	for i, ns := range dm.DNS.DNSRRs.Nameservers {
+		dnsFields[fmt.Sprintf("dns.resource-records.ns.%d.name", i)] = ns.Name
+		dnsFields[fmt.Sprintf("dns.resource-records.ns.%d.rdata", i)] = ns.Rdata
+		dnsFields[fmt.Sprintf("dns.resource-records.ns.%d.rdatatype", i)] = ns.Rdatatype
+		dnsFields[fmt.Sprintf("dns.resource-records.ns.%d.ttl", i)] = ns.TTL
+	}
+	for i, ar := range dm.DNS.DNSRRs.Records {
+		dnsFields[fmt.Sprintf("dns.resource-records.ar.%d.name", i)] = ar.Name
+		dnsFields[fmt.Sprintf("dns.resource-records.ar.%d.rdata", i)] = ar.Rdata
+		dnsFields[fmt.Sprintf("dns.resource-records.ar.%d.rdatatype", i)] = ar.Rdatatype
+		dnsFields[fmt.Sprintf("dns.resource-records.ar.%d.ttl", i)] = ar.TTL
+	}
+
+	// Add EDNSoptions fields: "edns.options.0.code": 10,
+	for i, opt := range dm.EDNS.Options {
+		dnsFields[fmt.Sprintf("edns.options.%d.code", i)] = opt.Code
+		dnsFields[fmt.Sprintf("edns.options.%d.data", i)] = opt.Data
+		dnsFields[fmt.Sprintf("edns.options.%d.name", i)] = opt.Name
+	}
+
+	// Add TransformDNSGeo fields
+	if dm.Geo != nil {
+		dnsFields["geoip.city"] = dm.Geo.City
+		dnsFields["geoip.continent"] = dm.Geo.Continent
+		dnsFields["geoip.country-isocode"] = dm.Geo.CountryIsoCode
+		dnsFields["geoip.as-number"] = dm.Geo.AutonomousSystemNumber
+		dnsFields["geoip.as-owner"] = dm.Geo.AutonomousSystemOrg
+	}
+
+	// Add TransformSuspicious fields
+	if dm.Suspicious != nil {
+		dnsFields["suspicious.score"] = dm.Suspicious.Score
+		dnsFields["suspicious.malformed-pkt"] = dm.Suspicious.MalformedPacket
+		dnsFields["suspicious.large-pkt"] = dm.Suspicious.LargePacket
+		dnsFields["suspicious.long-domain"] = dm.Suspicious.LongDomain
+		dnsFields["suspicious.slow-domain"] = dm.Suspicious.SlowDomain
+		dnsFields["suspicious.unallowed-chars"] = dm.Suspicious.UnallowedChars
+		dnsFields["suspicious.uncommon-qtypes"] = dm.Suspicious.UncommonQtypes
+		dnsFields["suspicious.excessive-number-labels"] = dm.Suspicious.ExcessiveNumberLabels
+		dnsFields["suspicious.domain"] = dm.Suspicious.Domain
+	}
+
+	// Add TransformPublicSuffix fields
+	if dm.PublicSuffix != nil {
+		dnsFields["publicsuffix.tld"] = dm.PublicSuffix.QnamePublicSuffix
+		dnsFields["publicsuffix.etld+1"] = dm.PublicSuffix.QnameEffectiveTLDPlusOne
+	}
+
+	// Add TransformExtracted fields
+	if dm.Extracted != nil {
+		dnsFields["extracted.dns_payload"] = dm.Extracted.Base64Payload
+	}
+
+	// Add TransformReducer fields
+	if dm.Reducer != nil {
+		dnsFields["reducer.occurrences"] = dm.Reducer.Occurrences
+		dnsFields["reducer.cumulative-length"] = dm.Reducer.CumulativeLength
+	}
+
+	// Add TransformFiltering fields
+	if dm.Filtering != nil {
+		dnsFields["filtering.sample-rate"] = dm.Filtering.SampleRate
+	}
+
+	// Add TransformML fields
+	if dm.MachineLearning != nil {
+		dnsFields["ml.entropy"] = dm.MachineLearning.Entropy
+		dnsFields["ml.length"] = dm.MachineLearning.Length
+		dnsFields["ml.labels"] = dm.MachineLearning.Labels
+		dnsFields["ml.digits"] = dm.MachineLearning.Digits
+		dnsFields["ml.lowers"] = dm.MachineLearning.Lowers
+		dnsFields["ml.uppers"] = dm.MachineLearning.Uppers
+		dnsFields["ml.specials"] = dm.MachineLearning.Specials
+		dnsFields["ml.others"] = dm.MachineLearning.Others
+		dnsFields["ml.ratio-digits"] = dm.MachineLearning.RatioDigits
+		dnsFields["ml.ratio-letters"] = dm.MachineLearning.RatioLetters
+		dnsFields["ml.ratio-specials"] = dm.MachineLearning.RatioSpecials
+		dnsFields["ml.ratio-others"] = dm.MachineLearning.RatioOthers
+		dnsFields["ml.consecutive-chars"] = dm.MachineLearning.ConsecutiveChars
+		dnsFields["ml.consecutive-vowels"] = dm.MachineLearning.ConsecutiveVowels
+		dnsFields["ml.consecutive-digits"] = dm.MachineLearning.ConsecutiveDigits
+		dnsFields["ml.consecutive-consonants"] = dm.MachineLearning.ConsecutiveConsonants
+		dnsFields["ml.size"] = dm.MachineLearning.Size
+		dnsFields["ml.occurrences"] = dm.MachineLearning.Occurrences
+		dnsFields["ml.uncommon-qtypes"] = dm.MachineLearning.UncommonQtypes
+	}
+
+	// Add TransformATags fields
+	if dm.ATags != nil {
+		if len(dm.ATags.Tags) == 0 {
+			dnsFields["atags.tags"] = "-"
+		}
+		for i, tag := range dm.ATags.Tags {
+			dnsFields[fmt.Sprintf("atags.tags.%d", i)] = tag
+		}
+	}
+
+	// Add PowerDNS collectors fields
+	if dm.PowerDNS != nil {
+		if len(dm.PowerDNS.Tags) == 0 {
+			dnsFields["powerdns.tags"] = "-"
+		}
+		for i, tag := range dm.PowerDNS.Tags {
+			dnsFields[fmt.Sprintf("powerdns.tags.%d", i)] = tag
+		}
+		dnsFields["powerdns.original-request-subnet"] = dm.PowerDNS.OriginalRequestSubnet
+		dnsFields["powerdns.applied-policy"] = dm.PowerDNS.AppliedPolicy
+		dnsFields["powerdns.applied-policy-hit"] = dm.PowerDNS.AppliedPolicyHit
+		dnsFields["powerdns.applied-policy-kind"] = dm.PowerDNS.AppliedPolicyKind
+		dnsFields["powerdns.applied-policy-trigger"] = dm.PowerDNS.AppliedPolicyTrigger
+		dnsFields["powerdns.applied-policy-type"] = dm.PowerDNS.AppliedPolicyType
+		for mk, mv := range dm.PowerDNS.Metadata {
+			dnsFields[fmt.Sprintf("powerdns.metadata.%s", mk)] = mv
+		}
+		dnsFields["powerdns.http-version"] = dm.PowerDNS.HTTPVersion
+	}
+
+	return dnsFields, nil
 }
 
 func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
