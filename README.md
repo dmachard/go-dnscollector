@@ -1,8 +1,8 @@
 <p align="center">
 <img src="https://goreportcard.com/badge/github.com/dmachard/go-dns-collector" alt="Go Report"/>
 <img src="https://img.shields.io/badge/go%20version-min%201.20-green" alt="Go version"/>
-<img src="https://img.shields.io/badge/go%20tests-417-green" alt="Go tests"/>
-<img src="https://img.shields.io/badge/go%20lines-38329-green" alt="Go lines"/>
+<img src="https://img.shields.io/badge/go%20tests-429-green" alt="Go tests"/>
+<img src="https://img.shields.io/badge/go%20lines-38661-green" alt="Go lines"/>
 </p>
 
 <p align="center">

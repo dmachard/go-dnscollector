@@ -1,14 +1,14 @@
-# DNS-collector - DNS JSON encoding
+# DNS-collector - JSON encoding
 
-The dns collector enable to transform dns queries or replies in JSON format.
-A JSON format contains dns message with additionnal metadata added by transformers or collectors.
+The `DNS-collector` enables the transformation of DNS queries or replies into `JSON` format.
+The JSON format contains DNS messages with additionnal metadata added by transformers or collectors.
 
-Default JSON payload::
+Main default JSON payload parts:
 
-- `network`:  query/response ip and port, the protocol and family used
-- `dnstap`: message type, arrival packet time, latency.
-- `dns`: dns fields
-- `edns`: extended dns options
+- `network`:  Query/response IP and port, the protocol, and family used.
+- `dnstap`: Message type, arrival packet time, latency.
+- `dns`: DNS fields.
+- `edns`: Extended DNS options.
 
 Example:
 
@@ -87,10 +87,13 @@ Example:
 }
 ```
 
-## Flat JSON export format
+## Flat JSON format (recommended)
 
-Sometimes, a single level key-value output in JSON is easier to ingest than multi-level JSON.
-Using flat-json requires more processing on the host running go-dnscollector but delivers every output field as its own key/value pair. Here's a flat-json output as formatted by `jq`:
+At times, a single level key-value output in JSON is easier to ingest than multi-level JSON structures.
+Utilizing `flat-json` delivers every output field as its own key/value pair but requires more processing
+on the host running DNS-collector.
+
+Here's a flat JSON output formatted using `jq`:
 
 ```json
 {
@@ -112,8 +115,8 @@ Using flat-json requires more processing on the host running go-dnscollector but
   "dns.resource-records.an.0.rdata": "142.251.39.99",
   "dns.resource-records.an.0.rdatatype": "A",
   "dns.resource-records.an.0.ttl": 300,
-  "dns.resource-records.ar": [],
-  "dns.resource-records.ns": [],
+  "dns.resource-records.ar": "-",
+  "dns.resource-records.ns": "-",
   "dnstap.identity": "foo",
   "dnstap.peer-name": "172.16.0.2",
   "dnstap.latency": "0.000000",
