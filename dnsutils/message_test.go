@@ -6,8 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnstap-protobuf"
+	"github.com/miekg/dns"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -58,6 +60,20 @@ func TestDnsMessage_ToDNSTap(t *testing.T) {
 
 	if string(dt.GetExtra()) != dm.DNSTap.Extra {
 		t.Errorf("extra field should be equal got=%s", string(dt.GetExtra()))
+	}
+}
+
+func BenchmarkDnsMessage_ToDNSTap(b *testing.B) {
+	dm := DNSMessage{}
+	dm.Init()
+	dm.InitTransforms()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := dm.ToDNSTap(false)
+		if err != nil {
+			b.Fatalf("could not encode to dnstap: %v\n", err)
+		}
 	}
 }
 
@@ -144,6 +160,20 @@ func TestDnsMessage_ToExtendedDNSTap_TransformGeo(t *testing.T) {
 	}
 	if edt.GetGeo().GetContinent() != "Europe" {
 		t.Errorf("invalid value for continent")
+	}
+}
+
+func BenchmarkDnsMessage_ToExtendedDNSTap(b *testing.B) {
+	dm := DNSMessage{}
+	dm.Init()
+	dm.InitTransforms()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := dm.ToDNSTap(true)
+		if err != nil {
+			b.Fatalf("could not encode to extended dnstap: %v\n", err)
+		}
 	}
 }
 
@@ -375,6 +405,17 @@ func TestDnsMessage_Json_Transforms_Reference(t *testing.T) {
 				t.Errorf("json format different from reference, Get=%s Want=%s", dmMap[tc.transform], refMap[tc.transform])
 			}
 		})
+	}
+}
+
+func BenchmarkDnsMessage_ToJSON(b *testing.B) {
+	dm := DNSMessage{}
+	dm.Init()
+	dm.InitTransforms()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		dm.ToJSON()
 	}
 }
 
@@ -724,7 +765,7 @@ func BenchmarkDnsMessage_ToFlatJSON(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := dm.ToFlatJSON()
 		if err != nil {
-			break
+			b.Fatalf("could not encode to flat json: %v\n", err)
 		}
 	}
 }
@@ -1298,5 +1339,46 @@ func TestDnsMessage_TextFormat_Directives_Filtering(t *testing.T) {
 				t.Errorf("Want: %s, got: %s", tc.expected, line)
 			}
 		})
+	}
+}
+
+func BenchmarkDnsMessage_ToTextFormat(b *testing.B) {
+	dm := DNSMessage{}
+	dm.Init()
+	dm.InitTransforms()
+
+	textFormat := []string{"timestamp-rfc3339ns", "identity",
+		"operation", "rcode", "queryip", "queryport", "family",
+		"protocol", "length-unit", "qname", "qtype", "latency"}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := dm.ToTextLine(textFormat, " ", "\"")
+		if err != nil {
+			b.Fatalf("could not encode to text format: %v\n", err)
+		}
+	}
+}
+
+// Tests for PCAP serialization
+func BenchmarkDnsMessage_ToPacketLayer(b *testing.B) {
+	dm := DNSMessage{}
+	dm.Init()
+	dm.InitTransforms()
+
+	dnsmsg := new(dns.Msg)
+	dnsmsg.SetQuestion("dnscollector.dev.", dns.TypeAAAA)
+	dnsquestion, _ := dnsmsg.Pack()
+
+	dm.NetworkInfo.Family = netlib.ProtoIPv4
+	dm.NetworkInfo.Protocol = netlib.ProtoUDP
+	dm.DNS.Payload = dnsquestion
+	dm.DNS.Length = len(dnsquestion)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := dm.ToPacketLayer()
+		if err != nil {
+			b.Fatalf("could not encode to pcap: %v\n", err)
+		}
 	}
 }

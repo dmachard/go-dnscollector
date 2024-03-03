@@ -90,7 +90,9 @@ Example:
 ## Flat JSON format (recommended)
 
 At times, a single level key-value output in JSON is easier to ingest than multi-level JSON structures.
-Utilizing `flat-json` delivers every output field as its own key/value pair. 
+Utilizing `flat-json` delivers every output field as its own key/value pair but requires more processing
+on the host running DNS-collector.
+
 Here's a flat JSON output formatted using `jq`:
 
 ```json

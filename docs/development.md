@@ -63,6 +63,13 @@ Execute a test for one specific testcase in a package
 go test -timeout 10s -cover -v ./loggers -run Test_SyslogRun
 ```
 
+Run bench
+
+```bash
+cd dnsutils/
+go test -run=^$ -bench=.
+```
+
 ## Update Golang version and package dependencies
 
 Update package dependencies
