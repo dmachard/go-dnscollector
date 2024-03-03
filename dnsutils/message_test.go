@@ -1382,3 +1382,18 @@ func BenchmarkDnsMessage_ToPacketLayer(b *testing.B) {
 		}
 	}
 }
+
+// Others tests
+func BenchmarkDnsMessage_ToFlatten(b *testing.B) {
+	dm := DNSMessage{}
+	dm.Init()
+	dm.InitTransforms()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := dm.Flatten()
+		if err != nil {
+			b.Fatalf("could not flat: %v\n", err)
+		}
+	}
+}
