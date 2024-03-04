@@ -67,7 +67,7 @@ func GetIPPort(dm *DNSMessage) (string, int, string, int) {
 type DNSAnswer struct {
 	Name      string `json:"name"`
 	Rdatatype string `json:"rdatatype"`
-	Class     int    `json:"-"`
+	Class     string `json:"class"`
 	TTL       int    `json:"ttl"`
 	Rdata     string `json:"rdata"`
 }
@@ -107,6 +107,7 @@ type DNS struct {
 	Opcode  int    `json:"opcode"`
 	Rcode   string `json:"rcode"`
 	Qname   string `json:"qname"`
+	Qclass  string `json:"qclass"`
 
 	Qtype           string   `json:"qtype"`
 	Flags           DNSFlags `json:"flags"`
@@ -277,6 +278,7 @@ func (dm *DNSMessage) Init() {
 		Rcode:           "-",
 		Qtype:           "-",
 		Qname:           "-",
+		Qclass:          "-",
 		DNSRRs:          DNSRRs{Answers: []DNSAnswer{}, Nameservers: []DNSAnswer{}, Records: []DNSAnswer{}},
 	}
 
@@ -652,6 +654,8 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			s.WriteString(strconv.Itoa(dm.DNS.Length))
 		case directive == "qtype":
 			s.WriteString(dm.DNS.Qtype)
+		case directive == "qclass":
+			s.WriteString(dm.DNS.Qclass)
 		case directive == "latency":
 			s.WriteString(dm.DNSTap.LatencySec)
 		case directive == "malformed":
@@ -1061,6 +1065,7 @@ func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
 		"dns.opcode":                 dm.DNS.Opcode,
 		"dns.qname":                  dm.DNS.Qname,
 		"dns.qtype":                  dm.DNS.Qtype,
+		"dns.qclass":                 dm.DNS.Qclass,
 		"dns.rcode":                  dm.DNS.Rcode,
 		"dnstap.identity":            dm.DNSTap.Identity,
 		"dnstap.latency":             dm.DNSTap.LatencySec,
@@ -1111,6 +1116,7 @@ func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
 		dnsFields[prefixAn+".rdata"] = an.Rdata
 		dnsFields[prefixAn+".rdatatype"] = an.Rdatatype
 		dnsFields[prefixAn+".ttl"] = an.TTL
+		dnsFields[prefixAn+".class"] = an.Class
 	}
 	for i, ns := range dm.DNS.DNSRRs.Nameservers {
 		prefixNs := "dns.resource-records.ns." + strconv.Itoa(i)
@@ -1118,6 +1124,7 @@ func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
 		dnsFields[prefixNs+".rdata"] = ns.Rdata
 		dnsFields[prefixNs+".rdatatype"] = ns.Rdatatype
 		dnsFields[prefixNs+".ttl"] = ns.TTL
+		dnsFields[prefixNs+".class"] = ns.Class
 	}
 	for i, ar := range dm.DNS.DNSRRs.Records {
 		prefixAr := "dns.resource-records.ar." + strconv.Itoa(i)
@@ -1125,6 +1132,7 @@ func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
 		dnsFields[prefixAr+".rdata"] = ar.Rdata
 		dnsFields[prefixAr+".rdatatype"] = ar.Rdatatype
 		dnsFields[prefixAr+".ttl"] = ar.TTL
+		dnsFields[prefixAr+".class"] = ar.Class
 	}
 
 	// Add EDNSoptions fields: "edns.options.0.code": 10,

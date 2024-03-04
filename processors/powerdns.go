@@ -270,7 +270,7 @@ RUN_LOOP:
 				rr := dnsutils.DNSAnswer{
 					Name:      RRs[j].GetName(),
 					Rdatatype: dnsutils.RdatatypeToString(int(RRs[j].GetType())),
-					Class:     int(RRs[j].GetClass()),
+					Class:     dnsutils.ClassToString(int(RRs[j].GetClass())),
 					TTL:       int(RRs[j].GetTtl()),
 					Rdata:     rdata,
 				}

@@ -2,7 +2,9 @@
 
 The configuration of DNS-collector is done through one yaml file named [`config.yml`](https://github.com/dmachard/go-dnscollector/blob/main/config.yml). When the DNS-collector starts, it will look for the config.yml from the current working directory.
 
-A typically configuration in [multiplexer](./docs/running_mode.md) mode would have one or more collector to receive DNS traffic, and severals loggers to process the incoming traffics. You can take a look to the list of config [`examples`](examples.md).
+A typically configuration in [multiplexer](./running_mode.md) mode would have one or more collector to receive DNS traffic, and severals loggers to process the incoming traffics. You can take a look to the list of config [`examples`](examples.md).
+
+## Global
 
 You can find the global settings below
 
@@ -10,8 +12,6 @@ You can find the global settings below
   - [Trace](#trace)
   - [Custom text format](#custom-text-format)
   - [Server identity](#server-identity)
-
-## Global
 
 ### Trace
 
@@ -88,8 +88,9 @@ Default directives:
 - `protocol`: protocol UDP, TCP
 - `length`: the length of the query or reply in bytes
 - `length-unit`: the length of the query or reply in bytes with unit (`b`)
-- `qtype`: dns qtype
-- `qname`: dns qname
+- `qtype`: dns query type
+- `qclass`: dns query class
+- `qname`: dns query name
 - `latency`: computed latency between queries and replies
 - `answercount`: the number of answer
 - `ttl`: answer ttl, only the first one

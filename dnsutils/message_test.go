@@ -201,6 +201,7 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 				  "rcode": "-",
 				  "qname": "-",
 				  "qtype": "-",
+				  "qclass": "-",
 				  "flags": {
 					"qr": false,
 					"tc": false,
@@ -444,6 +445,7 @@ func TestDnsMessage_JsonFlatten_Reference(t *testing.T) {
 					"dns.qname": "-",
 					"dns.qtype": "-",
 					"dns.rcode": "-",
+					"dns.qclass": "-",
 					"dns.resource-records.an.0.name": "google.nl",
 					"dns.resource-records.an.0.rdata": "142.251.39.99",
 					"dns.resource-records.an.0.rdatatype": "A",
@@ -868,6 +870,11 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 			format:   "qname qtype opcode",
 			dm:       DNSMessage{DNS: DNS{Qname: "dnscollector.fr", Qtype: "AAAA", Opcode: 42}},
 			expected: "dnscollector.fr AAAA 42",
+		},
+		{
+			format:   "qclass",
+			dm:       DNSMessage{DNS: DNS{Qclass: "CH"}},
+			expected: "CH",
 		},
 		{
 			format:   "operation",
