@@ -13,6 +13,23 @@ const (
 	TestQName = "dnstapcollector.test."
 )
 
+// Benchmark
+
+func BenchmarkDnsParseLabels(b *testing.B) {
+	payload := []byte{0x12, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x76, 0x69,
+		0x74, 0x79, 0x2d, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x06,
+		0x75, 0x62, 0x75, 0x6e, 0x74, 0x75, 0x03, 0x63, 0x6f, 0x6d, 0x00,
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _, err := ParseLabels(0, payload)
+		if err != nil {
+			b.Fatalf("could not parse labels: %v\n", err)
+		}
+	}
+}
+
+// Regular tests
 func TestRcodeValid(t *testing.T) {
 	rcode := RcodeToString(0)
 	if rcode != "NOERROR" {

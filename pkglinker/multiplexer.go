@@ -96,6 +96,9 @@ func InitMultiplexer(mapLoggers map[string]pkgutils.Worker, mapCollectors map[st
 		subcfg := GetItemConfig("loggers", config, output)
 
 		// registor the logger if enabled
+		if subcfg.Loggers.DevNull.Enable && IsLoggerRouted(config, output.Name) {
+			mapLoggers[output.Name] = loggers.NewDevNull(subcfg, logger, output.Name)
+		}
 		if subcfg.Loggers.RestAPI.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewRestAPI(subcfg, logger, output.Name)
 		}

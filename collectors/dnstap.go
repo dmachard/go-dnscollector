@@ -104,7 +104,7 @@ func (c *Dnstap) LogInfo(msg string, v ...interface{}) {
 }
 
 func (c *Dnstap) LogError(msg string, v ...interface{}) {
-	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+" dnstap - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] dnstap - "+msg, v...)
 }
 
 func (c *Dnstap) HandleConn(conn net.Conn) {

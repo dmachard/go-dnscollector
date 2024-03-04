@@ -108,6 +108,15 @@ INFO: 2023/12/24 14:43:29.043730 main - config OK!
 
 The [`_examples`](./docs/_examples) folder from documentation contains a number of [various configurations](./docs/examples.md) to get you started with the DNS-collector in different ways.
 
+The [`_integration`](./docs/_integration) folder contains DNS-collector `configuration` files and `docker compose` examples for popular tools:
+
+- [Elasticsearch](./docs/_integration/elasticsearch/README.md)
+
+## Performance
+
+Tuning may be neccesary to deal with a large traffic loads.
+Please refer to the [performance tuning](./docs/performance.md) guide if needed.
+
 ## Contributing
 
 See the [development guide](./docs/development.md) for more information on how to build it yourself.
