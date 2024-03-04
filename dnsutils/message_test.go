@@ -201,6 +201,7 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 				  "rcode": "-",
 				  "qname": "-",
 				  "qtype": "-",
+				  "qclass": "-",
 				  "flags": {
 					"qr": false,
 					"tc": false,
@@ -425,7 +426,7 @@ func TestDnsMessage_JsonFlatten_Reference(t *testing.T) {
 	dm.Init()
 
 	// add some items in slices field
-	dm.DNS.DNSRRs.Answers = append(dm.DNS.DNSRRs.Answers, DNSAnswer{Name: "google.nl", Rdata: "142.251.39.99", Rdatatype: "A", TTL: 300})
+	dm.DNS.DNSRRs.Answers = append(dm.DNS.DNSRRs.Answers, DNSAnswer{Name: "google.nl", Rdata: "142.251.39.99", Rdatatype: "A", TTL: 300, Class: "IN"})
 	dm.EDNS.Options = append(dm.EDNS.Options, DNSOption{Code: 10, Data: "aaaabbbbcccc", Name: "COOKIE"})
 
 	refJSON := `
@@ -444,10 +445,12 @@ func TestDnsMessage_JsonFlatten_Reference(t *testing.T) {
 					"dns.qname": "-",
 					"dns.qtype": "-",
 					"dns.rcode": "-",
+					"dns.qclass": "-",
 					"dns.resource-records.an.0.name": "google.nl",
 					"dns.resource-records.an.0.rdata": "142.251.39.99",
 					"dns.resource-records.an.0.rdatatype": "A",
 					"dns.resource-records.an.0.ttl": 300,
+					"dns.resource-records.an.0.class": "IN",
 					"dns.resource-records.ar": "-",
 					"dns.resource-records.ns": "-",
 					"dnstap.identity": "-",
@@ -868,6 +871,11 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 			format:   "qname qtype opcode",
 			dm:       DNSMessage{DNS: DNS{Qname: "dnscollector.fr", Qtype: "AAAA", Opcode: 42}},
 			expected: "dnscollector.fr AAAA 42",
+		},
+		{
+			format:   "qclass",
+			dm:       DNSMessage{DNS: DNS{Qclass: "CH"}},
+			expected: "CH",
 		},
 		{
 			format:   "operation",

@@ -114,7 +114,7 @@ The [`_integration`](./docs/_integration) folder contains DNS-collector `configu
 
 ## Performance
 
-Tuning may be neccesary to deal with a large traffic loads.
+Tuning may be necessary to deal with a large traffic loads.
 Please refer to the [performance tuning](./docs/performance.md) guide if needed.
 
 ## Contributing

@@ -28,6 +28,7 @@ Example:
     "qname": "eu.org",
     "qtype": "A",
     "id": 23455,
+    "qclass": "IN",
     "flags": {
       "qr": true,
       "tc": false,
@@ -43,7 +44,8 @@ Example:
           "name": "eu.org",
           "rdatatype": "A",
           "ttl": 2797,
-          "rdata": "78.194.169.74"
+          "rdata": "78.194.169.74",
+          "class": "IN"
         }
       ],
       "ns": [],
@@ -111,10 +113,12 @@ Here's a flat JSON output formatted using `jq`:
   "dns.qname": "google.nl",
   "dns.qtype": "A",
   "dns.rcode": "NOERROR",
+  "dns.qclass": "IN",
   "dns.resource-records.an.0.name": "google.nl",
   "dns.resource-records.an.0.rdata": "142.251.39.99",
   "dns.resource-records.an.0.rdatatype": "A",
   "dns.resource-records.an.0.ttl": 300,
+  "dns.resource-records.an.0.class": "IN",
   "dns.resource-records.ar": "-",
   "dns.resource-records.ns": "-",
   "dnstap.identity": "foo",
