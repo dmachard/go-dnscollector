@@ -450,6 +450,7 @@ func TestDnsMessage_JsonFlatten_Reference(t *testing.T) {
 					"dns.resource-records.an.0.rdata": "142.251.39.99",
 					"dns.resource-records.an.0.rdatatype": "A",
 					"dns.resource-records.an.0.ttl": 300,
+					"dns.resource-records.an.0.class": "IN",
 					"dns.resource-records.ar": "-",
 					"dns.resource-records.ns": "-",
 					"dnstap.identity": "-",

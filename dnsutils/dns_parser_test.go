@@ -2056,7 +2056,7 @@ func TestDecodePayload_AnswerError(t *testing.T) {
 	expected := DNSAnswer{
 		Name:      "google.com",
 		Rdatatype: RdatatypeToString(0x0006),
-		Class:     "IN", //0x0001,
+		Class:     "IN", // 0x0001,
 		TTL:       60,
 		Rdata:     "ns1.google.com dns-admin.google.com 430000820 900 900 1800 60",
 	}
