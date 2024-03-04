@@ -426,7 +426,7 @@ func TestDnsMessage_JsonFlatten_Reference(t *testing.T) {
 	dm.Init()
 
 	// add some items in slices field
-	dm.DNS.DNSRRs.Answers = append(dm.DNS.DNSRRs.Answers, DNSAnswer{Name: "google.nl", Rdata: "142.251.39.99", Rdatatype: "A", TTL: 300})
+	dm.DNS.DNSRRs.Answers = append(dm.DNS.DNSRRs.Answers, DNSAnswer{Name: "google.nl", Rdata: "142.251.39.99", Rdatatype: "A", TTL: 300, Class: "IN"})
 	dm.EDNS.Options = append(dm.EDNS.Options, DNSOption{Code: 10, Data: "aaaabbbbcccc", Name: "COOKIE"})
 
 	refJSON := `
