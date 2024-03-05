@@ -264,7 +264,7 @@ func (k *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 }
 
 func (k *KafkaProducer) Run() {
-	k.LogInfo("running in background...")
+	k.LogInfo("waiting dnsmessage to process...")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := k.RoutingHandler.GetDefaultRoutes()
@@ -276,7 +276,7 @@ func (k *KafkaProducer) Run() {
 	subprocessors := transformers.NewTransforms(&k.config.OutgoingTransformers, k.logger, k.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go k.Process()
+	go k.ProcessDM()
 
 	// loop to process incoming messages
 RUN_LOOP:
@@ -320,7 +320,9 @@ RUN_LOOP:
 	k.LogInfo("run terminated")
 }
 
-func (k *KafkaProducer) Process() {
+func (k *KafkaProducer) ProcessDM() {
+	k.LogInfo("waiting transformed dnsmessage to process...")
+
 	ctx, cancelKafka := context.WithCancel(context.Background())
 	defer cancelKafka() // Libérez les ressources liées au contexte
 
@@ -335,8 +337,6 @@ func (k *KafkaProducer) Process() {
 	flushTimer := time.NewTimer(flushInterval)
 
 	go k.ConnectToKafka(ctx, readyTimer)
-
-	k.LogInfo("ready to process")
 
 PROCESS_LOOP:
 	for {

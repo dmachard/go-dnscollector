@@ -544,7 +544,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.KafkaProducer.FlushInterval = 10
 	c.KafkaProducer.Topic = "dnscollector"
 	c.KafkaProducer.Partition = 0
-	c.KafkaProducer.ChannelBufferSize = 65535
+	c.KafkaProducer.ChannelBufferSize = 4096
 	c.KafkaProducer.Compression = CompressNone
 
 	c.FalcoClient.Enable = false
