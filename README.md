@@ -111,6 +111,7 @@ The [`_examples`](./docs/_examples) folder from documentation contains a number 
 The [`_integration`](./docs/_integration) folder contains DNS-collector `configuration` files and `docker compose` examples for popular tools:
 
 - [Elasticsearch](./docs/_integration/elasticsearch/README.md)
+- [Kafka](./docs/_integration/kafka/README.md)
 
 ## Performance
 
