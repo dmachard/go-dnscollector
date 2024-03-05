@@ -64,8 +64,8 @@
     - [`Loki`](docs/loggers/logger_loki.md)
     - [`ElasticSearch`](docs/loggers/logger_elasticsearch.md)
     - [`Scalyr`](docs/loggers/logger_scalyr.md)
-    - [`Redis`](docs/loggers/logger_redis.md)
-    - [`Kafka`](docs/loggers/logger_kafka.md)
+    - [`Redis`](docs/loggers/logger_redis.md) publisher
+    - [`Kafka`](docs/loggers/logger_kafka.md) producer
   - *Send to security tools*
     - [`Falco`](docs/loggers/logger_falco.md)
 
