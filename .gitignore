@@ -22,3 +22,4 @@ go-dnscollector
 bin/
 include/
 docs/_integration/elasticsearch/data/
+docs/_integration/kafka/data/
