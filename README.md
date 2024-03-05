@@ -2,6 +2,7 @@
 <img src="https://goreportcard.com/badge/github.com/dmachard/go-dns-collector" alt="Go Report"/>
 <img src="https://img.shields.io/badge/go%20version-min%201.20-green" alt="Go version"/>
 <img src="https://img.shields.io/badge/go%20tests-429-green" alt="Go tests"/>
+<img src="https://img.shields.io/badge/go%20tests-8-green" alt="Go bench"/>
 <img src="https://img.shields.io/badge/go%20lines-38661-green" alt="Go lines"/>
 </p>
 
@@ -63,8 +64,8 @@
     - [`Loki`](docs/loggers/logger_loki.md)
     - [`ElasticSearch`](docs/loggers/logger_elasticsearch.md)
     - [`Scalyr`](docs/loggers/logger_scalyr.md)
-    - [`Redis`](docs/loggers/logger_redis.md)
-    - [`Kafka`](docs/loggers/logger_kafka.md)
+    - [`Redis`](docs/loggers/logger_redis.md) publisher
+    - [`Kafka`](docs/loggers/logger_kafka.md) producer
   - *Send to security tools*
     - [`Falco`](docs/loggers/logger_falco.md)
 
@@ -111,6 +112,7 @@ The [`_examples`](./docs/_examples) folder from documentation contains a number 
 The [`_integration`](./docs/_integration) folder contains DNS-collector `configuration` files and `docker compose` examples for popular tools:
 
 - [Elasticsearch](./docs/_integration/elasticsearch/README.md)
+- [Kafka](./docs/_integration/kafka/README.md)
 
 ## Performance
 
