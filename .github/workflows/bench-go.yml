@@ -1,4 +1,4 @@
-name: tests go
+name: bench go
 
 on:
   push:
