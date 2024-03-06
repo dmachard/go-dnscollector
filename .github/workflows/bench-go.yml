@@ -48,7 +48,12 @@ jobs:
         go version
         sudo go version
         
-    - name: Bench
+    - name: Bench dnsutils
       run: |
         cd dnsutils/
-        go test -run=^$ -bench=.
+        go test -benchmem -run=^$ -bench=.
+    
+    - name: Bench transformers
+      run: |
+        cd transformers/
+        go test -benchmem -run=^$ -bench=^BenchmarkUserPrivacy.*\|BenchmarkTransforms.*$

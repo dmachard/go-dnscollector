@@ -1,7 +1,11 @@
 
 # DNS-collector with Elastic and Kibana
 
-- Copy folder [./docs/_integration/elasticsearch] and start the docker stack:
+- Copy this [folder](./docs/_integration/elasticsearch).
+
+- Create the `data` folder.
+
+- Start the docker stack:
 
     ```bash
     sudo docker compose up -d
@@ -13,7 +17,7 @@
 
 - Finally create index pattern `dnscollector` and choose `dnstap.timestamp-rfc33939ns`
 
-- Run DNScollector from source:
+- Finally, run DNScollector from source and generate some DNS logs from your DNS server with DNStap protocol.
 
     ```bash
     go run . -config docs/_integration/elasticsearch/config.yml

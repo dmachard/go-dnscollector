@@ -26,7 +26,6 @@ require (
 	github.com/klauspost/compress v1.17.6
 	github.com/miekg/dns v1.1.58
 	github.com/natefinch/lumberjack v2.0.0+incompatible
-	github.com/nqd/flat v0.2.0
 	github.com/oschwald/maxminddb-golang v1.12.0
 	github.com/prometheus/client_golang v1.18.0
 	github.com/rs/tzsp v0.0.0-20161230003637-8ce729c826b9
@@ -78,7 +77,6 @@ require (
 	github.com/hashicorp/golang-lru v0.6.0 // indirect
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
-	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
 	github.com/jcmturner/gofork v1.7.6 // indirect

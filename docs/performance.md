@@ -17,13 +17,14 @@ The conversion of DNS logs to JSON, text, or PCAP can incur CPU costs. Here's a 
 goos: linux
 goarch: amd64
 pkg: github.com/dmachard/go-dnscollector/dnsutils
-cpu: Intel(R) Core(TM) i5-7200U CPU @ 2.50GHz
-BenchmarkDnsMessage_ToTextFormat-4               2600718             460.7 ns/op
-BenchmarkDnsMessage_ToPacketLayer-4              1171467             969.5 ns/op
-BenchmarkDnsMessage_ToDNSTap-4                    993242              1130 ns/op
-BenchmarkDnsMessage_ToExtendedDNSTap-4            618400              1951 ns/op
-BenchmarkDnsMessage_ToJSON-4                      190939              6584 ns/op
-BenchmarkDnsMessage_ToFlatJSON-4                   19868             55533 ns/op
+cpu: Intel(R) Core(TM) i5-7200U CPU @ 2.50GHz 
+BenchmarkDnsMessage_ToTextFormat-4               2555529             450.2 ns/op              80 B/op          4 allocs/op
+BenchmarkDnsMessage_ToPacketLayer-4              1138892             952.0 ns/op            1144 B/op         12 allocs/op
+BenchmarkDnsMessage_ToDNSTap-4                   1036468              1136 ns/op             592 B/op         18 allocs/op
+BenchmarkDnsMessage_ToExtendedDNSTap-4            612438              1970 ns/op            1056 B/op         25 allocs/op
+BenchmarkDnsMessage_ToJSON-4                      188379              6724 ns/op            3632 B/op          3 allocs/op
+BenchmarkDnsMessage_ToFlatten-4                   121525             10151 ns/op            8215 B/op         29 allocs/op
+BenchmarkDnsMessage_ToFlatJSON-4                   20704             58365 ns/op           22104 B/op        220 allocs/op
 ```
 
 ## Memory usage

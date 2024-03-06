@@ -143,6 +143,7 @@ func Test_HashQueries_Expire(t *testing.T) {
 	}
 }
 
+// Bench
 func Benchmark_HashQueries_Set(b *testing.B) {
 	mapexpire := NewHashQueries(10 * time.Second)
 
