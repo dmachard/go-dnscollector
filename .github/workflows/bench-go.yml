@@ -56,4 +56,4 @@ jobs:
     - name: Bench transformers
       run: |
         cd transformers/
-        go test -benchmem -run=^$ -bench=.
+        go test -benchmem -run=^$ -bench=^BenchmarkUserPrivacy.*\|BenchmarkTransforms.*$
