@@ -55,5 +55,5 @@ jobs:
     
     - name: Bench transformers
       run: |
-        cd ../transformers/
+        cd transformers/
         go test -benchmem -run=^$ -bench=.
