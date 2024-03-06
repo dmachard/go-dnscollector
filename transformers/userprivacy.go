@@ -130,7 +130,7 @@ func (s *UserPrivacyProcessor) HashIP(ip string) string {
 		hash := sha256.New()
 		hash.Write([]byte(ip))
 		return fmt.Sprintf("%x", hash.Sum(nil))
-	case "sha512":
+	case "sha512": // nolint
 		hash := sha512.New()
 		hash.Write([]byte(ip))
 		return fmt.Sprintf("%x", hash.Sum(nil))
