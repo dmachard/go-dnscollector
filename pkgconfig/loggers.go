@@ -446,7 +446,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.Fluentd.KeyFile = ""
 	c.Fluentd.Tag = "dns.collector"
 	c.Fluentd.BufferSize = 100
-	c.Fluentd.ChannelBufferSize = 65535
+	c.Fluentd.ChannelBufferSize = 4096
 
 	c.InfluxDB.Enable = false
 	c.InfluxDB.ServerURL = "http://localhost:8086"

@@ -16,6 +16,35 @@ const (
 	Localhost   = "localhost"
 )
 
+// Bench to init DNS message
+func BenchmarkTransforms_Init(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.Suspicious.Enable = true
+	config.GeoIP.Enable = true
+	config.GeoIP.DBCountryFile = "../testsdata/GeoLite2-Country.mmdb"
+	config.GeoIP.Enable = true
+	config.GeoIP.DBASNFile = "../testsdata/GeoLite2-ASN.mmdb"
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.MinimazeQname = true
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.AnonymizeIP = true
+	config.Normalize.Enable = true
+	config.Normalize.QnameLowerCase = true
+	config.Filtering.Enable = true
+	config.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains.txt"
+
+	channels := []chan dnsutils.DNSMessage{}
+	subprocessors := NewTransforms(config, logger.New(false), "test", channels, 0)
+
+	dm := dnsutils.GetFakeDNSMessage()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		subprocessors.InitDNSMessageFormat(&dm)
+	}
+}
+
+// Other tests
 func TestTransformsSuspicious(t *testing.T) {
 	// config
 	config := pkgconfig.GetFakeConfigTransformers()

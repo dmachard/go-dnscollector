@@ -234,7 +234,7 @@ func (fc *FluentdClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 }
 
 func (fc *FluentdClient) Run() {
-	fc.LogInfo("running in background...")
+	fc.LogInfo("waiting dnsmessage to process...")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := fc.RoutingHandler.GetDefaultRoutes()
@@ -246,7 +246,7 @@ func (fc *FluentdClient) Run() {
 	subprocessors := transformers.NewTransforms(&fc.config.OutgoingTransformers, fc.logger, fc.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go fc.Process()
+	go fc.ProcessDM()
 
 	// init remote conn
 	go fc.ConnectToRemote()
@@ -293,15 +293,15 @@ RUN_LOOP:
 	fc.LogInfo("run terminated")
 }
 
-func (fc *FluentdClient) Process() {
+func (fc *FluentdClient) ProcessDM() {
+	fc.LogInfo("waiting transformed dnsmessage to process...")
+
 	// init buffer
 	bufferDm := []dnsutils.DNSMessage{}
 
 	// init flust timer for buffer
 	flushInterval := time.Duration(fc.config.Loggers.Fluentd.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
-
-	fc.LogInfo("ready to process")
 
 PROCESS_LOOP:
 	for {
@@ -311,7 +311,7 @@ PROCESS_LOOP:
 			break PROCESS_LOOP
 
 		case <-fc.transportReady:
-			fc.LogInfo("connected")
+			fc.LogInfo("connected with remote side")
 			fc.writerReady = true
 
 		// incoming dns message to process

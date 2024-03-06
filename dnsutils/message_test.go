@@ -13,6 +13,16 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// Bench to init DNS message
+func BenchmarkDnsMessage_Init(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		dm := DNSMessage{}
+		dm.Init()
+		dm.InitTransforms()
+	}
+}
+
 // Tests for DNSTap format
 func encodeToDNSTap(dm DNSMessage, t *testing.T) *ExtendedDnstap {
 	// encode to extended dnstap

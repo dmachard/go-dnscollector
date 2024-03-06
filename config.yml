@@ -595,7 +595,7 @@ multiplexer:
 #   # how many DNS messages will be buffered before being sent
 #   buffer-size: 100
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
-#   chan-buffer-size: 65535
+#   chan-buffer-size: 4096
 
 # # resend captured dns traffic to a InfluxDB database
 # influxdb:
