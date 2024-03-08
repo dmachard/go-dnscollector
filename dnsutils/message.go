@@ -186,6 +186,7 @@ type TransformSuspicious struct {
 type TransformPublicSuffix struct {
 	QnamePublicSuffix        string `json:"tld"`
 	QnameEffectiveTLDPlusOne string `json:"etld+1"`
+	ManagedByICANN           bool   `json:"managed-icann"`
 }
 
 type TransformExtracted struct {
@@ -456,6 +457,12 @@ func (dm *DNSMessage) handlePublicSuffixDirectives(directive string, s *strings.
 			s.WriteString(dm.PublicSuffix.QnamePublicSuffix)
 		case directive == "publixsuffix-etld+1":
 			s.WriteString(dm.PublicSuffix.QnameEffectiveTLDPlusOne)
+		case directive == "publixsuffix-managed-icann":
+			if dm.PublicSuffix.ManagedByICANN {
+				s.WriteString("managed")
+			} else {
+				s.WriteString("private")
+			}
 		default:
 			return errors.New(ErrorUnexpectedDirective + directive)
 		}
@@ -1169,6 +1176,7 @@ func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
 	if dm.PublicSuffix != nil {
 		dnsFields["publicsuffix.tld"] = dm.PublicSuffix.QnamePublicSuffix
 		dnsFields["publicsuffix.etld+1"] = dm.PublicSuffix.QnameEffectiveTLDPlusOne
+		dnsFields["publicsuffix.managed-icann"] = dm.PublicSuffix.ManagedByICANN
 	}
 
 	// Add TransformExtracted fields

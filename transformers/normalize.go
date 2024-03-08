@@ -138,6 +138,7 @@ func (p *NormalizeProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 		dm.PublicSuffix = &dnsutils.TransformPublicSuffix{
 			QnamePublicSuffix:        "-",
 			QnameEffectiveTLDPlusOne: "-",
+			ManagedByICANN:           false,
 		}
 	}
 }
@@ -174,8 +175,9 @@ func (p *NormalizeProcessor) GetEffectiveTld(dm *dnsutils.DNSMessage) int {
 	etld, icann := publicsuffixlist.PublicSuffix(qname)
 	if icann {
 		dm.PublicSuffix.QnamePublicSuffix = etld
+		dm.PublicSuffix.ManagedByICANN = true
 	} else {
-		p.logError("suffix unmanaged by icann: %s", qname)
+		dm.PublicSuffix.ManagedByICANN = false
 	}
 	return ReturnSuccess
 }

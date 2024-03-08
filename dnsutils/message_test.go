@@ -363,12 +363,14 @@ func TestDnsMessage_Json_Transforms_Reference(t *testing.T) {
 				PublicSuffix: &TransformPublicSuffix{
 					QnamePublicSuffix:        "com",
 					QnameEffectiveTLDPlusOne: "hello.com",
+					ManagedByICANN:           true,
 				},
 			},
 			jsonRef: `{
 						"publicsuffix": {
 							"tld": "com",
-							"etld+1": "hello.com"
+							"etld+1": "hello.com",
+							"managed-icann: true
 						}
 					}`,
 		},
