@@ -370,7 +370,7 @@ func TestDnsMessage_Json_Transforms_Reference(t *testing.T) {
 						"publicsuffix": {
 							"tld": "com",
 							"etld+1": "hello.com",
-							"managed-icann: true
+							"managed-icann": true
 						}
 					}`,
 		},

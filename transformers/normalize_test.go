@@ -190,7 +190,7 @@ func TestNormalize_SuffixICANNManaged(t *testing.T) {
 	dm := dnsutils.GetFakeDNSMessage()
 	// https://publicsuffix.org/list/effective_tld_names.dat
 	// // ===BEGIN ICANN DOMAINS===
-	dm.DNS.Qname = "en.wikipedia.org"
+	dm.DNS.Qname = "fr.wikipedia.org"
 	// // ===END ICANN DOMAINS===
 	// ===BEGIN PRIVATE DOMAINS===
 	// ..
