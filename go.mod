@@ -30,7 +30,7 @@ require (
 	github.com/prometheus/client_golang v1.18.0
 	github.com/rs/tzsp v0.0.0-20161230003637-8ce729c826b9
 	github.com/segmentio/kafka-go v0.4.47
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/tinylib/msgp v1.1.9
 	golang.org/x/net v0.21.0
 	golang.org/x/sys v0.17.0
@@ -103,7 +103,7 @@ require (
 	github.com/sercand/kuberesolver/v4 v4.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/soheilhy/cmux v0.1.5 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/weaveworks/promrus v1.2.0 // indirect
