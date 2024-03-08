@@ -51,6 +51,7 @@ Example:
 "publicsuffix": {
   "etld+1": "eu.org",
   "tld": "org",
+  "managed-icann": true
 }
 ```
 
@@ -58,3 +59,4 @@ Specific directives added for text format:
 
 - `publicsuffix-tld`: [Public Suffix](https://publicsuffix.org/) of the DNS QNAME
 - `publicsuffix-etld+1`: [Public Suffix](https://publicsuffix.org/) plus one label of the DNS QNAME
+- `publicsuffix-managed-icann`: [Public Suffix](https://publicsuffix.org/) flag for managed icann domains

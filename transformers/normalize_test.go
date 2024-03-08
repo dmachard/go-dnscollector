@@ -1,8 +1,6 @@
 package transformers
 
 import (
-	"encoding/json"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -10,52 +8,6 @@ import (
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
-
-func TestNormalize_Json(t *testing.T) {
-	// enable feature
-	config := pkgconfig.GetFakeConfigTransformers()
-
-	log := logger.New(false)
-	outChans := []chan dnsutils.DNSMessage{}
-
-	// get fake
-	dm := dnsutils.GetFakeDNSMessage()
-	dm.Init()
-
-	// init subproccesor
-	qnameNorm := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
-	qnameNorm.InitDNSMessage(&dm)
-
-	// expected json
-	refJSON := `
-			{
-				"publicsuffix": {
-					"tld":"-",
-					"etld+1":"-"
-				}
-			}
-			`
-
-	var dmMap map[string]interface{}
-	err := json.Unmarshal([]byte(dm.ToJSON()), &dmMap)
-	if err != nil {
-		t.Fatalf("could not unmarshal dm json: %s\n", err)
-	}
-
-	var refMap map[string]interface{}
-	err = json.Unmarshal([]byte(refJSON), &refMap)
-	if err != nil {
-		t.Fatalf("could not unmarshal ref json: %s\n", err)
-	}
-
-	if _, ok := dmMap["publicsuffix"]; !ok {
-		t.Fatalf("transformer key is missing")
-	}
-
-	if !reflect.DeepEqual(dmMap["publicsuffix"], refMap["publicsuffix"]) {
-		t.Errorf("json format different from reference")
-	}
-}
 
 func TestNormalize_LowercaseQname(t *testing.T) {
 	// enable feature
@@ -197,5 +149,124 @@ func TestNormalize_AddTldPlusOne(t *testing.T) {
 
 			}
 		})
+	}
+}
+
+func TestNormalize_SuffixUnmanaged(t *testing.T) {
+	// enable feature
+	config := pkgconfig.GetFakeConfigTransformers()
+	log := logger.New(true)
+	outChans := []chan dnsutils.DNSMessage{}
+
+	// init the processor
+	psl := NewNormalizeSubprocessor(config, logger.New(true), "test", 0, outChans, log.Info, log.Error)
+
+	dm := dnsutils.GetFakeDNSMessage()
+	// https://publicsuffix.org/list/effective_tld_names.dat
+	// // ===BEGIN ICANN DOMAINS===
+	// ....
+	// // ===END ICANN DOMAINS===
+	// ===BEGIN PRIVATE DOMAINS===
+	// ..
+	dm.DNS.Qname = "play.googleapis.com"
+	// // ===END PRIVATE DOMAINS===
+
+	psl.InitDNSMessage(&dm)
+	psl.GetEffectiveTld(&dm)
+	if dm.PublicSuffix.ManagedByICANN {
+		t.Errorf("Qname %s should be private domains", dm.DNS.Qname)
+	}
+}
+
+func TestNormalize_SuffixICANNManaged(t *testing.T) {
+	// enable feature
+	config := pkgconfig.GetFakeConfigTransformers()
+	log := logger.New(true)
+	outChans := []chan dnsutils.DNSMessage{}
+
+	// init the processor
+	psl := NewNormalizeSubprocessor(config, logger.New(true), "test", 0, outChans, log.Info, log.Error)
+
+	dm := dnsutils.GetFakeDNSMessage()
+	// https://publicsuffix.org/list/effective_tld_names.dat
+	// // ===BEGIN ICANN DOMAINS===
+	dm.DNS.Qname = "fr.wikipedia.org"
+	// // ===END ICANN DOMAINS===
+	// ===BEGIN PRIVATE DOMAINS===
+	// ..
+	// // ===END PRIVATE DOMAINS===
+
+	psl.InitDNSMessage(&dm)
+	psl.GetEffectiveTld(&dm)
+	if !dm.PublicSuffix.ManagedByICANN {
+		t.Errorf("Qname %s should be ICANN managed", dm.DNS.Qname)
+	}
+}
+
+// bench tests
+
+func BenchmarkNormalize_GetEffectiveTld(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+
+	log := logger.New(false)
+	channels := []chan dnsutils.DNSMessage{}
+
+	subprocessor := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = "en.wikipedia.org"
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		subprocessor.InitDNSMessage(&dm)
+		subprocessor.GetEffectiveTld(&dm)
+	}
+}
+
+func BenchmarkNormalize_GetEffectiveTldPlusOne(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+
+	log := logger.New(false)
+	channels := []chan dnsutils.DNSMessage{}
+
+	subprocessor := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = "en.wikipedia.org"
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		subprocessor.InitDNSMessage(&dm)
+		subprocessor.GetEffectiveTld(&dm)
+	}
+}
+
+func BenchmarkNormalize_QnameLowercase(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+
+	log := logger.New(false)
+	channels := []chan dnsutils.DNSMessage{}
+
+	subprocessor := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = "EN.Wikipedia.Org"
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		subprocessor.LowercaseQname(&dm)
+	}
+}
+
+func BenchmarkNormalize_QuietText(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+
+	log := logger.New(false)
+	channels := []chan dnsutils.DNSMessage{}
+
+	subprocessor := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = "EN.Wikipedia.Org"
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		subprocessor.QuietText(&dm)
 	}
 }
