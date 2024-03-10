@@ -227,6 +227,7 @@ type ConfigLoggers struct {
 		Server            string `yaml:"server"`
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		BulkSize          int    `yaml:"bulk-size"`
+		BulkChannelSize   int    `yaml:"bulk-channel-size"`
 		FlushInterval     int    `yaml:"flush-interval"`
 	} `yaml:"elasticsearch"`
 	ScalyrClient struct {
@@ -502,6 +503,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.ElasticSearchClient.ChannelBufferSize = 4096
 	c.ElasticSearchClient.BulkSize = 1048576
 	c.ElasticSearchClient.FlushInterval = 10
+	c.ElasticSearchClient.BulkChannelSize = 10
 
 	c.RedisPub.Enable = false
 	c.RedisPub.RemoteAddress = LocalhostIP

@@ -2,7 +2,9 @@ package loggers
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"path"
 	"time"
 
@@ -17,43 +19,37 @@ import (
 )
 
 type ElasticSearchClient struct {
-	stopProcess     chan bool
-	doneProcess     chan bool
-	stopBulkProcess chan bool
-	doneBulkProcess chan bool
-	stopRun         chan bool
-	doneRun         chan bool
-	inputChan       chan dnsutils.DNSMessage
-	outputChan      chan dnsutils.DNSMessage
-	sendChan        chan []byte
-	config          *pkgconfig.Config
-	configChan      chan *pkgconfig.Config
-	logger          *logger.Logger
-	name            string
-	server          string
-	index           string
-	bulkURL         string
-	RoutingHandler  pkgutils.RoutingHandler
-	httpClient      *http.Client
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	name           string
+	server         string
+	index          string
+	bulkURL        string
+	RoutingHandler pkgutils.RoutingHandler
+	httpClient     *http.Client
 }
 
 func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, name string) *ElasticSearchClient {
 	console.Info(pkgutils.PrefixLogLogger+"[%s] elasticsearch - enabled", name)
 	ec := &ElasticSearchClient{
-		stopProcess:     make(chan bool),
-		doneProcess:     make(chan bool),
-		stopBulkProcess: make(chan bool),
-		doneBulkProcess: make(chan bool),
-		stopRun:         make(chan bool),
-		doneRun:         make(chan bool),
-		inputChan:       make(chan dnsutils.DNSMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
-		outputChan:      make(chan dnsutils.DNSMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
-		sendChan:        make(chan []byte, config.Loggers.ElasticSearchClient.ChannelBufferSize),
-		logger:          console,
-		config:          config,
-		configChan:      make(chan *pkgconfig.Config),
-		name:            name,
-		RoutingHandler:  pkgutils.NewRoutingHandler(config, console, name),
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
+		logger:         console,
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, console, name),
 	}
 	ec.ReadConfig()
 
@@ -117,13 +113,17 @@ func (ec *ElasticSearchClient) Stop() {
 	ec.stopProcess <- true
 	<-ec.doneProcess
 
-	ec.LogInfo("stopping to bulk process...")
-	ec.stopBulkProcess <- true
-	<-ec.doneBulkProcess
+	// ec.LogInfo("stopping to bulk process...")
+	// ec.stopBulkProcess <- true
+	// <-ec.doneBulkProcess
 }
 
 func (ec *ElasticSearchClient) Run() {
 	ec.LogInfo("waiting dnsmessage to process...")
+	defer func() {
+		ec.LogInfo("run terminated")
+		ec.doneRun <- true
+	}()
 
 	// prepare next channels
 	defaultRoutes, defaultNames := ec.RoutingHandler.GetDefaultRoutes()
@@ -136,18 +136,14 @@ func (ec *ElasticSearchClient) Run() {
 
 	// goroutine to process transformed dns messages
 	go ec.ProcessDM()
-	go ec.ProcessBulk()
 
 	// loop to process incoming messages
-RUN_LOOP:
 	for {
 		select {
 		case <-ec.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
-
-			ec.doneRun <- true
-			break RUN_LOOP
+			return
 
 		case cfg, opened := <-ec.configChan:
 			if !opened {
@@ -177,26 +173,37 @@ RUN_LOOP:
 			ec.outputChan <- dm
 		}
 	}
-	ec.LogInfo("run terminated")
 }
 
 func (ec *ElasticSearchClient) ProcessDM() {
 	ec.LogInfo("waiting transformed dnsmessage to process...")
+	defer func() {
+		ec.LogInfo("processing terminated")
+		ec.doneProcess <- true
+	}()
 
-	// buffer
-	buffer := bytes.NewBuffer(nil)
 	// create a new encoder that writes to the buffer
+	buffer := bytes.NewBuffer(make([]byte, 0, ec.config.Loggers.ElasticSearchClient.BulkSize))
 	encoder := json.NewEncoder(buffer)
 
 	flushInterval := time.Duration(ec.config.Loggers.ElasticSearchClient.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
-PROCESS_LOOP:
+	dataBuffer := make(chan []byte, ec.config.Loggers.ElasticSearchClient.BulkChannelSize)
+	go func() {
+		for data := range dataBuffer {
+			err := ec.sendBulkData(data)
+			if err != nil {
+				ec.LogError("error sending bulk data: %v", err)
+			}
+		}
+	}()
+
 	for {
 		select {
 		case <-ec.stopProcess:
-			ec.doneProcess <- true
-			break PROCESS_LOOP
+			close(dataBuffer)
+			return
 
 		// incoming dns message to process
 		case dm, opened := <-ec.outputChan:
@@ -210,21 +217,21 @@ PROCESS_LOOP:
 			if err != nil {
 				ec.LogError("flattening DNS message failed: %e", err)
 			}
-
 			buffer.WriteString("{ \"create\" : {}}\n")
-			//	buffer.WriteString("\n")
 			encoder.Encode(flat)
 
 			// Send data and reset buffer
 			if buffer.Len() >= ec.config.Loggers.ElasticSearchClient.BulkSize {
 				bufCopy := make([]byte, buffer.Len())
-				copy(bufCopy, buffer.Bytes())
+				buffer.Read(bufCopy)
 				buffer.Reset()
 
+				//	go ec.sendBulkData(bufCopy)
+
 				select {
-				case ec.sendChan <- bufCopy:
+				case dataBuffer <- bufCopy:
 				default:
-					ec.LogError("send buffer is full, bulk dropped")
+					ec.LogError("Send buffer is full, bulk dropped")
 				}
 			}
 
@@ -234,13 +241,15 @@ PROCESS_LOOP:
 			// Send data and reset buffer
 			if buffer.Len() > 0 {
 				bufCopy := make([]byte, buffer.Len())
-				copy(bufCopy, buffer.Bytes())
+				buffer.Read(bufCopy)
 				buffer.Reset()
 
+				//	go ec.sendBulkData(bufCopy)
+
 				select {
-				case ec.sendChan <- bufCopy:
+				case dataBuffer <- bufCopy:
 				default:
-					ec.LogError("send buffer is full, bulk dropped")
+					ec.LogError("automatic flush, send buffer is full, bulk dropped")
 				}
 			}
 
@@ -248,37 +257,48 @@ PROCESS_LOOP:
 			flushTimer.Reset(flushInterval)
 		}
 	}
-	ec.LogInfo("processing terminated")
 }
 
-func (ec *ElasticSearchClient) ProcessBulk() {
-	ec.LogInfo("waiting bulk messages to process")
+func (ec *ElasticSearchClient) sendBulkData(data []byte) error {
+	var compressedData bytes.Buffer
+	gzipWriter := gzip.NewWriter(&compressedData)
 
-BULK_PROCESS_LOOP:
-	for {
-		select {
-		case <-ec.stopBulkProcess:
-			ec.doneBulkProcess <- true
-			break BULK_PROCESS_LOOP
-
-		case bulk, opened := <-ec.sendChan:
-			if !opened {
-				ec.LogInfo("bulk channel closed!")
-				return
-			}
-
-			post, _ := http.NewRequest("POST", ec.bulkURL, bytes.NewReader(bulk))
-			post.Header.Set("Content-Type", "application/json")
-
-			resp, err := ec.httpClient.Do(post)
-			if err != nil {
-				ec.LogError(err.Error())
-			}
-			if resp != nil {
-				resp.Body.Close()
-			}
-
-		}
+	// Write the uncompressed data to the gzip writer
+	_, err := gzipWriter.Write(data)
+	if err != nil {
+		fmt.Println("gzip", err)
+		return err
 	}
-	ec.LogInfo("bulk processing terminated")
+
+	// Close the gzip writer to flush any remaining data
+	err = gzipWriter.Close()
+	if err != nil {
+		fmt.Println("gzip", err)
+		return err
+	}
+
+	// Create a new HTTP request
+	req, err := http.NewRequest("POST", ec.bulkURL, &compressedData)
+	if err != nil {
+		fmt.Println("post", err)
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Encoding", "gzip") // Set Content-Encoding header to gzip
+
+	// Send the request using the HTTP client
+	resp, err := ec.httpClient.Do(req)
+	if err != nil {
+		fmt.Println("do", err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Check the response status code
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("unexpected status code:", resp.StatusCode)
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return nil
 }
