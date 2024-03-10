@@ -35,6 +35,7 @@ type Transforms struct {
 	ExtractProcessor         ExtractProcessor
 	MachineLearningTransform MlProcessor
 	ATagsTransform           ATagsProcessor
+	RelabelTransform         RelabelProcessor
 
 	activeTransforms []func(dm *dnsutils.DNSMessage) int
 }
@@ -58,6 +59,7 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 	d.GeoipTransform = NewDNSGeoIPProcessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 	d.MachineLearningTransform = NewMachineLearningSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 	d.ATagsTransform = NewATagsSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.RelabelTransform = NewRelabelSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 
 	d.Prepare()
 	return d
@@ -75,6 +77,7 @@ func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.ExtractProcessor.ReloadConfig(config)
 	p.MachineLearningTransform.ReloadConfig(config)
 	p.ATagsTransform.ReloadConfig(config)
+	p.RelabelTransform.ReloadConfig(config)
 
 	p.Prepare()
 }
@@ -171,6 +174,11 @@ func (p *Transforms) Prepare() error {
 	if p.config.ATags.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.ATagsTransform.AddTags)
 		p.LogInfo(prefixlog + "atags subprocessor is enabled")
+	}
+
+	if p.config.Relabeling.Enable {
+		p.activeTransforms = append(p.activeTransforms, p.RelabelTransform.AddLabelConfig)
+		p.LogInfo(prefixlog + "relabeling subprocessor is enabled")
 	}
 
 	return nil

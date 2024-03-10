@@ -5,7 +5,7 @@ global:
   # If turned on, log some applications messages
   trace:
     # debug informations
-    verbose: true
+    verbose: false
     # log malformed packet
     # log-malformed: false
     # # filename is the file to write logs to.
@@ -84,7 +84,25 @@ multiplexer:
   loggers:
     - name: console
       stdout:
-        mode: text
+        mode: flat-json
+      transforms:
+        relabeling:
+          rename:
+            - regex: "dnstap\\.timestamp-rfc3339ns"
+              replacement: "timestamp"
+            - regex: "dns\\.qname"
+              replacement: "query"
+            - regex: "network\\.query-ip"
+              replacement: "client"
+            - regex: "network\\.response-ip"
+              replacement: "server"
+            - regex: "dnstap\\.identity"
+              replacement: "client_id"
+            - regex: "^dns\\.resource-records\\.an\\..*\\.rdata$"
+              replacement: "answers_rdata"
+          remove:
+            - regex: "dns"
+            - regex: "network"
 
   routes:
     - from: [ tap ]

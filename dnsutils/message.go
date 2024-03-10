@@ -228,20 +228,28 @@ type TransformATags struct {
 	Tags []string `json:"tags"`
 }
 
+type TransformRelabeling struct {
+	Action      string
+	Regex       string
+	Replacement string
+}
+
 type DNSMessage struct {
-	NetworkInfo     DNSNetInfo             `json:"network"`
-	DNS             DNS                    `json:"dns"`
-	EDNS            DNSExtended            `json:"edns"`
-	DNSTap          DNSTap                 `json:"dnstap"`
-	Geo             *TransformDNSGeo       `json:"geoip,omitempty"`
-	PowerDNS        *PowerDNS              `json:"powerdns,omitempty"`
-	Suspicious      *TransformSuspicious   `json:"suspicious,omitempty"`
-	PublicSuffix    *TransformPublicSuffix `json:"publicsuffix,omitempty"`
-	Extracted       *TransformExtracted    `json:"extracted,omitempty"`
-	Reducer         *TransformReducer      `json:"reducer,omitempty"`
-	MachineLearning *TransformML           `json:"ml,omitempty"`
-	Filtering       *TransformFiltering    `json:"filtering,omitempty"`
-	ATags           *TransformATags        `json:"atags,omitempty"`
+	NetworkInfo      DNSNetInfo             `json:"network"`
+	DNS              DNS                    `json:"dns"`
+	EDNS             DNSExtended            `json:"edns"`
+	DNSTap           DNSTap                 `json:"dnstap"`
+	Geo              *TransformDNSGeo       `json:"geoip,omitempty"`
+	PowerDNS         *PowerDNS              `json:"powerdns,omitempty"`
+	Suspicious       *TransformSuspicious   `json:"suspicious,omitempty"`
+	PublicSuffix     *TransformPublicSuffix `json:"publicsuffix,omitempty"`
+	Extracted        *TransformExtracted    `json:"extracted,omitempty"`
+	Reducer          *TransformReducer      `json:"reducer,omitempty"`
+	MachineLearning  *TransformML           `json:"ml,omitempty"`
+	Filtering        *TransformFiltering    `json:"filtering,omitempty"`
+	ATags            *TransformATags        `json:"atags,omitempty"`
+	RelabelingRemove []TransformRelabeling
+	RelabelingRename []TransformRelabeling
 }
 
 func (dm *DNSMessage) Init() {
@@ -1246,6 +1254,33 @@ func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
 			dnsFields["powerdns.metadata."+mk] = mv
 		}
 		dnsFields["powerdns.http-version"] = dm.PowerDNS.HTTPVersion
+	}
+
+	// remove or update keys ?
+	for _, label := range dm.RelabelingRename {
+		regex := regexp.MustCompile(label.Regex)
+		for key := range dnsFields {
+			if regex.MatchString(key) {
+				if value, exists := dnsFields[label.Replacement]; exists {
+					if _, ok := value.([]string); ok {
+						dnsFields[label.Replacement] = append(dnsFields[label.Replacement].([]string), dnsFields[key].(string))
+					} else {
+						dnsFields[label.Replacement] = []string{dnsFields[label.Replacement].(string), dnsFields[key].(string)}
+					}
+				} else {
+					dnsFields[label.Replacement] = dnsFields[key]
+				}
+				delete(dnsFields, key)
+			}
+		}
+	}
+	for _, label := range dm.RelabelingRemove {
+		regex := regexp.MustCompile(label.Regex)
+		for key := range dnsFields {
+			if regex.MatchString(key) {
+				delete(dnsFields, key)
+			}
+		}
 	}
 
 	return dnsFields, nil
