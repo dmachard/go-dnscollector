@@ -248,8 +248,8 @@ type DNSMessage struct {
 	MachineLearning  *TransformML           `json:"ml,omitempty"`
 	Filtering        *TransformFiltering    `json:"filtering,omitempty"`
 	ATags            *TransformATags        `json:"atags,omitempty"`
-	RelabelingRemove []TransformRelabeling
-	RelabelingRename []TransformRelabeling
+	RelabelingRemove []TransformRelabeling  `json:"-"`
+	RelabelingRename []TransformRelabeling  `json:"-"`
 }
 
 func (dm *DNSMessage) Init() {

@@ -266,7 +266,7 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(dmMap, refMap) {
-		t.Errorf("json format different from reference")
+		t.Errorf("json format different from reference %v", dmMap)
 	}
 }
 
