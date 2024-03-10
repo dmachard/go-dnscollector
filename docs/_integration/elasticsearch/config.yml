@@ -13,11 +13,11 @@ multiplexer:
   loggers:
     - name: elastic
       elasticsearch:
-        server: "http://127.0.0.1:9200/"
+        server: "http://192.168.1.220:9200/"
         index:  "dnscollector"
         chan-buffer-size: 4096
         bulk-size: 5242880
-        flush-interval: 5
+        flush-interval: 10
         compression: gzip
         bulk-channel-size: 10
   routes:
