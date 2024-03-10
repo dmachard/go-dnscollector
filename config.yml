@@ -563,6 +563,10 @@ multiplexer:
 #   chan-buffer-size: 4096
 #   # Size of batches sent to ES via _bulk in bytes, default to 1MB
 #   bulk-size: 1048576
+#   # TODO
+#   bulk-channel-size: 10
+#   # TODO
+#   compression: none
 #   # interval in seconds before to flush the buffer
 #   flush-interval: 10
 

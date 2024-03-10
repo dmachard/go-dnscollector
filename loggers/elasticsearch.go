@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"log"
 	"path"
 	"time"
 
@@ -73,6 +74,17 @@ func (ec *ElasticSearchClient) AddDefaultRoute(wrk pkgutils.Worker) {
 func (ec *ElasticSearchClient) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (ec *ElasticSearchClient) ReadConfig() {
+
+	if ec.config.Loggers.ElasticSearchClient.Compression != pkgconfig.CompressNone {
+		ec.LogInfo(ec.config.Loggers.ElasticSearchClient.Compression)
+		switch ec.config.Loggers.ElasticSearchClient.Compression {
+		case pkgconfig.CompressGzip:
+			ec.LogInfo("gzip compression is enabled")
+		default:
+			log.Fatal(pkgutils.PrefixLogLogger+"["+ec.name+"] elasticsearch - invalid compress mode: ", ec.config.Loggers.ElasticSearchClient.Compression)
+		}
+	}
+
 	ec.server = ec.config.Loggers.ElasticSearchClient.Server
 	ec.index = ec.config.Loggers.ElasticSearchClient.Index
 
@@ -112,10 +124,6 @@ func (ec *ElasticSearchClient) Stop() {
 	ec.LogInfo("stopping to process...")
 	ec.stopProcess <- true
 	<-ec.doneProcess
-
-	// ec.LogInfo("stopping to bulk process...")
-	// ec.stopBulkProcess <- true
-	// <-ec.doneBulkProcess
 }
 
 func (ec *ElasticSearchClient) Run() {
@@ -192,7 +200,12 @@ func (ec *ElasticSearchClient) ProcessDM() {
 	dataBuffer := make(chan []byte, ec.config.Loggers.ElasticSearchClient.BulkChannelSize)
 	go func() {
 		for data := range dataBuffer {
-			err := ec.sendBulkData(data)
+			var err error
+			if ec.config.Loggers.ElasticSearchClient.Compression == pkgconfig.CompressGzip {
+				err = ec.sendCompressedBulk(data)
+			} else {
+				err = ec.sendBulk(data)
+			}
 			if err != nil {
 				ec.LogError("error sending bulk data: %v", err)
 			}
@@ -226,8 +239,6 @@ func (ec *ElasticSearchClient) ProcessDM() {
 				buffer.Read(bufCopy)
 				buffer.Reset()
 
-				//	go ec.sendBulkData(bufCopy)
-
 				select {
 				case dataBuffer <- bufCopy:
 				default:
@@ -244,8 +255,6 @@ func (ec *ElasticSearchClient) ProcessDM() {
 				buffer.Read(bufCopy)
 				buffer.Reset()
 
-				//	go ec.sendBulkData(bufCopy)
-
 				select {
 				case dataBuffer <- bufCopy:
 				default:
@@ -259,12 +268,35 @@ func (ec *ElasticSearchClient) ProcessDM() {
 	}
 }
 
-func (ec *ElasticSearchClient) sendBulkData(data []byte) error {
-	var compressedData bytes.Buffer
-	gzipWriter := gzip.NewWriter(&compressedData)
+func (ec *ElasticSearchClient) sendBulk(bulk []byte) error {
+	// Create a new HTTP request
+	req, err := http.NewRequest("POST", ec.bulkURL, bytes.NewReader(bulk))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send the request using the HTTP client
+	resp, err := ec.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Check the response status code
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+func (ec *ElasticSearchClient) sendCompressedBulk(bulk []byte) error {
+	var compressedBulk bytes.Buffer
+	gzipWriter := gzip.NewWriter(&compressedBulk)
 
 	// Write the uncompressed data to the gzip writer
-	_, err := gzipWriter.Write(data)
+	_, err := gzipWriter.Write(bulk)
 	if err != nil {
 		fmt.Println("gzip", err)
 		return err
@@ -273,14 +305,12 @@ func (ec *ElasticSearchClient) sendBulkData(data []byte) error {
 	// Close the gzip writer to flush any remaining data
 	err = gzipWriter.Close()
 	if err != nil {
-		fmt.Println("gzip", err)
 		return err
 	}
 
 	// Create a new HTTP request
-	req, err := http.NewRequest("POST", ec.bulkURL, &compressedData)
+	req, err := http.NewRequest("POST", ec.bulkURL, &compressedBulk)
 	if err != nil {
-		fmt.Println("post", err)
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -289,14 +319,12 @@ func (ec *ElasticSearchClient) sendBulkData(data []byte) error {
 	// Send the request using the HTTP client
 	resp, err := ec.httpClient.Do(req)
 	if err != nil {
-		fmt.Println("do", err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("unexpected status code:", resp.StatusCode)
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
