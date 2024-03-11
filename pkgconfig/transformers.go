@@ -1,7 +1,6 @@
 package pkgconfig
 
 type RelabelingConfig struct {
-	Action      string `yaml:"action"`
 	Regex       string `yaml:"regex"`
 	Replacement string `yaml:"replacement"`
 }

@@ -71,6 +71,7 @@
 
 - **[Transformers](./docs/transformers.md)**
 
+  - Relabeling `JSON` output [Relabeling](docs/transformers/transform_relabeling.md)
   - Add additionnal [Tags](docs/transformers/transform_atags.md)
   - Traffic [Filtering](docs/transformers/transform_trafficfiltering.md) and [Reducer](docs/transformers/transform_trafficreducer.md)
   - Latency [Computing](docs/transformers/transform_latency.md)

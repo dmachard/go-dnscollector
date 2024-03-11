@@ -177,7 +177,6 @@ func (p *Transforms) Prepare() error {
 	}
 
 	if p.config.Relabeling.Enable {
-		p.activeTransforms = append(p.activeTransforms, p.RelabelTransform.AddLabelConfig)
 		p.LogInfo(prefixlog + "relabeling subprocessor is enabled")
 	}
 
@@ -219,6 +218,10 @@ func (p *Transforms) InitDNSMessageFormat(dm *dnsutils.DNSMessage) {
 
 	if p.config.ATags.Enable {
 		p.ATagsTransform.InitDNSMessage(dm)
+	}
+
+	if p.config.Relabeling.Enable {
+		p.RelabelTransform.InitDNSMessage(dm)
 	}
 }
 

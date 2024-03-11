@@ -228,28 +228,31 @@ type TransformATags struct {
 	Tags []string `json:"tags"`
 }
 
-type TransformRelabeling struct {
-	Action      string
-	Regex       string
+type RelabelingRule struct {
+	Regex       *regexp.Regexp
 	Replacement string
+	Action      string
+}
+
+type TransformRelabeling struct {
+	Rules []RelabelingRule
 }
 
 type DNSMessage struct {
-	NetworkInfo      DNSNetInfo             `json:"network"`
-	DNS              DNS                    `json:"dns"`
-	EDNS             DNSExtended            `json:"edns"`
-	DNSTap           DNSTap                 `json:"dnstap"`
-	Geo              *TransformDNSGeo       `json:"geoip,omitempty"`
-	PowerDNS         *PowerDNS              `json:"powerdns,omitempty"`
-	Suspicious       *TransformSuspicious   `json:"suspicious,omitempty"`
-	PublicSuffix     *TransformPublicSuffix `json:"publicsuffix,omitempty"`
-	Extracted        *TransformExtracted    `json:"extracted,omitempty"`
-	Reducer          *TransformReducer      `json:"reducer,omitempty"`
-	MachineLearning  *TransformML           `json:"ml,omitempty"`
-	Filtering        *TransformFiltering    `json:"filtering,omitempty"`
-	ATags            *TransformATags        `json:"atags,omitempty"`
-	RelabelingRemove []TransformRelabeling  `json:"-"`
-	RelabelingRename []TransformRelabeling  `json:"-"`
+	NetworkInfo     DNSNetInfo             `json:"network"`
+	DNS             DNS                    `json:"dns"`
+	EDNS            DNSExtended            `json:"edns"`
+	DNSTap          DNSTap                 `json:"dnstap"`
+	Geo             *TransformDNSGeo       `json:"geoip,omitempty"`
+	PowerDNS        *PowerDNS              `json:"powerdns,omitempty"`
+	Suspicious      *TransformSuspicious   `json:"suspicious,omitempty"`
+	PublicSuffix    *TransformPublicSuffix `json:"publicsuffix,omitempty"`
+	Extracted       *TransformExtracted    `json:"extracted,omitempty"`
+	Reducer         *TransformReducer      `json:"reducer,omitempty"`
+	MachineLearning *TransformML           `json:"ml,omitempty"`
+	Filtering       *TransformFiltering    `json:"filtering,omitempty"`
+	ATags           *TransformATags        `json:"atags,omitempty"`
+	Relabeling      *TransformRelabeling   `json:"-"`
 }
 
 func (dm *DNSMessage) Init() {
@@ -311,6 +314,7 @@ func (dm *DNSMessage) InitTransforms() {
 	dm.Suspicious = &TransformSuspicious{}
 	dm.PowerDNS = &PowerDNS{}
 	dm.Geo = &TransformDNSGeo{}
+	dm.Relabeling = &TransformRelabeling{}
 }
 
 func (dm *DNSMessage) handleGeoIPDirectives(directive string, s *strings.Builder) error {
@@ -1256,34 +1260,44 @@ func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
 		dnsFields["powerdns.http-version"] = dm.PowerDNS.HTTPVersion
 	}
 
-	// remove or update keys ?
-	for _, label := range dm.RelabelingRename {
-		regex := regexp.MustCompile(label.Regex)
-		for key := range dnsFields {
-			if regex.MatchString(key) {
-				if value, exists := dnsFields[label.Replacement]; exists {
-					if _, ok := value.([]string); ok {
-						dnsFields[label.Replacement] = append(dnsFields[label.Replacement].([]string), dnsFields[key].(string))
-					} else {
-						dnsFields[label.Replacement] = []string{dnsFields[label.Replacement].(string), dnsFields[key].(string)}
-					}
-				} else {
-					dnsFields[label.Replacement] = dnsFields[key]
-				}
-				delete(dnsFields, key)
-			}
+	// relabeling ?
+	if dm.Relabeling != nil {
+		err := dm.ApplyRelabeling(dnsFields)
+		if err != nil {
+			return nil, err
 		}
 	}
-	for _, label := range dm.RelabelingRemove {
-		regex := regexp.MustCompile(label.Regex)
+
+	return dnsFields, nil
+}
+
+func (dm *DNSMessage) ApplyRelabeling(dnsFields map[string]interface{}) error {
+
+	for _, label := range dm.Relabeling.Rules {
+		regex := label.Regex
 		for key := range dnsFields {
 			if regex.MatchString(key) {
+				if label.Action == "rename" {
+					replacement := label.Replacement
+					if value, exists := dnsFields[replacement]; exists {
+						switch v := value.(type) {
+						case []string:
+							dnsFields[replacement] = append(v, convertToString(dnsFields[key]))
+						default:
+							dnsFields[replacement] = []string{convertToString(v), convertToString(dnsFields[key])}
+						}
+					} else {
+						dnsFields[replacement] = convertToString(dnsFields[key])
+					}
+				}
+
+				// delete on all case
 				delete(dnsFields, key)
 			}
 		}
 	}
 
-	return dnsFields, nil
+	return nil
 }
 
 func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
@@ -1798,4 +1812,19 @@ func GetReferenceDNSMessage() DNSMessage {
 	dm.Init()
 	dm.InitTransforms()
 	return dm
+}
+
+func convertToString(value interface{}) string {
+	switch v := value.(type) {
+	case int:
+		return strconv.Itoa(v)
+	case bool:
+		return strconv.FormatBool(v)
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64)
+	case string:
+		return v
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }
