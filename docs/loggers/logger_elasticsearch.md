@@ -19,3 +19,17 @@ Options:
   > Adjust the size of the channel buffer. If you encounter the error message buffer is full, xxx packet(s) dropped, consider increasing this parameter to prevent message drops.
 - `flush-interval` (integer) interval in seconds before to flush the buffer. Default to `10`.
   > Set the maximum time interval before the buffer is flushed. If the bulk batches reach this interval before reaching the maximum size, they will be sent to Elasticsearch.
+
+Configuration example:
+
+```yaml
+- name: elastic
+  elasticsearch:
+    server: "http://127.0.0.1:9200/"
+    index:  "dnscollector"
+    chan-buffer-size: 4096
+    bulk-size: 5242880
+    flush-interval: 10
+    compression: gzip
+    bulk-channel-size: 10
+```
