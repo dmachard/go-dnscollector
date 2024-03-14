@@ -1,7 +1,7 @@
 # Transformer: Relabeling
 
 Use this transformer to remove or rename some JSON keys.
-Only works on [`flat-json`](../dnsjson.md) output format.
+This transformation is only applied to the [`flat-json`](../dnsjson.md) output format.
 
 Configuration example
 
@@ -28,4 +28,27 @@ Configuration example
           remove:
             - regex: "dns"
             - regex: "network"
+```
+
+This config produces the following flat-json ouput:
+
+```json
+{
+  "client": "192.168.1.210",
+  "client_id": "dnsdist1",
+  "query": "www.google.co",
+  "server": "192.168.1.210",
+  "timestamp": "2024-03-10T19:58:30.881076563Z"
+}
+{
+  "answers_rdata": [
+    "172.217.20.206",
+    "www3.l.google.com"
+  ],
+  "client": "192.168.1.210",
+  "client_id": "dnsdist1",
+  "query": "www.google.co",
+  "server": "192.168.1.210",
+  "timestamp": "2024-03-10T19:58:30.903063148Z"
+}
 ```
