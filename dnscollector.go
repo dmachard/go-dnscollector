@@ -7,7 +7,6 @@ import (
 	"strings"
 	"syscall"
 
-	"net/http"
 	_ "net/http/pprof"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -55,9 +54,9 @@ func main() {
 	testFlag := false
 
 	// Server for pprof
-	go func() {
-		fmt.Println(http.ListenAndServe("localhost:9999", nil))
-	}()
+	// go func() {
+	// 	fmt.Println(http.ListenAndServe("localhost:9999", nil))
+	// }()
 
 	// no more use embedded golang flags...
 	// external lib like tcpassembly can set some uneeded flags too...
