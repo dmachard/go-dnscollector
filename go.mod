@@ -27,14 +27,14 @@ require (
 	github.com/miekg/dns v1.1.58
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/oschwald/maxminddb-golang v1.12.0
-	github.com/prometheus/client_golang v1.18.0
+	github.com/prometheus/client_golang v1.19.0
 	github.com/rs/tzsp v0.0.0-20161230003637-8ce729c826b9
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.9.0
 	github.com/tinylib/msgp v1.1.9
 	golang.org/x/net v0.21.0
 	golang.org/x/sys v0.17.0
-	google.golang.org/protobuf v1.32.0
+	google.golang.org/protobuf v1.33.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -136,7 +136,7 @@ require (
 	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_model v0.6.0
-	github.com/prometheus/common v0.46.0
+	github.com/prometheus/common v0.48.0
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/prometheus/prometheus v0.43.1-0.20230419161410-69155c6ba1e9
 	golang.org/x/mod v0.14.0 // indirect

@@ -42,6 +42,7 @@ func Test_ElasticSearchClient_BulkSize_Exceeded(t *testing.T) {
 			conf.Loggers.ElasticSearchClient.Index = "indexname"
 			conf.Loggers.ElasticSearchClient.Server = "http://127.0.0.1:59200/"
 			conf.Loggers.ElasticSearchClient.BulkSize = tc.bulkSize
+			conf.Loggers.ElasticSearchClient.BulkChannelSize = 50
 			g := NewElasticSearchClient(conf, logger.New(false), "test")
 
 			go g.Run()
