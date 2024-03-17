@@ -1,8 +1,6 @@
 
 # DNS-collector with Fluentd
 
-- Copy this [folder](./docs/_integration/fluentd)
-
 - Create the `data` folder.
 
 - Start the docker stack:

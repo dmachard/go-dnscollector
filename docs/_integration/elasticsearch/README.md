@@ -1,8 +1,6 @@
 
 # DNS-collector with Elastic and Kibana
 
-- Copy this [folder](./docs/_integration/elasticsearch).
-
 - Create the `data` folder.
 
 - Start the docker stack:

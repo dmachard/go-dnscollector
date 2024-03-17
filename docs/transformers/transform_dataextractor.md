@@ -7,7 +7,7 @@ Options:
 
 - `add-payload`: (boolean) add base64 encoded dns payload
 
-Default values:
+Default:
 
 ```yaml
 transforms:
