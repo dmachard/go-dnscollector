@@ -16,7 +16,16 @@ sudo setcap cap_sys_resource,cap_net_raw,cap_perfmon+ep go-dnscollector
 
 Options:
 
-- `device` (str) interface name to sniff. Defaults to `wlp2s0`.
+- `device` (str) interface name to sniff.
   > Interface to use for XDP.
-- `chan-buffer-size` (int) incoming channel size, number of packet before to drop it. Default to `65535`.
+- `chan-buffer-size` (int) incoming channel size, number of packet before to drop it.
   > Specifies the maximum number of packets that can be buffered before dropping additional packets.
+
+Defaults:
+
+```yaml
+- name: sniffer
+  xdp-sniffer:
+    device: wlp2s0
+    chan-buffer-size: 65535
+```

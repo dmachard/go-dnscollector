@@ -13,7 +13,7 @@
 | [Fluentd](loggers/logger_fluentd.md)            | Send logs to Fluentd server                           |
 | [InfluxDB](loggers/logger_influxdb.md)          | Send logs to InfluxDB server                          |
 | [Loki](loggers/logger_loki.md)                  | Send logs to Loki server                              |
-| [ElasticSearch](loggers/logger_elasticserch.md) | Send logs to Elastic instance                         |
+| [ElasticSearch](loggers/logger_elasticsearch.md) | Send logs to Elastic instance                         |
 | [Scalyr](loggers/logger_scalyr.md)              | Client for the Scalyr/DataSet addEvents API endpoint. |
 | [Redis](loggers/logger_redis.md)                | Redis pub logger                                      |
 | [Kafka](loggers/logger_kafka.md)                | Kafka DNS producer                                    |
