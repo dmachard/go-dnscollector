@@ -82,12 +82,12 @@ func (s *UserPrivacyProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers
 }
 
 func (s *UserPrivacyProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=userprivacy#%d - ", s.instance)
+	log := fmt.Sprintf("userprivacy#%d - ", s.instance)
 	s.logInfo(log+msg, v...)
 }
 
 func (s *UserPrivacyProcessor) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=userprivacy#%d - ", s.instance)
+	log := fmt.Sprintf("userprivacy#%d - ", s.instance)
 	s.logError(log+msg, v...)
 }
 
@@ -130,7 +130,7 @@ func (s *UserPrivacyProcessor) HashIP(ip string) string {
 		hash := sha256.New()
 		hash.Write([]byte(ip))
 		return fmt.Sprintf("%x", hash.Sum(nil))
-	case "sha512":
+	case "sha512": // nolint
 		hash := sha512.New()
 		hash.Write([]byte(ip))
 		return fmt.Sprintf("%x", hash.Sum(nil))

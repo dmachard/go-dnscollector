@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  dnscollector:
+    container_name: dnscollector
+    image: dmachard/go-dnscollector:${DNSCOLLECTOR_VERSION:-latest}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${DNSCOLLECTOR_DATA}/:/var/dnscollector/
+    env_file:
+      - .env
+    ports:
+      - "6000:6000/tcp"
+      - "8080:8080/tcp"
+    restart: always

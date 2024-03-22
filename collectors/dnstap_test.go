@@ -9,10 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -52,7 +51,7 @@ func Test_DnstapCollector(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			g := loggers.NewFakeLogger()
+			g := pkgutils.NewFakeLogger()
 
 			config := pkgconfig.GetFakeConfig()
 			if tc.listenPort > 0 {
@@ -62,7 +61,7 @@ func Test_DnstapCollector(t *testing.T) {
 				config.Collectors.Dnstap.SockPath = tc.address
 			}
 
-			c := NewDnstap([]dnsutils.Worker{g}, config, logger.New(false), "test")
+			c := NewDnstap([]pkgutils.Worker{g}, config, logger.New(false), "test")
 			if err := c.Listen(); err != nil {
 				log.Fatal("collector listening  error: ", err)
 			}
@@ -106,7 +105,7 @@ func Test_DnstapCollector(t *testing.T) {
 			}
 
 			// waiting message in channel
-			msg := <-g.Channel()
+			msg := <-g.GetInputChannel()
 			if msg.DNSTap.Operation != tc.operation {
 				t.Errorf("want %s, got %s", tc.operation, msg.DNSTap.Operation)
 			}
@@ -128,8 +127,8 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	config.Collectors.Dnstap.SockPath = "/tmp/dnscollector.sock"
 
 	// start the collector in unix mode
-	g := loggers.NewFakeLogger()
-	c := NewDnstap([]dnsutils.Worker{g}, config, lg, "test")
+	g := pkgutils.NewFakeLogger()
+	c := NewDnstap([]pkgutils.Worker{g}, config, lg, "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector listening  error: ", err)
 	}

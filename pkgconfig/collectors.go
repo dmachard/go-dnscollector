@@ -1,6 +1,16 @@
 package pkgconfig
 
+import "reflect"
+
 type ConfigCollectors struct {
+	DNSMessage struct {
+		Enable            bool `yaml:"enable"`
+		ChannelBufferSize int  `yaml:"chan-buffer-size"`
+		Matching          struct {
+			Include map[string]interface{} `yaml:"include"`
+			Exclude map[string]interface{} `yaml:"exclude"`
+		} `yaml:"matching"`
+	} `yaml:"dnsmessage"`
 	Tail struct {
 		Enable       bool   `yaml:"enable"`
 		TimeLayout   string `yaml:"time-layout"`
@@ -21,6 +31,7 @@ type ConfigCollectors struct {
 		ResetConn         bool   `yaml:"reset-conn"`
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		DisableDNSParser  bool   `yaml:"disable-dnsparser"`
+		ExtendedSupport   bool   `yaml:"extended-support"`
 		Compression       string `yaml:"compression"`
 	} `yaml:"dnstap"`
 	DnstapProxifier struct {
@@ -32,7 +43,7 @@ type ConfigCollectors struct {
 		TLSMinVersion string `yaml:"tls-min-version"`
 		CertFile      string `yaml:"cert-file"`
 		KeyFile       string `yaml:"key-file"`
-	} `yaml:"dnstap-proxifier"`
+	} `yaml:"dnstap-relay"`
 	AfpacketLiveCapture struct {
 		Enable            bool   `yaml:"enable"`
 		Port              int    `yaml:"port"`
@@ -75,6 +86,9 @@ type ConfigCollectors struct {
 }
 
 func (c *ConfigCollectors) SetDefault() {
+	c.DNSMessage.Enable = false
+	c.DNSMessage.ChannelBufferSize = 65535
+
 	c.Tail.Enable = false
 	c.Tail.TimeLayout = ""
 	c.Tail.PatternQuery = ""
@@ -93,6 +107,7 @@ func (c *ConfigCollectors) SetDefault() {
 	c.Dnstap.ResetConn = true
 	c.Dnstap.ChannelBufferSize = 65535
 	c.Dnstap.DisableDNSParser = false
+	c.Dnstap.ExtendedSupport = false
 	c.Dnstap.Compression = CompressNone
 
 	c.DnstapProxifier.Enable = false
@@ -136,4 +151,25 @@ func (c *ConfigCollectors) SetDefault() {
 	c.Tzsp.ListenIP = AnyIP
 	c.Tzsp.ListenPort = 10000
 	c.Tzsp.ChannelBufferSize = 65535
+}
+
+func (c *ConfigCollectors) GetTags() (ret []string) {
+	cl := reflect.TypeOf(*c)
+
+	for i := 0; i < cl.NumField(); i++ {
+		field := cl.Field(i)
+		tag := field.Tag.Get("yaml")
+		ret = append(ret, tag)
+	}
+	return ret
+}
+
+func (c *ConfigCollectors) IsValid(name string) bool {
+	tags := c.GetTags()
+	for i := range tags {
+		if name == tags[i] {
+			return true
+		}
+	}
+	return false
 }

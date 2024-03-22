@@ -7,4 +7,5 @@
 | [Tail](collectors/collector_tail.md)                  | Tail on plain text file |
 | [XDP Sniffer](collectors/collector_xdp.md)            | Live capture on network interface with XDP |
 | [AF_PACKET Sniffer](collectors/collector_afpacket.md) | Live capture on network interface with AF_PACKET socket |
-| [File Ingestor](collectors/collector_file.md)         | File ingestor like pcap |
+| [File Ingestor](collectors/collector_fileingestor.md) | File ingestor like pcap |
+| [DNS Message](collectors/collector_dnsmessage.md)     | Internal DNS data structure |

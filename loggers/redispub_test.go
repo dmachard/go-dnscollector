@@ -64,7 +64,7 @@ func Test_RedisPubRun(t *testing.T) {
 
 			// send fake dns message to logger
 			dm := dnsutils.GetFakeDNSMessage()
-			g.Channel() <- dm
+			g.GetInputChannel() <- dm
 
 			// read data on server side and decode-it
 			reader := bufio.NewReader(conn)

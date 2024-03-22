@@ -11,6 +11,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/segmentio/kafka-go"
@@ -36,10 +37,11 @@ type KafkaProducer struct {
 	kafkaReconnect chan bool
 	kafkaConnected bool
 	compressCodec  compress.Codec
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name string) *KafkaProducer {
-	logger.Info("[%s] logger=kafka - enabled", name)
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] kafka - enabled", name)
 	k := &KafkaProducer{
 		stopProcess:    make(chan bool),
 		doneProcess:    make(chan bool),
@@ -53,16 +55,24 @@ func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name stri
 		kafkaReady:     make(chan bool),
 		kafkaReconnect: make(chan bool),
 		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	k.ReadConfig()
-
 	return k
 }
 
 func (k *KafkaProducer) GetName() string { return k.name }
 
-func (k *KafkaProducer) SetLoggers(loggers []dnsutils.Worker) {}
+func (k *KafkaProducer) AddDroppedRoute(wrk pkgutils.Worker) {
+	k.RoutingHandler.AddDroppedRoute(wrk)
+}
+
+func (k *KafkaProducer) AddDefaultRoute(wrk pkgutils.Worker) {
+	k.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (k *KafkaProducer) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (k *KafkaProducer) ReadConfig() {
 	if len(k.config.Loggers.RedisPub.TextFormat) > 0 {
@@ -84,7 +94,7 @@ func (k *KafkaProducer) ReadConfig() {
 		case pkgconfig.CompressNone:
 			k.compressCodec = nil
 		default:
-			log.Fatal("kafka - invalid compress mode: ", k.config.Loggers.KafkaProducer.Compression)
+			log.Fatal(pkgutils.PrefixLogLogger+"["+k.name+"] kafka - invalid compress mode: ", k.config.Loggers.KafkaProducer.Compression)
 		}
 	}
 }
@@ -95,18 +105,21 @@ func (k *KafkaProducer) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (k *KafkaProducer) LogInfo(msg string, v ...interface{}) {
-	k.logger.Info("["+k.name+"] logger=kafka - "+msg, v...)
+	k.logger.Info(pkgutils.PrefixLogLogger+"["+k.name+"] kafka - "+msg, v...)
 }
 
 func (k *KafkaProducer) LogError(msg string, v ...interface{}) {
-	k.logger.Error("["+k.name+"] logger=kafka - "+msg, v...)
+	k.logger.Error(pkgutils.PrefixLogLogger+"["+k.name+"] kafka - "+msg, v...)
 }
 
-func (k *KafkaProducer) Channel() chan dnsutils.DNSMessage {
+func (k *KafkaProducer) GetInputChannel() chan dnsutils.DNSMessage {
 	return k.inputChan
 }
 
 func (k *KafkaProducer) Stop() {
+	k.LogInfo("stopping logger...")
+	k.RoutingHandler.Stop()
+
 	k.LogInfo("stopping to run...")
 	k.stopRun <- true
 	<-k.doneRun
@@ -251,7 +264,11 @@ func (k *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 }
 
 func (k *KafkaProducer) Run() {
-	k.LogInfo("running in background...")
+	k.LogInfo("waiting dnsmessage to process...")
+
+	// prepare next channels
+	defaultRoutes, defaultNames := k.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := k.RoutingHandler.GetDroppedRoutes()
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
@@ -259,7 +276,7 @@ func (k *KafkaProducer) Run() {
 	subprocessors := transformers.NewTransforms(&k.config.OutgoingTransformers, k.logger, k.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go k.Process()
+	go k.ProcessDM()
 
 	// loop to process incoming messages
 RUN_LOOP:
@@ -289,8 +306,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				k.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			k.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			k.outputChan <- dm
@@ -299,7 +320,9 @@ RUN_LOOP:
 	k.LogInfo("run terminated")
 }
 
-func (k *KafkaProducer) Process() {
+func (k *KafkaProducer) ProcessDM() {
+	k.LogInfo("waiting transformed dnsmessage to process...")
+
 	ctx, cancelKafka := context.WithCancel(context.Background())
 	defer cancelKafka() // Libérez les ressources liées au contexte
 
@@ -314,8 +337,6 @@ func (k *KafkaProducer) Process() {
 	flushTimer := time.NewTimer(flushInterval)
 
 	go k.ConnectToKafka(ctx, readyTimer)
-
-	k.LogInfo("ready to process")
 
 PROCESS_LOOP:
 	for {
@@ -359,9 +380,7 @@ PROCESS_LOOP:
 		// flush the buffer
 		case <-flushTimer.C:
 			if !k.kafkaConnected {
-				k.LogInfo("buffer cleared!")
 				bufferDm = nil
-				continue
 			}
 
 			if len(bufferDm) > 0 {

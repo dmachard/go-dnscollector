@@ -17,4 +17,10 @@
 # Python
 __pycache__/
 
+# ignore some specifics files
 go-dnscollector
+bin/
+include/
+docs/_integration/elasticsearch/data/
+docs/_integration/kafka/data/
+docs/_integration/fluentd/data/

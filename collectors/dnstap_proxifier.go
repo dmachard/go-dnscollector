@@ -11,34 +11,38 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 )
 
 type DnstapProxifier struct {
-	doneRun    chan bool
-	stopRun    chan bool
-	listen     net.Listener
-	conns      []net.Conn
-	sockPath   string
-	loggers    []dnsutils.Worker
-	config     *pkgconfig.Config
-	configChan chan *pkgconfig.Config
-	logger     *logger.Logger
-	name       string
-	stopping   bool
+	doneRun        chan bool
+	stopRun        chan bool
+	listen         net.Listener
+	conns          []net.Conn
+	sockPath       string
+	defaultRoutes  []pkgutils.Worker
+	droppedRoutes  []pkgutils.Worker
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	name           string
+	stopping       bool
+	RoutingHandler pkgutils.RoutingHandler
 }
 
-func NewDnstapProxifier(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
-	logger.Info("[%s] collector=dnstaprelay - enabled", name)
+func NewDnstapProxifier(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] dnstaprelay - enabled", name)
 	s := &DnstapProxifier{
-		doneRun:    make(chan bool),
-		stopRun:    make(chan bool),
-		config:     config,
-		configChan: make(chan *pkgconfig.Config),
-		loggers:    loggers,
-		logger:     logger,
-		name:       name,
+		doneRun:        make(chan bool),
+		stopRun:        make(chan bool),
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		defaultRoutes:  loggers,
+		logger:         logger,
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 	s.ReadConfig()
 	return s
@@ -46,21 +50,29 @@ func NewDnstapProxifier(loggers []dnsutils.Worker, config *pkgconfig.Config, log
 
 func (c *DnstapProxifier) GetName() string { return c.name }
 
-func (c *DnstapProxifier) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+func (c *DnstapProxifier) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
+}
+
+func (c *DnstapProxifier) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *DnstapProxifier) SetLoggers(loggers []pkgutils.Worker) {
+	c.defaultRoutes = loggers
 }
 
 func (c *DnstapProxifier) Loggers() []chan dnsutils.DNSMessage {
 	channels := []chan dnsutils.DNSMessage{}
-	for _, p := range c.loggers {
-		channels = append(channels, p.Channel())
+	for _, p := range c.defaultRoutes {
+		channels = append(channels, p.GetInputChannel())
 	}
 	return channels
 }
 
 func (c *DnstapProxifier) ReadConfig() {
 	if !pkgconfig.IsValidTLS(c.config.Collectors.DnstapProxifier.TLSMinVersion) {
-		c.logger.Fatal("collector=dnstaprelay - invalid tls min version")
+		c.logger.Fatal(pkgutils.PrefixLogCollector + "[" + c.name + "] dnstaprelay - invalid tls min version")
 	}
 
 	c.sockPath = c.config.Collectors.DnstapProxifier.SockPath
@@ -72,11 +84,11 @@ func (c *DnstapProxifier) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *DnstapProxifier) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=dnstaprelay - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] dnstaprelay - "+msg, v...)
 }
 
 func (c *DnstapProxifier) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=dnstaprelay - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] dnstaprelay - "+msg, v...)
 }
 
 func (c *DnstapProxifier) HandleFrame(recvFrom chan []byte, sendTo []chan dnsutils.DNSMessage) {
@@ -121,8 +133,10 @@ func (c *DnstapProxifier) HandleConn(conn net.Conn) {
 
 	// process incoming frame and send it to recv channel
 	err := fs.ProcessFrame(recvChan)
-	if err != nil && !c.stopping {
-		c.LogError("transport error: %s", err)
+	if err != nil {
+		if !c.stopping {
+			c.LogError("transport error: %s", err)
+		}
 	}
 
 	close(recvChan)
@@ -130,12 +144,12 @@ func (c *DnstapProxifier) HandleConn(conn net.Conn) {
 	c.LogInfo("%s - connection closed\n", peer)
 }
 
-func (c *DnstapProxifier) Channel() chan dnsutils.DNSMessage {
+func (c *DnstapProxifier) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 
 func (c *DnstapProxifier) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 	c.stopping = true
 
 	// closing properly current connections if exists

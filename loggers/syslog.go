@@ -14,6 +14,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -72,10 +73,11 @@ type Syslog struct {
 	transportReconnect chan bool
 	textFormat         []string
 	name               string
+	RoutingHandler     pkgutils.RoutingHandler
 }
 
 func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *Syslog {
-	console.Info("[%s] logger=syslog - enabled", name)
+	console.Info(pkgutils.PrefixLogLogger+"[%s] syslog - enabled", name)
 	s := &Syslog{
 		stopProcess:        make(chan bool),
 		doneProcess:        make(chan bool),
@@ -89,6 +91,7 @@ func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *S
 		config:             config,
 		configChan:         make(chan *pkgconfig.Config),
 		name:               name,
+		RoutingHandler:     pkgutils.NewRoutingHandler(config, console, name),
 	}
 	s.ReadConfig()
 	return s
@@ -96,25 +99,33 @@ func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *S
 
 func (s *Syslog) GetName() string { return s.name }
 
-func (s *Syslog) SetLoggers(loggers []dnsutils.Worker) {}
+func (s *Syslog) AddDroppedRoute(wrk pkgutils.Worker) {
+	s.RoutingHandler.AddDroppedRoute(wrk)
+}
+
+func (s *Syslog) AddDefaultRoute(wrk pkgutils.Worker) {
+	s.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (s *Syslog) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (s *Syslog) ReadConfig() {
 	if !pkgconfig.IsValidTLS(s.config.Loggers.Syslog.TLSMinVersion) {
-		s.logger.Fatal("logger=syslog - invalid tls min version")
+		s.logger.Fatal(pkgutils.PrefixLogLogger + "[" + s.name + "] syslog - invalid tls min version")
 	}
 
 	if !pkgconfig.IsValidMode(s.config.Loggers.Syslog.Mode) {
-		s.logger.Fatal("logger=syslog - invalid mode text or json expected")
+		s.logger.Fatal(pkgutils.PrefixLogLogger + "[" + s.name + "] syslog - invalid mode text or json expected")
 	}
 	severity, err := GetPriority(s.config.Loggers.Syslog.Severity)
 	if err != nil {
-		s.logger.Fatal("logger=syslog - invalid severity")
+		s.logger.Fatal(pkgutils.PrefixLogLogger + "[" + s.name + "] syslog - invalid severity")
 	}
 	s.severity = severity
 
 	facility, err := GetPriority(s.config.Loggers.Syslog.Facility)
 	if err != nil {
-		s.logger.Fatal("logger=syslog - invalid facility")
+		s.logger.Fatal(pkgutils.PrefixLogLogger + "[" + s.name + "] syslog - invalid facility")
 	}
 	s.facility = facility
 
@@ -130,19 +141,22 @@ func (s *Syslog) ReloadConfig(config *pkgconfig.Config) {
 	s.configChan <- config
 }
 
-func (s *Syslog) Channel() chan dnsutils.DNSMessage {
+func (s *Syslog) GetInputChannel() chan dnsutils.DNSMessage {
 	return s.inputChan
 }
 
 func (s *Syslog) LogInfo(msg string, v ...interface{}) {
-	s.logger.Info("["+s.name+"] logger=syslog - "+msg, v...)
+	s.logger.Info(pkgutils.PrefixLogLogger+"["+s.name+"] syslog - "+msg, v...)
 }
 
 func (s *Syslog) LogError(msg string, v ...interface{}) {
-	s.logger.Error("["+s.name+"] logger=syslog - "+msg, v...)
+	s.logger.Error(pkgutils.PrefixLogLogger+"["+s.name+"] syslog - "+msg, v...)
 }
 
 func (s *Syslog) Stop() {
+	s.LogInfo("stopping logger...")
+	s.RoutingHandler.Stop()
+
 	s.LogInfo("stopping to run...")
 	s.stopRun <- true
 	<-s.doneRun
@@ -167,7 +181,14 @@ func (s *Syslog) ConnectToRemote() {
 		case "local":
 			s.LogInfo("connecting to local syslog...")
 			logWriter, err = syslog.New(s.facility|s.severity, "")
-		case netlib.SocketUnix, netlib.SocketUDP, netlib.SocketTCP:
+		case netlib.SocketUnix:
+			s.LogInfo("connecting to %s://%s ...",
+				s.config.Loggers.Syslog.Transport,
+				s.config.Loggers.Syslog.RemoteAddress)
+			logWriter, err = syslog.Dial("",
+				s.config.Loggers.Syslog.RemoteAddress, s.facility|s.severity,
+				s.config.Loggers.Syslog.Tag)
+		case netlib.SocketUDP, netlib.SocketTCP:
 			s.LogInfo("connecting to %s://%s ...",
 				s.config.Loggers.Syslog.Transport,
 				s.config.Loggers.Syslog.RemoteAddress)
@@ -245,6 +266,10 @@ func (s *Syslog) ConnectToRemote() {
 func (s *Syslog) Run() {
 	s.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := s.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := s.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, s.outputChan)
@@ -285,8 +310,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				s.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			s.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			s.outputChan <- dm
@@ -349,8 +378,8 @@ func (s *Syslog) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 		if err != nil {
 			s.LogError("write error %s", err)
 			s.syslogReady = false
-			s.syslogWriter.Close()
 			<-s.transportReconnect
+			break
 		}
 	}
 
@@ -404,9 +433,7 @@ PROCESS_LOOP:
 			// flush the buffer
 		case <-flushTimer.C:
 			if !s.syslogReady {
-				s.LogInfo("buffer cleared!")
 				bufferDm = nil
-				continue
 			}
 
 			if len(bufferDm) > 0 {

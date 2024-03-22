@@ -15,6 +15,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
@@ -149,54 +150,57 @@ func RemoveBpfFilter(fd int) (err error) {
 }
 
 type AfpacketSniffer struct {
-	done       chan bool
-	exit       chan bool
-	fd         int
-	identity   string
-	loggers    []dnsutils.Worker
-	config     *pkgconfig.Config
-	configChan chan *pkgconfig.Config
-	logger     *logger.Logger
-	name       string
+	done          chan bool
+	exit          chan bool
+	fd            int
+	identity      string
+	defaultRoutes []pkgutils.Worker
+	droppedRoutes []pkgutils.Worker
+	config        *pkgconfig.Config
+	configChan    chan *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
 }
 
-func NewAfpacketSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	logger.Info("[%s] collector=afpacket - enabled", name)
+func NewAfpacketSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] afpacket sniffer - enabled", name)
 	s := &AfpacketSniffer{
-		done:       make(chan bool),
-		exit:       make(chan bool),
-		config:     config,
-		configChan: make(chan *pkgconfig.Config),
-		loggers:    loggers,
-		logger:     logger,
-		name:       name,
+		done:          make(chan bool),
+		exit:          make(chan bool),
+		config:        config,
+		configChan:    make(chan *pkgconfig.Config),
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
 }
 
 func (c *AfpacketSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=afpacket - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] afpacket sniffer- "+msg, v...)
 }
 
 func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=afpacket - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] afpacket sniffer - "+msg, v...)
 }
 
 func (c *AfpacketSniffer) GetName() string { return c.name }
 
-func (c *AfpacketSniffer) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+func (c *AfpacketSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
+}
+
+func (c *AfpacketSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *AfpacketSniffer) SetLoggers(loggers []pkgutils.Worker) {
+	c.defaultRoutes = loggers
 }
 
 func (c *AfpacketSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	channels := []chan dnsutils.DNSMessage{}
-	names := []string{}
-	for _, p := range c.loggers {
-		channels = append(channels, p.Channel())
-		names = append(names, p.GetName())
-	}
-	return channels, names
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *AfpacketSniffer) ReadConfig() {
@@ -208,12 +212,12 @@ func (c *AfpacketSniffer) ReloadConfig(config *pkgconfig.Config) {
 	c.configChan <- config
 }
 
-func (c *AfpacketSniffer) Channel() chan dnsutils.DNSMessage {
+func (c *AfpacketSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 
 func (c *AfpacketSniffer) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// exit to close properly
 	c.exit <- true
@@ -278,8 +282,13 @@ func (c *AfpacketSniffer) Run() {
 		}
 	}
 
-	dnsProcessor := processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.AfpacketLiveCapture.ChannelBufferSize)
-	go dnsProcessor.Run(c.Loggers())
+	dnsProcessor := processors.NewDNSProcessor(
+		c.config,
+		c.logger,
+		c.name,
+		c.config.Collectors.AfpacketLiveCapture.ChannelBufferSize,
+	)
+	go dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	dnsChan := make(chan netlib.DNSPacket)
 	udpChan := make(chan gopacket.Packet)

@@ -55,7 +55,10 @@ jobs:
         go-version: ${{ matrix.go-version }}
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
   go-freebsd:
     runs-on: ubuntu-latest
@@ -71,7 +74,10 @@ jobs:
         go-version: ${{ matrix.go-version }}
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=freebsd GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=freebsd GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
   # for macos and window, limit the build to the latest version
   go-macos:
@@ -88,7 +94,10 @@ jobs:
         go-version: ${{ matrix.go-version }}
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
   go-win:
     runs-on: windows-latest
@@ -106,6 +115,8 @@ jobs:
     - name: build binary
       run: |
         set CGO_ENABLED=0
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy
         go build -ldflags="-s -w" -o go-dnscollector.exe .
       
   docker:
@@ -116,3 +127,12 @@ jobs:
     - name: Build the Docker image
       run: |
         docker build --build-arg VERSION=dev . --file Dockerfile -t go-dnscollector
+
+  docker32b:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build the Docker image
+      run: |
+        docker build --build-arg VERSION=dev . --platform linux/386 --file Dockerfile -t go-dnscollector

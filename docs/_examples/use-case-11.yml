@@ -27,7 +27,7 @@ multiplexer:
     - name: console
       stdout:
         mode: text
-        text-format: "localtime identity queryip qname qtype rcode country"
+        text-format: "localtime identity queryip qname qtype geoip-country rcode"
 
   # Routes DNS messages from the tap collector to standard output
   routes:

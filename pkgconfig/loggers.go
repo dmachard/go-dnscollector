@@ -1,11 +1,18 @@
 package pkgconfig
 
 import (
+	"reflect"
+
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/prometheus/prometheus/model/relabel"
 )
 
 type ConfigLoggers struct {
+	DevNull struct {
+		Enable            bool   `yaml:"enable"`
+		Mode              string `yaml:"mode"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size"`
+	} `yaml:"devnull"`
 	Stdout struct {
 		Enable            bool   `yaml:"enable"`
 		Mode              string `yaml:"mode"`
@@ -13,22 +20,40 @@ type ConfigLoggers struct {
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
 	} `yaml:"stdout"`
 	Prometheus struct {
-		Enable                  bool     `yaml:"enable"`
-		ListenIP                string   `yaml:"listen-ip"`
-		ListenPort              int      `yaml:"listen-port"`
-		TLSSupport              bool     `yaml:"tls-support"`
-		TLSMutual               bool     `yaml:"tls-mutual"`
-		TLSMinVersion           string   `yaml:"tls-min-version"`
-		CertFile                string   `yaml:"cert-file"`
-		KeyFile                 string   `yaml:"key-file"`
-		PromPrefix              string   `yaml:"prometheus-prefix"`
-		LabelsList              []string `yaml:"prometheus-labels"`
-		TopN                    int      `yaml:"top-n"`
-		BasicAuthLogin          string   `yaml:"basic-auth-login"`
-		BasicAuthPwd            string   `yaml:"basic-auth-pwd"`
-		BasicAuthEnabled        bool     `yaml:"basic-auth-enable"`
-		ChannelBufferSize       int      `yaml:"chan-buffer-size"`
-		HistogramMetricsEnabled bool     `yaml:"histogram-metrics-enabled"`
+		Enable                    bool     `yaml:"enable"`
+		ListenIP                  string   `yaml:"listen-ip"`
+		ListenPort                int      `yaml:"listen-port"`
+		TLSSupport                bool     `yaml:"tls-support"`
+		TLSMutual                 bool     `yaml:"tls-mutual"`
+		TLSMinVersion             string   `yaml:"tls-min-version"`
+		CertFile                  string   `yaml:"cert-file"`
+		KeyFile                   string   `yaml:"key-file"`
+		PromPrefix                string   `yaml:"prometheus-prefix"`
+		LabelsList                []string `yaml:"prometheus-labels"`
+		TopN                      int      `yaml:"top-n"`
+		BasicAuthLogin            string   `yaml:"basic-auth-login"`
+		BasicAuthPwd              string   `yaml:"basic-auth-pwd"`
+		BasicAuthEnabled          bool     `yaml:"basic-auth-enable"`
+		ChannelBufferSize         int      `yaml:"chan-buffer-size"`
+		RequestersMetricsEnabled  bool     `yaml:"requesters-metrics-enabled"`
+		DomainsMetricsEnabled     bool     `yaml:"domains-metrics-enabled"`
+		NoErrorMetricsEnabled     bool     `yaml:"noerror-metrics-enabled"`
+		ServfailMetricsEnabled    bool     `yaml:"servfail-metrics-enabled"`
+		NonExistentMetricsEnabled bool     `yaml:"nonexistent-metrics-enabled"`
+		TimeoutMetricsEnabled     bool     `yaml:"timeout-metrics-enabled"`
+		HistogramMetricsEnabled   bool     `yaml:"histogram-metrics-enabled"`
+		RequestersCacheTTL        int      `yaml:"requesters-cache-ttl"`
+		RequestersCacheSize       int      `yaml:"requesters-cache-size"`
+		DomainsCacheTTL           int      `yaml:"domains-cache-ttl"`
+		DomainsCacheSize          int      `yaml:"domains-cache-size"`
+		NoErrorDomainsCacheTTL    int      `yaml:"noerror-domains-cache-ttl"`
+		NoErrorDomainsCacheSize   int      `yaml:"noerror-domains-cache-size"`
+		ServfailDomainsCacheTTL   int      `yaml:"servfail-domains-cache-ttl"`
+		ServfailDomainsCacheSize  int      `yaml:"servfail-domains-cache-size"`
+		NXDomainsCacheTTL         int      `yaml:"nonexistent-domains-cache-ttl"`
+		NXDomainsCacheSize        int      `yaml:"nonexistent-domains-cache-size"`
+		DefaultDomainsCacheTTL    int      `yaml:"default-domains-cache-ttl"`
+		DefaultDomainsCacheSize   int      `yaml:"default-domains-cache-size"`
 	} `yaml:"prometheus"`
 	RestAPI struct {
 		Enable            bool   `yaml:"enable"`
@@ -57,6 +82,7 @@ type ConfigLoggers struct {
 		PostRotateDelete    bool   `yaml:"postrotate-delete-success"`
 		TextFormat          string `yaml:"text-format"`
 		ChannelBufferSize   int    `yaml:"chan-buffer-size"`
+		ExtendedSupport     bool   `yaml:"extended-support"`
 	} `yaml:"logfile"`
 	DNSTap struct {
 		Enable            bool   `yaml:"enable"`
@@ -77,6 +103,7 @@ type ConfigLoggers struct {
 		OverwriteIdentity bool   `yaml:"overwrite-identity"`
 		BufferSize        int    `yaml:"buffer-size"`
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
+		ExtendedSupport   bool   `yaml:"extended-support"`
 		Compression       string `yaml:"compression"`
 	} `yaml:"dnstapclient"`
 	TCPClient struct {
@@ -201,7 +228,9 @@ type ConfigLoggers struct {
 		Server            string `yaml:"server"`
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		BulkSize          int    `yaml:"bulk-size"`
+		BulkChannelSize   int    `yaml:"bulk-channel-size"`
 		FlushInterval     int    `yaml:"flush-interval"`
+		Compression       string `yaml:"compression"`
 	} `yaml:"elasticsearch"`
 	ScalyrClient struct {
 		Enable            bool                   `yaml:"enable"`
@@ -272,6 +301,14 @@ type ConfigLoggers struct {
 		URL               string `yaml:"url"`
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
 	} `yaml:"falco"`
+	ClickhouseClient struct {
+		Enable   bool   `yaml:"enable"`
+		URL      string `yaml:"url"`
+		User     string `yaml:"user"`
+		Password string `yaml:"password"`
+		Database string `yaml:"database"`
+		Table    string `yaml:"table"`
+	} `yaml:"clickhouse"`
 }
 
 func (c *ConfigLoggers) SetDefault() {
@@ -299,6 +336,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.DNSTap.BufferSize = 100
 	c.DNSTap.ChannelBufferSize = 65535
 	c.DNSTap.Compression = CompressNone
+	c.DNSTap.ExtendedSupport = false
 
 	c.LogFile.Enable = false
 	c.LogFile.FilePath = ""
@@ -313,6 +351,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.LogFile.PostRotateDelete = false
 	c.LogFile.TextFormat = ""
 	c.LogFile.ChannelBufferSize = 65535
+	c.LogFile.ExtendedSupport = false
 
 	c.Prometheus.Enable = false
 	c.Prometheus.ListenIP = LocalhostIP
@@ -329,6 +368,24 @@ func (c *ConfigLoggers) SetDefault() {
 	c.Prometheus.BasicAuthEnabled = true
 	c.Prometheus.ChannelBufferSize = 65535
 	c.Prometheus.HistogramMetricsEnabled = false
+	c.Prometheus.RequestersMetricsEnabled = true
+	c.Prometheus.DomainsMetricsEnabled = true
+	c.Prometheus.NoErrorMetricsEnabled = true
+	c.Prometheus.ServfailMetricsEnabled = true
+	c.Prometheus.NonExistentMetricsEnabled = true
+	c.Prometheus.RequestersCacheTTL = 3600
+	c.Prometheus.RequestersCacheSize = 250000
+	c.Prometheus.DomainsCacheTTL = 3600
+	c.Prometheus.DomainsCacheSize = 500000
+	c.Prometheus.DomainsCacheTTL = 3600
+	c.Prometheus.NoErrorDomainsCacheSize = 100000
+	c.Prometheus.NoErrorDomainsCacheTTL = 3600
+	c.Prometheus.ServfailDomainsCacheSize = 10000
+	c.Prometheus.ServfailDomainsCacheTTL = 3600
+	c.Prometheus.NXDomainsCacheSize = 10000
+	c.Prometheus.NXDomainsCacheTTL = 3600
+	c.Prometheus.DefaultDomainsCacheSize = 1000
+	c.Prometheus.DefaultDomainsCacheTTL = 3600
 
 	c.RestAPI.Enable = false
 	c.RestAPI.ListenIP = LocalhostIP
@@ -401,7 +458,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.Fluentd.KeyFile = ""
 	c.Fluentd.Tag = "dns.collector"
 	c.Fluentd.BufferSize = 100
-	c.Fluentd.ChannelBufferSize = 65535
+	c.Fluentd.ChannelBufferSize = 4096
 
 	c.InfluxDB.Enable = false
 	c.InfluxDB.ServerURL = "http://localhost:8086"
@@ -453,10 +510,12 @@ func (c *ConfigLoggers) SetDefault() {
 
 	c.ElasticSearchClient.Enable = false
 	c.ElasticSearchClient.Server = "http://127.0.0.1:9200/"
-	c.ElasticSearchClient.Index = ""
-	c.ElasticSearchClient.ChannelBufferSize = 65535
-	c.ElasticSearchClient.BulkSize = 100
+	c.ElasticSearchClient.Index = ProgName
+	c.ElasticSearchClient.ChannelBufferSize = 4096
+	c.ElasticSearchClient.BulkSize = 5242880
 	c.ElasticSearchClient.FlushInterval = 10
+	c.ElasticSearchClient.BulkChannelSize = 10
+	c.ElasticSearchClient.Compression = CompressNone
 
 	c.RedisPub.Enable = false
 	c.RedisPub.RemoteAddress = LocalhostIP
@@ -497,13 +556,40 @@ func (c *ConfigLoggers) SetDefault() {
 	c.KafkaProducer.BufferSize = 100
 	c.KafkaProducer.ConnectTimeout = 5
 	c.KafkaProducer.FlushInterval = 10
-	c.KafkaProducer.Topic = "dnscollector"
+	c.KafkaProducer.Topic = ProgName
 	c.KafkaProducer.Partition = 0
-	c.KafkaProducer.ChannelBufferSize = 65535
+	c.KafkaProducer.ChannelBufferSize = 4096
 	c.KafkaProducer.Compression = CompressNone
 
 	c.FalcoClient.Enable = false
 	c.FalcoClient.URL = "http://127.0.0.1:9200"
 	c.FalcoClient.ChannelBufferSize = 65535
 
+	c.ClickhouseClient.Enable = false
+	c.ClickhouseClient.URL = "http://localhost:8123"
+	c.ClickhouseClient.User = "default"
+	c.ClickhouseClient.Password = "password"
+	c.ClickhouseClient.Database = ProgName
+	c.ClickhouseClient.Table = "records"
+}
+
+func (c *ConfigLoggers) GetTags() (ret []string) {
+	cl := reflect.TypeOf(*c)
+
+	for i := 0; i < cl.NumField(); i++ {
+		field := cl.Field(i)
+		tag := field.Tag.Get("yaml")
+		ret = append(ret, tag)
+	}
+	return ret
+}
+
+func (c *ConfigLoggers) IsValid(name string) bool {
+	tags := c.GetTags()
+	for i := range tags {
+		if name == tags[i] {
+			return true
+		}
+	}
+	return false
 }

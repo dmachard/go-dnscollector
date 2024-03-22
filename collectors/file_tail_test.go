@@ -7,9 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 )
 
@@ -28,8 +27,8 @@ func TestTailRun(t *testing.T) {
 	config.Collectors.Tail.PatternQuery = "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_QUERY) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
 
 	// init collector
-	g := loggers.NewFakeLogger()
-	c := NewTail([]dnsutils.Worker{g}, config, logger.New(false), "test")
+	g := pkgutils.NewFakeLogger()
+	c := NewTail([]pkgutils.Worker{g}, config, logger.New(false), "test")
 	if err := c.Follow(); err != nil {
 		t.Errorf("collector tail following error: %e", err)
 	}
@@ -45,7 +44,7 @@ func TestTailRun(t *testing.T) {
 	w.Flush()
 
 	// waiting message in channel
-	msg := <-g.Channel()
+	msg := <-g.GetInputChannel()
 	if msg.DNS.Qname != "www.google.org" {
 		t.Errorf("want www.google.org, got %s", msg.DNS.Qname)
 	}

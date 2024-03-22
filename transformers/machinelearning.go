@@ -50,12 +50,12 @@ func (p *MlProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 }
 
 func (p *MlProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=ml#%d - ", p.instance)
+	log := fmt.Sprintf("ml#%d - ", p.instance)
 	p.logInfo(log+msg, v...)
 }
 
 func (p *MlProcessor) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=ml#%d - ", p.instance)
+	log := fmt.Sprintf("ml#%d - ", p.instance)
 	p.logError(log+msg, v...)
 }
 
@@ -78,7 +78,7 @@ func (p *MlProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 			ConsecutiveDigits:     0,
 			ConsecutiveConsonants: 0,
 			Size:                  0,
-			Occurences:            0,
+			Occurrences:           0,
 			UncommonQtypes:        0,
 		}
 	}
@@ -200,7 +200,7 @@ func (p *MlProcessor) AddFeatures(dm *dnsutils.DNSMessage) {
 
 	// occurences
 	if dm.Reducer != nil {
-		dm.MachineLearning.Occurences = dm.Reducer.Occurences
+		dm.MachineLearning.Occurrences = dm.Reducer.Occurrences
 	}
 
 	// qtypes

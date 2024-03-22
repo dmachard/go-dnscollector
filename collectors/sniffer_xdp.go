@@ -16,6 +16,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-dnscollector/xdp"
 	"github.com/dmachard/go-logger"
@@ -42,53 +43,56 @@ func ConvertIP6(ip [4]uint32) net.IP {
 }
 
 type XDPSniffer struct {
-	done       chan bool
-	exit       chan bool
-	identity   string
-	loggers    []dnsutils.Worker
-	config     *pkgconfig.Config
-	configChan chan *pkgconfig.Config
-	logger     *logger.Logger
-	name       string
+	done          chan bool
+	exit          chan bool
+	identity      string
+	defaultRoutes []pkgutils.Worker
+	droppedRoutes []pkgutils.Worker
+	config        *pkgconfig.Config
+	configChan    chan *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
 }
 
-func NewXDPSniffer(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
-	logger.Info("[%s] collector=xdp - enabled", name)
+func NewXDPSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] xdp sniffer - enabled", name)
 	s := &XDPSniffer{
-		done:       make(chan bool),
-		exit:       make(chan bool),
-		config:     config,
-		configChan: make(chan *pkgconfig.Config),
-		loggers:    loggers,
-		logger:     logger,
-		name:       name,
+		done:          make(chan bool),
+		exit:          make(chan bool),
+		config:        config,
+		configChan:    make(chan *pkgconfig.Config),
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
 }
 
 func (c *XDPSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=xdp - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] xdp sniffer - "+msg, v...)
 }
 
 func (c *XDPSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=xdp - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] xdp sniffer - "+msg, v...)
 }
 
 func (c *XDPSniffer) GetName() string { return c.name }
 
-func (c *XDPSniffer) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+func (c *XDPSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
+}
+
+func (c *XDPSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *XDPSniffer) SetLoggers(loggers []pkgutils.Worker) {
+	c.defaultRoutes = loggers
 }
 
 func (c *XDPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	channels := []chan dnsutils.DNSMessage{}
-	names := []string{}
-	for _, p := range c.loggers {
-		channels = append(channels, p.Channel())
-		names = append(names, p.GetName())
-	}
-	return channels, names
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *XDPSniffer) ReadConfig() {
@@ -100,12 +104,12 @@ func (c *XDPSniffer) ReloadConfig(config *pkgconfig.Config) {
 	c.configChan <- config
 }
 
-func (c *XDPSniffer) Channel() chan dnsutils.DNSMessage {
+func (c *XDPSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 
 func (c *XDPSniffer) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// exit to close properly
 	c.exit <- true
@@ -118,8 +122,13 @@ func (c *XDPSniffer) Stop() {
 func (c *XDPSniffer) Run() {
 	c.LogInfo("starting collector...")
 
-	dnsProcessor := processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.XdpLiveCapture.ChannelBufferSize)
-	go dnsProcessor.Run(c.Loggers())
+	dnsProcessor := processors.NewDNSProcessor(
+		c.config,
+		c.logger,
+		c.name,
+		c.config.Collectors.XdpLiveCapture.ChannelBufferSize,
+	)
+	go dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	iface, err := net.InterfaceByName(c.config.Collectors.XdpLiveCapture.Device)
 	if err != nil {

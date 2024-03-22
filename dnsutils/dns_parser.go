@@ -14,6 +14,13 @@ const DNSLen = 12
 const UNKNOWN = "UNKNOWN"
 
 var (
+	Class = map[int]string{
+		1:   "IN",
+		3:   "CH",
+		4:   "HS",
+		254: "NONE",
+		255: "ANY",
+	}
 	Rdatatypes = map[int]string{
 		0:     "NONE",
 		1:     "A",
@@ -124,6 +131,7 @@ var ErrDecodeDNSLabelTooShort = errors.New("malformed pkt, dns payload too short
 var ErrDecodeQuestionQtypeTooShort = errors.New("malformed pkt, not enough data to decode qtype")
 var ErrDecodeDNSAnswerTooShort = errors.New("malformed pkt, not enough data to decode answer")
 var ErrDecodeDNSAnswerRdataTooShort = errors.New("malformed pkt, not enough data to decode rdata answer")
+var ErrDecodeQuestionQclassTooShort = errors.New("malformed pkt, not enough data to decode qclass")
 
 func RdatatypeToString(rrtype int) string {
 	if value, ok := Rdatatypes[rrtype]; ok {
@@ -134,6 +142,13 @@ func RdatatypeToString(rrtype int) string {
 
 func RcodeToString(rcode int) string {
 	if value, ok := Rcodes[rcode]; ok {
+		return value
+	}
+	return UNKNOWN
+}
+
+func ClassToString(class int) string {
+	if value, ok := Class[class]; ok {
 		return value
 	}
 	return UNKNOWN
@@ -263,11 +278,17 @@ func DecodePayload(dm *DNSMessage, header *DNSHeader, config *pkgconfig.Config) 
 	if header.Ad == 1 {
 		dm.DNS.Flags.AD = true
 	}
+	if header.Rd == 1 {
+		dm.DNS.Flags.RD = true
+	}
+	if header.Cd == 1 {
+		dm.DNS.Flags.CD = true
+	}
 
 	var payloadOffset int
 	// decode DNS question
 	if header.Qdcount > 0 {
-		dnsQname, dnsRRtype, offsetrr, err := DecodeQuestion(header.Qdcount, dm.DNS.Payload)
+		dnsQname, dnsRRtype, dnsQclass, offsetrr, err := DecodeQuestion(header.Qdcount, dm.DNS.Payload)
 		if err != nil {
 			dm.DNS.MalformedPacket = true
 			return &decodingError{part: "query", err: err}
@@ -275,6 +296,7 @@ func DecodePayload(dm *DNSMessage, header *DNSHeader, config *pkgconfig.Config) 
 
 		dm.DNS.Qname = dnsQname
 		dm.DNS.Qtype = RdatatypeToString(dnsRRtype)
+		dm.DNS.Qclass = ClassToString(dnsQclass)
 		payloadOffset = offsetrr
 	}
 
@@ -352,10 +374,11 @@ DNS QUESTION
 |                     QCLASS                    |
 +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 */
-func DecodeQuestion(qdcount int, payload []byte) (string, int, int, error) {
+func DecodeQuestion(qdcount int, payload []byte) (string, int, int, int, error) {
 	offset := DNSLen
 	var qname string
 	var qtype int
+	var qclass int
 
 	for i := 0; i < qdcount; i++ {
 		// the specification allows more than one query in DNS packet,
@@ -367,18 +390,26 @@ func DecodeQuestion(qdcount int, payload []byte) (string, int, int, error) {
 		// Decode QNAME
 		qname, offset, err = ParseLabels(offset, payload)
 		if err != nil {
-			return "", 0, 0, err
+			return "", 0, 0, 0, err
 		}
 
 		// decode QTYPE and support invalid packet, some abuser sends it...
-		if len(payload[offset:]) < 4 {
-			return "", 0, 0, ErrDecodeQuestionQtypeTooShort
+		if len(payload[offset:]) < 2 {
+			return "", 0, 0, 0, ErrDecodeQuestionQtypeTooShort
 		} else {
 			qtype = int(binary.BigEndian.Uint16(payload[offset : offset+2]))
-			offset += 4
+			offset += 2
+		}
+
+		// decode QCLASS
+		if len(payload[offset:]) < 2 {
+			return "", 0, 0, 0, ErrDecodeQuestionQclassTooShort
+		} else {
+			qclass = int(binary.BigEndian.Uint16(payload[offset : offset+2]))
+			offset += 2
 		}
 	}
-	return qname, qtype, offset, nil
+	return qname, qtype, qclass, offset, nil
 }
 
 /*
@@ -455,7 +486,7 @@ func DecodeAnswer(ancount int, startOffset int, payload []byte) ([]DNSAnswer, in
 		a := DNSAnswer{
 			Name:      name,
 			Rdatatype: rdatatype,
-			Class:     int(class),
+			Class:     ClassToString(int(class)),
 			TTL:       int(ttl),
 			Rdata:     parsed,
 		}

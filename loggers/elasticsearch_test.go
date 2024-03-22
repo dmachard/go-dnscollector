@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
@@ -15,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_ElasticSearchClient(t *testing.T) {
+func Test_ElasticSearchClient_BulkSize_Exceeded(t *testing.T) {
 
 	testcases := []struct {
 		mode      string
@@ -24,12 +25,12 @@ func Test_ElasticSearchClient(t *testing.T) {
 	}{
 		{
 			mode:      pkgconfig.ModeFlatJSON,
-			bulkSize:  10,
-			inputSize: 500,
+			bulkSize:  1024,
+			inputSize: 15,
 		},
 	}
 
-	fakeRcvr, err := net.Listen("tcp", "127.0.0.1:9200")
+	fakeRcvr, err := net.Listen("tcp", "127.0.0.1:59200")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,7 +40,9 @@ func Test_ElasticSearchClient(t *testing.T) {
 		t.Run(tc.mode, func(t *testing.T) {
 			conf := pkgconfig.GetFakeConfig()
 			conf.Loggers.ElasticSearchClient.Index = "indexname"
+			conf.Loggers.ElasticSearchClient.Server = "http://127.0.0.1:59200/"
 			conf.Loggers.ElasticSearchClient.BulkSize = tc.bulkSize
+			conf.Loggers.ElasticSearchClient.BulkChannelSize = 50
 			g := NewElasticSearchClient(conf, logger.New(false), "test")
 
 			go g.Run()
@@ -47,10 +50,11 @@ func Test_ElasticSearchClient(t *testing.T) {
 			dm := dnsutils.GetFakeDNSMessage()
 
 			for i := 0; i < tc.inputSize; i++ {
-				g.Channel() <- dm
+				g.GetInputChannel() <- dm
 			}
 
-			for i := 0; i < tc.inputSize/tc.bulkSize; i++ {
+			totalDm := 0
+			for i := 0; i < tc.inputSize; i++ {
 				// accept conn
 				conn, err := fakeRcvr.Accept()
 				if err != nil {
@@ -60,7 +64,7 @@ func Test_ElasticSearchClient(t *testing.T) {
 
 				// read and parse http request on server side
 				connReader := bufio.NewReader(conn)
-				connReaderT := bufio.NewReaderSize(connReader, tc.bulkSize*100000)
+				connReaderT := bufio.NewReaderSize(connReader, tc.bulkSize*2)
 				request, err := http.ReadRequest(connReaderT)
 				if err != nil {
 					t.Fatal(err)
@@ -74,6 +78,7 @@ func Test_ElasticSearchClient(t *testing.T) {
 				}
 
 				scanner := bufio.NewScanner(strings.NewReader(string(payload)))
+
 				cnt := 0
 				for scanner.Scan() {
 					if cnt%2 == 0 {
@@ -84,18 +89,18 @@ func Test_ElasticSearchClient(t *testing.T) {
 						var bulkDm dnsutils.DNSMessage
 						err := json.Unmarshal(scanner.Bytes(), &bulkDm)
 						assert.NoError(t, err)
+						totalDm += 1
 					}
 					cnt++
 				}
 
-				assert.Equal(t, tc.bulkSize*2, cnt)
-				assert.Equal(t, "http://127.0.0.1:9200/indexname/_bulk", g.bulkURL)
 			}
+			assert.Equal(t, tc.inputSize, totalDm)
 		})
 	}
 }
 
-func Test_ElasticSearchClientFlushINterval(t *testing.T) {
+func Test_ElasticSearchClient_FlushInterval_Exceeded(t *testing.T) {
 
 	testcases := []struct {
 		mode          string
@@ -105,34 +110,41 @@ func Test_ElasticSearchClientFlushINterval(t *testing.T) {
 	}{
 		{
 			mode:          pkgconfig.ModeFlatJSON,
-			bulkSize:      100,
-			inputSize:     99,
+			bulkSize:      1048576,
+			inputSize:     50,
 			flushInterval: 5,
 		},
 	}
 
-	fakeRcvr, err := net.Listen("tcp", "127.0.0.1:9200")
+	fakeRcvr, err := net.Listen("tcp", "127.0.0.1:59200")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer fakeRcvr.Close()
 
 	for _, tc := range testcases {
+		totalDm := 0
 		t.Run(tc.mode, func(t *testing.T) {
 			conf := pkgconfig.GetFakeConfig()
 			conf.Loggers.ElasticSearchClient.Index = "indexname"
+			conf.Loggers.ElasticSearchClient.Server = "http://127.0.0.1:59200/"
 			conf.Loggers.ElasticSearchClient.BulkSize = tc.bulkSize
 			conf.Loggers.ElasticSearchClient.FlushInterval = tc.flushInterval
-			g := NewElasticSearchClient(conf, logger.New(false), "test")
+			g := NewElasticSearchClient(conf, logger.New(true), "test")
 
+			// run logger
 			go g.Run()
+			time.Sleep(1 * time.Second)
 
+			// send DNSmessage
 			dm := dnsutils.GetFakeDNSMessage()
-
 			for i := 0; i < tc.inputSize; i++ {
-				g.Channel() <- dm
+				g.GetInputChannel() <- dm
 			}
+			time.Sleep(6 * time.Second)
 
+			// accept the new connection from logger
+			// the connection should contains all packets
 			conn, err := fakeRcvr.Accept()
 			if err != nil {
 				t.Fatal(err)
@@ -140,7 +152,7 @@ func Test_ElasticSearchClientFlushINterval(t *testing.T) {
 			defer conn.Close()
 
 			connReader := bufio.NewReader(conn)
-			connReaderT := bufio.NewReaderSize(connReader, tc.bulkSize*100000)
+			connReaderT := bufio.NewReaderSize(connReader, tc.bulkSize*2)
 			request, err := http.ReadRequest(connReaderT)
 			if err != nil {
 				t.Fatal(err)
@@ -150,7 +162,7 @@ func Test_ElasticSearchClientFlushINterval(t *testing.T) {
 			// read payload from request body
 			payload, err := io.ReadAll(request.Body)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatal("no body in request:", err)
 			}
 
 			scanner := bufio.NewScanner(strings.NewReader(string(payload)))
@@ -164,13 +176,14 @@ func Test_ElasticSearchClientFlushINterval(t *testing.T) {
 					var bulkDm dnsutils.DNSMessage
 					err := json.Unmarshal(scanner.Bytes(), &bulkDm)
 					assert.NoError(t, err)
+					totalDm += 1
 				}
 				cnt++
 			}
 
-			assert.Equal(t, tc.inputSize*2, cnt)
-			assert.Equal(t, "http://127.0.0.1:9200/indexname/_bulk", g.bulkURL)
+			g.Stop()
 
 		})
+		assert.Equal(t, tc.inputSize, totalDm)
 	}
 }

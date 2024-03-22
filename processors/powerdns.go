@@ -10,6 +10,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
@@ -27,37 +28,41 @@ var (
 )
 
 type PdnsProcessor struct {
-	ConnID       int
-	doneRun      chan bool
-	stopRun      chan bool
-	doneMonitor  chan bool
-	stopMonitor  chan bool
-	recvFrom     chan []byte
-	logger       *logger.Logger
-	config       *pkgconfig.Config
-	ConfigChan   chan *pkgconfig.Config
-	name         string
-	chanSize     int
-	dropped      chan string
-	droppedCount map[string]int
+	ConnID         int
+	PeerName       string
+	doneRun        chan bool
+	stopRun        chan bool
+	doneMonitor    chan bool
+	stopMonitor    chan bool
+	recvFrom       chan []byte
+	logger         *logger.Logger
+	config         *pkgconfig.Config
+	ConfigChan     chan *pkgconfig.Config
+	name           string
+	chanSize       int
+	RoutingHandler pkgutils.RoutingHandler
+	dropped        chan string
+	droppedCount   map[string]int
 }
 
-func NewPdnsProcessor(connID int, config *pkgconfig.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
-	logger.Info("[%s] processor=pdns#%d - initialization...", name, connID)
+func NewPdnsProcessor(connID int, peerName string, config *pkgconfig.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
+	logger.Info(pkgutils.PrefixLogProcessor+"[%s] powerdns - conn #%d - initialization...", name, connID)
 	d := PdnsProcessor{
-		ConnID:       connID,
-		doneMonitor:  make(chan bool),
-		doneRun:      make(chan bool),
-		stopMonitor:  make(chan bool),
-		stopRun:      make(chan bool),
-		recvFrom:     make(chan []byte, size),
-		chanSize:     size,
-		logger:       logger,
-		config:       config,
-		ConfigChan:   make(chan *pkgconfig.Config),
-		name:         name,
-		dropped:      make(chan string),
-		droppedCount: map[string]int{},
+		ConnID:         connID,
+		PeerName:       peerName,
+		doneMonitor:    make(chan bool),
+		doneRun:        make(chan bool),
+		stopMonitor:    make(chan bool),
+		stopRun:        make(chan bool),
+		recvFrom:       make(chan []byte, size),
+		chanSize:       size,
+		logger:         logger,
+		config:         config,
+		ConfigChan:     make(chan *pkgconfig.Config),
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
+		dropped:        make(chan string),
+		droppedCount:   map[string]int{},
 	}
 	return d
 }
@@ -65,9 +70,9 @@ func NewPdnsProcessor(connID int, config *pkgconfig.Config, logger *logger.Logge
 func (p *PdnsProcessor) LogInfo(msg string, v ...interface{}) {
 	var log string
 	if p.ConnID == 0 {
-		log = fmt.Sprintf("[%s] processor=powerdns - ", p.name)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - ", p.name)
 	} else {
-		log = fmt.Sprintf("[%s] processor=powerdns#%d - ", p.name, p.ConnID)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - conn #%d - ", p.name, p.ConnID)
 	}
 	p.logger.Info(log+msg, v...)
 }
@@ -75,9 +80,9 @@ func (p *PdnsProcessor) LogInfo(msg string, v ...interface{}) {
 func (p *PdnsProcessor) LogError(msg string, v ...interface{}) {
 	var log string
 	if p.ConnID == 0 {
-		log = fmt.Sprintf("[%s] processor=powerdns - ", p.name)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - ", p.name)
 	} else {
-		log = fmt.Sprintf("[%s] processor=powerdns#%d - ", p.name, p.ConnID)
+		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - conn #%d - ", p.name, p.ConnID)
 	}
 	p.logger.Error(log+msg, v...)
 }
@@ -87,6 +92,9 @@ func (p *PdnsProcessor) GetChannel() chan []byte {
 }
 
 func (p *PdnsProcessor) Stop() {
+	p.LogInfo("stopping processor...")
+	p.RoutingHandler.Stop()
+
 	p.LogInfo("stopping to process...")
 	p.stopRun <- true
 	<-p.doneRun
@@ -96,45 +104,15 @@ func (p *PdnsProcessor) Stop() {
 	<-p.doneMonitor
 }
 
-func (p *PdnsProcessor) MonitorLoggers() {
-	watchInterval := 10 * time.Second
-	bufferFull := time.NewTimer(watchInterval)
-FOLLOW_LOOP:
-	for {
-		select {
-		case <-p.stopMonitor:
-			close(p.dropped)
-			bufferFull.Stop()
-			p.doneMonitor <- true
-			break FOLLOW_LOOP
-
-		case loggerName := <-p.dropped:
-			if _, ok := p.droppedCount[loggerName]; !ok {
-				p.droppedCount[loggerName] = 1
-			} else {
-				p.droppedCount[loggerName]++
-			}
-
-		case <-bufferFull.C:
-
-			for v, k := range p.droppedCount {
-				if k > 0 {
-					p.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
-					p.droppedCount[v] = 0
-				}
-			}
-			bufferFull.Reset(watchInterval)
-
-		}
-	}
-	p.LogInfo("monitor terminated")
-}
-
-func (p *PdnsProcessor) Run(loggersChannel []chan dnsutils.DNSMessage, loggersName []string) {
+func (p *PdnsProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
 
+	// prepare next channels
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(defaultWorkers)
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(droppedworkers)
+
 	// prepare enabled transformers
-	transforms := transformers.NewTransforms(&p.config.IngoingTransformers, p.logger, p.name, loggersChannel, p.ConnID)
+	transforms := transformers.NewTransforms(&p.config.IngoingTransformers, p.logger, p.name, defaultRoutes, p.ConnID)
 
 	// start goroutine to count dropped messsages
 	go p.MonitorLoggers()
@@ -253,6 +231,10 @@ RUN_LOOP:
 
 			// get PowerDNS policy applied
 			pdns.AppliedPolicy = pbdm.GetResponse().GetAppliedPolicy()
+			pdns.AppliedPolicyHit = pbdm.GetResponse().GetAppliedPolicyHit()
+			pdns.AppliedPolicyKind = pbdm.GetResponse().GetAppliedPolicyKind().String()
+			pdns.AppliedPolicyTrigger = pbdm.GetResponse().GetAppliedPolicyTrigger()
+			pdns.AppliedPolicyType = pbdm.GetResponse().GetAppliedPolicyType().String()
 
 			// get PowerDNS metadata
 			metas := make(map[string]string)
@@ -260,6 +242,11 @@ RUN_LOOP:
 				metas[e.GetKey()] = strings.Join(e.Value.StringVal, " ")
 			}
 			pdns.Metadata = metas
+
+			// get http protocol version
+			if pbdm.GetSocketProtocol().String() == "DOH" {
+				pdns.HTTPVersion = pbdm.GetHttpVersion().String()
+			}
 
 			// finally set pdns to dns message
 			dm.PowerDNS = &pdns
@@ -283,7 +270,7 @@ RUN_LOOP:
 				rr := dnsutils.DNSAnswer{
 					Name:      RRs[j].GetName(),
 					Rdatatype: dnsutils.RdatatypeToString(int(RRs[j].GetType())),
-					Class:     int(RRs[j].GetClass()),
+					Class:     dnsutils.ClassToString(int(RRs[j].GetClass())),
 					TTL:       int(RRs[j].GetTtl()),
 					Rdata:     rdata,
 				}
@@ -354,18 +341,59 @@ RUN_LOOP:
 
 			// apply all enabled transformers
 			if transforms.ProcessMessage(&dm) == transformers.ReturnDrop {
+				for i := range droppedRoutes {
+					select {
+					case droppedRoutes[i] <- dm: // Successful send to logger channel
+					default:
+						p.dropped <- droppedNames[i]
+					}
+				}
 				continue
 			}
 
 			// dispatch dns messages to connected loggers
-			for i := range loggersChannel {
+			for i := range defaultRoutes {
 				select {
-				case loggersChannel[i] <- dm: // Successful send to logger channel
+				case defaultRoutes[i] <- dm: // Successful send to logger channel
 				default:
-					p.dropped <- loggersName[i]
+					p.dropped <- defaultNames[i]
 				}
 			}
 		}
 	}
 	p.LogInfo("processing terminated")
+}
+
+func (p *PdnsProcessor) MonitorLoggers() {
+	watchInterval := 10 * time.Second
+	bufferFull := time.NewTimer(watchInterval)
+FOLLOW_LOOP:
+	for {
+		select {
+		case <-p.stopMonitor:
+			close(p.dropped)
+			bufferFull.Stop()
+			p.doneMonitor <- true
+			break FOLLOW_LOOP
+
+		case loggerName := <-p.dropped:
+			if _, ok := p.droppedCount[loggerName]; !ok {
+				p.droppedCount[loggerName] = 1
+			} else {
+				p.droppedCount[loggerName]++
+			}
+
+		case <-bufferFull.C:
+
+			for v, k := range p.droppedCount {
+				if k > 0 {
+					p.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
+					p.droppedCount[v] = 0
+				}
+			}
+			bufferFull.Reset(watchInterval)
+
+		}
+	}
+	p.LogInfo("monitor terminated")
 }

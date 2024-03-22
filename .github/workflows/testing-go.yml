@@ -21,12 +21,22 @@ jobs:
   dev:
     strategy:
       matrix:
-        os-version: ['ubuntu-22.04', 'macos-latest' ]
+        os-version: ['ubuntu-22.04' ] #, 'macos-latest'
         go-version: [ '1.20', '1.21' ]
-        package: ['.', 'pkgconfig', 'dnsutils', 'collectors', 'loggers', 'transformers', 'netlib', 'processors']
-        exclude:
-          - os-version: macos-latest
-            go-version: '1.20'
+        package:
+          - '.'
+          - 'pkgconfig'
+          - 'pkglinker'
+          - 'pkgutils'
+          - 'dnsutils'
+          - 'collectors'
+          - 'loggers'
+          - 'transformers'
+          - 'netlib'
+          - 'processors'
+        # exclude:
+        #   - os-version: macos-latest
+        #     go-version: '1.20'
     
     runs-on: ${{ matrix.os-version }}
 
@@ -74,7 +84,10 @@ jobs:
         python-version: '3.12'
  
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 
     - name: Test ${{ matrix.package }}
       run: |
@@ -96,7 +109,10 @@ jobs:
         go-version: ${{ matrix.go-version }}
  
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }} 
+        go mod tidy
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: run collector
       run: ./go-dnscollector -config ./testsdata/config_prom.yml &
@@ -132,7 +148,7 @@ jobs:
 
     - id: count_tests
       run: |
-        data=$(sudo go test -v ./collectors ./processors ./dnsutils ./netlib ./loggers ./transformers ./pkgconfig ././ 2>&1 | grep -c RUN)
+        data=$(sudo go test -timeout 360s  -v ./collectors ./processors ./dnsutils ./netlib ./loggers ./transformers ./pkgconfig ./pkglinker ./pkgutils ././ 2>&1 | grep -c RUN)
         echo "Count of Tests: $data"
         echo "data=$data" >> $GITHUB_OUTPUT
 

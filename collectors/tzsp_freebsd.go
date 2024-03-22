@@ -6,28 +6,29 @@ package collectors
 import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 )
 
 type TZSPSniffer struct {
-	done    chan bool
-	exit    chan bool
-	loggers []dnsutils.Worker
-	config  *pkgconfig.Config
-	logger  *logger.Logger
-	name    string
+	done          chan bool
+	exit          chan bool
+	defaultRoutes []pkgutils.Worker
+	config        *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
 }
 
 // workaround for macos, not yet supported
-func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	logger.Info("[%s] tzsp collector - enabled", name)
-	s := &AfpacketSniffer{
-		done:    make(chan bool),
-		exit:    make(chan bool),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+func NewTZSP(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] tzsp - enabled", name)
+	s := &TZSPSniffer{
+		done:          make(chan bool),
+		exit:          make(chan bool),
+		config:        config,
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
@@ -35,36 +36,40 @@ func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger
 
 func (c *TZSPSniffer) GetName() string { return c.name }
 
-func (c *TZSPSniffer) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+func (c *TZSPSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
+	// TODO
+}
+
+func (c *TZSPSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *TZSPSniffer) SetLoggers(loggers []pkgutils.Worker) {
+	c.defaultRoutes = loggers
 }
 
 func (c *TZSPSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] tzsp collector - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] tzsp - "+msg, v...)
 }
 
 func (c *TZSPSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] tzsp collector - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] tzsp - "+msg, v...)
 }
 
-func (c *TZSPSniffer) Loggers() []chan dnsutils.DNSMessage {
-	channels := []chan dnsutils.DNSMessage{}
-	for _, p := range c.loggers {
-		channels = append(channels, p.Channel())
-	}
-	return channels
+func (c *TZSPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *TZSPSniffer) ReadConfig() {}
 
 func (c *TZSPSniffer) ReloadConfig(config *pkgconfig.Config) {}
 
-func (c *TZSPSniffer) Channel() chan dnsutils.DNSMessage {
+func (c *TZSPSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 
 func (c *TZSPSniffer) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// exit to close properly
 	c.exit <- true

@@ -15,6 +15,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/gogo/protobuf/proto"
@@ -23,11 +24,13 @@ import (
 
 	/*
 		install loki with tags
-		go get github.com/grafana/loki@9f809eda70babaf583bdf6bf335a28038f286618
-		https://github.com/grafana/loki/releases/tag/v2.8.2
 
-		go get github.com/deepmap/oapi-codegen@v1.12.4
-		go get github.com/prometheus/prometheus@v0.42.0
+		go get github.com/grafana/loki@2535f9bedeae5f27abdbfaf0cc1a8e9f91b6c96d
+		https://github.com/grafana/loki/releases/tag/v2.9.3
+
+		go get github.com/grafana/loki/pkg/push@2535f9bedeae5f27abdbfaf0cc1a8e9f91b6c96d
+
+		go get github.com/prometheus/prometheus@v0.43.1-0.20230419161410-69155c6ba1e9
 		go mod tidy
 	*/
 	"github.com/grafana/loki/pkg/logproto"
@@ -73,46 +76,55 @@ func (o *LokiStream) Encode2Proto() ([]byte, error) {
 }
 
 type LokiClient struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DNSMessage
-	outputChan  chan dnsutils.DNSMessage
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	logger      *logger.Logger
-	httpclient  *http.Client
-	textFormat  []string
-	streams     map[string]*LokiStream
-	name        string
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	httpclient     *http.Client
+	textFormat     []string
+	streams        map[string]*LokiStream
+	name           string
+	RoutingHandler pkgutils.RoutingHandler
 }
 
 func NewLokiClient(config *pkgconfig.Config, logger *logger.Logger, name string) *LokiClient {
-	logger.Info("[%s] logger=loki - enabled", name)
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] loki - enabled", name)
 
 	s := &LokiClient{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
-		logger:      logger,
-		config:      config,
-		configChan:  make(chan *pkgconfig.Config),
-		streams:     make(map[string]*LokiStream),
-		name:        name,
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
+		logger:         logger,
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		streams:        make(map[string]*LokiStream),
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	s.ReadConfig()
-
 	return s
 }
 
 func (c *LokiClient) GetName() string { return c.name }
 
-func (c *LokiClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *LokiClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDroppedRoute(wrk)
+}
+
+func (c *LokiClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (c *LokiClient) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (c *LokiClient) ReadConfig() {
 	if len(c.config.Loggers.LokiClient.TextFormat) > 0 {
@@ -132,7 +144,7 @@ func (c *LokiClient) ReadConfig() {
 
 	tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
 	if err != nil {
-		c.logger.Fatal("logger=loki - tls config failed:", err)
+		c.logger.Fatal(pkgutils.PrefixLogLogger+"["+c.name+"] loki - tls config failed:", err)
 	}
 
 	// prepare http client
@@ -169,18 +181,21 @@ func (c *LokiClient) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *LokiClient) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger=loki - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogLogger+"["+c.name+"] loki - "+msg, v...)
 }
 
 func (c *LokiClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger=loki - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogLogger+"["+c.name+"] loki - "+msg, v...)
 }
 
-func (c *LokiClient) Channel() chan dnsutils.DNSMessage {
+func (c *LokiClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 
 func (c *LokiClient) Stop() {
+	c.LogInfo("stopping logger...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun
@@ -192,6 +207,10 @@ func (c *LokiClient) Stop() {
 
 func (c *LokiClient) Run() {
 	c.LogInfo("running in background...")
+
+	// prepare next channels
+	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
@@ -229,8 +248,12 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			c.outputChan <- dm
@@ -285,6 +308,7 @@ PROCESS_LOOP:
 				}
 				sb.Sort()
 				lbls, _ = relabel.Process(sb.Labels(), c.config.Loggers.LokiClient.RelabelConfigs...)
+
 				// Drop all labels starting with __ from the map if a relabel config is used.
 				// These labels are just exposed to relabel for the user and should not be
 				// shipped to loki by default.
@@ -294,7 +318,8 @@ PROCESS_LOOP:
 						lb.Del(l.Name)
 					}
 				})
-				lbls = lb.Labels(lbls)
+				lbls = lb.Labels()
+
 				if len(lbls) == 0 {
 					c.LogInfo("dropping %v since it has no labels", dm)
 					continue

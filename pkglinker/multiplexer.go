@@ -1,15 +1,19 @@
-package main
+package pkglinker
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/collectors"
-	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 	"gopkg.in/yaml.v2"
+)
+
+const (
+	Transformers = "-transformers"
 )
 
 func IsMuxEnabled(config *pkgconfig.Config) bool {
@@ -54,7 +58,7 @@ func GetItemConfig(section string, config *pkgconfig.Config, item pkgconfig.Mult
 	// load config
 	cfg := make(map[string]interface{})
 	cfg[section] = item.Params
-	cfg[section+"-transformers"] = make(map[string]interface{})
+	cfg[section+Transformers] = make(map[string]interface{})
 	for _, p := range item.Params {
 		p.(map[string]interface{})["enable"] = true
 	}
@@ -66,7 +70,7 @@ func GetItemConfig(section string, config *pkgconfig.Config, item pkgconfig.Mult
 	// add transformer
 	for k, v := range item.Transforms {
 		v.(map[string]interface{})["enable"] = true
-		cfg[section+"-transformers"].(map[string]interface{})[k] = v
+		cfg[section+Transformers].(map[string]interface{})[k] = v
 	}
 
 	// copy global config
@@ -79,7 +83,7 @@ func GetItemConfig(section string, config *pkgconfig.Config, item pkgconfig.Mult
 	return subcfg
 }
 
-func InitMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[string]dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
+func InitMultiplexer(mapLoggers map[string]pkgutils.Worker, mapCollectors map[string]pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
 
 	// checking all routes before to continue
 	if err := AreRoutesValid(config); err != nil {
@@ -92,6 +96,9 @@ func InitMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[st
 		subcfg := GetItemConfig("loggers", config, output)
 
 		// registor the logger if enabled
+		if subcfg.Loggers.DevNull.Enable && IsLoggerRouted(config, output.Name) {
+			mapLoggers[output.Name] = loggers.NewDevNull(subcfg, logger, output.Name)
+		}
 		if subcfg.Loggers.RestAPI.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewRestAPI(subcfg, logger, output.Name)
 		}
@@ -140,6 +147,9 @@ func InitMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[st
 		if subcfg.Loggers.FalcoClient.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewFalcoClient(subcfg, logger, output.Name)
 		}
+		if subcfg.Loggers.ClickhouseClient.Enable && IsLoggerRouted(config, output.Name) {
+			mapLoggers[output.Name] = loggers.NewClickhouseClient(subcfg, logger, output.Name)
+		}
 	}
 
 	// load collectors
@@ -178,7 +188,7 @@ func InitMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[st
 	// here the multiplexer logic
 	// connect collectors between loggers
 	for _, route := range config.Multiplexer.Routes {
-		var logwrks []dnsutils.Worker
+		var logwrks []pkgutils.Worker
 		for _, dst := range route.Dst {
 			if _, ok := mapLoggers[dst]; ok {
 				logwrks = append(logwrks, mapLoggers[dst])
@@ -199,7 +209,7 @@ func InitMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[st
 	}
 }
 
-func ReloadMultiplexer(mapLoggers map[string]dnsutils.Worker, mapCollectors map[string]dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
+func ReloadMultiplexer(mapLoggers map[string]pkgutils.Worker, mapCollectors map[string]pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger) {
 	for _, output := range config.Multiplexer.Loggers {
 		newcfg := GetItemConfig("loggers", config, output)
 		if _, ok := mapLoggers[output.Name]; ok {

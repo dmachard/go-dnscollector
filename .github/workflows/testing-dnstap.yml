@@ -26,7 +26,7 @@ jobs:
     strategy:
       matrix:
         go-version: [ '1.21' ]
-        unbound: [ '1.17.0', '1.18.0' ]
+        unbound: [ '1.17.0', '1.18.0', '1.19.0' ]
 
         mode: [ 'tcp' ]
 
@@ -40,7 +40,10 @@ jobs:
         python-version: 3.12
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: Deploy docker image
       run: |
@@ -72,7 +75,10 @@ jobs:
         python-version: 3.12
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: Deploy coredns docker image
       run: |
@@ -104,7 +110,10 @@ jobs:
         python-version: 3.12
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: Generate certificate
       run: |
@@ -149,7 +158,10 @@ jobs:
         python-version: 3.12
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: add pdns user
       run: |
@@ -166,3 +178,49 @@ jobs:
         sudo python3 -m pip install dnstap_pb fstrm dnspython
         sudo python3 -m pip install --upgrade protobuf
         sudo -E python3 -m unittest tests.dnsquery_${{ matrix.mode }} -v
+
+  dnsdist_doq:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      matrix:
+        go-version: [ '1.21' ]
+        dnsdist: [ '19' ]
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+    - uses: actions/setup-python@v5
+      with:
+        python-version: 3.12
+
+    - name: build binary
+      run: |
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+
+    - name: download q
+      run: |
+        wget https://github.com/natesales/q/releases/download/v0.19.2/q_0.19.2_linux_amd64.tar.gz
+        tar xvf q_0.19.2_linux_amd64.tar.gz
+
+    - name: Generate certificate
+      run: |
+        openssl genrsa 2048 > ca.key
+        openssl req -days 365 -new -x509 -nodes -key ca.key -out ca.crt -config <(echo -e "[ req ]\nprompt = no\ndistinguished_name = req_distinguished_name\n[ req_distinguished_name ]\ncountryName = LU\nstateOrProvinceName = Space\nlocalityName = Moon\norganizationName = Github\norganizationalUnitName = Lab\ncommonName = dnscollector.dev\nemailAddress = admin@dnscollector.dev")
+        echo -e "[ req ]\nprompt = no\ndistinguished_name = req_distinguished_name\nreq_extensions = req_ext\n[ req_distinguished_name ]\ncountryName = LU\nstateOrProvinceName = Space\nlocalityName = Moon\norganizationName = Github\norganizationalUnitName = DNScollector\ncommonName = dnscollector.dev\nemailAddress = admin@dnscollector.dev\n[ req_ext ]\nsubjectAltName = DNS: dnscollector.dev, IP: 127.0.0.1" > server.conf
+        openssl req -newkey rsa:2048 -nodes -keyout server.key -out server.csr --config server.conf 
+        openssl x509 -req -days 365 -in server.csr -out server.crt -CA ca.crt -CAkey ca.key -extensions req_ext -extfile server.conf
+        sudo chmod 644 server.key
+
+    - name: Deploy dnsdist docker image
+      run: |
+        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/testsdata/powerdns/dnsdist_dox.conf:/etc/dnsdist/conf.d/dnsdist.conf:z --volume=$PWD/server.key:/etc/dnsdist/conf.d/server.key:z --volume=$PWD/server.crt:/etc/dnsdist/conf.d/server.crt:z powerdns/dnsdist-${{ matrix.dnsdist }}
+        until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
+
+    - name: Tests
+      run: |
+        sudo python3 -m unittest tests.dnsquery_dnstapdoq -v

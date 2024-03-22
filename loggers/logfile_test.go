@@ -60,7 +60,7 @@ func Test_LogFileText(t *testing.T) {
 			// send fake dns message to logger
 			dm := dnsutils.GetFakeDNSMessage()
 			dm.DNSTap.Identity = dnsutils.DNSTapIdentityTest
-			g.Channel() <- dm
+			g.GetInputChannel() <- dm
 
 			time.Sleep(time.Second)
 			g.Stop()

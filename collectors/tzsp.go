@@ -14,6 +14,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
@@ -22,25 +23,26 @@ import (
 )
 
 type TZSPSniffer struct {
-	done     chan bool
-	exit     chan bool
-	listen   net.UDPConn
-	loggers  []dnsutils.Worker
-	config   *pkgconfig.Config
-	logger   *logger.Logger
-	name     string
-	identity string
+	done          chan bool
+	exit          chan bool
+	listen        net.UDPConn
+	defaultRoutes []pkgutils.Worker
+	droppedRoutes []pkgutils.Worker
+	config        *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
+	identity      string
 }
 
-func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
-	logger.Info("[%s] collector=tzsp - enabled", name)
+func NewTZSP(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] tzsp - enabled", name)
 	s := &TZSPSniffer{
-		done:    make(chan bool),
-		exit:    make(chan bool),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+		done:          make(chan bool),
+		exit:          make(chan bool),
+		config:        config,
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
@@ -48,26 +50,28 @@ func NewTZSP(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger
 
 func (c *TZSPSniffer) GetName() string { return c.name }
 
-func (c *TZSPSniffer) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+func (c *TZSPSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
+}
+
+func (c *TZSPSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *TZSPSniffer) SetLoggers(loggers []pkgutils.Worker) {
+	c.defaultRoutes = loggers
 }
 
 func (c *TZSPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	channels := []chan dnsutils.DNSMessage{}
-	names := []string{}
-	for _, p := range c.loggers {
-		channels = append(channels, p.Channel())
-		names = append(names, p.GetName())
-	}
-	return channels, names
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *TZSPSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=tzsp  "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] tzsp  "+msg, v...)
 }
 
 func (c *TZSPSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=tzsp - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] tzsp - "+msg, v...)
 }
 
 func (c *TZSPSniffer) ReadConfig() {
@@ -106,12 +110,12 @@ func (c *TZSPSniffer) Listen() error {
 	return nil
 }
 
-func (c *TZSPSniffer) Channel() chan dnsutils.DNSMessage {
+func (c *TZSPSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 
 func (c *TZSPSniffer) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// Finally close the listener to unblock accept
 	c.exit <- true
@@ -129,7 +133,7 @@ func (c *TZSPSniffer) Run() {
 	}
 
 	dnsProcessor := processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.Tzsp.ChannelBufferSize)
-	go dnsProcessor.Run(c.Loggers())
+	go dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	go func() {
 		buf := make([]byte, 65536)

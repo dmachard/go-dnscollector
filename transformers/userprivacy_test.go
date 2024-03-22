@@ -13,6 +13,74 @@ var (
 	TestIP6 = "fe80::6111:626:c1b2:2353"
 )
 
+// bench
+func BenchmarkUserPrivacy_ReduceQname(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.MinimazeQname = true
+
+	log := logger.New(false)
+	channels := []chan dnsutils.DNSMessage{}
+
+	subprocessor := NewUserPrivacySubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+	qname := "localhost.domain.local.home"
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		subprocessor.MinimazeQname(qname)
+	}
+}
+
+func BenchmarkUserPrivacy_HashIP(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.HashIP = true
+
+	log := logger.New(false)
+	channels := []chan dnsutils.DNSMessage{}
+
+	subprocessor := NewUserPrivacySubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		subprocessor.HashIP(TestIP4)
+	}
+}
+
+func BenchmarkUserPrivacy_HashIPSha512(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.HashIP = true
+	config.UserPrivacy.HashIPAlgo = "sha512"
+
+	log := logger.New(false)
+	channels := []chan dnsutils.DNSMessage{}
+
+	subprocessor := NewUserPrivacySubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		subprocessor.HashIP(TestIP4)
+	}
+}
+
+func BenchmarkUserPrivacy_AnonymizeIP(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.AnonymizeIP = true
+
+	log := logger.New(false)
+	channels := []chan dnsutils.DNSMessage{}
+
+	subprocessor := NewUserPrivacySubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		subprocessor.AnonymizeIP(TestIP4)
+	}
+}
+
+// other tests
 func TestUserPrivacy_ReduceQname(t *testing.T) {
 	// enable feature
 	config := pkgconfig.GetFakeConfigTransformers()

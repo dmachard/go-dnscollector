@@ -97,12 +97,12 @@ func (p *NormalizeProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) 
 }
 
 func (p *NormalizeProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=normalize#%d - ", p.instance)
+	log := fmt.Sprintf("normalize#%d - ", p.instance)
 	p.logInfo(log+msg, v...)
 }
 
 func (p *NormalizeProcessor) LogError(msg string, v ...interface{}) {
-	p.logError("transformer=normalize - "+msg, v...)
+	p.logError("normalize - "+msg, v...)
 }
 
 func (p *NormalizeProcessor) LoadActiveProcessors() {
@@ -138,6 +138,7 @@ func (p *NormalizeProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 		dm.PublicSuffix = &dnsutils.TransformPublicSuffix{
 			QnamePublicSuffix:        "-",
 			QnameEffectiveTLDPlusOne: "-",
+			ManagedByICANN:           false,
 		}
 	}
 }
@@ -174,8 +175,9 @@ func (p *NormalizeProcessor) GetEffectiveTld(dm *dnsutils.DNSMessage) int {
 	etld, icann := publicsuffixlist.PublicSuffix(qname)
 	if icann {
 		dm.PublicSuffix.QnamePublicSuffix = etld
+		dm.PublicSuffix.ManagedByICANN = true
 	} else {
-		p.logError("suffix unmanaged by icann: %s", qname)
+		dm.PublicSuffix.ManagedByICANN = false
 	}
 	return ReturnSuccess
 }

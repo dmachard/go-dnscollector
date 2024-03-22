@@ -30,8 +30,8 @@ transforms:
 
 Specific text directive(s) available for the text format:
 
-- `reducer-occurences`: display the number of detected duplication
-- `cumulative-length`: sum of the length of each occurences
+- `reducer-occurrences`: display the number of detected duplication
+- `cumulative-length`: sum of the length of each occurrences
 
 When the feature is enabled, the following json field are populated in your DNS message:
 
@@ -40,7 +40,7 @@ Example:
 ```json
 {
   "reducer": {
-    "occurences": 1,
+    "occurrences": 1,
     "cumulative-length": 47
   }
 }

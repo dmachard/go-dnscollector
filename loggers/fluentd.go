@@ -2,18 +2,17 @@ package loggers
 
 import (
 	"crypto/tls"
-	"errors"
-	"io"
-	"net"
 	"strconv"
 	"time"
 
+	"github.com/IBM/fluent-forward-go/fluent/client"
+	"github.com/IBM/fluent-forward-go/fluent/protocol"
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
-	"github.com/vmihailenco/msgpack"
 )
 
 type FluentdClient struct {
@@ -21,30 +20,27 @@ type FluentdClient struct {
 	doneProcess        chan bool
 	stopRun            chan bool
 	doneRun            chan bool
-	stopRead           chan bool
-	doneRead           chan bool
 	inputChan          chan dnsutils.DNSMessage
 	outputChan         chan dnsutils.DNSMessage
 	config             *pkgconfig.Config
 	configChan         chan *pkgconfig.Config
 	logger             *logger.Logger
 	transport          string
-	transportConn      net.Conn
+	fluentConn         *client.Client
 	transportReady     chan bool
 	transportReconnect chan bool
 	writerReady        bool
 	name               string
+	RoutingHandler     pkgutils.RoutingHandler
 }
 
 func NewFluentdClient(config *pkgconfig.Config, logger *logger.Logger, name string) *FluentdClient {
-	logger.Info("[%s] logger=fluentd - enabled", name)
-	s := &FluentdClient{
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] fluentd - enabled", name)
+	fc := &FluentdClient{
 		stopProcess:        make(chan bool),
 		doneProcess:        make(chan bool),
 		stopRun:            make(chan bool),
 		doneRun:            make(chan bool),
-		stopRead:           make(chan bool),
-		doneRead:           make(chan bool),
 		inputChan:          make(chan dnsutils.DNSMessage, config.Loggers.Fluentd.ChannelBufferSize),
 		outputChan:         make(chan dnsutils.DNSMessage, config.Loggers.Fluentd.ChannelBufferSize),
 		transportReady:     make(chan bool),
@@ -53,280 +49,281 @@ func NewFluentdClient(config *pkgconfig.Config, logger *logger.Logger, name stri
 		config:             config,
 		configChan:         make(chan *pkgconfig.Config),
 		name:               name,
+		RoutingHandler:     pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
-	s.ReadConfig()
-
-	return s
+	fc.ReadConfig()
+	return fc
 }
 
-func (c *FluentdClient) GetName() string { return c.name }
+func (fc *FluentdClient) GetName() string { return fc.name }
 
-func (c *FluentdClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (fc *FluentdClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	fc.RoutingHandler.AddDroppedRoute(wrk)
+}
 
-func (c *FluentdClient) ReadConfig() {
-	c.transport = c.config.Loggers.Fluentd.Transport
+func (fc *FluentdClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	fc.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (fc *FluentdClient) SetLoggers(loggers []pkgutils.Worker) {}
+
+func (fc *FluentdClient) ReadConfig() {
+	fc.transport = fc.config.Loggers.Fluentd.Transport
 
 	// begin backward compatibility
-	if c.config.Loggers.Fluentd.TLSSupport {
-		c.transport = netlib.SocketTLS
+	if fc.config.Loggers.Fluentd.TLSSupport {
+		fc.transport = netlib.SocketTLS
 	}
-	if len(c.config.Loggers.Fluentd.SockPath) > 0 {
-		c.transport = netlib.SocketUnix
-	}
-	// end
-}
-
-func (c *FluentdClient) ReloadConfig(config *pkgconfig.Config) {
-	c.LogInfo("reload configuration!")
-	c.configChan <- config
-}
-
-func (c *FluentdClient) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger=fluentd - "+msg, v...)
-}
-
-func (c *FluentdClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger=fluentd - "+msg, v...)
-}
-
-func (c *FluentdClient) Channel() chan dnsutils.DNSMessage {
-	return c.inputChan
-}
-
-func (c *FluentdClient) Stop() {
-	c.LogInfo("stopping to run...")
-	c.stopRun <- true
-	<-c.doneRun
-
-	c.LogInfo("stopping to read...")
-	c.stopRead <- true
-	<-c.doneRead
-
-	c.LogInfo("stopping to process...")
-	c.stopProcess <- true
-	<-c.doneProcess
-}
-
-func (c *FluentdClient) Disconnect() {
-	if c.transportConn != nil {
-		c.LogInfo("closing tcp connection")
-		c.transportConn.Close()
+	if len(fc.config.Loggers.Fluentd.SockPath) > 0 {
+		fc.transport = netlib.SocketUnix
 	}
 }
 
-func (c *FluentdClient) ReadFromConnection() {
-	buffer := make([]byte, 4096)
-
-	go func() {
-		for {
-			_, err := c.transportConn.Read(buffer)
-			if err != nil {
-				if errors.Is(err, io.EOF) || errors.Is(err, net.ErrClosed) {
-					c.LogInfo("read from connection terminated")
-					break
-				}
-				c.LogError("Error on reading: %s", err.Error())
-			}
-			// We just discard the data
-		}
-	}()
-
-	// block goroutine until receive true event in stopRead channel
-	<-c.stopRead
-	c.doneRead <- true
-
-	c.LogInfo("read goroutine terminated")
+func (fc *FluentdClient) ReloadConfig(config *pkgconfig.Config) {
+	fc.LogInfo("reload configuration!")
+	fc.configChan <- config
 }
 
-func (c *FluentdClient) ConnectToRemote() {
+func (fc *FluentdClient) LogInfo(msg string, v ...interface{}) {
+	fc.logger.Info(pkgutils.PrefixLogLogger+"["+fc.name+"] fluentd - "+msg, v...)
+}
+
+func (fc *FluentdClient) LogError(msg string, v ...interface{}) {
+	fc.logger.Error(pkgutils.PrefixLogLogger+"["+fc.name+"] fluentd - "+msg, v...)
+}
+
+func (fc *FluentdClient) GetInputChannel() chan dnsutils.DNSMessage {
+	return fc.inputChan
+}
+
+func (fc *FluentdClient) Stop() {
+	fc.LogInfo("stopping logger...")
+	fc.RoutingHandler.Stop()
+
+	fc.LogInfo("stopping to run...")
+	fc.stopRun <- true
+	<-fc.doneRun
+
+	fc.LogInfo("stopping to process...")
+	fc.stopProcess <- true
+	<-fc.doneProcess
+}
+
+func (fc *FluentdClient) Disconnect() {
+	if fc.fluentConn != nil {
+		fc.LogInfo("closing fluentd connection")
+		fc.fluentConn.Disconnect()
+	}
+}
+
+func (fc *FluentdClient) ConnectToRemote() {
 	for {
-		if c.transportConn != nil {
-			c.transportConn.Close()
-			c.transportConn = nil
+		if fc.fluentConn != nil {
+			fc.fluentConn.Disconnect()
+			fc.fluentConn = nil
 		}
 
-		address := c.config.Loggers.Fluentd.RemoteAddress + ":" + strconv.Itoa(c.config.Loggers.Fluentd.RemotePort)
-		connTimeout := time.Duration(c.config.Loggers.Fluentd.ConnectTimeout) * time.Second
+		address := fc.config.Loggers.Fluentd.RemoteAddress + ":" + strconv.Itoa(fc.config.Loggers.Fluentd.RemotePort)
+		connTimeout := time.Duration(fc.config.Loggers.Fluentd.ConnectTimeout) * time.Second
 
 		// make the connection
-		var conn net.Conn
+		var c *client.Client
 		var err error
 
-		switch c.transport {
+		switch fc.transport {
 		case netlib.SocketUnix:
-			address = c.config.Loggers.Fluentd.RemoteAddress
-			if len(c.config.Loggers.Fluentd.SockPath) > 0 {
-				address = c.config.Loggers.Fluentd.SockPath
+			address = fc.config.Loggers.Fluentd.RemoteAddress
+			if len(fc.config.Loggers.Fluentd.SockPath) > 0 {
+				address = fc.config.Loggers.Fluentd.SockPath
 			}
-			c.LogInfo("connecting to %s://%s", c.transport, address)
-			conn, err = net.DialTimeout(c.transport, address, connTimeout)
+			fc.LogInfo("connecting to %s://%s", fc.transport, address)
+			c = client.New(client.ConnectionOptions{
+				Factory: &client.ConnFactory{
+					Network: "unix",
+					Address: address,
+				},
+				ConnectionTimeout: connTimeout,
+			})
 
 		case netlib.SocketTCP:
-			c.LogInfo("connecting to %s://%s", c.transport, address)
-			conn, err = net.DialTimeout(c.transport, address, connTimeout)
+			fc.LogInfo("connecting to %s://%s", fc.transport, address)
+			c = client.New(client.ConnectionOptions{
+				Factory: &client.ConnFactory{
+					Network: "tcp",
+					Address: address,
+				},
+				ConnectionTimeout: connTimeout,
+			})
 
 		case netlib.SocketTLS:
-			c.LogInfo("connecting to %s://%s", c.transport, address)
+			fc.LogInfo("connecting to %s://%s", fc.transport, address)
 
 			var tlsConfig *tls.Config
 
 			tlsOptions := pkgconfig.TLSOptions{
-				InsecureSkipVerify: c.config.Loggers.Fluentd.TLSInsecure,
-				MinVersion:         c.config.Loggers.Fluentd.TLSMinVersion,
-				CAFile:             c.config.Loggers.Fluentd.CAFile,
-				CertFile:           c.config.Loggers.Fluentd.CertFile,
-				KeyFile:            c.config.Loggers.Fluentd.KeyFile,
+				InsecureSkipVerify: fc.config.Loggers.Fluentd.TLSInsecure,
+				MinVersion:         fc.config.Loggers.Fluentd.TLSMinVersion,
+				CAFile:             fc.config.Loggers.Fluentd.CAFile,
+				CertFile:           fc.config.Loggers.Fluentd.CertFile,
+				KeyFile:            fc.config.Loggers.Fluentd.KeyFile,
 			}
+			tlsConfig, _ = pkgconfig.TLSClientConfig(tlsOptions)
 
-			tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
-			if err == nil {
-				dialer := &net.Dialer{Timeout: connTimeout}
-				conn, err = tls.DialWithDialer(dialer, netlib.SocketTCP, address, tlsConfig)
-			}
+			c = client.New(client.ConnectionOptions{
+				Factory: &client.ConnFactory{
+					Network:   "tcp+tls",
+					Address:   address,
+					TLSConfig: tlsConfig,
+				},
+				ConnectionTimeout: connTimeout,
+			})
+
 		default:
-			c.logger.Fatal("logger=fluent - invalid transport:", c.transport)
+			fc.logger.Fatal("logger=fluent - invalid transport:", fc.transport)
 		}
 
 		// something is wrong during connection ?
+		err = c.Connect()
 		if err != nil {
-			c.LogError("connect error: %s", err)
-			c.LogInfo("retry to connect in %d seconds", c.config.Loggers.Fluentd.RetryInterval)
-			time.Sleep(time.Duration(c.config.Loggers.Fluentd.RetryInterval) * time.Second)
+			fc.LogError("connect error: %s", err)
+			fc.LogInfo("retry to connect in %d seconds", fc.config.Loggers.Fluentd.RetryInterval)
+			time.Sleep(time.Duration(fc.config.Loggers.Fluentd.RetryInterval) * time.Second)
 			continue
 		}
 
-		c.transportConn = conn
+		// save current connection
+		fc.fluentConn = c
 
 		// block until framestream is ready
-		c.transportReady <- true
+		fc.transportReady <- true
 
-		// block until an error occured, need to reconnect
-		c.transportReconnect <- true
+		// block until an error occurred, need to reconnect
+		fc.transportReconnect <- true
 	}
 }
 
-func (c *FluentdClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
+func (fc *FluentdClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 
-	tag, _ := msgpack.Marshal(c.config.Loggers.Fluentd.Tag)
+	entries := []protocol.EntryExt{}
 
 	for _, dm := range *buf {
-		// prepare event
-		tm, _ := msgpack.Marshal(dm.DNSTap.TimeSec)
-		record, err := msgpack.Marshal(dm)
-		if err != nil {
-			c.LogError("msgpack error:", err.Error())
-			continue
-		}
+		// Convert DNSMessage to map[]
+		flatDm, _ := dm.Flatten()
 
-		// Message ::= [ Tag, Time, Record, Option? ]
-		encoded := []byte{}
-		// array, size 3
-		encoded = append(encoded, 0x93)
-		// append tag, time and record
-		encoded = append(encoded, tag...)
-		encoded = append(encoded, tm...)
-		encoded = append(encoded, record...)
+		// get timestamp from DNSMessage
+		timestamp, _ := time.Parse(time.RFC3339, dm.DNSTap.TimestampRFC3339)
 
-		// write event message
-		_, err = c.transportConn.Write(encoded)
-
-		// flusth the buffer
-		if err != nil {
-			c.LogError("send transport error", err.Error())
-			c.writerReady = false
-			<-c.transportReconnect
-			break
-		}
+		// append DNSMessage to the list
+		entries = append(entries, protocol.EntryExt{
+			Timestamp: protocol.EventTime{Time: timestamp},
+			Record:    flatDm,
+		})
 	}
+
+	// send all entries with tag, check error on write ?
+	err := fc.fluentConn.SendForward(fc.config.Loggers.Fluentd.Tag, entries)
+	if err != nil {
+		fc.LogError("forward fluent error", err.Error())
+		fc.writerReady = false
+		<-fc.transportReconnect
+	}
+
+	// reset buffer
+	*buf = nil
 }
 
-func (c *FluentdClient) Run() {
-	c.LogInfo("running in background...")
+func (fc *FluentdClient) Run() {
+	fc.LogInfo("waiting dnsmessage to process...")
+
+	// prepare next channels
+	defaultRoutes, defaultNames := fc.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := fc.RoutingHandler.GetDroppedRoutes()
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
-	listChannel = append(listChannel, c.outputChan)
-	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
+	listChannel = append(listChannel, fc.outputChan)
+	subprocessors := transformers.NewTransforms(&fc.config.OutgoingTransformers, fc.logger, fc.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go c.Process()
+	go fc.ProcessDM()
 
 	// init remote conn
-	go c.ConnectToRemote()
+	go fc.ConnectToRemote()
 
 	// loop to process incoming messages
 RUN_LOOP:
 	for {
 		select {
-		case <-c.stopRun:
+		case <-fc.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
 
-			c.doneRun <- true
+			fc.doneRun <- true
 			break RUN_LOOP
 
-		case cfg, opened := <-c.configChan:
+		case cfg, opened := <-fc.configChan:
 			if !opened {
 				return
 			}
-			c.config = cfg
-			c.ReadConfig()
+			fc.config = cfg
+			fc.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-c.inputChan:
+		case dm, opened := <-fc.inputChan:
 			if !opened {
-				c.LogInfo("input channel closed!")
+				fc.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				fc.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
+			// send to next ?
+			fc.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
+
 			// send to output channel
-			c.outputChan <- dm
+			fc.outputChan <- dm
 		}
 	}
-	c.LogInfo("run terminated")
+	fc.LogInfo("run terminated")
 }
 
-func (c *FluentdClient) Process() {
+func (fc *FluentdClient) ProcessDM() {
+	fc.LogInfo("waiting transformed dnsmessage to process...")
+
 	// init buffer
 	bufferDm := []dnsutils.DNSMessage{}
 
 	// init flust timer for buffer
-	flushInterval := time.Duration(c.config.Loggers.Fluentd.FlushInterval) * time.Second
+	flushInterval := time.Duration(fc.config.Loggers.Fluentd.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
-
-	c.LogInfo("ready to process")
 
 PROCESS_LOOP:
 	for {
 		select {
-		case <-c.stopProcess:
-			c.doneProcess <- true
+		case <-fc.stopProcess:
+			fc.doneProcess <- true
 			break PROCESS_LOOP
 
-		case <-c.transportReady:
-			c.LogInfo("connected")
-			c.writerReady = true
-
-			// read from the connection until we stop
-			go c.ReadFromConnection()
+		case <-fc.transportReady:
+			fc.LogInfo("connected with remote side")
+			fc.writerReady = true
 
 		// incoming dns message to process
-		case dm, opened := <-c.outputChan:
+		case dm, opened := <-fc.outputChan:
 			if !opened {
-				c.LogInfo("output channel closed!")
+				fc.LogInfo("output channel closed!")
 				return
 			}
 
 			// drop dns message if the connection is not ready to avoid memory leak or
 			// to block the channel
-			if !c.writerReady {
+			if !fc.writerReady {
 				continue
 			}
 
@@ -334,24 +331,23 @@ PROCESS_LOOP:
 			bufferDm = append(bufferDm, dm)
 
 			// buffer is full ?
-			if len(bufferDm) >= c.config.Loggers.Fluentd.BufferSize {
-				c.FlushBuffer(&bufferDm)
+			if len(bufferDm) >= fc.config.Loggers.Fluentd.BufferSize {
+				fc.FlushBuffer(&bufferDm)
 			}
 
 		// flush the buffer
 		case <-flushTimer.C:
-			if !c.writerReady {
+			if !fc.writerReady {
 				bufferDm = nil
-				continue
 			}
 
 			if len(bufferDm) > 0 {
-				c.FlushBuffer(&bufferDm)
+				fc.FlushBuffer(&bufferDm)
 			}
 
 			// restart timer
 			flushTimer.Reset(flushInterval)
 		}
 	}
-	c.LogInfo("processing terminated")
+	fc.LogInfo("processing terminated")
 }

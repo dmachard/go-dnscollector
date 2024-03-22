@@ -1,0 +1,22 @@
+# This configuration sets up DNS traffic monitoring through DNStap on port 6000;
+# and add geographical metadata with GeoIP database
+
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    transforms:
+      geoip:
+        mmdb-country-file: "./testsdata/GeoLite2-Country.mmdb"
+    routing-policy:
+      default: [ console ]
+
+  - name: console
+    stdout:
+      mode: text
+      text-format: "localtime identity queryip qname qtype geoip-country rcode"

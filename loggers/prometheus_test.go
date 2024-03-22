@@ -64,7 +64,7 @@ func TestPrometheus_GetMetrics(t *testing.T) {
 	config.Loggers.Prometheus.HistogramMetricsEnabled = true
 
 	// By default, prometheus uses 'stream_id' as the label
-	// t.Run("SingleLabelStreamID", getMetricsTestCase(config, map[string]string{"stream_id": "collector"}))
+	t.Run("SingleLabelStreamID", getMetricsTestCase(config, map[string]string{"stream_id": "collector"}))
 
 	config.Loggers.Prometheus.LabelsList = []string{"resolver", "stream_id"}
 	t.Run("TwoLabelsStreamIDResolver", getMetricsTestCase(config, map[string]string{"resolver": "4.3.2.1", "stream_id": "collector"}))
@@ -100,10 +100,8 @@ func getMetricsTestCase(config *pkgconfig.Config, labels map[string]string) func
 		nxRecord.NetworkInfo.Protocol = UDP
 		nxRecord.NetworkInfo.Family = IPv4
 		nxRecord.DNS.Length = 123
+		nxRecord.DNSTap.Latency = 0.05
 
-		// nxRecord.PublicSuffix = &dnsutils.TransformPublicSuffix{
-		// 	QnamePublicSuffix: "faketld1",
-		// }
 		g.Record(nxRecord)
 
 		sfRecord := dnsutils.GetFakeDNSMessage()
@@ -112,6 +110,7 @@ func getMetricsTestCase(config *pkgconfig.Config, labels map[string]string) func
 		sfRecord.NetworkInfo.Protocol = UDP
 		sfRecord.NetworkInfo.Family = IPv4
 		sfRecord.DNS.Length = 123
+		sfRecord.DNSTap.Latency = 0.05
 
 		g.Record(sfRecord)
 
@@ -122,27 +121,30 @@ func getMetricsTestCase(config *pkgconfig.Config, labels map[string]string) func
 		// call ComputeMetrics for the second time, to calculate per-second metrcis
 		g.ComputeEventsPerSecond()
 		mf := getMetrics(g, t)
+
 		ensureMetricValue(t, mf, "dnscollector_bytes_total", labels, 369)
 		ensureMetricValue(t, mf, "dnscollector_received_bytes_total", labels, 123)
 		ensureMetricValue(t, mf, "dnscollector_sent_bytes_total", labels, 246)
 
 		ensureMetricValue(t, mf, "dnscollector_throughput_ops", labels, 2)
-		ensureMetricValue(t, mf, "dnscollector_tlds_total", labels, 1)
-		ensureMetricValue(t, mf, "dnscollector_requesters_total", labels, 1)
 
-		ensureMetricValue(t, mf, "dnscollector_domains_total", labels, 1)
-		ensureMetricValue(t, mf, "dnscollector_domains_domains_total", labels, 1)
-		ensureMetricValue(t, mf, "dnscollector_nxdomains_total", labels, 1)
-		ensureMetricValue(t, mf, "dnscollector_sfdomains_total", labels, 1)
+		ensureMetricValue(t, mf, "dnscollector_total_tlds_lru", labels, 1)
+		ensureMetricValue(t, mf, "dnscollector_total_requesters_lru", labels, 1)
+		ensureMetricValue(t, mf, "dnscollector_total_domains_lru", labels, 1)
+		ensureMetricValue(t, mf, "dnscollector_total_noerror_domains_lru", labels, 1)
+		ensureMetricValue(t, mf, "dnscollector_total_nonexistent_domains_lru", labels, 1)
+		ensureMetricValue(t, mf, "dnscollector_total_servfail_domains_lru", labels, 1)
+
 		ensureMetricValue(t, mf, "dnscollector_dnsmessages_total", labels, 3)
 		ensureMetricValue(t, mf, "dnscollector_queries_total", labels, 1)
 		ensureMetricValue(t, mf, "dnscollector_replies_total", labels, 2)
 		ensureMetricValue(t, mf, "dnscollector_flag_aa_total", labels, 1)
 
 		labels["domain"] = "dns.collector"
-		ensureMetricValue(t, mf, "dnscollector_top_domains", labels, 1)
-		ensureMetricValue(t, mf, "dnscollector_top_nxdomains", labels, 1)
-		ensureMetricValue(t, mf, "dnscollector_top_sfdomains", labels, 1)
+		ensureMetricValue(t, mf, "dnscollector_top_domains", labels, 3)
+		ensureMetricValue(t, mf, "dnscollector_top_noerror_domains", labels, 1)
+		ensureMetricValue(t, mf, "dnscollector_top_nonexistent_domains", labels, 1)
+		ensureMetricValue(t, mf, "dnscollector_top_servfail_domains", labels, 1)
 
 		delete(labels, "domain")
 		labels["query_type"] = "A"
@@ -154,13 +156,9 @@ func getMetricsTestCase(config *pkgconfig.Config, labels map[string]string) func
 		labels["net_family"] = "IPv4"
 		ensureMetricValue(t, mf, "dnscollector_ipversion_total", labels, 3)
 		delete(labels, "net_family")
-		ensureMetricValue(t, mf, "dnscollector_latencies_count", labels, 1)
-		labels["le"] = "0.001"
-		ensureMetricValue(t, mf, "dnscollector_latencies_bucket", labels, 0)
-		labels["le"] = "0.1"
-		ensureMetricValue(t, mf, "dnscollector_latencies_bucket", labels, 1)
-		labels["le"] = "+Inf"
-		ensureMetricValue(t, mf, "dnscollector_latencies_bucket", labels, 1)
+
+		// check histogram
+		ensureMetricValue(t, mf, "dnscollector_latencies", labels, 3)
 	}
 }
 
@@ -173,7 +171,7 @@ func TestPrometheus_EPS_Counters(t *testing.T) {
 	noErrorRecord := dnsutils.GetFakeDNSMessage()
 	noErrorRecord.DNS.Type = dnsutils.DNSQuery
 	g.Record(noErrorRecord)
-	// Zero second elapsed, initalize EPS
+	// Zero second elapsed, initialize EPS
 	g.ComputeEventsPerSecond()
 	mf := getMetrics(g, t)
 	ensureMetricValue(t, mf, "dnscollector_throughput_ops", map[string]string{"stream_id": "collector"}, 0)
@@ -187,10 +185,6 @@ func TestPrometheus_EPS_Counters(t *testing.T) {
 	ensureMetricValue(t, mf, "dnscollector_throughput_ops", map[string]string{"stream_id": "collector"}, 2)
 	ensureMetricValue(t, mf, "dnscollector_throughput_ops_max", map[string]string{"stream_id": "collector"}, 2)
 
-	// for _, tc := range tt_1 {
-	// 	validateEPSCaseHelper(t, config, tc)
-	// }
-
 	// During next 'second' we see only 1 event. EPS counter changes, EPS Max counter keeps it's value
 	g.Record(noErrorRecord)
 	g.ComputeEventsPerSecond()
@@ -198,10 +192,6 @@ func TestPrometheus_EPS_Counters(t *testing.T) {
 	mf = getMetrics(g, t)
 	ensureMetricValue(t, mf, "dnscollector_throughput_ops", map[string]string{"stream_id": "collector"}, 1)
 	ensureMetricValue(t, mf, "dnscollector_throughput_ops_max", map[string]string{"stream_id": "collector"}, 2)
-
-	// for _, tc := range tt_2 {
-	// 	validateEPSCaseHelper(t, config, tc)
-	// }
 
 }
 
@@ -235,7 +225,7 @@ func TestPrometheus_ConfirmDifferentResolvers(t *testing.T) {
 	ensureMetricValue(t, mf, "dnscollector_bytes_total", map[string]string{"resolver": "10.10.10.10"}, 999)
 }
 
-func TestPrometheus_etldplusone(t *testing.T) {
+func TestPrometheus_Etldplusone(t *testing.T) {
 	config := pkgconfig.GetFakeConfig()
 	config.Loggers.Prometheus.LabelsList = []string{"stream_id"}
 	g := NewPrometheus(config, logger.New(false), "test")
@@ -258,13 +248,14 @@ func TestPrometheus_etldplusone(t *testing.T) {
 	g.Record(noErrorRecord)
 
 	mf := getMetrics(g, t)
-	ensureMetricValue(t, mf, "dnscollector_etldplusone_total", map[string]string{"stream_id": "collector"}, 2)
-	ensureMetricValue(t, mf, "dnscollector_etldplusone_top", map[string]string{"stream_id": "collector", "suffix": "anotherdomain.co.uk"}, 1)
+	ensureMetricValue(t, mf, "dnscollector_total_etlds_plusone_lru", map[string]string{"stream_id": "collector"}, 2)
+	ensureMetricValue(t, mf, "dnscollector_top_etlds_plusone", map[string]string{"stream_id": "collector", "suffix": "anotherdomain.co.uk"}, 1)
 }
 
 func ensureMetricValue(t *testing.T, mf map[string]*dto.MetricFamily, name string, labels map[string]string, value float64) bool {
 	m, found := mf[name]
 	if !found {
+		t.Errorf("Not found metric %v", name)
 		return false
 	}
 	// Match labels
@@ -294,11 +285,16 @@ func ensureMetricValue(t *testing.T, mf map[string]*dto.MetricFamily, name strin
 				if pv == value {
 					return true
 				}
+			case dto.MetricType_HISTOGRAM:
+				pv = float64(*metric.GetHistogram().SampleCount)
+				if pv == value {
+					return true
+				}
 			}
 			t.Errorf("Metric %v, expected=%v, got=%v", name, value, pv)
 		}
 	}
-	t.Errorf("Not found metric %v{%v}", name, labels)
+	t.Errorf("Not found metric with label %v{%v}", name, labels)
 	return false
 }
 
@@ -351,13 +347,16 @@ func TestPrometheus_QnameInvalidChars(t *testing.T) {
 	g.Record(dmSf)
 
 	mf := getMetrics(g, t)
-	if !ensureMetricValue(t, mf, "dnscollector_top_domains", map[string]string{"domain": qnameValidUTF8}, 1) {
+	if !ensureMetricValue(t, mf, "dnscollector_top_domains", map[string]string{"domain": qnameValidUTF8}, 3) {
 		t.Errorf("Cannot validate dnscollector_top_domains!")
 	}
-	if !ensureMetricValue(t, mf, "dnscollector_top_nxdomains", map[string]string{"domain": qnameValidUTF8}, 1) {
-		t.Errorf("Cannot validate dnscollector_top_nxdomains!")
+	if !ensureMetricValue(t, mf, "dnscollector_top_noerror_domains", map[string]string{"domain": qnameValidUTF8}, 1) {
+		t.Errorf("Cannot validate dnscollector_top_noerror_domains!")
 	}
-	if !ensureMetricValue(t, mf, "dnscollector_top_sfdomains", map[string]string{"domain": qnameValidUTF8}, 1) {
-		t.Errorf("Cannot validate dnscollector_top_sfdomains!")
+	if !ensureMetricValue(t, mf, "dnscollector_top_nonexistent_domains", map[string]string{"domain": qnameValidUTF8}, 1) {
+		t.Errorf("Cannot validate dnscollector_top_nonexistent_domains!")
+	}
+	if !ensureMetricValue(t, mf, "dnscollector_top_servfail_domains", map[string]string{"domain": qnameValidUTF8}, 1) {
+		t.Errorf("Cannot validate dnscollector_top_servfail_domains!")
 	}
 }

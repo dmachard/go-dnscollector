@@ -28,3 +28,12 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{github.ref_name}}
+          tag_name: ${{github.ref_name}}
+          files: |
+            docker-compose.yml
+            docker-example.env

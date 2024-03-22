@@ -88,7 +88,7 @@ func Test_SyslogRunUdp(t *testing.T) {
 			// send fake dns message to logger
 			time.Sleep(time.Second)
 			dm := dnsutils.GetFakeDNSMessage()
-			g.Channel() <- dm
+			g.GetInputChannel() <- dm
 
 			// read data on fake server side
 			buf := make([]byte, 4096)
@@ -191,7 +191,7 @@ func Test_SyslogRunTcp(t *testing.T) {
 			// send fake dns message to logger
 			time.Sleep(time.Second)
 			dm := dnsutils.GetFakeDNSMessage()
-			g.Channel() <- dm
+			g.GetInputChannel() <- dm
 
 			// read data on server side and decode-it
 			reader := bufio.NewReader(conn)
@@ -235,7 +235,7 @@ func Test_SyslogRun_RemoveNullCharacter(t *testing.T) {
 	time.Sleep(time.Second)
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = "null\x00char.com"
-	g.Channel() <- dm
+	g.GetInputChannel() <- dm
 
 	// read data on fake server side
 	buf := make([]byte, (500))

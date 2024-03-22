@@ -14,6 +14,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	framestream "github.com/farsightsec/golang-framestream"
@@ -38,7 +39,8 @@ func IsValidMode(mode string) bool {
 type FileIngestor struct {
 	done            chan bool
 	exit            chan bool
-	loggers         []dnsutils.Worker
+	droppedRoutes   []pkgutils.Worker
+	defaultRoutes   []pkgutils.Worker
 	config          *pkgconfig.Config
 	configChan      chan *pkgconfig.Config
 	logger          *logger.Logger
@@ -52,14 +54,14 @@ type FileIngestor struct {
 	mu              sync.Mutex
 }
 
-func NewFileIngestor(loggers []dnsutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
-	logger.Info("[%s] collector=fileingestor - enabled", name)
+func NewFileIngestor(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] fileingestor - enabled", name)
 	s := &FileIngestor{
 		done:          make(chan bool),
 		exit:          make(chan bool),
 		config:        config,
 		configChan:    make(chan *pkgconfig.Config),
-		loggers:       loggers,
+		defaultRoutes: loggers,
 		logger:        logger,
 		name:          name,
 		watcherTimers: make(map[string]*time.Timer),
@@ -70,23 +72,25 @@ func NewFileIngestor(loggers []dnsutils.Worker, config *pkgconfig.Config, logger
 
 func (c *FileIngestor) GetName() string { return c.name }
 
-func (c *FileIngestor) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+func (c *FileIngestor) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
+}
+
+func (c *FileIngestor) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *FileIngestor) SetLoggers(loggers []pkgutils.Worker) {
+	c.defaultRoutes = loggers
 }
 
 func (c *FileIngestor) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	channels := []chan dnsutils.DNSMessage{}
-	names := []string{}
-	for _, p := range c.loggers {
-		channels = append(channels, p.Channel())
-		names = append(names, p.GetName())
-	}
-	return channels, names
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *FileIngestor) ReadConfig() {
 	if !IsValidMode(c.config.Collectors.FileIngestor.WatchMode) {
-		c.logger.Fatal("collector file ingestor - invalid mode: ", c.config.Collectors.FileIngestor.WatchMode)
+		c.logger.Fatal(pkgutils.PrefixLogCollector+"["+c.name+"]fileingestor - invalid mode: ", c.config.Collectors.FileIngestor.WatchMode)
 	}
 
 	c.identity = c.config.GetServerIdentity()
@@ -103,19 +107,19 @@ func (c *FileIngestor) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (c *FileIngestor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=fileingestor - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] fileingestor - "+msg, v...)
 }
 
 func (c *FileIngestor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=fileingestor - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] fileingestor - "+msg, v...)
 }
 
-func (c *FileIngestor) Channel() chan dnsutils.DNSMessage {
+func (c *FileIngestor) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 
 func (c *FileIngestor) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// exit to close properly
 	c.exit <- true
@@ -134,7 +138,7 @@ func (c *FileIngestor) ProcessFile(filePath string) {
 			go c.ProcessPcap(filePath)
 		}
 	case pkgconfig.ModeDNSTap:
-		// processs dnstap
+		// process dnstap
 		if filepath.Ext(filePath) == ".fstrm" {
 			c.LogInfo("file ready to process %s", filePath)
 			go c.ProcessDnstap(filePath)
@@ -374,11 +378,18 @@ func (c *FileIngestor) Run() {
 	c.LogInfo("starting collector...")
 
 	c.dnsProcessor = processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
-	go c.dnsProcessor.Run(c.Loggers())
+	go c.dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	// start dnstap subprocessor
-	c.dnstapProcessor = processors.NewDNSTapProcessor(0, c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
-	go c.dnstapProcessor.Run(c.Loggers())
+	c.dnstapProcessor = processors.NewDNSTapProcessor(
+		0,
+		"",
+		c.config,
+		c.logger,
+		c.name,
+		c.config.Collectors.FileIngestor.ChannelBufferSize,
+	)
+	go c.dnstapProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	// read current folder content
 	entries, err := os.ReadDir(c.config.Collectors.FileIngestor.WatchDir)
@@ -402,7 +413,7 @@ func (c *FileIngestor) Run() {
 				go c.ProcessPcap(fn)
 			}
 		case pkgconfig.ModeDNSTap:
-			// processs dnstap
+			// process dnstap
 			if filepath.Ext(fn) == ".fstrm" {
 				go c.ProcessDnstap(fn)
 			}

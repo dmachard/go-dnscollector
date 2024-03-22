@@ -72,12 +72,12 @@ func (p *SuspiciousTransform) IsEnabled() bool {
 }
 
 func (p *SuspiciousTransform) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=suspicious#%d - ", p.instance)
+	log := fmt.Sprintf("suspicious#%d - ", p.instance)
 	p.logInfo(log+msg, v...)
 }
 
 func (p *SuspiciousTransform) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=suspicious#%d - ", p.instance)
+	log := fmt.Sprintf("suspicious#%d - ", p.instance)
 	p.logError(log+msg, v...)
 }
 

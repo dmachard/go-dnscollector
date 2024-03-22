@@ -16,6 +16,34 @@ const (
 	Localhost   = "localhost"
 )
 
+// Bench to init DNS message
+func BenchmarkTransforms_InitAndProcess(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.Suspicious.Enable = true
+	config.GeoIP.Enable = true
+	config.GeoIP.DBCountryFile = ".././testsdata/GeoLite2-Country.mmdb"
+	config.GeoIP.DBASNFile = ".././testsdata/GeoLite2-ASN.mmdb"
+	config.UserPrivacy.Enable = true
+	config.UserPrivacy.MinimazeQname = true
+	config.UserPrivacy.AnonymizeIP = true
+	config.Normalize.Enable = true
+	config.Normalize.QnameLowerCase = true
+	config.Filtering.Enable = true
+	config.Filtering.KeepDomainFile = ".././testsdata/filtering_keep_domains.txt"
+
+	channels := []chan dnsutils.DNSMessage{}
+	transformers := NewTransforms(config, logger.New(false), "test", channels, 0)
+
+	dm := dnsutils.GetFakeDNSMessage()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		transformers.InitDNSMessageFormat(&dm)
+		transformers.ProcessMessage(&dm)
+	}
+}
+
+// Other tests
 func TestTransformsSuspicious(t *testing.T) {
 	// config
 	config := pkgconfig.GetFakeConfigTransformers()
@@ -144,10 +172,10 @@ func TestTransformsReduceQname(t *testing.T) {
 	}
 
 	// test 3: local.home
-	dm.DNS.Qname = "localhost.domain.local.home"
+	dm.DNS.Qname = "localhost.domain.localtest.home"
 	returnCode = subprocessors.ProcessMessage(&dm)
 
-	if dm.DNS.Qname != "local.home" {
+	if dm.DNS.Qname != "localtest.home" {
 		t.Errorf("Qname minimization failed, got %s", dm.DNS.Qname)
 	}
 	if returnCode != ReturnSuccess {
