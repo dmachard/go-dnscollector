@@ -2,25 +2,47 @@ name: tests go
 
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
     branches:
       - main
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
     branches:
       - main
+
+permissions:
+  contents: read
 
 jobs:
   dev:
     strategy:
       matrix:
-        os-version: ['ubuntu-22.04', 'macos-12']
-        go-version: ['1.19', '1.20']
-        package: ['dnsutils', 'collectors', 'loggers', 'transformers', 'netlib']
+        os-version: ['ubuntu-22.04' ] #, 'macos-latest'
+        go-version: [ '1.20', '1.21' ]
+        package:
+          - '.'
+          - 'pkgconfig'
+          - 'pkglinker'
+          - 'pkgutils'
+          - 'dnsutils'
+          - 'collectors'
+          - 'loggers'
+          - 'transformers'
+          - 'netlib'
+          - 'processors'
+        # exclude:
+        #   - os-version: macos-latest
+        #     go-version: '1.20'
     
     runs-on: ${{ matrix.os-version }}
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-go@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
 
@@ -42,27 +64,30 @@ jobs:
         sudo go version
         
     - name: Test ${{ matrix.package }}
-      run: sudo go test -timeout 60s ./${{ matrix.package }}/ -race -cover -v
+      run: sudo go test -timeout 120s ./${{ matrix.package }}/ -race -cover -v
       
   int:
     runs-on: ubuntu-22.04
 
     strategy:
       matrix:
-        go-version: ['1.19', '1.20']
+        go-version: ['1.20', '1.21']
         package: ['config', 'clientquery_dnstaptcp', 'clientquery_dnstapunix' ]
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-go@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.12'
  
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 
     - name: Test ${{ matrix.package }}
       run: |
@@ -75,27 +100,30 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.19', '1.20']
+        go-version: ['1.21']
         
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-go@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
  
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }} 
+        go mod tidy
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: run collector
       run: ./go-dnscollector -config ./testsdata/config_prom.yml &
 
     - name: download dnstap generator
       run: |
-        wget -nv https://github.com/dmachard/go-dnstap-generator/releases/download/v0.4.0/go-dnstap-generator_0.4.0_linux_amd64.tar.gz
-        tar xf go-dnstap-generator_0.4.0_linux_amd64.tar.gz
+        wget -nv https://github.com/dmachard/go-dnstap-generator/releases/download/v${{ env.GENTAP }}/go-dnstap-generator_${{ env.GENTAP }}_linux_amd64.tar.gz
+        tar xf go-dnstap-generator_${{ env.GENTAP }}_linux_amd64.tar.gz
         ./go-dnstap-generator -i 127.0.0.1 -p 6000 -n 1
       env:
-        GENTAP: "0.4.0"
+        GENTAP: "0.5.0"
 
     - name: check prometheus format metrics
       run: |
@@ -104,4 +132,34 @@ jobs:
         cd prometheus-$PROM_VERSION.linux-amd64/
         curl -u admin:changeme http://127.0.0.1:8081/metrics | ./promtool check metrics
       env:
-        PROM_VERSION: "2.43.0"
+        PROM_VERSION: "2.47.0"
+
+  count:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: "1.21"
+
+    - id: count_tests
+      run: |
+        data=$(sudo go test -timeout 360s  -v ./collectors ./processors ./dnsutils ./netlib ./loggers ./transformers ./pkgconfig ./pkglinker ./pkgutils ././ 2>&1 | grep -c RUN)
+        echo "Count of Tests: $data"
+        echo "data=$data" >> $GITHUB_OUTPUT
+
+    - id: count_lines
+      run: |
+        data=$(find . -name "*.go" -exec grep -v "^$" {} \; -exec grep -v "//" {} \; | wc -l)
+        echo "Count of Lines: $data"
+        echo "data=$data" >> $GITHUB_OUTPUT
+
+    - id: count_lines_tests
+      run: |
+        data=$(find . -name "*_test.go" -exec grep -v "^$" {} \; -exec grep -v "//" {} \; | wc -l)
+        echo "Count of Lines in tests file: $data"
+        echo "data=$data" >> $GITHUB_OUTPUT

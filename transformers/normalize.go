@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	publicsuffixlist "golang.org/x/net/publicsuffix"
 )
@@ -28,7 +29,7 @@ var (
 		"DNSQueryType":       "Q", // powerdns
 		"DNSResponseType":    "R", // powerdns
 	}
-	DnsQr = map[string]string{
+	DNSQr = map[string]string{
 		"QUERY": "Q",
 		"REPLY": "R",
 	}
@@ -63,19 +64,19 @@ var (
 )
 
 type NormalizeProcessor struct {
-	config           *dnsutils.ConfigTransformers
+	config           *pkgconfig.ConfigTransformers
 	logger           *logger.Logger
 	name             string
 	instance         int
-	activeProcessors []func(dm *dnsutils.DnsMessage) int
-	outChannels      []chan dnsutils.DnsMessage
+	activeProcessors []func(dm *dnsutils.DNSMessage) int
+	outChannels      []chan dnsutils.DNSMessage
 	logInfo          func(msg string, v ...interface{})
 	logError         func(msg string, v ...interface{})
 }
 
 func NewNormalizeSubprocessor(
-	config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DnsMessage,
+	config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
+	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) NormalizeProcessor {
 	s := NormalizeProcessor{
@@ -88,20 +89,26 @@ func NewNormalizeSubprocessor(
 		logError:    logError,
 	}
 
-	s.LoadActiveProcessors()
 	return s
 }
 
+func (p *NormalizeProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
+	p.config = config
+}
+
 func (p *NormalizeProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=normalize#%d - ", p.instance)
+	log := fmt.Sprintf("normalize#%d - ", p.instance)
 	p.logInfo(log+msg, v...)
 }
 
 func (p *NormalizeProcessor) LogError(msg string, v ...interface{}) {
-	p.logError("transformer=normalize - "+msg, v...)
+	p.logError("normalize - "+msg, v...)
 }
 
 func (p *NormalizeProcessor) LoadActiveProcessors() {
+	// clean the slice
+	p.activeProcessors = p.activeProcessors[:0]
+
 	if p.config.Normalize.QnameLowerCase {
 		p.activeProcessors = append(p.activeProcessors, p.LowercaseQname)
 		p.LogInfo("lowercase subprocessor is enabled")
@@ -122,30 +129,31 @@ func (p *NormalizeProcessor) LoadActiveProcessors() {
 	}
 }
 
-func (s *NormalizeProcessor) IsEnabled() bool {
-	return s.config.Normalize.Enable
+func (p *NormalizeProcessor) IsEnabled() bool {
+	return p.config.Normalize.Enable
 }
 
-func (p *NormalizeProcessor) InitDnsMessage(dm *dnsutils.DnsMessage) {
+func (p *NormalizeProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 	if dm.PublicSuffix == nil {
 		dm.PublicSuffix = &dnsutils.TransformPublicSuffix{
 			QnamePublicSuffix:        "-",
 			QnameEffectiveTLDPlusOne: "-",
+			ManagedByICANN:           false,
 		}
 	}
 }
 
-func (p *NormalizeProcessor) LowercaseQname(dm *dnsutils.DnsMessage) int {
+func (p *NormalizeProcessor) LowercaseQname(dm *dnsutils.DNSMessage) int {
 	dm.DNS.Qname = strings.ToLower(dm.DNS.Qname)
 
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *NormalizeProcessor) QuietText(dm *dnsutils.DnsMessage) int {
-	if v, found := DnstapMessage[dm.DnsTap.Operation]; found {
-		dm.DnsTap.Operation = v
+func (p *NormalizeProcessor) QuietText(dm *dnsutils.DNSMessage) int {
+	if v, found := DnstapMessage[dm.DNSTap.Operation]; found {
+		dm.DNSTap.Operation = v
 	}
-	if v, found := DnsQr[dm.DNS.Type]; found {
+	if v, found := DNSQr[dm.DNS.Type]; found {
 		dm.DNS.Type = v
 	}
 	if v, found := IPversion[dm.NetworkInfo.Family]; found {
@@ -154,10 +162,10 @@ func (p *NormalizeProcessor) QuietText(dm *dnsutils.DnsMessage) int {
 	if v, found := Rcodes[dm.DNS.Rcode]; found {
 		dm.DNS.Rcode = v
 	}
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *NormalizeProcessor) GetEffectiveTld(dm *dnsutils.DnsMessage) int {
+func (p *NormalizeProcessor) GetEffectiveTld(dm *dnsutils.DNSMessage) int {
 	// PublicSuffix is case sensitive.
 	// remove ending dot ?
 	qname := strings.ToLower(dm.DNS.Qname)
@@ -167,13 +175,14 @@ func (p *NormalizeProcessor) GetEffectiveTld(dm *dnsutils.DnsMessage) int {
 	etld, icann := publicsuffixlist.PublicSuffix(qname)
 	if icann {
 		dm.PublicSuffix.QnamePublicSuffix = etld
+		dm.PublicSuffix.ManagedByICANN = true
 	} else {
-		p.LogError("ICANN Unmanaged")
+		dm.PublicSuffix.ManagedByICANN = false
 	}
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *NormalizeProcessor) GetEffectiveTldPlusOne(dm *dnsutils.DnsMessage) int {
+func (p *NormalizeProcessor) GetEffectiveTldPlusOne(dm *dnsutils.DNSMessage) int {
 	// PublicSuffix is case sensitive, remove ending dot ?
 	qname := strings.ToLower(dm.DNS.Qname)
 	qname = strings.TrimSuffix(qname, ".")
@@ -182,21 +191,21 @@ func (p *NormalizeProcessor) GetEffectiveTldPlusOne(dm *dnsutils.DnsMessage) int
 		dm.PublicSuffix.QnameEffectiveTLDPlusOne = etld
 	}
 
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }
 
-func (p *NormalizeProcessor) ProcessDnsMessage(dm *dnsutils.DnsMessage) int {
+func (p *NormalizeProcessor) ProcessDNSMessage(dm *dnsutils.DNSMessage) int {
 	if len(p.activeProcessors) == 0 {
-		return RETURN_SUCCESS
+		return ReturnSuccess
 	}
 
-	var r_code int
+	var rCode int
 	for _, fn := range p.activeProcessors {
-		r_code = fn(dm)
-		if r_code != RETURN_SUCCESS {
-			return r_code
+		rCode = fn(dm)
+		if rCode != ReturnSuccess {
+			return rCode
 		}
 	}
 
-	return RETURN_SUCCESS
+	return ReturnSuccess
 }

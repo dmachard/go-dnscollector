@@ -12,75 +12,80 @@ import (
 	"syscall"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/rs/tzsp"
 )
 
-type TzspSniffer struct {
-	done     chan bool
-	exit     chan bool
-	listen   net.UDPConn
-	loggers  []dnsutils.Worker
-	config   *dnsutils.Config
-	logger   *logger.Logger
-	name     string
-	identity string
-	port     int
-	ip       string
+type TZSPSniffer struct {
+	done          chan bool
+	exit          chan bool
+	listen        net.UDPConn
+	defaultRoutes []pkgutils.Worker
+	droppedRoutes []pkgutils.Worker
+	config        *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
+	identity      string
 }
 
-func NewTzsp(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *TzspSniffer {
-	logger.Info("[%s] collector=tzsp - enabled", name)
-	s := &TzspSniffer{
-		done:    make(chan bool),
-		exit:    make(chan bool),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+func NewTZSP(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] tzsp - enabled", name)
+	s := &TZSPSniffer{
+		done:          make(chan bool),
+		exit:          make(chan bool),
+		config:        config,
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
 }
 
-func (c *TzspSniffer) GetName() string { return c.name }
+func (c *TZSPSniffer) GetName() string { return c.name }
 
-func (c *TzspSniffer) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+func (c *TZSPSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
 }
 
-func (c *TzspSniffer) Loggers() ([]chan dnsutils.DnsMessage, []string) {
-	channels := []chan dnsutils.DnsMessage{}
-	names := []string{}
-	for _, p := range c.loggers {
-		channels = append(channels, p.Channel())
-		names = append(names, p.GetName())
-	}
-	return channels, names
+func (c *TZSPSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
-func (c *TzspSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=tzsp  "+msg, v...)
+func (c *TZSPSniffer) SetLoggers(loggers []pkgutils.Worker) {
+	c.defaultRoutes = loggers
 }
 
-func (c *TzspSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=tzsp - "+msg, v...)
+func (c *TZSPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
-func (c *TzspSniffer) ReadConfig() {
+func (c *TZSPSniffer) LogInfo(msg string, v ...interface{}) {
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] tzsp  "+msg, v...)
+}
 
-	c.port = c.config.Collectors.Tzsp.ListenPort
-	c.ip = c.config.Collectors.Tzsp.ListenIp
+func (c *TZSPSniffer) LogError(msg string, v ...interface{}) {
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] tzsp - "+msg, v...)
+}
+
+func (c *TZSPSniffer) ReadConfig() {
 	c.identity = c.config.GetServerIdentity()
-	// TODO: Implement
 }
 
-func (c *TzspSniffer) Listen() error {
+func (c *TZSPSniffer) ReloadConfig(config *pkgconfig.Config) {
+	// TODO implement reload configuration
+}
+
+func (c *TZSPSniffer) Listen() error {
 	c.logger.Info("running in background...")
 
-	ServerAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", c.ip, c.port))
+	ServerAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", c.config.Collectors.Tzsp.ListenIP, c.config.Collectors.Tzsp.ListenPort))
 	if err != nil {
 		return err
 	}
@@ -105,12 +110,12 @@ func (c *TzspSniffer) Listen() error {
 	return nil
 }
 
-func (c *TzspSniffer) Channel() chan dnsutils.DnsMessage {
+func (c *TZSPSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 
-func (c *TzspSniffer) Stop() {
-	c.LogInfo("stopping...")
+func (c *TZSPSniffer) Stop() {
+	c.LogInfo("stopping collector...")
 
 	// Finally close the listener to unblock accept
 	c.exit <- true
@@ -120,22 +125,21 @@ func (c *TzspSniffer) Stop() {
 	close(c.done)
 }
 
-func (c *TzspSniffer) Run() {
+func (c *TZSPSniffer) Run() {
 	c.logger.Info("starting collector...")
 
 	if err := c.Listen(); err != nil {
 		c.logger.Fatal("collector=tzsp listening failed: ", err)
 	}
 
-	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.Tzsp.ChannelBufferSize)
-
-	go dnsProcessor.Run(c.Loggers())
+	dnsProcessor := processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.Tzsp.ChannelBufferSize)
+	go dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	go func() {
 		buf := make([]byte, 65536)
 		oob := make([]byte, 100)
 		for {
-			//flags, from
+			// flags, from
 			bufN, oobn, _, _, err := c.listen.ReadMsgUDPAddrPort(buf, oob)
 			if err != nil {
 				panic(err)
@@ -169,7 +173,7 @@ func (c *TzspSniffer) Run() {
 			pkt := make([]byte, bufN)
 			copy(pkt, buf[:bufN])
 
-			tzsp_packet, err := tzsp.Parse(pkt)
+			tzspPacket, err := tzsp.Parse(pkt)
 
 			if err != nil {
 				c.LogError("Failed to parse packet: ", err)
@@ -185,30 +189,30 @@ func (c *TzspSniffer) Run() {
 			decodedLayers := make([]gopacket.LayerType, 0, 4)
 
 			// decode-it
-			parser.DecodeLayers(tzsp_packet.Data, &decodedLayers)
+			parser.DecodeLayers(tzspPacket.Data, &decodedLayers)
 
-			dm := dnsutils.DnsMessage{}
+			dm := dnsutils.DNSMessage{}
 			dm.Init()
 
-			ignore_packet := false
+			ignorePacket := false
 			for _, layertyp := range decodedLayers {
 				switch layertyp {
 				case layers.LayerTypeIPv4:
-					dm.NetworkInfo.Family = dnsutils.PROTO_IPV4
-					dm.NetworkInfo.QueryIp = ip4.SrcIP.String()
-					dm.NetworkInfo.ResponseIp = ip4.DstIP.String()
+					dm.NetworkInfo.Family = netlib.ProtoIPv4
+					dm.NetworkInfo.QueryIP = ip4.SrcIP.String()
+					dm.NetworkInfo.ResponseIP = ip4.DstIP.String()
 
 				case layers.LayerTypeIPv6:
-					dm.NetworkInfo.QueryIp = ip6.SrcIP.String()
-					dm.NetworkInfo.ResponseIp = ip6.DstIP.String()
-					dm.NetworkInfo.Family = dnsutils.PROTO_IPV6
+					dm.NetworkInfo.QueryIP = ip6.SrcIP.String()
+					dm.NetworkInfo.ResponseIP = ip6.DstIP.String()
+					dm.NetworkInfo.Family = netlib.ProtoIPv6
 
 				case layers.LayerTypeUDP:
 					dm.NetworkInfo.QueryPort = fmt.Sprint(int(udp.SrcPort))
 					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(udp.DstPort))
 					dm.DNS.Payload = udp.Payload
 					dm.DNS.Length = len(udp.Payload)
-					dm.NetworkInfo.Protocol = dnsutils.PROTO_UDP
+					dm.NetworkInfo.Protocol = netlib.ProtoUDP
 
 				case layers.LayerTypeTCP:
 					// ignore SYN/ACK packet
@@ -224,7 +228,7 @@ func (c *TzspSniffer) Run() {
 					}
 					dnsLengthField := binary.BigEndian.Uint16(tcp.Payload[0:2])
 					if len(tcp.Payload) < int(dnsLengthField) {
-						ignore_packet = true
+						ignorePacket = true
 						continue
 					}
 
@@ -232,16 +236,16 @@ func (c *TzspSniffer) Run() {
 					dm.NetworkInfo.ResponsePort = fmt.Sprint(int(tcp.DstPort))
 					dm.DNS.Payload = tcp.Payload[2:]
 					dm.DNS.Length = len(tcp.Payload[2:])
-					dm.NetworkInfo.Protocol = dnsutils.PROTO_TCP
+					dm.NetworkInfo.Protocol = netlib.ProtoTCP
 				}
 			}
 
-			if !ignore_packet {
-				dm.DnsTap.Identity = c.identity
+			if !ignorePacket {
+				dm.DNSTap.Identity = c.identity
 
 				// set timestamp
-				dm.DnsTap.TimeSec = int(tsec)
-				dm.DnsTap.TimeNsec = int(nsec)
+				dm.DNSTap.TimeSec = int(tsec)
+				dm.DNSTap.TimeNsec = int(nsec)
 
 				// just decode QR
 				if len(dm.DNS.Payload) < 4 {

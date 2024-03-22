@@ -5,45 +5,174 @@ import (
 	"net"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
-func Test_SyslogRun(t *testing.T) {
+func Test_SyslogRunUdp(t *testing.T) {
 	testcases := []struct {
-		transport string
-		mode      string
-		pattern   string
+		name       string
+		transport  string
+		mode       string
+		formatter  string
+		framer     string
+		pattern    string
+		listenAddr string
 	}{
 		{
-			transport: dnsutils.SOCKET_TCP,
-			mode:      dnsutils.MODE_TEXT,
-			pattern:   " dns.collector ",
+			name:       "unix_format",
+			transport:  netlib.SocketUDP,
+			mode:       pkgconfig.ModeText,
+			formatter:  netlib.SocketUnix,
+			framer:     "",
+			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
+			listenAddr: ":4000",
 		},
 		{
-			transport: dnsutils.SOCKET_TCP,
-			mode:      dnsutils.MODE_JSON,
-			pattern:   "\"qname\":\"dns.collector\"",
+			name:       "rfc3164_format",
+			transport:  netlib.SocketUDP,
+			mode:       pkgconfig.ModeText,
+			formatter:  "rfc3164",
+			framer:     "",
+			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
+			listenAddr: ":4000",
 		},
 		{
-			transport: dnsutils.SOCKET_TCP,
-			mode:      dnsutils.MODE_FLATJSON,
-			pattern:   "\"dns.qname\":\"dns.collector\"",
+			name:       "rfc5424_format",
+			transport:  netlib.SocketUDP,
+			mode:       pkgconfig.ModeText,
+			formatter:  "rfc5424",
+			framer:     "",
+			pattern:    `<30>1 \d+-\d+-\d+.*`,
+			listenAddr: ":4000",
+		},
+		{
+			name:       "rfc5424_format_rfc5425_framer",
+			transport:  netlib.SocketUDP,
+			mode:       pkgconfig.ModeText,
+			formatter:  "rfc5424",
+			framer:     "rfc5425",
+			pattern:    `\d+ \<30\>1 \d+-\d+-\d+.*`,
+			listenAddr: ":4000",
 		},
 	}
 
 	for _, tc := range testcases {
-		t.Run(tc.mode, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			// init logger
-			config := dnsutils.GetFakeConfig()
+			config := pkgconfig.GetFakeConfig()
 			config.Loggers.Syslog.Transport = tc.transport
-			config.Loggers.Syslog.RemoteAddress = ":4000"
+			config.Loggers.Syslog.RemoteAddress = tc.listenAddr
 			config.Loggers.Syslog.Mode = tc.mode
+			config.Loggers.Syslog.Formatter = tc.formatter
+			config.Loggers.Syslog.Framer = tc.framer
+			config.Loggers.Syslog.FlushInterval = 1
+			config.Loggers.Syslog.BufferSize = 0
+
 			g := NewSyslog(config, logger.New(false), "test")
 
 			// fake json receiver
-			fakeRcvr, err := net.Listen(tc.transport, ":4000")
+			fakeRcvr, err := net.ListenPacket(tc.transport, tc.listenAddr)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer fakeRcvr.Close()
+
+			// start the logger
+			go g.Run()
+
+			// send fake dns message to logger
+			time.Sleep(time.Second)
+			dm := dnsutils.GetFakeDNSMessage()
+			g.GetInputChannel() <- dm
+
+			// read data on fake server side
+			buf := make([]byte, 4096)
+			n, _, err := fakeRcvr.ReadFrom(buf)
+			if err != nil {
+				t.Errorf("error to read data: %s", err)
+			}
+
+			if n == 0 {
+				t.Errorf("no data received")
+			}
+
+			re := regexp.MustCompile(tc.pattern)
+			if !re.MatchString(string(buf)) {
+				t.Errorf("syslog error want %s, got: %s", tc.pattern, string(buf))
+			}
+		})
+	}
+}
+
+func Test_SyslogRunTcp(t *testing.T) {
+	testcases := []struct {
+		name       string
+		transport  string
+		mode       string
+		formatter  string
+		framer     string
+		pattern    string
+		listenAddr string
+	}{
+		{
+			name:       "unix_format",
+			transport:  netlib.SocketTCP,
+			mode:       pkgconfig.ModeText,
+			formatter:  netlib.SocketUnix,
+			framer:     "",
+			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
+			listenAddr: ":4000",
+		},
+		{
+			name:       "rfc3164_format",
+			transport:  netlib.SocketTCP,
+			mode:       pkgconfig.ModeText,
+			formatter:  "rfc3164",
+			framer:     "",
+			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
+			listenAddr: ":4000",
+		},
+		{
+			name:       "rfc5424_format",
+			transport:  netlib.SocketTCP,
+			mode:       pkgconfig.ModeText,
+			formatter:  "rfc5424",
+			framer:     "",
+			pattern:    `<30>1 \d+-\d+-\d+.*`,
+			listenAddr: ":4000",
+		},
+		{
+			name:       "rfc5425_format_rfc5425_framer",
+			transport:  netlib.SocketTCP,
+			mode:       pkgconfig.ModeText,
+			formatter:  "rfc5424",
+			framer:     "rfc5425",
+			pattern:    `\d+ \<30\>1 \d+-\d+-\d+.*`,
+			listenAddr: ":4000",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			// init logger
+			config := pkgconfig.GetFakeConfig()
+			config.Loggers.Syslog.Transport = tc.transport
+			config.Loggers.Syslog.RemoteAddress = tc.listenAddr
+			config.Loggers.Syslog.Mode = tc.mode
+			config.Loggers.Syslog.Formatter = tc.formatter
+			config.Loggers.Syslog.Framer = tc.framer
+			config.Loggers.Syslog.FlushInterval = 1
+			config.Loggers.Syslog.BufferSize = 0
+
+			g := NewSyslog(config, logger.New(false), "test")
+
+			// fake json receiver
+			fakeRcvr, err := net.Listen(tc.transport, tc.listenAddr)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -60,8 +189,9 @@ func Test_SyslogRun(t *testing.T) {
 			defer conn.Close()
 
 			// send fake dns message to logger
-			dm := dnsutils.GetFakeDnsMessage()
-			g.Channel() <- dm
+			time.Sleep(time.Second)
+			dm := dnsutils.GetFakeDNSMessage()
+			g.GetInputChannel() <- dm
 
 			// read data on server side and decode-it
 			reader := bufio.NewReader(conn)
@@ -70,10 +200,66 @@ func Test_SyslogRun(t *testing.T) {
 				t.Errorf("error to read line on syslog server: %s", err)
 			}
 
-			pattern := regexp.MustCompile(tc.pattern)
-			if !pattern.MatchString(string(line)) {
+			re := regexp.MustCompile(tc.pattern)
+			if !re.MatchString(string(line)) {
 				t.Errorf("syslog error want %s, got: %s", tc.pattern, string(line))
 			}
 		})
+	}
+}
+
+func Test_SyslogRun_RemoveNullCharacter(t *testing.T) {
+	// init logger
+	config := pkgconfig.GetFakeConfig()
+	config.Loggers.Syslog.Transport = netlib.SocketUDP
+	config.Loggers.Syslog.RemoteAddress = ":4000"
+	config.Loggers.Syslog.Mode = pkgconfig.ModeText
+	config.Loggers.Syslog.Formatter = netlib.SocketUnix
+	config.Loggers.Syslog.Framer = ""
+	config.Loggers.Syslog.FlushInterval = 1
+	config.Loggers.Syslog.BufferSize = 0
+
+	g := NewSyslog(config, logger.New(false), "test")
+
+	// fake json receiver
+	fakeRcvr, err := net.ListenPacket(config.Loggers.Syslog.Transport, ":4000")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer fakeRcvr.Close()
+
+	// start the logger
+	go g.Run()
+
+	// send fake dns message to logger
+	time.Sleep(time.Second)
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = "null\x00char.com"
+	g.GetInputChannel() <- dm
+
+	// read data on fake server side
+	buf := make([]byte, (500))
+
+	n, _, err := fakeRcvr.ReadFrom(buf)
+	if err != nil {
+		t.Errorf("error to read data: %s", err)
+	}
+
+	if n == 0 {
+		t.Errorf("no data received")
+	}
+
+	// search null char
+	for _, b := range buf[:n] {
+		if b == '\x00' {
+			t.Errorf("NULL char detected in log")
+		}
+	}
+
+	// search qname
+	pattern := `null` + config.Loggers.Syslog.ReplaceNullChar + `char\.com`
+	re := regexp.MustCompile(pattern)
+	if !re.MatchString(string(buf[:n])) {
+		t.Errorf("syslog error want %s, got: %s", pattern, string(buf[:n]))
 	}
 }

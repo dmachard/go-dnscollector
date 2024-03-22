@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	"github.com/golang/snappy"
 	"github.com/prometheus/common/model"
@@ -22,15 +23,15 @@ func Test_LokiClientRun(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.MODE_TEXT,
+			mode:    pkgconfig.ModeText,
 			pattern: "0b dns.collector A",
 		},
 		{
-			mode:    dnsutils.MODE_JSON,
+			mode:    pkgconfig.ModeJSON,
 			pattern: "\"qname\":\"dns.collector\"",
 		},
 		{
-			mode:    dnsutils.MODE_FLATJSON,
+			mode:    pkgconfig.ModeFlatJSON,
 			pattern: "\"dns.qname\":\"dns.collector\"",
 		},
 	}
@@ -45,7 +46,7 @@ func Test_LokiClientRun(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.mode, func(t *testing.T) {
 			// init logger
-			cfg := dnsutils.GetFakeConfig()
+			cfg := pkgconfig.GetFakeConfig()
 			cfg.Loggers.LokiClient.Mode = tc.mode
 			cfg.Loggers.LokiClient.BatchSize = 0
 			g := NewLokiClient(cfg, logger.New(false), "test")
@@ -54,9 +55,9 @@ func Test_LokiClientRun(t *testing.T) {
 			go g.Run()
 
 			// send fake dns message to logger
-			dm := dnsutils.GetFakeDnsMessage()
-			dm.DnsTap.Identity = dnsutils.DNSTAP_IDENTITY_TEST
-			g.Channel() <- dm
+			dm := dnsutils.GetFakeDNSMessage()
+			dm.DNSTap.Identity = dnsutils.DNSTapIdentityTest
+			g.GetInputChannel() <- dm
 
 			// accept conn
 			conn, err := fakeRcvr.Accept()
@@ -70,7 +71,7 @@ func Test_LokiClientRun(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			conn.Write([]byte(dnsutils.HTTP_OK))
+			conn.Write([]byte(pkgconfig.HTTPOK))
 
 			// read payload from request body
 			protobuf, err := io.ReadAll(request.Body)
@@ -78,17 +79,17 @@ func Test_LokiClientRun(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			protobuf_dec, err := snappy.Decode(nil, protobuf)
+			protobufDec, err := snappy.Decode(nil, protobuf)
 			if err != nil {
 				t.Fatal(err)
 			}
-			labels_pattern := regexp.MustCompile("{identity=\"test_id\", job=\"dnscollector\"}")
-			if !labels_pattern.MatchString(string(protobuf_dec)) {
-				t.Errorf("loki test error want {identity=\"test_id\", job=\"dnscollector\"}, got: %s", string(protobuf_dec))
+			labelsPattern := regexp.MustCompile("{identity=\"test_id\", job=\"dnscollector\"}")
+			if !labelsPattern.MatchString(string(protobufDec)) {
+				t.Errorf("loki test error want {identity=\"test_id\", job=\"dnscollector\"}, got: %s", string(protobufDec))
 			}
 			pattern := regexp.MustCompile(tc.pattern)
-			if !pattern.MatchString(string(protobuf_dec)) {
-				t.Errorf("loki test error want %s, got: %s", tc.pattern, string(protobuf_dec))
+			if !pattern.MatchString(string(protobufDec)) {
+				t.Errorf("loki test error want %s, got: %s", tc.pattern, string(protobufDec))
 			}
 		})
 	}
@@ -96,11 +97,11 @@ func Test_LokiClientRun(t *testing.T) {
 
 func Test_LokiClientRelabel(t *testing.T) {
 	testcases := []struct {
-		relabel_config []*relabel.Config
-		labels_pattern string
+		relabelConfig []*relabel.Config
+		labelsPattern string
 	}{
 		{
-			relabel_config: []*relabel.Config{
+			relabelConfig: []*relabel.Config{
 				{
 					Action:       relabel.Replace,
 					Separator:    ";",
@@ -110,10 +111,10 @@ func Test_LokiClientRelabel(t *testing.T) {
 					TargetLabel:  "rcode",
 				},
 			},
-			labels_pattern: "{identity=\"test_id\", job=\"dnscollector\", rcode=\"NOERROR\"}",
+			labelsPattern: "{identity=\"test_id\", job=\"dnscollector\", rcode=\"NOERROR\"}",
 		},
 		{
-			relabel_config: []*relabel.Config{
+			relabelConfig: []*relabel.Config{
 				{
 					Action:       relabel.Replace,
 					Separator:    ";",
@@ -123,16 +124,16 @@ func Test_LokiClientRelabel(t *testing.T) {
 					TargetLabel:  "__rcode",
 				},
 			},
-			labels_pattern: "{identity=\"test_id\", job=\"dnscollector\"}",
+			labelsPattern: "{identity=\"test_id\", job=\"dnscollector\"}",
 		},
 		{
-			relabel_config: []*relabel.Config{
+			relabelConfig: []*relabel.Config{
 				{
 					Action: relabel.LabelDrop,
 					Regex:  relabel.MustNewRegexp("job"),
 				},
 			},
-			labels_pattern: "{identity=\"test_id\"}",
+			labelsPattern: "{identity=\"test_id\"}",
 		},
 	}
 
@@ -144,22 +145,22 @@ func Test_LokiClientRelabel(t *testing.T) {
 	defer fakeRcvr.Close()
 
 	for _, tc := range testcases {
-		for _, m := range []string{dnsutils.MODE_TEXT, dnsutils.MODE_JSON, dnsutils.MODE_FLATJSON} {
-			t.Run(fmt.Sprint(m, tc.relabel_config, tc.labels_pattern), func(t *testing.T) {
+		for _, m := range []string{pkgconfig.ModeText, pkgconfig.ModeJSON, pkgconfig.ModeFlatJSON} {
+			t.Run(fmt.Sprint(m, tc.relabelConfig, tc.labelsPattern), func(t *testing.T) {
 				// init logger
-				cfg := dnsutils.GetFakeConfig()
+				cfg := pkgconfig.GetFakeConfig()
 				cfg.Loggers.LokiClient.Mode = m
 				cfg.Loggers.LokiClient.BatchSize = 0
-				cfg.Loggers.LokiClient.RelabelConfigs = tc.relabel_config
+				cfg.Loggers.LokiClient.RelabelConfigs = tc.relabelConfig
 				g := NewLokiClient(cfg, logger.New(false), "test")
 
 				// start the logger
 				go g.Run()
 
 				// send fake dns message to logger
-				dm := dnsutils.GetFakeDnsMessage()
-				dm.DnsTap.Identity = dnsutils.DNSTAP_IDENTITY_TEST
-				g.Channel() <- dm
+				dm := dnsutils.GetFakeDNSMessage()
+				dm.DNSTap.Identity = dnsutils.DNSTapIdentityTest
+				g.GetInputChannel() <- dm
 
 				// accept conn
 				conn, err := fakeRcvr.Accept()
@@ -173,7 +174,7 @@ func Test_LokiClientRelabel(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				conn.Write([]byte(dnsutils.HTTP_OK))
+				conn.Write([]byte(pkgconfig.HTTPOK))
 
 				// read payload from request body
 				protobuf, err := io.ReadAll(request.Body)
@@ -181,14 +182,14 @@ func Test_LokiClientRelabel(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				protobuf_dec, err := snappy.Decode(nil, protobuf)
+				protobufDec, err := snappy.Decode(nil, protobuf)
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				labels_pattern := regexp.MustCompile(tc.labels_pattern)
-				if !labels_pattern.MatchString(string(protobuf_dec)) {
-					t.Errorf("loki test error want %s, got: %s", tc.labels_pattern, string(protobuf_dec))
+				labelsPattern := regexp.MustCompile(tc.labelsPattern)
+				if !labelsPattern.MatchString(string(protobufDec)) {
+					t.Errorf("loki test error want %s, got: %s", tc.labelsPattern, string(protobufDec))
 				}
 			})
 		}

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -19,7 +20,7 @@ func Test_FalcoClient(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.MODE_JSON,
+			mode:    pkgconfig.ModeJSON,
 			pattern: "\"qname\":\"dns.collector\"",
 		},
 	}
@@ -32,13 +33,13 @@ func Test_FalcoClient(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.mode, func(t *testing.T) {
-			conf := dnsutils.GetFakeConfig()
+			conf := pkgconfig.GetFakeConfig()
 			g := NewFalcoClient(conf, logger.New(false), "test")
 
 			go g.Run()
 
-			dm := dnsutils.GetFakeDnsMessage()
-			g.Channel() <- dm
+			dm := dnsutils.GetFakeDNSMessage()
+			g.GetInputChannel() <- dm
 
 			// accept conn
 			conn, err := fakeRcvr.Accept()
@@ -52,7 +53,7 @@ func Test_FalcoClient(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			conn.Write([]byte(dnsutils.HTTP_OK))
+			conn.Write([]byte(pkgconfig.HTTPOK))
 
 			// read payload from request body
 			payload, err := io.ReadAll(request.Body)

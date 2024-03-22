@@ -1,0 +1,132 @@
+# HELP dnscollector_build_info A metric with a constant '1' value labeled by version, revision, branch, goversion from which dnscollector was built, and the goos and goarch for the build.
+# TYPE dnscollector_build_info gauge
+dnscollector_build_info{branch="",goarch="amd64",goos="linux",goversion="go1.21.4",revision="unknown",tags="unknown",version=""} 1
+# HELP dnscollector_bytes_total The total bytes received and sent
+# TYPE dnscollector_bytes_total counter
+dnscollector_bytes_total{stream_id="dnsdist1"} 201
+# HELP dnscollector_dnsmessages_total Counter of DNS messages per stream
+# TYPE dnscollector_dnsmessages_total counter
+dnscollector_dnsmessages_total{stream_id="dnsdist1"} 2
+# HELP dnscollector_flag_aa_total Number of packet with flag AA
+# TYPE dnscollector_flag_aa_total counter
+dnscollector_flag_aa_total{stream_id="dnsdist1"} 0
+# HELP dnscollector_flag_ad_total Number of packet with flag AD
+# TYPE dnscollector_flag_ad_total counter
+dnscollector_flag_ad_total{stream_id="dnsdist1"} 1
+# HELP dnscollector_flag_ra_total Number of packet with flag RA
+# TYPE dnscollector_flag_ra_total counter
+dnscollector_flag_ra_total{stream_id="dnsdist1"} 1
+# HELP dnscollector_flag_tc_total Number of packet with flag TC
+# TYPE dnscollector_flag_tc_total counter
+dnscollector_flag_tc_total{stream_id="dnsdist1"} 0
+# HELP dnscollector_fragmented_total Number of IP fragmented packets
+# TYPE dnscollector_fragmented_total counter
+dnscollector_fragmented_total{stream_id="dnsdist1"} 0
+# HELP dnscollector_ipprotocol_total Counter of packets per IP protocol
+# TYPE dnscollector_ipprotocol_total counter
+dnscollector_ipprotocol_total{net_transport="DOT",stream_id="dnsdist1"} 2
+# HELP dnscollector_ipversion_total Counter of packets per IP version
+# TYPE dnscollector_ipversion_total counter
+dnscollector_ipversion_total{net_family="IPv4",stream_id="dnsdist1"} 2
+# HELP dnscollector_malformed_total Number of malformed packets
+# TYPE dnscollector_malformed_total counter
+dnscollector_malformed_total{stream_id="dnsdist1"} 0
+# HELP dnscollector_qtypes_total Counter of queries per qtypes
+# TYPE dnscollector_qtypes_total counter
+dnscollector_qtypes_total{query_type="A",stream_id="dnsdist1"} 2
+# HELP dnscollector_queries_total Counter of DNS queries per stream
+# TYPE dnscollector_queries_total counter
+dnscollector_queries_total{stream_id="dnsdist1"} 1
+# HELP dnscollector_rcodes_total Counter of replies per return codes
+# TYPE dnscollector_rcodes_total counter
+dnscollector_rcodes_total{return_code="NOERROR",stream_id="dnsdist1"} 2
+# HELP dnscollector_reassembled_total Number of TCP reassembled packets
+# TYPE dnscollector_reassembled_total counter
+dnscollector_reassembled_total{stream_id="dnsdist1"} 0
+# HELP dnscollector_received_bytes_total The total bytes received
+# TYPE dnscollector_received_bytes_total counter
+dnscollector_received_bytes_total{stream_id="dnsdist1"} 128
+# HELP dnscollector_replies_total Counter of DNS replies per stream
+# TYPE dnscollector_replies_total counter
+dnscollector_replies_total{stream_id="dnsdist1"} 1
+# HELP dnscollector_sent_bytes_total The total bytes sent
+# TYPE dnscollector_sent_bytes_total counter
+dnscollector_sent_bytes_total{stream_id="dnsdist1"} 73
+# HELP dnscollector_sfdomains_lru Total number of serverfail domains most recently observed per stream identity
+# TYPE dnscollector_sfdomains_lru gauge
+dnscollector_sfdomains_lru{stream_id="dnsdist1"} 0
+# HELP dnscollector_throughput_ops Number of ops per second received, partitioned by stream
+# TYPE dnscollector_throughput_ops gauge
+dnscollector_throughput_ops{stream_id="dnsdist1"} 0
+# HELP dnscollector_throughput_ops_max Max number of ops per second observed, partitioned by stream
+# TYPE dnscollector_throughput_ops_max gauge
+dnscollector_throughput_ops_max{stream_id="dnsdist1"} 0
+# HELP dnscollector_top_domains Number of hit per domain topN, partitioned by qname
+# TYPE dnscollector_top_domains gauge
+dnscollector_top_domains{domain="www.github.com",stream_id="dnsdist1"} 2
+# HELP dnscollector_top_requesters Number of hit per requester topN, partitioned by client IP
+# TYPE dnscollector_top_requesters gauge
+dnscollector_top_requesters{ip="192.168.1.210",stream_id="dnsdist1"} 2
+# HELP dnscollector_total_domains_lru Total number of domains most recently observed per stream identity 
+# TYPE dnscollector_total_domains_lru gauge
+dnscollector_total_domains_lru{stream_id="dnsdist1"} 1
+# HELP dnscollector_total_etldsplusone_lru Total number of etlds+one most recently observed per stream identity
+# TYPE dnscollector_total_etldsplusone_lru gauge
+dnscollector_total_etldsplusone_lru{stream_id="dnsdist1"} 0
+# HELP dnscollector_total_nxdomains_lru Total number of unknown domains most recently observed per stream identity
+# TYPE dnscollector_total_nxdomains_lru gauge
+dnscollector_total_nxdomains_lru{stream_id="dnsdist1"} 0
+# HELP dnscollector_total_requesters_lru Total number of DNS clients most recently observed per stream identity.
+# TYPE dnscollector_total_requesters_lru gauge
+dnscollector_total_requesters_lru{stream_id="dnsdist1"} 1
+# HELP dnscollector_total_suspicious_lru Total number of suspicious domains most recently observed per stream identity
+# TYPE dnscollector_total_suspicious_lru gauge
+dnscollector_total_suspicious_lru{stream_id="dnsdist1"} 0
+# HELP dnscollector_total_tlds_lru Total number of tld most recently observed per stream identity
+# TYPE dnscollector_total_tlds_lru gauge
+dnscollector_total_tlds_lru{stream_id="dnsdist1"} 0
+# HELP dnscollector_total_unanswered_lru Total number of unanswered domains most recently observed per stream identity
+# TYPE dnscollector_total_unanswered_lru gauge
+dnscollector_total_unanswered_lru{stream_id="dnsdist1"} 0
+# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds{quantile="0"} 2.2399e-05
+go_gc_duration_seconds{quantile="0.25"} 2.2399e-05
+go_gc_duration_seconds{quantile="0.5"} 4.3674e-05
+go_gc_duration_seconds{quantile="0.75"} 5.4769e-05
+go_gc_duration_seconds{quantile="1"} 5.4769e-05
+go_gc_duration_seconds_sum 0.000120842
+go_gc_duration_seconds_count 3
+# HELP go_goroutines Number of goroutines that currently exist.
+# TYPE go_goroutines gauge
+go_goroutines 29
+# HELP go_info Information about the Go environment.
+# TYPE go_info gauge
+go_info{version="go1.21.4"} 1
+# HELP go_memstats_last_gc_time_seconds Number of seconds since 1970 of last garbage collection.
+# TYPE go_memstats_last_gc_time_seconds gauge
+go_memstats_last_gc_time_seconds 1.704015697147078e+09
+# HELP go_threads Number of OS threads created.
+# TYPE go_threads gauge
+go_threads 10
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 0.14
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 1.048576e+06
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 17
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 3.9059456e+07
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.7040156967e+09
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 2.036846592e+09
+# HELP process_virtual_memory_max_bytes Maximum amount of virtual memory available in bytes.
+# TYPE process_virtual_memory_max_bytes gauge
+process_virtual_memory_max_bytes 1.8446744073709552e+19

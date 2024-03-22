@@ -1,10 +1,11 @@
 package loggers
 
 import (
-	"crypto/tls"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 
@@ -13,174 +14,211 @@ import (
 )
 
 type InfluxDBClient struct {
-	stopProcess  chan bool
-	doneProcess  chan bool
-	stopRun      chan bool
-	doneRun      chan bool
-	inputChan    chan dnsutils.DnsMessage
-	outputChan   chan dnsutils.DnsMessage
-	config       *dnsutils.Config
-	logger       *logger.Logger
-	influxdbConn influxdb2.Client
-	writeAPI     api.WriteAPI
-	name         string
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	influxdbConn   influxdb2.Client
+	writeAPI       api.WriteAPI
+	name           string
+	RoutingHandler pkgutils.RoutingHandler
 }
 
-func NewInfluxDBClient(config *dnsutils.Config, logger *logger.Logger, name string) *InfluxDBClient {
-	logger.Info("[%s] logger=influxdb - enabled", name)
+func NewInfluxDBClient(config *pkgconfig.Config, logger *logger.Logger, name string) *InfluxDBClient {
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] influxdb - enabled", name)
 
-	s := &InfluxDBClient{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.InfluxDB.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.InfluxDB.ChannelBufferSize),
-		logger:      logger,
-		config:      config,
-		name:        name,
+	ic := &InfluxDBClient{
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.InfluxDB.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.InfluxDB.ChannelBufferSize),
+		logger:         logger,
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
-	s.ReadConfig()
+	ic.ReadConfig()
 
-	return s
+	return ic
 }
 
-func (c *InfluxDBClient) GetName() string { return c.name }
+func (ic *InfluxDBClient) GetName() string { return ic.name }
 
-func (c *InfluxDBClient) SetLoggers(loggers []dnsutils.Worker) {}
-
-func (o *InfluxDBClient) ReadConfig() {
-	if !dnsutils.IsValidTLS(o.config.Loggers.InfluxDB.TlsMinVersion) {
-		o.logger.Fatal("logger=influxdb - invalid tls min version")
-	}
+func (ic *InfluxDBClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	ic.RoutingHandler.AddDroppedRoute(wrk)
 }
 
-func (o *InfluxDBClient) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger=influxdb - "+msg, v...)
+func (ic *InfluxDBClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	ic.RoutingHandler.AddDefaultRoute(wrk)
 }
 
-func (o *InfluxDBClient) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger=influxdb - "+msg, v...)
+func (ic *InfluxDBClient) SetLoggers(loggers []pkgutils.Worker) {}
+
+func (ic *InfluxDBClient) ReadConfig() {}
+
+func (ic *InfluxDBClient) ReloadConfig(config *pkgconfig.Config) {
+	ic.LogInfo("reload configuration!")
+	ic.configChan <- config
 }
 
-func (o *InfluxDBClient) Channel() chan dnsutils.DnsMessage {
-	return o.inputChan
+func (ic *InfluxDBClient) LogInfo(msg string, v ...interface{}) {
+	ic.logger.Info(pkgutils.PrefixLogLogger+"["+ic.name+"] influxdb - "+msg, v...)
 }
 
-func (o *InfluxDBClient) Stop() {
-	o.LogInfo("stopping to run...")
-	o.stopRun <- true
-	<-o.doneRun
-
-	o.LogInfo("stopping to process...")
-	o.stopProcess <- true
-	<-o.doneProcess
+func (ic *InfluxDBClient) LogError(msg string, v ...interface{}) {
+	ic.logger.Error(pkgutils.PrefixLogLogger+"["+ic.name+"] influxdb - "+msg, v...)
 }
 
-func (o *InfluxDBClient) Run() {
-	o.LogInfo("running in background...")
+func (ic *InfluxDBClient) GetInputChannel() chan dnsutils.DNSMessage {
+	return ic.inputChan
+}
+
+func (ic *InfluxDBClient) Stop() {
+	ic.LogInfo("stopping logger...")
+	ic.RoutingHandler.Stop()
+
+	ic.LogInfo("stopping to run...")
+	ic.stopRun <- true
+	<-ic.doneRun
+
+	ic.LogInfo("stopping to process...")
+	ic.stopProcess <- true
+	<-ic.doneProcess
+}
+
+func (ic *InfluxDBClient) Run() {
+	ic.LogInfo("running in background...")
+
+	// prepare next channels
+	defaultRoutes, defaultNames := ic.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := ic.RoutingHandler.GetDroppedRoutes()
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.outputChan)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+	listChannel := []chan dnsutils.DNSMessage{}
+	listChannel = append(listChannel, ic.outputChan)
+	subprocessors := transformers.NewTransforms(&ic.config.OutgoingTransformers, ic.logger, ic.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go o.Process()
+	go ic.Process()
 
 	// loop to process incoming messages
 RUN_LOOP:
 	for {
 		select {
-		case <-o.stopRun:
+		case <-ic.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
 
-			o.doneRun <- true
+			ic.doneRun <- true
 			break RUN_LOOP
 
-		case dm, opened := <-o.inputChan:
+		case cfg, opened := <-ic.configChan:
 			if !opened {
-				o.LogInfo("input channel closed!")
+				return
+			}
+			ic.config = cfg
+			ic.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
+
+		case dm, opened := <-ic.inputChan:
+			if !opened {
+				ic.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			subprocessors.InitDNSMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				ic.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
+			// send to next ?
+			ic.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
+
 			// send to output channel
-			o.outputChan <- dm
+			ic.outputChan <- dm
 		}
 	}
-	o.LogInfo("run terminated")
+	ic.LogInfo("run terminated")
 }
 
-func (o *InfluxDBClient) Process() {
+func (ic *InfluxDBClient) Process() {
 	// prepare options for influxdb
 	opts := influxdb2.DefaultOptions()
 	opts.SetUseGZip(true)
-	if o.config.Loggers.InfluxDB.TlsSupport {
-		tlsConfig := &tls.Config{
-			InsecureSkipVerify: false,
-			MinVersion:         tls.VersionTLS12,
+	if ic.config.Loggers.InfluxDB.TLSSupport {
+		tlsOptions := pkgconfig.TLSOptions{
+			InsecureSkipVerify: ic.config.Loggers.InfluxDB.TLSInsecure,
+			MinVersion:         ic.config.Loggers.InfluxDB.TLSMinVersion,
+			CAFile:             ic.config.Loggers.InfluxDB.CAFile,
+			CertFile:           ic.config.Loggers.InfluxDB.CertFile,
+			KeyFile:            ic.config.Loggers.InfluxDB.KeyFile,
 		}
 
-		tlsConfig.InsecureSkipVerify = o.config.Loggers.InfluxDB.TlsInsecure
-		tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.InfluxDB.TlsMinVersion]
+		tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
+		if err != nil {
+			ic.logger.Fatal("logger=influxdb - tls config failed:", err)
+		}
 
 		opts.SetTLSConfig(tlsConfig)
 	}
 	// init the client
 	influxClient := influxdb2.NewClientWithOptions(
-		o.config.Loggers.InfluxDB.ServerURL,
-		o.config.Loggers.InfluxDB.AuthToken,
+		ic.config.Loggers.InfluxDB.ServerURL,
+		ic.config.Loggers.InfluxDB.AuthToken,
 		opts,
 	)
 
 	writeAPI := influxClient.WriteAPI(
-		o.config.Loggers.InfluxDB.Organization,
-		o.config.Loggers.InfluxDB.Bucket,
+		ic.config.Loggers.InfluxDB.Organization,
+		ic.config.Loggers.InfluxDB.Bucket,
 	)
 
-	o.influxdbConn = influxClient
-	o.writeAPI = writeAPI
+	ic.influxdbConn = influxClient
+	ic.writeAPI = writeAPI
 
-	o.LogInfo("ready to process")
+	ic.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {
-		case <-o.stopProcess:
+		case <-ic.stopProcess:
 			// Force all unwritten data to be sent
-			o.writeAPI.Flush()
+			ic.writeAPI.Flush()
 			// Ensures background processes finishes
-			o.influxdbConn.Close()
-			o.doneProcess <- true
+			ic.influxdbConn.Close()
+			ic.doneProcess <- true
 			break PROCESS_LOOP
 		// incoming dns message to process
-		case dm, opened := <-o.outputChan:
+		case dm, opened := <-ic.outputChan:
 			if !opened {
-				o.LogInfo("output channel closed!")
+				ic.LogInfo("output channel closed!")
 				return
 			}
 
 			p := influxdb2.NewPointWithMeasurement("dns").
-				AddTag("Identity", dm.DnsTap.Identity).
-				AddTag("QueryIP", dm.NetworkInfo.QueryIp).
+				AddTag("Identity", dm.DNSTap.Identity).
+				AddTag("QueryIP", dm.NetworkInfo.QueryIP).
 				AddTag("Qname", dm.DNS.Qname).
-				AddField("Operation", dm.DnsTap.Operation).
+				AddField("Operation", dm.DNSTap.Operation).
 				AddField("Family", dm.NetworkInfo.Family).
 				AddField("Protocol", dm.NetworkInfo.Protocol).
 				AddField("Qtype", dm.DNS.Qtype).
 				AddField("Rcode", dm.DNS.Rcode).
-				SetTime(time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec)))
+				SetTime(time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec)))
 
 			// write asynchronously
-			o.writeAPI.WritePoint(p)
+			ic.writeAPI.WritePoint(p)
 		}
 	}
-	o.LogInfo("processing terminated")
+	ic.LogInfo("processing terminated")
 }

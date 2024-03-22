@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -21,15 +22,15 @@ func Test_LogFileText(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.MODE_TEXT,
+			mode:    pkgconfig.ModeText,
 			pattern: "0b dns.collector A",
 		},
 		{
-			mode:    dnsutils.MODE_JSON,
+			mode:    pkgconfig.ModeJSON,
 			pattern: "\"qname\":\"dns.collector\"",
 		},
 		{
-			mode:    dnsutils.MODE_FLATJSON,
+			mode:    pkgconfig.ModeFlatJSON,
 			pattern: "\"dns.qname\":\"dns.collector\"",
 		},
 	}
@@ -45,7 +46,7 @@ func Test_LogFileText(t *testing.T) {
 			defer os.Remove(f.Name()) // clean up
 
 			// config
-			config := dnsutils.GetFakeConfig()
+			config := pkgconfig.GetFakeConfig()
 			config.Loggers.LogFile.FilePath = f.Name()
 			config.Loggers.LogFile.Mode = tc.mode
 			config.Loggers.LogFile.FlushInterval = 0
@@ -57,9 +58,9 @@ func Test_LogFileText(t *testing.T) {
 			go g.Run()
 
 			// send fake dns message to logger
-			dm := dnsutils.GetFakeDnsMessage()
-			dm.DnsTap.Identity = dnsutils.DNSTAP_IDENTITY_TEST
-			g.Channel() <- dm
+			dm := dnsutils.GetFakeDNSMessage()
+			dm.DNSTap.Identity = dnsutils.DNSTapIdentityTest
+			g.GetInputChannel() <- dm
 
 			time.Sleep(time.Second)
 			g.Stop()
@@ -88,15 +89,15 @@ func Test_LogFileWrite_PcapMode(t *testing.T) {
 	defer os.Remove(f.Name()) // clean up
 
 	// config
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 	config.Loggers.LogFile.FilePath = f.Name()
-	config.Loggers.LogFile.Mode = dnsutils.MODE_PCAP
+	config.Loggers.LogFile.Mode = pkgconfig.ModePCAP
 
 	// init generator in testing mode
 	g := NewLogFile(config, logger.New(false), "test")
 
 	// init fake dm
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 
 	// fake network packet
 	pkt := []gopacket.SerializableLayer{}
@@ -124,7 +125,7 @@ func Test_LogFileWrite_PcapMode(t *testing.T) {
 	data := make([]byte, 100)
 	count, err := f.Read(data)
 	if err != nil {
-		log.Fatal(err)
+		t.Errorf("unexpected error: %e", err)
 	}
 
 	if count == 0 {

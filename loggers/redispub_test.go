@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -17,22 +19,22 @@ func Test_RedisPubRun(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.MODE_TEXT,
+			mode:    pkgconfig.ModeText,
 			pattern: " dns.collector ",
 		},
 		{
-			mode:    dnsutils.MODE_JSON,
+			mode:    pkgconfig.ModeJSON,
 			pattern: `\\\"qname\\\":\\\"dns.collector\\\"`,
 		},
 		{
-			mode:    dnsutils.MODE_FLATJSON,
+			mode:    pkgconfig.ModeFlatJSON,
 			pattern: `\\\"dns.qname\\\":\\\"dns.collector\\\"`,
 		},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.mode, func(t *testing.T) {
 			// init logger
-			cfg := dnsutils.GetFakeConfig()
+			cfg := pkgconfig.GetFakeConfig()
 			cfg.Loggers.RedisPub.FlushInterval = 1
 			cfg.Loggers.RedisPub.BufferSize = 0
 			cfg.Loggers.RedisPub.Mode = tc.mode
@@ -41,7 +43,7 @@ func Test_RedisPubRun(t *testing.T) {
 			g := NewRedisPub(cfg, logger.New(false), "test")
 
 			// fake json receiver
-			fakeRcvr, err := net.Listen(dnsutils.SOCKET_TCP, ":6379")
+			fakeRcvr, err := net.Listen(netlib.SocketTCP, ":6379")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -61,8 +63,8 @@ func Test_RedisPubRun(t *testing.T) {
 			time.Sleep(time.Second)
 
 			// send fake dns message to logger
-			dm := dnsutils.GetFakeDnsMessage()
-			g.Channel() <- dm
+			dm := dnsutils.GetFakeDNSMessage()
+			g.GetInputChannel() <- dm
 
 			// read data on server side and decode-it
 			reader := bufio.NewReader(conn)
@@ -81,6 +83,10 @@ func Test_RedisPubRun(t *testing.T) {
 			if !pattern2.MatchString(line) {
 				t.Errorf("redis error want %s, got: %s", pattern2, line)
 			}
+
+			// stop all
+			fakeRcvr.Close()
+			g.Stop()
 		})
 	}
 }

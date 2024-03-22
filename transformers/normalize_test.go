@@ -1,75 +1,28 @@
 package transformers
 
 import (
-	"encoding/json"
-	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
-func TestNormalize_Json(t *testing.T) {
-	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
-
-	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
-
-	// get fake
-	dm := dnsutils.GetFakeDnsMessage()
-	dm.Init()
-
-	// init subproccesor
-	qnameNorm := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
-	qnameNorm.InitDnsMessage(&dm)
-
-	// expected json
-	refJson := `
-			{
-				"publicsuffix": {
-					"tld":"-",
-					"etld+1":"-"
-				}
-			}
-			`
-
-	var dmMap map[string]interface{}
-	err := json.Unmarshal([]byte(dm.ToJson()), &dmMap)
-	if err != nil {
-		t.Fatalf("could not unmarshal dm json: %s\n", err)
-	}
-
-	var refMap map[string]interface{}
-	err = json.Unmarshal([]byte(refJson), &refMap)
-	if err != nil {
-		t.Fatalf("could not unmarshal ref json: %s\n", err)
-	}
-
-	if _, ok := dmMap["publicsuffix"]; !ok {
-		t.Fatalf("transformer key is missing")
-	}
-
-	if !reflect.DeepEqual(dmMap["publicsuffix"], refMap["publicsuffix"]) {
-		t.Errorf("json format different from reference")
-	}
-}
-
 func TestNormalize_LowercaseQname(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Normalize.Enable = true
 	config.Normalize.QnameLowerCase = true
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
 	qnameNorm := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	qname := "www.Google.Com"
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = qname
 
 	ret := qnameNorm.LowercaseQname(&dm)
@@ -80,21 +33,21 @@ func TestNormalize_LowercaseQname(t *testing.T) {
 
 func TestNormalize_QuietText(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Normalize.Enable = true
 	config.Normalize.QuietText = true
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
 	norm := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	norm.QuietText(&dm)
 
-	if dm.DnsTap.Operation != "CQ" {
-		t.Errorf("CQ expected: %s", dm.DnsTap.Operation)
+	if dm.DNSTap.Operation != "CQ" {
+		t.Errorf("CQ expected: %s", dm.DNSTap.Operation)
 	}
 
 	if dm.DNS.Type != "Q" {
@@ -104,12 +57,12 @@ func TestNormalize_QuietText(t *testing.T) {
 
 func TestNormalize_AddTLD(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Normalize.Enable = true
 	config.Normalize.AddTld = true
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
 	psl := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
@@ -139,10 +92,10 @@ func TestNormalize_AddTLD(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			dm.DNS.Qname = tc.qname
 
-			psl.InitDnsMessage(&dm)
+			psl.InitDNSMessage(&dm)
 
 			psl.GetEffectiveTld(&dm)
 			if dm.PublicSuffix.QnamePublicSuffix != tc.want {
@@ -155,12 +108,12 @@ func TestNormalize_AddTLD(t *testing.T) {
 
 func TestNormalize_AddTldPlusOne(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Normalize.Enable = true
 	config.Normalize.AddTld = true
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
 	psl := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
@@ -185,16 +138,135 @@ func TestNormalize_AddTldPlusOne(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			dm.DNS.Qname = tc.qname
 
-			psl.InitDnsMessage(&dm)
+			psl.InitDNSMessage(&dm)
 
 			psl.GetEffectiveTldPlusOne(&dm)
 			if dm.PublicSuffix.QnameEffectiveTLDPlusOne != tc.want {
-				t.Errorf("Bad TLD, got: %s, expected: com", dm.PublicSuffix.QnameEffectiveTLDPlusOne)
+				t.Errorf("Bad TLD, got: %s, expected: %s", dm.PublicSuffix.QnameEffectiveTLDPlusOne, tc.want)
 
 			}
 		})
+	}
+}
+
+func TestNormalize_SuffixUnmanaged(t *testing.T) {
+	// enable feature
+	config := pkgconfig.GetFakeConfigTransformers()
+	log := logger.New(true)
+	outChans := []chan dnsutils.DNSMessage{}
+
+	// init the processor
+	psl := NewNormalizeSubprocessor(config, logger.New(true), "test", 0, outChans, log.Info, log.Error)
+
+	dm := dnsutils.GetFakeDNSMessage()
+	// https://publicsuffix.org/list/effective_tld_names.dat
+	// // ===BEGIN ICANN DOMAINS===
+	// ....
+	// // ===END ICANN DOMAINS===
+	// ===BEGIN PRIVATE DOMAINS===
+	// ..
+	dm.DNS.Qname = "play.googleapis.com"
+	// // ===END PRIVATE DOMAINS===
+
+	psl.InitDNSMessage(&dm)
+	psl.GetEffectiveTld(&dm)
+	if dm.PublicSuffix.ManagedByICANN {
+		t.Errorf("Qname %s should be private domains", dm.DNS.Qname)
+	}
+}
+
+func TestNormalize_SuffixICANNManaged(t *testing.T) {
+	// enable feature
+	config := pkgconfig.GetFakeConfigTransformers()
+	log := logger.New(true)
+	outChans := []chan dnsutils.DNSMessage{}
+
+	// init the processor
+	psl := NewNormalizeSubprocessor(config, logger.New(true), "test", 0, outChans, log.Info, log.Error)
+
+	dm := dnsutils.GetFakeDNSMessage()
+	// https://publicsuffix.org/list/effective_tld_names.dat
+	// // ===BEGIN ICANN DOMAINS===
+	dm.DNS.Qname = "fr.wikipedia.org"
+	// // ===END ICANN DOMAINS===
+	// ===BEGIN PRIVATE DOMAINS===
+	// ..
+	// // ===END PRIVATE DOMAINS===
+
+	psl.InitDNSMessage(&dm)
+	psl.GetEffectiveTld(&dm)
+	if !dm.PublicSuffix.ManagedByICANN {
+		t.Errorf("Qname %s should be ICANN managed", dm.DNS.Qname)
+	}
+}
+
+// bench tests
+
+func BenchmarkNormalize_GetEffectiveTld(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+
+	log := logger.New(false)
+	channels := []chan dnsutils.DNSMessage{}
+
+	subprocessor := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = "en.wikipedia.org"
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		subprocessor.InitDNSMessage(&dm)
+		subprocessor.GetEffectiveTld(&dm)
+	}
+}
+
+func BenchmarkNormalize_GetEffectiveTldPlusOne(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+
+	log := logger.New(false)
+	channels := []chan dnsutils.DNSMessage{}
+
+	subprocessor := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = "en.wikipedia.org"
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		subprocessor.InitDNSMessage(&dm)
+		subprocessor.GetEffectiveTld(&dm)
+	}
+}
+
+func BenchmarkNormalize_QnameLowercase(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+
+	log := logger.New(false)
+	channels := []chan dnsutils.DNSMessage{}
+
+	subprocessor := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = "EN.Wikipedia.Org"
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		subprocessor.LowercaseQname(&dm)
+	}
+}
+
+func BenchmarkNormalize_QuietText(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+
+	log := logger.New(false)
+	channels := []chan dnsutils.DNSMessage{}
+
+	subprocessor := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = "EN.Wikipedia.Org"
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		subprocessor.QuietText(&dm)
 	}
 }

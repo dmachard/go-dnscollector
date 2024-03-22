@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -32,11 +33,11 @@ func Test_DnstapClient(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.transport, func(t *testing.T) {
 			// init logger
-			cfg := dnsutils.GetFakeConfig()
-			cfg.Loggers.Dnstap.FlushInterval = 1
-			cfg.Loggers.Dnstap.BufferSize = 0
+			cfg := pkgconfig.GetFakeConfig()
+			cfg.Loggers.DNSTap.FlushInterval = 1
+			cfg.Loggers.DNSTap.BufferSize = 0
 			if tc.transport == "unix" {
-				cfg.Loggers.Dnstap.SockPath = tc.address
+				cfg.Loggers.DNSTap.SockPath = tc.address
 			}
 
 			g := NewDnstapSender(cfg, logger.New(false), "test")
@@ -59,8 +60,8 @@ func Test_DnstapClient(t *testing.T) {
 			defer conn.Close()
 
 			// init framestream on server side
-			fs_svr := framestream.NewFstrm(bufio.NewReader(conn), bufio.NewWriter(conn), conn, 5*time.Second, []byte("protobuf:dnstap.Dnstap"), true)
-			if err := fs_svr.InitReceiver(); err != nil {
+			fsSvr := framestream.NewFstrm(bufio.NewReader(conn), bufio.NewWriter(conn), conn, 5*time.Second, []byte("protobuf:dnstap.Dnstap"), true)
+			if err := fsSvr.InitReceiver(); err != nil {
 				t.Errorf("error to init framestream receiver: %s", err)
 			}
 
@@ -68,11 +69,11 @@ func Test_DnstapClient(t *testing.T) {
 			time.Sleep(time.Second)
 
 			// send fake dns message to logger
-			dm := dnsutils.GetFakeDnsMessage()
-			g.Channel() <- dm
+			dm := dnsutils.GetFakeDNSMessage()
+			g.GetInputChannel() <- dm
 
 			// receive frame on server side ?, timeout 5s
-			fs, err := fs_svr.RecvFrame(true)
+			fs, err := fsSvr.RecvFrame(true)
 			if err != nil {
 				t.Errorf("error to receive frame: %s", err)
 			}

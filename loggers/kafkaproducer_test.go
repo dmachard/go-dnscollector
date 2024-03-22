@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 
 	sarama "github.com/Shopify/sarama"
@@ -15,35 +16,43 @@ import (
 func Test_KafkaProducer(t *testing.T) {
 
 	// for debug only
-	//sarama.Logger = log.New(os.Stdout, "[sarama] ", log.LstdFlags)
+	// sarama.Logger = log.New(os.Stdout, "[sarama] ", log.LstdFlags)
 
 	testcases := []struct {
 		transport string
 		address   string
 		topic     string
+		compress  string
 	}{
 		{
-			transport: "tcp",
+			transport: "compress_none",
 			address:   ":9092",
 			topic:     "dnscollector",
+			compress:  "none",
 		},
-	}
-
-	// Create a new mock broker
-	// Création d'un listener factice
-	mockListener, err := net.Listen("tcp", "127.0.0.1:9092")
-	if err != nil {
-		log.Fatal(err)
+		{
+			transport: "compress_gzip",
+			address:   ":9092",
+			topic:     "dnscollector",
+			compress:  "gzip",
+		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.transport, func(t *testing.T) {
+			// Create a new mock broker
+			mockListener, err := net.Listen("tcp", "127.0.0.1:9092")
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer mockListener.Close()
 
 			// init logger
-			cfg := dnsutils.GetFakeConfig()
+			cfg := pkgconfig.GetFakeConfig()
 			cfg.Loggers.KafkaProducer.BufferSize = 0
 			cfg.Loggers.KafkaProducer.RemotePort = 9092
 			cfg.Loggers.KafkaProducer.Topic = tc.topic
+			cfg.Loggers.KafkaProducer.Compression = tc.compress
 
 			mockBroker := sarama.NewMockBrokerListener(t, 1, mockListener)
 			defer mockBroker.Close()
@@ -52,7 +61,7 @@ func Test_KafkaProducer(t *testing.T) {
 				"ApiVersionsRequest": sarama.NewMockApiVersionsResponse(t).SetApiKeys(
 					[]sarama.ApiVersionsResponseKey{
 						{
-							ApiKey:     3, //Metadata
+							ApiKey:     3, // Metadata
 							MinVersion: 0,
 							MaxVersion: 6,
 						},
@@ -80,8 +89,8 @@ func Test_KafkaProducer(t *testing.T) {
 			time.Sleep(1 * time.Second)
 
 			// send fake dns message to logger
-			dm := dnsutils.GetFakeDnsMessage()
-			g.Channel() <- dm
+			dm := dnsutils.GetFakeDNSMessage()
+			g.GetInputChannel() <- dm
 
 			// just wait
 			time.Sleep(1 * time.Second)

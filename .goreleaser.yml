@@ -8,12 +8,17 @@ builds:
     - CGO_ENABLED=0
 
   ldflags:
-    - '-X main.Version={{.Version}}'
+    - -s -w
+    - -X github.com/prometheus/common/version.Version={{.Version}}
+    - -X github.com/prometheus/common/version.Revision={{.Commit}}
+    - -X github.com/prometheus/common/version.Branch={{.Branch}}
+    - -X github.com/prometheus/common/version.BuildDate={{.Date}}
 
   goos:
     - windows
     - linux
     - darwin
+    - freebsd
   goarch:
     - amd64
     - arm64
@@ -27,14 +32,12 @@ builds:
 archives:
 - id: zipformat
   format: zip
-  rlcp: true
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
   files:
     - config.yml
     
 - id: targzformat
   format: tar.gz
-  rlcp: true
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
   files:
     - config.yml

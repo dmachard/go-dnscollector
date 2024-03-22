@@ -2,26 +2,35 @@ name: Benchmark
 
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
     branches:
       - main
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
     branches:
       - main
+
+permissions:
+  contents: read
 
 jobs:
   bench-dnstaptcp:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/setup-go@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-go@v5
+    - uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         path: app
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         repository: dmachard/go-dnstap-generator
         path: gen

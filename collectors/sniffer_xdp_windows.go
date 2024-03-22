@@ -5,65 +5,71 @@ package collectors
 
 import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 )
 
-type XdpSniffer struct {
-	done     chan bool
-	exit     chan bool
-	identity string
-	loggers  []dnsutils.Worker
-	config   *dnsutils.Config
-	logger   *logger.Logger
-	name     string
+type XDPSniffer struct {
+	done          chan bool
+	exit          chan bool
+	identity      string
+	defaultRoutes []pkgutils.Worker
+	config        *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
 }
 
-func NewXdpSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *XdpSniffer {
-	logger.Info("[%s] XDP collector enabled", name)
-	s := &XdpSniffer{
-		done:    make(chan bool),
-		exit:    make(chan bool),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+func NewXDPSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] xdp sniffer enabled", name)
+	s := &XDPSniffer{
+		done:          make(chan bool),
+		exit:          make(chan bool),
+		config:        config,
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
 }
 
-func (c *XdpSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] XDP collector - "+msg, v...)
+func (c *XDPSniffer) LogInfo(msg string, v ...interface{}) {
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] XDP sniffer - "+msg, v...)
 }
 
-func (c *XdpSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] XDP collector - "+msg, v...)
+func (c *XDPSniffer) LogError(msg string, v ...interface{}) {
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] XDP sniffer - "+msg, v...)
 }
 
-func (c *XdpSniffer) GetName() string { return c.name }
+func (c *XDPSniffer) GetName() string { return c.name }
 
-func (c *XdpSniffer) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+func (c *XDPSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
+	// TODO
 }
 
-func (c *XdpSniffer) Loggers() []chan dnsutils.DnsMessage {
-	channels := []chan dnsutils.DnsMessage{}
-	for _, p := range c.loggers {
-		channels = append(channels, p.Channel())
-	}
-	return channels
+func (c *XDPSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
-func (c *XdpSniffer) ReadConfig() {
-	c.identity = c.config.GetServerIdentity()
+func (c *XDPSniffer) SetLoggers(loggers []pkgutils.Worker) {
+	c.defaultRoutes = loggers
 }
 
-func (c *XdpSniffer) Channel() chan dnsutils.DnsMessage {
+func (c *XDPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+	return pkgutils.GetRoutes(c.defaultRoutes)
+}
+
+func (c *XDPSniffer) ReadConfig() {}
+
+func (c *XDPSniffer) ReloadConfig(config *pkgconfig.Config) {}
+
+func (c *XDPSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 
-func (c *XdpSniffer) Stop() {
-	c.LogInfo("stopping...")
+func (c *XDPSniffer) Stop() {
+	c.LogInfo("stopping collector...")
 
 	// exit to close properly
 	c.exit <- true
@@ -72,7 +78,7 @@ func (c *XdpSniffer) Stop() {
 	<-c.done
 	close(c.done)
 }
-func (c *XdpSniffer) Run() {
+func (c *XDPSniffer) Run() {
 	c.LogInfo("Not supported")
 	c.done <- true
 }

@@ -7,42 +7,44 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 func TestReducer_Json(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 
 	log := logger.New(false)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
 	// get fake
-	dm := dnsutils.GetFakeDnsMessage()
+	dm := dnsutils.GetFakeDNSMessage()
 	dm.Init()
 
 	// init subproccesor
 
 	reducer := NewReducerSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
-	reducer.InitDnsMessage(&dm)
+	reducer.InitDNSMessage(&dm)
 
 	// expected json
-	refJson := `
+	refJSON := `
 			{
 				"reducer": {
-				  "occurences": 0
+				  "occurrences": 0,
+				  "cumulative-length": 0
 				}
 			}
 			`
 
 	var dmMap map[string]interface{}
-	err := json.Unmarshal([]byte(dm.ToJson()), &dmMap)
+	err := json.Unmarshal([]byte(dm.ToJSON()), &dmMap)
 	if err != nil {
 		t.Fatalf("could not unmarshal dm json: %s\n", err)
 	}
 
 	var refMap map[string]interface{}
-	err = json.Unmarshal([]byte(refJson), &refMap)
+	err = json.Unmarshal([]byte(refJSON), &refMap)
 	if err != nil {
 		t.Fatalf("could not unmarshal ref json: %s\n", err)
 	}
@@ -57,14 +59,14 @@ func TestReducer_Json(t *testing.T) {
 
 func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 	// enable feature
-	config := dnsutils.GetFakeConfigTransformers()
+	config := pkgconfig.GetFakeConfigTransformers()
 	config.Reducer.Enable = true
 	config.Reducer.RepetitiveTrafficDetector = true
 	config.Reducer.WatchInterval = 1
 
 	log := logger.New(false)
-	outChan := make(chan dnsutils.DnsMessage, 1)
-	outChans := []chan dnsutils.DnsMessage{}
+	outChan := make(chan dnsutils.DNSMessage, 1)
+	outChans := []chan dnsutils.DNSMessage{}
 	outChans = append(outChans, outChan)
 
 	// init subproccesor
@@ -72,75 +74,74 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 	reducer.LoadActiveReducers()
 
 	// malformed DNS message
-
 	testcases := []struct {
 		name           string
-		dnsMessagesOut []dnsutils.DnsMessage
-		dnsMessagesIn  []dnsutils.DnsMessage
+		dnsMessagesOut []dnsutils.DNSMessage
+		dnsMessagesIn  []dnsutils.DNSMessage
 	}{
 		{
 			name: "norepeat",
-			dnsMessagesIn: []dnsutils.DnsMessage{
+			dnsMessagesIn: []dnsutils.DNSMessage{
 				{
-					DnsTap:      dnsutils.DnsTap{Operation: "CLIENT_QUERY"},
-					DNS:         dnsutils.Dns{Qname: "hello.world", Qtype: "A"},
-					NetworkInfo: dnsutils.DnsNetInfo{QueryIp: "127.0.0.1"},
+					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY"},
+					DNS:         dnsutils.DNS{Qname: "hello.world", Qtype: "A"},
+					NetworkInfo: dnsutils.DNSNetInfo{QueryIP: "127.0.0.1"},
 				},
 				{
-					DnsTap:      dnsutils.DnsTap{Operation: "CLIENT_RESPONSE"},
-					DNS:         dnsutils.Dns{Qname: "hello.world", Qtype: "A"},
-					NetworkInfo: dnsutils.DnsNetInfo{QueryIp: "127.0.0.1"},
+					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_RESPONSE"},
+					DNS:         dnsutils.DNS{Qname: "hello.world", Qtype: "A"},
+					NetworkInfo: dnsutils.DNSNetInfo{QueryIP: "127.0.0.1"},
 				},
 			},
-			dnsMessagesOut: []dnsutils.DnsMessage{
+			dnsMessagesOut: []dnsutils.DNSMessage{
 				{
-					Reducer: &dnsutils.TransformReducer{Occurences: 1},
+					Reducer: &dnsutils.TransformReducer{Occurrences: 1},
 				},
 				{
-					Reducer: &dnsutils.TransformReducer{Occurences: 1},
+					Reducer: &dnsutils.TransformReducer{Occurrences: 1},
 				},
 			},
 		},
 		{
 			name: "reduce",
-			dnsMessagesIn: []dnsutils.DnsMessage{
+			dnsMessagesIn: []dnsutils.DNSMessage{
 				{
-					DnsTap:      dnsutils.DnsTap{Operation: "CLIENT_QUERY"},
-					DNS:         dnsutils.Dns{Qname: "hello.world", Qtype: "A"},
-					NetworkInfo: dnsutils.DnsNetInfo{QueryIp: "127.0.0.1"},
+					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY"},
+					DNS:         dnsutils.DNS{Qname: "hello.world", Qtype: "A"},
+					NetworkInfo: dnsutils.DNSNetInfo{QueryIP: "127.0.0.1"},
 				},
 				{
-					DnsTap:      dnsutils.DnsTap{Operation: "CLIENT_QUERY"},
-					DNS:         dnsutils.Dns{Qname: "hello.world", Qtype: "A"},
-					NetworkInfo: dnsutils.DnsNetInfo{QueryIp: "127.0.0.1"},
+					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY"},
+					DNS:         dnsutils.DNS{Qname: "hello.world", Qtype: "A"},
+					NetworkInfo: dnsutils.DNSNetInfo{QueryIP: "127.0.0.1"},
 				},
 			},
-			dnsMessagesOut: []dnsutils.DnsMessage{
+			dnsMessagesOut: []dnsutils.DNSMessage{
 				{
-					Reducer: &dnsutils.TransformReducer{Occurences: 2},
+					Reducer: &dnsutils.TransformReducer{Occurrences: 2},
 				},
 			},
 		},
 		{
 			name: "norepeat_qtype",
-			dnsMessagesIn: []dnsutils.DnsMessage{
+			dnsMessagesIn: []dnsutils.DNSMessage{
 				{
-					DnsTap:      dnsutils.DnsTap{Operation: "CLIENT_QUERY"},
-					DNS:         dnsutils.Dns{Qname: "hello.world", Qtype: "A"},
-					NetworkInfo: dnsutils.DnsNetInfo{QueryIp: "127.0.0.1"},
+					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY"},
+					DNS:         dnsutils.DNS{Qname: "hello.world", Qtype: "A"},
+					NetworkInfo: dnsutils.DNSNetInfo{QueryIP: "127.0.0.1"},
 				},
 				{
-					DnsTap:      dnsutils.DnsTap{Operation: "CLIENT_QUERY"},
-					DNS:         dnsutils.Dns{Qname: "hello.world", Qtype: "AAAA"},
-					NetworkInfo: dnsutils.DnsNetInfo{QueryIp: "127.0.0.1"},
+					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY"},
+					DNS:         dnsutils.DNS{Qname: "hello.world", Qtype: "AAAA"},
+					NetworkInfo: dnsutils.DNSNetInfo{QueryIP: "127.0.0.1"},
 				},
 			},
-			dnsMessagesOut: []dnsutils.DnsMessage{
+			dnsMessagesOut: []dnsutils.DNSMessage{
 				{
-					Reducer: &dnsutils.TransformReducer{Occurences: 1},
+					Reducer: &dnsutils.TransformReducer{Occurrences: 1},
 				},
 				{
-					Reducer: &dnsutils.TransformReducer{Occurences: 1},
+					Reducer: &dnsutils.TransformReducer{Occurrences: 1},
 				},
 			},
 		},
@@ -150,9 +151,9 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			for _, dmIn := range tc.dnsMessagesIn {
-				reducer.InitDnsMessage(&dmIn)
-				ret := reducer.ProcessDnsMessage(&dmIn)
-				if ret != RETURN_DROP {
+				reducer.InitDNSMessage(&dmIn)
+				ret := reducer.ProcessDNSMessage(&dmIn)
+				if ret != ReturnDrop {
 					t.Errorf("DNS message should be dropped")
 				}
 			}
@@ -161,8 +162,76 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 
 			for _, dmRef := range tc.dnsMessagesOut {
 				newDm := <-outChan
-				if newDm.Reducer.Occurences != dmRef.Reducer.Occurences {
-					t.Errorf("DNS message invalid repeated: Want=%d, Get=%d", dmRef.Reducer.Occurences, newDm.Reducer.Occurences)
+				if newDm.Reducer.Occurrences != dmRef.Reducer.Occurrences {
+					t.Errorf("DNS message invalid repeated: Want=%d, Get=%d", dmRef.Reducer.Occurrences, newDm.Reducer.Occurrences)
+				}
+			}
+		})
+	}
+}
+
+func TestReducer_QnamePlusOne(t *testing.T) {
+	// enable feature
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.Reducer.Enable = true
+	config.Reducer.RepetitiveTrafficDetector = true
+	config.Reducer.QnamePlusOne = true
+	config.Reducer.WatchInterval = 1
+
+	log := logger.New(false)
+	outChan := make(chan dnsutils.DNSMessage, 1)
+	outChans := []chan dnsutils.DNSMessage{}
+	outChans = append(outChans, outChan)
+
+	// init subproccesor
+	reducer := NewReducerSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	reducer.LoadActiveReducers()
+
+	testcases := []struct {
+		name           string
+		dnsMessagesOut []dnsutils.DNSMessage
+		dnsMessagesIn  []dnsutils.DNSMessage
+	}{
+		{
+			name: "reduce",
+			dnsMessagesIn: []dnsutils.DNSMessage{
+				{
+					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY"},
+					DNS:         dnsutils.DNS{Qname: "test1.hello.world", Qtype: "A"},
+					NetworkInfo: dnsutils.DNSNetInfo{QueryIP: "127.0.0.1"},
+				},
+				{
+					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY"},
+					DNS:         dnsutils.DNS{Qname: "test2.hello.world", Qtype: "A"},
+					NetworkInfo: dnsutils.DNSNetInfo{QueryIP: "127.0.0.1"},
+				},
+			},
+			dnsMessagesOut: []dnsutils.DNSMessage{
+				{
+					Reducer: &dnsutils.TransformReducer{Occurrences: 2},
+				},
+			},
+		},
+	}
+
+	// run all testcases
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			for _, dmIn := range tc.dnsMessagesIn {
+				reducer.InitDNSMessage(&dmIn)
+				ret := reducer.ProcessDNSMessage(&dmIn)
+				if ret != ReturnDrop {
+					t.Errorf("DNS message should be dropped")
+				}
+			}
+
+			time.Sleep(1 * time.Second)
+
+			for _, dmRef := range tc.dnsMessagesOut {
+				newDm := <-outChan
+				if newDm.Reducer.Occurrences != dmRef.Reducer.Occurrences {
+					t.Errorf("DNS message invalid repeated: Want=%d, Get=%d", dmRef.Reducer.Occurrences, newDm.Reducer.Occurrences)
 				}
 			}
 		})

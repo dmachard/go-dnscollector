@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,6 +14,8 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/gogo/protobuf/proto"
@@ -23,11 +24,13 @@ import (
 
 	/*
 		install loki with tags
-		go get github.com/grafana/loki@9f809eda70babaf583bdf6bf335a28038f286618
-		https://github.com/grafana/loki/releases/tag/v2.8.2
 
-		go get github.com/deepmap/oapi-codegen@v1.12.4
-		go get github.com/prometheus/prometheus@v0.42.0
+		go get github.com/grafana/loki@2535f9bedeae5f27abdbfaf0cc1a8e9f91b6c96d
+		https://github.com/grafana/loki/releases/tag/v2.9.3
+
+		go get github.com/grafana/loki/pkg/push@2535f9bedeae5f27abdbfaf0cc1a8e9f91b6c96d
+
+		go get github.com/prometheus/prometheus@v0.43.1-0.20230419161410-69155c6ba1e9
 		go mod tidy
 	*/
 	"github.com/grafana/loki/pkg/logproto"
@@ -37,7 +40,7 @@ import (
 
 type LokiStream struct {
 	labels      labels.Labels
-	config      *dnsutils.Config
+	config      *pkgconfig.Config
 	logger      *logger.Logger
 	stream      *logproto.Stream
 	pushrequest *logproto.PushRequest
@@ -73,63 +76,76 @@ func (o *LokiStream) Encode2Proto() ([]byte, error) {
 }
 
 type LokiClient struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DnsMessage
-	outputChan  chan dnsutils.DnsMessage
-	config      *dnsutils.Config
-	logger      *logger.Logger
-	httpclient  *http.Client
-	textFormat  []string
-	streams     map[string]*LokiStream
-	name        string
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	httpclient     *http.Client
+	textFormat     []string
+	streams        map[string]*LokiStream
+	name           string
+	RoutingHandler pkgutils.RoutingHandler
 }
 
-func NewLokiClient(config *dnsutils.Config, logger *logger.Logger, name string) *LokiClient {
-	logger.Info("[%s] logger=loki - enabled", name)
+func NewLokiClient(config *pkgconfig.Config, logger *logger.Logger, name string) *LokiClient {
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] loki - enabled", name)
 
 	s := &LokiClient{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.LokiClient.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.LokiClient.ChannelBufferSize),
-		logger:      logger,
-		config:      config,
-		streams:     make(map[string]*LokiStream),
-		name:        name,
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.LokiClient.ChannelBufferSize),
+		logger:         logger,
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		streams:        make(map[string]*LokiStream),
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 	}
 
 	s.ReadConfig()
-
 	return s
 }
 
 func (c *LokiClient) GetName() string { return c.name }
 
-func (c *LokiClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *LokiClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDroppedRoute(wrk)
+}
 
-func (o *LokiClient) ReadConfig() {
-	if !dnsutils.IsValidTLS(o.config.Loggers.LokiClient.TlsMinVersion) {
-		o.logger.Fatal("logger=loki - invalid tls min version")
-	}
+func (c *LokiClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDefaultRoute(wrk)
+}
 
-	if len(o.config.Loggers.LokiClient.TextFormat) > 0 {
-		o.textFormat = strings.Fields(o.config.Loggers.LokiClient.TextFormat)
+func (c *LokiClient) SetLoggers(loggers []pkgutils.Worker) {}
+
+func (c *LokiClient) ReadConfig() {
+	if len(c.config.Loggers.LokiClient.TextFormat) > 0 {
+		c.textFormat = strings.Fields(c.config.Loggers.LokiClient.TextFormat)
 	} else {
-		o.textFormat = strings.Fields(o.config.Global.TextFormat)
+		c.textFormat = strings.Fields(c.config.Global.TextFormat)
 	}
 
 	// tls client config
-	tlsConfig := &tls.Config{
-		MinVersion:         tls.VersionTLS12,
-		InsecureSkipVerify: false,
+	tlsOptions := pkgconfig.TLSOptions{
+		InsecureSkipVerify: c.config.Loggers.LokiClient.TLSInsecure,
+		MinVersion:         c.config.Loggers.LokiClient.TLSMinVersion,
+		CAFile:             c.config.Loggers.LokiClient.CAFile,
+		CertFile:           c.config.Loggers.LokiClient.CertFile,
+		KeyFile:            c.config.Loggers.LokiClient.KeyFile,
 	}
-	tlsConfig.InsecureSkipVerify = o.config.Loggers.LokiClient.TlsInsecure
-	tlsConfig.MinVersion = dnsutils.TLS_VERSION[o.config.Loggers.LokiClient.TlsMinVersion]
+
+	tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
+	if err != nil {
+		c.logger.Fatal(pkgutils.PrefixLogLogger+"["+c.name+"] loki - tls config failed:", err)
+	}
 
 	// prepare http client
 	tr := &http.Transport{
@@ -140,126 +156,150 @@ func (o *LokiClient) ReadConfig() {
 	}
 
 	// use proxy
-	if len(o.config.Loggers.LokiClient.ProxyURL) > 0 {
-		proxyURL, err := url.Parse(o.config.Loggers.LokiClient.ProxyURL)
+	if len(c.config.Loggers.LokiClient.ProxyURL) > 0 {
+		proxyURL, err := url.Parse(c.config.Loggers.LokiClient.ProxyURL)
 		if err != nil {
-			o.logger.Fatal("unable to parse proxy url: ", err)
+			c.logger.Fatal("logger=loki - unable to parse proxy url: ", err)
 		}
 		tr.Proxy = http.ProxyURL(proxyURL)
 	}
 
-	o.httpclient = &http.Client{Transport: tr}
+	c.httpclient = &http.Client{Transport: tr}
 
-	if o.config.Loggers.LokiClient.BasicAuthPwdFile != "" {
-		content, err := os.ReadFile(o.config.Loggers.LokiClient.BasicAuthPwdFile)
+	if c.config.Loggers.LokiClient.BasicAuthPwdFile != "" {
+		content, err := os.ReadFile(c.config.Loggers.LokiClient.BasicAuthPwdFile)
 		if err != nil {
-			o.logger.Fatal("unable to load password from file: ", err)
+			c.logger.Fatal("logger=loki - unable to load password from file: ", err)
 		}
-		o.config.Loggers.LokiClient.BasicAuthPwd = string(content)
+		c.config.Loggers.LokiClient.BasicAuthPwd = string(content)
 	}
 }
 
-func (o *LokiClient) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger=loki - "+msg, v...)
+func (c *LokiClient) ReloadConfig(config *pkgconfig.Config) {
+	c.LogInfo("reload configuration!")
+	c.configChan <- config
 }
 
-func (o *LokiClient) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger=loki - "+msg, v...)
+func (c *LokiClient) LogInfo(msg string, v ...interface{}) {
+	c.logger.Info(pkgutils.PrefixLogLogger+"["+c.name+"] loki - "+msg, v...)
 }
 
-func (o *LokiClient) Channel() chan dnsutils.DnsMessage {
-	return o.inputChan
+func (c *LokiClient) LogError(msg string, v ...interface{}) {
+	c.logger.Error(pkgutils.PrefixLogLogger+"["+c.name+"] loki - "+msg, v...)
 }
 
-func (o *LokiClient) Stop() {
-	o.LogInfo("stopping to run...")
-	o.stopRun <- true
-	<-o.doneRun
-
-	o.LogInfo("stopping to process...")
-	o.stopProcess <- true
-	<-o.doneProcess
+func (c *LokiClient) GetInputChannel() chan dnsutils.DNSMessage {
+	return c.inputChan
 }
 
-func (o *LokiClient) Run() {
-	o.LogInfo("running in background...")
+func (c *LokiClient) Stop() {
+	c.LogInfo("stopping logger...")
+	c.RoutingHandler.Stop()
+
+	c.LogInfo("stopping to run...")
+	c.stopRun <- true
+	<-c.doneRun
+
+	c.LogInfo("stopping to process...")
+	c.stopProcess <- true
+	<-c.doneProcess
+}
+
+func (c *LokiClient) Run() {
+	c.LogInfo("running in background...")
+
+	// prepare next channels
+	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.outputChan)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+	listChannel := []chan dnsutils.DNSMessage{}
+	listChannel = append(listChannel, c.outputChan)
+	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go o.Process()
+	go c.Process()
 
 	// loop to process incoming messages
 RUN_LOOP:
 	for {
 		select {
-		case <-o.stopRun:
+		case <-c.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
 
-			o.doneRun <- true
+			c.doneRun <- true
 			break RUN_LOOP
 
-		case dm, opened := <-o.inputChan:
+		case cfg, opened := <-c.configChan:
 			if !opened {
-				o.LogInfo("input channel closed!")
+				return
+			}
+			c.config = cfg
+			c.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
+
+		case dm, opened := <-c.inputChan:
+			if !opened {
+				c.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			subprocessors.InitDNSMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
+			// send to next ?
+			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
+
 			// send to output channel
-			o.outputChan <- dm
+			c.outputChan <- dm
 		}
 	}
-	o.LogInfo("run terminated")
+	c.LogInfo("run terminated")
 }
 
-func (o *LokiClient) Process() {
+func (c *LokiClient) Process() {
 	// prepare buffer
 	buffer := new(bytes.Buffer)
 	var byteBuffer []byte
 
 	// prepare timers
-	tflush_interval := time.Duration(o.config.Loggers.LokiClient.FlushInterval) * time.Second
-	tflush := time.NewTimer(tflush_interval)
+	tflushInterval := time.Duration(c.config.Loggers.LokiClient.FlushInterval) * time.Second
+	tflush := time.NewTimer(tflushInterval)
 
-	o.LogInfo("ready to process")
+	c.LogInfo("ready to process")
 PROCESS_LOOP:
 	for {
 		select {
-		case <-o.stopProcess:
-			o.doneProcess <- true
+		case <-c.stopProcess:
+			c.doneProcess <- true
 			break PROCESS_LOOP
 
 		// incoming dns message to process
-		case dm, opened := <-o.outputChan:
+		case dm, opened := <-c.outputChan:
 			if !opened {
-				o.LogInfo("output channel closed!")
+				c.LogInfo("output channel closed!")
 				return
 			}
 
 			lbls := labels.Labels{
-				labels.Label{Name: "identity", Value: dm.DnsTap.Identity},
-				labels.Label{Name: "job", Value: o.config.Loggers.LokiClient.JobName},
+				labels.Label{Name: "identity", Value: dm.DNSTap.Identity},
+				labels.Label{Name: "job", Value: c.config.Loggers.LokiClient.JobName},
 			}
 			var err error
 			var flat map[string]interface{}
-			if len(o.config.Loggers.LokiClient.RelabelConfigs) > 0 {
+			if len(c.config.Loggers.LokiClient.RelabelConfigs) > 0 {
 				// Save flattened JSON in case it's used when populating the message of the log entry.
 				// There is more room for improvement for reusing data though. Flatten() internally
 				// does a JSON encode of the DnsMessage, but it's not saved to use when the mode
 				// is JSON.
 				flat, err = dm.Flatten()
 				if err != nil {
-					o.LogError("flattening DNS message failed: %e", err)
+					c.LogError("flattening DNS message failed: %e", err)
 				}
 				sb := labels.NewScratchBuilder(len(lbls) + len(flat))
 				sb.Assign(lbls)
@@ -267,7 +307,8 @@ PROCESS_LOOP:
 					sb.Add(fmt.Sprintf("__%s", strings.ReplaceAll(k, ".", "_")), fmt.Sprint(v))
 				}
 				sb.Sort()
-				lbls, _ = relabel.Process(sb.Labels(), o.config.Loggers.LokiClient.RelabelConfigs...)
+				lbls, _ = relabel.Process(sb.Labels(), c.config.Loggers.LokiClient.RelabelConfigs...)
+
 				// Drop all labels starting with __ from the map if a relabel config is used.
 				// These labels are just exposed to relabel for the user and should not be
 				// shipped to loki by default.
@@ -277,31 +318,32 @@ PROCESS_LOOP:
 						lb.Del(l.Name)
 					}
 				})
-				lbls = lb.Labels(lbls)
+				lbls = lb.Labels()
+
 				if len(lbls) == 0 {
-					o.LogInfo("dropping %v since it has no labels", dm)
+					c.LogInfo("dropping %v since it has no labels", dm)
 					continue
 				}
 			}
 
 			// prepare entry
 			entry := logproto.Entry{}
-			entry.Timestamp = time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec))
+			entry.Timestamp = time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec))
 
-			switch o.config.Loggers.LokiClient.Mode {
-			case dnsutils.MODE_TEXT:
-				entry.Line = string(dm.Bytes(o.textFormat,
-					o.config.Global.TextFormatDelimiter,
-					o.config.Global.TextFormatBoundary))
-			case dnsutils.MODE_JSON:
+			switch c.config.Loggers.LokiClient.Mode {
+			case pkgconfig.ModeText:
+				entry.Line = string(dm.Bytes(c.textFormat,
+					c.config.Global.TextFormatDelimiter,
+					c.config.Global.TextFormatBoundary))
+			case pkgconfig.ModeJSON:
 				json.NewEncoder(buffer).Encode(dm)
 				entry.Line = buffer.String()
 				buffer.Reset()
-			case dnsutils.MODE_FLATJSON:
+			case pkgconfig.ModeFlatJSON:
 				if len(flat) == 0 {
 					flat, err = dm.Flatten()
 					if err != nil {
-						o.LogError("flattening DNS message failed: %e", err)
+						c.LogError("flattening DNS message failed: %e", err)
 					}
 				}
 				json.NewEncoder(buffer).Encode(flat)
@@ -309,11 +351,11 @@ PROCESS_LOOP:
 				buffer.Reset()
 			}
 			key := string(lbls.Bytes(byteBuffer))
-			ls, ok := o.streams[key]
+			ls, ok := c.streams[key]
 			if !ok {
-				ls = &LokiStream{config: o.config, logger: o.logger, labels: lbls}
+				ls = &LokiStream{config: c.config, logger: c.logger, labels: lbls}
 				ls.Init()
-				o.streams[key] = ls
+				c.streams[key] = ls
 			}
 			ls.sizeentries += len(entry.Line)
 
@@ -321,40 +363,40 @@ PROCESS_LOOP:
 			ls.stream.Entries = append(ls.stream.Entries, entry)
 
 			// flush ?
-			if ls.sizeentries >= o.config.Loggers.LokiClient.BatchSize {
+			if ls.sizeentries >= c.config.Loggers.LokiClient.BatchSize {
 				// encode log entries
 				buf, err := ls.Encode2Proto()
 				if err != nil {
-					o.LogError("error encoding log entries - %v", err)
+					c.LogError("error encoding log entries - %v", err)
 					// reset push request and entries
 					ls.ResetEntries()
 					return
 				}
 
 				// send all entries
-				o.SendEntries(buf)
+				c.SendEntries(buf)
 
 				// reset entries and push request
 				ls.ResetEntries()
 			}
 
 		case <-tflush.C:
-			for _, s := range o.streams {
+			for _, s := range c.streams {
 				if len(s.stream.Entries) > 0 {
 					// timeout
 					// encode log entries
 					buf, err := s.Encode2Proto()
 					if err != nil {
-						o.LogError("error encoding log entries - %v", err)
+						c.LogError("error encoding log entries - %v", err)
 						// reset push request and entries
 						s.ResetEntries()
 						// restart timer
-						tflush.Reset(tflush_interval)
+						tflush.Reset(tflushInterval)
 						return
 					}
 
 					// send all entries
-					o.SendEntries(buf)
+					c.SendEntries(buf)
 
 					// reset entries and push request
 					s.ResetEntries()
@@ -362,13 +404,13 @@ PROCESS_LOOP:
 			}
 
 			// restart timer
-			tflush.Reset(tflush_interval)
+			tflush.Reset(tflushInterval)
 		}
 	}
-	o.LogInfo("processing terminated")
+	c.LogInfo("processing terminated")
 }
 
-func (o *LokiClient) SendEntries(buf []byte) {
+func (c *LokiClient) SendEntries(buf []byte) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -385,27 +427,27 @@ func (o *LokiClient) SendEntries(buf []byte) {
 
 	for {
 		// send post http
-		post, err := http.NewRequest("POST", o.config.Loggers.LokiClient.ServerURL, bytes.NewReader(buf))
+		post, err := http.NewRequest("POST", c.config.Loggers.LokiClient.ServerURL, bytes.NewReader(buf))
 		if err != nil {
-			o.LogError("new http error: %s", err)
+			c.LogError("new http error: %s", err)
 			return
 		}
 		post = post.WithContext(ctx)
 		post.Header.Set("Content-Type", "application/x-protobuf")
-		post.Header.Set("User-Agent", "dnscollector")
-		if len(o.config.Loggers.LokiClient.TenantId) > 0 {
-			post.Header.Set("X-Scope-OrgID", o.config.Loggers.LokiClient.TenantId)
+		post.Header.Set("User-Agent", c.config.GetServerIdentity())
+		if len(c.config.Loggers.LokiClient.TenantID) > 0 {
+			post.Header.Set("X-Scope-OrgID", c.config.Loggers.LokiClient.TenantID)
 		}
 
 		post.SetBasicAuth(
-			o.config.Loggers.LokiClient.BasicAuthLogin,
-			o.config.Loggers.LokiClient.BasicAuthPwd,
+			c.config.Loggers.LokiClient.BasicAuthLogin,
+			c.config.Loggers.LokiClient.BasicAuthPwd,
 		)
 
 		// send post and read response
-		resp, err := o.httpclient.Do(post)
+		resp, err := c.httpclient.Do(post)
 		if err != nil {
-			o.LogError("do http error: %s", err)
+			c.LogError("do http error: %s", err)
 			return
 		}
 
@@ -421,7 +463,7 @@ func (o *LokiClient) SendEntries(buf []byte) {
 			if scanner.Scan() {
 				line = scanner.Text()
 			}
-			o.LogError("server returned HTTP status %s (%d): %s", resp.Status, resp.StatusCode, line)
+			c.LogError("server returned HTTP status %s (%d): %s", resp.Status, resp.StatusCode, line)
 		}
 
 		// wait before retry

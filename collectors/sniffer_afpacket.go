@@ -1,5 +1,5 @@
-//go:build linux || freebsd
-// +build linux freebsd
+//go:build linux
+// +build linux
 
 package collectors
 
@@ -14,6 +14,9 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -26,7 +29,7 @@ func Htons(v uint16) int {
 	return int((v << 8) | (v >> 8))
 }
 
-func GetBpfFilter_Ingress(port int) []bpf.Instruction {
+func GetBPFFilterIngress(port int) []bpf.Instruction {
 	// bpf filter: (ip  or ip6 ) and (udp or tcp) and port 53
 	// fragmented packets are ignored
 	var filter = []bpf.Instruction{
@@ -147,68 +150,74 @@ func RemoveBpfFilter(fd int) (err error) {
 }
 
 type AfpacketSniffer struct {
-	done     chan bool
-	exit     chan bool
-	fd       int
-	port     int
-	device   string
-	identity string
-	loggers  []dnsutils.Worker
-	config   *dnsutils.Config
-	logger   *logger.Logger
-	name     string
+	done          chan bool
+	exit          chan bool
+	fd            int
+	identity      string
+	defaultRoutes []pkgutils.Worker
+	droppedRoutes []pkgutils.Worker
+	config        *pkgconfig.Config
+	configChan    chan *pkgconfig.Config
+	logger        *logger.Logger
+	name          string
 }
 
-func NewAfpacketSniffer(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	logger.Info("[%s] collector=afpacket - enabled", name)
+func NewAfpacketSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] afpacket sniffer - enabled", name)
 	s := &AfpacketSniffer{
-		done:    make(chan bool),
-		exit:    make(chan bool),
-		config:  config,
-		loggers: loggers,
-		logger:  logger,
-		name:    name,
+		done:          make(chan bool),
+		exit:          make(chan bool),
+		config:        config,
+		configChan:    make(chan *pkgconfig.Config),
+		defaultRoutes: loggers,
+		logger:        logger,
+		name:          name,
 	}
 	s.ReadConfig()
 	return s
 }
 
 func (c *AfpacketSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=afpacket - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] afpacket sniffer- "+msg, v...)
 }
 
 func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=afpacket - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] afpacket sniffer - "+msg, v...)
 }
 
 func (c *AfpacketSniffer) GetName() string { return c.name }
 
-func (c *AfpacketSniffer) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+func (c *AfpacketSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
 }
 
-func (c *AfpacketSniffer) Loggers() ([]chan dnsutils.DnsMessage, []string) {
-	channels := []chan dnsutils.DnsMessage{}
-	names := []string{}
-	for _, p := range c.loggers {
-		channels = append(channels, p.Channel())
-		names = append(names, p.GetName())
-	}
-	return channels, names
+func (c *AfpacketSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *AfpacketSniffer) SetLoggers(loggers []pkgutils.Worker) {
+	c.defaultRoutes = loggers
+}
+
+func (c *AfpacketSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *AfpacketSniffer) ReadConfig() {
-	c.port = c.config.Collectors.AfpacketLiveCapture.Port
 	c.identity = c.config.GetServerIdentity()
-	c.device = c.config.Collectors.AfpacketLiveCapture.Device
 }
 
-func (c *AfpacketSniffer) Channel() chan dnsutils.DnsMessage {
+func (c *AfpacketSniffer) ReloadConfig(config *pkgconfig.Config) {
+	c.LogInfo("reload configuration...")
+	c.configChan <- config
+}
+
+func (c *AfpacketSniffer) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 
 func (c *AfpacketSniffer) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// exit to close properly
 	c.exit <- true
@@ -226,8 +235,8 @@ func (c *AfpacketSniffer) Listen() error {
 	}
 
 	// bind to device ?
-	if c.device != "" {
-		iface, err := net.InterfaceByName(c.device)
+	if c.config.Collectors.AfpacketLiveCapture.Device != "" {
+		iface, err := net.InterfaceByName(c.config.Collectors.AfpacketLiveCapture.Device)
 		if err != nil {
 			return err
 		}
@@ -249,8 +258,7 @@ func (c *AfpacketSniffer) Listen() error {
 		return err
 	}
 
-	filter := GetBpfFilter(c.port)
-	//filter := GetBpfFilter_Ingress(c.port)
+	filter := GetBpfFilter(c.config.Collectors.AfpacketLiveCapture.Port)
 	err = ApplyBpfFilter(filter, fd)
 	if err != nil {
 		return err
@@ -270,59 +278,78 @@ func (c *AfpacketSniffer) Run() {
 	if c.fd == 0 {
 		if err := c.Listen(); err != nil {
 			c.LogError("init raw socket failed: %v\n", err)
-			os.Exit(1)
+			os.Exit(1) // nolint
 		}
 	}
 
-	dnsProcessor := NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.AfpacketLiveCapture.ChannelBufferSize)
-	go dnsProcessor.Run(c.Loggers())
+	dnsProcessor := processors.NewDNSProcessor(
+		c.config,
+		c.logger,
+		c.name,
+		c.config.Collectors.AfpacketLiveCapture.ChannelBufferSize,
+	)
+	go dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
-	dnsChan := make(chan netlib.DnsPacket)
+	dnsChan := make(chan netlib.DNSPacket)
 	udpChan := make(chan gopacket.Packet)
 	tcpChan := make(chan gopacket.Packet)
-	fragIp4Chan := make(chan gopacket.Packet)
-	fragIp6Chan := make(chan gopacket.Packet)
+	fragIP4Chan := make(chan gopacket.Packet)
+	fragIP6Chan := make(chan gopacket.Packet)
 
 	netDecoder := &netlib.NetDecoder{}
 
 	// defrag ipv4
-	go netlib.IpDefragger(fragIp4Chan, udpChan, tcpChan)
+	go netlib.IPDefragger(fragIP4Chan, udpChan, tcpChan)
 	// defrag ipv6
-	go netlib.IpDefragger(fragIp6Chan, udpChan, tcpChan)
+	go netlib.IPDefragger(fragIP6Chan, udpChan, tcpChan)
 	// tcp assembly
-	go netlib.TcpAssembler(tcpChan, dnsChan, 0)
+	go netlib.TCPAssembler(tcpChan, dnsChan, 0)
 	// udp processor
-	go netlib.UdpProcessor(udpChan, dnsChan, 0)
+	go netlib.UDPProcessor(udpChan, dnsChan, 0)
 
 	// goroutine to read all packets reassembled
 	go func() {
 		// prepare dns message
-		dm := dnsutils.DnsMessage{}
+		dm := dnsutils.DNSMessage{}
 
-		//	for {
-		for dnsPacket := range dnsChan {
-			// reset
-			dm.Init()
+		for {
+			select {
+			// new config provided?
+			case cfg, opened := <-c.configChan:
+				if !opened {
+					return
+				}
+				c.config = cfg
+				c.ReadConfig()
 
-			dm.NetworkInfo.Family = dnsPacket.IpLayer.EndpointType().String()
-			dm.NetworkInfo.QueryIp = dnsPacket.IpLayer.Src().String()
-			dm.NetworkInfo.ResponseIp = dnsPacket.IpLayer.Dst().String()
-			dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
-			dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
-			dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
+				// send the config to the dns processor
+				dnsProcessor.ConfigChan <- cfg
 
-			dm.DNS.Payload = dnsPacket.Payload
-			dm.DNS.Length = len(dnsPacket.Payload)
+			// dns message to read ?
+			case dnsPacket := <-dnsChan:
+				// reset
+				dm.Init()
 
-			dm.DnsTap.Identity = c.identity
+				dm.NetworkInfo.Family = dnsPacket.IPLayer.EndpointType().String()
+				dm.NetworkInfo.QueryIP = dnsPacket.IPLayer.Src().String()
+				dm.NetworkInfo.ResponseIP = dnsPacket.IPLayer.Dst().String()
+				dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
+				dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
+				dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
 
-			timestamp := dnsPacket.Timestamp.UnixNano()
-			seconds := timestamp / int64(time.Second)
-			dm.DnsTap.TimeSec = int(seconds)
-			dm.DnsTap.TimeNsec = int(timestamp - seconds*int64(time.Second)*int64(time.Nanosecond))
+				dm.DNS.Payload = dnsPacket.Payload
+				dm.DNS.Length = len(dnsPacket.Payload)
 
-			// send DNS message to DNS processor
-			dnsProcessor.GetChannel() <- dm
+				dm.DNSTap.Identity = c.identity
+
+				timestamp := dnsPacket.Timestamp.UnixNano()
+				seconds := timestamp / int64(time.Second)
+				dm.DNSTap.TimeSec = int(seconds)
+				dm.DNSTap.TimeNsec = int(timestamp - seconds*int64(time.Second)*int64(time.Nanosecond))
+
+				// send DNS message to DNS processor
+				dnsProcessor.GetChannel() <- dm
+			}
 		}
 	}()
 
@@ -331,7 +358,7 @@ func (c *AfpacketSniffer) Run() {
 		oob := make([]byte, 100)
 
 		for {
-			//flags, from
+			// flags, from
 			bufN, oobn, _, _, err := syscall.Recvmsg(c.fd, buf, oob, 0)
 			if err != nil {
 				if errors.Is(err, syscall.EINTR) {
@@ -387,7 +414,7 @@ func (c *AfpacketSniffer) Run() {
 			if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
 				ip4 := packet.NetworkLayer().(*layers.IPv4)
 				if ip4.Flags&layers.IPv4MoreFragments == 1 || ip4.FragOffset > 0 {
-					fragIp4Chan <- packet
+					fragIP4Chan <- packet
 					continue
 				}
 			}
@@ -396,7 +423,7 @@ func (c *AfpacketSniffer) Run() {
 			if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
 				v6frag := packet.Layer(layers.LayerTypeIPv6Fragment)
 				if v6frag != nil {
-					fragIp6Chan <- packet
+					fragIP6Chan <- packet
 					continue
 				}
 			}
@@ -415,6 +442,7 @@ func (c *AfpacketSniffer) Run() {
 
 	<-c.exit
 	close(dnsChan)
+	close(c.configChan)
 
 	// stop dns processor
 	dnsProcessor.Stop()

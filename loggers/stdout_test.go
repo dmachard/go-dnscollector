@@ -2,17 +2,22 @@ package loggers
 
 import (
 	"bytes"
+	"fmt"
 	"regexp"
 	"testing"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
+	"github.com/google/gopacket/pcapgo"
 )
 
 func Test_StdoutTextMode(t *testing.T) {
 
-	cfg := dnsutils.GetFakeConfig()
+	cfg := pkgconfig.GetFakeConfig()
 
 	testcases := []struct {
 		name      string
@@ -63,19 +68,19 @@ func Test_StdoutTextMode(t *testing.T) {
 			// init logger and redirect stdout output to bytes buffer
 			var stdout bytes.Buffer
 
-			cfg := dnsutils.GetFakeConfig()
+			cfg := pkgconfig.GetFakeConfig()
 			cfg.Global.TextFormatDelimiter = tc.delimiter
 			cfg.Global.TextFormatBoundary = tc.boundary
 
 			g := NewStdOut(cfg, logger.New(false), "test")
-			g.SetBuffer(&stdout)
+			g.SetTextWriter(&stdout)
 
 			go g.Run()
 
 			// print dns message to stdout buffer
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			dm.DNS.Qname = tc.qname
-			g.Channel() <- dm
+			g.GetInputChannel() <- dm
 
 			// stop logger
 			time.Sleep(time.Second)
@@ -95,11 +100,11 @@ func Test_StdoutJsonMode(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.MODE_JSON,
+			mode:    pkgconfig.ModeJSON,
 			pattern: "\"qname\":\"dns.collector\"",
 		},
 		{
-			mode:    dnsutils.MODE_FLATJSON,
+			mode:    pkgconfig.ModeFlatJSON,
 			pattern: "\"dns.qname\":\"dns.collector\"",
 		},
 	}
@@ -109,16 +114,16 @@ func Test_StdoutJsonMode(t *testing.T) {
 			// init logger and redirect stdout output to bytes buffer
 			var stdout bytes.Buffer
 
-			cfg := dnsutils.GetFakeConfig()
+			cfg := pkgconfig.GetFakeConfig()
 			cfg.Loggers.Stdout.Mode = tc.mode
 			g := NewStdOut(cfg, logger.New(false), "test")
-			g.SetBuffer(&stdout)
+			g.SetTextWriter(&stdout)
 
 			go g.Run()
 
 			// print dns message to stdout buffer
-			dm := dnsutils.GetFakeDnsMessage()
-			g.Channel() <- dm
+			dm := dnsutils.GetFakeDNSMessage()
+			g.GetInputChannel() <- dm
 
 			// stop logger
 			time.Sleep(time.Second)
@@ -132,4 +137,143 @@ func Test_StdoutJsonMode(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_StdoutPcapMode(t *testing.T) {
+	// redirect stdout output to bytes buffer
+	var pcap bytes.Buffer
+
+	// init logger and run
+	cfg := pkgconfig.GetFakeConfig()
+	cfg.Loggers.Stdout.Mode = "pcap"
+
+	g := NewStdOut(cfg, logger.New(false), "test")
+	g.SetPcapWriter(&pcap)
+
+	go g.Run()
+
+	// send DNSMessage to channel
+	dm := dnsutils.GetFakeDNSMessageWithPayload()
+	g.GetInputChannel() <- dm
+
+	// stop logger
+	time.Sleep(time.Second)
+	g.Stop()
+
+	// check pcap output
+	pcapReader, err := pcapgo.NewReader(bytes.NewReader(pcap.Bytes()))
+	if err != nil {
+		t.Errorf("unable to read pcap: %s", err)
+		return
+	}
+	data, _, err := pcapReader.ReadPacketData()
+	if err != nil {
+		t.Errorf("unable to read packet: %s", err)
+		return
+	}
+	if len(data) < dm.DNS.Length {
+		t.Errorf("incorrect packet size: %d", len(data))
+	}
+}
+
+func Test_StdoutPcapMode_NoDNSPayload(t *testing.T) {
+	// redirect stdout output to bytes buffer
+	logger := logger.New(false)
+	var logs bytes.Buffer
+	logger.SetOutput(&logs)
+
+	var pcap bytes.Buffer
+
+	// init logger and run
+	cfg := pkgconfig.GetFakeConfig()
+	cfg.Loggers.Stdout.Mode = "pcap"
+
+	g := NewStdOut(cfg, logger, "test")
+	g.SetPcapWriter(&pcap)
+
+	go g.Run()
+
+	// send DNSMessage to channel
+	dm := dnsutils.GetFakeDNSMessage()
+	g.GetInputChannel() <- dm
+
+	// stop logger
+	time.Sleep(time.Second)
+	g.Stop()
+
+	// check output
+	regxp := "ERROR:.*process: no dns payload to encode, drop it.*"
+	pattern := regexp.MustCompile(regxp)
+	ret := logs.String()
+	if !pattern.MatchString(ret) {
+		t.Errorf("stdout error want %s, got: %s", regxp, ret)
+	}
+}
+
+// test for issue https://github.com/dmachard/go-dnscollector/issues/568
+func Test_StdoutBufferLoggerIsFull(t *testing.T) {
+	// redirect stdout output to bytes buffer
+	logsChan := make(chan logger.LogEntry, 10)
+	lg := logger.New(true)
+	lg.SetOutputChannel((logsChan))
+
+	// init logger and redirect stdout output to bytes buffer
+	var stdout bytes.Buffer
+	cfg := pkgconfig.GetFakeConfig()
+	g := NewStdOut(cfg, lg, "test")
+	g.SetTextWriter(&stdout)
+
+	// init next logger with a buffer of one element
+	nxt := pkgutils.NewFakeLoggerWithBufferSize(1)
+	g.AddDefaultRoute(nxt)
+
+	// run collector
+	go g.Run()
+
+	// add a shot of dnsmessages to collector
+	dmIn := dnsutils.GetFakeDNSMessage()
+	for i := 0; i < 512; i++ {
+		g.GetInputChannel() <- dmIn
+	}
+
+	// waiting monitor to run in consumer
+	time.Sleep(12 * time.Second)
+
+	for entry := range logsChan {
+		fmt.Println(entry)
+		pattern := regexp.MustCompile(processors.ExpectedBufferMsg511)
+		if pattern.MatchString(entry.Message) {
+			break
+		}
+	}
+
+	// read dns message from dnstap consumer
+	dmOut := <-nxt.GetInputChannel()
+	if dmOut.DNS.Qname != processors.ExpectedQname2 {
+		t.Errorf("invalid qname in dns message: %s", dmOut.DNS.Qname)
+	}
+
+	// send second shot of packets to consumer
+	for i := 0; i < 1024; i++ {
+		g.GetInputChannel() <- dmIn
+	}
+
+	// waiting monitor to run in consumer
+	time.Sleep(12 * time.Second)
+	for entry := range logsChan {
+		fmt.Println(entry)
+		pattern := regexp.MustCompile(processors.ExpectedBufferMsg1023)
+		if pattern.MatchString(entry.Message) {
+			break
+		}
+	}
+
+	// read dns message from dnstap consumer
+	dmOut2 := <-nxt.GetInputChannel()
+	if dmOut2.DNS.Qname != processors.ExpectedQname2 {
+		t.Errorf("invalid qname in second dns message: %s", dmOut2.DNS.Qname)
+	}
+
+	// stop loggers
+	g.Stop()
 }

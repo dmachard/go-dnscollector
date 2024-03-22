@@ -3,7 +3,6 @@ package loggers
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,6 +17,8 @@ import (
 	"github.com/grafana/dskit/backoff"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -25,17 +26,20 @@ import (
 // ScalyrClient is a client for Scalyr(https://www.dataset.com/)
 // This client is using the addEvents endpoint, described here: https://app.scalyr.com/help/api#addEvents
 type ScalyrClient struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DnsMessage
-	outputChan  chan dnsutils.DnsMessage
-	logger      *logger.Logger
-	name        string
-	config      *dnsutils.Config
-	mode        string
-	textFormat  []string
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	logger         *logger.Logger
+	name           string
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	RoutingHandler pkgutils.RoutingHandler
+
+	mode       string
+	textFormat []string
 
 	session string // Session ID, used by scalyr, see API docs
 
@@ -50,19 +54,22 @@ type ScalyrClient struct {
 	submitterDone chan bool // Will be written to when the HTTP submitter is done
 }
 
-func NewScalyrClient(config *dnsutils.Config, console *logger.Logger, name string) *ScalyrClient {
-	console.Info("[%s] logger=scalyr - starting", name)
+func NewScalyrClient(config *pkgconfig.Config, console *logger.Logger, name string) *ScalyrClient {
+	console.Info(pkgutils.PrefixLogLogger+"[%s] scalyr - starting", name)
 	c := &ScalyrClient{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
-		logger:      console,
-		name:        name,
-		config:      config,
-		mode:        dnsutils.MODE_TEXT,
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
+		logger:         console,
+		name:           name,
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		RoutingHandler: pkgutils.NewRoutingHandler(config, console, name),
+
+		mode: pkgconfig.ModeText,
 
 		endpoint: makeEndpoint("app.scalyr.com"),
 		flush:    time.NewTicker(30 * time.Second),
@@ -81,16 +88,16 @@ func makeEndpoint(host string) string {
 }
 
 func (c *ScalyrClient) ReadConfig() {
-	if len(c.config.Loggers.ScalyrClient.ApiKey) == 0 {
+	if len(c.config.Loggers.ScalyrClient.APIKey) == 0 {
 		c.logger.Fatal("No API Key configured for Scalyr Client")
 	}
-	c.apikey = c.config.Loggers.ScalyrClient.ApiKey
+	c.apikey = c.config.Loggers.ScalyrClient.APIKey
 
 	if len(c.config.Loggers.ScalyrClient.Mode) != 0 {
 		c.mode = c.config.Loggers.ScalyrClient.Mode
 	}
 
-	if len(c.config.Loggers.ScalyrClient.Parser) == 0 && (c.mode == dnsutils.MODE_TEXT || c.mode == dnsutils.MODE_JSON) {
+	if len(c.config.Loggers.ScalyrClient.Parser) == 0 && (c.mode == pkgconfig.ModeText || c.mode == pkgconfig.ModeJSON) {
 		c.logger.Fatal(fmt.Sprintf("No Scalyr parser configured for Scalyr Client in %s mode", c.mode))
 	}
 	c.parser = c.config.Loggers.ScalyrClient.Parser
@@ -109,18 +116,19 @@ func (c *ScalyrClient) ReadConfig() {
 		c.flush = time.NewTicker(time.Duration(flushInterval) * time.Second)
 	}
 
-	tlsMinVersion := "TLS_v12"
-	if dnsutils.IsValidTLS(tlsMinVersion) {
-		tlsMinVersion = c.config.Loggers.ScalyrClient.TlsMinVersion
+	// tls client config
+	tlsOptions := pkgconfig.TLSOptions{
+		InsecureSkipVerify: c.config.Loggers.ScalyrClient.TLSInsecure,
+		MinVersion:         c.config.Loggers.ScalyrClient.TLSMinVersion,
+		CAFile:             c.config.Loggers.ScalyrClient.CAFile,
+		CertFile:           c.config.Loggers.ScalyrClient.CertFile,
+		KeyFile:            c.config.Loggers.ScalyrClient.KeyFile,
 	}
 
-	// tls client config
-	tlsConfig := &tls.Config{
-		MinVersion:         tls.VersionTLS12,
-		InsecureSkipVerify: false,
+	tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
+	if err != nil {
+		c.logger.Fatal("unable to parse tls confgi: ", err)
 	}
-	tlsConfig.InsecureSkipVerify = c.config.Loggers.ScalyrClient.TlsInsecure
-	tlsConfig.MinVersion = dnsutils.TLS_VERSION[tlsMinVersion]
 
 	// prepare http client
 	tr := &http.Transport{
@@ -142,45 +150,66 @@ func (c *ScalyrClient) ReadConfig() {
 	c.httpclient = &http.Client{Transport: tr}
 }
 
-func (o *ScalyrClient) Run() {
-	o.LogInfo("running in background...")
+func (c *ScalyrClient) ReloadConfig(config *pkgconfig.Config) {
+	c.LogInfo("reload configuration!")
+	c.configChan <- config
+}
+
+func (c *ScalyrClient) Run() {
+	c.LogInfo("running in background...")
+
+	// prepare next channels
+	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, o.outputChan)
-	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
+	listChannel := []chan dnsutils.DNSMessage{}
+	listChannel = append(listChannel, c.outputChan)
+	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go o.Process()
+	go c.Process()
 
 	// loop to process incoming messages
 RUN_LOOP:
 	for {
 		select {
-		case <-o.stopRun:
+		case <-c.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
 
-			o.doneRun <- true
+			c.doneRun <- true
 			break RUN_LOOP
 
-		case dm, opened := <-o.inputChan:
+		case cfg, opened := <-c.configChan:
 			if !opened {
-				o.LogInfo("input channel closed!")
+				return
+			}
+			c.config = cfg
+			c.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
+
+		case dm, opened := <-c.inputChan:
+			if !opened {
+				c.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			subprocessors.InitDNSMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
+			// send to next ?
+			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
+
 			// send to output channel
-			o.outputChan <- dm
+			c.outputChan <- dm
 		}
 	}
-	o.LogInfo("run terminated")
+	c.LogInfo("run terminated")
 }
 
 func (c *ScalyrClient) Process() {
@@ -232,13 +261,13 @@ PROCESS_LOOP:
 			}
 
 			switch c.mode {
-			case dnsutils.MODE_TEXT:
+			case pkgconfig.ModeText:
 				attrs["message"] = string(dm.Bytes(c.textFormat,
 					c.config.Global.TextFormatDelimiter,
 					c.config.Global.TextFormatBoundary))
-			case dnsutils.MODE_JSON:
+			case pkgconfig.ModeJSON:
 				attrs["message"] = dm
-			case dnsutils.MODE_FLATJSON:
+			case pkgconfig.ModeFlatJSON:
 				var err error
 				if attrs, err = dm.Flatten(); err != nil {
 					c.LogError("unable to flatten: %e", err)
@@ -252,7 +281,7 @@ PROCESS_LOOP:
 				}
 			}
 			events = append(events, event{
-				TS:    strconv.FormatInt(time.Unix(int64(dm.DnsTap.TimeSec), int64(dm.DnsTap.TimeNsec)).UnixNano(), 10),
+				TS:    strconv.FormatInt(time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec)).UnixNano(), 10),
 				Sev:   SeverityInfo,
 				Attrs: attrs,
 			})
@@ -273,6 +302,9 @@ PROCESS_LOOP:
 }
 
 func (c ScalyrClient) Stop() {
+	c.LogInfo("stopping logger...")
+	c.RoutingHandler.Stop()
+
 	c.LogInfo("stopping to run...")
 	c.stopRun <- true
 	<-c.doneRun
@@ -374,11 +406,11 @@ func parseServerResponse(body io.ReadCloser) (response, error) {
 }
 
 func (c *ScalyrClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] logger=scalyr - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogLogger+"["+c.name+"] scalyr - "+msg, v...)
 }
 
 func (c *ScalyrClient) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] logger=scalyr - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogLogger+"["+c.name+"] scalyr - "+msg, v...)
 }
 
 // Models
@@ -421,8 +453,16 @@ type response struct {
 
 func (c *ScalyrClient) GetName() string { return c.name }
 
-func (c *ScalyrClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *ScalyrClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDroppedRoute(wrk)
+}
 
-func (c *ScalyrClient) Channel() chan dnsutils.DnsMessage {
+func (c *ScalyrClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (c *ScalyrClient) SetLoggers(loggers []pkgutils.Worker) {}
+
+func (c *ScalyrClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }

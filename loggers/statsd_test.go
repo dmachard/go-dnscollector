@@ -5,18 +5,20 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 func TestStatsdRun(t *testing.T) {
 	// init logger
-	config := dnsutils.GetFakeConfig()
+	config := pkgconfig.GetFakeConfig()
 	config.Loggers.Statsd.FlushInterval = 1
 
-	g := NewStatsdClient(config, logger.New(false), "1.2.3", "test")
+	g := NewStatsdClient(config, logger.New(false), "test")
 
 	// fake msgpack receiver
-	fakeRcvr, err := net.ListenPacket(dnsutils.SOCKET_UDP, "127.0.0.1:8125")
+	fakeRcvr, err := net.ListenPacket(netlib.SocketUDP, "127.0.0.1:8125")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,8 +28,8 @@ func TestStatsdRun(t *testing.T) {
 	go g.Run()
 
 	// send fake dns message to logger
-	dm := dnsutils.GetFakeDnsMessage()
-	g.Channel() <- dm
+	dm := dnsutils.GetFakeDNSMessage()
+	g.GetInputChannel() <- dm
 
 	// read data on fake server side
 	buf := make([]byte, 4096)

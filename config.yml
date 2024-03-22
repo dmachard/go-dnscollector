@@ -1,5 +1,3 @@
-
-
 ################################################
 # global configuration
 ################################################
@@ -28,7 +26,16 @@ global:
   # - timestamp-unixns: unix timestamp with nano support
   # - localtime: local time
   # - identity: dnstap identity
+  # - peer-name: hostname or ip address of the dnstap sender
+  # - version: dnstap version
+  # - extra: dnstap extra as string
   # - operation: dnstap operation
+  # - policy-rule: dnstap policy rule
+  # - policy-type: dnstap policy type
+  # - policy-action: dnstap policy action
+  # - policy-match: dnstap policy match
+  # - policy-value: dnstap policy value
+  # - quey-zone: dnstap query zone
   # - opcode: dns opcode (integer)
   # - rcode: dns return code
   # - queryip: dns query ip
@@ -38,9 +45,11 @@ global:
   # - id: dns id
   # - family: ip protocol version INET or INET6
   # - protocol: protocol UDP, TCP
-  # - length: the length of the query or reply
-  # - qtype: dns qtype
-  # - qname: dns qname
+  # - length: the length of the query or reply in bytes
+  # - length-unit: the length of the query or reply in bytes with unit
+  # - qtype: dns query type
+  # - qname: dns query name
+  # - qclass: dns query class
   # - latency: computed latency between queries and replies
   # - answercount: the number of answer
   # - ttl: answer ttl, only the first one value
@@ -54,8 +63,7 @@ global:
   # - edns-csubnet: client subnet
   # - df: ip defragmentation flag
   # - tr: tcp reassembled flag
-  # - dns_payload: base64-encoded raw DNS payload
-  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
+  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length-unit qname qtype latency"
   # default text field delimiter
   text-format-delimiter: " "
   # default text field boundary
@@ -71,7 +79,7 @@ multiplexer:
         listen-port: 6000
       transforms:
         normalize:
-          qname-lowercase: true
+          qname-lowercase: false
 
   loggers:
     - name: console
@@ -81,6 +89,54 @@ multiplexer:
   routes:
     - from: [ tap ]
       to: [ console ]
+
+# /!\ experimental,  pipelling running mode /!\
+# pipelines:
+#   - name: main-input
+#     dnstap:
+#       listen-ip: 0.0.0.0
+#       listen-port: 6000
+#     routing-policy:
+#       default: [ filter ]
+
+#   - name: second-input
+#     dnstap:
+#       listen-ip: 0.0.0.0
+#       listen-port: 6002
+#       extended-support: true
+#     routing-policy:
+#       default: [ console ]
+
+#   - name: filter
+#     dnsmessage:
+#       matching:
+#         include:
+#           dns.qname: "^.*\\.google\\.com$"
+#     transforms:
+#       atags:
+#         tags: [ "google"]
+#     routing-policy:
+#       dropped: [ outputfile ]
+#       default: [ central ]
+
+#   - name: central
+#     dnstapclient:
+#       transport: tcp
+#       remote-address: 127.0.0.1
+#       remote-port: 6002
+#       flush-interval: 5
+#       extended-support: true
+
+#   - name: console
+#     stdout:
+#       mode: flat-json
+
+#   - name: outputfile
+#     logfile:
+#       file-path:  "/tmp/dnstap.log"
+#       max-size: 1000
+#       max-files: 10
+#       mode: text
 
 ################################################
 # list of supported collectors
@@ -108,9 +164,13 @@ multiplexer:
 #   reset-conn: true
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
+#   # Disable the minimalist DNS parser
+#   disable-dnsparser: true
+#   # Decode the extended extra field sent by DNScollector
+#   extended-support: false
 
 # # dnstap proxifier with no protobuf decoding.
-# dnstap-proxifier:
+# dnstap-relay:
 #   # listen on ip
 #   listen-ip: 0.0.0.0
 #   # listening on port
@@ -178,7 +238,12 @@ multiplexer:
 # # - powerdns-tags[:INDEX]: get all tags separated by comma or one tag at provided index
 # # - powerdns-original-request-client: powerdns metadata, get edns subclient
 # # - powerdns-applied-policy: powerdns metadata, get applied policy
+# # - powerdns-applied-policy-hit: get applied policy hit
+# # - powerdns-applied-policy-kind: get applied policy kind
+# # - powerdns-applied-policy-trigger: get applied policy trigger
+# # - powerdns-applied-policy-type: get applied policy type
 # # - powerdns-metadata[:KEY]: get  all metadata separated by comma or specific one if a valid [KEY] is provided
+# # - powerdns-http-version: http version used with DoH queries
 # powerdns:
 #   # listen on ip
 #   listen-ip: 0.0.0.0
@@ -196,13 +261,15 @@ multiplexer:
 #   reset-conn: true
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
+#   # Reconstruct and add raw DNS payload
+#   add-dns-payload: false
 
-# # ztsp (TaZmen Sniffer Protocol)
-# ztsp:
-#  # listen on ip
-#  listen-ip: 0.0.0.0
-#  # listen on port
-#  listen-port: 10000
+# # tzsp (TaZmen Sniffer Protocol)
+# tzsp:
+#   # listen on ip
+#   listen-ip: 0.0.0.0
+#   # listen on port
+#   listen-port: 10000
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
 
@@ -270,6 +337,44 @@ multiplexer:
 #   chan-buffer-size: 65535
 #   # compute histogram for qnames length, latencies, queries and replies size repartition
 #   histogram-metrics-enabled: false
+#   # compute requesters metrics - total and top requesters
+#   requesters-metrics-enabled: true
+#   # compute domains metrics - total and top domains
+#   domains-metrics-enabled: true
+#   # compute NOERROR domains metrics - total and top domains
+#   noerror-metrics-enabled: true
+#   # compute NOERROR domains metrics - total and top domains
+#   servfail-metrics-enabled: true
+#   # compute NXDOMAIN domains metrics - total and top domains
+#   nonexistent-metrics-enabled: true
+#   # compute TIMEOUT domains metrics - total and top domains
+#   timeout-metrics-enabled: true
+#   # prometheus-labels: (list of strings) labels to add to metrics. Currently supported labels: stream_id, resolver, stream_global
+#   prometheus-labels: ["stream_id"]
+#   # LRU (least-recently-used) cache size for observed clients DNS
+#   requesters-cache-size: 250000
+#   # maximum time (in seconds) before eviction from the LRU cache
+#   requesters-cache-ttl: 3600
+#   # LRU (least-recently-used) cache size for observed domains
+#   domains-cache-size: 500000
+#   # maximum time (in seconds) before eviction from the LRU cache
+#   domains-cache-ttl: 3600
+#   # LRU (least-recently-used) cache size for observed NOERROR domains
+#   noerror-domains-cache-size: 500000
+#   # maximum time (in seconds) before eviction from the LRU cache
+#   noerror-domains-cache-ttl: 3600
+#   # LRU (least-recently-used) cache size for observed SERVFAIL domains
+#   servfail-domains-cache-size: 500000
+#   # maximum time (in seconds) before eviction from the LRU cache
+#   servfail-domains-cache-ttl: 3600
+#   # LRU (least-recently-used) cache size for observed NX domains
+#   nonexistent-domains-cache-size: 500000
+#   # maximum time (in seconds) before eviction from the LRU cache
+#   nonexistent-domains-cache-ttl: 3600
+#   # LRU (least-recently-used) cache size for observed other domains (suspicious, tlds, ...)
+#   default-domains-cache-size: 500000
+#   # maximum time (in seconds) before eviction from the LRU cache
+#   default-domains-cache-ttl: 3600
 
 # # write captured dns traffic to text or binary files with rotation and compression support
 # logfile:
@@ -302,23 +407,29 @@ multiplexer:
 #   chan-buffer-size: 65535
 
 # # resend captured dns traffic to another dnstap collector or to unix socket
-# dnstap:
+# dnstapclient:
+#   # network transport to use: unix|tcp|tcp+tls
+#   transport: tcp
 #   # remote address
 #   remote-address: 10.0.0.1
 #   # remote tcp port
 #   remote-port: 6000
-#   # unix socket path
-#   sock-path: null
 #   # connect timeout
 #   connect-timeout: 5
 #   # interval in second between retry reconnect
 #   retry-interval: 10
 #   # interval in second before to flush the buffer
 #   flush-interval: 30
-#   # enable tls
-#   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # server identity, if empty use the global one or hostname
 #   server-id: "dnscollector"
 #   # overwrite original identity
@@ -327,29 +438,35 @@ multiplexer:
 #   buffer-size: 100
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
+#   # Extend the DNStap message by incorporating additional transformations, such as filtering and ATags, into the extra field.
+#   extended-support: false
 
 # # resend captured dns traffic to a tcp remote destination or to unix socket
 # tcpclient:
-#   # network transport to use: tcp|unix
+#   # network transport to use: unix|tcp|tcp+tls
 #   transport: tcp
-#   # remote address
+#   # remote address or unix socket path
 #   remote-address: 127.0.0.1
 #   # remote tcp port
 #   remote-port: 9999
-#   # unix socket path
-#   sock-path: null
 #   # connect timeout
 #   connect-timeout: 5
 #   # interval in second between retry reconnect
 #   retry-interval: 10
 #   # interval in second before to flush the buffer
 #   flush-interval: 30
-#   # enable tls
-#   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # trusted certificate file
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # output format: text|json|flat-json
-#   mode: json
+#   mode: flat-json
 #   # output text format, please refer to the top of this file to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 #   # delimiter to use between payload sent
@@ -362,7 +479,7 @@ multiplexer:
 # # Send captured traffic to a redis channel, mapped on TCP client logger options
 # redispub:
 #   # output format: text|json|flat-json
-#   mode: json
+#   mode: flat-json
 #   # remote address
 #   remote-address: 127.0.0.1
 #   # remote tcp port
@@ -371,9 +488,14 @@ multiplexer:
 #   connect-timeout: 5
 #   retry-interval: 10
 #   flush-interval: 2
-#   # enable tls
-#   tls-support: false
+#   # enable insecure tls
 #   tls-insecure: false
+#   # trusted certificate file
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # output text format, please refer to the top of this file to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 #   delimiter: "\n"
@@ -395,37 +517,68 @@ multiplexer:
 #   transport: local
 #   # Remote address host:port
 #   remote-address: ""
+#   # Channel buffer size for incoming packets, number of packet before to drop it.
+#   chan-buffer-size: 65535
+#   # interval in second between retry reconnect
+#   retry-interval: 10
 #   # output text format, please refer to the top of this file to see all available directives
 #   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length qname qtype latency"
 #   # output format: text|json|flat-json
 #   mode: text
-#   # enable tls
-#   tls-support: false
-#   # insecure skip verify
+#   # insecure mode, skip certificate verify
 #   tls-insecure: false
-#   # set syslog formatter between `unix` (default), `rfc3164` or `rfc5424`
-#   format: ""
-#   # Channel buffer size for incoming packets, number of packet before to drop it.
-#   chan-buffer-size: 65535
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
+#   # set syslog formatter between unix, rfc3164 (default) or rfc5424
+#   formatter: "rfc3164"
+#   # set syslog framer: `none` or `rfc5425`
+#   framer: "none"
+#   # set syslog hostname
+#   hostname: ""
+#   # set syslog program name
+#   app-name: ""
+#   # Syslog tag or MSGID
+#   tag: ""
+#   # Replace NULl char in Qname with the specified character
+#   replace-null-char: �
+#   # how many DNS messages will be buffered before being sent
+#   buffer-size: 100
+#   # interval in second before to flush the buffer
+#   flush-interval: 30
 
-# # elasticsearch backend, basic support
+# # ElasticSearch logger
+# # DNSMessage are exported with flat-json format
 # elasticsearch:
 #   # remote server url
-#   url: "http://127.0.0.1:9200/indexname/_doc"
+#   server: "http://127.0.0.1:9200/"
+#   # Elasticsearch index for ingestion
+#   index:  "dnscollector"
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
-#   chan-buffer-size: 65535
+#   chan-buffer-size: 4096
+#   # Size of batches sent to ES via _bulk in bytes, default to 1MB
+#   bulk-size: 1048576
+#   # Maximum size of the bulk channel
+#   bulk-channel-size: 10
+#   # Compression for bulk messages: none, gzip
+#   compression: none
+#   # interval in seconds before to flush the buffer
+#   flush-interval: 10
 
 # # resend captured dns traffic to a remote fluentd server or to unix socket
 # fluentd:
-#   # network transport to use: tcp|unix
+#   # network transport to use: tcp|unix|tcp+tls
 #   transport: tcp
 #   # remote address
 #   remote-address: 127.0.0.1
 #   # remote tcp port
 #   remote-port: 24224
-#   # unix socket path
-#   sock-path: null
-#   # connect timeout
+#   # connect timeout in seconds
 #   connect-timeout: 5
 #   # interval in second between retry reconnect
 #   retry-interval: 10
@@ -433,14 +586,20 @@ multiplexer:
 #   flush-interval: 30
 #   # tag name
 #   tag: "dns.collector"
-#   # enable tls
-#   tls-support: false
-#   # insecure skip verify
+#   # insecure tls, skip certificate and hostname verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # how many DNS messages will be buffered before being sent
 #   buffer-size: 100
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
-#   chan-buffer-size: 65535
+#   chan-buffer-size: 4096
 
 # # resend captured dns traffic to a InfluxDB database
 # influxdb:
@@ -452,8 +611,16 @@ multiplexer:
 #   tls-support: false
 #   # insecure skip verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # bucket
-#   bucket: "db_dns"
+#   bucket: "dns"
 #   # Organization
 #   organization: "dnscollector"
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
@@ -480,6 +647,14 @@ multiplexer:
 #   proxy-url: ""
 #   # insecure skip verify
 #   tls-insecure: false
+#   # tls min version
+#   tls-min-version: 1.2
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # basic auth login
 #   basic-auth-login: ""
 #   # basic auth password
@@ -500,16 +675,22 @@ multiplexer:
 
 # # forward to statsd proxy
 # statsd:
-#   # network transport to use: udp|tcp
+#   # network transport to use: udp|tcp|tcp+tls
 #   transport: udp
 #   # remote address
 #   remote-address: 127.0.0.1
 #   # remote tcp port
 #   remote-port: 8125
-#   # enable tls
-#   tls-support: false
-#   # insecure skip verify
+#   # connect timeout in seconds
+#   connect-timeout: 5
+#   # insecure tls, skip  certificate verify
 #   tls-insecure: false
+#   # provide CA file to verify the server certificate
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # prefix
 #   prefix: "dnscollector"
 #   # flush every X seconds
@@ -542,6 +723,11 @@ multiplexer:
 #   tls-insecure: false
 #   # tls min version
 #   tls-min-version: 1.2
+#   ca-file: ""
+#   # provide client certificate file for mTLS
+#   cert-file: ""
+#   # provide client private key file for mTLS
+#   key-file: ""
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
 #   chan-buffer-size: 65535
 
@@ -578,7 +764,9 @@ multiplexer:
 #   # Kafka partition
 #   partition: 0
 #   # Channel buffer size for incoming packets, number of packet before to drop it.
-#   chan-buffer-size: 65535
+#   chan-buffer-size: 4096
+#   # Compression for Kafka messages: none, gzip, lz4, snappy, zstd
+#   compression: none
 
 # # Send captured traffic to falco (https://falco.org/), for security and advanced inspection
 # falco:
@@ -601,9 +789,12 @@ multiplexer:
 # # Use this transformer to detect trafic duplication
 # # additionnals directive for text format
 # # - reducer-occurences: number of occurences detected
+# # - cumulative-length: sum of the length of each occurences
 # reducer:
 #   # enable detector
 #   repetitive-traffic-detector: true
+#   # limit to qname+1 instead of the complete qname to detect repetition
+#   qname-plus-one: false
 #   # watch interval in seconds
 #   watch-interval: 5
 
@@ -622,10 +813,16 @@ multiplexer:
 # user-privacy:
 #   # IP-Addresses are anonymities by zeroing the host-part of an address.
 #   anonymize-ip: false
+#   # summarize IPv4 down to the /integer level, default is /16
+#   anonymize-v4bits: "/8"
+#   # summarize IPv6 down to the /integer level, default is /64
+#   anonymize-v6bits: "::/64"
 #   # Reduce Qname to second level only, for exemple mail.google.com be replaced by google.com
 #   minimaze-qname: false
-#   # Hash query and response IP
+#   # Hashes the query and response IP with the specified algorithm.
 #   hash-ip: false
+#   # Algorithm to use for IP hashing, currently supported `sha1` (default), `sha256`, `sha512`
+#   hash-ip-algo: sha1
 
 # # Use this option to add top level domain and tld+1, based on public suffix list https://publicsuffix.org/
 # # or convert all domain to lowercase
@@ -633,6 +830,7 @@ multiplexer:
 # # additionnals directive for text format
 # # - publicsuffix-tld: tld
 # # - publicsuffix-etld+1: effective tld plus one
+# # - publicsuffix-managed-icann: flag for managed icann domains
 # normalize:
 #   # Wwww.GooGlE.com will be equal to www.google.com
 #   qname-lowercase: true
@@ -645,6 +843,8 @@ multiplexer:
 
 # # filtering feature to ignore some specific qname
 # # dns logs is not redirected to loggers if the filtering regexp matched
+# # additionnals directive for text format
+# # - filtering-sample-rate
 # filtering:
 #   # path file of the fqdn drop list, domains list must be a full qualified domain name
 #   drop-fqdn-file: ""
@@ -662,11 +862,15 @@ multiplexer:
 #   # Example to ignore NOERROR dns packets
 #   # drop-rcodes:
 #   #  - NOERROR
+#   keep-rdataip-file: ""
+#   # path file of the rdata IP keep list, one IP address or subnet per line
 #   drop-rcodes: []
 #   # forward received queries to configured loggers ?
 #   log-queries: true
 #   # forward received replies to configured loggers ?
 #   log-replies: true
+#   # only keep 1 out of every downsample records, e.g. if set to 20, then this will return every 20th record, dropping 95% of queries
+#   downsample: 0
 
 # # GeoIP maxmind support, more information on https://www.maxmind.com/en/geoip-demo
 # # this feature can be used to append additional informations like country, city, asn
@@ -703,3 +907,28 @@ multiplexer:
 #   threshold-max-labels: 10
 #   # to ignore some domains 
 #   whitelist-domains: [ "\.ip6\.arpa" ]
+
+# # this feature can be used to add more text format directives for machine learning purpose
+# # additionnals directive for text format
+# # - ml-entropy
+# # - ml-length
+# # - ml-digits
+# # - ml-lowers
+# # - ml-uppers
+# # - ml-specials
+# # - ml-others
+# # - ml-labels
+# # - ml-ratio-digits
+# # - ml-ratio-letters
+# # - ml-ratio-specials
+# # - ml-ratio-others
+# # - ml-consecutive-chars
+# # - ml-consecutive-vowels
+# # - ml-consecutive-digits
+# # - ml-consecutive-consonants
+# # - ml-size
+# # - ml-occurences
+# # - ml-uncommon-qtypes
+# machine-learning:
+#   # enable all features
+#   add-features: true

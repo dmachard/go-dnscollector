@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"crypto/tls"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"os"
@@ -14,40 +13,49 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 )
 
 type Dnstap struct {
-	doneRun       chan bool
-	doneMonitor   chan bool
-	stopMonitor   chan bool
-	listen        net.Listener
-	conns         []net.Conn
-	sockPath      string
-	loggers       []dnsutils.Worker
-	config        *dnsutils.Config
-	logger        *logger.Logger
-	name          string
-	connMode      string
-	connId        int
-	droppedCount  int
-	dropped       chan int
-	tapProcessors []DnstapProcessor
+	doneRun          chan bool
+	doneMonitor      chan bool
+	stopRun          chan bool
+	stopMonitor      chan bool
+	stopCalled       bool
+	listen           net.Listener
+	conns            []net.Conn
+	sockPath         string
+	defaultRoutes    []pkgutils.Worker
+	droppedRoutes    []pkgutils.Worker
+	config           *pkgconfig.Config
+	configChan       chan *pkgconfig.Config
+	logger           *logger.Logger
+	name             string
+	connMode         string
+	connID           int
+	droppedCount     int
+	droppedProcessor chan int
+	tapProcessors    []processors.DNSTapProcessor
 	sync.RWMutex
 }
 
-func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *Dnstap {
-	logger.Info("[%s] collector=dnstap - enabled", name)
+func NewDnstap(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] dnstap - enabled", name)
 	s := &Dnstap{
-		doneRun:     make(chan bool),
-		doneMonitor: make(chan bool),
-		stopMonitor: make(chan bool),
-		dropped:     make(chan int),
-		config:      config,
-		loggers:     loggers,
-		logger:      logger,
-		name:        name,
+		doneRun:          make(chan bool),
+		doneMonitor:      make(chan bool),
+		stopRun:          make(chan bool),
+		stopMonitor:      make(chan bool),
+		droppedProcessor: make(chan int),
+		config:           config,
+		configChan:       make(chan *pkgconfig.Config),
+		defaultRoutes:    loggers,
+		logger:           logger,
+		name:             name,
 	}
 	s.ReadConfig()
 	return s
@@ -55,74 +63,80 @@ func NewDnstap(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logge
 
 func (c *Dnstap) GetName() string { return c.name }
 
-func (c *Dnstap) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+func (c *Dnstap) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
 }
 
-func (c *Dnstap) Loggers() ([]chan dnsutils.DnsMessage, []string) {
-	channels := []chan dnsutils.DnsMessage{}
-	names := []string{}
-	for _, p := range c.loggers {
-		channels = append(channels, p.Channel())
-		names = append(names, p.GetName())
-	}
-	return channels, names
+func (c *Dnstap) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *Dnstap) SetLoggers(loggers []pkgutils.Worker) {
+	c.defaultRoutes = loggers
+}
+
+func (c *Dnstap) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *Dnstap) ReadConfig() {
-	if !dnsutils.IsValidTLS(c.config.Collectors.Dnstap.TlsMinVersion) {
+	if !pkgconfig.IsValidTLS(c.config.Collectors.Dnstap.TLSMinVersion) {
 		c.logger.Fatal("collector=dnstap - invalid tls min version")
 	}
 
 	c.sockPath = c.config.Collectors.Dnstap.SockPath
+	c.connMode = "tcp"
 
 	if len(c.config.Collectors.Dnstap.SockPath) > 0 {
 		c.connMode = "unix"
-	} else if c.config.Collectors.Dnstap.TlsSupport {
+	} else if c.config.Collectors.Dnstap.TLSSupport {
 		c.connMode = "tls"
-	} else {
-		c.connMode = "tcp"
 	}
 }
 
+func (c *Dnstap) ReloadConfig(config *pkgconfig.Config) {
+	c.LogInfo("reload configuration...")
+	c.configChan <- config
+}
+
 func (c *Dnstap) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=dnstap - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] dnstap - "+msg, v...)
 }
 
 func (c *Dnstap) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+" collector=dnstap - "+msg, v...)
-}
-
-func (c *Dnstap) LogConnInfo(connId int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf("[%s] collector=dnstap#%d - ", c.name, connId)
-	c.logger.Info(prefix+msg, v...)
-}
-
-func (c *Dnstap) LogConnError(connId int, msg string, v ...interface{}) {
-	prefix := fmt.Sprintf("[%s] collector=dnstap#%d - ", c.name, connId)
-	c.logger.Error(prefix+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] dnstap - "+msg, v...)
 }
 
 func (c *Dnstap) HandleConn(conn net.Conn) {
 	// close connection on function exit
 	defer conn.Close()
 
-	var connId int
+	var connID int
 	c.Lock()
-	c.connId++
-	connId = c.connId
+	c.connID++
+	connID = c.connID
 	c.Unlock()
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	c.LogConnInfo(connId, "new connection from %s", peer)
+	peerName := netlib.GetPeerName(peer)
+	c.LogInfo("new connection #%d from %s (%s)", connID, peer, peerName)
 
-	// start dnstap subprocessor
-	dnstapProcessor := NewDnstapProcessor(connId, c.config, c.logger, c.name, c.config.Collectors.Dnstap.ChannelBufferSize)
+	// start dnstap processor
+	dnstapProcessor := processors.NewDNSTapProcessor(
+		connID,
+		peerName,
+		c.config,
+		c.logger,
+		c.name,
+		c.config.Collectors.Dnstap.ChannelBufferSize,
+	)
 	c.Lock()
 	c.tapProcessors = append(c.tapProcessors, dnstapProcessor)
 	c.Unlock()
-	go dnstapProcessor.Run(c.Loggers())
+
+	// run processor
+	go dnstapProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	// frame stream library
 	r := bufio.NewReader(conn)
@@ -131,9 +145,9 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 
 	// init framestream receiver
 	if err := fs.InitReceiver(); err != nil {
-		c.LogConnError(connId, "stream initialization: %s", err)
+		c.LogError("conn #%d - stream initialization: %s", connID, err)
 	} else {
-		c.LogConnInfo(connId, "receiver framestream initialized")
+		c.LogInfo("conn #%d - receiver framestream initialized", connID)
 	}
 
 	// process incoming frame and send it to dnstap consumer channel
@@ -155,13 +169,27 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 			}
 
 			if connClosed {
-				c.LogConnInfo(connId, "connection closed with peer %s", peer)
+				c.LogInfo("conn #%d - connection closed with peer %s", connID, peer)
 			} else {
-				c.LogConnError(connId, "framestream reader error: %s", err)
+				c.LogError("conn #%d - framestream reader error: %s", connID, err)
 			}
 
-			// stop processor and exit the loop
-			dnstapProcessor.Stop()
+			// the Stop function is already called, don't stop again
+			if !c.stopCalled {
+				dnstapProcessor.Stop()
+			}
+			break
+		}
+
+		if frame.IsControl() {
+			if err := fs.ResetReceiver(frame); err != nil {
+				if errors.Is(err, io.EOF) {
+					c.LogInfo("conn #%d - framestream reseted by sender", connID)
+				} else {
+					c.LogError("conn #%d - unexpected control framestream: %s", connID, err)
+				}
+
+			}
 			break
 		}
 
@@ -169,15 +197,21 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 		select {
 		case dnstapProcessor.GetChannel() <- frame.Data(): // Successful send to channel
 		default:
-			c.dropped <- 1
+			c.droppedProcessor <- 1
 		}
+	}
+
+	// to avoid lock if the Stop function is already called
+	if c.stopCalled {
+		c.LogInfo("conn #%d - connection handler exited", connID)
+		return
 	}
 
 	// here the connection is closed,
 	// then removes the current tap processor from the list
 	c.Lock()
 	for i, t := range c.tapProcessors {
-		if t.connId == connId {
+		if t.ConnID == connID {
 			c.tapProcessors = append(c.tapProcessors[:i], c.tapProcessors[i+1:]...)
 		}
 	}
@@ -191,10 +225,10 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	}
 	c.Unlock()
 
-	c.LogConnInfo(connId, "connection handler terminated")
+	c.LogInfo("conn #%d - connection handler terminated", connID)
 }
 
-func (c *Dnstap) Channel() chan dnsutils.DnsMessage {
+func (c *Dnstap) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 
@@ -202,8 +236,13 @@ func (c *Dnstap) Stop() {
 	c.Lock()
 	defer c.Unlock()
 
+	// to avoid some lock situations when the remose side closes
+	// the connection at the same time of this Stop function
+	c.stopCalled = true
+	c.LogInfo("stopping collector...")
+
 	// stop all powerdns processors
-	c.LogInfo("stopping processors...")
+	c.LogInfo("cleanup all active processors...")
 	for _, tapProc := range c.tapProcessors {
 		tapProc.Stop()
 	}
@@ -225,8 +264,8 @@ func (c *Dnstap) Stop() {
 
 	// read done channel and block until run is terminated
 	c.LogInfo("stopping run...")
+	c.stopRun <- true
 	<-c.doneRun
-	close(c.doneRun)
 }
 
 func (c *Dnstap) Listen() error {
@@ -244,7 +283,7 @@ func (c *Dnstap) Listen() error {
 	}
 
 	// listening with tls enabled ?
-	if c.config.Collectors.Dnstap.TlsSupport {
+	if c.config.Collectors.Dnstap.TLSSupport {
 		c.LogInfo("tls support enabled")
 		var cer tls.Certificate
 		cer, err = tls.LoadX509KeyPair(c.config.Collectors.Dnstap.CertFile, c.config.Collectors.Dnstap.KeyFile)
@@ -258,20 +297,20 @@ func (c *Dnstap) Listen() error {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLS_VERSION[c.config.Collectors.Dnstap.TlsMinVersion]
+		tlsConfig.MinVersion = pkgconfig.TLSVersion[c.config.Collectors.Dnstap.TLSMinVersion]
 
 		if len(c.sockPath) > 0 {
-			listener, err = tls.Listen(dnsutils.SOCKET_UNIX, c.sockPath, tlsConfig)
+			listener, err = tls.Listen(netlib.SocketUnix, c.sockPath, tlsConfig)
 		} else {
-			listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, tlsConfig)
+			listener, err = tls.Listen(netlib.SocketTCP, addrlisten, tlsConfig)
 		}
 
 	} else {
 		// basic listening
 		if len(c.sockPath) > 0 {
-			listener, err = net.Listen(dnsutils.SOCKET_UNIX, c.sockPath)
+			listener, err = net.Listen(netlib.SocketUnix, c.sockPath)
 		} else {
-			listener, err = net.Listen(dnsutils.SOCKET_TCP, addrlisten)
+			listener, err = net.Listen(netlib.SocketTCP, addrlisten)
 		}
 	}
 
@@ -290,16 +329,16 @@ func (c *Dnstap) MonitorCollector() {
 MONITOR_LOOP:
 	for {
 		select {
-		case <-c.dropped:
+		case <-c.droppedProcessor:
 			c.droppedCount++
 		case <-c.stopMonitor:
-			close(c.dropped)
+			close(c.droppedProcessor)
 			bufferFull.Stop()
 			c.doneMonitor <- true
 			break MONITOR_LOOP
 		case <-bufferFull.C:
 			if c.droppedCount > 0 {
-				c.LogError("recv buffer is full, %d packet(s) dropped", c.droppedCount)
+				c.LogError("processor buffer is full, %d packet(s) dropped", c.droppedCount)
 				c.droppedCount = 0
 			}
 			bufferFull.Reset(watchInterval)
@@ -312,40 +351,73 @@ func (c *Dnstap) Run() {
 	c.LogInfo("starting collector...")
 	if c.listen == nil {
 		if err := c.Listen(); err != nil {
-			prefixlog := fmt.Sprintf("[%s] ", c.name)
-			c.logger.Fatal(prefixlog+"collector=dnstap listening failed: ", err)
+			c.logger.Fatal(pkgutils.PrefixLogCollector+"["+c.name+"] dnstap listening failed: ", err)
 		}
 	}
 
 	// start goroutine to count dropped messsages
 	go c.MonitorCollector()
 
-	for {
-		// Accept() blocks waiting for new connection.
-		conn, err := c.listen.Accept()
-		if err != nil {
-			break
-		}
-
-		if (c.connMode == "tls" || c.connMode == "tcp") && c.config.Collectors.Dnstap.RcvBufSize > 0 {
-			before, actual, err := netlib.SetSock_RCVBUF(
-				conn,
-				c.config.Collectors.Dnstap.RcvBufSize,
-				c.config.Collectors.Dnstap.TlsSupport,
-			)
+	// goroutine to Accept() blocks waiting for new connection.
+	acceptChan := make(chan net.Conn)
+	go func() {
+		for {
+			conn, err := c.listen.Accept()
 			if err != nil {
-				c.logger.Fatal("Unable to set SO_RCVBUF: ", err)
+				return
 			}
-			c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before,
-				c.config.Collectors.Dnstap.RcvBufSize, actual)
+			acceptChan <- conn
+		}
+	}()
+
+RUN_LOOP:
+	for {
+		select {
+		case <-c.stopRun:
+			close(acceptChan)
+			c.doneRun <- true
+			break RUN_LOOP
+
+		case cfg := <-c.configChan:
+
+			// save the new config
+			c.config = cfg
+			c.ReadConfig()
+
+			// refresh config for all conns
+			for i := range c.tapProcessors {
+				c.tapProcessors[i].ConfigChan <- cfg
+			}
+
+		case conn, opened := <-acceptChan:
+			if !opened {
+				return
+			}
+
+			if (c.connMode == "tls" || c.connMode == "tcp") && c.config.Collectors.Dnstap.RcvBufSize > 0 {
+				before, actual, err := netlib.SetSockRCVBUF(
+					conn,
+					c.config.Collectors.Dnstap.RcvBufSize,
+					c.config.Collectors.Dnstap.TLSSupport,
+				)
+				if err != nil {
+					c.logger.Fatal(pkgutils.PrefixLogCollector+"["+c.name+"] dnstap - unable to set SO_RCVBUF: ", err)
+				}
+				c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before,
+					c.config.Collectors.Dnstap.RcvBufSize, actual)
+			}
+
+			// to avoid lock if the Stop function is already called
+			if c.stopCalled {
+				continue
+			}
+
+			c.Lock()
+			c.conns = append(c.conns, conn)
+			c.Unlock()
+			go c.HandleConn(conn)
 		}
 
-		c.Lock()
-		c.conns = append(c.conns, conn)
-		c.Unlock()
-		go c.HandleConn(conn)
 	}
-
 	c.LogInfo("run terminated")
-	c.doneRun <- true
 }

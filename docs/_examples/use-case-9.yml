@@ -1,0 +1,37 @@
+# Example 9: Filtering incoming traffic with downsample and whitelist of domains
+#
+# As prerequisites, we assume you have 
+# - a DNS server which supports DNSTap (unbound, bind, powerdns, etc) for more informations about dnstap, 
+#   read the following page: https://dmachard.github.io/posts/0001-dnstap-testing/
+
+# If turned on, debug messages are printed in the standard output
+global:
+  trace:
+    verbose: true
+
+multiplexer:
+  # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
+  # with some transformations to only keep 1 out of every downsample records
+  # and whitelistfile witch contains:
+  # *.google.com$
+  # *.github.com$
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+      transforms:
+        filtering:
+          downsample: 1
+          keep-domain-file: ./testsdata/filtering_fqdn.txt
+
+  # Print DNS messages on standard output with TEXT format
+  loggers:
+    - name: console
+      stdout:
+        mode: text
+
+  # Routes DNS messages from the tap collector to standard output
+  routes:
+    - from: [tap]
+      to: [console]

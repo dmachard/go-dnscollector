@@ -1,0 +1,59 @@
+name: bench go
+
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+    branches:
+      - main
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  dev:
+    strategy:
+      matrix:
+        os-version: ['ubuntu-22.04' ]
+        go-version: [ '1.20', '1.21' ]
+    runs-on: ${{ matrix.os-version }}
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: Show Go version
+      run: |
+        go version
+        sudo go version
+
+    - name: Set up Go for root
+      if: runner.os != 'macOS'
+      run: |
+        which go
+        sudo which go
+        sudo ln -sf `which go` `sudo which go` || true
+    
+    - name: Show Go version
+      run: |
+        go version
+        sudo go version
+        
+    - name: Bench dnsutils
+      run: |
+        cd dnsutils/
+        go test -benchmem -run=^$ -bench=.
+    
+    - name: Bench transformers
+      run: |
+        cd transformers/
+        go test -benchmem -run=^$ -bench=^BenchmarkUserPrivacy.*\|BenchmarkTransforms.*\|BenchmarkNormalize.*$

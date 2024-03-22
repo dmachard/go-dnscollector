@@ -13,6 +13,9 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
+	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	framestream "github.com/farsightsec/golang-framestream"
 	"github.com/fsnotify/fsnotify"
@@ -26,8 +29,8 @@ var waitFor = 10 * time.Second
 func IsValidMode(mode string) bool {
 	switch mode {
 	case
-		dnsutils.MODE_PCAP,
-		dnsutils.MODE_DNSTAP:
+		pkgconfig.ModePCAP,
+		pkgconfig.ModeDNSTap:
 		return true
 	}
 	return false
@@ -36,26 +39,29 @@ func IsValidMode(mode string) bool {
 type FileIngestor struct {
 	done            chan bool
 	exit            chan bool
-	loggers         []dnsutils.Worker
-	config          *dnsutils.Config
+	droppedRoutes   []pkgutils.Worker
+	defaultRoutes   []pkgutils.Worker
+	config          *pkgconfig.Config
+	configChan      chan *pkgconfig.Config
 	logger          *logger.Logger
 	watcher         *fsnotify.Watcher
 	watcherTimers   map[string]*time.Timer
-	dnsProcessor    DnsProcessor
-	dnstapProcessor DnstapProcessor
-	filterDnsPort   int
+	dnsProcessor    processors.DNSProcessor
+	dnstapProcessor processors.DNSTapProcessor
+	filterDNSPort   int
 	identity        string
 	name            string
 	mu              sync.Mutex
 }
 
-func NewFileIngestor(loggers []dnsutils.Worker, config *dnsutils.Config, logger *logger.Logger, name string) *FileIngestor {
-	logger.Info("[%s] collector=fileingestor - enabled", name)
+func NewFileIngestor(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
+	logger.Info(pkgutils.PrefixLogCollector+"[%s] fileingestor - enabled", name)
 	s := &FileIngestor{
 		done:          make(chan bool),
 		exit:          make(chan bool),
 		config:        config,
-		loggers:       loggers,
+		configChan:    make(chan *pkgconfig.Config),
+		defaultRoutes: loggers,
 		logger:        logger,
 		name:          name,
 		watcherTimers: make(map[string]*time.Timer),
@@ -66,47 +72,54 @@ func NewFileIngestor(loggers []dnsutils.Worker, config *dnsutils.Config, logger 
 
 func (c *FileIngestor) GetName() string { return c.name }
 
-func (c *FileIngestor) SetLoggers(loggers []dnsutils.Worker) {
-	c.loggers = loggers
+func (c *FileIngestor) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.droppedRoutes = append(c.droppedRoutes, wrk)
 }
 
-func (c *FileIngestor) Loggers() ([]chan dnsutils.DnsMessage, []string) {
-	channels := []chan dnsutils.DnsMessage{}
-	names := []string{}
-	for _, p := range c.loggers {
-		channels = append(channels, p.Channel())
-		names = append(names, p.GetName())
-	}
-	return channels, names
+func (c *FileIngestor) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *FileIngestor) SetLoggers(loggers []pkgutils.Worker) {
+	c.defaultRoutes = loggers
+}
+
+func (c *FileIngestor) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+	return pkgutils.GetRoutes(c.defaultRoutes)
 }
 
 func (c *FileIngestor) ReadConfig() {
 	if !IsValidMode(c.config.Collectors.FileIngestor.WatchMode) {
-		c.logger.Fatal("collector file ingestor - invalid mode: ", c.config.Collectors.FileIngestor.WatchMode)
+		c.logger.Fatal(pkgutils.PrefixLogCollector+"["+c.name+"]fileingestor - invalid mode: ", c.config.Collectors.FileIngestor.WatchMode)
 	}
 
 	c.identity = c.config.GetServerIdentity()
-	c.filterDnsPort = c.config.Collectors.FileIngestor.PcapDnsPort
+	c.filterDNSPort = c.config.Collectors.FileIngestor.PcapDNSPort
 
 	c.LogInfo("watching directory [%s] to find [%s] files",
 		c.config.Collectors.FileIngestor.WatchDir,
 		c.config.Collectors.FileIngestor.WatchMode)
 }
 
+func (c *FileIngestor) ReloadConfig(config *pkgconfig.Config) {
+	c.LogInfo("reload configuration...")
+	c.configChan <- config
+}
+
 func (c *FileIngestor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info("["+c.name+"] collector=fileingestor - "+msg, v...)
+	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] fileingestor - "+msg, v...)
 }
 
 func (c *FileIngestor) LogError(msg string, v ...interface{}) {
-	c.logger.Error("["+c.name+"] collector=fileingestor - "+msg, v...)
+	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] fileingestor - "+msg, v...)
 }
 
-func (c *FileIngestor) Channel() chan dnsutils.DnsMessage {
+func (c *FileIngestor) GetInputChannel() chan dnsutils.DNSMessage {
 	return nil
 }
 
 func (c *FileIngestor) Stop() {
-	c.LogInfo("stopping...")
+	c.LogInfo("stopping collector...")
 
 	// exit to close properly
 	c.exit <- true
@@ -118,14 +131,14 @@ func (c *FileIngestor) Stop() {
 
 func (c *FileIngestor) ProcessFile(filePath string) {
 	switch c.config.Collectors.FileIngestor.WatchMode {
-	case dnsutils.MODE_PCAP:
+	case pkgconfig.ModePCAP:
 		// process file with pcap extension only
 		if filepath.Ext(filePath) == ".pcap" || filepath.Ext(filePath) == ".pcap.gz" {
 			c.LogInfo("file ready to process %s", filePath)
 			go c.ProcessPcap(filePath)
 		}
-	case dnsutils.MODE_DNSTAP:
-		// processs dnstap
+	case pkgconfig.ModeDNSTap:
+		// process dnstap
 		if filepath.Ext(filePath) == ".fstrm" {
 			c.LogInfo("file ready to process %s", filePath)
 			go c.ProcessDnstap(filePath)
@@ -157,24 +170,24 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 		return
 	}
 
-	dnsChan := make(chan netlib.DnsPacket)
+	dnsChan := make(chan netlib.DNSPacket)
 	udpChan := make(chan gopacket.Packet)
 	tcpChan := make(chan gopacket.Packet)
-	fragIp4Chan := make(chan gopacket.Packet)
-	fragIp6Chan := make(chan gopacket.Packet)
+	fragIP4Chan := make(chan gopacket.Packet)
+	fragIP6Chan := make(chan gopacket.Packet)
 
 	packetSource := gopacket.NewPacketSource(pcapHandler, pcapHandler.LinkType())
 	packetSource.DecodeOptions.Lazy = true
 	packetSource.NoCopy = true
 
 	// defrag ipv4
-	go netlib.IpDefragger(fragIp4Chan, udpChan, tcpChan)
+	go netlib.IPDefragger(fragIP4Chan, udpChan, tcpChan)
 	// defrag ipv6
-	go netlib.IpDefragger(fragIp6Chan, udpChan, tcpChan)
+	go netlib.IPDefragger(fragIP6Chan, udpChan, tcpChan)
 	// tcp assembly
-	go netlib.TcpAssembler(tcpChan, dnsChan, c.filterDnsPort)
+	go netlib.TCPAssembler(tcpChan, dnsChan, c.filterDNSPort)
 	// udp processor
-	go netlib.UdpProcessor(udpChan, dnsChan, c.filterDnsPort)
+	go netlib.UDPProcessor(udpChan, dnsChan, c.filterDNSPort)
 
 	go func() {
 		nbPackets := 0
@@ -188,24 +201,24 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 
 				lastReceivedTime = time.Now()
 				// prepare dns message
-				dm := dnsutils.DnsMessage{}
+				dm := dnsutils.DNSMessage{}
 				dm.Init()
 
-				dm.NetworkInfo.Family = dnsPacket.IpLayer.EndpointType().String()
-				dm.NetworkInfo.QueryIp = dnsPacket.IpLayer.Src().String()
-				dm.NetworkInfo.ResponseIp = dnsPacket.IpLayer.Dst().String()
+				dm.NetworkInfo.Family = dnsPacket.IPLayer.EndpointType().String()
+				dm.NetworkInfo.QueryIP = dnsPacket.IPLayer.Src().String()
+				dm.NetworkInfo.ResponseIP = dnsPacket.IPLayer.Dst().String()
 				dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
 				dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
 				dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
-				dm.NetworkInfo.IpDefragmented = dnsPacket.IpDefragmented
-				dm.NetworkInfo.TcpReassembled = dnsPacket.TcpReassembled
+				dm.NetworkInfo.IPDefragmented = dnsPacket.IPDefragmented
+				dm.NetworkInfo.TCPReassembled = dnsPacket.TCPReassembled
 
 				dm.DNS.Payload = dnsPacket.Payload
 				dm.DNS.Length = len(dnsPacket.Payload)
 
-				dm.DnsTap.Identity = c.identity
-				dm.DnsTap.TimeSec = dnsPacket.Timestamp.Second()
-				dm.DnsTap.TimeNsec = int(dnsPacket.Timestamp.UnixNano())
+				dm.DNSTap.Identity = c.identity
+				dm.DNSTap.TimeSec = dnsPacket.Timestamp.Second()
+				dm.DNSTap.TimeNsec = int(dnsPacket.Timestamp.UnixNano())
 
 				// count it
 				nbPackets++
@@ -249,7 +262,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 		if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
 			ip4 := packet.NetworkLayer().(*layers.IPv4)
 			if ip4.Flags&layers.IPv4MoreFragments == 1 || ip4.FragOffset > 0 {
-				fragIp4Chan <- packet
+				fragIP4Chan <- packet
 				continue
 			}
 		}
@@ -258,7 +271,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 		if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
 			v6frag := packet.Layer(layers.LayerTypeIPv6Fragment)
 			if v6frag != nil {
-				fragIp6Chan <- packet
+				fragIP6Chan <- packet
 				continue
 			}
 		}
@@ -273,8 +286,6 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 
 	}
 
-	// remove it ?
-	//assembler.FlushAll()
 	c.LogInfo("pcap file [%s] processing terminated, %d packet(s) read", fileName, nbPackets)
 
 	// remove it ?
@@ -283,9 +294,9 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 		os.Remove(filePath)
 	}
 
-	//close chan
-	close(fragIp4Chan)
-	close(fragIp6Chan)
+	// close chan
+	close(fragIP4Chan)
+	close(fragIP6Chan)
 	close(udpChan)
 	close(tcpChan)
 
@@ -366,12 +377,19 @@ func (c *FileIngestor) RemoveEvent(filePath string) {
 func (c *FileIngestor) Run() {
 	c.LogInfo("starting collector...")
 
-	c.dnsProcessor = NewDnsProcessor(c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
-	go c.dnsProcessor.Run(c.Loggers())
+	c.dnsProcessor = processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
+	go c.dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	// start dnstap subprocessor
-	c.dnstapProcessor = NewDnstapProcessor(0, c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
-	go c.dnstapProcessor.Run(c.Loggers())
+	c.dnstapProcessor = processors.NewDNSTapProcessor(
+		0,
+		"",
+		c.config,
+		c.logger,
+		c.name,
+		c.config.Collectors.FileIngestor.ChannelBufferSize,
+	)
+	go c.dnstapProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
 	// read current folder content
 	entries, err := os.ReadDir(c.config.Collectors.FileIngestor.WatchDir)
@@ -389,13 +407,13 @@ func (c *FileIngestor) Run() {
 		fn := filepath.Join(c.config.Collectors.FileIngestor.WatchDir, entry.Name())
 
 		switch c.config.Collectors.FileIngestor.WatchMode {
-		case dnsutils.MODE_PCAP:
+		case pkgconfig.ModePCAP:
 			// process file with pcap extension
 			if filepath.Ext(fn) == ".pcap" || filepath.Ext(fn) == ".pcap.gz" {
 				go c.ProcessPcap(fn)
 			}
-		case dnsutils.MODE_DNSTAP:
-			// processs dnstap
+		case pkgconfig.ModeDNSTap:
+			// process dnstap
 			if filepath.Ext(fn) == ".fstrm" {
 				go c.ProcessDnstap(fn)
 			}
@@ -416,6 +434,17 @@ func (c *FileIngestor) Run() {
 	go func() {
 		for {
 			select {
+			// new config provided?
+			case cfg, opened := <-c.configChan:
+				if !opened {
+					return
+				}
+				c.config = cfg
+				c.ReadConfig()
+
+				c.dnsProcessor.ConfigChan <- cfg
+				c.dnstapProcessor.ConfigChan <- cfg
+
 			case event, ok := <-c.watcher.Events:
 				if !ok { // Channel was closed (i.e. Watcher.Close() was called).
 					return

@@ -9,6 +9,9 @@ import (
 	"sync"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/dmachard/go-topmap"
@@ -43,18 +46,20 @@ type KeyHit struct {
 }
 
 type RestAPI struct {
-	doneApi     chan bool
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DnsMessage
-	outputChan  chan dnsutils.DnsMessage
-	httpserver  net.Listener
-	httpmux     *http.ServeMux
-	config      *dnsutils.Config
-	logger      *logger.Logger
-	name        string
+	doneAPI        chan bool
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	httpserver     net.Listener
+	httpmux        *http.ServeMux
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	name           string
+	RoutingHandler pkgutils.RoutingHandler
 
 	HitsStream HitsStream
 	HitsUniq   HitsUniq
@@ -70,19 +75,21 @@ type RestAPI struct {
 	sync.RWMutex
 }
 
-func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, version string, name string) *RestAPI {
-	logger.Info("[%s] logger=restapi - enabled", name)
+func NewRestAPI(config *pkgconfig.Config, logger *logger.Logger, name string) *RestAPI {
+	logger.Info(pkgutils.PrefixLogLogger+"[%s] restapi - enabled", name)
 	o := &RestAPI{
-		doneApi:     make(chan bool),
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		config:      config,
-		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.RestAPI.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.RestAPI.ChannelBufferSize),
-		logger:      logger,
-		name:        name,
+		doneAPI:        make(chan bool),
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		config:         config,
+		configChan:     make(chan *pkgconfig.Config),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.RestAPI.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.RestAPI.ChannelBufferSize),
+		logger:         logger,
+		name:           name,
+		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
 
 		HitsStream: HitsStream{
 			Streams: make(map[string]SearchBy),
@@ -109,55 +116,71 @@ func NewRestAPI(config *dnsutils.Config, logger *logger.Logger, version string, 
 
 func (c *RestAPI) GetName() string { return c.name }
 
-func (c *RestAPI) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *RestAPI) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDroppedRoute(wrk)
+}
 
-func (o *RestAPI) ReadConfig() {
-	if !dnsutils.IsValidTLS(o.config.Loggers.RestAPI.TlsMinVersion) {
-		o.logger.Fatal("logger rest api - invalid tls min version")
+func (c *RestAPI) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (c *RestAPI) SetLoggers(loggers []pkgutils.Worker) {}
+
+func (c *RestAPI) ReadConfig() {
+	if !pkgconfig.IsValidTLS(c.config.Loggers.RestAPI.TLSMinVersion) {
+		c.logger.Fatal(pkgutils.PrefixLogLogger + "[" + c.name + "]restapi - invalid tls min version")
 	}
 }
 
-func (o *RestAPI) LogInfo(msg string, v ...interface{}) {
-	o.logger.Info("["+o.name+"] logger=restapi - "+msg, v...)
+func (c *RestAPI) ReloadConfig(config *pkgconfig.Config) {
+	c.LogInfo("reload configuration!")
+	c.configChan <- config
 }
 
-func (o *RestAPI) LogError(msg string, v ...interface{}) {
-	o.logger.Error("["+o.name+"] logger=restapi - "+msg, v...)
+func (c *RestAPI) LogInfo(msg string, v ...interface{}) {
+	c.logger.Info(pkgutils.PrefixLogLogger+"["+c.name+"] restapi - "+msg, v...)
 }
 
-func (o *RestAPI) Channel() chan dnsutils.DnsMessage {
-	return o.inputChan
+func (c *RestAPI) LogError(msg string, v ...interface{}) {
+	c.logger.Error(pkgutils.PrefixLogLogger+"["+c.name+"] restapi - "+msg, v...)
 }
 
-func (o *RestAPI) Stop() {
-	o.LogInfo("stopping to run...")
-	o.stopRun <- true
-	<-o.doneRun
-
-	o.LogInfo("stopping to process...")
-	o.stopProcess <- true
-	<-o.doneProcess
-
-	o.LogInfo("stopping http server...")
-	o.httpserver.Close()
-	<-o.doneApi
+func (c *RestAPI) GetInputChannel() chan dnsutils.DNSMessage {
+	return c.inputChan
 }
 
-func (s *RestAPI) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
+func (c *RestAPI) Stop() {
+	c.LogInfo("stopping logger...")
+	c.RoutingHandler.Stop()
+
+	c.LogInfo("stopping to run...")
+	c.stopRun <- true
+	<-c.doneRun
+
+	c.LogInfo("stopping to process...")
+	c.stopProcess <- true
+	<-c.doneProcess
+
+	c.LogInfo("stopping http server...")
+	c.httpserver.Close()
+	<-c.doneAPI
+}
+
+func (c *RestAPI) BasicAuth(w http.ResponseWriter, r *http.Request) bool {
 	login, password, authOK := r.BasicAuth()
 	if !authOK {
 		return false
 	}
 
-	return (login == s.config.Loggers.RestAPI.BasicAuthLogin) &&
-		(password == s.config.Loggers.RestAPI.BasicAuthPwd)
+	return (login == c.config.Loggers.RestAPI.BasicAuthLogin) &&
+		(password == c.config.Loggers.RestAPI.BasicAuthPwd)
 }
 
-func (s *RestAPI) DeleteResetHandler(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *RestAPI) DeleteResetHandler(w http.ResponseWriter, r *http.Request) {
+	c.RLock()
+	defer c.RUnlock()
 
-	if !s.BasicAuth(w, r) {
+	if !c.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
@@ -165,22 +188,22 @@ func (s *RestAPI) DeleteResetHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodDelete:
 
-		s.HitsUniq.Clients = make(map[string]int)
-		s.HitsUniq.Domains = make(map[string]int)
-		s.HitsUniq.NxDomains = make(map[string]int)
-		s.HitsUniq.SfDomains = make(map[string]int)
-		s.HitsUniq.PublicSuffixes = make(map[string]int)
-		s.HitsUniq.Suspicious = make(map[string]*dnsutils.TransformSuspicious)
+		c.HitsUniq.Clients = make(map[string]int)
+		c.HitsUniq.Domains = make(map[string]int)
+		c.HitsUniq.NxDomains = make(map[string]int)
+		c.HitsUniq.SfDomains = make(map[string]int)
+		c.HitsUniq.PublicSuffixes = make(map[string]int)
+		c.HitsUniq.Suspicious = make(map[string]*dnsutils.TransformSuspicious)
 
-		s.Streams = make(map[string]int)
+		c.Streams = make(map[string]int)
 
-		s.TopQnames = topmap.NewTopMap(s.config.Loggers.RestAPI.TopN)
-		s.TopClients = topmap.NewTopMap(s.config.Loggers.RestAPI.TopN)
-		s.TopTLDs = topmap.NewTopMap(s.config.Loggers.RestAPI.TopN)
-		s.TopNonExistent = topmap.NewTopMap(s.config.Loggers.RestAPI.TopN)
-		s.TopServFail = topmap.NewTopMap(s.config.Loggers.RestAPI.TopN)
+		c.TopQnames = topmap.NewTopMap(c.config.Loggers.RestAPI.TopN)
+		c.TopClients = topmap.NewTopMap(c.config.Loggers.RestAPI.TopN)
+		c.TopTLDs = topmap.NewTopMap(c.config.Loggers.RestAPI.TopN)
+		c.TopNonExistent = topmap.NewTopMap(c.config.Loggers.RestAPI.TopN)
+		c.TopServFail = topmap.NewTopMap(c.config.Loggers.RestAPI.TopN)
 
-		s.HitsStream.Streams = make(map[string]SearchBy)
+		c.HitsStream.Streams = make(map[string]SearchBy)
 
 		w.Header().Set("Content-Type", "application/text")
 		w.Write([]byte("OK"))
@@ -189,11 +212,11 @@ func (s *RestAPI) DeleteResetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *RestAPI) GetTopTLDsHandler(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *RestAPI) GetTopTLDsHandler(w http.ResponseWriter, r *http.Request) {
+	c.RLock()
+	defer c.RUnlock()
 
-	if !s.BasicAuth(w, r) {
+	if !c.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
@@ -202,17 +225,17 @@ func (s *RestAPI) GetTopTLDsHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		json.NewEncoder(w).Encode(s.TopTLDs.Get())
+		json.NewEncoder(w).Encode(c.TopTLDs.Get())
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-func (s *RestAPI) GetTopClientsHandler(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *RestAPI) GetTopClientsHandler(w http.ResponseWriter, r *http.Request) {
+	c.RLock()
+	defer c.RUnlock()
 
-	if !s.BasicAuth(w, r) {
+	if !c.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
@@ -221,17 +244,17 @@ func (s *RestAPI) GetTopClientsHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		json.NewEncoder(w).Encode(s.TopClients.Get())
+		json.NewEncoder(w).Encode(c.TopClients.Get())
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-func (s *RestAPI) GetTopDomainsHandler(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *RestAPI) GetTopDomainsHandler(w http.ResponseWriter, r *http.Request) {
+	c.RLock()
+	defer c.RUnlock()
 
-	if !s.BasicAuth(w, r) {
+	if !c.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
@@ -240,17 +263,17 @@ func (s *RestAPI) GetTopDomainsHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		json.NewEncoder(w).Encode(s.TopQnames.Get())
+		json.NewEncoder(w).Encode(c.TopQnames.Get())
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-func (s *RestAPI) GetTopNxDomainsHandler(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *RestAPI) GetTopNxDomainsHandler(w http.ResponseWriter, r *http.Request) {
+	c.RLock()
+	defer c.RUnlock()
 
-	if !s.BasicAuth(w, r) {
+	if !c.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
@@ -259,17 +282,17 @@ func (s *RestAPI) GetTopNxDomainsHandler(w http.ResponseWriter, r *http.Request)
 
 	switch r.Method {
 	case http.MethodGet:
-		json.NewEncoder(w).Encode(s.TopNonExistent.Get())
+		json.NewEncoder(w).Encode(c.TopNonExistent.Get())
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-func (s *RestAPI) GetTopSfDomainsHandler(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *RestAPI) GetTopSfDomainsHandler(w http.ResponseWriter, r *http.Request) {
+	c.RLock()
+	defer c.RUnlock()
 
-	if !s.BasicAuth(w, r) {
+	if !c.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
@@ -278,17 +301,17 @@ func (s *RestAPI) GetTopSfDomainsHandler(w http.ResponseWriter, r *http.Request)
 
 	switch r.Method {
 	case http.MethodGet:
-		json.NewEncoder(w).Encode(s.TopServFail.Get())
+		json.NewEncoder(w).Encode(c.TopServFail.Get())
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-func (s *RestAPI) GetTLDsHandler(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *RestAPI) GetTLDsHandler(w http.ResponseWriter, r *http.Request) {
+	c.RLock()
+	defer c.RUnlock()
 
-	if !s.BasicAuth(w, r) {
+	if !c.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
@@ -299,7 +322,7 @@ func (s *RestAPI) GetTLDsHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		// return as array
 		dataArray := []KeyHit{}
-		for tld, hit := range s.HitsUniq.PublicSuffixes {
+		for tld, hit := range c.HitsUniq.PublicSuffixes {
 			dataArray = append(dataArray, KeyHit{Key: tld, Hit: hit})
 		}
 
@@ -310,11 +333,11 @@ func (s *RestAPI) GetTLDsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *RestAPI) GetClientsHandler(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *RestAPI) GetClientsHandler(w http.ResponseWriter, r *http.Request) {
+	c.RLock()
+	defer c.RUnlock()
 
-	if !s.BasicAuth(w, r) {
+	if !c.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
@@ -325,7 +348,7 @@ func (s *RestAPI) GetClientsHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		// return as array
 		dataArray := []KeyHit{}
-		for address, hit := range s.HitsUniq.Clients {
+		for address, hit := range c.HitsUniq.Clients {
 			dataArray = append(dataArray, KeyHit{Key: address, Hit: hit})
 		}
 		// encode
@@ -335,11 +358,11 @@ func (s *RestAPI) GetClientsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *RestAPI) GetDomainsHandler(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *RestAPI) GetDomainsHandler(w http.ResponseWriter, r *http.Request) {
+	c.RLock()
+	defer c.RUnlock()
 
-	if !s.BasicAuth(w, r) {
+	if !c.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
@@ -350,7 +373,7 @@ func (s *RestAPI) GetDomainsHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		// return as array
 		dataArray := []KeyHit{}
-		for domain, hit := range s.HitsUniq.Domains {
+		for domain, hit := range c.HitsUniq.Domains {
 			dataArray = append(dataArray, KeyHit{Key: domain, Hit: hit})
 		}
 
@@ -361,11 +384,11 @@ func (s *RestAPI) GetDomainsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *RestAPI) GetNxDomainsHandler(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *RestAPI) GetNxDomainsHandler(w http.ResponseWriter, r *http.Request) {
+	c.RLock()
+	defer c.RUnlock()
 
-	if !s.BasicAuth(w, r) {
+	if !c.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
@@ -376,7 +399,7 @@ func (s *RestAPI) GetNxDomainsHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		// convert to array
 		dataArray := []KeyHit{}
-		for domain, hit := range s.HitsUniq.NxDomains {
+		for domain, hit := range c.HitsUniq.NxDomains {
 			dataArray = append(dataArray, KeyHit{Key: domain, Hit: hit})
 		}
 
@@ -388,11 +411,11 @@ func (s *RestAPI) GetNxDomainsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *RestAPI) GetSfDomainsHandler(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *RestAPI) GetSfDomainsHandler(w http.ResponseWriter, r *http.Request) {
+	c.RLock()
+	defer c.RUnlock()
 
-	if !s.BasicAuth(w, r) {
+	if !c.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
@@ -403,7 +426,7 @@ func (s *RestAPI) GetSfDomainsHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		// return as array
 		dataArray := []KeyHit{}
-		for domain, hit := range s.HitsUniq.SfDomains {
+		for domain, hit := range c.HitsUniq.SfDomains {
 			dataArray = append(dataArray, KeyHit{Key: domain, Hit: hit})
 		}
 
@@ -414,11 +437,11 @@ func (s *RestAPI) GetSfDomainsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *RestAPI) GetSuspiciousHandler(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *RestAPI) GetSuspiciousHandler(w http.ResponseWriter, r *http.Request) {
+	c.RLock()
+	defer c.RUnlock()
 
-	if !s.BasicAuth(w, r) {
+	if !c.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
@@ -429,7 +452,7 @@ func (s *RestAPI) GetSuspiciousHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		// return as array
 		dataArray := []*dnsutils.TransformSuspicious{}
-		for domain, suspicious := range s.HitsUniq.Suspicious {
+		for domain, suspicious := range c.HitsUniq.Suspicious {
 			suspicious.Domain = domain
 			dataArray = append(dataArray, suspicious)
 		}
@@ -441,11 +464,11 @@ func (s *RestAPI) GetSuspiciousHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *RestAPI) GetSearchHandler(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *RestAPI) GetSearchHandler(w http.ResponseWriter, r *http.Request) {
+	c.RLock()
+	defer c.RUnlock()
 
-	if !s.BasicAuth(w, r) {
+	if !c.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
@@ -461,7 +484,7 @@ func (s *RestAPI) GetSearchHandler(w http.ResponseWriter, r *http.Request) {
 		dataArray := []KeyHit{}
 
 		// search by IP
-		for _, search := range s.HitsStream.Streams {
+		for _, search := range c.HitsStream.Streams {
 			userHits, clientExists := search.Clients[filter[0]]
 			if clientExists {
 				for domain, hit := range userHits.Hits {
@@ -472,7 +495,7 @@ func (s *RestAPI) GetSearchHandler(w http.ResponseWriter, r *http.Request) {
 
 		// search by domain
 		if len(dataArray) == 0 {
-			for _, search := range s.HitsStream.Streams {
+			for _, search := range c.HitsStream.Streams {
 				domainHists, domainExists := search.Domains[filter[0]]
 				if domainExists {
 					for addr, hit := range domainHists.Hits {
@@ -491,11 +514,11 @@ func (s *RestAPI) GetSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *RestAPI) GetStreamsHandler(w http.ResponseWriter, r *http.Request) {
-	s.RLock()
-	defer s.RUnlock()
+func (c *RestAPI) GetStreamsHandler(w http.ResponseWriter, r *http.Request) {
+	c.RLock()
+	defer c.RUnlock()
 
-	if !s.BasicAuth(w, r) {
+	if !c.BasicAuth(w, r) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
@@ -506,7 +529,7 @@ func (s *RestAPI) GetStreamsHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 
 		dataArray := []KeyHit{}
-		for stream, hit := range s.Streams {
+		for stream, hit := range c.Streams {
 			dataArray = append(dataArray, KeyHit{Key: stream, Hit: hit})
 		}
 
@@ -516,21 +539,21 @@ func (s *RestAPI) GetStreamsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *RestAPI) RecordDnsMessage(dm dnsutils.DnsMessage) {
-	s.Lock()
-	defer s.Unlock()
+func (c *RestAPI) RecordDNSMessage(dm dnsutils.DNSMessage) {
+	c.Lock()
+	defer c.Unlock()
 
-	if _, exists := s.Streams[dm.DnsTap.Identity]; !exists {
-		s.Streams[dm.DnsTap.Identity] = 1
+	if _, exists := c.Streams[dm.DNSTap.Identity]; !exists {
+		c.Streams[dm.DNSTap.Identity] = 1
 	} else {
-		s.Streams[dm.DnsTap.Identity] += 1
+		c.Streams[dm.DNSTap.Identity] += 1
 	}
 
 	// record suspicious domains only is enabled
 	if dm.Suspicious != nil {
 		if dm.Suspicious.Score > 0.0 {
-			if _, exists := s.HitsUniq.Suspicious[dm.DNS.Qname]; !exists {
-				s.HitsUniq.Suspicious[dm.DNS.Qname] = dm.Suspicious
+			if _, exists := c.HitsUniq.Suspicious[dm.DNS.Qname]; !exists {
+				c.HitsUniq.Suspicious[dm.DNS.Qname] = dm.Suspicious
 			}
 		}
 	}
@@ -539,121 +562,121 @@ func (s *RestAPI) RecordDnsMessage(dm dnsutils.DnsMessage) {
 	// record public suffix only if enabled
 	if dm.PublicSuffix != nil {
 		if dm.PublicSuffix.QnamePublicSuffix != "-" {
-			if _, ok := s.HitsUniq.PublicSuffixes[dm.PublicSuffix.QnamePublicSuffix]; !ok {
-				s.HitsUniq.PublicSuffixes[dm.PublicSuffix.QnamePublicSuffix] = 1
+			if _, ok := c.HitsUniq.PublicSuffixes[dm.PublicSuffix.QnamePublicSuffix]; !ok {
+				c.HitsUniq.PublicSuffixes[dm.PublicSuffix.QnamePublicSuffix] = 1
 			} else {
-				s.HitsUniq.PublicSuffixes[dm.PublicSuffix.QnamePublicSuffix]++
+				c.HitsUniq.PublicSuffixes[dm.PublicSuffix.QnamePublicSuffix]++
 			}
 		}
 	}
 
 	// uniq record for domains
-	if _, exists := s.HitsUniq.Domains[dm.DNS.Qname]; !exists {
-		s.HitsUniq.Domains[dm.DNS.Qname] = 1
+	if _, exists := c.HitsUniq.Domains[dm.DNS.Qname]; !exists {
+		c.HitsUniq.Domains[dm.DNS.Qname] = 1
 	} else {
-		s.HitsUniq.Domains[dm.DNS.Qname] += 1
+		c.HitsUniq.Domains[dm.DNS.Qname] += 1
 	}
 
-	if dm.DNS.Rcode == dnsutils.DNS_RCODE_NXDOMAIN {
-		if _, exists := s.HitsUniq.NxDomains[dm.DNS.Qname]; !exists {
-			s.HitsUniq.NxDomains[dm.DNS.Qname] = 1
+	if dm.DNS.Rcode == dnsutils.DNSRcodeNXDomain {
+		if _, exists := c.HitsUniq.NxDomains[dm.DNS.Qname]; !exists {
+			c.HitsUniq.NxDomains[dm.DNS.Qname] = 1
 		} else {
-			s.HitsUniq.NxDomains[dm.DNS.Qname] += 1
+			c.HitsUniq.NxDomains[dm.DNS.Qname] += 1
 		}
 	}
 
-	if dm.DNS.Rcode == dnsutils.DNS_RCODE_SERVFAIL {
-		if _, exists := s.HitsUniq.SfDomains[dm.DNS.Qname]; !exists {
-			s.HitsUniq.SfDomains[dm.DNS.Qname] = 1
+	if dm.DNS.Rcode == dnsutils.DNSRcodeServFail {
+		if _, exists := c.HitsUniq.SfDomains[dm.DNS.Qname]; !exists {
+			c.HitsUniq.SfDomains[dm.DNS.Qname] = 1
 		} else {
-			s.HitsUniq.SfDomains[dm.DNS.Qname] += 1
+			c.HitsUniq.SfDomains[dm.DNS.Qname] += 1
 		}
 	}
 
 	// uniq record for queries
-	if _, exists := s.HitsUniq.Clients[dm.NetworkInfo.QueryIp]; !exists {
-		s.HitsUniq.Clients[dm.NetworkInfo.QueryIp] = 1
+	if _, exists := c.HitsUniq.Clients[dm.NetworkInfo.QueryIP]; !exists {
+		c.HitsUniq.Clients[dm.NetworkInfo.QueryIP] = 1
 	} else {
-		s.HitsUniq.Clients[dm.NetworkInfo.QueryIp] += 1
+		c.HitsUniq.Clients[dm.NetworkInfo.QueryIP] += 1
 	}
 
 	// uniq top qnames and clients
-	s.TopQnames.Record(dm.DNS.Qname, s.HitsUniq.Domains[dm.DNS.Qname])
-	s.TopClients.Record(dm.NetworkInfo.QueryIp, s.HitsUniq.Clients[dm.NetworkInfo.QueryIp])
+	c.TopQnames.Record(dm.DNS.Qname, c.HitsUniq.Domains[dm.DNS.Qname])
+	c.TopClients.Record(dm.NetworkInfo.QueryIP, c.HitsUniq.Clients[dm.NetworkInfo.QueryIP])
 	if dm.PublicSuffix != nil {
-		s.TopTLDs.Record(dm.PublicSuffix.QnamePublicSuffix, s.HitsUniq.PublicSuffixes[dm.PublicSuffix.QnamePublicSuffix])
+		c.TopTLDs.Record(dm.PublicSuffix.QnamePublicSuffix, c.HitsUniq.PublicSuffixes[dm.PublicSuffix.QnamePublicSuffix])
 	}
-	if dm.DNS.Rcode == dnsutils.DNS_RCODE_NXDOMAIN {
-		s.TopNonExistent.Record(dm.DNS.Qname, s.HitsUniq.NxDomains[dm.DNS.Qname])
+	if dm.DNS.Rcode == dnsutils.DNSRcodeNXDomain {
+		c.TopNonExistent.Record(dm.DNS.Qname, c.HitsUniq.NxDomains[dm.DNS.Qname])
 	}
-	if dm.DNS.Rcode == dnsutils.DNS_RCODE_SERVFAIL {
-		s.TopServFail.Record(dm.DNS.Qname, s.HitsUniq.SfDomains[dm.DNS.Qname])
+	if dm.DNS.Rcode == dnsutils.DNSRcodeServFail {
+		c.TopServFail.Record(dm.DNS.Qname, c.HitsUniq.SfDomains[dm.DNS.Qname])
 	}
 
 	// record dns message per client source ip and domain
-	if _, exists := s.HitsStream.Streams[dm.DnsTap.Identity]; !exists {
-		s.HitsStream.Streams[dm.DnsTap.Identity] = SearchBy{Clients: make(map[string]*HitsRecord),
+	if _, exists := c.HitsStream.Streams[dm.DNSTap.Identity]; !exists {
+		c.HitsStream.Streams[dm.DNSTap.Identity] = SearchBy{Clients: make(map[string]*HitsRecord),
 			Domains: make(map[string]*HitsRecord)}
 	}
 
 	// continue with the query IP
-	if _, exists := s.HitsStream.Streams[dm.DnsTap.Identity].Clients[dm.NetworkInfo.QueryIp]; !exists {
-		s.HitsStream.Streams[dm.DnsTap.Identity].Clients[dm.NetworkInfo.QueryIp] = &HitsRecord{Hits: make(map[string]int), TotalHits: 1}
+	if _, exists := c.HitsStream.Streams[dm.DNSTap.Identity].Clients[dm.NetworkInfo.QueryIP]; !exists {
+		c.HitsStream.Streams[dm.DNSTap.Identity].Clients[dm.NetworkInfo.QueryIP] = &HitsRecord{Hits: make(map[string]int), TotalHits: 1}
 	} else {
-		s.HitsStream.Streams[dm.DnsTap.Identity].Clients[dm.NetworkInfo.QueryIp].TotalHits += 1
+		c.HitsStream.Streams[dm.DNSTap.Identity].Clients[dm.NetworkInfo.QueryIP].TotalHits += 1
 	}
 
 	// continue with Qname
-	if _, exists := s.HitsStream.Streams[dm.DnsTap.Identity].Clients[dm.NetworkInfo.QueryIp].Hits[dm.DNS.Qname]; !exists {
-		s.HitsStream.Streams[dm.DnsTap.Identity].Clients[dm.NetworkInfo.QueryIp].Hits[dm.DNS.Qname] = 1
+	if _, exists := c.HitsStream.Streams[dm.DNSTap.Identity].Clients[dm.NetworkInfo.QueryIP].Hits[dm.DNS.Qname]; !exists {
+		c.HitsStream.Streams[dm.DNSTap.Identity].Clients[dm.NetworkInfo.QueryIP].Hits[dm.DNS.Qname] = 1
 	} else {
-		s.HitsStream.Streams[dm.DnsTap.Identity].Clients[dm.NetworkInfo.QueryIp].Hits[dm.DNS.Qname] += 1
+		c.HitsStream.Streams[dm.DNSTap.Identity].Clients[dm.NetworkInfo.QueryIP].Hits[dm.DNS.Qname] += 1
 	}
 
 	// domain doesn't exists in domains map?
-	if _, exists := s.HitsStream.Streams[dm.DnsTap.Identity].Domains[dm.DNS.Qname]; !exists {
-		s.HitsStream.Streams[dm.DnsTap.Identity].Domains[dm.DNS.Qname] = &HitsRecord{Hits: make(map[string]int), TotalHits: 1}
+	if _, exists := c.HitsStream.Streams[dm.DNSTap.Identity].Domains[dm.DNS.Qname]; !exists {
+		c.HitsStream.Streams[dm.DNSTap.Identity].Domains[dm.DNS.Qname] = &HitsRecord{Hits: make(map[string]int), TotalHits: 1}
 	} else {
-		s.HitsStream.Streams[dm.DnsTap.Identity].Domains[dm.DNS.Qname].TotalHits += 1
+		c.HitsStream.Streams[dm.DNSTap.Identity].Domains[dm.DNS.Qname].TotalHits += 1
 	}
 
 	// domain doesn't exists in domains map?
-	if _, exists := s.HitsStream.Streams[dm.DnsTap.Identity].Domains[dm.DNS.Qname].Hits[dm.NetworkInfo.QueryIp]; !exists {
-		s.HitsStream.Streams[dm.DnsTap.Identity].Domains[dm.DNS.Qname].Hits[dm.NetworkInfo.QueryIp] = 1
+	if _, exists := c.HitsStream.Streams[dm.DNSTap.Identity].Domains[dm.DNS.Qname].Hits[dm.NetworkInfo.QueryIP]; !exists {
+		c.HitsStream.Streams[dm.DNSTap.Identity].Domains[dm.DNS.Qname].Hits[dm.NetworkInfo.QueryIP] = 1
 	} else {
-		s.HitsStream.Streams[dm.DnsTap.Identity].Domains[dm.DNS.Qname].Hits[dm.NetworkInfo.QueryIp] += 1
+		c.HitsStream.Streams[dm.DNSTap.Identity].Domains[dm.DNS.Qname].Hits[dm.NetworkInfo.QueryIP] += 1
 	}
 }
 
-func (s *RestAPI) ListenAndServe() {
-	s.LogInfo("starting server...")
+func (c *RestAPI) ListenAndServe() {
+	c.LogInfo("starting server...")
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/tlds", s.GetTLDsHandler)
-	mux.HandleFunc("/tlds/top", s.GetTopTLDsHandler)
-	mux.HandleFunc("/streams", s.GetStreamsHandler)
-	mux.HandleFunc("/clients", s.GetClientsHandler)
-	mux.HandleFunc("/clients/top", s.GetTopClientsHandler)
-	mux.HandleFunc("/domains", s.GetDomainsHandler)
-	mux.HandleFunc("/domains/servfail", s.GetSfDomainsHandler)
-	mux.HandleFunc("/domains/top", s.GetTopDomainsHandler)
-	mux.HandleFunc("/domains/nx/top", s.GetTopNxDomainsHandler)
-	mux.HandleFunc("/domains/servfail/top", s.GetTopSfDomainsHandler)
-	mux.HandleFunc("/suspicious", s.GetSuspiciousHandler)
-	mux.HandleFunc("/search", s.GetSearchHandler)
-	mux.HandleFunc("/reset", s.DeleteResetHandler)
+	mux.HandleFunc("/tlds", c.GetTLDsHandler)
+	mux.HandleFunc("/tlds/top", c.GetTopTLDsHandler)
+	mux.HandleFunc("/streams", c.GetStreamsHandler)
+	mux.HandleFunc("/clients", c.GetClientsHandler)
+	mux.HandleFunc("/clients/top", c.GetTopClientsHandler)
+	mux.HandleFunc("/domains", c.GetDomainsHandler)
+	mux.HandleFunc("/domains/servfail", c.GetSfDomainsHandler)
+	mux.HandleFunc("/domains/top", c.GetTopDomainsHandler)
+	mux.HandleFunc("/domains/nx/top", c.GetTopNxDomainsHandler)
+	mux.HandleFunc("/domains/servfail/top", c.GetTopSfDomainsHandler)
+	mux.HandleFunc("/suspicious", c.GetSuspiciousHandler)
+	mux.HandleFunc("/search", c.GetSearchHandler)
+	mux.HandleFunc("/reset", c.DeleteResetHandler)
 
 	var err error
 	var listener net.Listener
-	addrlisten := s.config.Loggers.RestAPI.ListenIP + ":" + strconv.Itoa(s.config.Loggers.RestAPI.ListenPort)
+	addrlisten := c.config.Loggers.RestAPI.ListenIP + ":" + strconv.Itoa(c.config.Loggers.RestAPI.ListenPort)
 
 	// listening with tls enabled ?
-	if s.config.Loggers.RestAPI.TlsSupport {
-		s.LogInfo("tls support enabled")
+	if c.config.Loggers.RestAPI.TLSSupport {
+		c.LogInfo("tls support enabled")
 		var cer tls.Certificate
-		cer, err = tls.LoadX509KeyPair(s.config.Loggers.RestAPI.CertFile, s.config.Loggers.RestAPI.KeyFile)
+		cer, err = tls.LoadX509KeyPair(c.config.Loggers.RestAPI.CertFile, c.config.Loggers.RestAPI.KeyFile)
 		if err != nil {
-			s.logger.Fatal("loading certificate failed:", err)
+			c.logger.Fatal("loading certificate failed:", err)
 		}
 
 		// prepare tls configuration
@@ -663,89 +686,106 @@ func (s *RestAPI) ListenAndServe() {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = dnsutils.TLS_VERSION[s.config.Loggers.RestAPI.TlsMinVersion]
+		tlsConfig.MinVersion = pkgconfig.TLSVersion[c.config.Loggers.RestAPI.TLSMinVersion]
 
-		listener, err = tls.Listen(dnsutils.SOCKET_TCP, addrlisten, tlsConfig)
+		listener, err = tls.Listen(netlib.SocketTCP, addrlisten, tlsConfig)
 
 	} else {
 		// basic listening
-		listener, err = net.Listen(dnsutils.SOCKET_TCP, addrlisten)
+		listener, err = net.Listen(netlib.SocketTCP, addrlisten)
 	}
 
 	// something wrong ?
 	if err != nil {
-		s.logger.Fatal("listening failed:", err)
+		c.logger.Fatal("listening failed:", err)
 	}
 
-	s.httpserver = listener
-	s.httpmux = mux
-	s.LogInfo("is listening on %s", listener.Addr())
+	c.httpserver = listener
+	c.httpmux = mux
+	c.LogInfo("is listening on %s", listener.Addr())
 
-	http.Serve(s.httpserver, s.httpmux)
+	http.Serve(c.httpserver, c.httpmux)
 
-	s.LogInfo("http server terminated")
-	s.doneApi <- true
+	c.LogInfo("http server terminated")
+	c.doneAPI <- true
 }
 
-func (s *RestAPI) Run() {
+func (c *RestAPI) Run() {
+	// prepare next channels
+	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
-	listChannel := []chan dnsutils.DnsMessage{}
-	listChannel = append(listChannel, s.outputChan)
-	subprocessors := transformers.NewTransforms(&s.config.OutgoingTransformers, s.logger, s.name, listChannel, 0)
+	listChannel := []chan dnsutils.DNSMessage{}
+	listChannel = append(listChannel, c.outputChan)
+	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
 
 	// start http server
-	go s.ListenAndServe()
+	go c.ListenAndServe()
 
 	// goroutine to process transformed dns messages
-	go s.Process()
+	go c.Process()
 
 	// loop to process incoming messages
-	s.LogInfo("ready to process")
+	c.LogInfo("ready to process")
 RUN_LOOP:
 	for {
 		select {
-		case <-s.stopRun:
+		case <-c.stopRun:
 			// cleanup transformers
 			subprocessors.Reset()
-			s.doneRun <- true
+			c.doneRun <- true
 			break RUN_LOOP
-		case dm, opened := <-s.inputChan:
+
+		case cfg, opened := <-c.configChan:
 			if !opened {
-				s.LogInfo("input channel closed!")
+				return
+			}
+			c.config = cfg
+			c.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
+
+		case dm, opened := <-c.inputChan:
+			if !opened {
+				c.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			subprocessors.InitDNSMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
+			// send to next ?
+			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
+
 			// send to output channel
-			s.outputChan <- dm
+			c.outputChan <- dm
 		}
 	}
-	s.LogInfo("run terminated")
+	c.LogInfo("run terminated")
 }
 
-func (s *RestAPI) Process() {
-	s.LogInfo("processing...")
+func (c *RestAPI) Process() {
+	c.LogInfo("processing...")
 
 PROCESS_LOOP:
 	for {
 		select {
-		case <-s.stopProcess:
-			s.doneProcess <- true
+		case <-c.stopProcess:
+			c.doneProcess <- true
 			break PROCESS_LOOP
 
-		case dm, opened := <-s.outputChan:
+		case dm, opened := <-c.outputChan:
 			if !opened {
-				s.LogInfo("output channel closed!")
+				c.LogInfo("output channel closed!")
 				return
 			}
 			// record the dnstap message
-			s.RecordDnsMessage(dm)
+			c.RecordDNSMessage(dm)
 		}
 	}
-	s.LogInfo("processing terminated")
+	c.LogInfo("processing terminated")
 }

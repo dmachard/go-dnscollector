@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -15,16 +16,20 @@ import (
 type MapQueries struct {
 	sync.RWMutex
 	ttl      time.Duration
-	kv       map[uint64]dnsutils.DnsMessage
-	channels []chan dnsutils.DnsMessage
+	kv       map[uint64]dnsutils.DNSMessage
+	channels []chan dnsutils.DNSMessage
 }
 
-func NewMapQueries(ttl time.Duration, channels []chan dnsutils.DnsMessage) MapQueries {
+func NewMapQueries(ttl time.Duration, channels []chan dnsutils.DNSMessage) MapQueries {
 	return MapQueries{
 		ttl:      ttl,
-		kv:       make(map[uint64]dnsutils.DnsMessage),
+		kv:       make(map[uint64]dnsutils.DNSMessage),
 		channels: channels,
 	}
+}
+
+func (mp *MapQueries) SetTTL(ttl time.Duration) {
+	mp.ttl = ttl
 }
 
 func (mp *MapQueries) Exists(key uint64) (ok bool) {
@@ -34,7 +39,7 @@ func (mp *MapQueries) Exists(key uint64) (ok bool) {
 	return ok
 }
 
-func (mp *MapQueries) Set(key uint64, dm dnsutils.DnsMessage) {
+func (mp *MapQueries) Set(key uint64, dm dnsutils.DNSMessage) {
 	mp.Lock()
 	defer mp.Unlock()
 	mp.kv[key] = dm
@@ -69,6 +74,10 @@ func NewHashQueries(ttl time.Duration) HashQueries {
 	}
 }
 
+func (mp *HashQueries) SetTTL(ttl time.Duration) {
+	mp.ttl = ttl
+}
+
 func (mp *HashQueries) Get(key uint64) (value int64, ok bool) {
 	mp.RLock()
 	defer mp.RUnlock()
@@ -93,19 +102,19 @@ func (mp *HashQueries) Delete(key uint64) {
 
 // latency processor
 type LatencyProcessor struct {
-	config      *dnsutils.ConfigTransformers
+	config      *pkgconfig.ConfigTransformers
 	logger      *logger.Logger
 	name        string
 	instance    int
 	hashQueries HashQueries
 	mapQueries  MapQueries
-	outChannels []chan dnsutils.DnsMessage
+	outChannels []chan dnsutils.DNSMessage
 	logInfo     func(msg string, v ...interface{})
 	logError    func(msg string, v ...interface{})
 }
 
-func NewLatencySubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DnsMessage,
+func NewLatencySubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
+	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) *LatencyProcessor {
 	s := LatencyProcessor{
@@ -124,46 +133,51 @@ func NewLatencySubprocessor(config *dnsutils.ConfigTransformers, logger *logger.
 	return &s
 }
 
-func (s *LatencyProcessor) MeasureLatency(dm *dnsutils.DnsMessage) {
+func (s *LatencyProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
+	s.config = config
+
+	s.hashQueries.SetTTL(time.Duration(config.Latency.QueriesTimeout) * time.Second)
+	s.mapQueries.SetTTL(time.Duration(config.Latency.QueriesTimeout) * time.Second)
+}
+
+func (s *LatencyProcessor) MeasureLatency(dm *dnsutils.DNSMessage) {
 	queryport, _ := strconv.Atoi(dm.NetworkInfo.QueryPort)
-	if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && !dm.DNS.MalformedPacket {
+	if len(dm.NetworkInfo.QueryIP) > 0 && queryport > 0 && !dm.DNS.MalformedPacket {
 		// compute the hash of the query
-		hash_data := []string{dm.NetworkInfo.QueryIp, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.DNS.Id)}
+		hashData := []string{dm.NetworkInfo.QueryIP, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.DNS.ID)}
 
 		hashfnv := fnv.New64a()
-		hashfnv.Write([]byte(strings.Join(hash_data[:], "+")))
+		hashfnv.Write([]byte(strings.Join(hashData, "+")))
 
-		if dm.DNS.Type == dnsutils.DnsQuery {
-			s.hashQueries.Set(hashfnv.Sum64(), dm.DnsTap.Timestamp)
+		if dm.DNS.Type == dnsutils.DNSQuery || dm.DNS.Type == dnsutils.DNSQueryQuiet {
+			s.hashQueries.Set(hashfnv.Sum64(), dm.DNSTap.Timestamp)
 		} else {
 			key := hashfnv.Sum64()
 			value, ok := s.hashQueries.Get(key)
 			if ok {
 				s.hashQueries.Delete(key)
-				latency := float64(dm.DnsTap.Timestamp-value) / float64(1000000000)
-				dm.DnsTap.Latency = latency
+				latency := float64(dm.DNSTap.Timestamp-value) / float64(1000000000)
+				dm.DNSTap.Latency = latency
 			}
 		}
 	}
 }
 
-func (s *LatencyProcessor) DetectEvictedTimeout(dm *dnsutils.DnsMessage) {
+func (s *LatencyProcessor) DetectEvictedTimeout(dm *dnsutils.DNSMessage) {
 
 	queryport, _ := strconv.Atoi(dm.NetworkInfo.QueryPort)
-	if len(dm.NetworkInfo.QueryIp) > 0 && queryport > 0 && !dm.DNS.MalformedPacket {
+	if len(dm.NetworkInfo.QueryIP) > 0 && queryport > 0 && !dm.DNS.MalformedPacket {
 		// compute the hash of the query
-		hash_data := []string{dm.NetworkInfo.QueryIp, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.DNS.Id)}
+		hashData := []string{dm.NetworkInfo.QueryIP, dm.NetworkInfo.QueryPort, strconv.Itoa(dm.DNS.ID)}
 
 		hashfnv := fnv.New64a()
-		hashfnv.Write([]byte(strings.Join(hash_data[:], "+")))
+		hashfnv.Write([]byte(strings.Join(hashData, "+")))
 		key := hashfnv.Sum64()
 
-		if dm.DNS.Type == dnsutils.DnsQuery {
+		if dm.DNS.Type == dnsutils.DNSQuery || dm.DNS.Type == dnsutils.DNSQueryQuiet {
 			s.mapQueries.Set(key, *dm)
-		} else {
-			if s.mapQueries.Exists(key) {
-				s.mapQueries.Delete(key)
-			}
+		} else if s.mapQueries.Exists(key) {
+			s.mapQueries.Delete(key)
 		}
 	}
 }

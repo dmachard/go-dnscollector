@@ -6,23 +6,24 @@ import (
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 type SuspiciousTransform struct {
-	config                *dnsutils.ConfigTransformers
+	config                *pkgconfig.ConfigTransformers
 	logger                *logger.Logger
 	name                  string
 	CommonQtypes          map[string]bool
 	whitelistDomainsRegex map[string]*regexp.Regexp
 	instance              int
-	outChannels           []chan dnsutils.DnsMessage
+	outChannels           []chan dnsutils.DNSMessage
 	logInfo               func(msg string, v ...interface{})
 	logError              func(msg string, v ...interface{})
 }
 
-func NewSuspiciousSubprocessor(config *dnsutils.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DnsMessage,
+func NewSuspiciousSubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
+	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) SuspiciousTransform {
 	d := SuspiciousTransform{
@@ -43,6 +44,15 @@ func NewSuspiciousSubprocessor(config *dnsutils.ConfigTransformers, logger *logg
 }
 
 func (p *SuspiciousTransform) ReadConfig() {
+	// cleanup maps
+	for key := range p.CommonQtypes {
+		delete(p.CommonQtypes, key)
+	}
+	for key := range p.whitelistDomainsRegex {
+		delete(p.whitelistDomainsRegex, key)
+	}
+
+	// load maps
 	for _, v := range p.config.Suspicious.CommonQtypes {
 		p.CommonQtypes[v] = true
 	}
@@ -51,21 +61,27 @@ func (p *SuspiciousTransform) ReadConfig() {
 	}
 }
 
+func (p *SuspiciousTransform) ReloadConfig(config *pkgconfig.ConfigTransformers) {
+	p.config = config
+
+	p.ReadConfig()
+}
+
 func (p *SuspiciousTransform) IsEnabled() bool {
 	return p.config.Suspicious.Enable
 }
 
 func (p *SuspiciousTransform) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=suspicious#%d - ", p.instance)
+	log := fmt.Sprintf("suspicious#%d - ", p.instance)
 	p.logInfo(log+msg, v...)
 }
 
 func (p *SuspiciousTransform) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("transformer=suspicious#%d - ", p.instance)
+	log := fmt.Sprintf("suspicious#%d - ", p.instance)
 	p.logError(log+msg, v...)
 }
 
-func (p *SuspiciousTransform) InitDnsMessage(dm *dnsutils.DnsMessage) {
+func (p *SuspiciousTransform) InitDNSMessage(dm *dnsutils.DNSMessage) {
 	if dm.Suspicious == nil {
 		dm.Suspicious = &dnsutils.TransformSuspicious{
 			Score:                 0.0,
@@ -80,7 +96,7 @@ func (p *SuspiciousTransform) InitDnsMessage(dm *dnsutils.DnsMessage) {
 	}
 }
 
-func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
+func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DNSMessage) {
 
 	if dm.Suspicious == nil {
 		p.LogError("transformer is not properly initialized")
@@ -113,7 +129,7 @@ func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DnsMessage) {
 	}
 
 	// slow domain name resolution ?
-	if dm.DnsTap.Latency > p.config.Suspicious.ThresholdSlow {
+	if dm.DNSTap.Latency > p.config.Suspicious.ThresholdSlow {
 		dm.Suspicious.Score += 1.0
 		dm.Suspicious.SlowDomain = true
 	}
