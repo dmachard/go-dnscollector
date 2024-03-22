@@ -63,21 +63,21 @@ func NewClickhouseClient(config *pkgconfig.Config, console *logger.Logger, name 
 	return o
 }
 
-func (c *ClickhouseClient) GetName() string { return c.name }
+func (o *ClickhouseClient) GetName() string { return o.name }
 
-func (c *ClickhouseClient) SetLoggers(loggers []pkgutils.Worker) {}
+func (o *ClickhouseClient) SetLoggers(loggers []pkgutils.Worker) {}
 
-func (c *ClickhouseClient) AddDroppedRoute(wrk pkgutils.Worker) {
-	c.RoutingHandler.AddDroppedRoute(wrk)
+func (o *ClickhouseClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	o.RoutingHandler.AddDroppedRoute(wrk)
 }
 
-func (c *ClickhouseClient) AddDefaultRoute(wrk pkgutils.Worker) {
-	c.RoutingHandler.AddDefaultRoute(wrk)
+func (o *ClickhouseClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	o.RoutingHandler.AddDefaultRoute(wrk)
 }
 
-func (c *ClickhouseClient) ReloadConfig(config *pkgconfig.Config) {
-	c.LogInfo("reload configuration!")
-	c.configChan <- config
+func (o *ClickhouseClient) ReloadConfig(config *pkgconfig.Config) {
+	o.LogInfo("reload configuration!")
+	o.configChan <- config
 }
 
 func (o *ClickhouseClient) ReadConfig() {
@@ -190,7 +190,7 @@ PROCESS_LOOP:
 			t, err := time.Parse(time.RFC3339, dm.DNSTap.TimestampRFC3339)
 			timensec := ""
 			if err == nil {
-				timensec = strconv.Itoa(int(int64(t.UnixNano())))
+				timensec = strconv.Itoa(int(t.UnixNano()))
 			}
 			data := ClickhouseData{
 				Identity:  dm.DNSTap.Identity,
@@ -204,6 +204,7 @@ PROCESS_LOOP:
 				TimeNSec:  timensec,
 				TimeStamp: strconv.Itoa(int(int64(dm.DNSTap.TimeSec))),
 			}
+			// nolint
 			url := o.url + "?query=INSERT%20INTO%20" + o.database + "." + o.table + "(identity,queryip,qname,operation,family,protocol,qtype,rcode,timensec,timestamp)%20VALUES%20('" + data.Identity + "','" + data.QueryIP + "','" + data.QName + "','" + data.Operation + "','" + data.Family + "','" + data.Protocol + "','" + data.QType + "','" + data.RCode + "','" + data.TimeNSec + "','" + data.TimeStamp + "')"
 			req, _ := http.NewRequest("POST", url, nil)
 
