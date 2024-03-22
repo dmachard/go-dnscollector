@@ -300,6 +300,14 @@ type ConfigLoggers struct {
 		URL               string `yaml:"url"`
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
 	} `yaml:"falco"`
+	ClickhouseClient struct {
+		Enable   bool   `yaml:"enable"`
+		URL      string `yaml:"url"`
+		User     string `yaml:"user"`
+		Password string `yaml:"password"`
+		Database string `yaml:"database"`
+		Table    string `yaml:"table"`
+	} `yaml:"clickhouse"`
 }
 
 func (c *ConfigLoggers) SetDefault() {
@@ -554,6 +562,13 @@ func (c *ConfigLoggers) SetDefault() {
 	c.FalcoClient.Enable = false
 	c.FalcoClient.URL = "http://127.0.0.1:9200"
 	c.FalcoClient.ChannelBufferSize = 65535
+
+	c.ClickhouseClient.Enable = false
+	c.ClickhouseClient.URL = "http://localhost:8123"
+	c.ClickhouseClient.User = "default"
+	c.ClickhouseClient.Password = "password"
+	c.ClickhouseClient.Database = "dnscollector"
+	c.ClickhouseClient.Table = "records"
 }
 
 func (c *ConfigLoggers) GetTags() (ret []string) {

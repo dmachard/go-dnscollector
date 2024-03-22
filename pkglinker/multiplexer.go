@@ -147,6 +147,9 @@ func InitMultiplexer(mapLoggers map[string]pkgutils.Worker, mapCollectors map[st
 		if subcfg.Loggers.FalcoClient.Enable && IsLoggerRouted(config, output.Name) {
 			mapLoggers[output.Name] = loggers.NewFalcoClient(subcfg, logger, output.Name)
 		}
+		if subcfg.Loggers.ClickhouseClient.Enable && IsLoggerRouted(config, output.Name) {
+			mapLoggers[output.Name] = loggers.NewClickhouseClient(subcfg, logger, output.Name)
+		}
 	}
 
 	// load collectors

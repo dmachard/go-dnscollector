@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"regexp"
 	"testing"
+
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
@@ -17,11 +19,11 @@ func Test_ClickhouseClient(t *testing.T) {
 		pattern string
 	}{
 		{
-			mode:    dnsutils.MODE_JSON,
+			mode:    pkgconfig.ModeJSON,
 			pattern: "dns.collector",
 		},
 	}
-	cfg := dnsutils.GetFakeConfig()
+	cfg := pkgconfig.GetFakeConfig()
 	cfg.Loggers.ClickhouseClient.URL = "http://127.0.0.1:8123"
 	cfg.Loggers.ClickhouseClient.User = "default"
 	cfg.Loggers.ClickhouseClient.Password = "password"
@@ -39,7 +41,7 @@ func Test_ClickhouseClient(t *testing.T) {
 
 			go g.Run()
 
-			dm := dnsutils.GetFakeDnsMessage()
+			dm := dnsutils.GetFakeDNSMessage()
 			g.Channel() <- dm
 			// accept conn
 			conn, err := fakeRcvr.Accept()
@@ -54,7 +56,7 @@ func Test_ClickhouseClient(t *testing.T) {
 				t.Fatal(err)
 			}
 			query := request.URL.Query().Get("query")
-			conn.Write([]byte(dnsutils.HTTP_OK))
+			conn.Write([]byte(pkgconfig.HTTPOK))
 
 			pattern := regexp.MustCompile(tc.pattern)
 			if !pattern.MatchString(query) {

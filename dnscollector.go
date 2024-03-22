@@ -127,9 +127,6 @@ func main() {
 			logger.Error("main - %s", err.Error())
 			os.Exit(1)
 		}
-		if subcfg.Loggers.ClickhouseClient.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewClickhouseClient(subcfg, logger, output.Name)
-		}
 	}
 
 	// Handle Ctrl-C with SIG TERM and SIGHUP

@@ -4,7 +4,10 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
 	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -23,34 +26,38 @@ type ClickhouseData struct {
 }
 
 type ClickhouseClient struct {
-	stopProcess chan bool
-	doneProcess chan bool
-	stopRun     chan bool
-	doneRun     chan bool
-	inputChan   chan dnsutils.DnsMessage
-	outputChan  chan dnsutils.DnsMessage
-	config      *dnsutils.Config
-	logger      *logger.Logger
-	name        string
-	url         string
-	user        string
-	password    string
-	database    string
-	table       string
+	stopProcess    chan bool
+	doneProcess    chan bool
+	stopRun        chan bool
+	doneRun        chan bool
+	inputChan      chan dnsutils.DNSMessage
+	outputChan     chan dnsutils.DNSMessage
+	config         *pkgconfig.Config
+	configChan     chan *pkgconfig.Config
+	logger         *logger.Logger
+	name           string
+	url            string
+	user           string
+	password       string
+	database       string
+	table          string
+	RoutingHandler pkgutils.RoutingHandler
 }
 
-func NewClickhouseClient(config *dnsutils.Config, console *logger.Logger, name string) *ClickhouseClient {
+func NewClickhouseClient(config *pkgconfig.Config, console *logger.Logger, name string) *ClickhouseClient {
 	console.Info("[%s] logger=clickhouse - enabled", name)
 	o := &ClickhouseClient{
-		stopProcess: make(chan bool),
-		doneProcess: make(chan bool),
-		stopRun:     make(chan bool),
-		doneRun:     make(chan bool),
-		inputChan:   make(chan dnsutils.DnsMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
-		outputChan:  make(chan dnsutils.DnsMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
-		logger:      console,
-		config:      config,
-		name:        name,
+		stopProcess:    make(chan bool),
+		doneProcess:    make(chan bool),
+		stopRun:        make(chan bool),
+		doneRun:        make(chan bool),
+		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
+		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.ElasticSearchClient.ChannelBufferSize),
+		logger:         console,
+		config:         config,
+		name:           name,
+		configChan:     make(chan *pkgconfig.Config),
+		RoutingHandler: pkgutils.NewRoutingHandler(config, console, name),
 	}
 	o.ReadConfig()
 	return o
@@ -58,7 +65,20 @@ func NewClickhouseClient(config *dnsutils.Config, console *logger.Logger, name s
 
 func (c *ClickhouseClient) GetName() string { return c.name }
 
-func (c *ClickhouseClient) SetLoggers(loggers []dnsutils.Worker) {}
+func (c *ClickhouseClient) SetLoggers(loggers []pkgutils.Worker) {}
+
+func (c *ClickhouseClient) AddDroppedRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDroppedRoute(wrk)
+}
+
+func (c *ClickhouseClient) AddDefaultRoute(wrk pkgutils.Worker) {
+	c.RoutingHandler.AddDefaultRoute(wrk)
+}
+
+func (c *ClickhouseClient) ReloadConfig(config *pkgconfig.Config) {
+	c.LogInfo("reload configuration!")
+	c.configChan <- config
+}
 
 func (o *ClickhouseClient) ReadConfig() {
 	o.url = o.config.Loggers.ClickhouseClient.URL
@@ -68,7 +88,11 @@ func (o *ClickhouseClient) ReadConfig() {
 	o.table = o.config.Loggers.ClickhouseClient.Table
 }
 
-func (o *ClickhouseClient) Channel() chan dnsutils.DnsMessage {
+func (o *ClickhouseClient) Channel() chan dnsutils.DNSMessage {
+	return o.inputChan
+}
+
+func (o *ClickhouseClient) GetInputChannel() chan dnsutils.DNSMessage {
 	return o.inputChan
 }
 
@@ -93,8 +117,12 @@ func (o *ClickhouseClient) Stop() {
 func (o *ClickhouseClient) Run() {
 	o.LogInfo("running in background...")
 
+	// prepare next channels
+	defaultRoutes, defaultNames := o.RoutingHandler.GetDefaultRoutes()
+	droppedRoutes, droppedNames := o.RoutingHandler.GetDroppedRoutes()
+
 	// prepare transforms
-	listChannel := []chan dnsutils.DnsMessage{}
+	listChannel := []chan dnsutils.DNSMessage{}
 	listChannel = append(listChannel, o.outputChan)
 	subprocessors := transformers.NewTransforms(&o.config.OutgoingTransformers, o.logger, o.name, listChannel, 0)
 
@@ -112,6 +140,14 @@ RUN_LOOP:
 			o.doneRun <- true
 			break RUN_LOOP
 
+		case cfg, opened := <-o.configChan:
+			if !opened {
+				return
+			}
+			o.config = cfg
+			o.ReadConfig()
+			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
+
 		case dm, opened := <-o.inputChan:
 			if !opened {
 				o.LogInfo("input channel closed!")
@@ -119,10 +155,14 @@ RUN_LOOP:
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDnsMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.RETURN_DROP {
+			subprocessors.InitDNSMessageFormat(&dm)
+			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				o.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
+
+			// send to next ?
+			o.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
 
 			// send to output channel
 			o.outputChan <- dm
@@ -147,22 +187,22 @@ PROCESS_LOOP:
 				o.LogInfo("output channel closed!")
 				return
 			}
-			t, err := time.Parse(time.RFC3339, dm.DnsTap.TimestampRFC3339)
+			t, err := time.Parse(time.RFC3339, dm.DNSTap.TimestampRFC3339)
 			timensec := ""
 			if err == nil {
 				timensec = strconv.Itoa(int(int64(t.UnixNano())))
 			}
 			data := ClickhouseData{
-				Identity:  dm.DnsTap.Identity,
-				QueryIP:   dm.NetworkInfo.QueryIp,
+				Identity:  dm.DNSTap.Identity,
+				QueryIP:   dm.NetworkInfo.QueryIP,
 				QName:     dm.DNS.Qname,
-				Operation: dm.DnsTap.Operation,
+				Operation: dm.DNSTap.Operation,
 				Family:    dm.NetworkInfo.Family,
 				Protocol:  dm.NetworkInfo.Protocol,
 				QType:     dm.DNS.Qtype,
 				RCode:     dm.DNS.Rcode,
 				TimeNSec:  timensec,
-				TimeStamp: strconv.Itoa(int(int64(dm.DnsTap.TimeSec))),
+				TimeStamp: strconv.Itoa(int(int64(dm.DNSTap.TimeSec))),
 			}
 			url := o.url + "?query=INSERT%20INTO%20" + o.database + "." + o.table + "(identity,queryip,qname,operation,family,protocol,qtype,rcode,timensec,timestamp)%20VALUES%20('" + data.Identity + "','" + data.QueryIP + "','" + data.QName + "','" + data.Operation + "','" + data.Family + "','" + data.Protocol + "','" + data.QType + "','" + data.RCode + "','" + data.TimeNSec + "','" + data.TimeStamp + "')"
 			req, _ := http.NewRequest("POST", url, nil)

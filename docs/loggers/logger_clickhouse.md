@@ -17,7 +17,7 @@ Defaults:
 clickhouse:
   url: "http://localhost:8123"
   user: "default"
-  password: ""
-  table: ""
-  database: ""
+  password: "password"
+  table: "records"
+  database: "dnscollector"
 ```
