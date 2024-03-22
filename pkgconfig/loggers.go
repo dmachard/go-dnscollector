@@ -300,6 +300,14 @@ type ConfigLoggers struct {
 		URL               string `yaml:"url"`
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
 	} `yaml:"falco"`
+	ClickhouseClient struct {
+		Enable   bool   `yaml:"enable"`
+		URL      string `yaml:"url"`
+		User     string `yaml:"user"`
+		Password string `yaml:"password"`
+		Database string `yaml:"database"`
+		Table    string `yaml:"table"`
+	} `yaml:"clickhouse"`
 }
 
 func (c *ConfigLoggers) SetDefault() {
@@ -500,7 +508,7 @@ func (c *ConfigLoggers) SetDefault() {
 
 	c.ElasticSearchClient.Enable = false
 	c.ElasticSearchClient.Server = "http://127.0.0.1:9200/"
-	c.ElasticSearchClient.Index = "dnscollector"
+	c.ElasticSearchClient.Index = ProgName
 	c.ElasticSearchClient.ChannelBufferSize = 4096
 	c.ElasticSearchClient.BulkSize = 5242880
 	c.ElasticSearchClient.FlushInterval = 10
@@ -546,7 +554,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.KafkaProducer.BufferSize = 100
 	c.KafkaProducer.ConnectTimeout = 5
 	c.KafkaProducer.FlushInterval = 10
-	c.KafkaProducer.Topic = "dnscollector"
+	c.KafkaProducer.Topic = ProgName
 	c.KafkaProducer.Partition = 0
 	c.KafkaProducer.ChannelBufferSize = 4096
 	c.KafkaProducer.Compression = CompressNone
@@ -554,6 +562,13 @@ func (c *ConfigLoggers) SetDefault() {
 	c.FalcoClient.Enable = false
 	c.FalcoClient.URL = "http://127.0.0.1:9200"
 	c.FalcoClient.ChannelBufferSize = 65535
+
+	c.ClickhouseClient.Enable = false
+	c.ClickhouseClient.URL = "http://localhost:8123"
+	c.ClickhouseClient.User = "default"
+	c.ClickhouseClient.Password = "password"
+	c.ClickhouseClient.Database = ProgName
+	c.ClickhouseClient.Table = "records"
 }
 
 func (c *ConfigLoggers) GetTags() (ret []string) {
