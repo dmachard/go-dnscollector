@@ -18,3 +18,4 @@
 | [Redis](loggers/logger_redis.md)                | Redis pub logger                                      |
 | [Kafka](loggers/logger_kafka.md)                | Kafka DNS producer                                    |
 | [Falco](loggers/logger_falco.md)                | Falco plugin logger                                   |
+| [Clickhouse](loggers/logger_clickhouse.md)      | ClickHouse logger                                   |

@@ -22,7 +22,7 @@
 > - DNS parser with [Extension Mechanisms for DNS (EDNS)](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsparser.md) support
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
-> - [Extended DNStap](https://github.com/dmachard/go-dns-collector/blob/main/docs/extended_dnstap.md)
+> - Compression and [Extended](https://github.com/dmachard/go-dns-collector/blob/main/docs/extended_dnstap.md) DNSTap
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
@@ -67,7 +67,7 @@
     - [`Scalyr`](docs/loggers/logger_scalyr.md)
     - [`Redis`](docs/loggers/logger_redis.md) publisher
     - [`Kafka`](docs/loggers/logger_kafka.md) producer
-    - [`Clickhouse`](doc/logger_clickhouse.md) *not yet production ready*
+    - [`Clickhouse`](doc/loggers/logger_clickhouse.md) *not yet production ready*
   - *Send to security tools*
     - [`Falco`](docs/loggers/logger_falco.md)
 
