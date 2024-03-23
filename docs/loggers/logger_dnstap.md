@@ -24,6 +24,8 @@ Options:
 * `buffer-size`: (integer) how many DNS messages will be buffered before being sent
 * `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 * `extended-support`: (boolen) Extend the DNStap message by incorporating additional transformations, such as filtering and ATags, into the extra field.
+* `compression` (string) Compression for DNStap messages: `none`, `gzip`, `lz4`, `snappy`, `zstd`. Default to `none`.
+  > Specifies the compression algorithm to use.
 
 Defaults:
 
@@ -46,4 +48,5 @@ Defaults:
     buffer-size: 100
     chan-buffer-size: 65535
     extended-support: false
+    compression: none
 ```

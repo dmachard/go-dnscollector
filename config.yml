@@ -85,6 +85,13 @@ multiplexer:
     - name: console
       stdout:
         mode: text
+    - name: dnstapclient
+      dnstapclient:
+        transport: tcp
+        remote-address: 192.168.1.210
+        remote-port: 6002
+        flush-interval: 30
+        compression: gzip
 
   routes:
     - from: [ tap ]

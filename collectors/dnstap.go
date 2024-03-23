@@ -3,6 +3,7 @@ package collectors
 import (
 	"bufio"
 	"crypto/tls"
+	"encoding/binary"
 	"errors"
 	"io"
 	"net"
@@ -18,6 +19,7 @@ import (
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
+	"github.com/segmentio/kafka-go/compress"
 )
 
 type Dnstap struct {
@@ -154,7 +156,11 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	var err error
 	var frame *framestream.Frame
 	for {
-		frame, err = fs.RecvFrame(false)
+		if c.config.Collectors.Dnstap.Compression == pkgconfig.CompressNone {
+			frame, err = fs.RecvFrame(false)
+		} else {
+			frame, err = fs.RecvCompressedFrame(&compress.GzipCodec, false)
+		}
 		if err != nil {
 			connClosed := false
 
@@ -193,12 +199,48 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 			break
 		}
 
-		// send payload to the channel
-		select {
-		case dnstapProcessor.GetChannel() <- frame.Data(): // Successful send to channel
-		default:
-			c.droppedProcessor <- 1
+		if c.config.Collectors.Dnstap.Compression == pkgconfig.CompressNone {
+			// send payload to the channel
+			select {
+			case dnstapProcessor.GetChannel() <- frame.Data(): // Successful send to channel
+			default:
+				c.droppedProcessor <- 1
+			}
+		} else {
+			// ignore first 4 bytes
+			data := frame.Data()[4:]
+			validFrame := true
+			for len(data) >= 4 {
+				// get frame size
+				payloadSize := binary.BigEndian.Uint32(data[:4])
+				data = data[4:]
+
+				// enough next data ?
+				if uint32(len(data)) < payloadSize {
+					validFrame = false
+					break
+				}
+				// send payload to the channel
+				select {
+				case dnstapProcessor.GetChannel() <- data[:payloadSize]: // Successful send to channel
+				default:
+					c.droppedProcessor <- 1
+				}
+
+				// continue for next
+				data = data[payloadSize:]
+			}
+			if !validFrame {
+				c.LogError("conn #%d - invalid compressed frame received", connID)
+				break // ignore the invalid frame
+			}
 		}
+	}
+
+	// to avoid lock if the Stop function is already called
+	if c.stopCalled {
+		c.LogInfo("conn #%d - connection handler exited", connID)
+		return
 	}
 
 	// to avoid lock if the Stop function is already called

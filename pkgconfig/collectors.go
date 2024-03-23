@@ -32,6 +32,7 @@ type ConfigCollectors struct {
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
 		DisableDNSParser  bool   `yaml:"disable-dnsparser"`
 		ExtendedSupport   bool   `yaml:"extended-support"`
+		Compression       string `yaml:"compression"`
 	} `yaml:"dnstap"`
 	DnstapProxifier struct {
 		Enable        bool   `yaml:"enable"`
@@ -107,6 +108,7 @@ func (c *ConfigCollectors) SetDefault() {
 	c.Dnstap.ChannelBufferSize = 65535
 	c.Dnstap.DisableDNSParser = false
 	c.Dnstap.ExtendedSupport = false
+	c.Dnstap.Compression = CompressNone
 
 	c.DnstapProxifier.Enable = false
 	c.DnstapProxifier.ListenIP = AnyIP
