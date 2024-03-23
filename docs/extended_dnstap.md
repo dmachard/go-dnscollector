@@ -3,9 +3,6 @@
 The DNScollector adds enhancements to the DNStap protocol with compression, TLS and extended metadata support.
 These features can be only used between two `DNS-collector` instance.
 
-## TLS encryption
-
-DNSTAP messages contains sensitive data. `DNS-collector` have a configurable flag to enable TLS encryption.
 
 ## Compression
 
@@ -26,7 +23,9 @@ DNSTAP message can be extended by incorporating additional metadata added throug
 
 These metadata are encoded in the extra field with the following [protobuf structure](./../../dnsutils/extended_dnstap.proto).
 
-This feature can be only used between two `DNS-collector` instance.
+## TLS encryption
+
+DNSTAP messages contains sensitive data. `DNS-collector` have a configurable flag to enable TLS encryption.
 
 ## Settings
 
