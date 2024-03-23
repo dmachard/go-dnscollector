@@ -22,7 +22,7 @@
 > - DNS parser with [Extension Mechanisms for DNS (EDNS)](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsparser.md) support
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
-> - Compression and [Extended](https://github.com/dmachard/go-dns-collector/blob/main/docs/extended_dnstap.md) DNSTap
+> - [Extended](https://github.com/dmachard/go-dns-collector/blob/main/docs/extended_dnstap.md) DNStap with TLS encryption, compression, and more metadata capabilities
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
