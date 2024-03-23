@@ -14,6 +14,7 @@ import (
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
+	"github.com/segmentio/kafka-go/compress"
 )
 
 type DnstapSender struct {
@@ -209,7 +210,8 @@ func (ds *DnstapSender) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 
 	var data []byte
 	var err error
-	frame := &framestream.Frame{}
+	bulkFrame := &framestream.Frame{}
+	subFrame := &framestream.Frame{}
 
 	for _, dm := range *buf {
 		// update identity ?
@@ -224,13 +226,27 @@ func (ds *DnstapSender) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 			continue
 		}
 
-		// send the frame
-		frame.Write(data)
-		if err := ds.fs.SendFrame(frame); err != nil {
-			ds.LogError("send frame error %s", err)
+		if ds.config.Loggers.DNSTap.Compression == pkgconfig.CompressNone {
+			// send the frame
+			bulkFrame.Write(data)
+			if err := ds.fs.SendFrame(bulkFrame); err != nil {
+				ds.LogError("send frame error %s", err)
+				ds.fsReady = false
+				<-ds.transportReconnect
+				break
+			}
+		} else {
+			subFrame.Write(data)
+			bulkFrame.AppendData(subFrame.Data())
+		}
+	}
+
+	if ds.config.Loggers.DNSTap.Compression != pkgconfig.CompressNone {
+		bulkFrame.Encode()
+		if err := ds.fs.SendCompressedFrame(&compress.GzipCodec, bulkFrame); err != nil {
+			ds.LogError("send bulk frame error %s", err)
 			ds.fsReady = false
 			<-ds.transportReconnect
-			break
 		}
 	}
 

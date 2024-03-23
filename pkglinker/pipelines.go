@@ -172,6 +172,9 @@ func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map
 	if config.Loggers.FalcoClient.Enable {
 		mapLoggers[stanzaName] = loggers.NewFalcoClient(config, logger, stanzaName)
 	}
+	if config.Loggers.ClickhouseClient.Enable {
+		mapLoggers[stanzaName] = loggers.NewClickhouseClient(config, logger, stanzaName)
+	}
 
 	// register the collector if enabled
 	if config.Collectors.DNSMessage.Enable {

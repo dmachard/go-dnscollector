@@ -2,6 +2,7 @@ package loggers
 
 import (
 	"bufio"
+	"encoding/binary"
 	"net"
 	"testing"
 	"time"
@@ -11,31 +12,45 @@ import (
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
+	"github.com/segmentio/kafka-go/compress"
 	"google.golang.org/protobuf/proto"
 )
 
 func Test_DnstapClient(t *testing.T) {
 
 	testcases := []struct {
-		transport string
-		address   string
+		name        string
+		transport   string
+		address     string
+		compression string
 	}{
 		{
-			transport: "tcp",
-			address:   ":6000",
+			name:        "dnstap_tcp",
+			transport:   "tcp",
+			address:     ":6000",
+			compression: "none",
 		},
 		{
-			transport: "unix",
-			address:   "/tmp/test.sock",
+			name:        "dnstap_unix",
+			transport:   "unix",
+			address:     "/tmp/test.sock",
+			compression: "none",
+		},
+		{
+			name:        "dnstap_tcp_gzip_compress",
+			transport:   "tcp",
+			address:     ":6000",
+			compression: "gzip",
 		},
 	}
 
 	for _, tc := range testcases {
-		t.Run(tc.transport, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			// init logger
 			cfg := pkgconfig.GetFakeConfig()
 			cfg.Loggers.DNSTap.FlushInterval = 1
 			cfg.Loggers.DNSTap.BufferSize = 0
+			cfg.Loggers.DNSTap.Compression = tc.compression
 			if tc.transport == "unix" {
 				cfg.Loggers.DNSTap.SockPath = tc.address
 			}
@@ -73,15 +88,47 @@ func Test_DnstapClient(t *testing.T) {
 			g.GetInputChannel() <- dm
 
 			// receive frame on server side ?, timeout 5s
-			fs, err := fsSvr.RecvFrame(true)
+			var fs *framestream.Frame
+			if tc.compression == "gzip" {
+				fs, err = fsSvr.RecvCompressedFrame(&compress.GzipCodec, true)
+			} else {
+				fs, err = fsSvr.RecvFrame(true)
+			}
 			if err != nil {
 				t.Errorf("error to receive frame: %s", err)
 			}
 
 			// decode the dnstap message in server side
 			dt := &dnstap.Dnstap{}
-			if err := proto.Unmarshal(fs.Data(), dt); err != nil {
-				t.Errorf("error to decode dnstap")
+			if cfg.Loggers.DNSTap.Compression == pkgconfig.CompressNone {
+				if err := proto.Unmarshal(fs.Data(), dt); err != nil {
+					t.Errorf("error to decode dnstap")
+				}
+			} else {
+				// ignore first 4 bytes
+				data := fs.Data()[4:]
+				validFrame := true
+				for len(data) >= 4 {
+					// get frame size
+					payloadSize := binary.BigEndian.Uint32(data[:4])
+					data = data[4:]
+
+					// enough next data ?
+					if uint32(len(data)) < payloadSize {
+						validFrame = false
+						break
+					}
+
+					if err := proto.Unmarshal(data[:payloadSize], dt); err != nil {
+						t.Errorf("error to decode dnstap from compressed frame")
+					}
+
+					// continue for next
+					data = data[payloadSize:]
+				}
+				if !validFrame {
+					t.Errorf("invalid compressed frame")
+				}
 			}
 		})
 	}

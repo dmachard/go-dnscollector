@@ -15,8 +15,18 @@ sudo setcap cap_net_admin,cap_net_raw=eip go-dnscollector
 
 Options:
 
-* `port` (int) filter on source and destination port. Defaults to `53`.
-* `device` (str) interface name to sniff. Defaults to `wlp2s0`.
+* `port` (int) filter on source and destination port.
+* `device` (str) interface name to sniff.
   > if value is empty, bind on all interfaces.
-* `chan-buffer-size` (int) incoming channel size, number of packet before to drop it. Default to `65535`.
+* `chan-buffer-size` (int) incoming channel size, number of packet before to drop it.
   > Specifies the maximum number of packets that can be buffered before dropping additional packets.
+
+Defaults:
+
+```yaml
+- name: sniffer
+  afpacket-sniffer:
+    port: 53
+    device: wlp2s0
+    chan-buffer-size: 65535
+```

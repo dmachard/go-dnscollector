@@ -1,9 +1,9 @@
 <p align="center">
 <img src="https://goreportcard.com/badge/github.com/dmachard/go-dns-collector" alt="Go Report"/>
 <img src="https://img.shields.io/badge/go%20version-min%201.20-green" alt="Go version"/>
-<img src="https://img.shields.io/badge/go%20tests-429-green" alt="Go tests"/>
-<img src="https://img.shields.io/badge/go%20bench-18-green" alt="Go bench"/>
-<img src="https://img.shields.io/badge/go%20lines-38661-green" alt="Go lines"/>
+<img src="https://img.shields.io/badge/go%20tests-435-green" alt="Go tests"/>
+<img src="https://img.shields.io/badge/go%20bench-19-green" alt="Go bench"/>
+<img src="https://img.shields.io/badge/go%20lines-39765-green" alt="Go lines"/>
 </p>
 
 <p align="center">
@@ -22,6 +22,7 @@
 > - DNS parser with [Extension Mechanisms for DNS (EDNS)](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsparser.md) support
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
+> - [Extended](https://github.com/dmachard/go-dns-collector/blob/main/docs/extended_dnstap.md) DNStap with TLS encryption, compression, and more metadata capabilities
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
@@ -66,6 +67,7 @@
     - [`Scalyr`](docs/loggers/logger_scalyr.md)
     - [`Redis`](docs/loggers/logger_redis.md) publisher
     - [`Kafka`](docs/loggers/logger_kafka.md) producer
+    - [`Clickhouse`](docs/loggers/logger_clickhouse.md) *(not yet production ready)*
   - *Send to security tools*
     - [`Falco`](docs/loggers/logger_falco.md)
 

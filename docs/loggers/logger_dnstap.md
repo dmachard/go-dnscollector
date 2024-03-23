@@ -24,25 +24,29 @@ Options:
 * `buffer-size`: (integer) how many DNS messages will be buffered before being sent
 * `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 * `extended-support`: (boolen) Extend the DNStap message by incorporating additional transformations, such as filtering and ATags, into the extra field.
+* `compression` (string) Compression for DNStap messages: `none`, `gzip`, `lz4`, `snappy`, `zstd`. Default to `none`.
+  > Specifies the compression algorithm to use.
 
-Default values:
+Defaults:
 
 ```yaml
-dnstapclient:
-  transport: tcp
-  remote-address: 10.0.0.1
-  remote-port: 6000
-  connect-timeout: 5
-  retry-interval: 10
-  flush-interval: 30
-  tls-insecure: false
-  tls-min-version: 1.2
-  ca-file: ""
-  cert-file: ""
-  key-file: ""
-  server-id: "dnscollector"
-  overwrite-identity: false
-  buffer-size: 100
-  chan-buffer-size: 65535
-  extended-support: false
+- name: dnstap
+  dnstapclient:
+    transport: tcp
+    remote-address: 10.0.0.1
+    remote-port: 6000
+    connect-timeout: 5
+    retry-interval: 10
+    flush-interval: 30
+    tls-insecure: false
+    tls-min-version: 1.2
+    ca-file: ""
+    cert-file: ""
+    key-file: ""
+    server-id: "dnscollector"
+    overwrite-identity: false
+    buffer-size: 100
+    chan-buffer-size: 65535
+    extended-support: false
+    compression: none
 ```

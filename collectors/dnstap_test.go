@@ -15,37 +15,50 @@ import (
 	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
+	"github.com/segmentio/kafka-go/compress"
 	"google.golang.org/protobuf/proto"
 )
 
 func Test_DnstapCollector(t *testing.T) {
 	testcases := []struct {
-		name       string
-		mode       string
-		address    string
-		listenPort int
-		operation  string
+		name        string
+		mode        string
+		address     string
+		listenPort  int
+		operation   string
+		compression string
 	}{
 		{
-			name:       "tcp_default",
-			mode:       netlib.SocketTCP,
-			address:    ":6000",
-			listenPort: 0,
-			operation:  "CLIENT_QUERY",
+			name:        "tcp_default",
+			mode:        netlib.SocketTCP,
+			address:     ":6000",
+			listenPort:  0,
+			operation:   "CLIENT_QUERY",
+			compression: "none",
 		},
 		{
-			name:       "tcp_custom_port",
-			mode:       netlib.SocketTCP,
-			address:    ":7000",
-			listenPort: 7000,
-			operation:  "CLIENT_QUERY",
+			name:        "tcp_custom_port",
+			mode:        netlib.SocketTCP,
+			address:     ":7000",
+			listenPort:  7000,
+			operation:   "CLIENT_QUERY",
+			compression: "none",
 		},
 		{
-			name:       "unix_default",
-			mode:       netlib.SocketUnix,
-			address:    "/tmp/dnscollector.sock",
-			listenPort: 0,
-			operation:  "CLIENT_QUERY",
+			name:        "unix_default",
+			mode:        netlib.SocketUnix,
+			address:     "/tmp/dnscollector.sock",
+			listenPort:  0,
+			operation:   "CLIENT_QUERY",
+			compression: "none",
+		},
+		{
+			name:        "tcp_compress_gzip",
+			mode:        netlib.SocketTCP,
+			address:     ":7000",
+			listenPort:  7000,
+			operation:   "CLIENT_QUERY",
+			compression: "gzip",
 		},
 	}
 
@@ -60,6 +73,7 @@ func Test_DnstapCollector(t *testing.T) {
 			if tc.mode == netlib.SocketUnix {
 				config.Collectors.Dnstap.SockPath = tc.address
 			}
+			config.Collectors.Dnstap.Compression = tc.compression
 
 			c := NewDnstap([]pkgutils.Worker{g}, config, logger.New(false), "test")
 			if err := c.Listen(); err != nil {
@@ -80,7 +94,8 @@ func Test_DnstapCollector(t *testing.T) {
 			if err := fs.InitSender(); err != nil {
 				t.Fatalf("framestream init error: %s", err)
 			} else {
-				frame := &framestream.Frame{}
+				bulkFrame := &framestream.Frame{}
+				subFrame := &framestream.Frame{}
 
 				// get fake dns question
 				dnsquery, err := processors.GetFakeDNS()
@@ -98,9 +113,23 @@ func Test_DnstapCollector(t *testing.T) {
 				}
 
 				// send query
-				frame.Write(data)
-				if err := fs.SendFrame(frame); err != nil {
-					t.Fatalf("send frame error %s", err)
+
+				if config.Collectors.Dnstap.Compression == pkgconfig.CompressNone {
+					// send the frame
+					bulkFrame.Write(data)
+					if err := fs.SendFrame(bulkFrame); err != nil {
+						t.Fatalf("send frame error %s", err)
+					}
+				} else {
+					subFrame.Write(data)
+					bulkFrame.AppendData(subFrame.Data())
+				}
+
+				if config.Collectors.Dnstap.Compression != pkgconfig.CompressNone {
+					bulkFrame.Encode()
+					if err := fs.SendCompressedFrame(&compress.GzipCodec, bulkFrame); err != nil {
+						t.Fatalf("send compressed frame error %s", err)
+					}
 				}
 			}
 

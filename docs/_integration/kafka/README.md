@@ -1,8 +1,6 @@
 
 # DNS-collector with Kafka
 
-- Copy this [folder](./docs/_integration/kafka).
-
 - Create the `data` folder.
 
 - Start the docker stack:
