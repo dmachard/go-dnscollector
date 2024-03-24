@@ -18,11 +18,11 @@
 
 > Additionally, DNS-collector also support
 >
+> - [Extended](https://github.com/dmachard/go-dns-collector/blob/main/docs/extended_dnstap.md) DNStap with TLS encryption, compression, and more metadata capabilities
 > - DNS protocol conversions (to [plain text](https://github.com/dmachard/go-dns-collector/blob/main/docs/configuration.md#custom-text-format), [JSON](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsjson.md), and more... )
 > - DNS parser with [Extension Mechanisms for DNS (EDNS)](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsparser.md) support
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
-> - [Extended](https://github.com/dmachard/go-dns-collector/blob/main/docs/extended_dnstap.md) DNStap with TLS encryption, compression, and more metadata capabilities
 
 *NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
 
@@ -73,7 +73,7 @@
 
 - **[Transformers](./docs/transformers.md)**
 
-  - Relabeling `JSON` output [Relabeling](docs/transformers/transform_relabeling.md)
+  - Custom `JSON` [Relabeling](docs/transformers/transform_relabeling.md)
   - Add additionnal [Tags](docs/transformers/transform_atags.md)
   - Traffic [Filtering](docs/transformers/transform_trafficfiltering.md) and [Reducer](docs/transformers/transform_trafficreducer.md)
   - Latency [Computing](docs/transformers/transform_latency.md)

@@ -56,6 +56,7 @@ func (p *RelabelProcessor) Precompile() {
 		})
 	}
 }
+
 func (p *RelabelProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 	if dm.Relabeling == nil {
 		dm.Relabeling = &dnsutils.TransformRelabeling{
