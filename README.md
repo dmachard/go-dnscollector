@@ -67,13 +67,13 @@
     - [`Scalyr`](docs/loggers/logger_scalyr.md)
     - [`Redis`](docs/loggers/logger_redis.md) publisher
     - [`Kafka`](docs/loggers/logger_kafka.md) producer
-    - [`Clickhouse`](docs/loggers/logger_clickhouse.md) *(not yet production ready)*
+    - [`ClickHouse`](docs/loggers/logger_clickhouse.md) *(not yet production ready)*
   - *Send to security tools*
     - [`Falco`](docs/loggers/logger_falco.md)
 
 - **[Transformers](./docs/transformers.md)**
 
-  - Custom `JSON` [Relabeling](docs/transformers/transform_relabeling.md)
+  - Custom JSON [Relabeling](docs/transformers/transform_relabeling.md)
   - Add additionnal [Tags](docs/transformers/transform_atags.md)
   - Traffic [Filtering](docs/transformers/transform_trafficfiltering.md) and [Reducer](docs/transformers/transform_trafficreducer.md)
   - Latency [Computing](docs/transformers/transform_latency.md)

@@ -162,6 +162,7 @@ This JSON message can be extended by collector(s):
 
 This JSON message can be also extended by transformer(s):
 
+- [Atags](transformers/transformer_atags.md)
 - [GeoIP](transformers/transformer_geoip.md)
 - [Suspicious traffic detector](transformers/transform_suspiciousdetector.md)
 - [Public suffix](transformers/transform_normalize.md)
