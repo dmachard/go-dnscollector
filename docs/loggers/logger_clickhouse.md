@@ -1,7 +1,7 @@
 
-# Logger: Clickhouse client
+# Logger: ClickHouse client
 
-Clickhouse client to remote Clickhouse server
+Clickhouse client to remote ClickHouse server
 
 Options:
 

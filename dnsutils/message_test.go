@@ -396,6 +396,15 @@ func TestDnsMessage_Json_Transforms_Reference(t *testing.T) {
 						}
 					}`,
 		},
+		{
+			transform: "atags",
+			dmRef:     DNSMessage{ATags: &TransformATags{Tags: []string{"test0", "test1"}}},
+			jsonRef: `{
+						"atags": {
+							"tags": [ "test0", "test1" ]
+						}
+					}`,
+		},
 	}
 
 	for _, tc := range testcases {

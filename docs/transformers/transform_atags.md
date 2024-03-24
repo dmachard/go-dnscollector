@@ -28,7 +28,11 @@ Flat JSON:
 Default JSON structure:
 
 ```json
-
+{
+  "atags": {
+    "tags": [ "test0", "test1" ]
+  }
+}
 ```
 
 Complete example with the `dnsmessage` collector

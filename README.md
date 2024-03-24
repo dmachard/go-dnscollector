@@ -56,18 +56,18 @@
     - [`Statsd`](docs/loggers/logger_statsd.md) support
     - [`REST API`](docs/loggers/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/docs/swagger.yml) to search DNS domains
   - *Send to remote host with generic transport protocol*
-    - [`TCP`](docs/loggers/logger_tcp.md)
+    - Raw [`TCP`](docs/loggers/logger_tcp.md) client
     - [`Syslog`](docs/loggers/logger_syslog.md) with TLS support
-    - [`DNSTap`](docs/loggers/logger_dnstap.md) protobuf messages with TLS support
+    - [`DNSTap`](docs/loggers/logger_dnstap.md) protobuf client
   - *Send to various sinks*
     - [`Fluentd`](docs/loggers/logger_fluentd.md)
     - [`InfluxDB`](docs/loggers/logger_influxdb.md)
-    - [`Loki`](docs/loggers/logger_loki.md)
+    - [`Loki`](docs/loggers/logger_loki.md) client
     - [`ElasticSearch`](docs/loggers/logger_elasticsearch.md)
     - [`Scalyr`](docs/loggers/logger_scalyr.md)
     - [`Redis`](docs/loggers/logger_redis.md) publisher
     - [`Kafka`](docs/loggers/logger_kafka.md) producer
-    - [`ClickHouse`](docs/loggers/logger_clickhouse.md) *(not yet production ready)*
+    - [`ClickHouse`](docs/loggers/logger_clickhouse.md) client *(not yet production ready)*
   - *Send to security tools*
     - [`Falco`](docs/loggers/logger_falco.md)
 
