@@ -69,6 +69,10 @@ func GetItemConfig(section string, config *pkgconfig.Config, item pkgconfig.Mult
 
 	// add transformer
 	for k, v := range item.Transforms {
+		if _, ok := v.(map[string]interface{}); !ok {
+			panic("main - yaml transform config error - map expected")
+		}
+
 		v.(map[string]interface{})["enable"] = true
 		cfg[section+Transformers].(map[string]interface{})[k] = v
 	}

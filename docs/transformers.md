@@ -26,3 +26,4 @@ Transformers processing is currently in this order :
 | [Data Extractor](transformers/transform_dataextractor.md)         | Add base64 encoded dns payload                        |
 | [Traffic Prediction](transformers/transform_trafficprediction.md) | Features to train machine learning models              |
 | [Additionnal Tags](transformers/transform_atags.md) | Add additionnal tags |
+| [JSON relabeling](transformers/transform_relabeling.md) | JSON relabeling to rename or remove keys |

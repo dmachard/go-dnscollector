@@ -3,7 +3,7 @@
 The `DNS-collector` enables the transformation of DNS queries or replies into `JSON` format.
 The JSON format contains DNS messages with additionnal metadata added by transformers or collectors.
 
-Main default JSON payload parts:
+The default JSON payload parts:
 
 - `network`:  Query/response IP and port, the protocol, and family used.
 - `dnstap`: Message type, arrival packet time, latency.
@@ -94,6 +94,8 @@ Example:
 At times, a single level key-value output in JSON is easier to ingest than multi-level JSON structures.
 Utilizing `flat-json` delivers every output field as its own key/value pair but requires more processing
 on the host running DNS-collector.
+
+This format is recommended because custom relabeling can be applied on it (drop keys or rename it).
 
 Here's a flat JSON output formatted using `jq`:
 

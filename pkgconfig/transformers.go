@@ -1,5 +1,10 @@
 package pkgconfig
 
+type RelabelingConfig struct {
+	Regex       string `yaml:"regex"`
+	Replacement string `yaml:"replacement"`
+}
+
 type ConfigTransformers struct {
 	UserPrivacy struct {
 		Enable            bool   `yaml:"enable"`
@@ -71,6 +76,11 @@ type ConfigTransformers struct {
 		Enable bool     `yaml:"enable"`
 		Tags   []string `yaml:"tags,flow"`
 	} `yaml:"atags"`
+	Relabeling struct {
+		Enable bool               `yaml:"enable"`
+		Rename []RelabelingConfig `yaml:"rename,flow"`
+		Remove []RelabelingConfig `yaml:"remove,flow"`
+	} `yaml:"relabeling"`
 }
 
 func (c *ConfigTransformers) SetDefault() {
@@ -132,6 +142,10 @@ func (c *ConfigTransformers) SetDefault() {
 
 	c.ATags.Enable = false
 	c.ATags.Tags = []string{}
+
+	c.Relabeling.Enable = false
+	c.Relabeling.Remove = []RelabelingConfig{}
+	c.Relabeling.Rename = []RelabelingConfig{}
 }
 
 func GetFakeConfigTransformers() *ConfigTransformers {

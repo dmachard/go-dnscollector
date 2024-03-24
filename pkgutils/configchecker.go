@@ -72,13 +72,18 @@ func CheckConfig(userConfigPath string, dmRef dnsutils.DNSMessage) error {
 	}
 
 	// create default config
-	// and simulate items in multiplexer and pipelines mode
 	defaultConfig := &pkgconfig.Config{}
 	defaultConfig.SetDefault()
+
+	// and simulate items in multiplexer and pipelines mode
 	defaultConfig.Multiplexer.Routes = append(defaultConfig.Multiplexer.Routes, pkgconfig.MultiplexRoutes{})
 	defaultConfig.Multiplexer.Loggers = append(defaultConfig.Multiplexer.Loggers, pkgconfig.MultiplexInOut{})
 	defaultConfig.Multiplexer.Collectors = append(defaultConfig.Multiplexer.Collectors, pkgconfig.MultiplexInOut{})
 	defaultConfig.Pipelines = append(defaultConfig.Pipelines, pkgconfig.ConfigPipelines{})
+
+	// add default relabeling examples
+	defaultConfig.IngoingTransformers.Relabeling.Remove = append(defaultConfig.IngoingTransformers.Relabeling.Remove, pkgconfig.RelabelingConfig{})
+	defaultConfig.IngoingTransformers.Relabeling.Rename = append(defaultConfig.IngoingTransformers.Relabeling.Rename, pkgconfig.RelabelingConfig{})
 
 	// Convert default config to map
 	// And get unique YAML keys
