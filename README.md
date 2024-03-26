@@ -1,7 +1,7 @@
 <p align="center">
 <img src="https://goreportcard.com/badge/github.com/dmachard/go-dns-collector" alt="Go Report"/>
 <img src="https://img.shields.io/badge/go%20version-min%201.20-green" alt="Go version"/>
-<img src="https://img.shields.io/badge/go%20tests-435-green" alt="Go tests"/>
+<img src="https://img.shields.io/badge/go%20tests-440-green" alt="Go tests"/>
 <img src="https://img.shields.io/badge/go%20bench-19-green" alt="Go bench"/>
 <img src="https://img.shields.io/badge/go%20lines-39765-green" alt="Go lines"/>
 </p>
@@ -56,24 +56,24 @@
     - [`Statsd`](docs/loggers/logger_statsd.md) support
     - [`REST API`](docs/loggers/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/docs/swagger.yml) to search DNS domains
   - *Send to remote host with generic transport protocol*
-    - [`TCP`](docs/loggers/logger_tcp.md)
+    - Raw [`TCP`](docs/loggers/logger_tcp.md) client
     - [`Syslog`](docs/loggers/logger_syslog.md) with TLS support
-    - [`DNSTap`](docs/loggers/logger_dnstap.md) protobuf messages with TLS support
+    - [`DNSTap`](docs/loggers/logger_dnstap.md) protobuf client
   - *Send to various sinks*
     - [`Fluentd`](docs/loggers/logger_fluentd.md)
     - [`InfluxDB`](docs/loggers/logger_influxdb.md)
-    - [`Loki`](docs/loggers/logger_loki.md)
+    - [`Loki`](docs/loggers/logger_loki.md) client
     - [`ElasticSearch`](docs/loggers/logger_elasticsearch.md)
     - [`Scalyr`](docs/loggers/logger_scalyr.md)
     - [`Redis`](docs/loggers/logger_redis.md) publisher
     - [`Kafka`](docs/loggers/logger_kafka.md) producer
-    - [`Clickhouse`](docs/loggers/logger_clickhouse.md) *(not yet production ready)*
+    - [`ClickHouse`](docs/loggers/logger_clickhouse.md) client *(not yet production ready)*
   - *Send to security tools*
     - [`Falco`](docs/loggers/logger_falco.md)
 
 - **[Transformers](./docs/transformers.md)**
 
-  - Custom `JSON` [Relabeling](docs/transformers/transform_relabeling.md)
+  - Custom [Relabeling](docs/transformers/transform_relabeling.md) for JSON structure
   - Add additionnal [Tags](docs/transformers/transform_atags.md)
   - Traffic [Filtering](docs/transformers/transform_trafficfiltering.md) and [Reducer](docs/transformers/transform_trafficreducer.md)
   - Latency [Computing](docs/transformers/transform_latency.md)

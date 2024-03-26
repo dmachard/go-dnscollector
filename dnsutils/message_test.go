@@ -396,6 +396,15 @@ func TestDnsMessage_Json_Transforms_Reference(t *testing.T) {
 						}
 					}`,
 		},
+		{
+			transform: "atags",
+			dmRef:     DNSMessage{ATags: &TransformATags{Tags: []string{"test0", "test1"}}},
+			jsonRef: `{
+						"atags": {
+							"tags": [ "test0", "test1" ]
+						}
+					}`,
+		},
 	}
 
 	for _, tc := range testcases {
@@ -1183,6 +1192,61 @@ func TestDnsMessage_TextFormat_Directives_Pdns(t *testing.T) {
 			format:   "powerdns-http-version",
 			dm:       DNSMessage{PowerDNS: &PowerDNS{HTTPVersion: "HTTP2"}},
 			expected: "HTTP2",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			line := tc.dm.String(
+				strings.Fields(tc.format),
+				config.Global.TextFormatDelimiter,
+				config.Global.TextFormatBoundary,
+			)
+			if line != tc.expected {
+				t.Errorf("Want: %s, got: %s", tc.expected, line)
+			}
+		})
+	}
+}
+
+func TestDnsMessage_TextFormat_Directives_ATags(t *testing.T) {
+	config := pkgconfig.GetFakeConfig()
+
+	testcases := []struct {
+		name     string
+		format   string
+		dm       DNSMessage
+		expected string
+	}{
+		{
+			name:     "undefined",
+			format:   "atags",
+			dm:       DNSMessage{},
+			expected: "-",
+		},
+		{
+			name:     "empty_attributes",
+			format:   "atags",
+			dm:       DNSMessage{ATags: &TransformATags{}},
+			expected: "-",
+		},
+		{
+			name:     "tags_all",
+			format:   "atags",
+			dm:       DNSMessage{ATags: &TransformATags{Tags: []string{"tag1", "tag2"}}},
+			expected: "tag1,tag2",
+		},
+		{
+			name:     "tags_index",
+			format:   "atags:1",
+			dm:       DNSMessage{ATags: &TransformATags{Tags: []string{"tag1", "tag2"}}},
+			expected: "tag2",
+		},
+		{
+			name:     "tags_invalid_index",
+			format:   "atags:3",
+			dm:       DNSMessage{ATags: &TransformATags{Tags: []string{"tag1", "tag2"}}},
+			expected: "-",
 		},
 	}
 
