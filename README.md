@@ -73,7 +73,7 @@
 
 - **[Transformers](./docs/transformers.md)**
 
-  - Custom JSON [Relabeling](docs/transformers/transform_relabeling.md)
+  - Custom [Relabeling](docs/transformers/transform_relabeling.md) for JSON structure
   - Add additionnal [Tags](docs/transformers/transform_atags.md)
   - Traffic [Filtering](docs/transformers/transform_trafficfiltering.md) and [Reducer](docs/transformers/transform_trafficreducer.md)
   - Latency [Computing](docs/transformers/transform_latency.md)

@@ -1209,6 +1209,61 @@ func TestDnsMessage_TextFormat_Directives_Pdns(t *testing.T) {
 	}
 }
 
+func TestDnsMessage_TextFormat_Directives_ATags(t *testing.T) {
+	config := pkgconfig.GetFakeConfig()
+
+	testcases := []struct {
+		name     string
+		format   string
+		dm       DNSMessage
+		expected string
+	}{
+		{
+			name:     "undefined",
+			format:   "atags",
+			dm:       DNSMessage{},
+			expected: "-",
+		},
+		{
+			name:     "empty_attributes",
+			format:   "atags",
+			dm:       DNSMessage{ATags: &TransformATags{}},
+			expected: "-",
+		},
+		{
+			name:     "tags_all",
+			format:   "atags",
+			dm:       DNSMessage{ATags: &TransformATags{Tags: []string{"tag1", "tag2"}}},
+			expected: "tag1,tag2",
+		},
+		{
+			name:     "tags_index",
+			format:   "atags:1",
+			dm:       DNSMessage{ATags: &TransformATags{Tags: []string{"tag1", "tag2"}}},
+			expected: "tag2",
+		},
+		{
+			name:     "tags_invalid_index",
+			format:   "atags:3",
+			dm:       DNSMessage{ATags: &TransformATags{Tags: []string{"tag1", "tag2"}}},
+			expected: "-",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			line := tc.dm.String(
+				strings.Fields(tc.format),
+				config.Global.TextFormatDelimiter,
+				config.Global.TextFormatBoundary,
+			)
+			if line != tc.expected {
+				t.Errorf("Want: %s, got: %s", tc.expected, line)
+			}
+		})
+	}
+}
+
 func TestDnsMessage_TextFormat_Directives_Suspicious(t *testing.T) {
 	config := pkgconfig.GetFakeConfig()
 

@@ -37,6 +37,7 @@ var (
 	ReducerDirectives         = regexp.MustCompile(`^reducer-*`)
 	MachineLearningDirectives = regexp.MustCompile(`^ml-*`)
 	FilteringDirectives       = regexp.MustCompile(`^filtering-*`)
+	ATagsDirectives           = regexp.MustCompile(`^atags*`)
 )
 
 func GetIPPort(dm *DNSMessage) (string, int, string, int) {
@@ -446,6 +447,49 @@ func (dm *DNSMessage) handlePdnsDirectives(directive string, s *strings.Builder)
 	return nil
 }
 
+func (dm *DNSMessage) handleATagsDirectives(directive string, s *strings.Builder) error {
+	if dm.ATags == nil {
+		s.WriteString("-")
+	} else {
+		var directives []string
+		if i := strings.IndexByte(directive, ':'); i == -1 {
+			directives = append(directives, directive)
+		} else {
+			directives = []string{directive[:i], directive[i+1:]}
+		}
+
+		switch directive := directives[0]; {
+		case directive == "atags":
+			if len(dm.ATags.Tags) > 0 {
+				if len(directives) == 2 {
+					tagIndex, err := strconv.Atoi(directives[1])
+					if err != nil {
+						log.Fatalf("unsupport tag index provided (integer expected): %s", directives[1])
+					}
+					if tagIndex >= len(dm.ATags.Tags) {
+						s.WriteString("-")
+					} else {
+						s.WriteString(dm.ATags.Tags[tagIndex])
+					}
+				} else {
+					for i, tag := range dm.ATags.Tags {
+						s.WriteString(tag)
+						// add separator
+						if i+1 < len(dm.ATags.Tags) {
+							s.WriteString(",")
+						}
+					}
+				}
+			} else {
+				s.WriteString("-")
+			}
+		default:
+			return errors.New(ErrorUnexpectedDirective + directive)
+		}
+	}
+	return nil
+}
+
 func (dm *DNSMessage) handleSuspiciousDirectives(directive string, s *strings.Builder) error {
 	if dm.Suspicious == nil {
 		s.WriteString("-")
@@ -790,6 +834,11 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			}
 		case FilteringDirectives.MatchString(directive):
 			err := dm.handleFilteringDirectives(directive, &s)
+			if err != nil {
+				return nil, err
+			}
+		case ATagsDirectives.MatchString(directive):
+			err := dm.handleATagsDirectives(directive, &s)
 			if err != nil {
 				return nil, err
 			}

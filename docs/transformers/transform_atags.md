@@ -48,3 +48,16 @@ pipelines:
       atags:
         tags: [ "google"]
 ```
+
+Custom text format:
+
+If you logs your DNS traffic in basic text format, you can use the specific directives:
+
+- `atags[:INDEX]`: get all tags separated by comma, or the tag according to the provided INDEX
+
+```yaml
+- name: console
+  stdout:
+    mode: text
+    text-format: "timestamp-rfc3339ns identity qr qname qtype atags:0"
+```
