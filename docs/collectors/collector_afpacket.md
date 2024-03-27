@@ -15,10 +15,13 @@ sudo setcap cap_net_admin,cap_net_raw=eip go-dnscollector
 
 Options:
 
-* `port` (int) filter on source and destination port.
-* `device` (str) interface name to sniff.
-  > if value is empty, bind on all interfaces.
-* `chan-buffer-size` (int) incoming channel size, number of packet before to drop it.
+* `port` (int)
+  > filter on source and destination port.
+
+* `device` (str)
+  > Interface name to sniff. If value is empty, bind on all interfaces.
+
+* `chan-buffer-size` (int)
   > Specifies the maximum number of packets that can be buffered before dropping additional packets.
 
 Defaults:

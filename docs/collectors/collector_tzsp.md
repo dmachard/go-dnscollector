@@ -5,11 +5,14 @@ Its primary purpose is to suppport DNS packet capture from Mikrotik brand device
 
 Options:
 
-- `listen-ip` (str) listen on ip.
-- `listen-port` (int) listening on port.
-- `chan-buffer-size` (int) incoming channel size, number of packet before to drop it.
-  > Specifies the maximum number of packets that can be buffered before dropping additional packets.
+* `listen-ip` (str)
+  > Set the local address that the server will bind to.
 
+* `listen-port` (int)
+  > Set the local port that the server will bind to.
+
+* `chan-buffer-size` (int)
+  > Specifies the maximum number of packets that can be buffered before dropping additional packets.
 
 Defaults:
 

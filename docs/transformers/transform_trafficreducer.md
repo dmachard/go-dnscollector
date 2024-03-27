@@ -14,9 +14,14 @@ The following criterias are used:
 
 Options:
 
-- `repetitive-traffic-detector`: (boolean) detect repetitive traffic
-- `qname-plus-one`: (boolean) use qname+1 instead of the complete one
-- `watch-interval`: (integer) watch interval in seconds
+* `repetitive-traffic-detector` (boolean)
+  > detect repetitive traffic
+
+* `qname-plus-one` (boolean)
+  > use qname+1 instead of the complete one
+
+* `watch-interval` (integer)
+  > watch interval in seconds
 
 Default values:
 
@@ -30,8 +35,8 @@ transforms:
 
 Specific text directive(s) available for the text format:
 
-- `reducer-occurrences`: display the number of detected duplication
-- `cumulative-length`: sum of the length of each occurrences
+* `reducer-occurrences`: display the number of detected duplication
+* `cumulative-length`: sum of the length of each occurrences
 
 When the feature is enabled, the following json field are populated in your DNS message:
 

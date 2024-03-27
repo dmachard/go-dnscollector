@@ -2,10 +2,13 @@
 
 Use this transformer to add additional tags in your DNS logs.
 
-This transformation can be valuable in the `pipeline` mode, where it's possible to match specific traffic. 
+This transformation can be valuable in the [`pipeline`](https://github.com/dmachard/go-dnscollector/blob/main/docs/running_mode.md#pipelining) mode, where it's possible to match specific traffic.
 In such cases, you can include a tag for identification."
 
-A list of string is expected in the `tag` field.
+Options:
+
+* `tag` (list)
+  > A list of string
 
 Configuration example:
 
@@ -24,6 +27,7 @@ Flat JSON:
   "atags.tags.0": "TXT:google",
   "atags.tags.1": "MX:apple"
 }
+```
 
 Default JSON structure:
 

@@ -5,6 +5,8 @@ These features can be only used between two `DNS-collector` instance.
 
 ## Compression
 
+> ref: https://github.com/dmachard/go-dnscollector/issues/490
+
 DNSTAP messages are highly compressible. They can be sent in reasonably large blocks, which enables significant compression for transmission over long-haul network links. While DNSTAP does not natively support compression, it seems not unreasonable that `DNS-collector` could have a configurable compression flag that would mark a stream as being compressed with one of the different models of compression that are supported in other areas of the code currently. This would allow a much more efficient transmission of DNSTAP-based messages through various components.
 
 The following codec are supported:
@@ -13,8 +15,6 @@ The following codec are supported:
 - lz4
 - snappy
 - std
-
-> ref: https://github.com/dmachard/go-dnscollector/issues/490
 
 ## Extended metadata
 
@@ -33,7 +33,7 @@ The following transformers are supported:
 
 DNSTAP messages contains sensitive data. `DNS-collector` have a configurable flag to enable TLS encryption.
 
-## Configuration examples
+## Configuration
 
 How to enable it on the collector side ?
 

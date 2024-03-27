@@ -5,9 +5,14 @@ Use this feature to compute latency and detect queries timeout
 
 Options:
 
-- `measure-latency`: (boolean) measure latency between replies and queries
-- `unanswered-queries`: (boolean) Detect evicted queries
-- `queries-timeout`: (integer) timeout in second for queries
+* `measure-latency` (boolean)
+  > measure latency between replies and queries
+
+* `unanswered-queries` (boolean)
+  > Detect evicted queries
+
+* `queries-timeout` (integer)
+  > timeout in second for queries
 
 ```yaml
 transforms:

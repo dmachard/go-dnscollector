@@ -1,7 +1,7 @@
 
 # DNS-collector with Elastic and Kibana
 
-- Download the `[docker-compose](https://github.com/dmachard/go-dnscollector/blob/doc_atags/docs/_integration/elasticsearch/docker-compose.yml)` file
+- Download the [`docker-compose`](https://github.com/dmachard/go-dnscollector/blob/doc_atags/docs/_integration/elasticsearch/docker-compose.yml) file
 
 - Create the `data` folder.
 
