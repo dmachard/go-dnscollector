@@ -12,8 +12,10 @@ Options:
 
 -`transport`: (string)
   > Network transport to use: `unix`|`tcp`|`tcp+tls`
+
 -`remote-address`: (string)
   > Remote address
+
 -`remote-port`: (integer)
   > Remote TCP port
 -`connect-timeout`: (integer)
