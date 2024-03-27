@@ -5,9 +5,9 @@ This transformation is only applied to the [`flat-json`](../dnsjson.md) output f
 
 Options:
 
-- `rename`: (list)
+- `rename` (list)
   > A list key to rename
-- `remove`: (list)
+- `remove` (list)
   > A list of key to remove
 
 Configuration example

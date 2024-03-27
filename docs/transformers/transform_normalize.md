@@ -9,13 +9,13 @@ is `co.uk` and the `TLD+1` is `amazon.co.uk`.
 
 Options:
 
-- `qname-lowercase`: (boolean)
+- `qname-lowercase` (boolean)
   > enable or disable lowercase
-- `add-tld`: (boolean)
+- `add-tld` (boolean)
   > add top level domain
-- `add-tld-plus-one`: (boolean)
+- `add-tld-plus-one` (boolean)
   > add top level domain plus one label
-- `quiet-text`: (boolean)
+- `quiet-text` (boolean)
   > Quiet text mode to reduce the size of the logs
 
 ```yaml

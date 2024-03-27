@@ -4,7 +4,7 @@ Use this transformer to add more directives and help to train your machine learn
 
 Options:
 
-- `add-features`:
+- `add-features` (bool)
   > enable all features
 
 Default values:

@@ -7,7 +7,7 @@ In such cases, you can include a tag for identification."
 
 Options:
 
-- `tag`: (list)
+- `tag` (list)
   > A list of string
 
 Configuration example:

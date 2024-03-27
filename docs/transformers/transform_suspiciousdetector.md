@@ -4,19 +4,19 @@ This feature can be used to tag unusual dns traffic like long domain, large pack
 
 Options:
 
-- `threshold-qname-len`: 
+- `threshold-qname-len` (int)
   > a length greater than this value for qname will be considered as suspicious
-- `threshold-packet-len`:
+- `threshold-packet-len` (int)
   > a size greater than this value will be considered as suspicious in bytes
-- `threshold-slow`:
+- `threshold-slow` (int)
   > threshold to set a domain considered as slow regarding latency, value in second
-- `common-qtypes`: 
+- `common-qtypes`  (list of string)
   > common qtypes list
-- `unallowed-chars`: 
+- `unallowed-chars`  (list of string)
   > unallowed list of characters not acceptable in domain name
-- `threshold-max-labels`: 
+- `threshold-max-labels` (int)
   > maximum number of labels in domains name
-- `whitelist-domains`:
+- `whitelist-domains` (list of string)
   > to ignore some domains
 
 Default values:
