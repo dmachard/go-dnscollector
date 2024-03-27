@@ -5,24 +5,37 @@ Collector to logging protobuf streams from PowerDNS servers. The DNS-collector h
 Settings:
 
 - `listen-ip` (str)
-  > Set the local address that the server will bind to. If not provided, the server will bind to all available network interfaces (0.0.0.0).
+  > Set the local address that the server will bind to. 
+  > If not provided, the server will bind to all available network interfaces (0.0.0.0).
+
 - `listen-port` (int)
   > Set the local port that the server will listen on. If not provided, use the default port.
+
 - `tls-support` (bool)
-  > Enables or disables TLS (Transport Layer Security) support. If set to true, TLS will be used for secure communication.
+  > Enables or disables TLS (Transport Layer Security) support.
+  > If set to true, TLS will be used for secure communication.
+
 - `tls-min-version` (str)
   > Specifies the minimum TLS version that the server will support.
+
 - `cert-file` (str)
-  > Specifies the path to the certificate file to be used for TLS. This is a required parameter if TLS support is enabled.
+  > Specifies the path to the certificate file to be used for TLS.
+  > This is a required parameter if TLS support is enabled.
+
 - `key-file`(str)
-  > Specifies the path to the key file corresponding to the certificate file. This is a required parameter if TLS support is enabled.
+  > Specifies the path to the key file corresponding to the certificate file.
+  > This is a required parameter if TLS support is enabled.
+
 - `sock-rcvbuf` (int)
   > This advanced parameter allows fine-tuning of network performance by adjusting the amount of data the socket can receive before signaling to the sender to slow down. Sets the socket receive buffer in bytes SO_RCVBUF.
   > Set to zero to use the default system value.
+
 - `reset-conn` (bool)
   > Set whether to send a TCP Reset to force the cleanup of the connection on the remote side when the server exits.
+
 - `chan-buffer-size` (int)
   > Specifies the maximum number of packets that can be buffered before dropping additional packets.
+
 - `add-dns-payload` (bool)
   > PowerDNS protobuf message does not contain a DNS payload; use this setting to add a raw DNS payload.
 

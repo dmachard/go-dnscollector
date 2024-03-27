@@ -7,8 +7,10 @@ Options:
 
 - `measure-latency` (boolean)
   > measure latency between replies and queries
+
 - `unanswered-queries` (boolean)
   > Detect evicted queries
+
 - `queries-timeout` (integer)
   > timeout in second for queries
 

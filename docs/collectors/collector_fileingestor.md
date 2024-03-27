@@ -16,12 +16,16 @@ Options:
 
 - `watch-dir` (str)
   > Specifies the directory where pcap files are monitored for ingestion.
+
 - `watch-mode` (str)
   >  Watch the directory pcap or dnstap file. `*.pcap` extension or dnstap stream with `*.fstrm` extension are expected.
+
 - `pcap-dns-port` (int)
   > Expects a source or destination port number use for DNS communication.
+
 - `delete-after:` (boolean)
   > Determines whether the pcap file should be deleted after ingestion.
+
 - `chan-buffer-size` (int)
   > Specifies the maximum number of packets that can be buffered before dropping additional packets.
 

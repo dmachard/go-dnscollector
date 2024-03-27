@@ -18,6 +18,7 @@ Options:
 
 - `device` (str)
   > Interface name to use for XDP sniffing.
+
 - `chan-buffer-size` (int)
   > Specifies the maximum number of packets that can be buffered before dropping additional packets.
 

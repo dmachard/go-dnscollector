@@ -11,10 +11,13 @@ Options:
 
 - `qname-lowercase` (boolean)
   > enable or disable lowercase
+
 - `add-tld` (boolean)
   > add top level domain
+
 - `add-tld-plus-one` (boolean)
   > add top level domain plus one label
+
 - `quiet-text` (boolean)
   > Quiet text mode to reduce the size of the logs
 
