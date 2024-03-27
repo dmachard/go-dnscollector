@@ -32,6 +32,8 @@ Configuration example
 
 This config produces the following flat-json ouput:
 
+Query:
+
 ```json
 {
   "client": "192.168.1.210",
@@ -40,6 +42,11 @@ This config produces the following flat-json ouput:
   "server": "192.168.1.210",
   "timestamp": "2024-03-10T19:58:30.881076563Z"
 }
+```
+
+Reply:
+
+```json
 {
   "answers_rdata": [
     "172.217.20.206",

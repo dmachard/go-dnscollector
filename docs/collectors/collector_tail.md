@@ -10,13 +10,13 @@ Enable the tail by provided the path of the file to follow
 
 Options:
 
-* `file-path`: (string) file to follow.
+* `file-path`: (string)
   > Specifies the path to the file that will be monitored.
-* `time-layout`: (string)  Use the exact layout numbers.
+* `time-layout`: (string)
   > Specifies the layout format for time representation, following the layout numbers defined in https://golang.org/src/time format.go.
-* `pattern-query`: (string) regexp pattern for queries.
+* `pattern-query`: (string)
   > Specifies the regular expression pattern used to match queries.
-* `pattern-reply`: (string) regexp pattern for replies.
+* `pattern-reply`: (string)
   > Specifies the regular expression pattern used to match replies.
 
 Defaults:
