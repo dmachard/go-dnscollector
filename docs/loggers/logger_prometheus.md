@@ -5,79 +5,79 @@ This logger generates **prometheus** metrics. Use the following Grafana [dashboa
 
 Options:
 
-- `listen-ip` (string)
+* `listen-ip` (string)
   > listening IP
 
-- `listen-port` (integer)
+* `listen-port` (integer)
   > listening port
 
-- `basic-auth-enable` (bool)
+* `basic-auth-enable` (bool)
   > whether to enable basic auth
 
-- `basic-auth-login` (string)
+* `basic-auth-login` (string)
   > default login for basic auth
 
-- `basic-auth-pwd` (string)
+* `basic-auth-pwd` (string)
   > default password for basic auth
 
-- `tls-support` (boolean)
+* `tls-support` (boolean)
   > tls support
 
-- `tls-mutual` (boolean)
+* `tls-mutual` (boolean)
   > mtls authentication
 
-- `tls-min-version` (string)
+* `tls-min-version` (string)
   > min tls version, default to 1.2
 
-- `cert-file` (string)
+* `cert-file` (string)
   > certificate server file
 
-- `key-file` (string)
+* `key-file` (string)
   > private key server file
 
-- `prometheus-suffix` (string)
+* `prometheus-suffix` (string)
   > prometheus suffix
 
-- `top-n` (string)
+* `top-n` (string)
   > default number of items on top
 
-- `chan-buffer-size` (integer)
+* `chan-buffer-size` (integer)
   > channel buffer size used on incoming dns message, number of messages before to drop it
 
-- `histogram-metrics-enabled` (boolean)
+* `histogram-metrics-enabled` (boolean)
   > compute histogram for qnames length, latencies, queries and replies size repartition
 
-- `prometheus-labels` (list of strings)
+* `prometheus-labels` (list of strings)
   > labels to add to metrics. Currently supported labels: `stream_id` (default), `stream_global`, `resolver`
   
-- `requesters-cache-size` (integer)
+* `requesters-cache-size` (integer)
   > LRU (least-recently-used) cache size for observed clients DNS per stream
 
-- `requesters-cache-ttl` (integer)
+* `requesters-cache-ttl` (integer)
   > maximum time (in seconds) before eviction from the LRU cache
 
-- `domains-cache-size` (integer)
+* `domains-cache-size` (integer)
   > LRU (least-recently-used) cache size for observed domains per strea
 
-- `domains-cache-ttl` (integer)
+* `domains-cache-ttl` (integer)
   > maximum time (in seconds) before eviction from the LRU cache
 
-- `noerror-domains-cache-size`: (integer)
+* `noerror-domains-cache-size`: (integer)
   > LRU (least-recently-used) cache size for observed NOERROR domains per strea
 
-- `noerror-domains-cache-ttl` (integer)
+* `noerror-domains-cache-ttl` (integer)
   > maximum time (in seconds) before eviction from the LRU cach
 
-- `servfail-domains-cache-size` (integer)
+* `servfail-domains-cache-size` (integer)
   > LRU (least-recently-used) cache size for observed SERVFAIL domains per stream
 
-- `servfail-domains-cache-ttl` (integer)
+* `servfail-domains-cache-ttl` (integer)
   > maximum time (in seconds) before eviction from the LRU cache
 
-- `nonexistent-domains-cache-size`: (integer)
+* `nonexistent-domains-cache-size`: (integer)
   > LRU (least-recently-used) cache size for observed NX domains per stream
 
-- `nonexistent-domains-cache-ttl` (integer)
+* `nonexistent-domains-cache-ttl` (integer)
   > maximum time (in seconds) before eviction from the LRU cache
 
 Default values:

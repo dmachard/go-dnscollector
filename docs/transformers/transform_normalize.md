@@ -9,16 +9,16 @@ is `co.uk` and the `TLD+1` is `amazon.co.uk`.
 
 Options:
 
-- `qname-lowercase` (boolean)
+* `qname-lowercase` (boolean)
   > enable or disable lowercase
 
-- `add-tld` (boolean)
+* `add-tld` (boolean)
   > add top level domain
 
-- `add-tld-plus-one` (boolean)
+* `add-tld-plus-one` (boolean)
   > add top level domain plus one label
 
-- `quiet-text` (boolean)
+* `quiet-text` (boolean)
   > Quiet text mode to reduce the size of the logs
 
 ```yaml
@@ -64,6 +64,6 @@ Example:
 
 Specific directives added for text format:
 
-- `publicsuffix-tld`: [Public Suffix](https://publicsuffix.org/) of the DNS QNAME
-- `publicsuffix-etld+1`: [Public Suffix](https://publicsuffix.org/) plus one label of the DNS QNAME
-- `publicsuffix-managed-icann`: [Public Suffix](https://publicsuffix.org/) flag for managed icann domains
+* `publicsuffix-tld`: [Public Suffix](https://publicsuffix.org/) of the DNS QNAME
+* `publicsuffix-etld+1`: [Public Suffix](https://publicsuffix.org/) plus one label of the DNS QNAME
+* `publicsuffix-managed-icann`: [Public Suffix](https://publicsuffix.org/) flag for managed icann domains

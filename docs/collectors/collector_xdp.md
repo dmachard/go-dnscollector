@@ -16,10 +16,10 @@ sudo setcap cap_sys_resource,cap_net_raw,cap_perfmon+ep go-dnscollector
 
 Options:
 
-- `device` (str)
+* `device` (str)
   > Interface name to use for XDP sniffing.
 
-- `chan-buffer-size` (int)
+* `chan-buffer-size` (int)
   > Specifies the maximum number of packets that can be buffered before dropping additional packets.
 
 Defaults:

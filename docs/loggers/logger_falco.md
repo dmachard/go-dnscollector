@@ -4,10 +4,10 @@ Falco plugin Logger - Currently available here https://github.com/SysdigDan/dnsc
 
 Options:
 
-- `url` (string)
+* `url` (string)
   > Falco Plugin endpoint url "http://127.0.0.1:9200"
 
-- `chan-buffer-size` (integer)
+* `chan-buffer-size` (integer)
   > channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:

@@ -5,19 +5,19 @@ Clickhouse client to remote ClickHouse server
 
 Options:
 
--`url` (string)
+* `url` (string)
   > Clickhouse server url
 
--`user` (string)
+* `user` (string)
   > Clickhouse database user
 
--`password` (string)
+* `password` (string)
   > Clickhouse database user password
 
--`table` (string)
+* `table` (string)
   > Clickhouse table name
 
--`database` (string)
+* `database` (string)
   > Clickhouse database name
 
 Defaults:
