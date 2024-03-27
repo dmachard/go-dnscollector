@@ -5,7 +5,8 @@ Use this transformer to extract the raw dns payload encoded in base64:
 
 Options:
 
-- `add-payload`: (boolean) add base64 encoded dns payload
+- `add-payload` (boolean)
+  > add base64 encoded dns payload
 
 Default:
 

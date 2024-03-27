@@ -14,9 +14,12 @@ The following criterias are used:
 
 Options:
 
-- `repetitive-traffic-detector`: (boolean) detect repetitive traffic
-- `qname-plus-one`: (boolean) use qname+1 instead of the complete one
-- `watch-interval`: (integer) watch interval in seconds
+- `repetitive-traffic-detector`: (boolean)
+  > detect repetitive traffic
+- `qname-plus-one`: (boolean)
+  > use qname+1 instead of the complete one
+- `watch-interval`: (integer)
+  > watch interval in seconds
 
 Default values:
 

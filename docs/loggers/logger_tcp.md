@@ -17,16 +17,19 @@ Options:
 * `connect-timeout`: (integer) connect timeout in second
 * `retry-interval`: (integer) interval in second between retry reconnect
 * `flush-interval`: (integer) interval in second before to flush the buffer
-* `tls-support` **DEPRECATED, replaced with tcp+tls flag on transport**: (boolean) enable tls
-* `tls-insecure`: (boolean) insecure tls, skip certificate and hostname verify
-* `tls-min-version`: (string) min tls version, default to 1.2
-* `ca-file`: (string) provide CA file to verify the server certificate
-* `cert-file`: (string) provide client certificate file for mTLS
-* `key-file`: (string) provide client private key file for mTLS
+- `tls-insecure` (boolean)
+  > If set to true, skip verification of server certificate.
+- `tls-min-version` (string)
+  > Specifies the minimum TLS version that the server will support.
+- `ca-file` (string)
+  > Specifies the path to the CA (Certificate Authority) file used to verify the server's certificate.
+- `cert-file` (string)
+  > Specifies the path to the certificate file to be used. This is a required parameter if TLS support is enabled.
+- `key-file` (string)
+  > Specifies the path to the key file corresponding to the certificate file. This is a required parameter if TLS support is enabled.
 * `mode`: (string) output format: `text`, `json`, or `flat-json`
 * `text-format`: (string) output text format, please refer to the default text format to see all available [directives](../configuration.md#custom-text-format), use this parameter if you want a specific format
 * `buffer-size`: (integer) how many DNS messages will be buffered before being sent
-* `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 

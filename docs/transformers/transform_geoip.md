@@ -8,9 +8,12 @@ See [Downloads](https://www.maxmind.com/en/accounts/current/geoip/downloads) max
 
 Options:
 
-- `mmdb-country-file`: (string) path file to your mmdb country database
-- `mmdb-city-file`: (string) path file to your mmdb city database
-- `mmdb-asn-file`: (string) path file to your mmdb asn database
+- `mmdb-country-file`: (string)
+  > path file to your mmdb country database
+- `mmdb-city-file`: (string)
+  > path file to your mmdb city database
+- `mmdb-asn-file`: (string)
+  > path file to your mmdb asn database
 
 ```yaml
 transforms:

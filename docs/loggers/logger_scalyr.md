@@ -13,14 +13,20 @@ Options:
 - `batch-size`: (integer) batch size for log entries in bytes
 - `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
 - `proxy-url`: (string) Proxy URL
-- `tls-insecure`: (boolean) insecure skip verify
-- `tls-min-version`: (string) min tls version
-- `ca-file`: (string) provide CA file to verify the server certificate
-- `cert-file`: (string) provide client certificate file for mTLS
-- `key-file`: (string) provide client private key file for mTLS
+- `tls-insecure` (boolean)
+  > If set to true, skip verification of server certificate.
+- `tls-min-version` (string)
+  > Specifies the minimum TLS version that the server will support.
+- `ca-file` (string)
+  > Specifies the path to the CA (Certificate Authority) file used to verify the server's certificate.
+- `cert-file` (string)
+  > Specifies the path to the certificate file to be used. This is a required parameter if TLS support is enabled.
+- `key-file` (string)
+  > Specifies the path to the key file corresponding to the certificate file. This is a required parameter if TLS support is enabled.
+- `chan-buffer-size` (int)
+  > Specifies the maximum number of packets that can be buffered before dropping additional packets.
 - `session-info`: (map) Any "session" or server information for Scalyr. e.g. 'region', 'serverHost'. If 'serverHost' is not included, it is set using the hostname.
 - `attrs`: (map) Any extra attributes that should be added to the log's fields.
-- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
 
 The client can send the data in 3 formats: text (using `text-format`), json (by including the whole DNS message in the `message` field), or flat-json.
 The first two formats (text, json) require setting the `parser` option and needs a corresponding parser defined in the Scalyr backend.

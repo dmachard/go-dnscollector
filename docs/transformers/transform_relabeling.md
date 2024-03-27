@@ -3,6 +3,13 @@
 Use this transformer to remove or rename some JSON keys.
 This transformation is only applied to the [`flat-json`](../dnsjson.md) output format.
 
+Options:
+
+- `rename`: (list)
+  > A list key to rename
+- `remove`: (list)
+  > A list of key to remove
+
 Configuration example
 
 ```yaml

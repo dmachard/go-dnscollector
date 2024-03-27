@@ -46,3 +46,8 @@ Options:
   > Specifies the maximum number of packets that can be buffered before dropping additional packets.
 - `compression` (string) Compression for Kafka messages: `none`, `gzip`, `lz4`, `snappy`, `zstd`. Default to `none`.
   > Specifies the compression algorithm to use for Kafka messages.
+
+Defaults:
+
+```yaml
+```
