@@ -10,22 +10,22 @@ Tcp/unix stream client logger.
 
 Options:
 
--`transport`: (string)
+-`transport` (string)
   > Network transport to use: `unix`|`tcp`|`tcp+tls`
 
--`remote-address`: (string)
+-`remote-address` (string)
   > Remote address
 
--`remote-port`: (integer)
+-`remote-port` (integer)
   > Remote TCP port
 
--`connect-timeout`: (integer)
+-`connect-timeout` (integer)
   > Connect timeout in second
 
--`retry-interval`: (integer)
+-`retry-interval` (integer)
   > Interval in second between retry reconnect
 
--`flush-interval`: (integer)
+-`flush-interval` (integer)
   > Interval in second before to flush the buffer
 
 -`tls-insecure` (boolean)
@@ -43,13 +43,13 @@ Options:
 -`key-file` (string)
   > Specifies the path to the key file corresponding to the certificate file. This is a required parameter if TLS support is enabled.
 
--`mode`: (string)
+-`mode` (string)
   > Output format: `text`, `json`, or `flat-json`
 
--`text-format`: (string)
+-`text-format` (string)
   > output text format, please refer to the default text format to see all available [directives](../configuration.md#custom-text-format), use this parameter if you want a specific format
 
--`buffer-size`: (integer)
+-`buffer-size` (integer)
   > how many DNS messages will be buffered before being sent
 
 Default values:

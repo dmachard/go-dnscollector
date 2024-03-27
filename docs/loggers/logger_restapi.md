@@ -8,17 +8,38 @@ See the [swagger](https://generator.swagger.io/?url=https://raw.githubuserconten
 
 Options:
 
-- `listen-ip`: (string) listening IP
-- `listen-port`: (integer) listening port
-- `basic-auth-enable`: (boolean) enable or disable basic authentication
-- `basic-auth-login`: (string) default login for basic auth
-- `basic-auth-pwd`: (string) default password for basic auth
-- `tls-support`: (boolean) tls support
-- `tls-min-version`: (string) min tls version, default to 1.2
-- `cert-file`: (string) certificate server file
-- `key-file`: (string) private key server file
-- `top-n`: (string) default number of items on top
-- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
+- `listen-ip` (string)
+  > listening IP
+
+- `listen-port` (integer)
+  > listening port
+
+- `basic-auth-enable` (boolean)
+  > enable or disable basic authentication
+
+- `basic-auth-login` (string)
+  > default login for basic auth
+
+- `basic-auth-pwd` (string)
+  > default password for basic auth
+
+- `tls-support` (boolean)
+  > tls support
+
+- `tls-min-version` (string)
+  > min tls version, default to 1.2
+
+- `cert-file` (string)
+  > certificate server file
+
+- `key-file` (string)
+  > private key server file
+
+- `top-n` (string)
+  > default number of items on top
+
+- `chan-buffer-size` (integer)
+  > channel buffer size used on incoming dns message, number of messages before to drop it.
 
 Default values:
 
