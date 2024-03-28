@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         os-version: ['ubuntu-22.04' ] #, 'macos-latest'
-        go-version: [ '1.20', '1.21' ]
+        go-version: [ '1.21', '1.22' ]
         package:
           - '.'
           - 'pkgconfig'
@@ -71,7 +71,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.20', '1.21']
+        go-version: [ '1.21', '1.22' ]
         package: ['config', 'clientquery_dnstaptcp', 'clientquery_dnstapunix' ]
 
     steps:
@@ -100,7 +100,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.21']
+        go-version: [ '1.21', '1.22' ]
         
     steps:
     - uses: actions/checkout@v4
@@ -144,7 +144,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: "1.21"
+        go-version: "1.22"
 
     - id: count_tests
       run: |

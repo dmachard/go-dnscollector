@@ -25,7 +25,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.21' ]
+        go-version: [ '1.22' ]
         unbound: [ '1.17.0', '1.18.0', '1.19.0' ]
 
         mode: [ 'tcp' ]
@@ -61,7 +61,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.21' ]
+        go-version: [ '1.22' ]
         coredns: [ '1.10.1', '1.11.1' ]
         mode: [ 'tcp' ]
 
@@ -96,7 +96,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.21' ]
+        go-version: [ '1.22' ]
         coredns: [ '1.11.1' ]
         mode: [ 'tls' ]
 
@@ -143,7 +143,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.21' ]
+        go-version: [ '1.22' ]
         dnsdist: [ '17', '18', '19' ]
 
         mode: [ 'dnstaptcp', 'dnstapunix' ]
@@ -184,7 +184,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.21' ]
+        go-version: [ '1.22' ]
         dnsdist: [ '19' ]
 
     steps:
