@@ -40,7 +40,7 @@ goversion: check-go
 	@echo "Go version: $(GO_VERSION)"
 
 # Installs project dependencies.
-dep: check-go
+dep: goversion
 	@go get github.com/dmachard/go-logger@v$(GO_LOGGER)
 	@go get github.com/dmachard/go-powerdns-protobuf@v$(GO_POWERDNS_PROTOBUF)
 	@go get github.com/dmachard/go-dnstap-protobuf@v$(GO_DNSTAP_PROTOBUF)
