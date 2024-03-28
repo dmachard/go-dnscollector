@@ -46,22 +46,22 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
 
-    - name: Show Go version
-      run: |
-        go version
-        sudo go version
-
     - name: Set up Go for root
       if: runner.os != 'macOS'
       run: |
         which go
         sudo which go
         sudo ln -sf `which go` `sudo which go` || true
-    
+        
     - name: Show Go version
       run: |
         go version
         sudo go version
+    
+    # - name: Show Go version
+    #   run: |
+    #     go version
+    #     sudo go version
         
     - name: Test ${{ matrix.package }}
       run: sudo go test -timeout 120s ./${{ matrix.package }}/ -race -cover -v
