@@ -89,9 +89,15 @@ func CheckConfig(userConfigPath string, dmRef dnsutils.DNSMessage) error {
 
 	// add fake value in relabel.Config because yaml tag is set to omitempty
 	defaultConfig.Loggers.LokiClient.RelabelConfigs = append(defaultConfig.Loggers.LokiClient.RelabelConfigs,
-		&relabel.Config{TargetLabel: "default",
-			SourceLabels: []model.LabelName{"test"},
-			Separator:    ",", Replacement: "test"})
+		&relabel.Config{
+			TargetLabel:  "target",
+			SourceLabels: []model.LabelName{"source"},
+			Separator:    "separator",
+			Replacement:  "replacement",
+			Action:       relabel.Action("action"),
+			Regex:        relabel.Regexp{},
+		},
+	)
 
 	// Convert default config to map
 	// And get unique YAML keys

@@ -384,6 +384,10 @@ multiplexer:
         relabel-configs:
           - source_labels: ["__dns_qtype"]
             target_label: "qtype"
+            replacement: "test"
+            action: "update"
+            separator: ","
+            regex: "test"
   routes:
     - from: [ tap ]
       to: [ loki ]
