@@ -356,3 +356,45 @@ pipelines:
 		t.Errorf("Expected error, but got nil")
 	}
 }
+
+// test for issue https://github.com/dmachard/go-dnscollector/issues/643
+func TestConfig_CheckConfig_SpecificsItems(t *testing.T) {
+	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
+	if err != nil {
+		t.Fatal("Error creating temporary file:", err)
+	}
+	defer os.Remove(userConfigFile.Name())
+	defer userConfigFile.Close()
+
+	userConfigContent := `
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+  loggers:
+    - name: loki
+      lokiclient:
+        server-url: "https://grafana-loki.example.com/loki/api/v1/push"
+        job-name: "dnscollector"
+        mode: "flat-json"
+        tls-insecure: true
+        tenant-id: fake
+        relabel-configs:
+          - source_labels: ["__dns_qtype"]
+            target_label: "qtype"
+  routes:
+    - from: [ tap ]
+      to: [ loki ]
+`
+	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
+	if err != nil {
+		t.Fatal("Error writing to user configuration file:", err)
+	}
+
+	dm := dnsutils.GetReferenceDNSMessage()
+	if err := CheckConfig(userConfigFile.Name(), dm); err != nil {
+		t.Errorf("failed: Unexpected error: %v", err)
+	}
+}
