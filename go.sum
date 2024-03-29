@@ -655,10 +655,10 @@ github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWm
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/dskit v0.0.0-20230804003603-740f56bd2934 h1:W1g+y6rOO7K/Jm2XNPxIXyJisJSJ25uiVVaSa7N1Zwo=
 github.com/grafana/dskit v0.0.0-20230804003603-740f56bd2934/go.mod h1:Xg0aN3EpqkYFW1ZxGyIl4BGEpr3QrCQOM1aWalpU3ik=
-github.com/grafana/loki v1.6.2-0.20231211180320-2535f9bedeae h1:KLk1jneF9/yVmxizviqWMV8uxwf5DbpYAJeru0NY1AU=
-github.com/grafana/loki v1.6.2-0.20231211180320-2535f9bedeae/go.mod h1:sZKmF0+xGpEluaT7bfiVbvvior9zY7Nr2sUMPYp0dIE=
-github.com/grafana/loki/pkg/push v0.0.0-20231211180320-2535f9bedeae h1:8v1H5D9zFpqv5HPaAesZEkJftZZhjJ7/+snbOkXVsac=
-github.com/grafana/loki/pkg/push v0.0.0-20231211180320-2535f9bedeae/go.mod h1:5ll3An1wAxYejo6aM04+3/lc6N4joYVYLY5U+Z4O6vI=
+github.com/grafana/loki v1.6.2-0.20240321101415-318652035059 h1:h+xwylsEKeHCG+uCK7uaOaQ7Ebxgeymj3HfQr4DyykQ=
+github.com/grafana/loki v1.6.2-0.20240321101415-318652035059/go.mod h1:zyU3OQA5qH8YVaiouxvFWzhf4cXrXLCpBFBniLNVQJM=
+github.com/grafana/loki/pkg/push v0.0.0-20240321101415-318652035059 h1:wcEAmS/O45T/Siobj2qzWdz/TXZna2VyIAfOPWk43TE=
+github.com/grafana/loki/pkg/push v0.0.0-20240321101415-318652035059/go.mod h1:5ll3An1wAxYejo6aM04+3/lc6N4joYVYLY5U+Z4O6vI=
 github.com/grafana/regexp v0.0.0-20221122212121-6b5c0a4cb7fd h1:PpuIBO5P3e9hpqBD0O/HjhShYuM6XE0i/lbE6J94kww=
 github.com/grafana/regexp v0.0.0-20221122212121-6b5c0a4cb7fd/go.mod h1:M5qHK+eWfAv8VR/265dIuEpL3fNfeC21tXXp9itM24A=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0/go.mod h1:8NvIoxWQoOIhqOTXgfV/d3M/q6VIi02HzZEHgUlZvzk=

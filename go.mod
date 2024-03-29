@@ -21,7 +21,7 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
 	github.com/grafana/dskit v0.0.0-20230804003603-740f56bd2934
-	github.com/grafana/loki v1.6.2-0.20231211180320-2535f9bedeae
+	github.com/grafana/loki v1.6.2-0.20240321101415-318652035059
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb-client-go v1.4.0
@@ -64,7 +64,7 @@ require (
 	github.com/google/btree v1.1.2 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/grafana/loki/pkg/push v0.0.0-20231211180320-2535f9bedeae // indirect
+	github.com/grafana/loki/pkg/push v0.0.0-20240321101415-318652035059 // indirect
 	github.com/grafana/regexp v0.0.0-20221122212121-6b5c0a4cb7fd // indirect
 	github.com/hashicorp/consul/api v1.20.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
