@@ -49,17 +49,17 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 		instance: instance,
 	}
 
-	d.SuspiciousTransform = NewSuspiciousSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.NormalizeTransform = NewNormalizeSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.ExtractProcessor = NewExtractSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.LatencyTransform = NewLatencySubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.ReducerTransform = NewReducerSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.UserPrivacyTransform = NewUserPrivacySubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.FilteringTransform = NewFilteringProcessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.GeoipTransform = NewDNSGeoIPProcessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.MachineLearningTransform = NewMachineLearningSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.ATagsTransform = NewATagsSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.RelabelTransform = NewRelabelSubprocessor(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.SuspiciousTransform = NewSuspiciousTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.NormalizeTransform = NewNormalizeTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.ExtractProcessor = NewExtractTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.LatencyTransform = NewLatencyTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.ReducerTransform = NewReducerTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.UserPrivacyTransform = NewUserPrivacyTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.FilteringTransform = NewFilteringTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.GeoipTransform = NewDNSGeoIPTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.MachineLearningTransform = NewMachineLearningTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.ATagsTransform = NewATagsTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.RelabelTransform = NewRelabelTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
 
 	d.Prepare()
 	return d
@@ -94,17 +94,17 @@ func (p *Transforms) Prepare() error {
 	}
 
 	if p.config.Normalize.Enable {
-		p.LogInfo(prefixlog + "qname lowercase subprocessor is " + enabled)
+		p.LogInfo(prefixlog + "transformer=qname_lowercase is " + enabled)
 
 		p.NormalizeTransform.LoadActiveProcessors()
 	}
 
 	if p.config.GeoIP.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.geoipTransform)
-		p.LogInfo(prefixlog + "geoip subprocessor is " + enabled)
+		p.LogInfo(prefixlog + "transformer=geoip is " + enabled)
 
 		if err := p.GeoipTransform.Open(); err != nil {
-			p.LogError(prefixlog+"geoip subprocessor open error %v", err)
+			p.LogError(prefixlog+"transformer=geoip - open error %v", err)
 		}
 	}
 
@@ -112,22 +112,22 @@ func (p *Transforms) Prepare() error {
 		// Apply user privacy on qname and query ip
 		if p.config.UserPrivacy.AnonymizeIP {
 			p.activeTransforms = append(p.activeTransforms, p.anonymizeIP)
-			p.LogInfo(prefixlog + "ip anonymization subprocessor is enabled")
+			p.LogInfo(prefixlog + "transformer=ip_anonymization is enabled")
 		}
 
 		if p.config.UserPrivacy.MinimazeQname {
 			p.activeTransforms = append(p.activeTransforms, p.minimazeQname)
-			p.LogInfo(prefixlog + "minimaze qname subprocessor is enabled")
+			p.LogInfo(prefixlog + "transformer=minimaze_qname is enabled")
 		}
 
 		if p.config.UserPrivacy.HashIP {
 			p.activeTransforms = append(p.activeTransforms, p.hashIP)
-			p.LogInfo(prefixlog + "hash ip subprocessor is enabled")
+			p.LogInfo(prefixlog + "transformer=hash_ip is enabled")
 		}
 	}
 
 	if p.config.Filtering.Enable {
-		p.LogInfo(prefixlog + "filtering subprocessor is " + enabled)
+		p.LogInfo(prefixlog + "transformer=filtering is " + enabled)
 
 		p.FilteringTransform.LoadRcodes()
 		p.FilteringTransform.LoadDomainsList()
@@ -140,21 +140,21 @@ func (p *Transforms) Prepare() error {
 	if p.config.Latency.Enable {
 		if p.config.Latency.MeasureLatency {
 			p.activeTransforms = append(p.activeTransforms, p.measureLatency)
-			p.LogInfo(prefixlog + "measure latency subprocessor is enabled")
+			p.LogInfo(prefixlog + "transformer=measure_latency is enabled")
 		}
 		if p.config.Latency.UnansweredQueries {
 			p.activeTransforms = append(p.activeTransforms, p.detectEvictedTimeout)
-			p.LogInfo(prefixlog + "unanswered queries subprocessor is enabled")
+			p.LogInfo(prefixlog + "transformer=unanswered_queries is enabled")
 		}
 	}
 
 	if p.config.Suspicious.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.suspiciousTransform)
-		p.LogInfo(prefixlog + "suspicious subprocessor is " + enabled)
+		p.LogInfo(prefixlog + "transformer=suspicious is " + enabled)
 	}
 
 	if p.config.Reducer.Enable {
-		p.LogInfo(prefixlog + "reducer subprocessor is " + enabled)
+		p.LogInfo(prefixlog + "transformer=reducer is " + enabled)
 
 		p.ReducerTransform.LoadActiveReducers()
 	}
@@ -162,22 +162,22 @@ func (p *Transforms) Prepare() error {
 	if p.config.Extract.Enable {
 		if p.config.Extract.AddPayload {
 			p.activeTransforms = append(p.activeTransforms, p.addBase64Payload)
-			p.LogInfo(prefixlog + "extract subprocessor is enabled")
+			p.LogInfo(prefixlog + "transformer=extract is enabled")
 		}
 	}
 
 	if p.config.MachineLearning.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.machineLearningTransform)
-		p.LogInfo(prefixlog + "machinelearning subprocessor is" + enabled)
+		p.LogInfo(prefixlog + "transformer=machinelearning is" + enabled)
 	}
 
 	if p.config.ATags.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.ATagsTransform.AddTags)
-		p.LogInfo(prefixlog + "atags subprocessor is enabled")
+		p.LogInfo(prefixlog + "transformer=atags is enabled")
 	}
 
 	if p.config.Relabeling.Enable {
-		p.LogInfo(prefixlog + "relabeling subprocessor is enabled")
+		p.LogInfo(prefixlog + "transformer=relabeling is enabled")
 	}
 
 	return nil

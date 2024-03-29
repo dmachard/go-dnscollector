@@ -18,7 +18,7 @@ func TestATags_AddTag(t *testing.T) {
 	// init the processor
 	log := logger.New(false)
 	outChans := []chan dnsutils.DNSMessage{}
-	transform := NewATagsSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	transform := NewATagsTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	if !transform.IsEnabled() {
 		t.Errorf("subprocessor should be enabled")

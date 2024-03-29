@@ -19,7 +19,7 @@ func TestNormalize_LowercaseQname(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
-	qnameNorm := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	qnameNorm := NewNormalizeTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	qname := "www.Google.Com"
 	dm := dnsutils.GetFakeDNSMessage()
@@ -41,7 +41,7 @@ func TestNormalize_QuietText(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
-	norm := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	norm := NewNormalizeTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	dm := dnsutils.GetFakeDNSMessage()
 	norm.QuietText(&dm)
@@ -65,7 +65,7 @@ func TestNormalize_AddTLD(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
-	psl := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	psl := NewNormalizeTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	tt := []struct {
 		name  string
@@ -116,7 +116,7 @@ func TestNormalize_AddTldPlusOne(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
-	psl := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	psl := NewNormalizeTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	tt := []struct {
 		name  string
@@ -159,7 +159,7 @@ func TestNormalize_SuffixUnmanaged(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
-	psl := NewNormalizeSubprocessor(config, logger.New(true), "test", 0, outChans, log.Info, log.Error)
+	psl := NewNormalizeTransform(config, logger.New(true), "test", 0, outChans, log.Info, log.Error)
 
 	dm := dnsutils.GetFakeDNSMessage()
 	// https://publicsuffix.org/list/effective_tld_names.dat
@@ -185,7 +185,7 @@ func TestNormalize_SuffixICANNManaged(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
-	psl := NewNormalizeSubprocessor(config, logger.New(true), "test", 0, outChans, log.Info, log.Error)
+	psl := NewNormalizeTransform(config, logger.New(true), "test", 0, outChans, log.Info, log.Error)
 
 	dm := dnsutils.GetFakeDNSMessage()
 	// https://publicsuffix.org/list/effective_tld_names.dat
@@ -211,7 +211,7 @@ func BenchmarkNormalize_GetEffectiveTld(b *testing.B) {
 	log := logger.New(false)
 	channels := []chan dnsutils.DNSMessage{}
 
-	subprocessor := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+	subprocessor := NewNormalizeTransform(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = "en.wikipedia.org"
 
@@ -228,7 +228,7 @@ func BenchmarkNormalize_GetEffectiveTldPlusOne(b *testing.B) {
 	log := logger.New(false)
 	channels := []chan dnsutils.DNSMessage{}
 
-	subprocessor := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+	subprocessor := NewNormalizeTransform(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = "en.wikipedia.org"
 
@@ -245,7 +245,7 @@ func BenchmarkNormalize_QnameLowercase(b *testing.B) {
 	log := logger.New(false)
 	channels := []chan dnsutils.DNSMessage{}
 
-	subprocessor := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+	subprocessor := NewNormalizeTransform(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = "EN.Wikipedia.Org"
 
@@ -261,7 +261,7 @@ func BenchmarkNormalize_QuietText(b *testing.B) {
 	log := logger.New(false)
 	channels := []chan dnsutils.DNSMessage{}
 
-	subprocessor := NewNormalizeSubprocessor(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+	subprocessor := NewNormalizeTransform(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = "EN.Wikipedia.Org"
 

@@ -22,7 +22,7 @@ func TestGeoIP_Json(t *testing.T) {
 	dm.Init()
 
 	// init subproccesor
-	geoip := NewDNSGeoIPProcessor(config, logger.New(true), "test", 0, outChans, log.Info, log.Error)
+	geoip := NewDNSGeoIPTransform(config, logger.New(true), "test", 0, outChans, log.Info, log.Error)
 	if err := geoip.Open(); err != nil {
 		t.Fatalf("geoip init failed: %v+", err)
 	}
@@ -72,7 +72,7 @@ func TestGeoIP_LookupCountry(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
-	geoip := NewDNSGeoIPProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	geoip := NewDNSGeoIPTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	if err := geoip.Open(); err != nil {
 		t.Fatalf("geoip init failed: %v+", err)
 	}
@@ -103,7 +103,7 @@ func TestGeoIP_LookupAsn(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
-	geoip := NewDNSGeoIPProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	geoip := NewDNSGeoIPTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	if err := geoip.Open(); err != nil {
 		t.Fatalf("geoip init failed: %v", err)
 	}

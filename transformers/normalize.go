@@ -74,7 +74,7 @@ type NormalizeProcessor struct {
 	logError         func(msg string, v ...interface{})
 }
 
-func NewNormalizeSubprocessor(
+func NewNormalizeTransform(
 	config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
@@ -111,17 +111,17 @@ func (p *NormalizeProcessor) LoadActiveProcessors() {
 
 	if p.config.Normalize.QnameLowerCase {
 		p.activeProcessors = append(p.activeProcessors, p.LowercaseQname)
-		p.LogInfo("lowercase subprocessor is enabled")
+		p.LogInfo("transformer=lowercase is enabled")
 	}
 
 	if p.config.Normalize.QuietText {
 		p.activeProcessors = append(p.activeProcessors, p.QuietText)
-		p.LogInfo("quiet text subprocessor is enabled")
+		p.LogInfo("transformer=quiet_text is enabled")
 	}
 
 	if p.config.Normalize.AddTld {
 		p.activeProcessors = append(p.activeProcessors, p.GetEffectiveTld)
-		p.LogInfo("add tld subprocessor is enabled")
+		p.LogInfo("transformer=add_tld is enabled")
 	}
 	if p.config.Normalize.AddTldPlusOne {
 		p.activeProcessors = append(p.activeProcessors, p.GetEffectiveTldPlusOne)

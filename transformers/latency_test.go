@@ -18,7 +18,7 @@ func TestLatency_MeasureLatency(t *testing.T) {
 	outChannels := []chan dnsutils.DNSMessage{}
 
 	// init transformer
-	latencyProcessor := NewLatencySubprocessor(config, logger.New(true), "test", 0, outChannels, log.Info, log.Error)
+	latencyProcessor := NewLatencyTransform(config, logger.New(true), "test", 0, outChannels, log.Info, log.Error)
 
 	testcases := []struct {
 		name string
@@ -73,7 +73,7 @@ func TestLatency_DetectEvictedTimeout(t *testing.T) {
 	outChannels = append(outChannels, make(chan dnsutils.DNSMessage, 1))
 
 	// init transformer
-	latencyProcessor := NewLatencySubprocessor(config, logger.New(true), "test", 0, outChannels, log.Info, log.Error)
+	latencyProcessor := NewLatencyTransform(config, logger.New(true), "test", 0, outChannels, log.Info, log.Error)
 
 	testcases := []struct {
 		name string

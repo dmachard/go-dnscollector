@@ -23,7 +23,7 @@ func TestRelabeling_CompileRegex(t *testing.T) {
 	// init the processor
 	log := logger.New(false)
 	outChans := []chan dnsutils.DNSMessage{}
-	relabelingProc := NewRelabelSubprocessor(
+	relabelingProc := NewRelabelTransform(
 		config,
 		logger.New(false),
 		"test",

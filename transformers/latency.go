@@ -113,7 +113,7 @@ type LatencyProcessor struct {
 	logError    func(msg string, v ...interface{})
 }
 
-func NewLatencySubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
+func NewLatencyTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) *LatencyProcessor {
