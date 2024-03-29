@@ -30,7 +30,7 @@ type MlProcessor struct {
 	logError    func(msg string, v ...interface{})
 }
 
-func NewMachineLearningSubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
+func NewMachineLearningTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) MlProcessor {

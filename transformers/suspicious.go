@@ -22,7 +22,7 @@ type SuspiciousTransform struct {
 	logError              func(msg string, v ...interface{})
 }
 
-func NewSuspiciousSubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
+func NewSuspiciousTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) SuspiciousTransform {

@@ -24,7 +24,7 @@ func TestReducer_Json(t *testing.T) {
 
 	// init subproccesor
 
-	reducer := NewReducerSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	reducer := NewReducerTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	reducer.InitDNSMessage(&dm)
 
 	// expected json
@@ -70,7 +70,7 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 	outChans = append(outChans, outChan)
 
 	// init subproccesor
-	reducer := NewReducerSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	reducer := NewReducerTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	reducer.LoadActiveReducers()
 
 	// malformed DNS message
@@ -184,7 +184,7 @@ func TestReducer_QnamePlusOne(t *testing.T) {
 	outChans = append(outChans, outChan)
 
 	// init subproccesor
-	reducer := NewReducerSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	reducer := NewReducerTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	reducer.LoadActiveReducers()
 
 	testcases := []struct {

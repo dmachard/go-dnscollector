@@ -23,7 +23,7 @@ func TestExtract_Json(t *testing.T) {
 	dm.Init()
 
 	// init subproccesor
-	extract := NewExtractSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	extract := NewExtractTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	extract.InitDNSMessage(&dm)
 
 	// expected json
@@ -66,7 +66,7 @@ func TestExtract_AddPayload(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
-	extract := NewExtractSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	extract := NewExtractTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	// feature is enabled ?
 	if !extract.IsEnabled() {

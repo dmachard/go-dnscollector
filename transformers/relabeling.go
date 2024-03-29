@@ -19,7 +19,7 @@ type RelabelProcessor struct {
 	RelabelingRules []dnsutils.RelabelingRule
 }
 
-func NewRelabelSubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
+func NewRelabelTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{})) RelabelProcessor {
 	s := RelabelProcessor{

@@ -25,7 +25,7 @@ multiplexer:
         listen-port: 6000
       transforms:
         normalize:
-          qname-lowercase: false
+          qname-lowercase: true
 
   loggers:
     - name: console

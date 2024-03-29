@@ -16,7 +16,7 @@ type ATagsProcessor struct {
 	logError    func(msg string, v ...interface{})
 }
 
-func NewATagsSubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
+func NewATagsTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{})) ATagsProcessor {
 	s := ATagsProcessor{

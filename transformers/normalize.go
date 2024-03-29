@@ -74,7 +74,7 @@ type NormalizeProcessor struct {
 	logError         func(msg string, v ...interface{})
 }
 
-func NewNormalizeSubprocessor(
+func NewNormalizeTransform(
 	config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
@@ -109,19 +109,24 @@ func (p *NormalizeProcessor) LoadActiveProcessors() {
 	// clean the slice
 	p.activeProcessors = p.activeProcessors[:0]
 
+	if p.config.Normalize.RRLowerCase {
+		p.activeProcessors = append(p.activeProcessors, p.RRLowercase)
+		p.LogInfo("transformer=lowercase is enabled")
+	}
+
 	if p.config.Normalize.QnameLowerCase {
-		p.activeProcessors = append(p.activeProcessors, p.LowercaseQname)
-		p.LogInfo("lowercase subprocessor is enabled")
+		p.activeProcessors = append(p.activeProcessors, p.QnameLowercase)
+		p.LogInfo("transformer=lowercase is enabled")
 	}
 
 	if p.config.Normalize.QuietText {
 		p.activeProcessors = append(p.activeProcessors, p.QuietText)
-		p.LogInfo("quiet text subprocessor is enabled")
+		p.LogInfo("transformer=quiet_text is enabled")
 	}
 
 	if p.config.Normalize.AddTld {
 		p.activeProcessors = append(p.activeProcessors, p.GetEffectiveTld)
-		p.LogInfo("add tld subprocessor is enabled")
+		p.LogInfo("transformer=add_tld is enabled")
 	}
 	if p.config.Normalize.AddTldPlusOne {
 		p.activeProcessors = append(p.activeProcessors, p.GetEffectiveTldPlusOne)
@@ -143,9 +148,26 @@ func (p *NormalizeProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 	}
 }
 
-func (p *NormalizeProcessor) LowercaseQname(dm *dnsutils.DNSMessage) int {
+func (p *NormalizeProcessor) QnameLowercase(dm *dnsutils.DNSMessage) int {
 	dm.DNS.Qname = strings.ToLower(dm.DNS.Qname)
 
+	return ReturnSuccess
+}
+
+func processRecords(records []dnsutils.DNSAnswer) {
+	for i := range records {
+		records[i].Name = strings.ToLower(records[i].Name)
+		switch records[i].Rdatatype {
+		case "CNAME", "SOA", "NS", "MX", "PTR", "SRV":
+			records[i].Rdata = strings.ToLower(records[i].Rdata)
+		}
+	}
+}
+
+func (p *NormalizeProcessor) RRLowercase(dm *dnsutils.DNSMessage) int {
+	processRecords(dm.DNS.DNSRRs.Answers)
+	processRecords(dm.DNS.DNSRRs.Nameservers)
+	processRecords(dm.DNS.DNSRRs.Records)
 	return ReturnSuccess
 }
 

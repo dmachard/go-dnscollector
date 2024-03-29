@@ -38,7 +38,7 @@ type FilteringProcessor struct {
 	logError             func(msg string, v ...interface{})
 }
 
-func NewFilteringProcessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
+func NewFilteringTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) FilteringProcessor {
@@ -92,12 +92,12 @@ func (p *FilteringProcessor) LoadActiveFilters() {
 
 	if !p.config.Filtering.LogQueries {
 		p.activeFilters = append(p.activeFilters, p.ignoreQueryFilter)
-		p.LogInfo("drop queries subprocessor is enabled")
+		p.LogInfo("drop queries transformer is enabled")
 	}
 
 	if !p.config.Filtering.LogReplies {
 		p.activeFilters = append(p.activeFilters, p.ignoreReplyFilter)
-		p.LogInfo("drop replies subprocessor is enabled")
+		p.LogInfo("drop replies transformer is enabled")
 	}
 
 	if len(p.mapRcodes) > 0 {
@@ -137,7 +137,7 @@ func (p *FilteringProcessor) LoadActiveFilters() {
 		p.downsample = p.config.Filtering.Downsample
 		p.downsampleCount = 0
 		p.activeFilters = append(p.activeFilters, p.downsampleFilter)
-		p.LogInfo("down sampling subprocessor is enabled")
+		p.LogInfo("transformer=downsampling is enabled")
 	}
 }
 

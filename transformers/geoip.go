@@ -47,7 +47,7 @@ type GeoIPProcessor struct {
 	logError    func(msg string, v ...interface{})
 }
 
-func NewDNSGeoIPProcessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
+func NewDNSGeoIPTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage,
 	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
 ) GeoIPProcessor {

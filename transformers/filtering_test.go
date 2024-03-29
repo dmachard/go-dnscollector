@@ -24,7 +24,7 @@ func TestFilteringQR(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadActiveFilters()
 
 	dm := dnsutils.GetFakeDNSMessage()
@@ -49,7 +49,7 @@ func TestFilteringByRcodeNOERROR(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadRcodes()
 	filtering.LoadActiveFilters()
 
@@ -70,7 +70,7 @@ func TestFilteringByRcodeEmpty(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadRcodes()
 	filtering.LoadActiveFilters()
 
@@ -90,7 +90,7 @@ func TestFilteringByKeepQueryIp(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadQueryIPList()
 	filtering.LoadActiveFilters()
 
@@ -122,7 +122,7 @@ func TestFilteringByDropQueryIp(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadQueryIPList()
 	filtering.LoadActiveFilters()
 
@@ -154,7 +154,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadrDataIPList()
 	filtering.LoadActiveFilters()
 
@@ -250,7 +250,7 @@ func TestFilteringByFqdn(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadDomainsList()
 	filtering.LoadActiveFilters()
 
@@ -276,7 +276,7 @@ func TestFilteringByDomainRegex(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadDomainsList()
 	filtering.LoadActiveFilters()
 
@@ -309,7 +309,7 @@ func TestFilteringByKeepDomain(t *testing.T) {
 	config.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains.txt"
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadDomainsList()
 	filtering.LoadActiveFilters()
 
@@ -351,7 +351,7 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 	config.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains_regex.txt"
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadDomainsList()
 	filtering.LoadActiveFilters()
 
@@ -388,14 +388,14 @@ func TestFilteringByDownsampleDisabled(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadActiveFilters()
 
 	// init DNS Message
 	dm := dnsutils.GetFakeDNSMessage()
 
 	// test for default behavior when downsample is set to 0
-	filtering = NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering = NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	if filtering.CheckIfDrop(&dm) == true {
 		t.Errorf("dns query should not be dropped! downsampling rate is set to 0 and should not downsample.")
@@ -415,7 +415,7 @@ func TestFilteringByDownsample(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadActiveFilters()
 
 	// init DNS Message
@@ -449,7 +449,7 @@ func TestFilteringByDownsampleUpdateJSONModel(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadActiveFilters()
 
 	// init DNS Message
@@ -482,7 +482,7 @@ func TestFilteringMultipleFilters(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init subproccesor
-	filtering := NewFilteringProcessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 	filtering.LoadQueryIPList()
 	filtering.LoadDomainsList()
 	filtering.LoadActiveFilters()
