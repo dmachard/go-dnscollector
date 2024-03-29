@@ -14,11 +14,10 @@ import (
 func TestLatency_MeasureLatency(t *testing.T) {
 	// enable feature
 	config := pkgconfig.GetFakeConfigTransformers()
-	log := logger.New(false)
 	outChannels := []chan dnsutils.DNSMessage{}
 
 	// init transformer
-	latencyProcessor := NewLatencyTransform(config, logger.New(true), "test", 0, outChannels, log.Info, log.Error)
+	latencyProcessor := NewLatencyTransform(config, logger.New(true), "test", 0, outChannels)
 
 	testcases := []struct {
 		name string
@@ -68,12 +67,11 @@ func TestLatency_DetectEvictedTimeout(t *testing.T) {
 	config.Latency.Enable = true
 	config.Latency.QueriesTimeout = 1
 
-	log := logger.New(false)
 	outChannels := []chan dnsutils.DNSMessage{}
 	outChannels = append(outChannels, make(chan dnsutils.DNSMessage, 1))
 
 	// init transformer
-	latencyProcessor := NewLatencyTransform(config, logger.New(true), "test", 0, outChannels, log.Info, log.Error)
+	latencyProcessor := NewLatencyTransform(config, logger.New(true), "test", 0, outChannels)
 
 	testcases := []struct {
 		name string

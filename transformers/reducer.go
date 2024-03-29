@@ -2,6 +2,7 @@ package transformers
 
 import (
 	"container/list"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -108,27 +109,34 @@ type ReducerProcessor struct {
 	outChannels      []chan dnsutils.DNSMessage
 	activeProcessors []func(dm *dnsutils.DNSMessage) int
 	mapTraffic       MapTraffic
-	logInfo          func(msg string, v ...interface{})
-	logError         func(msg string, v ...interface{})
+	LogInfo          func(msg string, v ...interface{})
+	LogError         func(msg string, v ...interface{})
 	strBuilder       strings.Builder
 }
 
 func NewReducerTransform(
 	config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
-) *ReducerProcessor {
+	instance int, outChannels []chan dnsutils.DNSMessage) *ReducerProcessor {
 	s := ReducerProcessor{
 		config:      config,
 		logger:      logger,
 		name:        name,
 		instance:    instance,
 		outChannels: outChannels,
-		logInfo:     logInfo,
-		logError:    logError,
 	}
 
-	s.mapTraffic = NewMapTraffic(time.Duration(config.Reducer.WatchInterval)*time.Second, outChannels, logInfo, logError)
+	s.LogInfo = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - reducer - ", name, instance)
+		logger.Info(log+msg, v...)
+	}
+
+	s.LogError = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - reducer - ", name, instance)
+		logger.Error(log+msg, v...)
+	}
+
+	s.mapTraffic = NewMapTraffic(time.Duration(config.Reducer.WatchInterval)*time.Second, outChannels, s.LogInfo, s.LogError)
+
 	return &s
 }
 

@@ -1,6 +1,7 @@
 package transformers
 
 import (
+	"fmt"
 	"hash/fnv"
 	"strconv"
 	"strings"
@@ -109,22 +110,28 @@ type LatencyProcessor struct {
 	hashQueries HashQueries
 	mapQueries  MapQueries
 	outChannels []chan dnsutils.DNSMessage
-	logInfo     func(msg string, v ...interface{})
-	logError    func(msg string, v ...interface{})
+	LogInfo     func(msg string, v ...interface{})
+	LogError    func(msg string, v ...interface{})
 }
 
 func NewLatencyTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
-) *LatencyProcessor {
+	instance int, outChannels []chan dnsutils.DNSMessage) *LatencyProcessor {
 	s := LatencyProcessor{
 		config:      config,
 		logger:      logger,
 		name:        name,
 		instance:    instance,
 		outChannels: outChannels,
-		logInfo:     logInfo,
-		logError:    logError,
+	}
+
+	s.LogInfo = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - latency - ", name, instance)
+		logger.Info(log+msg, v...)
+	}
+
+	s.LogError = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - latency - ", name, instance)
+		logger.Error(log+msg, v...)
 	}
 
 	s.hashQueries = NewHashQueries(time.Duration(config.Latency.QueriesTimeout) * time.Second)

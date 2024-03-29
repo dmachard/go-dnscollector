@@ -70,23 +70,29 @@ type NormalizeProcessor struct {
 	instance         int
 	activeProcessors []func(dm *dnsutils.DNSMessage) int
 	outChannels      []chan dnsutils.DNSMessage
-	logInfo          func(msg string, v ...interface{})
-	logError         func(msg string, v ...interface{})
+	LogInfo          func(msg string, v ...interface{})
+	LogError         func(msg string, v ...interface{})
 }
 
 func NewNormalizeTransform(
 	config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
-) NormalizeProcessor {
+	instance int, outChannels []chan dnsutils.DNSMessage) NormalizeProcessor {
 	s := NormalizeProcessor{
 		config:      config,
 		logger:      logger,
 		name:        name,
 		instance:    instance,
 		outChannels: outChannels,
-		logInfo:     logInfo,
-		logError:    logError,
+	}
+
+	s.LogInfo = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - normalize - ", name, instance)
+		logger.Info(log+msg, v...)
+	}
+
+	s.LogError = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - normalize - ", name, instance)
+		logger.Error(log+msg, v...)
 	}
 
 	return s
@@ -96,37 +102,28 @@ func (p *NormalizeProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) 
 	p.config = config
 }
 
-func (p *NormalizeProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("normalize#%d - ", p.instance)
-	p.logInfo(log+msg, v...)
-}
-
-func (p *NormalizeProcessor) LogError(msg string, v ...interface{}) {
-	p.logError("normalize - "+msg, v...)
-}
-
 func (p *NormalizeProcessor) LoadActiveProcessors() {
 	// clean the slice
 	p.activeProcessors = p.activeProcessors[:0]
 
 	if p.config.Normalize.RRLowerCase {
 		p.activeProcessors = append(p.activeProcessors, p.RRLowercase)
-		p.LogInfo("transformer=lowercase is enabled")
+		p.LogInfo("processor=lowercase is enabled")
 	}
 
 	if p.config.Normalize.QnameLowerCase {
 		p.activeProcessors = append(p.activeProcessors, p.QnameLowercase)
-		p.LogInfo("transformer=lowercase is enabled")
+		p.LogInfo("processor=lowercase is enabled")
 	}
 
 	if p.config.Normalize.QuietText {
 		p.activeProcessors = append(p.activeProcessors, p.QuietText)
-		p.LogInfo("transformer=quiet_text is enabled")
+		p.LogInfo("processor=quiet_text is enabled")
 	}
 
 	if p.config.Normalize.AddTld {
 		p.activeProcessors = append(p.activeProcessors, p.GetEffectiveTld)
-		p.LogInfo("transformer=add_tld is enabled")
+		p.LogInfo("processor=add_tld is enabled")
 	}
 	if p.config.Normalize.AddTldPlusOne {
 		p.activeProcessors = append(p.activeProcessors, p.GetEffectiveTldPlusOne)

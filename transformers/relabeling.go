@@ -1,6 +1,7 @@
 package transformers
 
 import (
+	"fmt"
 	"regexp"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -14,23 +15,31 @@ type RelabelProcessor struct {
 	name            string
 	instance        int
 	outChannels     []chan dnsutils.DNSMessage
-	logInfo         func(msg string, v ...interface{})
-	logError        func(msg string, v ...interface{})
+	LogInfo         func(msg string, v ...interface{})
+	LogError        func(msg string, v ...interface{})
 	RelabelingRules []dnsutils.RelabelingRule
 }
 
 func NewRelabelTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{})) RelabelProcessor {
+	instance int, outChannels []chan dnsutils.DNSMessage) RelabelProcessor {
 	s := RelabelProcessor{
 		config:      config,
 		logger:      logger,
 		name:        name,
 		instance:    instance,
 		outChannels: outChannels,
-		logInfo:     logInfo,
-		logError:    logError,
 	}
+
+	s.LogInfo = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - relabeling - ", name, instance)
+		logger.Info(log+msg, v...)
+	}
+
+	s.LogError = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - relabeling - ", name, instance)
+		logger.Error(log+msg, v...)
+	}
+
 	s.Precompile()
 	return s
 }

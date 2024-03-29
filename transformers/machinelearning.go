@@ -26,20 +26,26 @@ type MlProcessor struct {
 	config      *pkgconfig.ConfigTransformers
 	instance    int
 	outChannels []chan dnsutils.DNSMessage
-	logInfo     func(msg string, v ...interface{})
-	logError    func(msg string, v ...interface{})
+	LogInfo     func(msg string, v ...interface{})
+	LogError    func(msg string, v ...interface{})
 }
 
 func NewMachineLearningTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
-) MlProcessor {
+	instance int, outChannels []chan dnsutils.DNSMessage) MlProcessor {
 	s := MlProcessor{
 		config:      config,
 		instance:    instance,
 		outChannels: outChannels,
-		logInfo:     logInfo,
-		logError:    logError,
+	}
+
+	s.LogInfo = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)
+		logger.Info(log+msg, v...)
+	}
+
+	s.LogError = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)
+		logger.Error(log+msg, v...)
 	}
 
 	return s
@@ -47,16 +53,6 @@ func NewMachineLearningTransform(config *pkgconfig.ConfigTransformers, logger *l
 
 func (p *MlProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
-}
-
-func (p *MlProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("ml#%d - ", p.instance)
-	p.logInfo(log+msg, v...)
-}
-
-func (p *MlProcessor) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("ml#%d - ", p.instance)
-	p.logError(log+msg, v...)
 }
 
 func (p *MlProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {

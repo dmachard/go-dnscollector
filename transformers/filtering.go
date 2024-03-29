@@ -34,14 +34,12 @@ type FilteringProcessor struct {
 	activeFilters        []func(dm *dnsutils.DNSMessage) bool
 	instance             int
 	outChannels          []chan dnsutils.DNSMessage
-	logInfo              func(msg string, v ...interface{})
-	logError             func(msg string, v ...interface{})
+	LogInfo              func(msg string, v ...interface{})
+	LogError             func(msg string, v ...interface{})
 }
 
 func NewFilteringTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
-) FilteringProcessor {
+	instance int, outChannels []chan dnsutils.DNSMessage) FilteringProcessor {
 	// creates a new file watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -64,24 +62,23 @@ func NewFilteringTransform(config *pkgconfig.ConfigTransformers, logger *logger.
 		name:                 name,
 		instance:             instance,
 		outChannels:          outChannels,
-		logInfo:              logInfo,
-		logError:             logError,
 	}
+
+	d.LogInfo = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)
+		logger.Info(log+msg, v...)
+	}
+
+	d.LogError = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)
+		logger.Error(log+msg, v...)
+	}
+
 	return d
 }
 
 func (p *FilteringProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
-}
-
-func (p *FilteringProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("filtering#%d - ", p.instance)
-	p.logInfo(log+msg, v...)
-}
-
-func (p *FilteringProcessor) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("filtering#%d - ", p.instance)
-	p.logError(log+msg, v...)
 }
 
 func (p *FilteringProcessor) LoadActiveFilters() {
