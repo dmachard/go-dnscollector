@@ -11,6 +11,8 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/pkg/errors"
+	"github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/model/relabel"
 	"gopkg.in/yaml.v3"
 )
 
@@ -84,6 +86,19 @@ func CheckConfig(userConfigPath string, dmRef dnsutils.DNSMessage) error {
 	// add default relabeling examples
 	defaultConfig.IngoingTransformers.Relabeling.Remove = append(defaultConfig.IngoingTransformers.Relabeling.Remove, pkgconfig.RelabelingConfig{})
 	defaultConfig.IngoingTransformers.Relabeling.Rename = append(defaultConfig.IngoingTransformers.Relabeling.Rename, pkgconfig.RelabelingConfig{})
+
+	// add fake value in relabel.Config because yaml tag is set to omitempty
+	// avoid this type of exception in future ....
+	defaultConfig.Loggers.LokiClient.RelabelConfigs = append(defaultConfig.Loggers.LokiClient.RelabelConfigs,
+		&relabel.Config{
+			TargetLabel:  "target",
+			SourceLabels: []model.LabelName{"source"},
+			Separator:    "separator",
+			Replacement:  "replacement",
+			Action:       relabel.Action("action"),
+			Regex:        relabel.Regexp{},
+		},
+	)
 
 	// Convert default config to map
 	// And get unique YAML keys
