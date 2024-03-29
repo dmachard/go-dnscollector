@@ -10,7 +10,7 @@ import (
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 
-	sarama "github.com/Shopify/sarama"
+	sarama "github.com/IBM/sarama"
 )
 
 func Test_KafkaProducer(t *testing.T) {
