@@ -88,6 +88,7 @@ func CheckConfig(userConfigPath string, dmRef dnsutils.DNSMessage) error {
 	defaultConfig.IngoingTransformers.Relabeling.Rename = append(defaultConfig.IngoingTransformers.Relabeling.Rename, pkgconfig.RelabelingConfig{})
 
 	// add fake value in relabel.Config because yaml tag is set to omitempty
+	// avoid this type of exception in future ....
 	defaultConfig.Loggers.LokiClient.RelabelConfigs = append(defaultConfig.Loggers.LokiClient.RelabelConfigs,
 		&relabel.Config{
 			TargetLabel:  "target",
