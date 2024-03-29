@@ -18,6 +18,7 @@ type ConfigTransformers struct {
 	Normalize struct {
 		Enable         bool `yaml:"enable"`
 		QnameLowerCase bool `yaml:"qname-lowercase"`
+		RRLowerCase    bool `yaml:"rr-lowercase"`
 		QuietText      bool `yaml:"quiet-text"`
 		AddTld         bool `yaml:"add-tld"`
 		AddTldPlusOne  bool `yaml:"add-tld-plus-one"`
@@ -104,6 +105,7 @@ func (c *ConfigTransformers) SetDefault() {
 
 	c.Normalize.Enable = false
 	c.Normalize.QnameLowerCase = false
+	c.Normalize.RRLowerCase = false
 	c.Normalize.QuietText = false
 	c.Normalize.AddTld = false
 	c.Normalize.AddTldPlusOne = false

@@ -19,15 +19,51 @@ func TestNormalize_LowercaseQname(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
-	qnameNorm := NewNormalizeTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+	normTransformer := NewNormalizeTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
 
 	qname := "www.Google.Com"
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = qname
 
-	ret := qnameNorm.LowercaseQname(&dm)
+	normTransformer.QnameLowercase(&dm)
 	if dm.DNS.Qname != strings.ToLower(qname) {
-		t.Errorf("Qname to lowercase failed, got %d", ret)
+		t.Errorf("Qname to lowercase failed, got %s", dm.DNS.Qname)
+	}
+}
+
+func TestNormalize_RRLowercaseQname(t *testing.T) {
+	// enable feature
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.Normalize.Enable = true
+
+	log := logger.New(false)
+	outChans := []chan dnsutils.DNSMessage{}
+
+	// init the processor
+	normTransformer := NewNormalizeTransform(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
+
+	// create DNSMessage with answers
+	rrqname := "www.RRGoogle.Com"
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = "www.test.com"
+	dm.DNS.DNSRRs.Answers = append(dm.DNS.DNSRRs.Answers, dnsutils.DNSAnswer{Name: rrqname})
+	dm.DNS.DNSRRs.Nameservers = append(dm.DNS.DNSRRs.Nameservers, dnsutils.DNSAnswer{Name: rrqname})
+	dm.DNS.DNSRRs.Records = append(dm.DNS.DNSRRs.Records, dnsutils.DNSAnswer{Name: rrqname})
+
+	// process DNSMessage
+	normTransformer.RRLowercase(&dm)
+
+	// checks
+	if dm.DNS.DNSRRs.Answers[0].Name != strings.ToLower(rrqname) {
+		t.Errorf("RR Answers to lowercase failed, got %s", dm.DNS.DNSRRs.Answers[0].Name)
+	}
+
+	if dm.DNS.DNSRRs.Nameservers[0].Name != strings.ToLower(rrqname) {
+		t.Errorf("RR Nameservers to lowercase failed, got %s", dm.DNS.DNSRRs.Nameservers[0].Name)
+	}
+
+	if dm.DNS.DNSRRs.Records[0].Name != strings.ToLower(rrqname) {
+		t.Errorf("RR Records to lowercase failed, got %s", dm.DNS.DNSRRs.Records[0].Name)
 	}
 }
 
@@ -251,7 +287,28 @@ func BenchmarkNormalize_QnameLowercase(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		subprocessor.LowercaseQname(&dm)
+		subprocessor.QnameLowercase(&dm)
+	}
+}
+
+func BenchmarkNormalize_RRLowercase(b *testing.B) {
+	config := pkgconfig.GetFakeConfigTransformers()
+
+	log := logger.New(false)
+	channels := []chan dnsutils.DNSMessage{}
+
+	tranform := NewNormalizeTransform(config, logger.New(false), "test", 0, channels, log.Info, log.Error)
+
+	name := "En.Tikipedia.Org"
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Qname = name
+	dm.DNS.DNSRRs.Answers = append(dm.DNS.DNSRRs.Answers, dnsutils.DNSAnswer{Name: name})
+	dm.DNS.DNSRRs.Nameservers = append(dm.DNS.DNSRRs.Nameservers, dnsutils.DNSAnswer{Name: name})
+	dm.DNS.DNSRRs.Records = append(dm.DNS.DNSRRs.Records, dnsutils.DNSAnswer{Name: name})
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		tranform.RRLowercase(&dm)
 	}
 }
 

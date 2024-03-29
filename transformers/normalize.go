@@ -109,8 +109,13 @@ func (p *NormalizeProcessor) LoadActiveProcessors() {
 	// clean the slice
 	p.activeProcessors = p.activeProcessors[:0]
 
+	if p.config.Normalize.RRLowerCase {
+		p.activeProcessors = append(p.activeProcessors, p.RRLowercase)
+		p.LogInfo("transformer=lowercase is enabled")
+	}
+
 	if p.config.Normalize.QnameLowerCase {
-		p.activeProcessors = append(p.activeProcessors, p.LowercaseQname)
+		p.activeProcessors = append(p.activeProcessors, p.QnameLowercase)
 		p.LogInfo("transformer=lowercase is enabled")
 	}
 
@@ -143,9 +148,26 @@ func (p *NormalizeProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 	}
 }
 
-func (p *NormalizeProcessor) LowercaseQname(dm *dnsutils.DNSMessage) int {
+func (p *NormalizeProcessor) QnameLowercase(dm *dnsutils.DNSMessage) int {
 	dm.DNS.Qname = strings.ToLower(dm.DNS.Qname)
 
+	return ReturnSuccess
+}
+
+func processRecords(records []dnsutils.DNSAnswer) {
+	for i := range records {
+		records[i].Name = strings.ToLower(records[i].Name)
+		switch records[i].Rdatatype {
+		case "CNAME", "SOA", "NS", "MX", "PTR", "SRV":
+			records[i].Rdata = strings.ToLower(records[i].Rdata)
+		}
+	}
+}
+
+func (p *NormalizeProcessor) RRLowercase(dm *dnsutils.DNSMessage) int {
+	processRecords(dm.DNS.DNSRRs.Answers)
+	processRecords(dm.DNS.DNSRRs.Nameservers)
+	processRecords(dm.DNS.DNSRRs.Records)
 	return ReturnSuccess
 }
 
