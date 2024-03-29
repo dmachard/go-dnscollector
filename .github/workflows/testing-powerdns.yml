@@ -27,7 +27,7 @@ jobs:
     strategy:
       matrix:
         go-version: [ '1.22' ]
-        dnsdist: [ '17', '18', '19' ]
+        dnsdist: [ '18', '19' ]
 
     steps:
     - uses: actions/checkout@v4
@@ -60,7 +60,7 @@ jobs:
     strategy:
       matrix:
         go-version: [ '1.22' ]
-        recursor: [ '47', '48', '49' ]
+        recursor: [ '48', '49' ]
 
     steps:
     - uses: actions/checkout@v4
