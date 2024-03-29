@@ -1,11 +1,13 @@
 module github.com/dmachard/go-dnscollector
 
-go 1.21
+go 1.21.0
+
+toolchain go1.22.1
 
 require (
 	github.com/IBM/fluent-forward-go v0.2.2
-	github.com/Shopify/sarama v1.38.1
-	github.com/cilium/ebpf v0.12.3
+	github.com/IBM/sarama v1.43.1
+	github.com/cilium/ebpf v0.14.0
 	github.com/dmachard/go-clientsyslog v0.3.0
 	github.com/dmachard/go-dnstap-protobuf v1.0.0
 	github.com/dmachard/go-framestream v0.10.0
@@ -19,7 +21,7 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
 	github.com/grafana/dskit v0.0.0-20230804003603-740f56bd2934
-	github.com/grafana/loki v1.6.2-0.20231211180320-2535f9bedeae
+	github.com/grafana/loki v1.6.2-0.20240321101415-318652035059
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb-client-go v1.4.0
@@ -50,8 +52,8 @@ require (
 	github.com/deepmap/oapi-codegen v1.12.4 // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/eapache/go-resiliency v1.3.0 // indirect
-	github.com/eapache/go-xerial-snappy v0.0.0-20230111030713-bf00bc1b83b6 // indirect
+	github.com/eapache/go-resiliency v1.6.0 // indirect
+	github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
@@ -62,7 +64,7 @@ require (
 	github.com/google/btree v1.1.2 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/grafana/loki/pkg/push v0.0.0-20231211180320-2535f9bedeae // indirect
+	github.com/grafana/loki/pkg/push v0.0.0-20240321101415-318652035059 // indirect
 	github.com/grafana/regexp v0.0.0-20221122212121-6b5c0a4cb7fd // indirect
 	github.com/hashicorp/consul/api v1.20.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -80,7 +82,7 @@ require (
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
 	github.com/jcmturner/gofork v1.7.6 // indirect
-	github.com/jcmturner/gokrb5/v8 v8.4.3 // indirect
+	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -95,7 +97,7 @@ require (
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/philhofer/fwd v1.1.2 // indirect
-	github.com/pierrec/lz4/v4 v4.1.17 // indirect
+	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/exporter-toolkit v0.9.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
