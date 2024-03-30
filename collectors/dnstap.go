@@ -23,25 +23,22 @@ import (
 )
 
 type Dnstap struct {
-	doneRun          chan bool
-	doneMonitor      chan bool
-	stopRun          chan bool
-	stopMonitor      chan bool
-	stopCalled       bool
-	listen           net.Listener
-	conns            []net.Conn
-	sockPath         string
-	defaultRoutes    []pkgutils.Worker
-	droppedRoutes    []pkgutils.Worker
-	config           *pkgconfig.Config
-	configChan       chan *pkgconfig.Config
-	logger           *logger.Logger
-	name             string
-	connMode         string
-	connID           int
-	droppedCount     int
-	droppedProcessor chan int
-	tapProcessors    []processors.DNSTapProcessor
+	doneRun, stopRun             chan bool
+	doneMonitor, stopMonitor     chan bool
+	stopCalled                   bool
+	listen                       net.Listener
+	conns                        []net.Conn
+	sockPath                     string
+	defaultRoutes, droppedRoutes []pkgutils.Worker
+	config                       *pkgconfig.Config
+	configChan                   chan *pkgconfig.Config
+	logger                       *logger.Logger
+	name                         string
+	connMode                     string
+	connID                       int
+	droppedCount                 int
+	droppedProcessor             chan int
+	tapProcessors                []processors.DNSTapProcessor
 	sync.RWMutex
 }
 

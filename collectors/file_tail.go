@@ -19,14 +19,13 @@ import (
 )
 
 type Tail struct {
-	doneRun       chan bool
-	stopRun       chan bool
-	tailf         *tail.Tail
-	defaultRoutes []pkgutils.Worker
-	config        *pkgconfig.Config
-	configChan    chan *pkgconfig.Config
-	logger        *logger.Logger
-	name          string
+	doneRun, stopRun chan bool
+	tailf            *tail.Tail
+	defaultRoutes    []pkgutils.Worker
+	config           *pkgconfig.Config
+	configChan       chan *pkgconfig.Config
+	logger           *logger.Logger
+	name             string
 }
 
 func NewTail(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Tail {

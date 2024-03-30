@@ -32,20 +32,17 @@ func IsStdoutValidMode(mode string) bool {
 }
 
 type StdOut struct {
-	stopProcess    chan bool
-	doneProcess    chan bool
-	stopRun        chan bool
-	doneRun        chan bool
-	inputChan      chan dnsutils.DNSMessage
-	outputChan     chan dnsutils.DNSMessage
-	textFormat     []string
-	config         *pkgconfig.Config
-	configChan     chan *pkgconfig.Config
-	logger         *logger.Logger
-	writerText     *log.Logger
-	writerPcap     *pcapgo.Writer
-	name           string
-	RoutingHandler pkgutils.RoutingHandler
+	stopProcess, doneProcess chan bool
+	stopRun, doneRun         chan bool
+	inputChan, outputChan    chan dnsutils.DNSMessage
+	textFormat               []string
+	config                   *pkgconfig.Config
+	configChan               chan *pkgconfig.Config
+	logger                   *logger.Logger
+	writerText               *log.Logger
+	writerPcap               *pcapgo.Writer
+	name                     string
+	RoutingHandler           pkgutils.RoutingHandler
 }
 
 func NewStdOut(config *pkgconfig.Config, console *logger.Logger, name string) *StdOut {

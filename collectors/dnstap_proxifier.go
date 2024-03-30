@@ -17,19 +17,17 @@ import (
 )
 
 type DnstapProxifier struct {
-	doneRun        chan bool
-	stopRun        chan bool
-	listen         net.Listener
-	conns          []net.Conn
-	sockPath       string
-	defaultRoutes  []pkgutils.Worker
-	droppedRoutes  []pkgutils.Worker
-	config         *pkgconfig.Config
-	configChan     chan *pkgconfig.Config
-	logger         *logger.Logger
-	name           string
-	stopping       bool
-	RoutingHandler pkgutils.RoutingHandler
+	doneRun, stopRun             chan bool
+	listen                       net.Listener
+	conns                        []net.Conn
+	sockPath                     string
+	defaultRoutes, droppedRoutes []pkgutils.Worker
+	config                       *pkgconfig.Config
+	configChan                   chan *pkgconfig.Config
+	logger                       *logger.Logger
+	name                         string
+	stopping                     bool
+	RoutingHandler               pkgutils.RoutingHandler
 }
 
 func NewDnstapProxifier(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {

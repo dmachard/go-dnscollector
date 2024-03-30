@@ -16,22 +16,19 @@ import (
 )
 
 type FluentdClient struct {
-	stopProcess        chan bool
-	doneProcess        chan bool
-	stopRun            chan bool
-	doneRun            chan bool
-	inputChan          chan dnsutils.DNSMessage
-	outputChan         chan dnsutils.DNSMessage
-	config             *pkgconfig.Config
-	configChan         chan *pkgconfig.Config
-	logger             *logger.Logger
-	transport          string
-	fluentConn         *client.Client
-	transportReady     chan bool
-	transportReconnect chan bool
-	writerReady        bool
-	name               string
-	RoutingHandler     pkgutils.RoutingHandler
+	stopProcess, doneProcess chan bool
+	stopRun, doneRun         chan bool
+	inputChan, outputChan    chan dnsutils.DNSMessage
+	config                   *pkgconfig.Config
+	configChan               chan *pkgconfig.Config
+	logger                   *logger.Logger
+	transport                string
+	fluentConn               *client.Client
+	transportReady           chan bool
+	transportReconnect       chan bool
+	writerReady              bool
+	name                     string
+	RoutingHandler           pkgutils.RoutingHandler
 }
 
 func NewFluentdClient(config *pkgconfig.Config, logger *logger.Logger, name string) *FluentdClient {

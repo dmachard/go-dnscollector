@@ -42,12 +42,7 @@ type Transforms struct {
 
 func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DNSMessage, instance int) Transforms {
 
-	d := Transforms{
-		config:   config,
-		logger:   logger,
-		name:     name,
-		instance: instance,
-	}
+	d := Transforms{config: config, logger: logger, name: name, instance: instance}
 
 	d.SuspiciousTransform = NewSuspiciousTransform(config, logger, name, instance, outChannels)
 	d.NormalizeTransform = NewNormalizeTransform(config, logger, name, instance, outChannels)
@@ -95,7 +90,6 @@ func (p *Transforms) Prepare() error {
 
 	if p.config.Normalize.Enable {
 		p.LogInfo(prefixlog + "transformer=normalize is " + enabled)
-
 		p.NormalizeTransform.LoadActiveProcessors()
 	}
 

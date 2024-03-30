@@ -10,7 +10,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
-	"gopkg.in/fsnotify.v1"
 	"inet.af/netaddr"
 )
 
@@ -22,7 +21,6 @@ type FilteringProcessor struct {
 	ipsetDrop, ipsetKeep, rDataIpsetKeep   *netaddr.IPSet
 	listFqdns, listKeepFqdns               map[string]bool
 	listDomainsRegex, listKeepDomainsRegex map[string]*regexp.Regexp
-	fileWatcher                            *fsnotify.Watcher
 	downsample, downsampleCount            int
 	activeFilters                          []func(dm *dnsutils.DNSMessage) bool
 	outChannels                            []chan dnsutils.DNSMessage
@@ -31,13 +29,6 @@ type FilteringProcessor struct {
 
 func NewFilteringTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage) FilteringProcessor {
-	// creates a new file watcher
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		fmt.Println("ERROR", err)
-	}
-	defer watcher.Close()
-
 	d := FilteringProcessor{
 		config:               config,
 		logger:               logger,
@@ -49,7 +40,6 @@ func NewFilteringTransform(config *pkgconfig.ConfigTransformers, logger *logger.
 		listDomainsRegex:     make(map[string]*regexp.Regexp),
 		listKeepFqdns:        make(map[string]bool),
 		listKeepDomainsRegex: make(map[string]*regexp.Regexp),
-		fileWatcher:          watcher,
 		outChannels:          outChannels,
 	}
 
@@ -326,20 +316,6 @@ func (p *FilteringProcessor) loadKeepRdataIPList(fname string) (uint64, error) {
 	p.rDataIpsetKeep, err = ipsetbuilder.IPSet()
 
 	return read, err
-}
-
-func (p *FilteringProcessor) Run() {
-	for {
-		select {
-		// watch for events
-		case event := <-p.fileWatcher.Events:
-			fmt.Printf("EVENT! %#v\n", event)
-
-			// watch for errors
-		case err := <-p.fileWatcher.Errors:
-			fmt.Println("ERROR", err)
-		}
-	}
 }
 
 func (p *FilteringProcessor) ignoreQueryFilter(dm *dnsutils.DNSMessage) bool {

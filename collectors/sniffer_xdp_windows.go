@@ -11,8 +11,7 @@ import (
 )
 
 type XDPSniffer struct {
-	done          chan bool
-	exit          chan bool
+	done, exit    chan bool
 	identity      string
 	defaultRoutes []pkgutils.Worker
 	config        *pkgconfig.Config

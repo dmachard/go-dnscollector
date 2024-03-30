@@ -55,29 +55,17 @@ EpsCounters (Events Per Second) - is a set of metrics we calculate on per-second
 For others we rely on averaging by collector
 */
 type EpsCounters struct {
-	Eps             uint64
-	EpsMax          uint64
-	TotalEvents     uint64
-	TotalEventsPrev uint64
+	Eps, EpsMax                  uint64
+	TotalEvents, TotalEventsPrev uint64
 
-	TotalRcodes        map[string]float64
-	TotalQtypes        map[string]float64
-	TotalIPVersion     map[string]float64
-	TotalIPProtocol    map[string]float64
-	TotalDNSMessages   float64
-	TotalQueries       int
-	TotalReplies       int
-	TotalBytesSent     int
-	TotalBytesReceived int
-	TotalBytes         int
+	TotalRcodes, TotalQtypes                       map[string]float64
+	TotalIPVersion, TotalIPProtocol                map[string]float64
+	TotalDNSMessages                               float64
+	TotalQueries, TotalReplies                     int
+	TotalBytes, TotalBytesSent, TotalBytesReceived int
 
-	TotalTC         float64
-	TotalAA         float64
-	TotalRA         float64
-	TotalAD         float64
-	TotalMalformed  float64
-	TotalFragmented float64
-	TotalReasembled float64
+	TotalTC, TotalAA, TotalRA, TotalAD               float64
+	TotalMalformed, TotalFragmented, TotalReasembled float64
 }
 
 type PrometheusCountersCatalogue interface {
@@ -109,7 +97,8 @@ type PrometheusCountersSet struct {
 	suspicious   *expirable.LRU[string, int] // Requests number for a specific name that looked suspicious
 	evicted      *expirable.LRU[string, int] // Requests number for a specific name that timed out
 
-	epsCounters     EpsCounters
+	epsCounters EpsCounters
+
 	topRequesters   *topmap.TopMap
 	topAllDomains   *topmap.TopMap
 	topEvicted      *topmap.TopMap
@@ -173,19 +162,16 @@ func GetResolverIP(dm *dnsutils.DNSMessage) string {
 }
 
 type Prometheus struct {
-	doneAPI      chan bool
-	stopProcess  chan bool
-	doneProcess  chan bool
-	stopRun      chan bool
-	doneRun      chan bool
-	httpServer   *http.Server
-	netListener  net.Listener
-	inputChan    chan dnsutils.DNSMessage
-	outputChan   chan dnsutils.DNSMessage
-	config       *pkgconfig.Config
-	configChan   chan *pkgconfig.Config
-	logger       *logger.Logger
-	promRegistry *prometheus.Registry
+	doneAPI                  chan bool
+	stopProcess, doneProcess chan bool
+	stopRun, doneRun         chan bool
+	httpServer               *http.Server
+	netListener              net.Listener
+	inputChan, outputChan    chan dnsutils.DNSMessage
+	config                   *pkgconfig.Config
+	configChan               chan *pkgconfig.Config
+	logger                   *logger.Logger
+	promRegistry             *prometheus.Registry
 
 	sync.Mutex
 	catalogueLabels []string

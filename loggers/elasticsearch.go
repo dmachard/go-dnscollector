@@ -20,21 +20,18 @@ import (
 )
 
 type ElasticSearchClient struct {
-	stopProcess    chan bool
-	doneProcess    chan bool
-	stopRun        chan bool
-	doneRun        chan bool
-	inputChan      chan dnsutils.DNSMessage
-	outputChan     chan dnsutils.DNSMessage
-	config         *pkgconfig.Config
-	configChan     chan *pkgconfig.Config
-	logger         *logger.Logger
-	name           string
-	server         string
-	index          string
-	bulkURL        string
-	RoutingHandler pkgutils.RoutingHandler
-	httpClient     *http.Client
+	stopProcess, doneProcess chan bool
+	stopRun, doneRun         chan bool
+	inputChan, outputChan    chan dnsutils.DNSMessage
+	config                   *pkgconfig.Config
+	configChan               chan *pkgconfig.Config
+	logger                   *logger.Logger
+	name                     string
+	server                   string
+	index                    string
+	bulkURL                  string
+	RoutingHandler           pkgutils.RoutingHandler
+	httpClient               *http.Client
 }
 
 func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, name string) *ElasticSearchClient {

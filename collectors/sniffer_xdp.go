@@ -43,15 +43,13 @@ func ConvertIP6(ip [4]uint32) net.IP {
 }
 
 type XDPSniffer struct {
-	done          chan bool
-	exit          chan bool
-	identity      string
-	defaultRoutes []pkgutils.Worker
-	droppedRoutes []pkgutils.Worker
-	config        *pkgconfig.Config
-	configChan    chan *pkgconfig.Config
-	logger        *logger.Logger
-	name          string
+	done, exit                   chan bool
+	identity                     string
+	defaultRoutes, droppedRoutes []pkgutils.Worker
+	config                       *pkgconfig.Config
+	configChan                   chan *pkgconfig.Config
+	logger                       *logger.Logger
+	name                         string
 }
 
 func NewXDPSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {

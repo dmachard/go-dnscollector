@@ -37,21 +37,20 @@ func IsValidMode(mode string) bool {
 }
 
 type FileIngestor struct {
-	done            chan bool
-	exit            chan bool
-	droppedRoutes   []pkgutils.Worker
-	defaultRoutes   []pkgutils.Worker
-	config          *pkgconfig.Config
-	configChan      chan *pkgconfig.Config
-	logger          *logger.Logger
-	watcher         *fsnotify.Watcher
-	watcherTimers   map[string]*time.Timer
-	dnsProcessor    processors.DNSProcessor
-	dnstapProcessor processors.DNSTapProcessor
-	filterDNSPort   int
-	identity        string
-	name            string
-	mu              sync.Mutex
+	done                         chan bool
+	exit                         chan bool
+	droppedRoutes, defaultRoutes []pkgutils.Worker
+	config                       *pkgconfig.Config
+	configChan                   chan *pkgconfig.Config
+	logger                       *logger.Logger
+	watcher                      *fsnotify.Watcher
+	watcherTimers                map[string]*time.Timer
+	dnsProcessor                 processors.DNSProcessor
+	dnstapProcessor              processors.DNSTapProcessor
+	filterDNSPort                int
+	identity                     string
+	name                         string
+	mu                           sync.Mutex
 }
 
 func NewFileIngestor(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {

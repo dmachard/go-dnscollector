@@ -76,20 +76,17 @@ func (o *LokiStream) Encode2Proto() ([]byte, error) {
 }
 
 type LokiClient struct {
-	stopProcess    chan bool
-	doneProcess    chan bool
-	stopRun        chan bool
-	doneRun        chan bool
-	inputChan      chan dnsutils.DNSMessage
-	outputChan     chan dnsutils.DNSMessage
-	config         *pkgconfig.Config
-	configChan     chan *pkgconfig.Config
-	logger         *logger.Logger
-	httpclient     *http.Client
-	textFormat     []string
-	streams        map[string]*LokiStream
-	name           string
-	RoutingHandler pkgutils.RoutingHandler
+	stopProcess, doneProcess chan bool
+	stopRun, doneRun         chan bool
+	inputChan, outputChan    chan dnsutils.DNSMessage
+	config                   *pkgconfig.Config
+	configChan               chan *pkgconfig.Config
+	logger                   *logger.Logger
+	httpclient               *http.Client
+	textFormat               []string
+	streams                  map[string]*LokiStream
+	name                     string
+	RoutingHandler           pkgutils.RoutingHandler
 }
 
 func NewLokiClient(config *pkgconfig.Config, logger *logger.Logger, name string) *LokiClient {
