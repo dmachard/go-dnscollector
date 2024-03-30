@@ -64,26 +64,17 @@ var (
 )
 
 type NormalizeProcessor struct {
-	config           *pkgconfig.ConfigTransformers
-	logger           *logger.Logger
-	name             string
-	instance         int
-	activeProcessors []func(dm *dnsutils.DNSMessage) int
-	outChannels      []chan dnsutils.DNSMessage
-	LogInfo          func(msg string, v ...interface{})
-	LogError         func(msg string, v ...interface{})
+	config            *pkgconfig.ConfigTransformers
+	logger            *logger.Logger
+	activeProcessors  []func(dm *dnsutils.DNSMessage) int
+	outChannels       []chan dnsutils.DNSMessage
+	LogInfo, LogError func(msg string, v ...interface{})
 }
 
 func NewNormalizeTransform(
 	config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage) NormalizeProcessor {
-	s := NormalizeProcessor{
-		config:      config,
-		logger:      logger,
-		name:        name,
-		instance:    instance,
-		outChannels: outChannels,
-	}
+	s := NormalizeProcessor{config: config, logger: logger, outChannels: outChannels}
 
 	s.LogInfo = func(msg string, v ...interface{}) {
 		log := fmt.Sprintf("transformer - [%s] conn #%d - normalize - ", name, instance)

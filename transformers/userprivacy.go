@@ -36,22 +36,15 @@ func parseCIDRMask(mask string) (net.IPMask, error) {
 }
 
 type UserPrivacyProcessor struct {
-	config      *pkgconfig.ConfigTransformers
-	v4Mask      net.IPMask
-	v6Mask      net.IPMask
-	instance    int
-	outChannels []chan dnsutils.DNSMessage
-	LogInfo     func(msg string, v ...interface{})
-	LogError    func(msg string, v ...interface{})
+	config            *pkgconfig.ConfigTransformers
+	v4Mask, v6Mask    net.IPMask
+	outChannels       []chan dnsutils.DNSMessage
+	LogInfo, LogError func(msg string, v ...interface{})
 }
 
 func NewUserPrivacyTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage) UserPrivacyProcessor {
-	s := UserPrivacyProcessor{
-		config:      config,
-		instance:    instance,
-		outChannels: outChannels,
-	}
+	s := UserPrivacyProcessor{config: config, outChannels: outChannels}
 
 	s.LogInfo = func(msg string, v ...interface{}) {
 		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)

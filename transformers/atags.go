@@ -9,24 +9,16 @@ import (
 )
 
 type ATagsProcessor struct {
-	config      *pkgconfig.ConfigTransformers
-	logger      *logger.Logger
-	name        string
-	instance    int
-	outChannels []chan dnsutils.DNSMessage
-	LogInfo     func(msg string, v ...interface{})
-	LogError    func(msg string, v ...interface{})
+	config            *pkgconfig.ConfigTransformers
+	logger            *logger.Logger
+	outChannels       []chan dnsutils.DNSMessage
+	LogInfo, LogError func(msg string, v ...interface{})
 }
 
 func NewATagsTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage) ATagsProcessor {
-	s := ATagsProcessor{
-		config:      config,
-		logger:      logger,
-		name:        name,
-		instance:    instance,
-		outChannels: outChannels,
-	}
+	s := ATagsProcessor{config: config, logger: logger, outChannels: outChannels}
+
 	s.LogInfo = func(msg string, v ...interface{}) {
 		log := fmt.Sprintf("transformer - [%s] conn #%d - atags - ", name, instance)
 		logger.Info(log+msg, v...)

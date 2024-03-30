@@ -13,13 +13,10 @@ import (
 type SuspiciousTransform struct {
 	config                *pkgconfig.ConfigTransformers
 	logger                *logger.Logger
-	name                  string
 	CommonQtypes          map[string]bool
 	whitelistDomainsRegex map[string]*regexp.Regexp
-	instance              int
 	outChannels           []chan dnsutils.DNSMessage
-	LogInfo               func(msg string, v ...interface{})
-	LogError              func(msg string, v ...interface{})
+	LogInfo, LogError     func(msg string, v ...interface{})
 }
 
 func NewSuspiciousTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
@@ -27,10 +24,8 @@ func NewSuspiciousTransform(config *pkgconfig.ConfigTransformers, logger *logger
 	d := SuspiciousTransform{
 		config:                config,
 		logger:                logger,
-		name:                  name,
 		CommonQtypes:          make(map[string]bool),
 		whitelistDomainsRegex: make(map[string]*regexp.Regexp),
-		instance:              instance,
 		outChannels:           outChannels,
 	}
 

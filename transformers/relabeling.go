@@ -10,25 +10,16 @@ import (
 )
 
 type RelabelProcessor struct {
-	config          *pkgconfig.ConfigTransformers
-	logger          *logger.Logger
-	name            string
-	instance        int
-	outChannels     []chan dnsutils.DNSMessage
-	LogInfo         func(msg string, v ...interface{})
-	LogError        func(msg string, v ...interface{})
-	RelabelingRules []dnsutils.RelabelingRule
+	config            *pkgconfig.ConfigTransformers
+	logger            *logger.Logger
+	outChannels       []chan dnsutils.DNSMessage
+	LogInfo, LogError func(msg string, v ...interface{})
+	RelabelingRules   []dnsutils.RelabelingRule
 }
 
 func NewRelabelTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage) RelabelProcessor {
-	s := RelabelProcessor{
-		config:      config,
-		logger:      logger,
-		name:        name,
-		instance:    instance,
-		outChannels: outChannels,
-	}
+	s := RelabelProcessor{config: config, logger: logger, outChannels: outChannels}
 
 	s.LogInfo = func(msg string, v ...interface{}) {
 		log := fmt.Sprintf("transformer - [%s] conn #%d - relabeling - ", name, instance)

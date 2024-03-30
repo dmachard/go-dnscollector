@@ -102,28 +102,19 @@ func (mp *MapTraffic) ProcessExpiredKeys() {
 }
 
 type ReducerProcessor struct {
-	config           *pkgconfig.ConfigTransformers
-	logger           *logger.Logger
-	name             string
-	instance         int
-	outChannels      []chan dnsutils.DNSMessage
-	activeProcessors []func(dm *dnsutils.DNSMessage) int
-	mapTraffic       MapTraffic
-	LogInfo          func(msg string, v ...interface{})
-	LogError         func(msg string, v ...interface{})
-	strBuilder       strings.Builder
+	config            *pkgconfig.ConfigTransformers
+	logger            *logger.Logger
+	outChannels       []chan dnsutils.DNSMessage
+	activeProcessors  []func(dm *dnsutils.DNSMessage) int
+	mapTraffic        MapTraffic
+	LogInfo, LogError func(msg string, v ...interface{})
+	strBuilder        strings.Builder
 }
 
 func NewReducerTransform(
 	config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage) *ReducerProcessor {
-	s := ReducerProcessor{
-		config:      config,
-		logger:      logger,
-		name:        name,
-		instance:    instance,
-		outChannels: outChannels,
-	}
+	s := ReducerProcessor{config: config, logger: logger, outChannels: outChannels}
 
 	s.LogInfo = func(msg string, v ...interface{}) {
 		log := fmt.Sprintf("transformer - [%s] conn #%d - reducer - ", name, instance)

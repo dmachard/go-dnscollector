@@ -15,27 +15,18 @@ import (
 )
 
 type FilteringProcessor struct {
-	config               *pkgconfig.ConfigTransformers
-	logger               *logger.Logger
-	dropDomains          bool
-	keepDomains          bool
-	mapRcodes            map[string]bool
-	ipsetDrop            *netaddr.IPSet
-	ipsetKeep            *netaddr.IPSet
-	rDataIpsetKeep       *netaddr.IPSet
-	listFqdns            map[string]bool
-	listDomainsRegex     map[string]*regexp.Regexp
-	listKeepFqdns        map[string]bool
-	listKeepDomainsRegex map[string]*regexp.Regexp
-	fileWatcher          *fsnotify.Watcher
-	name                 string
-	downsample           int
-	downsampleCount      int
-	activeFilters        []func(dm *dnsutils.DNSMessage) bool
-	instance             int
-	outChannels          []chan dnsutils.DNSMessage
-	LogInfo              func(msg string, v ...interface{})
-	LogError             func(msg string, v ...interface{})
+	config                                 *pkgconfig.ConfigTransformers
+	logger                                 *logger.Logger
+	dropDomains, keepDomains               bool
+	mapRcodes                              map[string]bool
+	ipsetDrop, ipsetKeep, rDataIpsetKeep   *netaddr.IPSet
+	listFqdns, listKeepFqdns               map[string]bool
+	listDomainsRegex, listKeepDomainsRegex map[string]*regexp.Regexp
+	fileWatcher                            *fsnotify.Watcher
+	downsample, downsampleCount            int
+	activeFilters                          []func(dm *dnsutils.DNSMessage) bool
+	outChannels                            []chan dnsutils.DNSMessage
+	LogInfo, LogError                      func(msg string, v ...interface{})
 }
 
 func NewFilteringTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
@@ -59,8 +50,6 @@ func NewFilteringTransform(config *pkgconfig.ConfigTransformers, logger *logger.
 		listKeepFqdns:        make(map[string]bool),
 		listKeepDomainsRegex: make(map[string]*regexp.Regexp),
 		fileWatcher:          watcher,
-		name:                 name,
-		instance:             instance,
 		outChannels:          outChannels,
 	}
 

@@ -103,26 +103,17 @@ func (mp *HashQueries) Delete(key uint64) {
 
 // latency processor
 type LatencyProcessor struct {
-	config      *pkgconfig.ConfigTransformers
-	logger      *logger.Logger
-	name        string
-	instance    int
-	hashQueries HashQueries
-	mapQueries  MapQueries
-	outChannels []chan dnsutils.DNSMessage
-	LogInfo     func(msg string, v ...interface{})
-	LogError    func(msg string, v ...interface{})
+	config            *pkgconfig.ConfigTransformers
+	logger            *logger.Logger
+	hashQueries       HashQueries
+	mapQueries        MapQueries
+	outChannels       []chan dnsutils.DNSMessage
+	LogInfo, LogError func(msg string, v ...interface{})
 }
 
 func NewLatencyTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage) *LatencyProcessor {
-	s := LatencyProcessor{
-		config:      config,
-		logger:      logger,
-		name:        name,
-		instance:    instance,
-		outChannels: outChannels,
-	}
+	s := LatencyProcessor{config: config, logger: logger, outChannels: outChannels}
 
 	s.LogInfo = func(msg string, v ...interface{}) {
 		log := fmt.Sprintf("transformer - [%s] conn #%d - latency - ", name, instance)

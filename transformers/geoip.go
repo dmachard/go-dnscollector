@@ -26,36 +26,22 @@ type MaxminddbRecord struct {
 }
 
 type GeoRecord struct {
-	Continent      string
-	CountryISOCode string
-	City           string
-	ASN            string
-	ASO            string
+	Continent, CountryISOCode, City, ASN, ASO string
 }
 
 type GeoIPProcessor struct {
-	config      *pkgconfig.ConfigTransformers
-	logger      *logger.Logger
-	dbCountry   *maxminddb.Reader
-	dbCity      *maxminddb.Reader
-	dbAsn       *maxminddb.Reader
-	enabled     bool
-	name        string
-	instance    int
-	outChannels []chan dnsutils.DNSMessage
-	LogInfo     func(msg string, v ...interface{})
-	LogError    func(msg string, v ...interface{})
+	config                   *pkgconfig.ConfigTransformers
+	logger                   *logger.Logger
+	dbCountry, dbCity, dbAsn *maxminddb.Reader
+	enabled                  bool
+	outChannels              []chan dnsutils.DNSMessage
+	LogInfo, LogError        func(msg string, v ...interface{})
 }
 
 func NewDNSGeoIPTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
 	instance int, outChannels []chan dnsutils.DNSMessage) GeoIPProcessor {
-	d := GeoIPProcessor{
-		config:      config,
-		logger:      logger,
-		name:        name,
-		instance:    instance,
-		outChannels: outChannels,
-	}
+	d := GeoIPProcessor{config: config, logger: logger, outChannels: outChannels}
+
 	d.LogInfo = func(msg string, v ...interface{}) {
 		log := fmt.Sprintf("transformer - [%s] conn #%d - geoip - ", name, instance)
 		logger.Info(log+msg, v...)
