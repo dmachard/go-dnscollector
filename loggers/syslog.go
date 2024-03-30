@@ -62,8 +62,7 @@ type Syslog struct {
 	config                             *pkgconfig.Config
 	configChan                         chan *pkgconfig.Config
 	logger                             *logger.Logger
-	severity                           syslog.Priority
-	facility                           syslog.Priority
+	severity, facility                 syslog.Priority
 	syslogWriter                       *syslog.Writer
 	syslogReady                        bool
 	transportReady, transportReconnect chan bool

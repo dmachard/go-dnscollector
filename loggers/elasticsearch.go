@@ -27,9 +27,7 @@ type ElasticSearchClient struct {
 	configChan               chan *pkgconfig.Config
 	logger                   *logger.Logger
 	name                     string
-	server                   string
-	index                    string
-	bulkURL                  string
+	server, index, bulkURL   string
 	RoutingHandler           pkgutils.RoutingHandler
 	httpClient               *http.Client
 }

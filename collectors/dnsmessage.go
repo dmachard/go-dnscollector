@@ -31,14 +31,13 @@ type MatchSource struct {
 }
 
 type DNSMessage struct {
-	doneRun, stopRun         chan bool
-	doneMonitor, stopMonitor chan bool
-	config                   *pkgconfig.Config
-	configChan               chan *pkgconfig.Config
-	inputChan                chan dnsutils.DNSMessage
-	logger                   *logger.Logger
-	name                     string
-	//	RoutingHandler pkgutils.RoutingHandler
+	doneRun, stopRun             chan bool
+	doneMonitor, stopMonitor     chan bool
+	config                       *pkgconfig.Config
+	configChan                   chan *pkgconfig.Config
+	inputChan                    chan dnsutils.DNSMessage
+	logger                       *logger.Logger
+	name                         string
 	droppedRoutes, defaultRoutes []pkgutils.Worker
 	dropped                      chan string
 	droppedCount                 map[string]int

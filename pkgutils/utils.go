@@ -18,9 +18,8 @@ type Worker interface {
 }
 
 type FakeLogger struct {
-	inputChan  chan dnsutils.DNSMessage
-	outputChan chan dnsutils.DNSMessage
-	name       string
+	inputChan, outputChan chan dnsutils.DNSMessage
+	name                  string
 }
 
 func NewFakeLogger() *FakeLogger {

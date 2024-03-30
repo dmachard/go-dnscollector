@@ -18,20 +18,19 @@ import (
 )
 
 type DnstapSender struct {
-	stopProcess, doneProcess chan bool
-	stopRun, doneRun         chan bool
-	inputChan, outputChan    chan dnsutils.DNSMessage
-	config                   *pkgconfig.Config
-	configChan               chan *pkgconfig.Config
-	logger                   *logger.Logger
-	fs                       *framestream.Fstrm
-	fsReady                  bool
-	transport                string
-	transportConn            net.Conn
-	transportReady           chan bool
-	transportReconnect       chan bool
-	name                     string
-	RoutingHandler           pkgutils.RoutingHandler
+	stopProcess, doneProcess           chan bool
+	stopRun, doneRun                   chan bool
+	inputChan, outputChan              chan dnsutils.DNSMessage
+	config                             *pkgconfig.Config
+	configChan                         chan *pkgconfig.Config
+	logger                             *logger.Logger
+	fs                                 *framestream.Fstrm
+	fsReady                            bool
+	transport                          string
+	transportConn                      net.Conn
+	transportReady, transportReconnect chan bool
+	name                               string
+	RoutingHandler                     pkgutils.RoutingHandler
 }
 
 func NewDnstapSender(config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapSender {

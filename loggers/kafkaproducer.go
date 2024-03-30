@@ -21,20 +21,19 @@ import (
 )
 
 type KafkaProducer struct {
-	stopProcess, doneProcess chan bool
-	stopRun, doneRun         chan bool
-	inputChan, outputChan    chan dnsutils.DNSMessage
-	config                   *pkgconfig.Config
-	configChan               chan *pkgconfig.Config
-	logger                   *logger.Logger
-	textFormat               []string
-	name                     string
-	kafkaConn                *kafka.Conn
-	kafkaReady               chan bool
-	kafkaReconnect           chan bool
-	kafkaConnected           bool
-	compressCodec            compress.Codec
-	RoutingHandler           pkgutils.RoutingHandler
+	stopProcess, doneProcess   chan bool
+	stopRun, doneRun           chan bool
+	inputChan, outputChan      chan dnsutils.DNSMessage
+	config                     *pkgconfig.Config
+	configChan                 chan *pkgconfig.Config
+	logger                     *logger.Logger
+	textFormat                 []string
+	name                       string
+	kafkaConn                  *kafka.Conn
+	kafkaReady, kafkaReconnect chan bool
+	kafkaConnected             bool
+	compressCodec              compress.Codec
+	RoutingHandler             pkgutils.RoutingHandler
 }
 
 func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name string) *KafkaProducer {

@@ -26,19 +26,15 @@ type ClickhouseData struct {
 }
 
 type ClickhouseClient struct {
-	stopProcess, doneProcess chan bool
-	stopRun, doneRun         chan bool
-	inputChan, outputChan    chan dnsutils.DNSMessage
-	config                   *pkgconfig.Config
-	configChan               chan *pkgconfig.Config
-	logger                   *logger.Logger
-	name                     string
-	url                      string
-	user                     string
-	password                 string
-	database                 string
-	table                    string
-	RoutingHandler           pkgutils.RoutingHandler
+	stopProcess, doneProcess             chan bool
+	stopRun, doneRun                     chan bool
+	inputChan, outputChan                chan dnsutils.DNSMessage
+	config                               *pkgconfig.Config
+	configChan                           chan *pkgconfig.Config
+	logger                               *logger.Logger
+	name                                 string
+	url, user, password, database, table string
+	RoutingHandler                       pkgutils.RoutingHandler
 }
 
 func NewClickhouseClient(config *pkgconfig.Config, console *logger.Logger, name string) *ClickhouseClient {
