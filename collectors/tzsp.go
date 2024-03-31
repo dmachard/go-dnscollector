@@ -23,15 +23,13 @@ import (
 )
 
 type TZSPSniffer struct {
-	done          chan bool
-	exit          chan bool
-	listen        net.UDPConn
-	defaultRoutes []pkgutils.Worker
-	droppedRoutes []pkgutils.Worker
-	config        *pkgconfig.Config
-	logger        *logger.Logger
-	name          string
-	identity      string
+	done, exit                   chan bool
+	listen                       net.UDPConn
+	defaultRoutes, droppedRoutes []pkgutils.Worker
+	config                       *pkgconfig.Config
+	logger                       *logger.Logger
+	name                         string
+	identity                     string
 }
 
 func NewTZSP(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {

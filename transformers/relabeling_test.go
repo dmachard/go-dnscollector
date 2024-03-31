@@ -21,16 +21,8 @@ func TestRelabeling_CompileRegex(t *testing.T) {
 	})
 
 	// init the processor
-	log := logger.New(false)
 	outChans := []chan dnsutils.DNSMessage{}
-	relabelingProc := NewRelabelTransform(
-		config,
-		logger.New(false),
-		"test",
-		0,
-		outChans,
-		log.Info,
-		log.Error)
+	relabelingProc := NewRelabelTransform(config, logger.New(false), "test", 0, outChans)
 
 	if !relabelingProc.IsEnabled() {
 		t.Errorf("subprocessor should be enabled")

@@ -20,26 +20,21 @@ import (
 )
 
 type TCPClient struct {
-	stopProcess        chan bool
-	doneProcess        chan bool
-	stopRun            chan bool
-	doneRun            chan bool
-	stopRead           chan bool
-	doneRead           chan bool
-	inputChan          chan dnsutils.DNSMessage
-	outputChan         chan dnsutils.DNSMessage
-	config             *pkgconfig.Config
-	configChan         chan *pkgconfig.Config
-	logger             *logger.Logger
-	textFormat         []string
-	name               string
-	transport          string
-	transportWriter    *bufio.Writer
-	transportConn      net.Conn
-	transportReady     chan bool
-	transportReconnect chan bool
-	writerReady        bool
-	RoutingHandler     pkgutils.RoutingHandler
+	stopProcess, doneProcess           chan bool
+	stopRun, doneRun                   chan bool
+	stopRead, doneRead                 chan bool
+	inputChan, outputChan              chan dnsutils.DNSMessage
+	config                             *pkgconfig.Config
+	configChan                         chan *pkgconfig.Config
+	logger                             *logger.Logger
+	textFormat                         []string
+	name                               string
+	transport                          string
+	transportWriter                    *bufio.Writer
+	transportConn                      net.Conn
+	transportReady, transportReconnect chan bool
+	writerReady                        bool
+	RoutingHandler                     pkgutils.RoutingHandler
 }
 
 func NewTCPClient(config *pkgconfig.Config, logger *logger.Logger, name string) *TCPClient {

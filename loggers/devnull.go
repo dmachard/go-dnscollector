@@ -8,17 +8,14 @@ import (
 )
 
 type DevNull struct {
-	stopProcess    chan bool
-	doneProcess    chan bool
-	stopRun        chan bool
-	doneRun        chan bool
-	inputChan      chan dnsutils.DNSMessage
-	outputChan     chan dnsutils.DNSMessage
-	config         *pkgconfig.Config
-	configChan     chan *pkgconfig.Config
-	logger         *logger.Logger
-	name           string
-	RoutingHandler pkgutils.RoutingHandler
+	stopProcess, doneProcess chan bool
+	stopRun, doneRun         chan bool
+	inputChan, outputChan    chan dnsutils.DNSMessage
+	config                   *pkgconfig.Config
+	configChan               chan *pkgconfig.Config
+	logger                   *logger.Logger
+	name                     string
+	RoutingHandler           pkgutils.RoutingHandler
 }
 
 func NewDevNull(config *pkgconfig.Config, console *logger.Logger, name string) *DevNull {

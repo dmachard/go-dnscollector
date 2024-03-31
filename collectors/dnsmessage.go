@@ -31,20 +31,16 @@ type MatchSource struct {
 }
 
 type DNSMessage struct {
-	doneRun     chan bool
-	doneMonitor chan bool
-	stopRun     chan bool
-	stopMonitor chan bool
-	config      *pkgconfig.Config
-	configChan  chan *pkgconfig.Config
-	inputChan   chan dnsutils.DNSMessage
-	logger      *logger.Logger
-	name        string
-	//	RoutingHandler pkgutils.RoutingHandler
-	droppedRoutes []pkgutils.Worker
-	defaultRoutes []pkgutils.Worker
-	dropped       chan string
-	droppedCount  map[string]int
+	doneRun, stopRun             chan bool
+	doneMonitor, stopMonitor     chan bool
+	config                       *pkgconfig.Config
+	configChan                   chan *pkgconfig.Config
+	inputChan                    chan dnsutils.DNSMessage
+	logger                       *logger.Logger
+	name                         string
+	droppedRoutes, defaultRoutes []pkgutils.Worker
+	dropped                      chan string
+	droppedCount                 map[string]int
 }
 
 func NewDNSMessage(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DNSMessage {

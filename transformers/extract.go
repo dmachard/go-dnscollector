@@ -1,34 +1,32 @@
 package transformers
 
 import (
+	"fmt"
+
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
 
 type ExtractProcessor struct {
-	config      *pkgconfig.ConfigTransformers
-	logger      *logger.Logger
-	name        string
-	instance    int
-	outChannels []chan dnsutils.DNSMessage
-	logInfo     func(msg string, v ...interface{})
-	logError    func(msg string, v ...interface{})
+	config            *pkgconfig.ConfigTransformers
+	logger            *logger.Logger
+	outChannels       []chan dnsutils.DNSMessage
+	LogInfo, LogError func(msg string, v ...interface{})
 }
 
 func NewExtractTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{})) ExtractProcessor {
-	s := ExtractProcessor{
-		config:      config,
-		logger:      logger,
-		name:        name,
-		instance:    instance,
-		outChannels: outChannels,
-		logInfo:     logInfo,
-		logError:    logError,
+	instance int, outChannels []chan dnsutils.DNSMessage) ExtractProcessor {
+	s := ExtractProcessor{config: config, logger: logger, outChannels: outChannels}
+	s.LogInfo = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - extract - ", name, instance)
+		logger.Info(log+msg, v...)
 	}
 
+	s.LogError = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - extract - ", name, instance)
+		logger.Error(log+msg, v...)
+	}
 	return s
 }
 

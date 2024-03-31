@@ -14,19 +14,16 @@ import (
 )
 
 type InfluxDBClient struct {
-	stopProcess    chan bool
-	doneProcess    chan bool
-	stopRun        chan bool
-	doneRun        chan bool
-	inputChan      chan dnsutils.DNSMessage
-	outputChan     chan dnsutils.DNSMessage
-	config         *pkgconfig.Config
-	configChan     chan *pkgconfig.Config
-	logger         *logger.Logger
-	influxdbConn   influxdb2.Client
-	writeAPI       api.WriteAPI
-	name           string
-	RoutingHandler pkgutils.RoutingHandler
+	stopProcess, doneProcess chan bool
+	stopRun, doneRun         chan bool
+	inputChan, outputChan    chan dnsutils.DNSMessage
+	config                   *pkgconfig.Config
+	configChan               chan *pkgconfig.Config
+	logger                   *logger.Logger
+	influxdbConn             influxdb2.Client
+	writeAPI                 api.WriteAPI
+	name                     string
+	RoutingHandler           pkgutils.RoutingHandler
 }
 
 func NewInfluxDBClient(config *pkgconfig.Config, logger *logger.Logger, name string) *InfluxDBClient {

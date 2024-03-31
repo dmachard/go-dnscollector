@@ -21,24 +21,21 @@ import (
 )
 
 type ProtobufPowerDNS struct {
-	doneRun        chan bool
-	stopRun        chan bool
-	doneMonitor    chan bool
-	stopMonitor    chan bool
-	cleanup        chan bool
-	stopCalled     bool
-	listen         net.Listener
-	connID         int
-	conns          []net.Conn
-	droppedRoutes  []pkgutils.Worker
-	defaultRoutes  []pkgutils.Worker
-	config         *pkgconfig.Config
-	configChan     chan *pkgconfig.Config
-	logger         *logger.Logger
-	name           string
-	droppedCount   int
-	dropped        chan int
-	pdnsProcessors []*processors.PdnsProcessor
+	doneRun, stopRun             chan bool
+	doneMonitor, stopMonitor     chan bool
+	cleanup                      chan bool
+	stopCalled                   bool
+	listen                       net.Listener
+	connID                       int
+	conns                        []net.Conn
+	droppedRoutes, defaultRoutes []pkgutils.Worker
+	config                       *pkgconfig.Config
+	configChan                   chan *pkgconfig.Config
+	logger                       *logger.Logger
+	name                         string
+	droppedCount                 int
+	dropped                      chan int
+	pdnsProcessors               []*processors.PdnsProcessor
 	sync.RWMutex
 }
 

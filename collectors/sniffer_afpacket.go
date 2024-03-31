@@ -150,16 +150,14 @@ func RemoveBpfFilter(fd int) (err error) {
 }
 
 type AfpacketSniffer struct {
-	done          chan bool
-	exit          chan bool
-	fd            int
-	identity      string
-	defaultRoutes []pkgutils.Worker
-	droppedRoutes []pkgutils.Worker
-	config        *pkgconfig.Config
-	configChan    chan *pkgconfig.Config
-	logger        *logger.Logger
-	name          string
+	done, exit                   chan bool
+	fd                           int
+	identity                     string
+	defaultRoutes, droppedRoutes []pkgutils.Worker
+	config                       *pkgconfig.Config
+	configChan                   chan *pkgconfig.Config
+	logger                       *logger.Logger
+	name                         string
 }
 
 func NewAfpacketSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {

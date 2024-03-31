@@ -46,20 +46,17 @@ type KeyHit struct {
 }
 
 type RestAPI struct {
-	doneAPI        chan bool
-	stopProcess    chan bool
-	doneProcess    chan bool
-	stopRun        chan bool
-	doneRun        chan bool
-	inputChan      chan dnsutils.DNSMessage
-	outputChan     chan dnsutils.DNSMessage
-	httpserver     net.Listener
-	httpmux        *http.ServeMux
-	config         *pkgconfig.Config
-	configChan     chan *pkgconfig.Config
-	logger         *logger.Logger
-	name           string
-	RoutingHandler pkgutils.RoutingHandler
+	doneAPI                  chan bool
+	stopProcess, doneProcess chan bool
+	stopRun, doneRun         chan bool
+	inputChan, outputChan    chan dnsutils.DNSMessage
+	httpserver               net.Listener
+	httpmux                  *http.ServeMux
+	config                   *pkgconfig.Config
+	configChan               chan *pkgconfig.Config
+	logger                   *logger.Logger
+	name                     string
+	RoutingHandler           pkgutils.RoutingHandler
 
 	HitsStream HitsStream
 	HitsUniq   HitsUniq

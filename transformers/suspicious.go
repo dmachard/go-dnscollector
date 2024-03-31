@@ -13,29 +13,30 @@ import (
 type SuspiciousTransform struct {
 	config                *pkgconfig.ConfigTransformers
 	logger                *logger.Logger
-	name                  string
 	CommonQtypes          map[string]bool
 	whitelistDomainsRegex map[string]*regexp.Regexp
-	instance              int
 	outChannels           []chan dnsutils.DNSMessage
-	logInfo               func(msg string, v ...interface{})
-	logError              func(msg string, v ...interface{})
+	LogInfo, LogError     func(msg string, v ...interface{})
 }
 
 func NewSuspiciousTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
-) SuspiciousTransform {
+	instance int, outChannels []chan dnsutils.DNSMessage) SuspiciousTransform {
 	d := SuspiciousTransform{
 		config:                config,
 		logger:                logger,
-		name:                  name,
 		CommonQtypes:          make(map[string]bool),
 		whitelistDomainsRegex: make(map[string]*regexp.Regexp),
-		instance:              instance,
 		outChannels:           outChannels,
-		logInfo:               logInfo,
-		logError:              logError,
+	}
+
+	d.LogInfo = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - suspicious - ", name, instance)
+		logger.Info(log+msg, v...)
+	}
+
+	d.LogError = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - suspicious - ", name, instance)
+		logger.Error(log+msg, v...)
 	}
 
 	d.ReadConfig()
@@ -69,16 +70,6 @@ func (p *SuspiciousTransform) ReloadConfig(config *pkgconfig.ConfigTransformers)
 
 func (p *SuspiciousTransform) IsEnabled() bool {
 	return p.config.Suspicious.Enable
-}
-
-func (p *SuspiciousTransform) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("suspicious#%d - ", p.instance)
-	p.logInfo(log+msg, v...)
-}
-
-func (p *SuspiciousTransform) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("suspicious#%d - ", p.instance)
-	p.logError(log+msg, v...)
 }
 
 func (p *SuspiciousTransform) InitDNSMessage(dm *dnsutils.DNSMessage) {

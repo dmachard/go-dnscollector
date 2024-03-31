@@ -10,45 +10,25 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
-	"gopkg.in/fsnotify.v1"
 	"inet.af/netaddr"
 )
 
 type FilteringProcessor struct {
-	config               *pkgconfig.ConfigTransformers
-	logger               *logger.Logger
-	dropDomains          bool
-	keepDomains          bool
-	mapRcodes            map[string]bool
-	ipsetDrop            *netaddr.IPSet
-	ipsetKeep            *netaddr.IPSet
-	rDataIpsetKeep       *netaddr.IPSet
-	listFqdns            map[string]bool
-	listDomainsRegex     map[string]*regexp.Regexp
-	listKeepFqdns        map[string]bool
-	listKeepDomainsRegex map[string]*regexp.Regexp
-	fileWatcher          *fsnotify.Watcher
-	name                 string
-	downsample           int
-	downsampleCount      int
-	activeFilters        []func(dm *dnsutils.DNSMessage) bool
-	instance             int
-	outChannels          []chan dnsutils.DNSMessage
-	logInfo              func(msg string, v ...interface{})
-	logError             func(msg string, v ...interface{})
+	config                                 *pkgconfig.ConfigTransformers
+	logger                                 *logger.Logger
+	dropDomains, keepDomains               bool
+	mapRcodes                              map[string]bool
+	ipsetDrop, ipsetKeep, rDataIpsetKeep   *netaddr.IPSet
+	listFqdns, listKeepFqdns               map[string]bool
+	listDomainsRegex, listKeepDomainsRegex map[string]*regexp.Regexp
+	downsample, downsampleCount            int
+	activeFilters                          []func(dm *dnsutils.DNSMessage) bool
+	outChannels                            []chan dnsutils.DNSMessage
+	LogInfo, LogError                      func(msg string, v ...interface{})
 }
 
 func NewFilteringTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
-) FilteringProcessor {
-	// creates a new file watcher
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		fmt.Println("ERROR", err)
-	}
-	defer watcher.Close()
-
+	instance int, outChannels []chan dnsutils.DNSMessage) FilteringProcessor {
 	d := FilteringProcessor{
 		config:               config,
 		logger:               logger,
@@ -60,28 +40,24 @@ func NewFilteringTransform(config *pkgconfig.ConfigTransformers, logger *logger.
 		listDomainsRegex:     make(map[string]*regexp.Regexp),
 		listKeepFqdns:        make(map[string]bool),
 		listKeepDomainsRegex: make(map[string]*regexp.Regexp),
-		fileWatcher:          watcher,
-		name:                 name,
-		instance:             instance,
 		outChannels:          outChannels,
-		logInfo:              logInfo,
-		logError:             logError,
 	}
+
+	d.LogInfo = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)
+		logger.Info(log+msg, v...)
+	}
+
+	d.LogError = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)
+		logger.Error(log+msg, v...)
+	}
+
 	return d
 }
 
 func (p *FilteringProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
-}
-
-func (p *FilteringProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("filtering#%d - ", p.instance)
-	p.logInfo(log+msg, v...)
-}
-
-func (p *FilteringProcessor) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("filtering#%d - ", p.instance)
-	p.logError(log+msg, v...)
 }
 
 func (p *FilteringProcessor) LoadActiveFilters() {
@@ -340,20 +316,6 @@ func (p *FilteringProcessor) loadKeepRdataIPList(fname string) (uint64, error) {
 	p.rDataIpsetKeep, err = ipsetbuilder.IPSet()
 
 	return read, err
-}
-
-func (p *FilteringProcessor) Run() {
-	for {
-		select {
-		// watch for events
-		case event := <-p.fileWatcher.Events:
-			fmt.Printf("EVENT! %#v\n", event)
-
-			// watch for errors
-		case err := <-p.fileWatcher.Errors:
-			fmt.Println("ERROR", err)
-		}
-	}
 }
 
 func (p *FilteringProcessor) ignoreQueryFilter(dm *dnsutils.DNSMessage) bool {

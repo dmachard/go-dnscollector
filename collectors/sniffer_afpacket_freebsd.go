@@ -11,8 +11,7 @@ import (
 )
 
 type AfpacketSniffer struct {
-	done          chan bool
-	exit          chan bool
+	done, exit    chan bool
 	defaultRoutes []pkgutils.Worker
 	config        *pkgconfig.Config
 	logger        *logger.Logger

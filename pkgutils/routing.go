@@ -27,15 +27,13 @@ func GetName(name string) string {
 }
 
 type RoutingHandler struct {
-	name          string
-	logger        *logger.Logger
-	config        *pkgconfig.Config
-	stopRun       chan bool
-	doneRun       chan bool
-	droppedCount  map[string]int
-	dropped       chan string
-	droppedRoutes []Worker
-	defaultRoutes []Worker
+	name                         string
+	logger                       *logger.Logger
+	config                       *pkgconfig.Config
+	stopRun, doneRun             chan bool
+	droppedCount                 map[string]int
+	dropped                      chan string
+	droppedRoutes, defaultRoutes []Worker
 }
 
 func NewRoutingHandler(config *pkgconfig.Config, console *logger.Logger, name string) RoutingHandler {

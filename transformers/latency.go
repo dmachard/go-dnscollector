@@ -1,6 +1,7 @@
 package transformers
 
 import (
+	"fmt"
 	"hash/fnv"
 	"strconv"
 	"strings"
@@ -102,29 +103,26 @@ func (mp *HashQueries) Delete(key uint64) {
 
 // latency processor
 type LatencyProcessor struct {
-	config      *pkgconfig.ConfigTransformers
-	logger      *logger.Logger
-	name        string
-	instance    int
-	hashQueries HashQueries
-	mapQueries  MapQueries
-	outChannels []chan dnsutils.DNSMessage
-	logInfo     func(msg string, v ...interface{})
-	logError    func(msg string, v ...interface{})
+	config            *pkgconfig.ConfigTransformers
+	logger            *logger.Logger
+	hashQueries       HashQueries
+	mapQueries        MapQueries
+	outChannels       []chan dnsutils.DNSMessage
+	LogInfo, LogError func(msg string, v ...interface{})
 }
 
 func NewLatencyTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
-) *LatencyProcessor {
-	s := LatencyProcessor{
-		config:      config,
-		logger:      logger,
-		name:        name,
-		instance:    instance,
-		outChannels: outChannels,
-		logInfo:     logInfo,
-		logError:    logError,
+	instance int, outChannels []chan dnsutils.DNSMessage) *LatencyProcessor {
+	s := LatencyProcessor{config: config, logger: logger, outChannels: outChannels}
+
+	s.LogInfo = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - latency - ", name, instance)
+		logger.Info(log+msg, v...)
+	}
+
+	s.LogError = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - latency - ", name, instance)
+		logger.Error(log+msg, v...)
 	}
 
 	s.hashQueries = NewHashQueries(time.Duration(config.Latency.QueriesTimeout) * time.Second)

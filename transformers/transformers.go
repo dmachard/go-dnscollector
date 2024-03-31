@@ -42,24 +42,19 @@ type Transforms struct {
 
 func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DNSMessage, instance int) Transforms {
 
-	d := Transforms{
-		config:   config,
-		logger:   logger,
-		name:     name,
-		instance: instance,
-	}
+	d := Transforms{config: config, logger: logger, name: name, instance: instance}
 
-	d.SuspiciousTransform = NewSuspiciousTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.NormalizeTransform = NewNormalizeTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.ExtractProcessor = NewExtractTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.LatencyTransform = NewLatencyTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.ReducerTransform = NewReducerTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.UserPrivacyTransform = NewUserPrivacyTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.FilteringTransform = NewFilteringTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.GeoipTransform = NewDNSGeoIPTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.MachineLearningTransform = NewMachineLearningTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.ATagsTransform = NewATagsTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
-	d.RelabelTransform = NewRelabelTransform(config, logger, name, instance, outChannels, d.LogInfo, d.LogError)
+	d.SuspiciousTransform = NewSuspiciousTransform(config, logger, name, instance, outChannels)
+	d.NormalizeTransform = NewNormalizeTransform(config, logger, name, instance, outChannels)
+	d.ExtractProcessor = NewExtractTransform(config, logger, name, instance, outChannels)
+	d.LatencyTransform = NewLatencyTransform(config, logger, name, instance, outChannels)
+	d.ReducerTransform = NewReducerTransform(config, logger, name, instance, outChannels)
+	d.UserPrivacyTransform = NewUserPrivacyTransform(config, logger, name, instance, outChannels)
+	d.FilteringTransform = NewFilteringTransform(config, logger, name, instance, outChannels)
+	d.GeoipTransform = NewDNSGeoIPTransform(config, logger, name, instance, outChannels)
+	d.MachineLearningTransform = NewMachineLearningTransform(config, logger, name, instance, outChannels)
+	d.ATagsTransform = NewATagsTransform(config, logger, name, instance, outChannels)
+	d.RelabelTransform = NewRelabelTransform(config, logger, name, instance, outChannels)
 
 	d.Prepare()
 	return d
@@ -94,8 +89,7 @@ func (p *Transforms) Prepare() error {
 	}
 
 	if p.config.Normalize.Enable {
-		p.LogInfo(prefixlog + "transformer=qname_lowercase is " + enabled)
-
+		p.LogInfo(prefixlog + "transformer=normalize is " + enabled)
 		p.NormalizeTransform.LoadActiveProcessors()
 	}
 

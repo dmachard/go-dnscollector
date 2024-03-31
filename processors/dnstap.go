@@ -52,21 +52,19 @@ func GetFakeDNSTap(dnsquery []byte) *dnstap.Dnstap {
 }
 
 type DNSTapProcessor struct {
-	ConnID         int
-	PeerName       string
-	doneRun        chan bool
-	stopRun        chan bool
-	doneMonitor    chan bool
-	stopMonitor    chan bool
-	recvFrom       chan []byte
-	logger         *logger.Logger
-	config         *pkgconfig.Config
-	ConfigChan     chan *pkgconfig.Config
-	name           string
-	chanSize       int
-	RoutingHandler pkgutils.RoutingHandler
-	dropped        chan string
-	droppedCount   map[string]int
+	ConnID                   int
+	PeerName                 string
+	doneRun, stopRun         chan bool
+	doneMonitor, stopMonitor chan bool
+	recvFrom                 chan []byte
+	logger                   *logger.Logger
+	config                   *pkgconfig.Config
+	ConfigChan               chan *pkgconfig.Config
+	name                     string
+	chanSize                 int
+	RoutingHandler           pkgutils.RoutingHandler
+	dropped                  chan string
+	droppedCount             map[string]int
 }
 
 func NewDNSTapProcessor(

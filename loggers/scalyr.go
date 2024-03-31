@@ -26,17 +26,14 @@ import (
 // ScalyrClient is a client for Scalyr(https://www.dataset.com/)
 // This client is using the addEvents endpoint, described here: https://app.scalyr.com/help/api#addEvents
 type ScalyrClient struct {
-	stopProcess    chan bool
-	doneProcess    chan bool
-	stopRun        chan bool
-	doneRun        chan bool
-	inputChan      chan dnsutils.DNSMessage
-	outputChan     chan dnsutils.DNSMessage
-	logger         *logger.Logger
-	name           string
-	config         *pkgconfig.Config
-	configChan     chan *pkgconfig.Config
-	RoutingHandler pkgutils.RoutingHandler
+	stopProcess, doneProcess chan bool
+	stopRun, doneRun         chan bool
+	inputChan, outputChan    chan dnsutils.DNSMessage
+	logger                   *logger.Logger
+	name                     string
+	config                   *pkgconfig.Config
+	configChan               chan *pkgconfig.Config
+	RoutingHandler           pkgutils.RoutingHandler
 
 	mode       string
 	textFormat []string

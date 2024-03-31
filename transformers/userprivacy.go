@@ -36,26 +36,26 @@ func parseCIDRMask(mask string) (net.IPMask, error) {
 }
 
 type UserPrivacyProcessor struct {
-	config      *pkgconfig.ConfigTransformers
-	v4Mask      net.IPMask
-	v6Mask      net.IPMask
-	instance    int
-	outChannels []chan dnsutils.DNSMessage
-	logInfo     func(msg string, v ...interface{})
-	logError    func(msg string, v ...interface{})
+	config            *pkgconfig.ConfigTransformers
+	v4Mask, v6Mask    net.IPMask
+	outChannels       []chan dnsutils.DNSMessage
+	LogInfo, LogError func(msg string, v ...interface{})
 }
 
 func NewUserPrivacyTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
-) UserPrivacyProcessor {
-	s := UserPrivacyProcessor{
-		config:      config,
-		instance:    instance,
-		outChannels: outChannels,
-		logInfo:     logInfo,
-		logError:    logError,
+	instance int, outChannels []chan dnsutils.DNSMessage) UserPrivacyProcessor {
+	s := UserPrivacyProcessor{config: config, outChannels: outChannels}
+
+	s.LogInfo = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)
+		logger.Info(log+msg, v...)
 	}
+
+	s.LogError = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)
+		logger.Error(log+msg, v...)
+	}
+
 	s.ReadConfig()
 	return s
 }
@@ -79,16 +79,6 @@ func (s *UserPrivacyProcessor) ReadConfig() {
 
 func (s *UserPrivacyProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	s.config = config
-}
-
-func (s *UserPrivacyProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("userprivacy#%d - ", s.instance)
-	s.logInfo(log+msg, v...)
-}
-
-func (s *UserPrivacyProcessor) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("userprivacy#%d - ", s.instance)
-	s.logError(log+msg, v...)
 }
 
 func (s *UserPrivacyProcessor) MinimazeQname(qname string) string {

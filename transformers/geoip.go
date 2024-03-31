@@ -26,56 +26,36 @@ type MaxminddbRecord struct {
 }
 
 type GeoRecord struct {
-	Continent      string
-	CountryISOCode string
-	City           string
-	ASN            string
-	ASO            string
+	Continent, CountryISOCode, City, ASN, ASO string
 }
 
 type GeoIPProcessor struct {
-	config      *pkgconfig.ConfigTransformers
-	logger      *logger.Logger
-	dbCountry   *maxminddb.Reader
-	dbCity      *maxminddb.Reader
-	dbAsn       *maxminddb.Reader
-	enabled     bool
-	name        string
-	instance    int
-	outChannels []chan dnsutils.DNSMessage
-	logInfo     func(msg string, v ...interface{})
-	logError    func(msg string, v ...interface{})
+	config                   *pkgconfig.ConfigTransformers
+	logger                   *logger.Logger
+	dbCountry, dbCity, dbAsn *maxminddb.Reader
+	enabled                  bool
+	outChannels              []chan dnsutils.DNSMessage
+	LogInfo, LogError        func(msg string, v ...interface{})
 }
 
 func NewDNSGeoIPTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
-) GeoIPProcessor {
-	d := GeoIPProcessor{
-		config:      config,
-		logger:      logger,
-		name:        name,
-		instance:    instance,
-		outChannels: outChannels,
-		logInfo:     logInfo,
-		logError:    logError,
+	instance int, outChannels []chan dnsutils.DNSMessage) GeoIPProcessor {
+	d := GeoIPProcessor{config: config, logger: logger, outChannels: outChannels}
+
+	d.LogInfo = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - geoip - ", name, instance)
+		logger.Info(log+msg, v...)
 	}
 
+	d.LogError = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("transformer - [%s] conn #%d - geoip - ", name, instance)
+		logger.Error(log+msg, v...)
+	}
 	return d
 }
 
 func (p *GeoIPProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
-}
-
-func (p *GeoIPProcessor) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("geoip#%d - ", p.instance)
-	p.logInfo(log+msg, v...)
-}
-
-func (p *GeoIPProcessor) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("geoip#%d - ", p.instance)
-	p.logError(log+msg, v...)
 }
 
 func (p *GeoIPProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {

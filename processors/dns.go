@@ -19,18 +19,16 @@ func GetFakeDNS() ([]byte, error) {
 }
 
 type DNSProcessor struct {
-	doneRun        chan bool
-	stopRun        chan bool
-	doneMonitor    chan bool
-	stopMonitor    chan bool
-	recvFrom       chan dnsutils.DNSMessage
-	logger         *logger.Logger
-	config         *pkgconfig.Config
-	ConfigChan     chan *pkgconfig.Config
-	name           string
-	RoutingHandler pkgutils.RoutingHandler
-	dropped        chan string
-	droppedCount   map[string]int
+	doneRun, stopRun         chan bool
+	doneMonitor, stopMonitor chan bool
+	recvFrom                 chan dnsutils.DNSMessage
+	logger                   *logger.Logger
+	config                   *pkgconfig.Config
+	ConfigChan               chan *pkgconfig.Config
+	name                     string
+	RoutingHandler           pkgutils.RoutingHandler
+	dropped                  chan string
+	droppedCount             map[string]int
 }
 
 func NewDNSProcessor(config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSProcessor {
