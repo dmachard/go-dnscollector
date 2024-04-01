@@ -23,88 +23,90 @@ import (
 )
 
 type Dnstap struct {
-	doneRun, stopRun             chan bool
-	doneMonitor, stopMonitor     chan bool
-	stopCalled                   bool
-	listen                       net.Listener
-	conns                        []net.Conn
-	sockPath                     string
-	defaultRoutes, droppedRoutes []pkgutils.Worker
-	config                       *pkgconfig.Config
-	configChan                   chan *pkgconfig.Config
-	logger                       *logger.Logger
-	name                         string
-	connMode                     string
-	connID                       int
-	droppedCount                 int
-	droppedProcessor             chan int
-	tapProcessors                []processors.DNSTapProcessor
+	*pkgutils.Collector
+	doneRun, stopRun         chan bool
+	doneMonitor, stopMonitor chan bool
+	stopCalled               bool
+	listen                   net.Listener
+	conns                    []net.Conn
+	sockPath                 string
+	// defaultRoutes, droppedRoutes []pkgutils.Worker
+	// config                       *pkgconfig.Config
+	// configChan                   chan *pkgconfig.Config
+	// logger                       *logger.Logger
+	// name                         string
+	connMode         string
+	connID           int
+	droppedCount     int
+	droppedProcessor chan int
+	tapProcessors    []processors.DNSTapProcessor
 	sync.RWMutex
 }
 
 func NewDnstap(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
 	logger.Info(pkgutils.PrefixLogCollector+"[%s] dnstap - enabled", name)
 	s := &Dnstap{
+		Collector:        pkgutils.NewCollector(config, logger, name),
 		doneRun:          make(chan bool),
 		doneMonitor:      make(chan bool),
 		stopRun:          make(chan bool),
 		stopMonitor:      make(chan bool),
 		droppedProcessor: make(chan int),
-		config:           config,
-		configChan:       make(chan *pkgconfig.Config),
-		defaultRoutes:    loggers,
-		logger:           logger,
-		name:             name,
+		// config:           config,
+		// configChan:       make(chan *pkgconfig.Config),
+		// defaultRoutes:    loggers,
+		// logger:           logger,
+		// name:             name,
 	}
 	s.ReadConfig()
 	return s
 }
 
-func (c *Dnstap) GetName() string { return c.name }
+// func (c *Dnstap) GetName() string { return c.name }
 
-func (c *Dnstap) AddDroppedRoute(wrk pkgutils.Worker) {
-	c.droppedRoutes = append(c.droppedRoutes, wrk)
-}
+// func (c *Dnstap) AddDroppedRoute(wrk pkgutils.Worker) {
+// 	c.droppedRoutes = append(c.droppedRoutes, wrk)
+// }
 
-func (c *Dnstap) AddDefaultRoute(wrk pkgutils.Worker) {
-	c.defaultRoutes = append(c.defaultRoutes, wrk)
-}
+// func (c *Dnstap) AddDefaultRoute(wrk pkgutils.Worker) {
+// 	c.defaultRoutes = append(c.defaultRoutes, wrk)
+// }
 
-func (c *Dnstap) SetLoggers(loggers []pkgutils.Worker) {
-	c.defaultRoutes = loggers
-}
+// func (c *Dnstap) SetLoggers(loggers []pkgutils.Worker) {
+// 	c.defaultRoutes = loggers
+// }
 
-func (c *Dnstap) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	return pkgutils.GetRoutes(c.defaultRoutes)
-}
+// func (c *Dnstap) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+// 	return pkgutils.GetRoutes(c.defaultRoutes)
+// }
 
 func (c *Dnstap) ReadConfig() {
-	if !pkgconfig.IsValidTLS(c.config.Collectors.Dnstap.TLSMinVersion) {
-		c.logger.Fatal("collector=dnstap - invalid tls min version")
+	if !pkgconfig.IsValidTLS(c.GetConfig().Collectors.Dnstap.TLSMinVersion) {
+		c.LogFatal("collector=dnstap - invalid tls min version")
 	}
 
-	c.sockPath = c.config.Collectors.Dnstap.SockPath
+	c.sockPath = c.GetConfig().Collectors.Dnstap.SockPath
 	c.connMode = "tcp"
 
-	if len(c.config.Collectors.Dnstap.SockPath) > 0 {
+	if len(c.GetConfig().Collectors.Dnstap.SockPath) > 0 {
 		c.connMode = "unix"
-	} else if c.config.Collectors.Dnstap.TLSSupport {
+	} else if c.GetConfig().Collectors.Dnstap.TLSSupport {
 		c.connMode = "tls"
 	}
 }
 
-func (c *Dnstap) ReloadConfig(config *pkgconfig.Config) {
-	c.LogInfo("reload configuration...")
-	c.configChan <- config
-}
+// func (c *Dnstap) ReloadConfig(config *pkgconfig.Config) {
+// 	c.LogInfo("reload configuration...")
+// 	c.configChan <- config
+// }
 
-func (c *Dnstap) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] dnstap - "+msg, v...)
-}
+// func (c *Dnstap) LogInfo(msg string, v ...interface{}) {
+// 	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] dnstap - "+msg, v...)
+// }
 
-func (c *Dnstap) LogError(msg string, v ...interface{}) {
-	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] dnstap - "+msg, v...)
-}
+// func (c *Dnstap) LogError(msg string, v ...interface{}) {
+// 	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] dnstap - "+msg, v...)
+// }
 
 func (c *Dnstap) HandleConn(conn net.Conn) {
 	// close connection on function exit
@@ -125,17 +127,17 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	dnstapProcessor := processors.NewDNSTapProcessor(
 		connID,
 		peerName,
-		c.config,
-		c.logger,
-		c.name,
-		c.config.Collectors.Dnstap.ChannelBufferSize,
+		c.GetConfig(),
+		c.GetLogger(),
+		c.GetName(),
+		c.GetConfig().Collectors.Dnstap.ChannelBufferSize,
 	)
 	c.Lock()
 	c.tapProcessors = append(c.tapProcessors, dnstapProcessor)
 	c.Unlock()
 
 	// run processor
-	go dnstapProcessor.Run(c.defaultRoutes, c.droppedRoutes)
+	go dnstapProcessor.Run(c.GetDefaultRoutes(), c.GetDroppedRoutes())
 
 	// frame stream library
 	r := bufio.NewReader(conn)
@@ -153,7 +155,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 	var err error
 	var frame *framestream.Frame
 	for {
-		if c.config.Collectors.Dnstap.Compression == pkgconfig.CompressNone {
+		if c.GetConfig().Collectors.Dnstap.Compression == pkgconfig.CompressNone {
 			frame, err = fs.RecvFrame(false)
 		} else {
 			frame, err = fs.RecvCompressedFrame(&compress.GzipCodec, false)
@@ -196,7 +198,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 			break
 		}
 
-		if c.config.Collectors.Dnstap.Compression == pkgconfig.CompressNone {
+		if c.GetConfig().Collectors.Dnstap.Compression == pkgconfig.CompressNone {
 			// send payload to the channel
 			select {
 			case dnstapProcessor.GetChannel() <- frame.Data(): // Successful send to channel
@@ -289,7 +291,7 @@ func (c *Dnstap) Stop() {
 	// closing properly current connections if exists
 	c.LogInfo("closing connected peers...")
 	for _, conn := range c.conns {
-		netlib.Close(conn, c.config.Collectors.Dnstap.ResetConn)
+		netlib.Close(conn, c.GetConfig().Collectors.Dnstap.ResetConn)
 	}
 
 	// Finally close the listener to unblock accept
@@ -315,19 +317,19 @@ func (c *Dnstap) Listen() error {
 
 	var err error
 	var listener net.Listener
-	addrlisten := c.config.Collectors.Dnstap.ListenIP + ":" + strconv.Itoa(c.config.Collectors.Dnstap.ListenPort)
+	addrlisten := c.GetConfig().Collectors.Dnstap.ListenIP + ":" + strconv.Itoa(c.GetConfig().Collectors.Dnstap.ListenPort)
 
 	if len(c.sockPath) > 0 {
 		_ = os.Remove(c.sockPath)
 	}
 
 	// listening with tls enabled ?
-	if c.config.Collectors.Dnstap.TLSSupport {
+	if c.GetConfig().Collectors.Dnstap.TLSSupport {
 		c.LogInfo("tls support enabled")
 		var cer tls.Certificate
-		cer, err = tls.LoadX509KeyPair(c.config.Collectors.Dnstap.CertFile, c.config.Collectors.Dnstap.KeyFile)
+		cer, err = tls.LoadX509KeyPair(c.GetConfig().Collectors.Dnstap.CertFile, c.GetConfig().Collectors.Dnstap.KeyFile)
 		if err != nil {
-			c.logger.Fatal("loading certificate failed:", err)
+			c.LogFatal("loading certificate failed:", err)
 		}
 
 		tlsConfig := &tls.Config{
@@ -336,7 +338,7 @@ func (c *Dnstap) Listen() error {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = pkgconfig.TLSVersion[c.config.Collectors.Dnstap.TLSMinVersion]
+		tlsConfig.MinVersion = pkgconfig.TLSVersion[c.GetConfig().Collectors.Dnstap.TLSMinVersion]
 
 		if len(c.sockPath) > 0 {
 			listener, err = tls.Listen(netlib.SocketUnix, c.sockPath, tlsConfig)
@@ -390,7 +392,7 @@ func (c *Dnstap) Run() {
 	c.LogInfo("starting collector...")
 	if c.listen == nil {
 		if err := c.Listen(); err != nil {
-			c.logger.Fatal(pkgutils.PrefixLogCollector+"["+c.name+"] dnstap listening failed: ", err)
+			c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] dnstap listening failed: ", err)
 		}
 	}
 
@@ -417,10 +419,10 @@ RUN_LOOP:
 			c.doneRun <- true
 			break RUN_LOOP
 
-		case cfg := <-c.configChan:
+		case cfg := <-c.NewConfig():
 
 			// save the new config
-			c.config = cfg
+			c.SetConfig(cfg)
 			c.ReadConfig()
 
 			// refresh config for all conns
@@ -433,17 +435,17 @@ RUN_LOOP:
 				return
 			}
 
-			if (c.connMode == "tls" || c.connMode == "tcp") && c.config.Collectors.Dnstap.RcvBufSize > 0 {
+			if (c.connMode == "tls" || c.connMode == "tcp") && c.GetConfig().Collectors.Dnstap.RcvBufSize > 0 {
 				before, actual, err := netlib.SetSockRCVBUF(
 					conn,
-					c.config.Collectors.Dnstap.RcvBufSize,
-					c.config.Collectors.Dnstap.TLSSupport,
+					c.GetConfig().Collectors.Dnstap.RcvBufSize,
+					c.GetConfig().Collectors.Dnstap.TLSSupport,
 				)
 				if err != nil {
-					c.logger.Fatal(pkgutils.PrefixLogCollector+"["+c.name+"] dnstap - unable to set SO_RCVBUF: ", err)
+					c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] dnstap - unable to set SO_RCVBUF: ", err)
 				}
 				c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before,
-					c.config.Collectors.Dnstap.RcvBufSize, actual)
+					c.GetConfig().Collectors.Dnstap.RcvBufSize, actual)
 			}
 
 			// to avoid lock if the Stop function is already called
