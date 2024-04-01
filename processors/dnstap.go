@@ -67,17 +67,8 @@ type DNSTapProcessor struct {
 	droppedCount             map[string]int
 }
 
-func NewDNSTapProcessor(
-	connID int,
-	peerName string,
-	config *pkgconfig.Config,
-	logger *logger.Logger,
-	name string,
-	size int,
-) DNSTapProcessor {
-
+func NewDNSTapProcessor(connID int, peerName string, config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
 	logger.Info(pkgutils.PrefixLogProcessor+"[%s] dnstap - conn #%d - initialization...", name, connID)
-
 	d := DNSTapProcessor{
 		ConnID:         connID,
 		PeerName:       peerName,

@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netlib"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
@@ -43,7 +43,7 @@ type Dnstap struct {
 	sync.RWMutex
 }
 
-func NewDnstap(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
+func NewDnstap(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
 	logger.Info(pkgutils.PrefixLogCollector+"[%s] dnstap - enabled", name)
 	s := &Dnstap{
 		Collector:        pkgutils.NewCollector(config, logger, name),
@@ -58,6 +58,7 @@ func NewDnstap(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logg
 		// logger:           logger,
 		// name:             name,
 	}
+	s.SetDefaultRoutes(next)
 	s.ReadConfig()
 	return s
 }
@@ -242,12 +243,13 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 		return
 	}
 
-	// to avoid lock if the Stop function is already called
-	if c.stopCalled {
-		c.LogInfo("conn #%d - connection handler exited", connID)
-		return
-	}
+	// // to avoid lock if the Stop function is already called
+	// if c.stopCalled {
+	// 	c.LogInfo("conn #%d - connection handler exited", connID)
+	// 	return
+	// }
 
+	fmt.Println("CLEAN1")
 	// here the connection is closed,
 	// then removes the current tap processor from the list
 	c.Lock()
@@ -257,6 +259,7 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 		}
 	}
 
+	fmt.Println("CLEAN2")
 	// finnaly removes the current connection from the list
 	for j, cn := range c.conns {
 		if cn == conn {
@@ -264,14 +267,18 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 			conn = nil
 		}
 	}
+
+	fmt.Println("CLEAN3")
 	c.Unlock()
 
 	c.LogInfo("conn #%d - connection handler terminated", connID)
+
+	fmt.Println("CLEAN4")
 }
 
-func (c *Dnstap) GetInputChannel() chan dnsutils.DNSMessage {
-	return nil
-}
+// func (c *Dnstap) GetInputChannel() chan dnsutils.DNSMessage {
+// 	return nil
+// }
 
 func (c *Dnstap) Stop() {
 	c.Lock()

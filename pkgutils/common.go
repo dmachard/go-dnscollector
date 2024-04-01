@@ -7,6 +7,8 @@ import (
 )
 
 type Collector struct {
+	// doneRun, stopRun             chan bool
+	// doneMonitor, stopMonitor     chan bool
 	config                       *pkgconfig.Config
 	configChan                   chan *pkgconfig.Config
 	logger                       *logger.Logger
@@ -52,12 +54,20 @@ func (c *Collector) GetDefaultRoutes() []Worker {
 	return c.defaultRoutes
 }
 
+func (c *Collector) GetInputChannel() chan dnsutils.DNSMessage {
+	return nil
+}
+
 func (c *Collector) AddDroppedRoute(wrk Worker) {
 	c.droppedRoutes = append(c.droppedRoutes, wrk)
 }
 
 func (c *Collector) AddDefaultRoute(wrk Worker) {
 	c.defaultRoutes = append(c.defaultRoutes, wrk)
+}
+
+func (c *Collector) SetDefaultRoutes(next []Worker) {
+	c.defaultRoutes = next
 }
 
 func (c *Collector) SetLoggers(loggers []Worker) {

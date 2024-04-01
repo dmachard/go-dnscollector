@@ -111,7 +111,6 @@ func Test_DnstapCollector(t *testing.T) {
 				if err != nil {
 					t.Fatalf("dnstap proto marshal error %s", err)
 				}
-
 				// send query
 
 				if config.Collectors.Dnstap.Compression == pkgconfig.CompressNone {
@@ -185,12 +184,18 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	}
 
 	regxp := ".*framestream reseted by sender.*"
+	pattern := regexp.MustCompile(regxp)
+
+	match_msg := false
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(regxp)
 		if pattern.MatchString(entry.Message) {
+			match_msg = true
 			break
 		}
+	}
+	if !match_msg {
+		t.Errorf("reset from sender not received")
 	}
 
 	// cleanup
