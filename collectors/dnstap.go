@@ -184,6 +184,8 @@ func (c *Dnstap) HandleConn(conn net.Conn) {
 			if !c.stopCalled {
 				dnstapProcessor.Stop()
 			}
+
+			// exit the loop
 			break
 		}
 

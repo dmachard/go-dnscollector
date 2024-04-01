@@ -157,6 +157,7 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	// start the collector in unix mode
 	g := pkgutils.NewFakeLogger()
 	c := NewDnstap([]pkgutils.Worker{g}, config, lg, "test")
+
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector listening  error: ", err)
 	}
