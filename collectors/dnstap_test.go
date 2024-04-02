@@ -147,7 +147,7 @@ func Test_DnstapCollector(t *testing.T) {
 // Support Bind9 with dnstap closing.
 func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	// redirect stdout output to bytes buffer
-	logsChan := make(chan logger.LogEntry, 10)
+	logsChan := make(chan logger.LogEntry, 50)
 	lg := logger.New(true)
 	lg.SetOutputChannel((logsChan))
 
@@ -201,5 +201,4 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 
 	// cleanup
 	c.Stop()
-
 }
