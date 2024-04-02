@@ -54,13 +54,11 @@ func Test_DnstapProxifier(t *testing.T) {
 				config.Collectors.DnstapProxifier.SockPath = tc.address
 			}
 
+			// start collector
 			c := NewDnstapProxifier([]pkgutils.Worker{g}, config, logger.New(false), "test")
-			// if err := c.Listen(); err != nil {
-			// 	log.Fatal("collector dnstap relay error: ", err)
-			// }
-
 			go c.Run()
 
+			// start client
 			time.Sleep(1 * time.Second)
 			conn, err := net.Dial(tc.mode, tc.address)
 			if err != nil {

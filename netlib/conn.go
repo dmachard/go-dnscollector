@@ -1,12 +1,14 @@
 package netlib
 
 import (
+	"errors"
 	"io"
 	"net"
 )
 
 func IsClosedConnectionError(err error) bool {
-	if opErr, ok := err.(*net.OpError); ok {
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
 		if opErr.Err.Error() == "use of closed network connection" {
 			return true
 		}
