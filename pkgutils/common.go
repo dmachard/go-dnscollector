@@ -129,9 +129,13 @@ func (c *Collector) Stop() {
 }
 
 func (c *Collector) MonitorCollector() {
+	defer func() {
+		c.LogInfo("monitor terminated")
+		c.doneMonitor <- true
+	}()
+
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
-MONITOR_LOOP:
 	for {
 		select {
 		case <-c.droppedProcessor:
@@ -139,8 +143,7 @@ MONITOR_LOOP:
 		case <-c.stopMonitor:
 			close(c.droppedProcessor)
 			bufferFull.Stop()
-			c.doneMonitor <- true
-			break MONITOR_LOOP
+			return
 		case <-bufferFull.C:
 			if c.droppedCount > 0 {
 				c.LogError("processor buffer is full, %d packet(s) dropped", c.droppedCount)
@@ -149,7 +152,6 @@ MONITOR_LOOP:
 			bufferFull.Reset(watchInterval)
 		}
 	}
-	c.LogInfo("monitor terminated")
 }
 
 func (c *Collector) ProcessorIsBusy() {

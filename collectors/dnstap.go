@@ -24,18 +24,18 @@ import (
 
 type Dnstap struct {
 	*pkgutils.Collector
-	listen       net.Listener
-	sockPath     string
-	connMode     string
-	connCounter  uint64
-	connWG       sync.WaitGroup
-	cleanupConns chan bool
+	listen      net.Listener
+	sockPath    string
+	connMode    string
+	connCounter uint64
+	connWG      sync.WaitGroup
+	connCleanup chan bool
 }
 
 func NewDnstap(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
 	s := &Dnstap{
-		Collector:    pkgutils.NewCollector(config, logger, name, "dnstap"),
-		cleanupConns: make(chan bool),
+		Collector:   pkgutils.NewCollector(config, logger, name, "dnstap"),
+		connCleanup: make(chan bool),
 	}
 	s.SetDefaultRoutes(next)
 	s.ReadConfig()
@@ -198,7 +198,7 @@ func (c *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, 
 func (c *Dnstap) Stop() {
 	// closing properly current connections if exists
 	c.LogInfo("closing connected peers...")
-	close(c.cleanupConns)
+	close(c.connCleanup)
 	c.connWG.Wait()
 
 	// stop the collector
@@ -257,6 +257,10 @@ func (c *Dnstap) Listen() error {
 
 func (c *Dnstap) Run() {
 	c.LogInfo("running in background...")
+	defer func() {
+		c.LogInfo("run terminated")
+		c.StopIsDone()
+	}()
 
 	if err := c.Listen(); err != nil {
 		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] dnstap listening failed: ", err)
@@ -274,14 +278,12 @@ func (c *Dnstap) Run() {
 		}
 	}()
 
-RUN_LOOP:
 	for {
 		select {
 		case <-c.OnStop():
 			c.listen.Close()
 			close(acceptChan)
-			c.StopIsDone()
-			break RUN_LOOP
+			return
 
 		// save the new config
 		case cfg := <-c.NewConfig():
@@ -310,9 +312,8 @@ RUN_LOOP:
 			// handle the connection
 			c.connWG.Add(1)
 			connID := atomic.AddUint64(&c.connCounter, 1)
-			go c.HandleConn(conn, connID, c.cleanupConns, &c.connWG)
+			go c.HandleConn(conn, connID, c.connCleanup, &c.connWG)
 		}
 
 	}
-	c.LogInfo("run terminated")
 }

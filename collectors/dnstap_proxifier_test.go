@@ -2,7 +2,6 @@ package collectors
 
 import (
 	"bufio"
-	"log"
 	"net"
 	"testing"
 	"time"
@@ -56,12 +55,13 @@ func Test_DnstapProxifier(t *testing.T) {
 			}
 
 			c := NewDnstapProxifier([]pkgutils.Worker{g}, config, logger.New(false), "test")
-			if err := c.Listen(); err != nil {
-				log.Fatal("collector dnstap relay error: ", err)
-			}
+			// if err := c.Listen(); err != nil {
+			// 	log.Fatal("collector dnstap relay error: ", err)
+			// }
 
 			go c.Run()
 
+			time.Sleep(1 * time.Second)
 			conn, err := net.Dial(tc.mode, tc.address)
 			if err != nil {
 				t.Error("could not connect: ", err)

@@ -5,6 +5,15 @@ import (
 	"net"
 )
 
+func IsClosedConnectionError(err error) bool {
+	if opErr, ok := err.(*net.OpError); ok {
+		if opErr.Err.Error() == "use of closed network connection" {
+			return true
+		}
+	}
+	return false
+}
+
 // thanks to https://stackoverflow.com/questions/28967701/golang-tcp-socket-cant-close-after-get-file,
 // call conn.CloseRead() before calling conn.Close()
 func Close(conn io.Closer, reset bool) error {
