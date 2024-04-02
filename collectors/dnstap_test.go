@@ -3,7 +3,6 @@ package collectors
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"net"
 	"regexp"
 	"testing"
@@ -75,13 +74,12 @@ func Test_DnstapCollector(t *testing.T) {
 			}
 			config.Collectors.Dnstap.Compression = tc.compression
 
+			// start the collector
 			c := NewDnstap([]pkgutils.Worker{g}, config, logger.New(false), "test")
-			if err := c.Listen(); err != nil {
-				log.Fatal("collector listening  error: ", err)
-			}
-
 			go c.Run()
 
+			// wait before to connect
+			time.Sleep(1 * time.Second)
 			conn, err := net.Dial(tc.mode, tc.address)
 			if err != nil {
 				t.Error("could not connect: ", err)
@@ -157,14 +155,10 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	// start the collector in unix mode
 	g := pkgutils.NewFakeLogger()
 	c := NewDnstap([]pkgutils.Worker{g}, config, lg, "test")
-
-	if err := c.Listen(); err != nil {
-		log.Fatal("collector listening  error: ", err)
-	}
-
 	go c.Run()
 
 	// simulate dns server connection to collector
+	time.Sleep(1 * time.Second)
 	conn, err := net.Dial(netlib.SocketUnix, "/tmp/dnscollector.sock")
 	if err != nil {
 		t.Error("could not connect: ", err)
@@ -187,15 +181,15 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	regxp := ".*framestream reseted by sender.*"
 	pattern := regexp.MustCompile(regxp)
 
-	match_msg := false
+	matchMsg := false
 	for entry := range logsChan {
 		fmt.Println(entry)
 		if pattern.MatchString(entry.Message) {
-			match_msg = true
+			matchMsg = true
 			break
 		}
 	}
-	if !match_msg {
+	if !matchMsg {
 		t.Errorf("reset from sender not received")
 	}
 
