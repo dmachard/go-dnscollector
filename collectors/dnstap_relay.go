@@ -23,11 +23,11 @@ type DnstapProxifier struct {
 func NewDnstapProxifier(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
 	s := &DnstapProxifier{Collector: pkgutils.NewCollector(config, logger, name, "dnstaprelay")}
 	s.SetDefaultRoutes(next)
-	s.ReadConfig()
+	s.CheckConfig()
 	return s
 }
 
-func (c *DnstapProxifier) ReadConfig() {
+func (c *DnstapProxifier) CheckConfig() {
 	if !pkgconfig.IsValidTLS(c.GetConfig().Collectors.DnstapProxifier.TLSMinVersion) {
 		c.LogFatal(pkgutils.PrefixLogCollector + "[" + c.GetName() + "] dnstaprelay - invalid tls min version")
 	}
@@ -154,7 +154,7 @@ func (c *DnstapProxifier) Run() {
 		// save the new config
 		case cfg := <-c.NewConfig():
 			c.SetConfig(cfg)
-			c.ReadConfig()
+			c.CheckConfig()
 
 		case conn, opened := <-acceptChan:
 			if !opened {

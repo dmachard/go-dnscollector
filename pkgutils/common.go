@@ -9,16 +9,14 @@ import (
 )
 
 type Collector struct {
-	doneRun, stopRun             chan bool
-	doneMonitor, stopMonitor     chan bool
-	config                       *pkgconfig.Config
-	configChan                   chan *pkgconfig.Config
-	logger                       *logger.Logger
-	name                         string
-	descr                        string
-	droppedRoutes, defaultRoutes []Worker
-	droppedCount                 int
-	droppedProcessor             chan int
+	doneRun, stopRun, doneMonitor, stopMonitor chan bool
+	config                                     *pkgconfig.Config
+	configChan                                 chan *pkgconfig.Config
+	logger                                     *logger.Logger
+	name, descr                                string
+	droppedRoutes, defaultRoutes               []Worker
+	droppedCount                               int
+	droppedProcessor                           chan int
 }
 
 func NewCollector(config *pkgconfig.Config, logger *logger.Logger, name string, descr string) *Collector {
@@ -39,37 +37,23 @@ func NewCollector(config *pkgconfig.Config, logger *logger.Logger, name string, 
 	return c
 }
 
-func (c *Collector) GetName() string {
-	return c.name
-}
+func (c *Collector) GetName() string { return c.name }
 
-func (c *Collector) GetConfig() *pkgconfig.Config {
-	return c.config
-}
+func (c *Collector) GetConfig() *pkgconfig.Config { return c.config }
 
-func (c *Collector) SetConfig(config *pkgconfig.Config) {
-	c.config = config
-}
+func (c *Collector) SetConfig(config *pkgconfig.Config) { c.config = config }
 
-func (c *Collector) NewConfig() chan *pkgconfig.Config {
-	return c.configChan
-}
+func (c *Collector) ReadConfig() {}
 
-func (c *Collector) GetLogger() *logger.Logger {
-	return c.logger
-}
+func (c *Collector) NewConfig() chan *pkgconfig.Config { return c.configChan }
 
-func (c *Collector) GetDroppedRoutes() []Worker {
-	return c.droppedRoutes
-}
+func (c *Collector) GetLogger() *logger.Logger { return c.logger }
 
-func (c *Collector) GetDefaultRoutes() []Worker {
-	return c.defaultRoutes
-}
+func (c *Collector) GetDroppedRoutes() []Worker { return c.droppedRoutes }
 
-func (c *Collector) GetInputChannel() chan dnsutils.DNSMessage {
-	return nil
-}
+func (c *Collector) GetDefaultRoutes() []Worker { return c.defaultRoutes }
+
+func (c *Collector) GetInputChannel() chan dnsutils.DNSMessage { return nil }
 
 func (c *Collector) AddDroppedRoute(wrk Worker) {
 	c.droppedRoutes = append(c.droppedRoutes, wrk)
@@ -83,9 +67,7 @@ func (c *Collector) SetDefaultRoutes(next []Worker) {
 	c.defaultRoutes = next
 }
 
-func (c *Collector) SetLoggers(loggers []Worker) {
-	c.defaultRoutes = loggers
-}
+func (c *Collector) SetLoggers(loggers []Worker) { c.defaultRoutes = loggers }
 
 func (c *Collector) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	return GetRoutes(c.defaultRoutes)

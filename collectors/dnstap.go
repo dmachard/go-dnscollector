@@ -21,30 +21,19 @@ import (
 
 type Dnstap struct {
 	*pkgutils.Collector
-	sockPath    string
-	connMode    string
 	connCounter uint64
 }
 
 func NewDnstap(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
 	s := &Dnstap{Collector: pkgutils.NewCollector(config, logger, name, "dnstap")}
 	s.SetDefaultRoutes(next)
-	s.ReadConfig()
+	s.CheckConfig()
 	return s
 }
 
-func (c *Dnstap) ReadConfig() {
-	config := c.GetConfig().Collectors.Dnstap
-	switch {
-	case !pkgconfig.IsValidTLS(config.TLSMinVersion):
-		c.LogFatal("collector=dnstap - invalid tls min version")
-	case len(config.SockPath) > 0:
-		c.sockPath = config.SockPath
-		c.connMode = "unix"
-	case config.TLSSupport:
-		c.connMode = "tls"
-	default:
-		c.connMode = "tcp"
+func (c *Dnstap) CheckConfig() {
+	if !pkgconfig.IsValidTLS(c.GetConfig().Collectors.Dnstap.TLSMinVersion) {
+		c.LogFatal(pkgutils.PrefixLogCollector + "[" + c.GetName() + "] dnstap - invalid tls min version")
 	}
 }
 
@@ -195,12 +184,13 @@ func (c *Dnstap) Run() {
 
 	var connWG sync.WaitGroup
 	connCleanup := make(chan bool)
+	cfg := c.GetConfig().Collectors.Dnstap
 
 	// start to listen
 	listener, err := netlib.StartToListen(
-		c.GetConfig().Collectors.Dnstap.ListenIP, c.GetConfig().Collectors.Dnstap.ListenPort, c.sockPath,
-		c.GetConfig().Collectors.Dnstap.TLSSupport, pkgconfig.TLSVersion[c.GetConfig().Collectors.Dnstap.TLSMinVersion],
-		c.GetConfig().Collectors.Dnstap.CertFile, c.GetConfig().Collectors.Dnstap.KeyFile)
+		cfg.ListenIP, cfg.ListenPort, cfg.SockPath,
+		cfg.TLSSupport, pkgconfig.TLSVersion[cfg.TLSMinVersion],
+		cfg.CertFile, cfg.KeyFile)
 	if err != nil {
 		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] dnstap listening failed: ", err)
 	}
@@ -225,7 +215,7 @@ func (c *Dnstap) Run() {
 		// save the new config
 		case cfg := <-c.NewConfig():
 			c.SetConfig(cfg)
-			c.ReadConfig()
+			c.CheckConfig()
 
 		// new incoming connection
 		case conn, opened := <-acceptChan:
@@ -233,17 +223,12 @@ func (c *Dnstap) Run() {
 				return
 			}
 
-			if (c.connMode == "tls" || c.connMode == "tcp") && c.GetConfig().Collectors.Dnstap.RcvBufSize > 0 {
-				before, actual, err := netlib.SetSockRCVBUF(
-					conn,
-					c.GetConfig().Collectors.Dnstap.RcvBufSize,
-					c.GetConfig().Collectors.Dnstap.TLSSupport,
-				)
+			if len(cfg.SockPath) == 0 && cfg.RcvBufSize > 0 {
+				before, actual, err := netlib.SetSockRCVBUF(conn, cfg.RcvBufSize, cfg.TLSSupport)
 				if err != nil {
 					c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] dnstap - unable to set SO_RCVBUF: ", err)
 				}
-				c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before,
-					c.GetConfig().Collectors.Dnstap.RcvBufSize, actual)
+				c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before, cfg.RcvBufSize, actual)
 			}
 
 			// handle the connection
