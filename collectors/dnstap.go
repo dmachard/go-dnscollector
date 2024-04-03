@@ -2,13 +2,10 @@ package collectors
 
 import (
 	"bufio"
-	"crypto/tls"
 	"encoding/binary"
 	"errors"
 	"io"
 	"net"
-	"os"
-	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -24,19 +21,13 @@ import (
 
 type Dnstap struct {
 	*pkgutils.Collector
-	listen      net.Listener
 	sockPath    string
 	connMode    string
 	connCounter uint64
-	connWG      sync.WaitGroup
-	connCleanup chan bool
 }
 
 func NewDnstap(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
-	s := &Dnstap{
-		Collector:   pkgutils.NewCollector(config, logger, name, "dnstap"),
-		connCleanup: make(chan bool),
-	}
+	s := &Dnstap{Collector: pkgutils.NewCollector(config, logger, name, "dnstap")}
 	s.SetDefaultRoutes(next)
 	s.ReadConfig()
 	return s
@@ -195,66 +186,6 @@ func (c *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, 
 	}
 }
 
-func (c *Dnstap) Stop() {
-	// closing properly current connections if exists
-	c.LogInfo("closing connected peers...")
-	close(c.connCleanup)
-	c.connWG.Wait()
-
-	// stop the collector
-	c.Collector.Stop()
-}
-
-func (c *Dnstap) Listen() error {
-	var err error
-	var listener net.Listener
-	addrlisten := c.GetConfig().Collectors.Dnstap.ListenIP + ":" + strconv.Itoa(c.GetConfig().Collectors.Dnstap.ListenPort)
-
-	if len(c.sockPath) > 0 {
-		_ = os.Remove(c.sockPath)
-	}
-
-	// listening with tls enabled ?
-	if c.GetConfig().Collectors.Dnstap.TLSSupport {
-		c.LogInfo("tls support enabled")
-		var cer tls.Certificate
-		cer, err = tls.LoadX509KeyPair(c.GetConfig().Collectors.Dnstap.CertFile, c.GetConfig().Collectors.Dnstap.KeyFile)
-		if err != nil {
-			c.LogFatal("loading certificate failed:", err)
-		}
-
-		tlsConfig := &tls.Config{
-			Certificates: []tls.Certificate{cer},
-			MinVersion:   tls.VersionTLS12,
-		}
-
-		// update tls min version according to the user config
-		tlsConfig.MinVersion = pkgconfig.TLSVersion[c.GetConfig().Collectors.Dnstap.TLSMinVersion]
-
-		if len(c.sockPath) > 0 {
-			listener, err = tls.Listen(netlib.SocketUnix, c.sockPath, tlsConfig)
-		} else {
-			listener, err = tls.Listen(netlib.SocketTCP, addrlisten, tlsConfig)
-		}
-
-	} else {
-		// basic listening
-		if len(c.sockPath) > 0 {
-			listener, err = net.Listen(netlib.SocketUnix, c.sockPath)
-		} else {
-			listener, err = net.Listen(netlib.SocketTCP, addrlisten)
-		}
-	}
-
-	// something is wrong ?
-	if err != nil {
-		return err
-	}
-	c.LogInfo("is listening on %s://%s", c.connMode, listener.Addr())
-	c.listen = listener
-	return nil
-}
-
 func (c *Dnstap) Run() {
 	c.LogInfo("running in background...")
 	defer func() {
@@ -262,27 +193,33 @@ func (c *Dnstap) Run() {
 		c.StopIsDone()
 	}()
 
-	if err := c.Listen(); err != nil {
+	var connWG sync.WaitGroup
+	connCleanup := make(chan bool)
+
+	// start to listen
+	listener, err := netlib.StartToListen(
+		c.GetConfig().Collectors.Dnstap.ListenIP, c.GetConfig().Collectors.Dnstap.ListenPort, c.sockPath,
+		c.GetConfig().Collectors.Dnstap.TLSSupport, pkgconfig.TLSVersion[c.GetConfig().Collectors.Dnstap.TLSMinVersion],
+		c.GetConfig().Collectors.Dnstap.CertFile, c.GetConfig().Collectors.Dnstap.KeyFile)
+	if err != nil {
 		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] dnstap listening failed: ", err)
 	}
+	c.LogInfo("listening on %s", listener.Addr())
 
 	// goroutine to Accept() blocks waiting for new connection.
 	acceptChan := make(chan net.Conn)
-	go func() {
-		for {
-			conn, err := c.listen.Accept()
-			if err != nil {
-				return
-			}
-			acceptChan <- conn
-		}
-	}()
+	netlib.AcceptConnections(listener, acceptChan)
 
+	// main loop
 	for {
 		select {
 		case <-c.OnStop():
-			c.listen.Close()
-			close(acceptChan)
+			c.LogInfo("stop to listen...")
+			listener.Close()
+
+			c.LogInfo("closing connected peers...")
+			close(connCleanup)
+			connWG.Wait()
 			return
 
 		// save the new config
@@ -310,9 +247,9 @@ func (c *Dnstap) Run() {
 			}
 
 			// handle the connection
-			c.connWG.Add(1)
+			connWG.Add(1)
 			connID := atomic.AddUint64(&c.connCounter, 1)
-			go c.HandleConn(conn, connID, c.connCleanup, &c.connWG)
+			go c.HandleConn(conn, connID, connCleanup, &connWG)
 		}
 
 	}

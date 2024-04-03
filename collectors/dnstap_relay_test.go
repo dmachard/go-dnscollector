@@ -15,7 +15,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func Test_DnstapProxifier(t *testing.T) {
+func Test_DnstapRelay(t *testing.T) {
 	testcases := []struct {
 		name       string
 		mode       string

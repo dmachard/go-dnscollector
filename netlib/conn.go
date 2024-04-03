@@ -6,6 +6,19 @@ import (
 	"net"
 )
 
+func AcceptConnections(listener net.Listener, acceptChan chan<- net.Conn) {
+	go func() {
+		defer close(acceptChan)
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				return
+			}
+			acceptChan <- conn
+		}
+	}()
+}
+
 func IsClosedConnectionError(err error) bool {
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
