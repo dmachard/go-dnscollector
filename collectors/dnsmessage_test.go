@@ -15,7 +15,7 @@ import (
 
 func Test_DnsMessage_BufferLoggerIsFull(t *testing.T) {
 	// redirect stdout output to bytes buffer
-	logsChan := make(chan logger.LogEntry, 10)
+	logsChan := make(chan logger.LogEntry, 50)
 	lg := logger.New(true)
 	lg.SetOutputChannel((logsChan))
 

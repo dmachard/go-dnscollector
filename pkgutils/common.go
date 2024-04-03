@@ -15,25 +15,29 @@ type Collector struct {
 	logger                                     *logger.Logger
 	name, descr                                string
 	droppedRoutes, defaultRoutes               []Worker
-	droppedCount                               int
+	droppedProcessorCount                      int
 	droppedProcessor                           chan int
+	droppedStanza                              chan string
+	droppedStanzaCount                         map[string]int
 }
 
 func NewCollector(config *pkgconfig.Config, logger *logger.Logger, name string, descr string) *Collector {
 	logger.Info(PrefixLogCollector+"[%s] %s - enabled", name, descr)
 	c := &Collector{
-		config:           config,
-		configChan:       make(chan *pkgconfig.Config),
-		logger:           logger,
-		name:             name,
-		descr:            descr,
-		doneRun:          make(chan bool),
-		doneMonitor:      make(chan bool),
-		stopRun:          make(chan bool),
-		stopMonitor:      make(chan bool),
-		droppedProcessor: make(chan int),
+		config:             config,
+		configChan:         make(chan *pkgconfig.Config),
+		logger:             logger,
+		name:               name,
+		descr:              descr,
+		doneRun:            make(chan bool),
+		doneMonitor:        make(chan bool),
+		stopRun:            make(chan bool),
+		stopMonitor:        make(chan bool),
+		droppedProcessor:   make(chan int),
+		droppedStanza:      make(chan string),
+		droppedStanzaCount: map[string]int{},
 	}
-	go c.MonitorCollector()
+	go c.Monitor()
 	return c
 }
 
@@ -110,27 +114,46 @@ func (c *Collector) Stop() {
 	<-c.doneRun
 }
 
-func (c *Collector) MonitorCollector() {
+func (c *Collector) Monitor() {
 	defer func() {
 		c.LogInfo("monitor terminated")
 		c.doneMonitor <- true
 	}()
 
+	c.LogInfo("start monitor")
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 	for {
 		select {
 		case <-c.droppedProcessor:
-			c.droppedCount++
+			c.droppedProcessorCount++
+
+		case loggerName := <-c.droppedStanza:
+			if _, ok := c.droppedStanzaCount[loggerName]; !ok {
+				c.droppedStanzaCount[loggerName] = 1
+			} else {
+				c.droppedStanzaCount[loggerName]++
+			}
+
 		case <-c.stopMonitor:
 			close(c.droppedProcessor)
+			close(c.droppedStanza)
 			bufferFull.Stop()
 			return
+
 		case <-bufferFull.C:
-			if c.droppedCount > 0 {
-				c.LogError("processor buffer is full, %d packet(s) dropped", c.droppedCount)
-				c.droppedCount = 0
+			if c.droppedProcessorCount > 0 {
+				c.LogError("processor buffer is full, %d dnsmessage(s) dropped", c.droppedProcessorCount)
+				c.droppedProcessorCount = 0
 			}
+
+			for v, k := range c.droppedStanzaCount {
+				if k > 0 {
+					c.LogError("stanza[%s] buffer is full, %d dnsmessage(s) dropped", v, k)
+					c.droppedStanzaCount[v] = 0
+				}
+			}
+
 			bufferFull.Reset(watchInterval)
 		}
 	}
@@ -138,4 +161,8 @@ func (c *Collector) MonitorCollector() {
 
 func (c *Collector) ProcessorIsBusy() {
 	c.droppedProcessor <- 1
+}
+
+func (c *Collector) NextStanzaIsBusy(name string) {
+	c.droppedStanza <- name
 }
