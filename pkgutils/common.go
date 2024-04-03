@@ -166,3 +166,11 @@ func (c *Collector) ProcessorIsBusy() {
 func (c *Collector) NextStanzaIsBusy(name string) {
 	c.droppedStanza <- name
 }
+
+func (c *Collector) Run() {
+	c.LogInfo("running in background...")
+	defer func() {
+		c.LogInfo("run terminated")
+		c.StopIsDone()
+	}()
+}
