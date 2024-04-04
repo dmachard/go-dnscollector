@@ -36,9 +36,10 @@ func (c *DnstapProxifier) CheckConfig() {
 func (c *DnstapProxifier) HandleFrame(recvFrom chan []byte, sendTo []chan dnsutils.DNSMessage) {
 	defer c.LogInfo("frame handler terminated")
 
+	dm := dnsutils.DNSMessage{}
+
 	for data := range recvFrom {
 		// init DNS message container
-		dm := dnsutils.DNSMessage{}
 		dm.Init()
 
 		// register payload

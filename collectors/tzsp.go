@@ -19,3 +19,8 @@ func NewTZSP(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Lo
 	s.ReadConfig()
 	return s
 }
+
+func (c *TZSPSniffer) Run() {
+	c.LogInfo("This OS not supported!")
+	c.StopIsDone()
+}
