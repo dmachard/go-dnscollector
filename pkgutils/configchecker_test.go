@@ -358,7 +358,7 @@ pipelines:
 }
 
 // test for issue https://github.com/dmachard/go-dnscollector/issues/643
-func TestConfig_CheckConfig_SpecificsItems(t *testing.T) {
+func TestConfig_CheckConfig_SpecificsItems_Loki(t *testing.T) {
 	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
 	if err != nil {
 		t.Fatal("Error creating temporary file:", err)
@@ -388,6 +388,49 @@ multiplexer:
             action: "update"
             separator: ","
             regex: "test"
+  routes:
+    - from: [ tap ]
+      to: [ loki ]
+`
+	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
+	if err != nil {
+		t.Fatal("Error writing to user configuration file:", err)
+	}
+
+	dm := dnsutils.GetReferenceDNSMessage()
+	if err := CheckConfig(userConfigFile.Name(), dm); err != nil {
+		t.Errorf("failed: Unexpected error: %v", err)
+	}
+}
+
+// test for issue https://github.com/dmachard/go-dnscollector/issues/676
+func TestConfig_CheckConfig_SpecificsItems_Scalyr(t *testing.T) {
+	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
+	if err != nil {
+		t.Fatal("Error creating temporary file:", err)
+	}
+	defer os.Remove(userConfigFile.Name())
+	defer userConfigFile.Close()
+
+	userConfigContent := `
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+  loggers:
+    - name: loki
+      scalyrclient:
+        apikey: XXXXX
+        attrs:
+          service: dnstap
+          type: queries
+        flush-interval: 10
+        mode: flat-json
+        sessioninfo:
+          cloud_provider: Azure
+          cloud_region: westeurope
   routes:
     - from: [ tap ]
       to: [ loki ]
