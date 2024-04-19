@@ -1,7 +1,6 @@
 package pkgconfig
 
 import (
-	"fmt"
 	"os"
 	"reflect"
 
@@ -51,7 +50,8 @@ func (c *Config) SetDefault() {
 
 func (c *Config) IsValid(userCfg map[string]interface{}) error {
 	for userKey, userValue := range userCfg {
-		if userKey == "global" {
+		switch userKey {
+		case "global":
 			if kvMap, ok := userValue.(map[string]interface{}); ok {
 				if err := c.Global.Check(kvMap); err != nil {
 					return errors.Errorf("global section - %s", err)
@@ -60,7 +60,7 @@ func (c *Config) IsValid(userCfg map[string]interface{}) error {
 				return errors.Errorf("unexpected type for global value, got %T", kvMap)
 			}
 
-		} else if userKey == "multiplexer" {
+		case "multiplexer":
 			if kvMap, ok := userValue.(map[string]interface{}); ok {
 				if err := c.Multiplexer.IsValid(kvMap); err != nil {
 					return errors.Errorf("mutiplexer section - %s", err)
@@ -69,7 +69,7 @@ func (c *Config) IsValid(userCfg map[string]interface{}) error {
 				return errors.Errorf("unexpected type for multiplexer value, got %T", kvMap)
 			}
 
-		} else if userKey == "pipelines" {
+		case "pipelines":
 			for i, cv := range userValue.([]interface{}) {
 				cfg := ConfigPipelines{}
 				if err := cfg.IsValid(cv.(map[string]interface{})); err != nil {
@@ -77,8 +77,8 @@ func (c *Config) IsValid(userCfg map[string]interface{}) error {
 				}
 			}
 
-		} else {
-			fmt.Printf("unknown key=%s\n", userKey)
+		default:
+			return errors.Errorf("unknown key=%s\n", userKey)
 		}
 	}
 	return nil

@@ -18,7 +18,8 @@ func (c *ConfigMultiplexer) SetDefault() {
 
 func (c *ConfigMultiplexer) IsValid(userCfg map[string]interface{}) error {
 	for k, v := range userCfg {
-		if k == "collectors" {
+		switch k {
+		case "collectors":
 			for i, cv := range v.([]interface{}) {
 				cfg := MultiplexInOut{IsCollector: true}
 				if err := cfg.IsValid(cv.(map[string]interface{})); err != nil {
@@ -26,7 +27,7 @@ func (c *ConfigMultiplexer) IsValid(userCfg map[string]interface{}) error {
 				}
 			}
 
-		} else if k == "loggers" {
+		case "loggers":
 			for i, cv := range v.([]interface{}) {
 				cfg := MultiplexInOut{IsCollector: false}
 				if err := cfg.IsValid(cv.(map[string]interface{})); err != nil {
@@ -34,7 +35,7 @@ func (c *ConfigMultiplexer) IsValid(userCfg map[string]interface{}) error {
 				}
 			}
 
-		} else if k == "routes" {
+		case "routes":
 			for i, cv := range v.([]interface{}) {
 				cfg := MultiplexRoutes{}
 				if err := cfg.IsValid(cv.(map[string]interface{})); err != nil {
@@ -42,7 +43,7 @@ func (c *ConfigMultiplexer) IsValid(userCfg map[string]interface{}) error {
 				}
 			}
 
-		} else {
+		default:
 			return errors.Errorf("unknown multiplexer key=%s\n", k)
 		}
 	}
