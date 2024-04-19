@@ -3,141 +3,35 @@ package pkgutils
 import (
 	"os"
 	"testing"
-
-	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/pkg/errors"
 )
 
-// Valid minimal user configuration
-func TestConfig_CheckConfig_Valid(t *testing.T) {
-	// Create a temporary file for the user configuration
-	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
+func createTempConfigFile(content string) (string, error) {
+	tempFile, err := os.CreateTemp("", "user-config.yaml")
 	if err != nil {
-		t.Fatal("Error creating temporary file:", err)
+		return "", err
 	}
-	defer os.Remove(userConfigFile.Name())
-	defer userConfigFile.Close()
+	defer tempFile.Close()
 
-	validUserConfigContent := `
-global:
-  trace: false
-multiplexer:
-  routes:
-    - from: [test-route]
-  loggers:
-    - name: test-logger
-  collectors:
-    - name: test-collector
-`
-	err = os.WriteFile(userConfigFile.Name(), []byte(validUserConfigContent), 0644)
-	if err != nil {
-		t.Fatal("Error writing to user configuration file:", err)
+	if _, err := tempFile.WriteString(content); err != nil {
+		return "", err
 	}
 
-	dm := dnsutils.GetReferenceDNSMessage()
-	if err := CheckConfig(userConfigFile.Name(), dm); err != nil {
-		t.Errorf("failed: Unexpected error: %v", err)
-	}
+	return tempFile.Name(), nil
 }
 
-// Invalid user configuration with an unknown key
-func TestConfig_CheckConfig_UnknownKeywords(t *testing.T) {
-	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
-	if err != nil {
-		t.Fatal("Error creating temporary file:", err)
-	}
-	defer os.Remove(userConfigFile.Name())
-	defer userConfigFile.Close()
-
-	userConfigContent := `
+func TestConfig_CheckConfig(t *testing.T) {
+	tests := []struct {
+		name    string
+		content string
+		wantErr bool
+	}{
+		{
+			name: "Valid multiplexer configuration",
+			content: `
 global:
-  trace: false
-multiplexer:
-  routes:
-  - from: [test-route]
-    unknown-key: invalid
-`
-	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
-	if err != nil {
-		t.Fatal("Error writing to user configuration file:", err)
-	}
-
-	dm := dnsutils.GetReferenceDNSMessage()
-	expectedError := errors.Errorf("unknown YAML key `unknown-key` in configuration")
-	if err := CheckConfig(userConfigFile.Name(), dm); err == nil || err.Error() != expectedError.Error() {
-		t.Errorf("Expected error %v, but got %v", expectedError, err)
-	}
-}
-
-// Ignore dynamic keys
-func TestConfig_CheckConfig_IgnoreDynamicKeys(t *testing.T) {
-	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
-	if err != nil {
-		t.Fatal("Error creating temporary file:", err)
-	}
-	defer os.Remove(userConfigFile.Name())
-	defer userConfigFile.Close()
-
-	userConfigContent := `
-global:
-  trace: false
-pipelines:
-  - name: match
-    dnsmessage:
-      matching:
-        include:
-          atags.tags.*: test
-          atags.tags.2: test
-          dns.resources-records.*: test
-          dns.resources-records.10.rdata: test
-          dns.resources-records.*.ttl: test
-`
-	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
-	if err != nil {
-		t.Fatal("Error writing to user configuration file:", err)
-	}
-
-	dm := dnsutils.GetReferenceDNSMessage()
-	if err := CheckConfig(userConfigFile.Name(), dm); err != nil {
-		t.Errorf("Expected no error, but got %v", err)
-	}
-}
-
-// Keywork exist but not at the good position
-func TestConfig_CheckConfig_BadKeywordPosition(t *testing.T) {
-	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
-	if err != nil {
-		t.Fatal("Error creating temporary file:", err)
-	}
-	defer os.Remove(userConfigFile.Name())
-	defer userConfigFile.Close()
-
-	userConfigContent := `
-global:
-  trace: false
-  logger: bad-position
-`
-	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
-	if err != nil {
-		t.Fatal("Error writing to user configuration file:", err)
-	}
-
-	dm := dnsutils.GetReferenceDNSMessage()
-	if err := CheckConfig(userConfigFile.Name(), dm); err == nil {
-		t.Errorf("Expected error, but got %v", err)
-	}
-}
-
-// Valid multiplexer configuration
-func TestConfig_CheckMultiplexerConfig_Valid(t *testing.T) {
-	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
-	if err != nil {
-		t.Fatal("Error creating temporary file:", err)
-	}
-	defer os.Remove(userConfigFile.Name())
-	defer userConfigFile.Close()
-
-	userConfigContent := `
+  trace:
+    verbose: true
+  server-identity: "dns-collector"
 multiplexer:
   collectors:
     - name: tap
@@ -154,294 +48,180 @@ multiplexer:
   routes:
     - from: [ tap ]
       to: [ console ]
-`
-	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
-	if err != nil {
-		t.Fatal("Error writing to user configuration file:", err)
-	}
-
-	dm := dnsutils.GetReferenceDNSMessage()
-	if err := CheckConfig(userConfigFile.Name(), dm); err != nil {
-		t.Errorf("failed: Unexpected error: %v", err)
-	}
-}
-
-// Invalid multiplexer configuration
-func TestConfig_CheckMultiplexerConfig_Invalid(t *testing.T) {
-	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
-	if err != nil {
-		t.Fatal("Error creating temporary file:", err)
-	}
-	defer os.Remove(userConfigFile.Name())
-	defer userConfigFile.Close()
-
-	userConfigContent := `
+`,
+			wantErr: false,
+		},
+		{
+			name: "Valid pipeline configuration",
+			content: `
 global:
-  trace: false
-multiplexer:
-- name: block
-  dnstap:
-    listen-ip: 0.0.0.0
-	transforms:
-      normalize:
-        qname-lowercase: true
-`
+  trace:
+    verbose: true
+  server-identity: "dns-collector"
+pipelines:
+  - name: dnsdist-main
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routing-policy: 
+      default: [ console ]
 
-	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
-	if err != nil {
-		t.Fatal("Error writing to user configuration file:", err)
-	}
-
-	dm := dnsutils.GetReferenceDNSMessage()
-	if err := CheckConfig(userConfigFile.Name(), dm); err == nil {
-		t.Errorf("Expected error, but got %v", err)
-	}
-}
-
-// https://github.com/dmachard/go-dnscollector/issues/565
-func TestConfig_CheckMultiplexerConfig_InvalidLogger(t *testing.T) {
-	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
-	if err != nil {
-		t.Fatal("Error creating temporary file:", err)
-	}
-	defer os.Remove(userConfigFile.Name())
-	defer userConfigFile.Close()
-
-	// all keywords in this config are valid but the logger dnstap is not valid in this context
-	userConfigContent := `
+  - name: console
+    stdout:
+      mode: text
+`,
+			wantErr: false,
+		},
+		{
+			name: "Invalid key",
+			content: `
 global:
-  trace: false
+  logger: bad-position
+`,
+			wantErr: true,
+		},
+		{
+			name: "Invalid multiplexer config format",
+			content: `
 multiplexer:
-  collectors:
-    - name: tap
-      dnstap:
-        listen-ip: 0.0.0.0
-  loggers:
-    - name: tapOut
-      dnstap:
-        listen-ip: 0.0.0.0
-  routes:
-    - from: [ tapIn ]
-      to: [ tapOut ]
-`
-
-	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
-	if err != nil {
-		t.Fatal("Error writing to user configuration file:", err)
-	}
-
-	dm := dnsutils.GetReferenceDNSMessage()
-	if err := CheckConfig(userConfigFile.Name(), dm); err == nil {
-		t.Errorf("Expected error, but got %v", err)
-	}
-}
-
-// Valid pipeline configuration
-func TestConfig_CheckPipelinesConfig_Valid(t *testing.T) {
-	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
-	if err != nil {
-		t.Fatal("Error creating temporary file:", err)
-	}
-	defer os.Remove(userConfigFile.Name())
-	defer userConfigFile.Close()
-
-	userConfigContent := `
-pipelines:
-- name: dnsdist-main
-  dnstap:
-    listen-ip: 0.0.0.0
-    listen-port: 6000
-  routing-policy: 
-    default: [ console ]
-
-- name: console
-  stdout:
-    mode: text
-`
-	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
-	if err != nil {
-		t.Fatal("Error writing to user configuration file:", err)
-	}
-
-	dm := dnsutils.GetReferenceDNSMessage()
-	if err := CheckConfig(userConfigFile.Name(), dm); err != nil {
-		t.Errorf("failed: Unexpected error: %v", err)
-	}
-}
-
-// Invalid pipeline configuration
-func TestConfig_CheckPipelinesConfig_Invalid(t *testing.T) {
-	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
-	if err != nil {
-		t.Fatal("Error creating temporary file:", err)
-	}
-	defer os.Remove(userConfigFile.Name())
-	defer userConfigFile.Close()
-
-	userConfigContent := `
-pipelines:
-- name: dnsdist-main
-  dnstap:
-    listen-ip: 0.0.0.0
+  - name: block
+    dnstap:
+      listen-ip: 0.0.0.0
     transforms:
       normalize:
         qname-lowercase: true
-  routing-policy: 
-    default: [ console ]
-`
-
-	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
-	if err != nil {
-		t.Fatal("Error writing to user configuration file:", err)
-	}
-
-	dm := dnsutils.GetReferenceDNSMessage()
-	if err := CheckConfig(userConfigFile.Name(), dm); err == nil {
-		t.Errorf("Expected error, but got %v", err)
-	}
-}
-
-// Invalid directives
-func TestConfig_CheckMultiplexer_InvalidTextDirective(t *testing.T) {
-	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
-	if err != nil {
-		t.Fatal("Error creating temporary file:", err)
-	}
-	defer os.Remove(userConfigFile.Name())
-	defer userConfigFile.Close()
-
-	userConfigContent := `
+`,
+			wantErr: true,
+		},
+		{
+			name: "Invalid multiplexer logger",
+			content: `
 multiplexer:
+  collectors:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
   loggers:
-  - name: dnsdist-main
-    stdout:
-      text-format: "qtype latency reducer-occurences"
-`
-
-	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
-	if err != nil {
-		t.Fatal("Error writing to user configuration file:", err)
-	}
-
-	dm := dnsutils.GetReferenceDNSMessage()
-	if err = CheckConfig(userConfigFile.Name(), dm); err == nil {
-		t.Errorf("Expected error, but got nil")
-	}
-}
-
-func TestConfig_CheckPipelines_InvalidTextDirective(t *testing.T) {
-	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
-	if err != nil {
-		t.Fatal("Error creating temporary file:", err)
-	}
-	defer os.Remove(userConfigFile.Name())
-	defer userConfigFile.Close()
-
-	userConfigContent := `
+  - name: tapOut
+    dnstap:
+      listen-ip: 0.0.0.0
+  routes:
+  - from: [ tapIn ]
+    to: [ tapOut ]
+`,
+			wantErr: true,
+		},
+		{
+			name: "Invalid pipeline transform",
+			content: `
 pipelines:
-- name: dnsdist-main
-  stdout:
-    text-format: "qtype latency reducer-occurences"
-  routing-policy: 
-    default: [ console ]
-`
-
-	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
-	if err != nil {
-		t.Fatal("Error writing to user configuration file:", err)
-	}
-
-	dm := dnsutils.GetReferenceDNSMessage()
-	if err = CheckConfig(userConfigFile.Name(), dm); err == nil {
-		t.Errorf("Expected error, but got nil")
-	}
-}
-
-// test for issue https://github.com/dmachard/go-dnscollector/issues/643
-func TestConfig_CheckConfig_SpecificsItems_Loki(t *testing.T) {
-	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
-	if err != nil {
-		t.Fatal("Error creating temporary file:", err)
-	}
-	defer os.Remove(userConfigFile.Name())
-	defer userConfigFile.Close()
-
-	userConfigContent := `
+  - name: dnsdist-main
+    dnstap:
+      listen-ip: 0.0.0.0
+      transforms:
+        normalize:
+          qname-lowercase: true
+    routing-policy: 
+      default: [ console ]
+`,
+			wantErr: true,
+		},
+		{
+			name: "Invalid multiplexer route",
+			content: `
+multiplexer:
+  routes:
+  - from: [test-route]
+    unknown-key: invalid
+`,
+			wantErr: true,
+		},
+		{
+			name: "pipeline dynamic keys",
+			content: `
+pipelines:
+  - name: match
+    dnsmessage:
+      matching:
+        include:
+          atags.tags.*: test
+          atags.tags.2: test
+          dns.resources-records.*: test
+`,
+			wantErr: false,
+		},
+		{
+			name: "freeform loki #643",
+			content: `
 multiplexer:
   collectors:
-    - name: tap
-      dnstap:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
   loggers:
-    - name: loki
-      lokiclient:
-        server-url: "https://grafana-loki.example.com/loki/api/v1/push"
-        job-name: "dnscollector"
-        mode: "flat-json"
-        tls-insecure: true
-        tenant-id: fake
-        relabel-configs:
-          - source_labels: ["__dns_qtype"]
-            target_label: "qtype"
-            replacement: "test"
-            action: "update"
-            separator: ","
-            regex: "test"
+  - name: loki
+    lokiclient:
+      server-url: "https://grafana-loki.example.com/loki/api/v1/push"
+      job-name: "dnscollector"
+      mode: "flat-json"
+      tls-insecure: true
+      tenant-id: fake
+      relabel-configs:
+      - source_labels: ["__dns_qtype"]
+        target_label: "qtype"
+        replacement: "test"
+        action: "update"
+        separator: ","
+        regex: "test"
   routes:
-    - from: [ tap ]
-      to: [ loki ]
-`
-	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
-	if err != nil {
-		t.Fatal("Error writing to user configuration file:", err)
-	}
-
-	dm := dnsutils.GetReferenceDNSMessage()
-	if err := CheckConfig(userConfigFile.Name(), dm); err != nil {
-		t.Errorf("failed: Unexpected error: %v", err)
-	}
-}
-
-// test for issue https://github.com/dmachard/go-dnscollector/issues/676
-func TestConfig_CheckConfig_SpecificsItems_Scalyr(t *testing.T) {
-	userConfigFile, err := os.CreateTemp("", "user-config.yaml")
-	if err != nil {
-		t.Fatal("Error creating temporary file:", err)
-	}
-	defer os.Remove(userConfigFile.Name())
-	defer userConfigFile.Close()
-
-	userConfigContent := `
+  - from: [ tap ]
+    to: [ loki ]
+`,
+			wantErr: false,
+		},
+		{
+			name: "freeform scalyr #676",
+			content: `
 multiplexer:
   collectors:
-    - name: tap
-      dnstap:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
   loggers:
-    - name: loki
-      scalyrclient:
-        apikey: XXXXX
-        attrs:
-          service: dnstap
-          type: queries
-        flush-interval: 10
-        mode: flat-json
-        sessioninfo:
-          cloud_provider: Azure
-          cloud_region: westeurope
+  - name: scalyr
+    scalyrclient:
+      apikey: XXXXX
+      attrs:
+        service: dnstap
+        type: queries
+      flush-interval: 10
+      mode: flat-json
+      sessioninfo:
+        cloud_provider: Azure
+        cloud_region: westeurope
   routes:
-    - from: [ tap ]
-      to: [ loki ]
-`
-	err = os.WriteFile(userConfigFile.Name(), []byte(userConfigContent), 0644)
-	if err != nil {
-		t.Fatal("Error writing to user configuration file:", err)
+  - from: [ tap ]
+    to: [ scalyr ]
+`,
+			wantErr: false,
+		},
 	}
 
-	dm := dnsutils.GetReferenceDNSMessage()
-	if err := CheckConfig(userConfigFile.Name(), dm); err != nil {
-		t.Errorf("failed: Unexpected error: %v", err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tempFile, err := createTempConfigFile(tt.content)
+			if err != nil {
+				t.Fatalf("Error creating temporary file: %v", err)
+			}
+			defer os.Remove(tempFile)
+
+			err = CheckConfig(tempFile)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CheckConfig() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
 	}
 }

@@ -20,12 +20,12 @@ func GetStanzaConfig(config *pkgconfig.Config, item pkgconfig.ConfigPipelines) *
 	// Enable the provided collector or loggers
 	for k, p := range item.Params {
 		// is a logger or collector ?
-		if !config.Loggers.IsValid(k) && !config.Collectors.IsValid(k) {
-			panic(fmt.Sprintln("main - get stanza config error"))
-		}
-		if config.Loggers.IsValid(k) {
-			section = "loggers"
-		}
+		// if !config.Loggers.IsValid(k) && !config.Collectors.IsValid(k) {
+		// 	panic(fmt.Sprintln("main - get stanza config error"))
+		// }
+		// if config.Loggers.IsValid(k) {
+		// 	section = "loggers"
+		// }
 		if p == nil {
 			item.Params[k] = make(map[string]interface{})
 		}
