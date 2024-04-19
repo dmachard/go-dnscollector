@@ -517,6 +517,23 @@ func (c *ConfigLoggers) SetDefault() {
 	c.ElasticSearchClient.BulkChannelSize = 10
 	c.ElasticSearchClient.Compression = CompressNone
 
+	c.ScalyrClient.Enable = false
+	c.ScalyrClient.Mode = ModeText
+	c.ScalyrClient.TextFormat = ""
+	c.ScalyrClient.SessionInfo = map[string]string{}
+	c.ScalyrClient.Attrs = map[string]interface{}{}
+	c.ScalyrClient.ServerURL = "app.scalyr.com"
+	c.ScalyrClient.APIKey = ""
+	c.ScalyrClient.Parser = ""
+	c.ScalyrClient.FlushInterval = 10
+	c.ScalyrClient.ProxyURL = ""
+	c.ScalyrClient.TLSInsecure = false
+	c.ScalyrClient.TLSMinVersion = TLSV12
+	c.ScalyrClient.CAFile = ""
+	c.ScalyrClient.CertFile = ""
+	c.ScalyrClient.KeyFile = ""
+	c.ScalyrClient.ChannelBufferSize = 65535
+
 	c.RedisPub.Enable = false
 	c.RedisPub.RemoteAddress = LocalhostIP
 	c.RedisPub.RemotePort = 6379
