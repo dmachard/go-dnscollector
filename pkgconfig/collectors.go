@@ -156,5 +156,5 @@ func (c *ConfigCollectors) SetDefault() {
 }
 
 func (c *ConfigCollectors) IsValid(userCfg map[string]interface{}) error {
-	return CheckConfig(reflect.ValueOf(*c), userCfg)
+	return CheckConfigWithTags(reflect.ValueOf(*c), userCfg)
 }

@@ -1,4 +1,4 @@
-package pkgutils
+package pkgconfig
 
 import (
 	"os"

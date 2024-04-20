@@ -153,7 +153,7 @@ func (c *ConfigTransformers) SetDefault() {
 }
 
 func (c *ConfigTransformers) IsValid(userCfg map[string]interface{}) error {
-	return CheckConfig(reflect.ValueOf(*c), userCfg)
+	return CheckConfigWithTags(reflect.ValueOf(*c), userCfg)
 }
 
 func GetFakeConfigTransformers() *ConfigTransformers {

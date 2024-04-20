@@ -33,5 +33,5 @@ func (c *ConfigGlobal) SetDefault() {
 }
 
 func (c *ConfigGlobal) Check(userCfg map[string]interface{}) error {
-	return CheckConfig(reflect.ValueOf(*c), userCfg)
+	return CheckConfigWithTags(reflect.ValueOf(*c), userCfg)
 }

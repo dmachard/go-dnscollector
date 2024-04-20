@@ -103,7 +103,7 @@ func GetFakeConfig() *Config {
 	return config
 }
 
-func CheckConfig(v reflect.Value, userCfg map[string]interface{}) error {
+func CheckConfigWithTags(v reflect.Value, userCfg map[string]interface{}) error {
 	t := v.Type()
 	for k, kv := range userCfg {
 		keyExist := false
@@ -117,7 +117,7 @@ func CheckConfig(v reflect.Value, userCfg map[string]interface{}) error {
 			}
 			if fieldValue.Kind() == reflect.Struct && fieldTag == k {
 				if kvMap, ok := kv.(map[string]interface{}); ok {
-					err := CheckConfig(fieldValue, kvMap)
+					err := CheckConfigWithTags(fieldValue, kvMap)
 					if err != nil {
 						return errors.Errorf("%s in subkey=`%s`", err, k)
 					}

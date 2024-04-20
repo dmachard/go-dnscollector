@@ -95,7 +95,7 @@ func main() {
 	logger := logger.New(true)
 
 	// load config
-	config, err := pkgutils.LoadConfig(configPath)
+	config, err := pkgconfig.LoadConfig(configPath)
 	if err != nil {
 		fmt.Printf("config error: %v\n", err)
 		os.Exit(1)
@@ -141,7 +141,7 @@ func main() {
 				logger.Info("main - SIGHUP received")
 
 				// read config
-				err := pkgutils.ReloadConfig(configPath, config)
+				err := pkgconfig.ReloadConfig(configPath, config)
 				if err != nil {
 					panic(fmt.Sprintf("main - reload config error:  %v", err))
 				}

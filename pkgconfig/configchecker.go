@@ -1,15 +1,14 @@
-package pkgutils
+package pkgconfig
 
 import (
 	"io"
 	"os"
 
-	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
 
-func ReloadConfig(configPath string, config *pkgconfig.Config) error {
+func ReloadConfig(configPath string, config *Config) error {
 	// Open config file
 	configFile, err := os.Open(configPath)
 	if err != nil {
@@ -32,7 +31,7 @@ func ReloadConfig(configPath string, config *pkgconfig.Config) error {
 	return nil
 }
 
-func LoadConfig(configPath string) (*pkgconfig.Config, error) {
+func LoadConfig(configPath string) (*Config, error) {
 	// Open config file
 	configFile, err := os.Open(configPath)
 	if err != nil {
@@ -49,7 +48,7 @@ func LoadConfig(configPath string) (*pkgconfig.Config, error) {
 	d := yaml.NewDecoder(configFile)
 
 	// Start YAML decoding to go
-	config := &pkgconfig.Config{}
+	config := &Config{}
 	config.SetDefault()
 
 	if err := d.Decode(&config); err != nil {
@@ -68,7 +67,7 @@ func CheckConfig(userConfigPath string) error {
 	}
 
 	// check the user config with the default one
-	config := &pkgconfig.Config{}
+	config := &Config{}
 	config.SetDefault()
 
 	// check if the provided config is valid
