@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
@@ -229,14 +229,14 @@ RUN_LOOP:
 			if familyIndex != -1 {
 				dm.NetworkInfo.Family = matches[familyIndex]
 			} else {
-				dm.NetworkInfo.Family = netlib.ProtoIPv4
+				dm.NetworkInfo.Family = netutils.ProtoIPv4
 			}
 
 			protocolIndex := re.SubexpIndex("protocol")
 			if protocolIndex != -1 {
 				dm.NetworkInfo.Protocol = matches[protocolIndex]
 			} else {
-				dm.NetworkInfo.Protocol = netlib.ProtoUDP
+				dm.NetworkInfo.Protocol = netutils.ProtoUDP
 			}
 
 			lengthIndex := re.SubexpIndex("length")

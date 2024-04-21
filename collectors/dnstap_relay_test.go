@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
@@ -24,19 +24,19 @@ func Test_DnstapRelay(t *testing.T) {
 	}{
 		{
 			name:       "tcp_default",
-			mode:       netlib.SocketTCP,
+			mode:       netutils.SocketTCP,
 			address:    ":6000",
 			listenPort: 0,
 		},
 		{
 			name:       "tcp_custom_port",
-			mode:       netlib.SocketTCP,
+			mode:       netutils.SocketTCP,
 			address:    ":7100",
 			listenPort: 7100,
 		},
 		{
 			name:       "unix_default",
-			mode:       netlib.SocketUnix,
+			mode:       netutils.SocketUnix,
 			address:    "/tmp/dnscollector_relay.sock",
 			listenPort: 0,
 		},
@@ -50,7 +50,7 @@ func Test_DnstapRelay(t *testing.T) {
 			if tc.listenPort > 0 {
 				config.Collectors.DnstapProxifier.ListenPort = tc.listenPort
 			}
-			if tc.mode == netlib.SocketUnix {
+			if tc.mode == netutils.SocketUnix {
 				config.Collectors.DnstapProxifier.SockPath = tc.address
 			}
 

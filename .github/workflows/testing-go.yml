@@ -32,7 +32,7 @@ jobs:
           - 'collectors'
           - 'loggers'
           - 'transformers'
-          - 'netlib'
+          - 'netutils'
           - 'processors'
         # exclude:
         #   - os-version: macos-latest

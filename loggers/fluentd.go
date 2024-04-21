@@ -8,7 +8,7 @@ import (
 	"github.com/IBM/fluent-forward-go/fluent/client"
 	"github.com/IBM/fluent-forward-go/fluent/protocol"
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
@@ -69,10 +69,10 @@ func (fc *FluentdClient) ReadConfig() {
 
 	// begin backward compatibility
 	if fc.config.Loggers.Fluentd.TLSSupport {
-		fc.transport = netlib.SocketTLS
+		fc.transport = netutils.SocketTLS
 	}
 	if len(fc.config.Loggers.Fluentd.SockPath) > 0 {
-		fc.transport = netlib.SocketUnix
+		fc.transport = netutils.SocketUnix
 	}
 }
 
@@ -128,7 +128,7 @@ func (fc *FluentdClient) ConnectToRemote() {
 		var err error
 
 		switch fc.transport {
-		case netlib.SocketUnix:
+		case netutils.SocketUnix:
 			address = fc.config.Loggers.Fluentd.RemoteAddress
 			if len(fc.config.Loggers.Fluentd.SockPath) > 0 {
 				address = fc.config.Loggers.Fluentd.SockPath
@@ -142,7 +142,7 @@ func (fc *FluentdClient) ConnectToRemote() {
 				ConnectionTimeout: connTimeout,
 			})
 
-		case netlib.SocketTCP:
+		case netutils.SocketTCP:
 			fc.LogInfo("connecting to %s://%s", fc.transport, address)
 			c = client.New(client.ConnectionOptions{
 				Factory: &client.ConnFactory{
@@ -152,7 +152,7 @@ func (fc *FluentdClient) ConnectToRemote() {
 				ConnectionTimeout: connTimeout,
 			})
 
-		case netlib.SocketTLS:
+		case netutils.SocketTLS:
 			fc.LogInfo("connecting to %s://%s", fc.transport, address)
 
 			var tlsConfig *tls.Config

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
@@ -169,7 +169,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 		return
 	}
 
-	dnsChan := make(chan netlib.DNSPacket)
+	dnsChan := make(chan netutils.DNSPacket)
 	udpChan := make(chan gopacket.Packet)
 	tcpChan := make(chan gopacket.Packet)
 	fragIP4Chan := make(chan gopacket.Packet)
@@ -180,13 +180,13 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 	packetSource.NoCopy = true
 
 	// defrag ipv4
-	go netlib.IPDefragger(fragIP4Chan, udpChan, tcpChan)
+	go netutils.IPDefragger(fragIP4Chan, udpChan, tcpChan)
 	// defrag ipv6
-	go netlib.IPDefragger(fragIP6Chan, udpChan, tcpChan)
+	go netutils.IPDefragger(fragIP6Chan, udpChan, tcpChan)
 	// tcp assembly
-	go netlib.TCPAssembler(tcpChan, dnsChan, c.filterDNSPort)
+	go netutils.TCPAssembler(tcpChan, dnsChan, c.filterDNSPort)
 	// udp processor
-	go netlib.UDPProcessor(udpChan, dnsChan, c.filterDNSPort)
+	go netutils.UDPProcessor(udpChan, dnsChan, c.filterDNSPort)
 
 	go func() {
 		nbPackets := 0

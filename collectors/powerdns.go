@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
@@ -117,7 +117,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn) {
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	peerName := netlib.GetPeerName(peer)
+	peerName := netutils.GetPeerName(peer)
 	c.LogInfo("new connection #%d from %s (%s)", connID, peer, peerName)
 
 	// start protobuf subprocessor
@@ -228,7 +228,7 @@ func (c *ProtobufPowerDNS) Stop() {
 	for _, conn := range c.conns {
 		peer := conn.RemoteAddr().String()
 		c.LogInfo("%s - closing connection...", peer)
-		netlib.Close(conn, c.config.Collectors.PowerDNS.ResetConn)
+		netutils.Close(conn, c.config.Collectors.PowerDNS.ResetConn)
 	}
 
 	// Finally close the listener to unblock accept
@@ -274,9 +274,9 @@ func (c *ProtobufPowerDNS) Listen() error {
 		// update tls min version according to the user config
 		tlsConfig.MinVersion = pkgconfig.TLSVersion[c.config.Collectors.PowerDNS.TLSMinVersion]
 
-		listener, err = tls.Listen(netlib.SocketTCP, addrlisten, tlsConfig)
+		listener, err = tls.Listen(netutils.SocketTCP, addrlisten, tlsConfig)
 	} else {
-		listener, err = net.Listen(netlib.SocketTCP, addrlisten)
+		listener, err = net.Listen(netutils.SocketTCP, addrlisten)
 	}
 	// something is wrong ?
 	if err != nil {
@@ -362,7 +362,7 @@ RUN_LOOP:
 			}
 
 			if c.config.Collectors.Dnstap.RcvBufSize > 0 {
-				before, actual, err := netlib.SetSockRCVBUF(
+				before, actual, err := netutils.SetSockRCVBUF(
 					conn,
 					c.config.Collectors.Dnstap.RcvBufSize,
 					c.config.Collectors.Dnstap.TLSSupport,

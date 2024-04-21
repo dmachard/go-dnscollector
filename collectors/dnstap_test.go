@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
@@ -29,7 +29,7 @@ func Test_DnstapCollector(t *testing.T) {
 	}{
 		{
 			name:        "tcp_default",
-			mode:        netlib.SocketTCP,
+			mode:        netutils.SocketTCP,
 			address:     ":6000",
 			listenPort:  0,
 			operation:   "CLIENT_QUERY",
@@ -37,7 +37,7 @@ func Test_DnstapCollector(t *testing.T) {
 		},
 		{
 			name:        "tcp_custom_port",
-			mode:        netlib.SocketTCP,
+			mode:        netutils.SocketTCP,
 			address:     ":7000",
 			listenPort:  7000,
 			operation:   "CLIENT_QUERY",
@@ -45,7 +45,7 @@ func Test_DnstapCollector(t *testing.T) {
 		},
 		{
 			name:        "unix_default",
-			mode:        netlib.SocketUnix,
+			mode:        netutils.SocketUnix,
 			address:     "/tmp/dnscollector.sock",
 			listenPort:  0,
 			operation:   "CLIENT_QUERY",
@@ -53,7 +53,7 @@ func Test_DnstapCollector(t *testing.T) {
 		},
 		{
 			name:        "tcp_compress_gzip",
-			mode:        netlib.SocketTCP,
+			mode:        netutils.SocketTCP,
 			address:     ":7000",
 			listenPort:  7000,
 			operation:   "CLIENT_QUERY",
@@ -69,7 +69,7 @@ func Test_DnstapCollector(t *testing.T) {
 			if tc.listenPort > 0 {
 				config.Collectors.Dnstap.ListenPort = tc.listenPort
 			}
-			if tc.mode == netlib.SocketUnix {
+			if tc.mode == netutils.SocketUnix {
 				config.Collectors.Dnstap.SockPath = tc.address
 			}
 			config.Collectors.Dnstap.Compression = tc.compression
@@ -159,7 +159,7 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 
 	// simulate dns server connection to collector
 	time.Sleep(1 * time.Second)
-	conn, err := net.Dial(netlib.SocketUnix, "/tmp/dnscollector.sock")
+	conn, err := net.Dial(netutils.SocketUnix, "/tmp/dnscollector.sock")
 	if err != nil {
 		t.Error("could not connect: ", err)
 	}

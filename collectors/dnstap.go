@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
@@ -41,13 +41,13 @@ func (c *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, 
 	// close connection on function exit
 	defer func() {
 		c.LogInfo("conn #%d - connection handler terminated", connID)
-		netlib.Close(conn, c.GetConfig().Collectors.Dnstap.ResetConn)
+		netutils.Close(conn, c.GetConfig().Collectors.Dnstap.ResetConn)
 		wg.Done()
 	}()
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
-	peerName := netlib.GetPeerName(peer)
+	peerName := netutils.GetPeerName(peer)
 	c.LogInfo("new connection #%d from %s (%s)", connID, peer, peerName)
 
 	// start dnstap processor and run it
@@ -82,7 +82,7 @@ func (c *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, 
 			select {
 			case <-forceClose:
 				c.LogInfo("conn #%d - force to cleanup the connection handler", connID)
-				netlib.Close(conn, c.GetConfig().Collectors.Dnstap.ResetConn)
+				netutils.Close(conn, c.GetConfig().Collectors.Dnstap.ResetConn)
 				return
 			case <-cleanup:
 				c.LogInfo("conn #%d - cleanup the connection handler", connID)
@@ -187,7 +187,7 @@ func (c *Dnstap) Run() {
 	cfg := c.GetConfig().Collectors.Dnstap
 
 	// start to listen
-	listener, err := netlib.StartToListen(
+	listener, err := netutils.StartToListen(
 		cfg.ListenIP, cfg.ListenPort, cfg.SockPath,
 		cfg.TLSSupport, pkgconfig.TLSVersion[cfg.TLSMinVersion],
 		cfg.CertFile, cfg.KeyFile)
@@ -198,7 +198,7 @@ func (c *Dnstap) Run() {
 
 	// goroutine to Accept() blocks waiting for new connection.
 	acceptChan := make(chan net.Conn)
-	netlib.AcceptConnections(listener, acceptChan)
+	netutils.AcceptConnections(listener, acceptChan)
 
 	// main loop
 	for {
@@ -224,7 +224,7 @@ func (c *Dnstap) Run() {
 			}
 
 			if len(cfg.SockPath) == 0 && cfg.RcvBufSize > 0 {
-				before, actual, err := netlib.SetSockRCVBUF(conn, cfg.RcvBufSize, cfg.TLSSupport)
+				before, actual, err := netutils.SetSockRCVBUF(conn, cfg.RcvBufSize, cfg.TLSSupport)
 				if err != nil {
 					c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] dnstap - unable to set SO_RCVBUF: ", err)
 				}

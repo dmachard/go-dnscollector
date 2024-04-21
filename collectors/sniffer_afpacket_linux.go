@@ -13,7 +13,7 @@ import (
 	"unsafe"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
@@ -27,53 +27,6 @@ import (
 // Convert a uint16 to host byte order (big endian)
 func Htons(v uint16) int {
 	return int((v << 8) | (v >> 8))
-}
-
-func GetBPFFilterIngress(port int) []bpf.Instruction {
-	// bpf filter: (ip  or ip6 ) and (udp or tcp) and port 53
-	// fragmented packets are ignored
-	var filter = []bpf.Instruction{
-		// Load eth.type (2 bytes at offset 12) and push-it in register A
-		bpf.LoadAbsolute{Off: 12, Size: 2},
-		// if eth.type == IPv4 continue with the next instruction
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: 0x0800, SkipTrue: 0, SkipFalse: 8},
-		// Load ip.proto (1 byte at offset 23) and push-it in register A
-		bpf.LoadAbsolute{Off: 23, Size: 1},
-		// ip.proto == UDP ?
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: 0x11, SkipTrue: 1, SkipFalse: 0},
-		// ip.proto == TCP ?
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: 0x6, SkipTrue: 0, SkipFalse: 12},
-		// load flags and fragment offset (2 bytes at offset 20) to ignore fragmented packet
-		bpf.LoadAbsolute{Off: 20, Size: 2},
-		// Only look at the last 13 bits of the data saved in regiter A
-		//  0x1fff == 0001 1111 1111 1111 (fragment offset)
-		// If any of the data in fragment offset is true, ignore the packet
-		bpf.JumpIf{Cond: bpf.JumpBitsSet, Val: 0x1fff, SkipTrue: 10, SkipFalse: 0},
-		// Load ip.length
-		// Register X = ip header len * 4
-		bpf.LoadMemShift{Off: 14},
-		// Load source port in tcp or udp (2 bytes at offset x+14)
-		bpf.LoadIndirect{Off: 14, Size: 2},
-		// source port equal to 53 ?
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(port), SkipTrue: 6, SkipFalse: 7},
-		// if eth.type == IPv6 continue with the next instruction
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: 0x86dd, SkipTrue: 0, SkipFalse: 6},
-		// Load ipv6.nxt (2 bytes at offset 12) and push-it in register A
-		bpf.LoadAbsolute{Off: 20, Size: 1},
-		// ip.proto == UDP ?
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: 0x11, SkipTrue: 1, SkipFalse: 0},
-		// ip.proto == TCP ?
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: 0x6, SkipTrue: 0, SkipFalse: 3},
-		// Load source port tcp or udp (2 bytes at offset 54)
-		bpf.LoadAbsolute{Off: 54, Size: 2},
-		// source port equal to 53 ?
-		bpf.JumpIf{Cond: bpf.JumpEqual, Val: uint32(port), SkipTrue: 0, SkipFalse: 1},
-		// Keep the packet and send up to 65k of the packet to userspace
-		bpf.RetConstant{Val: 0xFFFF},
-		// Ignore packet
-		bpf.RetConstant{Val: 0},
-	}
-	return filter
 }
 
 func GetBpfFilter(port int) []bpf.Instruction {
@@ -288,22 +241,22 @@ func (c *AfpacketSniffer) Run() {
 	)
 	go dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
 
-	dnsChan := make(chan netlib.DNSPacket)
+	dnsChan := make(chan netutils.DNSPacket)
 	udpChan := make(chan gopacket.Packet)
 	tcpChan := make(chan gopacket.Packet)
 	fragIP4Chan := make(chan gopacket.Packet)
 	fragIP6Chan := make(chan gopacket.Packet)
 
-	netDecoder := &netlib.NetDecoder{}
+	netDecoder := &netutils.NetDecoder{}
 
 	// defrag ipv4
-	go netlib.IPDefragger(fragIP4Chan, udpChan, tcpChan)
+	go netutils.IPDefragger(fragIP4Chan, udpChan, tcpChan)
 	// defrag ipv6
-	go netlib.IPDefragger(fragIP6Chan, udpChan, tcpChan)
+	go netutils.IPDefragger(fragIP6Chan, udpChan, tcpChan)
 	// tcp assembly
-	go netlib.TCPAssembler(tcpChan, dnsChan, 0)
+	go netutils.TCPAssembler(tcpChan, dnsChan, 0)
 	// udp processor
-	go netlib.UDPProcessor(udpChan, dnsChan, 0)
+	go netutils.UDPProcessor(udpChan, dnsChan, 0)
 
 	// goroutine to read all packets reassembled
 	go func() {

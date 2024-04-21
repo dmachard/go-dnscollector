@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
@@ -231,7 +231,7 @@ RUN_LOOP:
 				}
 			}
 
-			if ipVersion, valid := netlib.IPVersion[dt.GetMessage().GetSocketFamily().String()]; valid {
+			if ipVersion, valid := netutils.IPVersion[dt.GetMessage().GetSocketFamily().String()]; valid {
 				dm.NetworkInfo.Family = ipVersion
 			} else {
 				dm.NetworkInfo.Family = pkgconfig.StrUnknown

@@ -14,7 +14,7 @@ import (
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/perf"
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
@@ -22,25 +22,6 @@ import (
 	"github.com/dmachard/go-logger"
 	"golang.org/x/sys/unix"
 )
-
-func GetIPAddress[T uint32 | [4]uint32](ip T, mapper func(T) net.IP) net.IP {
-	return mapper(ip)
-}
-
-func ConvertIP4(ip uint32) net.IP {
-	addr := make(net.IP, net.IPv4len)
-	binary.BigEndian.PutUint32(addr, ip)
-	return addr
-}
-
-func ConvertIP6(ip [4]uint32) net.IP {
-	addr := make(net.IP, net.IPv6len)
-	binary.LittleEndian.PutUint32(addr[0:], ip[0])
-	binary.LittleEndian.PutUint32(addr[4:], ip[1])
-	binary.LittleEndian.PutUint32(addr[8:], ip[2])
-	binary.LittleEndian.PutUint32(addr[12:], ip[3])
-	return addr
-}
 
 type XDPSniffer struct {
 	done, exit                   chan bool
@@ -221,11 +202,11 @@ func (c *XDPSniffer) Run() {
 			// convert ip
 			var saddr, daddr net.IP
 			if pkt.IpVersion == 0x0800 {
-				saddr = GetIPAddress(pkt.SrcAddr, ConvertIP4)
-				daddr = GetIPAddress(pkt.DstAddr, ConvertIP4)
+				saddr = netutils.GetIPAddress(pkt.SrcAddr, netutils.ConvertIP4)
+				daddr = netutils.GetIPAddress(pkt.DstAddr, netutils.ConvertIP4)
 			} else {
-				saddr = GetIPAddress(pkt.SrcAddr6, ConvertIP6)
-				daddr = GetIPAddress(pkt.DstAddr6, ConvertIP6)
+				saddr = netutils.GetIPAddress(pkt.SrcAddr6, netutils.ConvertIP6)
+				daddr = netutils.GetIPAddress(pkt.DstAddr6, netutils.ConvertIP6)
 			}
 
 			// prepare DnsMessage
@@ -247,17 +228,17 @@ func (c *XDPSniffer) Run() {
 			dm.NetworkInfo.ResponsePort = fmt.Sprint(pkt.DstPort)
 
 			if pkt.IpVersion == 0x0800 {
-				dm.NetworkInfo.Family = netlib.ProtoIPv4
+				dm.NetworkInfo.Family = netutils.ProtoIPv4
 			} else {
-				dm.NetworkInfo.Family = netlib.ProtoIPv6
+				dm.NetworkInfo.Family = netutils.ProtoIPv6
 			}
 
 			if pkt.IpProto == 0x11 {
-				dm.NetworkInfo.Protocol = netlib.ProtoUDP
+				dm.NetworkInfo.Protocol = netutils.ProtoUDP
 				dm.DNS.Payload = record.RawSample[int(pkt.PktOffset)+int(pkt.PayloadOffset):]
 				dm.DNS.Length = len(dm.DNS.Payload)
 			} else {
-				dm.NetworkInfo.Protocol = netlib.ProtoTCP
+				dm.NetworkInfo.Protocol = netutils.ProtoTCP
 				dm.DNS.Payload = record.RawSample[int(pkt.PktOffset)+int(pkt.PayloadOffset)+2:]
 				dm.DNS.Length = len(dm.DNS.Payload)
 			}

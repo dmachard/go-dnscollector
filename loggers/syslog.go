@@ -12,7 +12,7 @@ import (
 	syslog "github.com/dmachard/go-clientsyslog"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
@@ -176,21 +176,21 @@ func (s *Syslog) ConnectToRemote() {
 		case "local":
 			s.LogInfo("connecting to local syslog...")
 			logWriter, err = syslog.New(s.facility|s.severity, "")
-		case netlib.SocketUnix:
+		case netutils.SocketUnix:
 			s.LogInfo("connecting to %s://%s ...",
 				s.config.Loggers.Syslog.Transport,
 				s.config.Loggers.Syslog.RemoteAddress)
 			logWriter, err = syslog.Dial("",
 				s.config.Loggers.Syslog.RemoteAddress, s.facility|s.severity,
 				s.config.Loggers.Syslog.Tag)
-		case netlib.SocketUDP, netlib.SocketTCP:
+		case netutils.SocketUDP, netutils.SocketTCP:
 			s.LogInfo("connecting to %s://%s ...",
 				s.config.Loggers.Syslog.Transport,
 				s.config.Loggers.Syslog.RemoteAddress)
 			logWriter, err = syslog.Dial(s.config.Loggers.Syslog.Transport,
 				s.config.Loggers.Syslog.RemoteAddress, s.facility|s.severity,
 				s.config.Loggers.Syslog.Tag)
-		case netlib.SocketTLS:
+		case netutils.SocketTLS:
 			s.LogInfo("connecting to %s://%s ...",
 				s.config.Loggers.Syslog.Transport,
 				s.config.Loggers.Syslog.RemoteAddress)

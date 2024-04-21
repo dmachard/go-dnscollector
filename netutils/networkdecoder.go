@@ -1,4 +1,4 @@
-package netlib
+package netutils
 
 import (
 	"fmt"

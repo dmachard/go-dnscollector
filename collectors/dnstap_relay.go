@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-framestream"
@@ -104,7 +104,7 @@ func (c *DnstapProxifier) HandleConn(conn net.Conn, connID uint64, forceClose ch
 	// process incoming frame and send it to recv channel
 	err := fs.ProcessFrame(recvChan)
 	if err != nil {
-		if netlib.IsClosedConnectionError(err) {
+		if netutils.IsClosedConnectionError(err) {
 			c.LogInfo("conn #%d - connection closed with peer %s", connID, peer)
 		} else {
 			c.LogError("conn #%d - transport error: %s", connID, err)
@@ -112,7 +112,6 @@ func (c *DnstapProxifier) HandleConn(conn net.Conn, connID uint64, forceClose ch
 
 		close(cleanup)
 	}
-
 }
 
 func (c *DnstapProxifier) Run() {
@@ -126,7 +125,7 @@ func (c *DnstapProxifier) Run() {
 	connCleanup := make(chan bool)
 
 	// start to listen
-	listener, err := netlib.StartToListen(
+	listener, err := netutils.StartToListen(
 		c.GetConfig().Collectors.DnstapProxifier.ListenIP, c.GetConfig().Collectors.DnstapProxifier.ListenPort,
 		c.GetConfig().Collectors.DnstapProxifier.SockPath,
 		c.GetConfig().Collectors.DnstapProxifier.TLSSupport, pkgconfig.TLSVersion[c.GetConfig().Collectors.DnstapProxifier.TLSMinVersion],
@@ -138,7 +137,7 @@ func (c *DnstapProxifier) Run() {
 
 	// goroutine to Accept() and blocks waiting for new connection.
 	acceptChan := make(chan net.Conn)
-	netlib.AcceptConnections(listener, acceptChan)
+	netutils.AcceptConnections(listener, acceptChan)
 
 	// main loop
 	for {
