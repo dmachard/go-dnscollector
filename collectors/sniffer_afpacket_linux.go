@@ -4,6 +4,7 @@
 package collectors
 
 import (
+	"context"
 	"encoding/binary"
 	"errors"
 	"net"
@@ -103,79 +104,14 @@ func RemoveBpfFilter(fd int) (err error) {
 }
 
 type AfpacketSniffer struct {
-	done, exit                   chan bool
-	fd                           int
-	identity                     string
-	defaultRoutes, droppedRoutes []pkgutils.Worker
-	config                       *pkgconfig.Config
-	configChan                   chan *pkgconfig.Config
-	logger                       *logger.Logger
-	name                         string
+	*pkgutils.Collector
+	fd int
 }
 
-func NewAfpacketSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	logger.Info(pkgutils.PrefixLogCollector+"[%s] afpacket sniffer - enabled", name)
-	s := &AfpacketSniffer{
-		done:          make(chan bool),
-		exit:          make(chan bool),
-		config:        config,
-		configChan:    make(chan *pkgconfig.Config),
-		defaultRoutes: loggers,
-		logger:        logger,
-		name:          name,
-	}
-	s.ReadConfig()
+func NewAfpacketSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
+	s := &AfpacketSniffer{Collector: pkgutils.NewCollector(config, logger, name, "afpacket sniffer")}
+	s.SetDefaultRoutes(next)
 	return s
-}
-
-func (c *AfpacketSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] afpacket sniffer- "+msg, v...)
-}
-
-func (c *AfpacketSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] afpacket sniffer - "+msg, v...)
-}
-
-func (c *AfpacketSniffer) GetName() string { return c.name }
-
-func (c *AfpacketSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
-	c.droppedRoutes = append(c.droppedRoutes, wrk)
-}
-
-func (c *AfpacketSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
-	c.defaultRoutes = append(c.defaultRoutes, wrk)
-}
-
-func (c *AfpacketSniffer) SetLoggers(loggers []pkgutils.Worker) {
-	c.defaultRoutes = loggers
-}
-
-func (c *AfpacketSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	return pkgutils.GetRoutes(c.defaultRoutes)
-}
-
-func (c *AfpacketSniffer) ReadConfig() {
-	c.identity = c.config.GetServerIdentity()
-}
-
-func (c *AfpacketSniffer) ReloadConfig(config *pkgconfig.Config) {
-	c.LogInfo("reload configuration...")
-	c.configChan <- config
-}
-
-func (c *AfpacketSniffer) GetInputChannel() chan dnsutils.DNSMessage {
-	return nil
-}
-
-func (c *AfpacketSniffer) Stop() {
-	c.LogInfo("stopping collector...")
-
-	// exit to close properly
-	c.exit <- true
-
-	// read done channel and block until run is terminated
-	<-c.done
-	close(c.done)
 }
 
 func (c *AfpacketSniffer) Listen() error {
@@ -186,8 +122,8 @@ func (c *AfpacketSniffer) Listen() error {
 	}
 
 	// bind to device ?
-	if c.config.Collectors.AfpacketLiveCapture.Device != "" {
-		iface, err := net.InterfaceByName(c.config.Collectors.AfpacketLiveCapture.Device)
+	if c.GetConfig().Collectors.AfpacketLiveCapture.Device != "" {
+		iface, err := net.InterfaceByName(c.GetConfig().Collectors.AfpacketLiveCapture.Device)
 		if err != nil {
 			return err
 		}
@@ -209,7 +145,7 @@ func (c *AfpacketSniffer) Listen() error {
 		return err
 	}
 
-	filter := GetBpfFilter(c.config.Collectors.AfpacketLiveCapture.Port)
+	filter := GetBpfFilter(c.GetConfig().Collectors.AfpacketLiveCapture.Port)
 	err = ApplyBpfFilter(filter, fd)
 	if err != nil {
 		return err
@@ -223,8 +159,10 @@ func (c *AfpacketSniffer) Listen() error {
 
 func (c *AfpacketSniffer) Run() {
 	c.LogInfo("starting collector...")
-	defer RemoveBpfFilter(c.fd)
-	defer syscall.Close(c.fd)
+	defer func() {
+		c.LogInfo("run terminated")
+		c.StopIsDone()
+	}()
 
 	if c.fd == 0 {
 		if err := c.Listen(); err != nil {
@@ -233,13 +171,8 @@ func (c *AfpacketSniffer) Run() {
 		}
 	}
 
-	dnsProcessor := processors.NewDNSProcessor(
-		c.config,
-		c.logger,
-		c.name,
-		c.config.Collectors.AfpacketLiveCapture.ChannelBufferSize,
-	)
-	go dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
+	dnsProcessor := processors.NewDNSProcessor(c.GetConfig(), c.GetLogger(), c.GetName(), c.GetConfig().Collectors.AfpacketLiveCapture.ChannelBufferSize)
+	go dnsProcessor.Run(c.GetDefaultRoutes(), c.GetDroppedRoutes())
 
 	dnsChan := make(chan netutils.DNSPacket)
 	udpChan := make(chan gopacket.Packet)
@@ -258,146 +191,165 @@ func (c *AfpacketSniffer) Run() {
 	// udp processor
 	go netutils.UDPProcessor(udpChan, dnsChan, 0)
 
-	// goroutine to read all packets reassembled
-	go func() {
-		// prepare dns message
-		dm := dnsutils.DNSMessage{}
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func(ctx context.Context) {
+		defer func() {
+			dnsProcessor.Stop()
+			RemoveBpfFilter(c.fd)
+			syscall.Close(c.fd)
+			c.LogInfo("read data terminated")
+			defer close(done)
+		}()
 
-		for {
-			select {
-			// new config provided?
-			case cfg, opened := <-c.configChan:
-				if !opened {
-					return
-				}
-				c.config = cfg
-				c.ReadConfig()
-
-				// send the config to the dns processor
-				dnsProcessor.ConfigChan <- cfg
-
-			// dns message to read ?
-			case dnsPacket := <-dnsChan:
-				// reset
-				dm.Init()
-
-				dm.NetworkInfo.Family = dnsPacket.IPLayer.EndpointType().String()
-				dm.NetworkInfo.QueryIP = dnsPacket.IPLayer.Src().String()
-				dm.NetworkInfo.ResponseIP = dnsPacket.IPLayer.Dst().String()
-				dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
-				dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
-				dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
-
-				dm.DNS.Payload = dnsPacket.Payload
-				dm.DNS.Length = len(dnsPacket.Payload)
-
-				dm.DNSTap.Identity = c.identity
-
-				timestamp := dnsPacket.Timestamp.UnixNano()
-				seconds := timestamp / int64(time.Second)
-				dm.DNSTap.TimeSec = int(seconds)
-				dm.DNSTap.TimeNsec = int(timestamp - seconds*int64(time.Second)*int64(time.Nanosecond))
-
-				// send DNS message to DNS processor
-				dnsProcessor.GetChannel() <- dm
-			}
-		}
-	}()
-
-	go func() {
 		buf := make([]byte, 65536)
 		oob := make([]byte, 100)
 
 		for {
-			// flags, from
-			bufN, oobn, _, _, err := syscall.Recvmsg(c.fd, buf, oob, 0)
-			if err != nil {
-				if errors.Is(err, syscall.EINTR) {
-					continue
-				} else {
+			select {
+			case <-ctx.Done():
+				c.LogInfo("stopping sniffer...")
+				syscall.Close(c.fd)
+				return
+			default:
+				var fdSet syscall.FdSet
+				fdSet.Bits[c.fd/64] |= 1 << (uint(c.fd) % 64)
+
+				nReady, err := syscall.Select(c.fd+1, &fdSet, nil, nil, &syscall.Timeval{Sec: 1, Usec: 0})
+				if err != nil {
+					if errors.Is(err, syscall.EINTR) {
+						continue
+					}
 					panic(err)
 				}
-			}
-			if bufN == 0 {
-				panic("buf empty")
-			}
-			if bufN > len(buf) {
-				panic("buf overflow")
-			}
-			if oobn == 0 {
-				panic("oob missing")
-			}
-
-			scms, err := syscall.ParseSocketControlMessage(oob[:oobn])
-			if err != nil {
-				panic(err)
-			}
-			if len(scms) != 1 {
-				continue
-			}
-			scm := scms[0]
-			if scm.Header.Type != syscall.SCM_TIMESTAMPNS {
-				panic("scm timestampns missing")
-			}
-			tsec := binary.LittleEndian.Uint32(scm.Data[:4])
-			nsec := binary.LittleEndian.Uint32(scm.Data[8:12])
-			timestamp := time.Unix(int64(tsec), int64(nsec))
-
-			// copy packet data from buffer
-			pkt := make([]byte, bufN)
-			copy(pkt, buf[:bufN])
-
-			// decode minimal layers
-			packet := gopacket.NewPacket(pkt, netDecoder, gopacket.NoCopy)
-			packet.Metadata().CaptureLength = len(packet.Data())
-			packet.Metadata().Length = len(packet.Data())
-			packet.Metadata().Timestamp = timestamp
-
-			// some security checks
-			if packet.NetworkLayer() == nil {
-				continue
-			}
-			if packet.TransportLayer() == nil {
-				continue
-			}
-
-			// ipv4 fragmented packet ?
-			if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
-				ip4 := packet.NetworkLayer().(*layers.IPv4)
-				if ip4.Flags&layers.IPv4MoreFragments == 1 || ip4.FragOffset > 0 {
-					fragIP4Chan <- packet
+				if nReady == 0 {
 					continue
 				}
-			}
 
-			// ipv6 fragmented packet ?
-			if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
-				v6frag := packet.Layer(layers.LayerTypeIPv6Fragment)
-				if v6frag != nil {
-					fragIP6Chan <- packet
+				bufN, oobn, _, _, err := syscall.Recvmsg(c.fd, buf, oob, syscall.MSG_DONTWAIT)
+				if err != nil {
+					if errors.Is(err, syscall.EINTR) || errors.Is(err, syscall.EAGAIN) || errors.Is(err, syscall.EWOULDBLOCK) {
+						continue
+					} else {
+						c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"read data", err)
+					}
+				}
+				if bufN == 0 {
+					c.LogFatal(pkgutils.PrefixLogCollector + "[" + c.GetName() + "] buf empty")
+				}
+				if bufN > len(buf) {
+					c.LogFatal(pkgutils.PrefixLogCollector + "[" + c.GetName() + "] buf overflow")
+				}
+				if oobn == 0 {
+					c.LogFatal(pkgutils.PrefixLogCollector + "[" + c.GetName() + "] oob missing")
+				}
+
+				scms, err := syscall.ParseSocketControlMessage(oob[:oobn])
+				if err != nil {
+					c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] control msg", err)
+				}
+				if len(scms) != 1 {
 					continue
 				}
-			}
+				scm := scms[0]
+				if scm.Header.Type != syscall.SCM_TIMESTAMPNS {
+					c.LogFatal(pkgutils.PrefixLogCollector + "[" + c.GetName() + "] scm timestampns missing")
+				}
+				tsec := binary.LittleEndian.Uint32(scm.Data[:4])
+				nsec := binary.LittleEndian.Uint32(scm.Data[8:12])
+				timestamp := time.Unix(int64(tsec), int64(nsec))
 
-			// tcp or udp packets ?
-			if packet.TransportLayer().LayerType() == layers.LayerTypeUDP {
-				udpChan <- packet
-			}
+				// copy packet data from buffer
+				pkt := make([]byte, bufN)
+				copy(pkt, buf[:bufN])
 
-			if packet.TransportLayer().LayerType() == layers.LayerTypeTCP {
-				tcpChan <- packet
+				// decode minimal layers
+				packet := gopacket.NewPacket(pkt, netDecoder, gopacket.NoCopy)
+				packet.Metadata().CaptureLength = len(packet.Data())
+				packet.Metadata().Length = len(packet.Data())
+				packet.Metadata().Timestamp = timestamp
+
+				// some security checks
+				if packet.NetworkLayer() == nil {
+					continue
+				}
+				if packet.TransportLayer() == nil {
+					continue
+				}
+
+				// ipv4 fragmented packet ?
+				if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
+					ip4 := packet.NetworkLayer().(*layers.IPv4)
+					if ip4.Flags&layers.IPv4MoreFragments == 1 || ip4.FragOffset > 0 {
+						fragIP4Chan <- packet
+						continue
+					}
+				}
+
+				// ipv6 fragmented packet ?
+				if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
+					v6frag := packet.Layer(layers.LayerTypeIPv6Fragment)
+					if v6frag != nil {
+						fragIP6Chan <- packet
+						continue
+					}
+				}
+
+				// tcp or udp packets ?
+				if packet.TransportLayer().LayerType() == layers.LayerTypeUDP {
+					udpChan <- packet
+				}
+
+				if packet.TransportLayer().LayerType() == layers.LayerTypeTCP {
+					tcpChan <- packet
+				}
 			}
 		}
 
-	}()
+	}(ctx)
 
-	<-c.exit
-	close(dnsChan)
-	close(c.configChan)
+	// prepare dns message
+	dm := dnsutils.DNSMessage{}
 
-	// stop dns processor
-	dnsProcessor.Stop()
+	for {
+		select {
+		case <-c.OnStop():
+			c.LogInfo("stop to listen...")
+			cancel()
+			<-done
+			return
 
-	c.LogInfo("run terminated")
-	c.done <- true
+		// new config provided?
+		case cfg := <-c.NewConfig():
+			c.SetConfig(cfg)
+
+			// send the config to the dns processor
+			dnsProcessor.ConfigChan <- cfg
+
+		// dns message to read ?
+		case dnsPacket := <-dnsChan:
+			// reset
+			dm.Init()
+
+			dm.NetworkInfo.Family = dnsPacket.IPLayer.EndpointType().String()
+			dm.NetworkInfo.QueryIP = dnsPacket.IPLayer.Src().String()
+			dm.NetworkInfo.ResponseIP = dnsPacket.IPLayer.Dst().String()
+			dm.NetworkInfo.QueryPort = dnsPacket.TransportLayer.Src().String()
+			dm.NetworkInfo.ResponsePort = dnsPacket.TransportLayer.Dst().String()
+			dm.NetworkInfo.Protocol = dnsPacket.TransportLayer.EndpointType().String()
+
+			dm.DNS.Payload = dnsPacket.Payload
+			dm.DNS.Length = len(dnsPacket.Payload)
+
+			dm.DNSTap.Identity = c.GetConfig().GetServerIdentity()
+
+			timestamp := dnsPacket.Timestamp.UnixNano()
+			seconds := timestamp / int64(time.Second)
+			dm.DNSTap.TimeSec = int(seconds)
+			dm.DNSTap.TimeNsec = int(timestamp - seconds*int64(time.Second)*int64(time.Nanosecond))
+
+			// send DNS message to DNS processor
+			dnsProcessor.GetChannel() <- dm
+		}
+	}
 }

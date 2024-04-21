@@ -27,13 +27,17 @@ multiplexer:
         normalize:
           qname-lowercase: true
 
+    - name: sniffer
+      afpacket-sniffer:
+        port: 53
+        device: wlp2s0
+        chan-buffer-size: 65535
   loggers:
     - name: console
       stdout:
         mode: text
-
   routes:
-    - from: [ tap ]
+    - from: [ sniffer ]
       to: [ console ]
 
 ################################################

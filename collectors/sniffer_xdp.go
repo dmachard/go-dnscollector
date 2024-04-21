@@ -89,12 +89,13 @@ func (c *XDPSniffer) Run() {
 			c.LogInfo("read data terminated")
 			defer close(done)
 		}()
+
 		var pkt xdp.BpfPktEvent
 		var netErr net.Error
 		for {
 			select {
 			case <-ctx.Done():
-				c.LogInfo("stopping XDP sniffer...")
+				c.LogInfo("stopping sniffer...")
 				perfEvent.Close()
 				return
 			default:
