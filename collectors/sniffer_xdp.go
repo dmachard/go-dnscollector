@@ -5,10 +5,11 @@ package collectors
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
-	"os"
 	"time"
 
 	"github.com/cilium/ebpf/link"
@@ -24,102 +25,39 @@ import (
 )
 
 type XDPSniffer struct {
-	done, exit                   chan bool
-	identity                     string
-	defaultRoutes, droppedRoutes []pkgutils.Worker
-	config                       *pkgconfig.Config
-	configChan                   chan *pkgconfig.Config
-	logger                       *logger.Logger
-	name                         string
+	*pkgutils.Collector
 }
 
-func NewXDPSniffer(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
-	logger.Info(pkgutils.PrefixLogCollector+"[%s] xdp sniffer - enabled", name)
-	s := &XDPSniffer{
-		done:          make(chan bool),
-		exit:          make(chan bool),
-		config:        config,
-		configChan:    make(chan *pkgconfig.Config),
-		defaultRoutes: loggers,
-		logger:        logger,
-		name:          name,
-	}
-	s.ReadConfig()
+func NewXDPSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
+	s := &XDPSniffer{Collector: pkgutils.NewCollector(config, logger, name, "xdp sniffer")}
+	s.SetDefaultRoutes(next)
 	return s
 }
 
-func (c *XDPSniffer) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] xdp sniffer - "+msg, v...)
-}
-
-func (c *XDPSniffer) LogError(msg string, v ...interface{}) {
-	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] xdp sniffer - "+msg, v...)
-}
-
-func (c *XDPSniffer) GetName() string { return c.name }
-
-func (c *XDPSniffer) AddDroppedRoute(wrk pkgutils.Worker) {
-	c.droppedRoutes = append(c.droppedRoutes, wrk)
-}
-
-func (c *XDPSniffer) AddDefaultRoute(wrk pkgutils.Worker) {
-	c.defaultRoutes = append(c.defaultRoutes, wrk)
-}
-
-func (c *XDPSniffer) SetLoggers(loggers []pkgutils.Worker) {
-	c.defaultRoutes = loggers
-}
-
-func (c *XDPSniffer) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	return pkgutils.GetRoutes(c.defaultRoutes)
-}
-
-func (c *XDPSniffer) ReadConfig() {
-	c.identity = c.config.GetServerIdentity()
-}
-
-func (c *XDPSniffer) ReloadConfig(config *pkgconfig.Config) {
-	c.LogInfo("reload configuration...")
-	c.configChan <- config
-}
-
-func (c *XDPSniffer) GetInputChannel() chan dnsutils.DNSMessage {
-	return nil
-}
-
-func (c *XDPSniffer) Stop() {
-	c.LogInfo("stopping collector...")
-
-	// exit to close properly
-	c.exit <- true
-
-	// read done channel and block until run is terminated
-	<-c.done
-	close(c.done)
-}
-
 func (c *XDPSniffer) Run() {
-	c.LogInfo("starting collector...")
+	c.LogInfo("running in background...")
+	defer func() {
+		c.LogInfo("run terminated")
+		c.StopIsDone()
+	}()
 
 	dnsProcessor := processors.NewDNSProcessor(
-		c.config,
-		c.logger,
-		c.name,
-		c.config.Collectors.XdpLiveCapture.ChannelBufferSize,
+		c.GetConfig(),
+		c.GetLogger(),
+		c.GetName(),
+		c.GetConfig().Collectors.XdpLiveCapture.ChannelBufferSize,
 	)
-	go dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
+	go dnsProcessor.Run(c.GetDefaultRoutes(), c.GetDroppedRoutes())
 
-	iface, err := net.InterfaceByName(c.config.Collectors.XdpLiveCapture.Device)
+	iface, err := net.InterfaceByName(c.GetConfig().Collectors.XdpLiveCapture.Device)
 	if err != nil {
-		c.LogError("lookup network iface: %s", err)
-		os.Exit(1)
+		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] lookup network iface: ", err)
 	}
 
 	// Load pre-compiled programs into the kernel.
 	objs := xdp.BpfObjects{}
 	if err := xdp.LoadBpfObjects(&objs, nil); err != nil {
-		c.LogError("loading BPF objects: %s", err)
-		os.Exit(1)
+		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] loading BPF objects: ", err)
 	}
 	defer objs.Close()
 
@@ -129,8 +67,7 @@ func (c *XDPSniffer) Run() {
 		Interface: iface.Index,
 	})
 	if err != nil {
-		c.LogError("could not attach XDP program: %s", err)
-		os.Exit(1) // nolint
+		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] could not attach XDP program: ", err)
 	}
 	defer l.Close()
 
@@ -138,122 +75,130 @@ func (c *XDPSniffer) Run() {
 
 	perfEvent, err := perf.NewReader(objs.Pkts, 1<<24)
 	if err != nil {
-		panic(err)
+		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] read event: ", err)
 	}
 
 	dnsChan := make(chan dnsutils.DNSMessage)
 
-	// goroutine to read all packets reassembled
-	go func() {
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+
+	go func(ctx context.Context) {
+		defer func() {
+			dnsProcessor.Stop()
+			c.LogInfo("read data terminated")
+			defer close(done)
+		}()
+		var pkt xdp.BpfPktEvent
+		var netErr net.Error
 		for {
 			select {
-			// new config provided?
-			case cfg, opened := <-c.configChan:
-				if !opened {
-					return
+			case <-ctx.Done():
+				c.LogInfo("stopping XDP sniffer...")
+				perfEvent.Close()
+				return
+			default:
+				// The data submitted via bpf_perf_event_output.
+				perfEvent.SetDeadline(time.Now().Add(1 * time.Second))
+				record, err := perfEvent.Read()
+				if err != nil {
+					if errors.As(err, &netErr) && netErr.Timeout() {
+						continue
+					}
+					c.LogError("BPF reading map: %s", err)
+					break
 				}
-				c.config = cfg
-				c.ReadConfig()
+				if record.LostSamples != 0 {
+					c.LogError("BPF dump: Dropped %d samples from kernel perf buffer", record.LostSamples)
+					continue
+				}
 
-				// send the config to the dns processor
-				dnsProcessor.ConfigChan <- cfg
+				reader := bytes.NewReader(record.RawSample)
+				if err := binary.Read(reader, binary.LittleEndian, &pkt); err != nil {
+					c.LogError("BPF reading sample: %s", err)
+					break
+				}
 
-			// dns message to read ?
-			case dm := <-dnsChan:
+				// adjust arrival time
+				timenow := time.Now().UTC()
+				var ts unix.Timespec
+				unix.ClockGettime(unix.CLOCK_MONOTONIC, &ts)
+				elapsed := time.Since(timenow) * time.Nanosecond
+				delta3 := time.Duration(uint64(unix.TimespecToNsec(ts))-pkt.Timestamp) * time.Nanosecond
+				tsAdjusted := timenow.Add(-(delta3 + elapsed))
 
-				// update identity with config ?
-				dm.DNSTap.Identity = c.identity
+				// convert ip
+				var saddr, daddr net.IP
+				if pkt.IpVersion == 0x0800 {
+					saddr = netutils.GetIPAddress(pkt.SrcAddr, netutils.ConvertIP4)
+					daddr = netutils.GetIPAddress(pkt.DstAddr, netutils.ConvertIP4)
+				} else {
+					saddr = netutils.GetIPAddress(pkt.SrcAddr6, netutils.ConvertIP6)
+					daddr = netutils.GetIPAddress(pkt.DstAddr6, netutils.ConvertIP6)
+				}
 
-				dnsProcessor.GetChannel() <- dm
+				// prepare DnsMessage
+				dm := dnsutils.DNSMessage{}
+				dm.Init()
 
+				dm.DNSTap.TimeSec = int(tsAdjusted.Unix())
+				dm.DNSTap.TimeNsec = int(tsAdjusted.UnixNano() - tsAdjusted.Unix()*1e9)
+
+				if pkt.SrcPort == 53 {
+					dm.DNSTap.Operation = dnsutils.DNSTapClientResponse
+				} else {
+					dm.DNSTap.Operation = dnsutils.DNSTapClientQuery
+				}
+
+				dm.NetworkInfo.QueryIP = saddr.String()
+				dm.NetworkInfo.QueryPort = fmt.Sprint(pkt.SrcPort)
+				dm.NetworkInfo.ResponseIP = daddr.String()
+				dm.NetworkInfo.ResponsePort = fmt.Sprint(pkt.DstPort)
+
+				if pkt.IpVersion == 0x0800 {
+					dm.NetworkInfo.Family = netutils.ProtoIPv4
+				} else {
+					dm.NetworkInfo.Family = netutils.ProtoIPv6
+				}
+
+				if pkt.IpProto == 0x11 {
+					dm.NetworkInfo.Protocol = netutils.ProtoUDP
+					dm.DNS.Payload = record.RawSample[int(pkt.PktOffset)+int(pkt.PayloadOffset):]
+					dm.DNS.Length = len(dm.DNS.Payload)
+				} else {
+					dm.NetworkInfo.Protocol = netutils.ProtoTCP
+					dm.DNS.Payload = record.RawSample[int(pkt.PktOffset)+int(pkt.PayloadOffset)+2:]
+					dm.DNS.Length = len(dm.DNS.Payload)
+				}
+
+				dnsChan <- dm
 			}
 		}
-	}()
+	}(ctx)
 
-	go func() {
-		var pkt xdp.BpfPktEvent
-		for {
-			// The data submitted via bpf_perf_event_output.
-			record, err := perfEvent.Read()
-			if err != nil {
-				c.LogError("BPF reading map: %s", err)
-				break
-			}
+	for {
+		select {
+		case <-c.OnStop():
+			c.LogInfo("stop to listen...")
+			cancel()
+			<-done
+			return
 
-			if record.LostSamples != 0 {
-				c.LogError("BPF dump: Dropped %d samples from kernel perf buffer", record.LostSamples)
-				continue
-			}
+		// new config provided?
+		case cfg := <-c.NewConfig():
+			c.SetConfig(cfg)
 
-			reader := bytes.NewReader(record.RawSample)
-			if err := binary.Read(reader, binary.LittleEndian, &pkt); err != nil {
-				c.LogError("BPF reading sample: %s", err)
-				break
-			}
+			// send the config to the dns processor
+			dnsProcessor.ConfigChan <- cfg
 
-			// adjust arrival time
-			timenow := time.Now().UTC()
-			var ts unix.Timespec
-			unix.ClockGettime(unix.CLOCK_MONOTONIC, &ts)
-			elapsed := time.Since(timenow) * time.Nanosecond
-			delta3 := time.Duration(uint64(unix.TimespecToNsec(ts))-pkt.Timestamp) * time.Nanosecond
-			tsAdjusted := timenow.Add(-(delta3 + elapsed))
+		// dns message to read ?
+		case dm := <-dnsChan:
 
-			// convert ip
-			var saddr, daddr net.IP
-			if pkt.IpVersion == 0x0800 {
-				saddr = netutils.GetIPAddress(pkt.SrcAddr, netutils.ConvertIP4)
-				daddr = netutils.GetIPAddress(pkt.DstAddr, netutils.ConvertIP4)
-			} else {
-				saddr = netutils.GetIPAddress(pkt.SrcAddr6, netutils.ConvertIP6)
-				daddr = netutils.GetIPAddress(pkt.DstAddr6, netutils.ConvertIP6)
-			}
+			// update identity with config ?
+			dm.DNSTap.Identity = c.GetConfig().GetServerIdentity()
 
-			// prepare DnsMessage
-			dm := dnsutils.DNSMessage{}
-			dm.Init()
+			dnsProcessor.GetChannel() <- dm
 
-			dm.DNSTap.TimeSec = int(tsAdjusted.Unix())
-			dm.DNSTap.TimeNsec = int(tsAdjusted.UnixNano() - tsAdjusted.Unix()*1e9)
-
-			if pkt.SrcPort == 53 {
-				dm.DNSTap.Operation = dnsutils.DNSTapClientResponse
-			} else {
-				dm.DNSTap.Operation = dnsutils.DNSTapClientQuery
-			}
-
-			dm.NetworkInfo.QueryIP = saddr.String()
-			dm.NetworkInfo.QueryPort = fmt.Sprint(pkt.SrcPort)
-			dm.NetworkInfo.ResponseIP = daddr.String()
-			dm.NetworkInfo.ResponsePort = fmt.Sprint(pkt.DstPort)
-
-			if pkt.IpVersion == 0x0800 {
-				dm.NetworkInfo.Family = netutils.ProtoIPv4
-			} else {
-				dm.NetworkInfo.Family = netutils.ProtoIPv6
-			}
-
-			if pkt.IpProto == 0x11 {
-				dm.NetworkInfo.Protocol = netutils.ProtoUDP
-				dm.DNS.Payload = record.RawSample[int(pkt.PktOffset)+int(pkt.PayloadOffset):]
-				dm.DNS.Length = len(dm.DNS.Payload)
-			} else {
-				dm.NetworkInfo.Protocol = netutils.ProtoTCP
-				dm.DNS.Payload = record.RawSample[int(pkt.PktOffset)+int(pkt.PayloadOffset)+2:]
-				dm.DNS.Length = len(dm.DNS.Payload)
-			}
-
-			dnsChan <- dm
 		}
-	}()
-
-	<-c.exit
-	close(dnsChan)
-	close(c.configChan)
-
-	// stop dns processor
-	dnsProcessor.Stop()
-
-	c.LogInfo("run terminated")
-	c.done <- true
+	}
 }

@@ -14,7 +14,7 @@ type XDPSniffer struct {
 }
 
 func NewXDPSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
-	s := &XDPSniffer{Collector: pkgutils.NewCollector(config, logger, name, "XDP sniffer")}
+	s := &XDPSniffer{Collector: pkgutils.NewCollector(config, logger, name, "xdp sniffer")}
 	s.SetDefaultRoutes(next)
 	s.ReadConfig()
 	return s
