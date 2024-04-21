@@ -19,88 +19,21 @@ import (
 )
 
 type Tail struct {
-	doneRun, stopRun chan bool
-	tailf            *tail.Tail
-	defaultRoutes    []pkgutils.Worker
-	config           *pkgconfig.Config
-	configChan       chan *pkgconfig.Config
-	logger           *logger.Logger
-	name             string
+	*pkgutils.Collector
+	tailf *tail.Tail
 }
 
-func NewTail(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Tail {
-	logger.Info(pkgutils.PrefixLogCollector+"[%s] tail - enabled", name)
-	s := &Tail{
-		doneRun:       make(chan bool),
-		stopRun:       make(chan bool),
-		config:        config,
-		configChan:    make(chan *pkgconfig.Config),
-		defaultRoutes: loggers,
-		logger:        logger,
-		name:          name,
-	}
-	s.ReadConfig()
+func NewTail(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Tail {
+	s := &Tail{Collector: pkgutils.NewCollector(config, logger, name, "tail")}
+	s.SetDefaultRoutes(next)
 	return s
-}
-
-func (c *Tail) GetName() string { return c.name }
-
-func (c *Tail) AddDroppedRoute(wrk pkgutils.Worker) {
-	// TODO
-}
-
-func (c *Tail) AddDefaultRoute(wrk pkgutils.Worker) {
-	c.defaultRoutes = append(c.defaultRoutes, wrk)
-}
-
-func (c *Tail) SetLoggers(loggers []pkgutils.Worker) {
-	c.defaultRoutes = loggers
-}
-
-func (c *Tail) Loggers() []chan dnsutils.DNSMessage {
-	channels := []chan dnsutils.DNSMessage{}
-	for _, p := range c.defaultRoutes {
-		channels = append(channels, p.GetInputChannel())
-	}
-	return channels
-}
-
-func (c *Tail) ReadConfig() {}
-
-func (c *Tail) ReloadConfig(config *pkgconfig.Config) {
-	c.LogInfo("reload configuration...")
-	c.configChan <- config
-}
-
-func (c *Tail) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] tail - "+msg, v...)
-}
-
-func (c *Tail) LogError(msg string, v ...interface{}) {
-	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] tail - "+msg, v...)
-}
-
-func (c *Tail) GetInputChannel() chan dnsutils.DNSMessage {
-	return nil
-}
-
-func (c *Tail) Stop() {
-	c.LogInfo("stopping collector...")
-
-	// Stop to follow file
-	c.LogInfo("stop following file...")
-	c.tailf.Stop()
-
-	// read done channel and block until run is terminated
-	c.stopRun <- true
-	<-c.doneRun
 }
 
 func (c *Tail) Follow() error {
 	var err error
 	location := tail.SeekInfo{Offset: 0, Whence: io.SeekEnd}
 	config := tail.Config{Location: &location, ReOpen: true, Follow: true, Logger: tail.DiscardingLogger, Poll: true, MustExist: true}
-	c.tailf, err = tail.TailFile(c.config.Collectors.Tail.FilePath, config)
+	c.tailf, err = tail.TailFile(c.GetConfig().Collectors.Tail.FilePath, config)
 	if err != nil {
 		return err
 	}
@@ -109,13 +42,19 @@ func (c *Tail) Follow() error {
 
 func (c *Tail) Run() {
 	c.LogInfo("starting collector...")
+	defer func() {
+		c.LogInfo("run terminated")
+		c.StopIsDone()
+	}()
+
 	err := c.Follow()
 	if err != nil {
-		c.logger.Fatal("collector tail - unable to follow file: ", err)
+		c.LogFatal("collector tail - unable to follow file: ", err)
 	}
 
 	// prepare enabled transformers
-	subprocessors := transformers.NewTransforms(&c.config.IngoingTransformers, c.logger, c.name, c.Loggers(), 0)
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(c.GetDefaultRoutes())
+	subprocessors := transformers.NewTransforms(&c.GetConfig().IngoingTransformers, c.GetLogger(), c.GetName(), defaultRoutes, 0)
 
 	// init dns message
 	dm := dnsutils.DNSMessage{}
@@ -131,39 +70,31 @@ func (c *Tail) Run() {
 		dm.DNSTap.Identity = "undefined"
 	}
 
-RUN_LOOP:
 	for {
 		select {
-		// new config provided?
-		case cfg, opened := <-c.configChan:
-			if !opened {
-				return
-			}
-			c.config = cfg
-			c.ReadConfig()
-
+		// save the new config
+		case cfg := <-c.NewConfig():
+			c.SetConfig(cfg)
 			subprocessors.ReloadConfig(&cfg.IngoingTransformers)
-		case <-c.stopRun:
 
-			// cleanup transformers
+		case <-c.OnStop():
+			c.LogInfo("stopping...")
 			subprocessors.Reset()
-
-			c.doneRun <- true
-			break RUN_LOOP
+			return
 
 		case line := <-c.tailf.Lines:
 			var matches []string
 			var re *regexp.Regexp
 
-			if len(c.config.Collectors.Tail.PatternQuery) > 0 {
-				re = regexp.MustCompile(c.config.Collectors.Tail.PatternQuery)
+			if len(c.GetConfig().Collectors.Tail.PatternQuery) > 0 {
+				re = regexp.MustCompile(c.GetConfig().Collectors.Tail.PatternQuery)
 				matches = re.FindStringSubmatch(line.Text)
 				dm.DNS.Type = dnsutils.DNSQuery
 				dm.DNSTap.Operation = dnsutils.DNSTapOperationQuery
 			}
 
-			if len(c.config.Collectors.Tail.PatternReply) > 0 && len(matches) == 0 {
-				re = regexp.MustCompile(c.config.Collectors.Tail.PatternReply)
+			if len(c.GetConfig().Collectors.Tail.PatternReply) > 0 && len(matches) == 0 {
+				re = regexp.MustCompile(c.GetConfig().Collectors.Tail.PatternReply)
 				matches = re.FindStringSubmatch(line.Text)
 				dm.DNS.Type = dnsutils.DNSReply
 				dm.DNSTap.Operation = dnsutils.DNSTapOperationReply
@@ -181,7 +112,7 @@ RUN_LOOP:
 			var t time.Time
 			timestampIndex := re.SubexpIndex("timestamp")
 			if timestampIndex != -1 {
-				t, err = time.Parse(c.config.Collectors.Tail.TimeLayout, matches[timestampIndex])
+				t, err = time.Parse(c.GetConfig().Collectors.Tail.TimeLayout, matches[timestampIndex])
 				if err != nil {
 					continue
 				}
@@ -298,12 +229,13 @@ RUN_LOOP:
 			}
 
 			// dispatch dns message to connected loggers
-			chanLoggers := c.Loggers()
-			for i := range chanLoggers {
-				chanLoggers[i] <- dm
+			for i := range defaultRoutes {
+				select {
+				case defaultRoutes[i] <- dm: // Successful send to logger channel
+				default:
+					c.NextStanzaIsBusy(defaultNames[i])
+				}
 			}
 		}
 	}
-
-	c.LogInfo("run terminated")
 }

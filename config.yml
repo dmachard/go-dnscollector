@@ -27,17 +27,22 @@ multiplexer:
         normalize:
           qname-lowercase: true
 
-    - name: sniffer
-      afpacket-sniffer:
-        port: 53
-        device: wlp2s0
-        chan-buffer-size: 65535
+    - name: tailf
+      tail:
+        file-path: /var/log/syslog
+        time-layout: "2006-01-02T15:04:05.999999999Z07:00"
+        pattern-query: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_QUERY) (?P<rcode>[^ ]*)
+          (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*)
+          (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
+        pattern-reply: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_RESPONSE) (?P<rcode>[^ ]*)
+          (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b
+          (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
   loggers:
     - name: console
       stdout:
         mode: text
   routes:
-    - from: [ sniffer ]
+    - from: [ tailf ]
       to: [ console ]
 
 ################################################
