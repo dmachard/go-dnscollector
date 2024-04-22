@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
@@ -72,10 +72,10 @@ func (ds *DnstapSender) ReadConfig() {
 
 	// begin backward compatibility
 	if ds.config.Loggers.DNSTap.TLSSupport {
-		ds.transport = netlib.SocketTLS
+		ds.transport = netutils.SocketTLS
 	}
 	if len(ds.config.Loggers.DNSTap.SockPath) > 0 {
-		ds.transport = netlib.SocketUnix
+		ds.transport = netutils.SocketUnix
 	}
 	// end
 
@@ -150,7 +150,7 @@ func (ds *DnstapSender) ConnectToRemote() {
 		var err error
 
 		switch ds.transport {
-		case netlib.SocketUnix:
+		case netutils.SocketUnix:
 			address = ds.config.Loggers.DNSTap.RemoteAddress
 			if len(ds.config.Loggers.DNSTap.SockPath) > 0 {
 				address = ds.config.Loggers.DNSTap.SockPath
@@ -158,11 +158,11 @@ func (ds *DnstapSender) ConnectToRemote() {
 			ds.LogInfo("connecting to %s://%s", ds.transport, address)
 			conn, err = net.DialTimeout(ds.transport, address, connTimeout)
 
-		case netlib.SocketTCP:
+		case netutils.SocketTCP:
 			ds.LogInfo("connecting to %s://%s", ds.transport, address)
 			conn, err = net.DialTimeout(ds.transport, address, connTimeout)
 
-		case netlib.SocketTLS:
+		case netutils.SocketTLS:
 			ds.LogInfo("connecting to %s://%s", ds.transport, address)
 
 			var tlsConfig *tls.Config
@@ -178,7 +178,7 @@ func (ds *DnstapSender) ConnectToRemote() {
 			tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
 			if err == nil {
 				dialer := &net.Dialer{Timeout: connTimeout}
-				conn, err = tls.DialWithDialer(dialer, netlib.SocketTCP, address, tlsConfig)
+				conn, err = tls.DialWithDialer(dialer, netutils.SocketTCP, address, tlsConfig)
 			}
 		default:
 			ds.logger.Fatal("logger=dnstap - invalid transport:", ds.transport)

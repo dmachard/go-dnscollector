@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 )
@@ -25,16 +25,16 @@ func Test_SyslogRunUdp(t *testing.T) {
 	}{
 		{
 			name:       "unix_format",
-			transport:  netlib.SocketUDP,
+			transport:  netutils.SocketUDP,
 			mode:       pkgconfig.ModeText,
-			formatter:  netlib.SocketUnix,
+			formatter:  netutils.SocketUnix,
 			framer:     "",
 			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
 			listenAddr: ":4000",
 		},
 		{
 			name:       "rfc3164_format",
-			transport:  netlib.SocketUDP,
+			transport:  netutils.SocketUDP,
 			mode:       pkgconfig.ModeText,
 			formatter:  "rfc3164",
 			framer:     "",
@@ -43,7 +43,7 @@ func Test_SyslogRunUdp(t *testing.T) {
 		},
 		{
 			name:       "rfc5424_format",
-			transport:  netlib.SocketUDP,
+			transport:  netutils.SocketUDP,
 			mode:       pkgconfig.ModeText,
 			formatter:  "rfc5424",
 			framer:     "",
@@ -52,7 +52,7 @@ func Test_SyslogRunUdp(t *testing.T) {
 		},
 		{
 			name:       "rfc5424_format_rfc5425_framer",
-			transport:  netlib.SocketUDP,
+			transport:  netutils.SocketUDP,
 			mode:       pkgconfig.ModeText,
 			formatter:  "rfc5424",
 			framer:     "rfc5425",
@@ -121,16 +121,16 @@ func Test_SyslogRunTcp(t *testing.T) {
 	}{
 		{
 			name:       "unix_format",
-			transport:  netlib.SocketTCP,
+			transport:  netutils.SocketTCP,
 			mode:       pkgconfig.ModeText,
-			formatter:  netlib.SocketUnix,
+			formatter:  netutils.SocketUnix,
 			framer:     "",
 			pattern:    `<30>\D+ \d+ \d+:\d+:\d+.*`,
 			listenAddr: ":4000",
 		},
 		{
 			name:       "rfc3164_format",
-			transport:  netlib.SocketTCP,
+			transport:  netutils.SocketTCP,
 			mode:       pkgconfig.ModeText,
 			formatter:  "rfc3164",
 			framer:     "",
@@ -139,7 +139,7 @@ func Test_SyslogRunTcp(t *testing.T) {
 		},
 		{
 			name:       "rfc5424_format",
-			transport:  netlib.SocketTCP,
+			transport:  netutils.SocketTCP,
 			mode:       pkgconfig.ModeText,
 			formatter:  "rfc5424",
 			framer:     "",
@@ -148,7 +148,7 @@ func Test_SyslogRunTcp(t *testing.T) {
 		},
 		{
 			name:       "rfc5425_format_rfc5425_framer",
-			transport:  netlib.SocketTCP,
+			transport:  netutils.SocketTCP,
 			mode:       pkgconfig.ModeText,
 			formatter:  "rfc5424",
 			framer:     "rfc5425",
@@ -211,10 +211,10 @@ func Test_SyslogRunTcp(t *testing.T) {
 func Test_SyslogRun_RemoveNullCharacter(t *testing.T) {
 	// init logger
 	config := pkgconfig.GetFakeConfig()
-	config.Loggers.Syslog.Transport = netlib.SocketUDP
+	config.Loggers.Syslog.Transport = netutils.SocketUDP
 	config.Loggers.Syslog.RemoteAddress = ":4000"
 	config.Loggers.Syslog.Mode = pkgconfig.ModeText
-	config.Loggers.Syslog.Formatter = netlib.SocketUnix
+	config.Loggers.Syslog.Formatter = netutils.SocketUnix
 	config.Loggers.Syslog.Framer = ""
 	config.Loggers.Syslog.FlushInterval = 1
 	config.Loggers.Syslog.BufferSize = 0

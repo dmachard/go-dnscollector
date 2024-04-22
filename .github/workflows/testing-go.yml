@@ -32,7 +32,7 @@ jobs:
           - 'collectors'
           - 'loggers'
           - 'transformers'
-          - 'netlib'
+          - 'netutils'
           - 'processors'
         # exclude:
         #   - os-version: macos-latest
@@ -148,7 +148,7 @@ jobs:
 
     - id: count_tests
       run: |
-        data=$(sudo go test -timeout 360s  -v ./collectors ./processors ./dnsutils ./netlib ./loggers ./transformers ./pkgconfig ./pkglinker ./pkgutils ././ 2>&1 | grep -c RUN)
+        data=$(sudo go test -timeout 360s  -v ./collectors ./processors ./dnsutils ./netutils ./loggers ./transformers ./pkgconfig ./pkglinker ./pkgutils ././ 2>&1 | grep -c RUN)
         echo "Count of Tests: $data"
         echo "data=$data" >> $GITHUB_OUTPUT
 
