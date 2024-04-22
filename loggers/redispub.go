@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
@@ -81,10 +81,10 @@ func (c *RedisPub) ReadConfig() {
 
 	// begin backward compatibility
 	if c.config.Loggers.RedisPub.TLSSupport {
-		c.transport = netlib.SocketTLS
+		c.transport = netutils.SocketTLS
 	}
 	if len(c.config.Loggers.RedisPub.SockPath) > 0 {
-		c.transport = netlib.SocketUnix
+		c.transport = netutils.SocketUnix
 	}
 	// end
 
@@ -174,7 +174,7 @@ func (c *RedisPub) ConnectToRemote() {
 		var err error
 
 		switch c.transport {
-		case netlib.SocketUnix:
+		case netutils.SocketUnix:
 			address = c.config.Loggers.RedisPub.RemoteAddress
 			if len(c.config.Loggers.RedisPub.SockPath) > 0 {
 				address = c.config.Loggers.RedisPub.SockPath
@@ -182,11 +182,11 @@ func (c *RedisPub) ConnectToRemote() {
 			c.LogInfo("connecting to %s://%s", c.transport, address)
 			conn, err = net.DialTimeout(c.transport, address, connTimeout)
 
-		case netlib.SocketTCP:
+		case netutils.SocketTCP:
 			c.LogInfo("connecting to %s://%s", c.transport, address)
 			conn, err = net.DialTimeout(c.transport, address, connTimeout)
 
-		case netlib.SocketTLS:
+		case netutils.SocketTLS:
 			c.LogInfo("connecting to %s://%s", c.transport, address)
 
 			var tlsConfig *tls.Config
@@ -202,7 +202,7 @@ func (c *RedisPub) ConnectToRemote() {
 			tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
 			if err == nil {
 				dialer := &net.Dialer{Timeout: connTimeout}
-				conn, err = tls.DialWithDialer(dialer, netlib.SocketTCP, address, tlsConfig)
+				conn, err = tls.DialWithDialer(dialer, netutils.SocketTCP, address, tlsConfig)
 			}
 
 		default:

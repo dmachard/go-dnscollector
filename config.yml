@@ -26,12 +26,10 @@ multiplexer:
       transforms:
         normalize:
           qname-lowercase: true
-
   loggers:
     - name: console
       stdout:
         mode: text
-
   routes:
     - from: [ tap ]
       to: [ console ]
