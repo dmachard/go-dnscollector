@@ -9,7 +9,7 @@ require (
 	github.com/IBM/sarama v1.43.1
 	github.com/cilium/ebpf v0.14.0
 	github.com/dmachard/go-clientsyslog v0.3.0
-	github.com/dmachard/go-dnstap-protobuf v1.0.0
+	github.com/dmachard/go-dnstap-protobuf v1.0.1
 	github.com/dmachard/go-framestream v0.10.0
 	github.com/dmachard/go-logger v0.4.0
 	github.com/dmachard/go-powerdns-protobuf v1.1.0

@@ -469,8 +469,8 @@ github.com/dennwc/varint v1.0.0/go.mod h1:hnItb35rvZvJrbTALZtY/iQfDs48JKRG1RPpgz
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dmachard/go-clientsyslog v0.3.0 h1:CV6PlG6mr6nYoKjcEZP1RFJudw+Lr7D3abVdWRyM0tc=
 github.com/dmachard/go-clientsyslog v0.3.0/go.mod h1:llRfIIzxlTNsEQbVF6GKUzxORDWTiSvld3ElJcUtyCo=
-github.com/dmachard/go-dnstap-protobuf v1.0.0 h1:I+3buchctfgtUcGU4QJIu7WGyltpH8Nv+Qwj0NRYoBA=
-github.com/dmachard/go-dnstap-protobuf v1.0.0/go.mod h1:/qjFCg+/6sZyGcL4d/cV2DyJbxqK7m2TwplyEd6C8TY=
+github.com/dmachard/go-dnstap-protobuf v1.0.1 h1:Fu5/SWpRzUPqLPmERw/6CoqcDlYSk5FGC7JzmIKz/F4=
+github.com/dmachard/go-dnstap-protobuf v1.0.1/go.mod h1:eU6ktwd2+GWAhorMaRSk3O9hMb8pI41uOKDSB08elOk=
 github.com/dmachard/go-framestream v0.10.0 h1:NzDOkpJOdrgV/c0XKCsVxijILbdTxsUcUlSwp4y34mw=
 github.com/dmachard/go-framestream v0.10.0/go.mod h1:CiSK1RmU/7hVsM/NhsroqpBxDH3meawKIXR8x8O+LP4=
 github.com/dmachard/go-logger v0.4.0 h1:JJJW8C5Ri6OaWIECAE6dUNqLs4ym1+WX3xD6h5MxLI4=
