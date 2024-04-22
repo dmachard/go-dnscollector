@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"os"
 	"path/filepath"
@@ -12,7 +11,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
@@ -37,99 +36,34 @@ func IsValidMode(mode string) bool {
 }
 
 type FileIngestor struct {
-	done                         chan bool
-	exit                         chan bool
-	droppedRoutes, defaultRoutes []pkgutils.Worker
-	config                       *pkgconfig.Config
-	configChan                   chan *pkgconfig.Config
-	logger                       *logger.Logger
-	watcher                      *fsnotify.Watcher
-	watcherTimers                map[string]*time.Timer
-	dnsProcessor                 processors.DNSProcessor
-	dnstapProcessor              processors.DNSTapProcessor
-	filterDNSPort                int
-	identity                     string
-	name                         string
-	mu                           sync.Mutex
+	*pkgutils.Collector
+	watcherTimers   map[string]*time.Timer
+	dnsProcessor    processors.DNSProcessor
+	dnstapProcessor processors.DNSTapProcessor
+	mu              sync.Mutex
 }
 
-func NewFileIngestor(loggers []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
-	logger.Info(pkgutils.PrefixLogCollector+"[%s] fileingestor - enabled", name)
+func NewFileIngestor(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
 	s := &FileIngestor{
-		done:          make(chan bool),
-		exit:          make(chan bool),
-		config:        config,
-		configChan:    make(chan *pkgconfig.Config),
-		defaultRoutes: loggers,
-		logger:        logger,
-		name:          name,
-		watcherTimers: make(map[string]*time.Timer),
-	}
-	s.ReadConfig()
+		Collector:     pkgutils.NewCollector(config, logger, name, "fileingestor"),
+		watcherTimers: make(map[string]*time.Timer)}
+	s.SetDefaultRoutes(next)
+	s.CheckConfig()
 	return s
 }
 
-func (c *FileIngestor) GetName() string { return c.name }
-
-func (c *FileIngestor) AddDroppedRoute(wrk pkgutils.Worker) {
-	c.droppedRoutes = append(c.droppedRoutes, wrk)
-}
-
-func (c *FileIngestor) AddDefaultRoute(wrk pkgutils.Worker) {
-	c.defaultRoutes = append(c.defaultRoutes, wrk)
-}
-
-func (c *FileIngestor) SetLoggers(loggers []pkgutils.Worker) {
-	c.defaultRoutes = loggers
-}
-
-func (c *FileIngestor) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	return pkgutils.GetRoutes(c.defaultRoutes)
-}
-
-func (c *FileIngestor) ReadConfig() {
-	if !IsValidMode(c.config.Collectors.FileIngestor.WatchMode) {
-		c.logger.Fatal(pkgutils.PrefixLogCollector+"["+c.name+"]fileingestor - invalid mode: ", c.config.Collectors.FileIngestor.WatchMode)
+func (c *FileIngestor) CheckConfig() {
+	if !IsValidMode(c.GetConfig().Collectors.FileIngestor.WatchMode) {
+		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] - invalid mode: ", c.GetConfig().Collectors.FileIngestor.WatchMode)
 	}
 
-	c.identity = c.config.GetServerIdentity()
-	c.filterDNSPort = c.config.Collectors.FileIngestor.PcapDNSPort
-
 	c.LogInfo("watching directory [%s] to find [%s] files",
-		c.config.Collectors.FileIngestor.WatchDir,
-		c.config.Collectors.FileIngestor.WatchMode)
-}
-
-func (c *FileIngestor) ReloadConfig(config *pkgconfig.Config) {
-	c.LogInfo("reload configuration...")
-	c.configChan <- config
-}
-
-func (c *FileIngestor) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info(pkgutils.PrefixLogCollector+"["+c.name+"] fileingestor - "+msg, v...)
-}
-
-func (c *FileIngestor) LogError(msg string, v ...interface{}) {
-	c.logger.Error(pkgutils.PrefixLogCollector+"["+c.name+"] fileingestor - "+msg, v...)
-}
-
-func (c *FileIngestor) GetInputChannel() chan dnsutils.DNSMessage {
-	return nil
-}
-
-func (c *FileIngestor) Stop() {
-	c.LogInfo("stopping collector...")
-
-	// exit to close properly
-	c.exit <- true
-
-	// read done channel and block until run is terminated
-	<-c.done
-	close(c.done)
+		c.GetConfig().Collectors.FileIngestor.WatchDir,
+		c.GetConfig().Collectors.FileIngestor.WatchMode)
 }
 
 func (c *FileIngestor) ProcessFile(filePath string) {
-	switch c.config.Collectors.FileIngestor.WatchMode {
+	switch c.GetConfig().Collectors.FileIngestor.WatchMode {
 	case pkgconfig.ModePCAP:
 		// process file with pcap extension only
 		if filepath.Ext(filePath) == ".pcap" || filepath.Ext(filePath) == ".pcap.gz" {
@@ -169,7 +103,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 		return
 	}
 
-	dnsChan := make(chan netlib.DNSPacket)
+	dnsChan := make(chan netutils.DNSPacket)
 	udpChan := make(chan gopacket.Packet)
 	tcpChan := make(chan gopacket.Packet)
 	fragIP4Chan := make(chan gopacket.Packet)
@@ -180,13 +114,13 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 	packetSource.NoCopy = true
 
 	// defrag ipv4
-	go netlib.IPDefragger(fragIP4Chan, udpChan, tcpChan)
+	go netutils.IPDefragger(fragIP4Chan, udpChan, tcpChan)
 	// defrag ipv6
-	go netlib.IPDefragger(fragIP6Chan, udpChan, tcpChan)
+	go netutils.IPDefragger(fragIP6Chan, udpChan, tcpChan)
 	// tcp assembly
-	go netlib.TCPAssembler(tcpChan, dnsChan, c.filterDNSPort)
+	go netutils.TCPAssembler(tcpChan, dnsChan, c.GetConfig().Collectors.FileIngestor.PcapDNSPort)
 	// udp processor
-	go netlib.UDPProcessor(udpChan, dnsChan, c.filterDNSPort)
+	go netutils.UDPProcessor(udpChan, dnsChan, c.GetConfig().Collectors.FileIngestor.PcapDNSPort)
 
 	go func() {
 		nbPackets := 0
@@ -215,7 +149,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 				dm.DNS.Payload = dnsPacket.Payload
 				dm.DNS.Length = len(dnsPacket.Payload)
 
-				dm.DNSTap.Identity = c.identity
+				dm.DNSTap.Identity = c.GetConfig().GetServerIdentity()
 				dm.DNSTap.TimeSec = dnsPacket.Timestamp.Second()
 				dm.DNSTap.TimeNsec = int(dnsPacket.Timestamp.UnixNano())
 
@@ -288,7 +222,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 	c.LogInfo("pcap file [%s] processing terminated, %d packet(s) read", fileName, nbPackets)
 
 	// remove it ?
-	if c.config.Collectors.FileIngestor.DeleteAfter {
+	if c.GetConfig().Collectors.FileIngestor.DeleteAfter {
 		c.LogInfo("delete file [%s]", fileName)
 		os.Remove(filePath)
 	}
@@ -336,7 +270,7 @@ func (c *FileIngestor) ProcessDnstap(filePath string) error {
 
 	// remove it ?
 	c.LogInfo("processing of [%s] terminated", fileName)
-	if c.config.Collectors.FileIngestor.DeleteAfter {
+	if c.GetConfig().Collectors.FileIngestor.DeleteAfter {
 		c.LogInfo("delete file [%s]", fileName)
 		os.Remove(filePath)
 	}
@@ -374,24 +308,21 @@ func (c *FileIngestor) RemoveEvent(filePath string) {
 }
 
 func (c *FileIngestor) Run() {
-	c.LogInfo("starting collector...")
+	c.LogInfo("running collector...")
+	defer func() {
+		c.LogInfo("run terminated")
+		c.StopIsDone()
+	}()
 
-	c.dnsProcessor = processors.NewDNSProcessor(c.config, c.logger, c.name, c.config.Collectors.FileIngestor.ChannelBufferSize)
-	go c.dnsProcessor.Run(c.defaultRoutes, c.droppedRoutes)
+	c.dnsProcessor = processors.NewDNSProcessor(c.GetConfig(), c.GetLogger(), c.GetName(), c.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
+	go c.dnsProcessor.Run(c.GetDefaultRoutes(), c.GetDroppedRoutes())
 
 	// start dnstap subprocessor
-	c.dnstapProcessor = processors.NewDNSTapProcessor(
-		0,
-		"",
-		c.config,
-		c.logger,
-		c.name,
-		c.config.Collectors.FileIngestor.ChannelBufferSize,
-	)
-	go c.dnstapProcessor.Run(c.defaultRoutes, c.droppedRoutes)
+	c.dnstapProcessor = processors.NewDNSTapProcessor(0, "", c.GetConfig(), c.GetLogger(), c.GetName(), c.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
+	go c.dnstapProcessor.Run(c.GetDefaultRoutes(), c.GetDroppedRoutes())
 
 	// read current folder content
-	entries, err := os.ReadDir(c.config.Collectors.FileIngestor.WatchDir)
+	entries, err := os.ReadDir(c.GetConfig().Collectors.FileIngestor.WatchDir)
 	if err != nil {
 		c.LogError("unable to read folder: %s", err)
 	}
@@ -403,9 +334,9 @@ func (c *FileIngestor) Run() {
 		}
 
 		// prepare filepath
-		fn := filepath.Join(c.config.Collectors.FileIngestor.WatchDir, entry.Name())
+		fn := filepath.Join(c.GetConfig().Collectors.FileIngestor.WatchDir, entry.Name())
 
-		switch c.config.Collectors.FileIngestor.WatchMode {
+		switch c.GetConfig().Collectors.FileIngestor.WatchMode {
 		case pkgconfig.ModePCAP:
 			// process file with pcap extension
 			if filepath.Ext(fn) == ".pcap" || filepath.Ext(fn) == ".pcap.gz" {
@@ -420,61 +351,55 @@ func (c *FileIngestor) Run() {
 	}
 
 	// then watch for new one
-	c.watcher, err = fsnotify.NewWatcher()
+	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatal(err)
+		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] new watcher: ", err)
 	}
 	// register the folder to watch
-	err = c.watcher.Add(c.config.Collectors.FileIngestor.WatchDir)
+	err = watcher.Add(c.GetConfig().Collectors.FileIngestor.WatchDir)
 	if err != nil {
-		log.Fatal(err)
+		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] register folder: ", err)
 	}
 
-	go func() {
-		for {
-			select {
-			// new config provided?
-			case cfg, opened := <-c.configChan:
-				if !opened {
-					return
-				}
-				c.config = cfg
-				c.ReadConfig()
+	for {
+		select {
+		case <-c.OnStop():
+			c.LogInfo("stop to listen...")
 
-				c.dnsProcessor.ConfigChan <- cfg
-				c.dnstapProcessor.ConfigChan <- cfg
+			// stop watching
+			watcher.Close()
 
-			case event, ok := <-c.watcher.Events:
-				if !ok { // Channel was closed (i.e. Watcher.Close() was called).
-					return
-				}
+			// stop processors
+			c.dnsProcessor.Stop()
+			c.dnstapProcessor.Stop()
+			return
 
-				// detect activity on file
-				if !event.Has(fsnotify.Create) && !event.Has(fsnotify.Write) {
-					continue
-				}
+		// save the new config
+		case cfg := <-c.NewConfig():
+			c.SetConfig(cfg)
+			c.CheckConfig()
 
-				// register the event by the name
-				c.RegisterEvent(event.Name)
+			c.dnsProcessor.ConfigChan <- cfg
+			c.dnstapProcessor.ConfigChan <- cfg
 
-			case err, ok := <-c.watcher.Errors:
-				if !ok {
-					return
-				}
-				c.LogError("error:", err)
+		case event, ok := <-watcher.Events:
+			if !ok { // Channel was closed (i.e. Watcher.Close() was called).
+				return
 			}
+
+			// detect activity on file
+			if !event.Has(fsnotify.Create) && !event.Has(fsnotify.Write) {
+				continue
+			}
+
+			// register the event by the name
+			c.RegisterEvent(event.Name)
+
+		case err, ok := <-watcher.Errors:
+			if !ok {
+				return
+			}
+			c.LogError("error:", err)
 		}
-	}()
-
-	<-c.exit
-
-	// stop watching
-	c.watcher.Close()
-
-	// stop processors
-	c.dnsProcessor.Stop()
-	c.dnstapProcessor.Stop()
-
-	c.LogInfo("run terminated")
-	c.done <- true
+	}
 }

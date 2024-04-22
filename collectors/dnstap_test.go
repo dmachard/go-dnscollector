@@ -3,13 +3,12 @@ package collectors
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"net"
 	"regexp"
 	"testing"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
@@ -30,7 +29,7 @@ func Test_DnstapCollector(t *testing.T) {
 	}{
 		{
 			name:        "tcp_default",
-			mode:        netlib.SocketTCP,
+			mode:        netutils.SocketTCP,
 			address:     ":6000",
 			listenPort:  0,
 			operation:   "CLIENT_QUERY",
@@ -38,7 +37,7 @@ func Test_DnstapCollector(t *testing.T) {
 		},
 		{
 			name:        "tcp_custom_port",
-			mode:        netlib.SocketTCP,
+			mode:        netutils.SocketTCP,
 			address:     ":7000",
 			listenPort:  7000,
 			operation:   "CLIENT_QUERY",
@@ -46,7 +45,7 @@ func Test_DnstapCollector(t *testing.T) {
 		},
 		{
 			name:        "unix_default",
-			mode:        netlib.SocketUnix,
+			mode:        netutils.SocketUnix,
 			address:     "/tmp/dnscollector.sock",
 			listenPort:  0,
 			operation:   "CLIENT_QUERY",
@@ -54,7 +53,7 @@ func Test_DnstapCollector(t *testing.T) {
 		},
 		{
 			name:        "tcp_compress_gzip",
-			mode:        netlib.SocketTCP,
+			mode:        netutils.SocketTCP,
 			address:     ":7000",
 			listenPort:  7000,
 			operation:   "CLIENT_QUERY",
@@ -70,18 +69,17 @@ func Test_DnstapCollector(t *testing.T) {
 			if tc.listenPort > 0 {
 				config.Collectors.Dnstap.ListenPort = tc.listenPort
 			}
-			if tc.mode == netlib.SocketUnix {
+			if tc.mode == netutils.SocketUnix {
 				config.Collectors.Dnstap.SockPath = tc.address
 			}
 			config.Collectors.Dnstap.Compression = tc.compression
 
+			// start the collector
 			c := NewDnstap([]pkgutils.Worker{g}, config, logger.New(false), "test")
-			if err := c.Listen(); err != nil {
-				log.Fatal("collector listening  error: ", err)
-			}
-
 			go c.Run()
 
+			// wait before to connect
+			time.Sleep(1 * time.Second)
 			conn, err := net.Dial(tc.mode, tc.address)
 			if err != nil {
 				t.Error("could not connect: ", err)
@@ -111,7 +109,6 @@ func Test_DnstapCollector(t *testing.T) {
 				if err != nil {
 					t.Fatalf("dnstap proto marshal error %s", err)
 				}
-
 				// send query
 
 				if config.Collectors.Dnstap.Compression == pkgconfig.CompressNone {
@@ -148,7 +145,7 @@ func Test_DnstapCollector(t *testing.T) {
 // Support Bind9 with dnstap closing.
 func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	// redirect stdout output to bytes buffer
-	logsChan := make(chan logger.LogEntry, 10)
+	logsChan := make(chan logger.LogEntry, 50)
 	lg := logger.New(true)
 	lg.SetOutputChannel((logsChan))
 
@@ -158,14 +155,11 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	// start the collector in unix mode
 	g := pkgutils.NewFakeLogger()
 	c := NewDnstap([]pkgutils.Worker{g}, config, lg, "test")
-	if err := c.Listen(); err != nil {
-		log.Fatal("collector listening  error: ", err)
-	}
-
 	go c.Run()
 
 	// simulate dns server connection to collector
-	conn, err := net.Dial(netlib.SocketUnix, "/tmp/dnscollector.sock")
+	time.Sleep(1 * time.Second)
+	conn, err := net.Dial(netutils.SocketUnix, "/tmp/dnscollector.sock")
 	if err != nil {
 		t.Error("could not connect: ", err)
 	}
@@ -185,15 +179,20 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	}
 
 	regxp := ".*framestream reseted by sender.*"
+	pattern := regexp.MustCompile(regxp)
+
+	matchMsg := false
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(regxp)
 		if pattern.MatchString(entry.Message) {
+			matchMsg = true
 			break
 		}
+	}
+	if !matchMsg {
+		t.Errorf("reset from sender not received")
 	}
 
 	// cleanup
 	c.Stop()
-
 }

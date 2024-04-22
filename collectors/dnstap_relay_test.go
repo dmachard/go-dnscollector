@@ -2,12 +2,11 @@ package collectors
 
 import (
 	"bufio"
-	"log"
 	"net"
 	"testing"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/processors"
@@ -16,7 +15,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func Test_DnstapProxifier(t *testing.T) {
+func Test_DnstapRelay(t *testing.T) {
 	testcases := []struct {
 		name       string
 		mode       string
@@ -25,19 +24,19 @@ func Test_DnstapProxifier(t *testing.T) {
 	}{
 		{
 			name:       "tcp_default",
-			mode:       netlib.SocketTCP,
+			mode:       netutils.SocketTCP,
 			address:    ":6000",
 			listenPort: 0,
 		},
 		{
 			name:       "tcp_custom_port",
-			mode:       netlib.SocketTCP,
+			mode:       netutils.SocketTCP,
 			address:    ":7100",
 			listenPort: 7100,
 		},
 		{
 			name:       "unix_default",
-			mode:       netlib.SocketUnix,
+			mode:       netutils.SocketUnix,
 			address:    "/tmp/dnscollector_relay.sock",
 			listenPort: 0,
 		},
@@ -51,17 +50,16 @@ func Test_DnstapProxifier(t *testing.T) {
 			if tc.listenPort > 0 {
 				config.Collectors.DnstapProxifier.ListenPort = tc.listenPort
 			}
-			if tc.mode == netlib.SocketUnix {
+			if tc.mode == netutils.SocketUnix {
 				config.Collectors.DnstapProxifier.SockPath = tc.address
 			}
 
+			// start collector
 			c := NewDnstapProxifier([]pkgutils.Worker{g}, config, logger.New(false), "test")
-			if err := c.Listen(); err != nil {
-				log.Fatal("collector dnstap relay error: ", err)
-			}
-
 			go c.Run()
 
+			// start client
+			time.Sleep(1 * time.Second)
 			conn, err := net.Dial(tc.mode, tc.address)
 			if err != nil {
 				t.Error("could not connect: ", err)

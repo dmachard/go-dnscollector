@@ -1,4 +1,4 @@
-package netlib
+package netutils
 
 const (
 	ProtoInet  = "INET"

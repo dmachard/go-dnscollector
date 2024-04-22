@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
@@ -1195,11 +1195,11 @@ func (c *Prometheus) ListenAndServe() {
 			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
 		}
 
-		listener, err = tls.Listen(netlib.SocketTCP, addrlisten, tlsConfig)
+		listener, err = tls.Listen(netutils.SocketTCP, addrlisten, tlsConfig)
 
 	} else {
 		// basic listening
-		listener, err = net.Listen(netlib.SocketTCP, addrlisten)
+		listener, err = net.Listen(netutils.SocketTCP, addrlisten)
 	}
 
 	// something wrong ?

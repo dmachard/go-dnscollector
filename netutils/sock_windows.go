@@ -1,7 +1,7 @@
 //go:build windows
 // +build windows
 
-package netlib
+package netutils
 
 import (
 	"crypto/tls"

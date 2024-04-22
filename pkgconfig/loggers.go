@@ -3,7 +3,7 @@ package pkgconfig
 import (
 	"reflect"
 
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/prometheus/prometheus/model/relabel"
 )
 
@@ -320,7 +320,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.DNSTap.Enable = false
 	c.DNSTap.RemoteAddress = LocalhostIP
 	c.DNSTap.RemotePort = 6000
-	c.DNSTap.Transport = netlib.SocketTCP
+	c.DNSTap.Transport = netutils.SocketTCP
 	c.DNSTap.ConnectTimeout = 5
 	c.DNSTap.RetryInterval = 10
 	c.DNSTap.FlushInterval = 30
@@ -404,7 +404,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.TCPClient.RemotePort = 9999
 	c.TCPClient.SockPath = ""
 	c.TCPClient.RetryInterval = 10
-	c.TCPClient.Transport = netlib.SocketTCP
+	c.TCPClient.Transport = netutils.SocketTCP
 	c.TCPClient.TLSSupport = false
 	c.TCPClient.TLSInsecure = false
 	c.TCPClient.TLSMinVersion = TLSV12
@@ -449,7 +449,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.Fluentd.RetryInterval = 10
 	c.Fluentd.ConnectTimeout = 5
 	c.Fluentd.FlushInterval = 30
-	c.Fluentd.Transport = netlib.SocketTCP
+	c.Fluentd.Transport = netutils.SocketTCP
 	c.Fluentd.TLSSupport = false // deprecated
 	c.Fluentd.TLSInsecure = false
 	c.Fluentd.TLSMinVersion = TLSV12
@@ -497,7 +497,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.Statsd.Prefix = ProgName
 	c.Statsd.RemoteAddress = LocalhostIP
 	c.Statsd.RemotePort = 8125
-	c.Statsd.Transport = netlib.SocketUDP
+	c.Statsd.Transport = netutils.SocketUDP
 	c.Statsd.ConnectTimeout = 5
 	c.Statsd.FlushInterval = 10
 	c.Statsd.TLSSupport = false // deprecated
@@ -539,7 +539,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.RedisPub.RemotePort = 6379
 	c.RedisPub.SockPath = ""
 	c.RedisPub.RetryInterval = 10
-	c.RedisPub.Transport = netlib.SocketTCP
+	c.RedisPub.Transport = netutils.SocketTCP
 	c.RedisPub.TLSSupport = false
 	c.RedisPub.TLSInsecure = false
 	c.RedisPub.TLSMinVersion = TLSV12

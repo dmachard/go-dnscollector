@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
@@ -67,17 +67,8 @@ type DNSTapProcessor struct {
 	droppedCount             map[string]int
 }
 
-func NewDNSTapProcessor(
-	connID int,
-	peerName string,
-	config *pkgconfig.Config,
-	logger *logger.Logger,
-	name string,
-	size int,
-) DNSTapProcessor {
-
+func NewDNSTapProcessor(connID int, peerName string, config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
 	logger.Info(pkgutils.PrefixLogProcessor+"[%s] dnstap - conn #%d - initialization...", name, connID)
-
 	d := DNSTapProcessor{
 		ConnID:         connID,
 		PeerName:       peerName,
@@ -240,7 +231,7 @@ RUN_LOOP:
 				}
 			}
 
-			if ipVersion, valid := netlib.IPVersion[dt.GetMessage().GetSocketFamily().String()]; valid {
+			if ipVersion, valid := netutils.IPVersion[dt.GetMessage().GetSocketFamily().String()]; valid {
 				dm.NetworkInfo.Family = ipVersion
 			} else {
 				dm.NetworkInfo.Family = pkgconfig.StrUnknown

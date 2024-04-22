@@ -8,7 +8,7 @@ import (
 
 	"github.com/IBM/fluent-forward-go/fluent/protocol"
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
 	"github.com/tinylib/msgp/msgp"
@@ -24,7 +24,7 @@ func Test_FluentdClient(t *testing.T) {
 	}{
 		{
 			name:          "with_buffer",
-			transport:     netlib.SocketTCP,
+			transport:     netutils.SocketTCP,
 			address:       ":24224",
 			bufferSize:    100,
 			flushInterval: 1,

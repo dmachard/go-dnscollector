@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/miekg/dns"
@@ -1454,8 +1454,8 @@ func BenchmarkDnsMessage_ToPacketLayer(b *testing.B) {
 	dnsmsg.SetQuestion("dnscollector.dev.", dns.TypeAAAA)
 	dnsquestion, _ := dnsmsg.Pack()
 
-	dm.NetworkInfo.Family = netlib.ProtoIPv4
-	dm.NetworkInfo.Protocol = netlib.ProtoUDP
+	dm.NetworkInfo.Family = netutils.ProtoIPv4
+	dm.NetworkInfo.Protocol = netutils.ProtoUDP
 	dm.DNS.Payload = dnsquestion
 	dm.DNS.Length = len(dnsquestion)
 

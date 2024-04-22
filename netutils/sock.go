@@ -1,7 +1,7 @@
 //go:build linux || darwin || freebsd
 // +build linux darwin freebsd
 
-package netlib
+package netutils
 
 import (
 	"crypto/tls"
