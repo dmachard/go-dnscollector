@@ -176,7 +176,7 @@ func (c *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, 
 }
 
 func (c *Dnstap) Run() {
-	c.LogInfo("running in background...")
+	c.LogInfo("running collector...")
 	defer func() {
 		c.LogInfo("run terminated")
 		c.StopIsDone()
@@ -192,7 +192,7 @@ func (c *Dnstap) Run() {
 		cfg.TLSSupport, pkgconfig.TLSVersion[cfg.TLSMinVersion],
 		cfg.CertFile, cfg.KeyFile)
 	if err != nil {
-		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] listening failed: ", err)
+		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] listen error: ", err)
 	}
 	c.LogInfo("listening on %s", listener.Addr())
 

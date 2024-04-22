@@ -41,7 +41,7 @@ func (c *Tail) Follow() error {
 }
 
 func (c *Tail) Run() {
-	c.LogInfo("starting collector...")
+	c.LogInfo("running collector...")
 	defer func() {
 		c.LogInfo("run terminated")
 		c.StopIsDone()

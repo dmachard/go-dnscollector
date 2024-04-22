@@ -35,20 +35,17 @@ func NewXDPSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *log
 }
 
 func (c *XDPSniffer) Run() {
-	c.LogInfo("running in background...")
+	c.LogInfo("running collector...")
 	defer func() {
 		c.LogInfo("run terminated")
 		c.StopIsDone()
 	}()
 
-	dnsProcessor := processors.NewDNSProcessor(
-		c.GetConfig(),
-		c.GetLogger(),
-		c.GetName(),
-		c.GetConfig().Collectors.XdpLiveCapture.ChannelBufferSize,
-	)
+	// init dns processor
+	dnsProcessor := processors.NewDNSProcessor(c.GetConfig(), c.GetLogger(), c.GetName(), c.GetConfig().Collectors.XdpLiveCapture.ChannelBufferSize)
 	go dnsProcessor.Run(c.GetDefaultRoutes(), c.GetDroppedRoutes())
 
+	// get network interface by name
 	iface, err := net.InterfaceByName(c.GetConfig().Collectors.XdpLiveCapture.Device)
 	if err != nil {
 		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] lookup network iface: ", err)

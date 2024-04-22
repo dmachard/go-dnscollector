@@ -1,9 +1,9 @@
 package collectors
 
 import (
-	"log"
 	"net"
 	"testing"
+	"time"
 
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
@@ -15,11 +15,10 @@ func TestPowerDNS_Run(t *testing.T) {
 	g := pkgutils.NewFakeLogger()
 
 	c := NewProtobufPowerDNS([]pkgutils.Worker{g}, pkgconfig.GetFakeConfig(), logger.New(false), "test")
-	if err := c.Listen(); err != nil {
-		log.Fatal("collector powerdns  listening error: ", err)
-	}
 	go c.Run()
 
+	// wait before to connect
+	time.Sleep(1 * time.Second)
 	conn, err := net.Dial(netutils.SocketTCP, ":6001")
 	if err != nil {
 		t.Error("could not connect to TCP server: ", err)

@@ -77,7 +77,7 @@ func (c *AfpacketSniffer) Listen() error {
 }
 
 func (c *AfpacketSniffer) Run() {
-	c.LogInfo("starting collector...")
+	c.LogInfo("running collector...")
 	defer func() {
 		c.LogInfo("run terminated")
 		c.StopIsDone()

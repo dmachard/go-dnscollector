@@ -308,7 +308,7 @@ func (c *FileIngestor) RemoveEvent(filePath string) {
 }
 
 func (c *FileIngestor) Run() {
-	c.LogInfo("starting collector...")
+	c.LogInfo("running collector...")
 	defer func() {
 		c.LogInfo("run terminated")
 		c.StopIsDone()

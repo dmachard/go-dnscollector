@@ -115,7 +115,7 @@ func (c *DnstapProxifier) HandleConn(conn net.Conn, connID uint64, forceClose ch
 }
 
 func (c *DnstapProxifier) Run() {
-	c.LogInfo("running in background...")
+	c.LogInfo("running collector...")
 	defer func() {
 		c.LogInfo("run terminated")
 		c.StopIsDone()

@@ -21,6 +21,6 @@ func NewTZSP(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Lo
 }
 
 func (c *TZSPSniffer) Run() {
-	c.LogInfo("This OS not supported!")
+	c.LogError("running collector failed...OS not supported!")
 	c.StopIsDone()
 }

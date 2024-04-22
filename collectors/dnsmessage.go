@@ -170,7 +170,7 @@ func (c *DNSMessage) LoadFromFile(filePath string, srcKind string) (MatchSource,
 }
 
 func (c *DNSMessage) Run() {
-	c.LogInfo("running in background...")
+	c.LogInfo("running collector...")
 	defer func() {
 		c.LogInfo("run terminated")
 		c.StopIsDone()

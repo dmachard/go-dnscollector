@@ -21,6 +21,6 @@ func NewAfpacketSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger
 }
 
 func (c *AfpacketSniffer) Run() {
-	c.LogInfo("This OS not supported!")
+	c.LogError("running collector failed...OS not supported!")
 	c.StopIsDone()
 }

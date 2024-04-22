@@ -75,16 +75,18 @@ func (c *TZSPSniffer) Listen() error {
 }
 
 func (c *TZSPSniffer) Run() {
-	c.LogInfo("running in background...")
+	c.LogInfo("running collector...")
 	defer func() {
 		c.LogInfo("run terminated")
 		c.StopIsDone()
 	}()
 
+	// start server
 	if err := c.Listen(); err != nil {
 		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] listening failed: ", err)
 	}
 
+	// init dns processor
 	dnsProcessor := processors.NewDNSProcessor(c.GetConfig(), c.GetLogger(), c.GetName(), c.GetConfig().Collectors.Tzsp.ChannelBufferSize)
 	go dnsProcessor.Run(c.GetDefaultRoutes(), c.GetDroppedRoutes())
 
