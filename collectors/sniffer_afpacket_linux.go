@@ -200,7 +200,7 @@ func (c *AfpacketSniffer) Run() {
 				if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
 					ip4 := packet.NetworkLayer().(*layers.IPv4)
 					if ip4.Flags&layers.IPv4MoreFragments == 1 || ip4.FragOffset > 0 {
-						fragIP4Chan <- packet
+						// fragIP4Chan <- packet
 						continue
 					}
 				}
@@ -209,7 +209,7 @@ func (c *AfpacketSniffer) Run() {
 				if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
 					v6frag := packet.Layer(layers.LayerTypeIPv6Fragment)
 					if v6frag != nil {
-						fragIP6Chan <- packet
+						// fragIP6Chan <- packet
 						continue
 					}
 				}
