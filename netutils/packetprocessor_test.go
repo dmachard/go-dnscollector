@@ -50,9 +50,9 @@ func Test_IpDefrag(t *testing.T) {
 			outputChan := make(chan gopacket.Packet, 2)
 
 			// defrag ipv4
-			go IPDefragger(fragIP4Chan, outputChan, outputChan)
+			go IPDefragger(fragIP4Chan, outputChan, outputChan, 53)
 			// defrag ipv6
-			go IPDefragger(fragIP6Chan, outputChan, outputChan)
+			go IPDefragger(fragIP6Chan, outputChan, outputChan, 53)
 
 			packetSource := gopacket.NewPacketSource(pcapHandler, pcapHandler.LinkType())
 			packetSource.DecodeOptions.Lazy = true

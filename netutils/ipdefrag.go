@@ -56,11 +56,14 @@ func (f *fragments) insert(in gopacket.Packet) (gopacket.Packet, error) {
 
 			var fragOffset uint16
 
-			frag6 := packet.Layer(layers.LayerTypeIPv6Fragment).(*layers.IPv6Fragment)
-			ip4, _ := e.Value.(*layers.IPv4)
-			if frag6 != nil {
-				fragOffset = frag6.FragmentOffset * 8
-			} else {
+			switch packet.NetworkLayer().LayerType() {
+			case layers.LayerTypeIPv6:
+				if frag6Layer := packet.Layer(layers.LayerTypeIPv6Fragment); frag6Layer != nil {
+					frag6 := frag6Layer.(*layers.IPv6Fragment)
+					fragOffset = frag6.FragmentOffset * 8
+				}
+			case layers.LayerTypeIPv4:
+				ip4, _ := packet.Layer(layers.LayerTypeIPv4).(*layers.IPv4)
 				fragOffset = ip4.FragOffset * 8
 			}
 

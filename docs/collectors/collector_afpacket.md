@@ -21,6 +21,9 @@ Options:
 * `device` (str)
   > Interface name to sniff. If value is empty, bind on all interfaces.
 
+* `enable-fragment-support` (bool)
+  > Enable IP defrag support
+
 * `chan-buffer-size` (int)
   > Specifies the maximum number of packets that can be buffered before dropping additional packets.
 
@@ -31,5 +34,6 @@ Defaults:
   afpacket-sniffer:
     port: 53
     device: wlp2s0
+    enable-fragment-support: true
     chan-buffer-size: 65535
 ```
