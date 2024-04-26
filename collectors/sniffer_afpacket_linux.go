@@ -102,9 +102,9 @@ func (c *AfpacketSniffer) Run() {
 	netDecoder := &netutils.NetDecoder{}
 
 	// defrag ipv4
-	go netutils.IPDefragger(fragIP4Chan, udpChan, tcpChan)
+	go netutils.IPDefragger(fragIP4Chan, udpChan, tcpChan, c.GetConfig().Collectors.AfpacketLiveCapture.Port)
 	// defrag ipv6
-	go netutils.IPDefragger(fragIP6Chan, udpChan, tcpChan)
+	go netutils.IPDefragger(fragIP6Chan, udpChan, tcpChan, c.GetConfig().Collectors.AfpacketLiveCapture.Port)
 	// tcp assembly
 	go netutils.TCPAssembler(tcpChan, dnsChan, 0)
 	// udp processor
@@ -198,6 +198,9 @@ func (c *AfpacketSniffer) Run() {
 
 				// ipv4 fragmented packet ?
 				if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
+					if !c.GetConfig().Collectors.AfpacketLiveCapture.FragmentSupport {
+						continue
+					}
 					ip4 := packet.NetworkLayer().(*layers.IPv4)
 					if ip4.Flags&layers.IPv4MoreFragments == 1 || ip4.FragOffset > 0 {
 						fragIP4Chan <- packet
@@ -207,6 +210,9 @@ func (c *AfpacketSniffer) Run() {
 
 				// ipv6 fragmented packet ?
 				if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
+					if !c.GetConfig().Collectors.AfpacketLiveCapture.FragmentSupport {
+						continue
+					}
 					v6frag := packet.Layer(layers.LayerTypeIPv6Fragment)
 					if v6frag != nil {
 						fragIP6Chan <- packet
