@@ -17,11 +17,12 @@ func ReloadConfig(configPath string, config *Config) error {
 	defer configFile.Close()
 
 	// Check config to detect unknown keywords
-	if err := CheckConfig(configPath); err != nil {
+	if err := CheckConfig(configFile); err != nil {
 		return err
 	}
 
 	// Init new YAML decode
+	configFile.Seek(0, 0)
 	d := yaml.NewDecoder(configFile)
 
 	// Start YAML decoding from file
@@ -40,11 +41,12 @@ func LoadConfig(configPath string) (*Config, error) {
 	defer configFile.Close()
 
 	// Check config to detect unknown keywords
-	if err := CheckConfig(configPath); err != nil {
+	if err := CheckConfig(configFile); err != nil {
 		return nil, err
 	}
 
 	// Init new YAML decode
+	configFile.Seek(0, 0)
 	d := yaml.NewDecoder(configFile)
 
 	// Start YAML decoding to go
@@ -58,12 +60,18 @@ func LoadConfig(configPath string) (*Config, error) {
 	return config, nil
 }
 
-func CheckConfig(userConfigPath string) error {
-
-	// Read user YAML configuration file
-	userCfg, err := loadUserConfigToMap(userConfigPath)
+func CheckConfig(configFile *os.File) error {
+	// Read config file bytes
+	configBytes, err := io.ReadAll(configFile)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Error reading configuration file")
+	}
+
+	// Unmarshal YAML to map
+	userCfg := make(map[string]interface{})
+	err = yaml.Unmarshal(configBytes, &userCfg)
+	if err != nil {
+		return errors.Wrap(err, "error parsing YAML file")
 	}
 
 	// check the user config with the default one
@@ -72,28 +80,4 @@ func CheckConfig(userConfigPath string) error {
 
 	// check if the provided config is valid
 	return config.IsValid(userCfg)
-}
-
-func loadUserConfigToMap(configPath string) (map[string]interface{}, error) {
-	// Read user configuration file
-	configFile, err := os.Open(configPath)
-	if err != nil {
-		return nil, err
-	}
-	defer configFile.Close()
-
-	// Read config file bytes
-	configBytes, err := io.ReadAll(configFile)
-	if err != nil {
-		return nil, errors.Wrap(err, "Error reading configuration file")
-	}
-
-	// Unmarshal YAML to map
-	userConfigMap := make(map[string]interface{})
-	err = yaml.Unmarshal(configBytes, &userConfigMap)
-	if err != nil {
-		return nil, errors.Wrap(err, "error parsing YAML file")
-	}
-
-	return userConfigMap, nil
 }

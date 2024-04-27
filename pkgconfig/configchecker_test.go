@@ -216,8 +216,13 @@ multiplexer:
 				t.Fatalf("Error creating temporary file: %v", err)
 			}
 			defer os.Remove(tempFile)
+			configFile, err := os.Open(tempFile)
+			if err != nil {
+				t.Fatalf("Read temporary file: %v", err)
+			}
+			defer configFile.Close()
 
-			err = CheckConfig(tempFile)
+			err = CheckConfig(configFile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CheckConfig() error = %v, wantErr %v", err, tt.wantErr)
 				return
