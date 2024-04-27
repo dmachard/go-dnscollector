@@ -51,6 +51,7 @@ type ConfigCollectors struct {
 		Port              int    `yaml:"port"`
 		Device            string `yaml:"device"`
 		ChannelBufferSize int    `yaml:"chan-buffer-size"`
+		FragmentSupport   bool   `yaml:"enable-defrag-ip"`
 	} `yaml:"afpacket-sniffer"`
 	XdpLiveCapture struct {
 		Enable            bool   `yaml:"enable"`
@@ -129,6 +130,7 @@ func (c *ConfigCollectors) SetDefault() {
 	c.AfpacketLiveCapture.Port = 53
 	c.AfpacketLiveCapture.Device = ""
 	c.AfpacketLiveCapture.ChannelBufferSize = 65535
+	c.AfpacketLiveCapture.FragmentSupport = true
 
 	c.PowerDNS.Enable = false
 	c.PowerDNS.ListenIP = AnyIP

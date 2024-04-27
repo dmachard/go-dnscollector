@@ -114,9 +114,9 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 	packetSource.NoCopy = true
 
 	// defrag ipv4
-	go netutils.IPDefragger(fragIP4Chan, udpChan, tcpChan)
+	go netutils.IPDefragger(fragIP4Chan, udpChan, tcpChan, c.GetConfig().Collectors.FileIngestor.PcapDNSPort)
 	// defrag ipv6
-	go netutils.IPDefragger(fragIP6Chan, udpChan, tcpChan)
+	go netutils.IPDefragger(fragIP6Chan, udpChan, tcpChan, c.GetConfig().Collectors.FileIngestor.PcapDNSPort)
 	// tcp assembly
 	go netutils.TCPAssembler(tcpChan, dnsChan, c.GetConfig().Collectors.FileIngestor.PcapDNSPort)
 	// udp processor

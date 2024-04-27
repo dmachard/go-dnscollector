@@ -86,7 +86,7 @@ FLUSHALL:
 	assembler.FlushAll()
 }
 
-func IPDefragger(ipInput chan gopacket.Packet, udpOutput chan gopacket.Packet, tcpOutput chan gopacket.Packet) {
+func IPDefragger(ipInput chan gopacket.Packet, udpOutput chan gopacket.Packet, tcpOutput chan gopacket.Packet, port int) {
 	defragger := NewIPDefragmenter()
 	for fragment := range ipInput {
 		reassembled, err := defragger.DefragIP(fragment)
@@ -96,10 +96,23 @@ func IPDefragger(ipInput chan gopacket.Packet, udpOutput chan gopacket.Packet, t
 		if reassembled == nil {
 			continue
 		}
+
 		if reassembled.TransportLayer() != nil && reassembled.TransportLayer().LayerType() == layers.LayerTypeUDP {
+			// ignore packet regarding udp port
+			pkt := reassembled.TransportLayer().(*layers.UDP)
+			if pkt.DstPort != layers.UDPPort(port) && pkt.SrcPort != layers.UDPPort(port) {
+				continue
+			}
+			// valid reassembled packet
 			udpOutput <- reassembled
 		}
 		if reassembled.TransportLayer() != nil && reassembled.TransportLayer().LayerType() == layers.LayerTypeTCP {
+			// ignore packet regarding udp port
+			pkt := reassembled.TransportLayer().(*layers.TCP)
+			if pkt.DstPort != layers.TCPPort(port) && pkt.SrcPort != layers.TCPPort(port) {
+				continue
+			}
+			// valid reassembled packet
 			tcpOutput <- reassembled
 		}
 	}
