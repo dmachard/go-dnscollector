@@ -9,7 +9,6 @@ import (
 
 	_ "net/http/pprof"
 
-	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkglinker"
 	"github.com/dmachard/go-dnscollector/pkgutils"
@@ -95,9 +94,8 @@ func main() {
 	// create logger
 	logger := logger.New(true)
 
-	// get DNSMessage flat model
-	dmRef := dnsutils.GetReferenceDNSMessage()
-	config, err := pkgutils.LoadConfig(configPath, dmRef)
+	// load config
+	config, err := pkgconfig.LoadConfig(configPath)
 	if err != nil {
 		fmt.Printf("config error: %v\n", err)
 		os.Exit(1)
@@ -143,7 +141,7 @@ func main() {
 				logger.Info("main - SIGHUP received")
 
 				// read config
-				err := pkgutils.ReloadConfig(configPath, config, dmRef)
+				err := pkgconfig.ReloadConfig(configPath, config)
 				if err != nil {
 					panic(fmt.Sprintf("main - reload config error:  %v", err))
 				}

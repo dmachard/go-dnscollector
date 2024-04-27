@@ -1,5 +1,9 @@
 package pkgconfig
 
+import (
+	"reflect"
+)
+
 type ConfigGlobal struct {
 	TextFormat          string `yaml:"text-format"`
 	TextFormatDelimiter string `yaml:"text-format-delimiter"`
@@ -26,4 +30,8 @@ func (c *ConfigGlobal) SetDefault() {
 	c.Trace.MaxSize = 10
 	c.Trace.MaxBackups = 10
 	c.ServerIdentity = ""
+}
+
+func (c *ConfigGlobal) Check(userCfg map[string]interface{}) error {
+	return CheckConfigWithTags(reflect.ValueOf(*c), userCfg)
 }

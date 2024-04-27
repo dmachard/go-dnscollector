@@ -1,5 +1,7 @@
 package pkgconfig
 
+import "reflect"
+
 type RelabelingConfig struct {
 	Regex       string `yaml:"regex"`
 	Replacement string `yaml:"replacement"`
@@ -148,6 +150,10 @@ func (c *ConfigTransformers) SetDefault() {
 	c.Relabeling.Enable = false
 	c.Relabeling.Remove = []RelabelingConfig{}
 	c.Relabeling.Rename = []RelabelingConfig{}
+}
+
+func (c *ConfigTransformers) IsValid(userCfg map[string]interface{}) error {
+	return CheckConfigWithTags(reflect.ValueOf(*c), userCfg)
 }
 
 func GetFakeConfigTransformers() *ConfigTransformers {

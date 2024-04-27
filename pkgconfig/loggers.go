@@ -590,23 +590,6 @@ func (c *ConfigLoggers) SetDefault() {
 	c.ClickhouseClient.Table = "records"
 }
 
-func (c *ConfigLoggers) GetTags() (ret []string) {
-	cl := reflect.TypeOf(*c)
-
-	for i := 0; i < cl.NumField(); i++ {
-		field := cl.Field(i)
-		tag := field.Tag.Get("yaml")
-		ret = append(ret, tag)
-	}
-	return ret
-}
-
-func (c *ConfigLoggers) IsValid(name string) bool {
-	tags := c.GetTags()
-	for i := range tags {
-		if name == tags[i] {
-			return true
-		}
-	}
-	return false
+func (c *ConfigLoggers) IsValid(userCfg map[string]interface{}) error {
+	return CheckConfigWithTags(reflect.ValueOf(*c), userCfg)
 }
