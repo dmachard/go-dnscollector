@@ -288,6 +288,7 @@ type ConfigLoggers struct {
 		SaslPassword      string `yaml:"sasl-password"`
 		SaslMechanism     string `yaml:"sasl-mechanism"`
 		Mode              string `yaml:"mode"`
+		TextFormat        string `yaml:"text-format"`
 		BufferSize        int    `yaml:"buffer-size"`
 		FlushInterval     int    `yaml:"flush-interval"`
 		ConnectTimeout    int    `yaml:"connect-timeout"`
@@ -570,6 +571,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.KafkaProducer.SaslPassword = ""
 	c.KafkaProducer.SaslMechanism = SASLMechanismPlain
 	c.KafkaProducer.Mode = ModeFlatJSON
+	c.KafkaProducer.TextFormat = ""
 	c.KafkaProducer.BufferSize = 100
 	c.KafkaProducer.ConnectTimeout = 5
 	c.KafkaProducer.FlushInterval = 10
