@@ -56,6 +56,9 @@ Options:
 * `mode` (string)
   > Specifies the output format for Kafka messages. Output format: `text`, `json`, or `flat-json`.
 
+* `text-format` (string)
+  > output text format, please refer to the default text format to see all available [directives](../configuration.md#custom-text-format), use this parameter if you want a specific format
+
 * `buffer-size` (integer)
   > Specifies the size of the buffer for DNS messages before they are sent to Kafka.
 
@@ -88,6 +91,7 @@ kafkaproducer:
   sasl-username: false
   sasl-password: false
   mode: flat-json
+  text-format: ""
   buffer-size: 100
   topic: "dnscollector"
   partition: 0

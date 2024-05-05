@@ -71,8 +71,8 @@ func (k *KafkaProducer) AddDefaultRoute(wrk pkgutils.Worker) {
 func (k *KafkaProducer) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (k *KafkaProducer) ReadConfig() {
-	if len(k.config.Loggers.RedisPub.TextFormat) > 0 {
-		k.textFormat = strings.Fields(k.config.Loggers.RedisPub.TextFormat)
+	if len(k.config.Loggers.KafkaProducer.TextFormat) > 0 {
+		k.textFormat = strings.Fields(k.config.Loggers.KafkaProducer.TextFormat)
 	} else {
 		k.textFormat = strings.Fields(k.config.Global.TextFormat)
 	}
