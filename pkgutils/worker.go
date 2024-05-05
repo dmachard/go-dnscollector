@@ -31,9 +31,10 @@ type GenericWorker struct {
 	droppedProcessor                           chan int
 	droppedStanza                              chan string
 	droppedStanzaCount                         map[string]int
+	dnsMessageIn, dnsMessageOut                chan dnsutils.DNSMessage
 }
 
-func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name string, descr string) *GenericWorker {
+func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name string, descr string, bufferSize int) *GenericWorker {
 	logger.Info(PrefixLogCollector+"[%s] %s - enabled", name, descr)
 	c := &GenericWorker{
 		config:             config,
@@ -48,6 +49,8 @@ func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name stri
 		droppedProcessor:   make(chan int),
 		droppedStanza:      make(chan string),
 		droppedStanzaCount: map[string]int{},
+		dnsMessageIn:       make(chan dnsutils.DNSMessage, bufferSize),
+		dnsMessageOut:      make(chan dnsutils.DNSMessage, bufferSize),
 	}
 	go c.Monitor()
 	return c
@@ -69,7 +72,9 @@ func (c *GenericWorker) GetDroppedRoutes() []Worker { return c.droppedRoutes }
 
 func (c *GenericWorker) GetDefaultRoutes() []Worker { return c.defaultRoutes }
 
-func (c *GenericWorker) GetInputChannel() chan dnsutils.DNSMessage { return nil }
+func (c *GenericWorker) GetInputChannel() chan dnsutils.DNSMessage { return c.dnsMessageIn }
+
+func (c *GenericWorker) GetOutputChannel() chan dnsutils.DNSMessage { return c.dnsMessageOut }
 
 func (c *GenericWorker) AddDroppedRoute(wrk Worker) {
 	c.droppedRoutes = append(c.droppedRoutes, wrk)

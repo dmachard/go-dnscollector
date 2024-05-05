@@ -6,4 +6,5 @@ var (
 	PrefixLogLogger      = "logger - "
 	PrefixLogRouting     = "routing - "
 	PrefixLogTransformer = "transformer - "
+	DefaultBufferSize    = 1
 )

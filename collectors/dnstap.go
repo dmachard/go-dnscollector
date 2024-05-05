@@ -25,7 +25,7 @@ type Dnstap struct {
 }
 
 func NewDnstap(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
-	s := &Dnstap{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap")}
+	s := &Dnstap{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap", pkgutils.DefaultBufferSize)}
 	s.SetDefaultRoutes(next)
 	s.CheckConfig()
 	return s

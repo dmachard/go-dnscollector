@@ -36,7 +36,7 @@ type DNSMessage struct {
 
 func NewDNSMessage(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DNSMessage {
 	s := &DNSMessage{
-		GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnsmessage"),
+		GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnsmessage", 0),
 		inputChan:     make(chan dnsutils.DNSMessage, config.Collectors.DNSMessage.ChannelBufferSize),
 	}
 	s.SetDefaultRoutes(next)

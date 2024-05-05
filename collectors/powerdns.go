@@ -23,7 +23,7 @@ type ProtobufPowerDNS struct {
 }
 
 func NewProtobufPowerDNS(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *ProtobufPowerDNS {
-	s := &ProtobufPowerDNS{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "powerdns")}
+	s := &ProtobufPowerDNS{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "powerdns", pkgutils.DefaultBufferSize)}
 	s.SetDefaultRoutes(next)
 	s.CheckConfig()
 	return s

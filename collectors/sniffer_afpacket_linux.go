@@ -28,7 +28,7 @@ type AfpacketSniffer struct {
 }
 
 func NewAfpacketSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	s := &AfpacketSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "afpacket sniffer")}
+	s := &AfpacketSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "afpacket sniffer", pkgutils.DefaultBufferSize)}
 	s.SetDefaultRoutes(next)
 	return s
 }
