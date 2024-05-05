@@ -19,12 +19,12 @@ import (
 )
 
 type Tail struct {
-	*pkgutils.Collector
+	*pkgutils.GenericWorker
 	tailf *tail.Tail
 }
 
 func NewTail(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Tail {
-	s := &Tail{Collector: pkgutils.NewCollector(config, logger, name, "tail")}
+	s := &Tail{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tail")}
 	s.SetDefaultRoutes(next)
 	return s
 }

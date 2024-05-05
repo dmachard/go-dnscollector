@@ -8,7 +8,19 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-type Collector struct {
+type Worker interface {
+	AddDefaultRoute(wrk Worker)
+	AddDroppedRoute(wrk Worker)
+	SetLoggers(loggers []Worker)
+	GetName() string
+	Stop()
+	Run()
+	GetInputChannel() chan dnsutils.DNSMessage
+	ReadConfig()
+	ReloadConfig(config *pkgconfig.Config)
+}
+
+type GenericWorker struct {
 	doneRun, stopRun, doneMonitor, stopMonitor chan bool
 	config                                     *pkgconfig.Config
 	configChan                                 chan *pkgconfig.Config
@@ -21,9 +33,9 @@ type Collector struct {
 	droppedStanzaCount                         map[string]int
 }
 
-func NewCollector(config *pkgconfig.Config, logger *logger.Logger, name string, descr string) *Collector {
+func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name string, descr string) *GenericWorker {
 	logger.Info(PrefixLogCollector+"[%s] %s - enabled", name, descr)
-	c := &Collector{
+	c := &GenericWorker{
 		config:             config,
 		configChan:         make(chan *pkgconfig.Config),
 		logger:             logger,
@@ -41,68 +53,68 @@ func NewCollector(config *pkgconfig.Config, logger *logger.Logger, name string, 
 	return c
 }
 
-func (c *Collector) GetName() string { return c.name }
+func (c *GenericWorker) GetName() string { return c.name }
 
-func (c *Collector) GetConfig() *pkgconfig.Config { return c.config }
+func (c *GenericWorker) GetConfig() *pkgconfig.Config { return c.config }
 
-func (c *Collector) SetConfig(config *pkgconfig.Config) { c.config = config }
+func (c *GenericWorker) SetConfig(config *pkgconfig.Config) { c.config = config }
 
-func (c *Collector) ReadConfig() {}
+func (c *GenericWorker) ReadConfig() {}
 
-func (c *Collector) NewConfig() chan *pkgconfig.Config { return c.configChan }
+func (c *GenericWorker) NewConfig() chan *pkgconfig.Config { return c.configChan }
 
-func (c *Collector) GetLogger() *logger.Logger { return c.logger }
+func (c *GenericWorker) GetLogger() *logger.Logger { return c.logger }
 
-func (c *Collector) GetDroppedRoutes() []Worker { return c.droppedRoutes }
+func (c *GenericWorker) GetDroppedRoutes() []Worker { return c.droppedRoutes }
 
-func (c *Collector) GetDefaultRoutes() []Worker { return c.defaultRoutes }
+func (c *GenericWorker) GetDefaultRoutes() []Worker { return c.defaultRoutes }
 
-func (c *Collector) GetInputChannel() chan dnsutils.DNSMessage { return nil }
+func (c *GenericWorker) GetInputChannel() chan dnsutils.DNSMessage { return nil }
 
-func (c *Collector) AddDroppedRoute(wrk Worker) {
+func (c *GenericWorker) AddDroppedRoute(wrk Worker) {
 	c.droppedRoutes = append(c.droppedRoutes, wrk)
 }
 
-func (c *Collector) AddDefaultRoute(wrk Worker) {
+func (c *GenericWorker) AddDefaultRoute(wrk Worker) {
 	c.defaultRoutes = append(c.defaultRoutes, wrk)
 }
 
-func (c *Collector) SetDefaultRoutes(next []Worker) {
+func (c *GenericWorker) SetDefaultRoutes(next []Worker) {
 	c.defaultRoutes = next
 }
 
-func (c *Collector) SetLoggers(loggers []Worker) { c.defaultRoutes = loggers }
+func (c *GenericWorker) SetLoggers(loggers []Worker) { c.defaultRoutes = loggers }
 
-func (c *Collector) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+func (c *GenericWorker) Loggers() ([]chan dnsutils.DNSMessage, []string) {
 	return GetRoutes(c.defaultRoutes)
 }
 
-func (c *Collector) ReloadConfig(config *pkgconfig.Config) {
+func (c *GenericWorker) ReloadConfig(config *pkgconfig.Config) {
 	c.LogInfo("reload configuration...")
 	c.configChan <- config
 }
 
-func (c *Collector) LogInfo(msg string, v ...interface{}) {
+func (c *GenericWorker) LogInfo(msg string, v ...interface{}) {
 	c.logger.Info(PrefixLogCollector+"["+c.name+"] "+c.descr+" - "+msg, v...)
 }
 
-func (c *Collector) LogError(msg string, v ...interface{}) {
+func (c *GenericWorker) LogError(msg string, v ...interface{}) {
 	c.logger.Error(PrefixLogCollector+"["+c.name+"] "+c.descr+" - "+msg, v...)
 }
 
-func (c *Collector) LogFatal(v ...interface{}) {
+func (c *GenericWorker) LogFatal(v ...interface{}) {
 	c.logger.Fatal(v...)
 }
 
-func (c *Collector) OnStop() chan bool {
+func (c *GenericWorker) OnStop() chan bool {
 	return c.stopRun
 }
 
-func (c *Collector) StopIsDone() {
+func (c *GenericWorker) StopIsDone() {
 	c.doneRun <- true
 }
 
-func (c *Collector) Stop() {
+func (c *GenericWorker) Stop() {
 	// stop monitor goroutine
 	c.LogInfo("stopping monitor...")
 	c.stopMonitor <- true
@@ -114,7 +126,7 @@ func (c *Collector) Stop() {
 	<-c.doneRun
 }
 
-func (c *Collector) Monitor() {
+func (c *GenericWorker) Monitor() {
 	defer func() {
 		c.LogInfo("monitor terminated")
 		c.doneMonitor <- true
@@ -149,7 +161,7 @@ func (c *Collector) Monitor() {
 
 			for v, k := range c.droppedStanzaCount {
 				if k > 0 {
-					c.LogError("stanza[%s] buffer is full, %d dnsmessage(s) dropped", v, k)
+					c.LogError("worker[%s] buffer is full, %d dnsmessage(s) dropped", v, k)
 					c.droppedStanzaCount[v] = 0
 				}
 			}
@@ -159,15 +171,15 @@ func (c *Collector) Monitor() {
 	}
 }
 
-func (c *Collector) ProcessorIsBusy() {
+func (c *GenericWorker) ProcessorIsBusy() {
 	c.droppedProcessor <- 1
 }
 
-func (c *Collector) NextStanzaIsBusy(name string) {
+func (c *GenericWorker) NextStanzaIsBusy(name string) {
 	c.droppedStanza <- name
 }
 
-func (c *Collector) Run() {
+func (c *GenericWorker) Run() {
 	c.LogInfo("running in background...")
 	defer func() {
 		c.LogInfo("run terminated")

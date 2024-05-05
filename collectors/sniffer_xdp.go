@@ -25,11 +25,11 @@ import (
 )
 
 type XDPSniffer struct {
-	*pkgutils.Collector
+	*pkgutils.GenericWorker
 }
 
 func NewXDPSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
-	s := &XDPSniffer{Collector: pkgutils.NewCollector(config, logger, name, "xdp sniffer")}
+	s := &XDPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "xdp sniffer")}
 	s.SetDefaultRoutes(next)
 	return s
 }

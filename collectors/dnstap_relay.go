@@ -16,12 +16,12 @@ import (
 )
 
 type DnstapProxifier struct {
-	*pkgutils.Collector
+	*pkgutils.GenericWorker
 	connCounter uint64
 }
 
 func NewDnstapProxifier(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
-	s := &DnstapProxifier{Collector: pkgutils.NewCollector(config, logger, name, "dnstaprelay")}
+	s := &DnstapProxifier{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstaprelay")}
 	s.SetDefaultRoutes(next)
 	s.CheckConfig()
 	return s

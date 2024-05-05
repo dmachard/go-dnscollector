@@ -20,12 +20,12 @@ import (
 )
 
 type Dnstap struct {
-	*pkgutils.Collector
+	*pkgutils.GenericWorker
 	connCounter uint64
 }
 
 func NewDnstap(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
-	s := &Dnstap{Collector: pkgutils.NewCollector(config, logger, name, "dnstap")}
+	s := &Dnstap{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap")}
 	s.SetDefaultRoutes(next)
 	s.CheckConfig()
 	return s

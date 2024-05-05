@@ -30,14 +30,14 @@ type MatchSource struct {
 }
 
 type DNSMessage struct {
-	*pkgutils.Collector
+	*pkgutils.GenericWorker
 	inputChan chan dnsutils.DNSMessage
 }
 
 func NewDNSMessage(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DNSMessage {
 	s := &DNSMessage{
-		Collector: pkgutils.NewCollector(config, logger, name, "dnsmessage"),
-		inputChan: make(chan dnsutils.DNSMessage, config.Collectors.DNSMessage.ChannelBufferSize),
+		GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnsmessage"),
+		inputChan:     make(chan dnsutils.DNSMessage, config.Collectors.DNSMessage.ChannelBufferSize),
 	}
 	s.SetDefaultRoutes(next)
 	s.ReadConfig()

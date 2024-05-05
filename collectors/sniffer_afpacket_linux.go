@@ -23,12 +23,12 @@ import (
 )
 
 type AfpacketSniffer struct {
-	*pkgutils.Collector
+	*pkgutils.GenericWorker
 	fd int
 }
 
 func NewAfpacketSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	s := &AfpacketSniffer{Collector: pkgutils.NewCollector(config, logger, name, "afpacket sniffer")}
+	s := &AfpacketSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "afpacket sniffer")}
 	s.SetDefaultRoutes(next)
 	return s
 }

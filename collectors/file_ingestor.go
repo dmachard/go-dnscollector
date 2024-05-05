@@ -36,7 +36,7 @@ func IsValidMode(mode string) bool {
 }
 
 type FileIngestor struct {
-	*pkgutils.Collector
+	*pkgutils.GenericWorker
 	watcherTimers   map[string]*time.Timer
 	dnsProcessor    processors.DNSProcessor
 	dnstapProcessor processors.DNSTapProcessor
@@ -45,7 +45,7 @@ type FileIngestor struct {
 
 func NewFileIngestor(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
 	s := &FileIngestor{
-		Collector:     pkgutils.NewCollector(config, logger, name, "fileingestor"),
+		GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "fileingestor"),
 		watcherTimers: make(map[string]*time.Timer)}
 	s.SetDefaultRoutes(next)
 	s.CheckConfig()

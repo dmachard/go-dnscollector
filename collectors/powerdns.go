@@ -18,12 +18,12 @@ import (
 )
 
 type ProtobufPowerDNS struct {
-	*pkgutils.Collector
+	*pkgutils.GenericWorker
 	connCounter uint64
 }
 
 func NewProtobufPowerDNS(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *ProtobufPowerDNS {
-	s := &ProtobufPowerDNS{Collector: pkgutils.NewCollector(config, logger, name, "powerdns")}
+	s := &ProtobufPowerDNS{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "powerdns")}
 	s.SetDefaultRoutes(next)
 	s.CheckConfig()
 	return s

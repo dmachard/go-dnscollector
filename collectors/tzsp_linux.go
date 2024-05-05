@@ -27,12 +27,12 @@ import (
 )
 
 type TZSPSniffer struct {
-	*pkgutils.Collector
+	*pkgutils.GenericWorker
 	listen net.UDPConn
 }
 
 func NewTZSP(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
-	s := &TZSPSniffer{Collector: pkgutils.NewCollector(config, logger, name, "tzsp")}
+	s := &TZSPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tzsp")}
 	s.SetDefaultRoutes(next)
 	return s
 }
