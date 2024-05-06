@@ -73,9 +73,7 @@ func (w *StdOut) SetPcapWriter(pcapWriter io.Writer) {
 
 func (w *StdOut) StartCollect() {
 	w.LogInfo("worker is starting collection")
-	defer func() {
-		w.StopIsDone()
-	}()
+	defer w.CollectDone()
 
 	// prepare next channels
 	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
@@ -127,9 +125,7 @@ func (w *StdOut) StartCollect() {
 
 func (w *StdOut) StartLogging() {
 	w.LogInfo("worker is starting logging")
-	defer func() {
-		w.LoggerTerminated()
-	}()
+	defer w.LoggingDone()
 
 	// standard output buffer
 	buffer := new(bytes.Buffer)

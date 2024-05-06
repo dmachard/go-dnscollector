@@ -76,9 +76,7 @@ func (c *TZSPSniffer) Listen() error {
 
 func (c *TZSPSniffer) StartCollect() {
 	c.LogInfo("worker is starting collection")
-	defer func() {
-		c.StopIsDone()
-	}()
+	defer c.CollectDone()
 
 	// start server
 	if err := c.Listen(); err != nil {

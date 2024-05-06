@@ -36,9 +36,7 @@ func NewXDPSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *log
 
 func (c *XDPSniffer) StartCollect() {
 	c.LogInfo("worker is starting collection")
-	defer func() {
-		c.StopIsDone()
-	}()
+	defer c.CollectDone()
 
 	// init dns processor
 	dnsProcessor := processors.NewDNSProcessor(c.GetConfig(), c.GetLogger(), c.GetName(), c.GetConfig().Collectors.XdpLiveCapture.ChannelBufferSize)

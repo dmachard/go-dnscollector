@@ -22,5 +22,5 @@ func NewXDPSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *log
 
 func (c *XDPSniffer) StartCollect() {
 	c.LogError("running collector failed...OS not supported!")
-	c.StopIsDone()
+	defer c.CollectDone()
 }

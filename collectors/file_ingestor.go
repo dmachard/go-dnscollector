@@ -309,9 +309,7 @@ func (c *FileIngestor) RemoveEvent(filePath string) {
 
 func (c *FileIngestor) StartCollect() {
 	c.LogInfo("worker is starting collection")
-	defer func() {
-		c.StopIsDone()
-	}()
+	defer c.CollectDone()
 
 	c.dnsProcessor = processors.NewDNSProcessor(c.GetConfig(), c.GetLogger(), c.GetName(), c.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
 	go c.dnsProcessor.Run(c.GetDefaultRoutes(), c.GetDroppedRoutes())

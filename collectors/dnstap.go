@@ -177,9 +177,7 @@ func (c *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, 
 
 func (c *Dnstap) StartCollect() {
 	c.LogInfo("worker is starting collection")
-	defer func() {
-		c.StopIsDone()
-	}()
+	defer c.CollectDone()
 
 	var connWG sync.WaitGroup
 	connCleanup := make(chan bool)

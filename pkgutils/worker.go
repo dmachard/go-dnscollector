@@ -126,12 +126,12 @@ func (w *GenericWorker) StopLogger() {
 	<-w.doneProcess
 }
 
-func (w *GenericWorker) StopIsDone() {
+func (w *GenericWorker) CollectDone() {
 	w.LogInfo("collection terminated")
 	w.doneRun <- true
 }
 
-func (w *GenericWorker) LoggerTerminated() {
+func (w *GenericWorker) LoggingDone() {
 	w.LogInfo("logging terminated")
 	w.doneProcess <- true
 }
@@ -201,16 +201,12 @@ func (w *GenericWorker) WorkerIsBusy(name string) {
 
 func (w *GenericWorker) StartCollect() {
 	w.LogInfo("worker is starting collection")
-	defer func() {
-		w.StopIsDone()
-	}()
+	defer w.CollectDone()
 }
 
 func (w *GenericWorker) StartLogging() {
 	w.LogInfo("worker is starting logging")
-	defer func() {
-		w.LoggerTerminated()
-	}()
+	defer w.LoggingDone()
 }
 
 func (w *GenericWorker) SendTo(routes []chan dnsutils.DNSMessage, routesName []string, dm dnsutils.DNSMessage) {

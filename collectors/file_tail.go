@@ -42,9 +42,7 @@ func (c *Tail) Follow() error {
 
 func (c *Tail) StartCollect() {
 	c.LogInfo("worker is starting collection")
-	defer func() {
-		c.StopIsDone()
-	}()
+	defer c.CollectDone()
 
 	err := c.Follow()
 	if err != nil {

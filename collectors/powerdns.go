@@ -116,9 +116,7 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn, connID uint64, forceClose c
 
 func (c *ProtobufPowerDNS) StartCollect() {
 	c.LogInfo("worker is starting collection")
-	defer func() {
-		c.StopIsDone()
-	}()
+	defer c.CollectDone()
 
 	var connWG sync.WaitGroup
 	connCleanup := make(chan bool)
