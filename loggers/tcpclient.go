@@ -20,182 +20,114 @@ import (
 )
 
 type TCPClient struct {
-	stopProcess, doneProcess           chan bool
-	stopRun, doneRun                   chan bool
+	*pkgutils.GenericWorker
 	stopRead, doneRead                 chan bool
-	inputChan, outputChan              chan dnsutils.DNSMessage
-	config                             *pkgconfig.Config
-	configChan                         chan *pkgconfig.Config
-	logger                             *logger.Logger
 	textFormat                         []string
-	name                               string
 	transport                          string
 	transportWriter                    *bufio.Writer
 	transportConn                      net.Conn
 	transportReady, transportReconnect chan bool
 	writerReady                        bool
-	RoutingHandler                     pkgutils.RoutingHandler
 }
 
 func NewTCPClient(config *pkgconfig.Config, logger *logger.Logger, name string) *TCPClient {
-	logger.Info(pkgutils.PrefixLogLogger+"[%s] tcpclient - enabled", name)
-	s := &TCPClient{
-		stopProcess:        make(chan bool),
-		doneProcess:        make(chan bool),
-		stopRun:            make(chan bool),
-		doneRun:            make(chan bool),
-		stopRead:           make(chan bool),
-		doneRead:           make(chan bool),
-		inputChan:          make(chan dnsutils.DNSMessage, config.Loggers.TCPClient.ChannelBufferSize),
-		outputChan:         make(chan dnsutils.DNSMessage, config.Loggers.TCPClient.ChannelBufferSize),
-		transportReady:     make(chan bool),
-		transportReconnect: make(chan bool),
-		logger:             logger,
-		config:             config,
-		configChan:         make(chan *pkgconfig.Config),
-		name:               name,
-		RoutingHandler:     pkgutils.NewRoutingHandler(config, logger, name),
-	}
-
-	s.ReadConfig()
-
-	return s
+	w := &TCPClient{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tcpclient", config.Loggers.TCPClient.ChannelBufferSize)}
+	w.transportReady = make(chan bool)
+	w.transportReconnect = make(chan bool)
+	w.stopRead = make(chan bool)
+	w.doneRead = make(chan bool)
+	w.ReadConfig()
+	return w
 }
 
-func (c *TCPClient) GetName() string { return c.name }
-
-func (c *TCPClient) AddDroppedRoute(wrk pkgutils.Worker) {
-	c.RoutingHandler.AddDroppedRoute(wrk)
-}
-
-func (c *TCPClient) AddDefaultRoute(wrk pkgutils.Worker) {
-	c.RoutingHandler.AddDefaultRoute(wrk)
-}
-
-func (c *TCPClient) SetLoggers(loggers []pkgutils.Worker) {}
-
-func (c *TCPClient) ReadConfig() {
-	c.transport = c.config.Loggers.TCPClient.Transport
+func (w *TCPClient) ReadConfig() {
+	w.transport = w.GetConfig().Loggers.TCPClient.Transport
 
 	// begin backward compatibility
-	if c.config.Loggers.TCPClient.TLSSupport {
-		c.transport = netutils.SocketTLS
+	if w.GetConfig().Loggers.TCPClient.TLSSupport {
+		w.transport = netutils.SocketTLS
 	}
-	if len(c.config.Loggers.TCPClient.SockPath) > 0 {
-		c.transport = netutils.SocketUnix
+	if len(w.GetConfig().Loggers.TCPClient.SockPath) > 0 {
+		w.transport = netutils.SocketUnix
 	}
 	// end
 
-	if len(c.config.Loggers.TCPClient.TextFormat) > 0 {
-		c.textFormat = strings.Fields(c.config.Loggers.TCPClient.TextFormat)
+	if len(w.GetConfig().Loggers.TCPClient.TextFormat) > 0 {
+		w.textFormat = strings.Fields(w.GetConfig().Loggers.TCPClient.TextFormat)
 	} else {
-		c.textFormat = strings.Fields(c.config.Global.TextFormat)
+		w.textFormat = strings.Fields(w.GetConfig().Global.TextFormat)
 	}
 }
 
-func (c *TCPClient) ReloadConfig(config *pkgconfig.Config) {
-	c.LogInfo("reload configuration!")
-	c.configChan <- config
-}
-
-func (c *TCPClient) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info(pkgutils.PrefixLogLogger+"["+c.name+"] tcpclient - "+msg, v...)
-}
-
-func (c *TCPClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error(pkgutils.PrefixLogLogger+"["+c.name+"] tcpclient - "+msg, v...)
-}
-
-func (c *TCPClient) GetInputChannel() chan dnsutils.DNSMessage {
-	return c.inputChan
-}
-
-func (c *TCPClient) Stop() {
-	c.LogInfo("stopping logger...")
-	c.RoutingHandler.Stop()
-
-	c.LogInfo("stopping to run...")
-	c.stopRun <- true
-	<-c.doneRun
-
-	c.LogInfo("stopping to read...")
-	c.stopRead <- true
-	<-c.doneRead
-
-	c.LogInfo("stopping to process...")
-	c.stopProcess <- true
-	<-c.doneProcess
-}
-
-func (c *TCPClient) Disconnect() {
-	if c.transportConn != nil {
-		c.LogInfo("closing tcp connection")
-		c.transportConn.Close()
+func (w *TCPClient) Disconnect() {
+	if w.transportConn != nil {
+		w.LogInfo("closing tcp connection")
+		w.transportConn.Close()
 	}
 }
 
-func (c *TCPClient) ReadFromConnection() {
+func (w *TCPClient) ReadFromConnection() {
 	buffer := make([]byte, 4096)
 
 	go func() {
 		for {
-			_, err := c.transportConn.Read(buffer)
+			_, err := w.transportConn.Read(buffer)
 			if err != nil {
 				if errors.Is(err, io.EOF) || errors.Is(err, net.ErrClosed) {
-					c.LogInfo("read from connection terminated")
+					w.LogInfo("read from connection terminated")
 					break
 				}
-				c.LogError("Error on reading: %s", err.Error())
+				w.LogError("Error on reading: %s", err.Error())
 			}
 			// We just discard the data
 		}
 	}()
 
 	// block goroutine until receive true event in stopRead channel
-	<-c.stopRead
-	c.doneRead <- true
+	<-w.stopRead
+	w.doneRead <- true
 
-	c.LogInfo("read goroutine terminated")
+	w.LogInfo("read goroutine terminated")
 }
 
-func (c *TCPClient) ConnectToRemote() {
+func (w *TCPClient) ConnectToRemote() {
 	for {
-		if c.transportConn != nil {
-			c.transportConn.Close()
-			c.transportConn = nil
+		if w.transportConn != nil {
+			w.transportConn.Close()
+			w.transportConn = nil
 		}
 
-		address := c.config.Loggers.TCPClient.RemoteAddress + ":" + strconv.Itoa(c.config.Loggers.TCPClient.RemotePort)
-		connTimeout := time.Duration(c.config.Loggers.TCPClient.ConnectTimeout) * time.Second
+		address := w.GetConfig().Loggers.TCPClient.RemoteAddress + ":" + strconv.Itoa(w.GetConfig().Loggers.TCPClient.RemotePort)
+		connTimeout := time.Duration(w.GetConfig().Loggers.TCPClient.ConnectTimeout) * time.Second
 
 		// make the connection
 		var conn net.Conn
 		var err error
 
-		switch c.transport {
+		switch w.transport {
 		case netutils.SocketUnix:
-			address = c.config.Loggers.TCPClient.RemoteAddress
-			if len(c.config.Loggers.TCPClient.SockPath) > 0 {
-				address = c.config.Loggers.TCPClient.SockPath
+			address = w.GetConfig().Loggers.TCPClient.RemoteAddress
+			if len(w.GetConfig().Loggers.TCPClient.SockPath) > 0 {
+				address = w.GetConfig().Loggers.TCPClient.SockPath
 			}
-			c.LogInfo("connecting to %s://%s", c.transport, address)
-			conn, err = net.DialTimeout(c.transport, address, connTimeout)
+			w.LogInfo("connecting to %s://%s", w.transport, address)
+			conn, err = net.DialTimeout(w.transport, address, connTimeout)
 
 		case netutils.SocketTCP:
-			c.LogInfo("connecting to %s://%s", c.transport, address)
-			conn, err = net.DialTimeout(c.transport, address, connTimeout)
+			w.LogInfo("connecting to %s://%s", w.transport, address)
+			conn, err = net.DialTimeout(w.transport, address, connTimeout)
 
 		case netutils.SocketTLS:
-			c.LogInfo("connecting to %s://%s", c.transport, address)
+			w.LogInfo("connecting to %s://%s", w.transport, address)
 
 			var tlsConfig *tls.Config
 
 			tlsOptions := pkgconfig.TLSOptions{
-				InsecureSkipVerify: c.config.Loggers.TCPClient.TLSInsecure,
-				MinVersion:         c.config.Loggers.TCPClient.TLSMinVersion,
-				CAFile:             c.config.Loggers.TCPClient.CAFile,
-				CertFile:           c.config.Loggers.TCPClient.CertFile,
-				KeyFile:            c.config.Loggers.TCPClient.KeyFile,
+				InsecureSkipVerify: w.GetConfig().Loggers.TCPClient.TLSInsecure,
+				MinVersion:         w.GetConfig().Loggers.TCPClient.TLSMinVersion,
+				CAFile:             w.GetConfig().Loggers.TCPClient.CAFile,
+				CertFile:           w.GetConfig().Loggers.TCPClient.CertFile,
+				KeyFile:            w.GetConfig().Loggers.TCPClient.KeyFile,
 			}
 
 			tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
@@ -204,57 +136,57 @@ func (c *TCPClient) ConnectToRemote() {
 				conn, err = tls.DialWithDialer(dialer, netutils.SocketTCP, address, tlsConfig)
 			}
 		default:
-			c.logger.Fatal("logger=tcpclient - invalid transport:", c.transport)
+			w.LogFatal("invalid transport:", w.transport)
 		}
 
 		// something is wrong during connection ?
 		if err != nil {
-			c.LogError("%s", err)
-			c.LogInfo("retry to connect in %d seconds", c.config.Loggers.TCPClient.RetryInterval)
-			time.Sleep(time.Duration(c.config.Loggers.TCPClient.RetryInterval) * time.Second)
+			w.LogError("%s", err)
+			w.LogInfo("retry to connect in %d seconds", w.GetConfig().Loggers.TCPClient.RetryInterval)
+			time.Sleep(time.Duration(w.GetConfig().Loggers.TCPClient.RetryInterval) * time.Second)
 			continue
 		}
 
-		c.transportConn = conn
+		w.transportConn = conn
 
 		// block until framestream is ready
-		c.transportReady <- true
+		w.transportReady <- true
 
 		// block until an error occurred, need to reconnect
-		c.transportReconnect <- true
+		w.transportReconnect <- true
 	}
 }
 
-func (c *TCPClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
+func (w *TCPClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	for _, dm := range *buf {
-		if c.config.Loggers.TCPClient.Mode == pkgconfig.ModeText {
-			c.transportWriter.Write(dm.Bytes(c.textFormat,
-				c.config.Global.TextFormatDelimiter,
-				c.config.Global.TextFormatBoundary))
-			c.transportWriter.WriteString(c.config.Loggers.TCPClient.PayloadDelimiter)
+		if w.GetConfig().Loggers.TCPClient.Mode == pkgconfig.ModeText {
+			w.transportWriter.Write(dm.Bytes(w.textFormat,
+				w.GetConfig().Global.TextFormatDelimiter,
+				w.GetConfig().Global.TextFormatBoundary))
+			w.transportWriter.WriteString(w.GetConfig().Loggers.TCPClient.PayloadDelimiter)
 		}
 
-		if c.config.Loggers.TCPClient.Mode == pkgconfig.ModeJSON {
-			json.NewEncoder(c.transportWriter).Encode(dm)
-			c.transportWriter.WriteString(c.config.Loggers.TCPClient.PayloadDelimiter)
+		if w.GetConfig().Loggers.TCPClient.Mode == pkgconfig.ModeJSON {
+			json.NewEncoder(w.transportWriter).Encode(dm)
+			w.transportWriter.WriteString(w.GetConfig().Loggers.TCPClient.PayloadDelimiter)
 		}
 
-		if c.config.Loggers.TCPClient.Mode == pkgconfig.ModeFlatJSON {
+		if w.GetConfig().Loggers.TCPClient.Mode == pkgconfig.ModeFlatJSON {
 			flat, err := dm.Flatten()
 			if err != nil {
-				c.LogError("flattening DNS message failed: %e", err)
+				w.LogError("flattening DNS message failed: %e", err)
 				continue
 			}
-			json.NewEncoder(c.transportWriter).Encode(flat)
-			c.transportWriter.WriteString(c.config.Loggers.TCPClient.PayloadDelimiter)
+			json.NewEncoder(w.transportWriter).Encode(flat)
+			w.transportWriter.WriteString(w.GetConfig().Loggers.TCPClient.PayloadDelimiter)
 		}
 
 		// flush the transport buffer
-		err := c.transportWriter.Flush()
+		err := w.transportWriter.Flush()
 		if err != nil {
-			c.LogError("send frame error", err.Error())
-			c.writerReady = false
-			<-c.transportReconnect
+			w.LogError("send frame error", err.Error())
+			w.writerReady = false
+			<-w.transportReconnect
 			break
 		}
 	}
@@ -263,102 +195,101 @@ func (c *TCPClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	*buf = nil
 }
 
-func (c *TCPClient) StartCollect() {
-	c.LogInfo("worker is starting collection")
+func (w *TCPClient) StartCollect() {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
-	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
-	listChannel = append(listChannel, c.outputChan)
-	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
+	listChannel = append(listChannel, w.GetOutputChannel())
+	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go c.Process()
+	go w.StartLogging()
 
 	// loop to process incoming messages
-RUN_LOOP:
 	for {
 		select {
-		case <-c.stopRun:
-			// cleanup transformers
+		case <-w.OnStop():
+			w.StopLogger()
 			subprocessors.Reset()
 
-			c.doneRun <- true
-			break RUN_LOOP
+			w.stopRead <- true
+			<-w.doneRead
 
-		case cfg, opened := <-c.configChan:
-			if !opened {
-				return
-			}
-			c.config = cfg
-			c.ReadConfig()
+			return
+
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
+			w.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-c.inputChan:
+		case dm, opened := <-w.GetInputChannel():
 			if !opened {
-				c.LogInfo("input channel closed!")
+				w.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
-				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
-			// send to next ?
-			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
-
 			// send to output channel
-			c.outputChan <- dm
+			w.GetOutputChannel() <- dm
+
+			// send to next ?
+			w.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
-	c.LogInfo("run terminated")
 }
 
-func (c *TCPClient) Process() {
+func (w *TCPClient) StartLogging() {
+	w.LogInfo("worker is starting logging")
+	defer w.LoggingDone()
+
 	// init buffer
 	bufferDm := []dnsutils.DNSMessage{}
 
 	// init flust timer for buffer
-	flushInterval := time.Duration(c.config.Loggers.TCPClient.FlushInterval) * time.Second
+	flushInterval := time.Duration(w.GetConfig().Loggers.TCPClient.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
 	// init remote conn
-	go c.ConnectToRemote()
+	go w.ConnectToRemote()
 
-	c.LogInfo("ready to process")
-PROCESS_LOOP:
+	w.LogInfo("ready to process")
 	for {
 		select {
-		case <-c.stopProcess:
+		case <-w.OnLoggerStopped():
 			// closing remote connection if exist
-			c.Disconnect()
-			c.doneProcess <- true
-			break PROCESS_LOOP
+			w.Disconnect()
+			return
 
-		case <-c.transportReady:
-			c.LogInfo("transport connected with success")
-			c.transportWriter = bufio.NewWriter(c.transportConn)
-			c.writerReady = true
+		case <-w.transportReady:
+			w.LogInfo("transport connected with success")
+			w.transportWriter = bufio.NewWriter(w.transportConn)
+			w.writerReady = true
 
 			// read from the connection until we stop
-			go c.ReadFromConnection()
+			go w.ReadFromConnection()
 
 		// incoming dns message to process
-		case dm, opened := <-c.outputChan:
+		case dm, opened := <-w.GetOutputChannel():
 			if !opened {
-				c.LogInfo("output channel closed!")
+				w.LogInfo("output channel closed!")
 				return
 			}
 
 			// drop dns message if the connection is not ready to avoid memory leak or
 			// to block the channel
-			if !c.writerReady {
+			if !w.writerReady {
 				continue
 			}
 
@@ -366,18 +297,18 @@ PROCESS_LOOP:
 			bufferDm = append(bufferDm, dm)
 
 			// buffer is full ?
-			if len(bufferDm) >= c.config.Loggers.TCPClient.BufferSize {
-				c.FlushBuffer(&bufferDm)
+			if len(bufferDm) >= w.GetConfig().Loggers.TCPClient.BufferSize {
+				w.FlushBuffer(&bufferDm)
 			}
 
 		// flush the buffer
 		case <-flushTimer.C:
-			if !c.writerReady {
+			if !w.writerReady {
 				bufferDm = nil
 			}
 
 			if len(bufferDm) > 0 {
-				c.FlushBuffer(&bufferDm)
+				w.FlushBuffer(&bufferDm)
 			}
 
 			// restart timer
@@ -385,5 +316,4 @@ PROCESS_LOOP:
 
 		}
 	}
-	c.LogInfo("processing terminated")
 }
