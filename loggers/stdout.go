@@ -39,10 +39,10 @@ type StdOut struct {
 }
 
 func NewStdOut(config *pkgconfig.Config, console *logger.Logger, name string) *StdOut {
-	s := &StdOut{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "stdout", config.Loggers.Stdout.ChannelBufferSize)}
-	s.writerText = log.New(os.Stdout, "", 0)
-	s.ReadConfig()
-	return s
+	w := &StdOut{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "stdout", config.Loggers.Stdout.ChannelBufferSize)}
+	w.writerText = log.New(os.Stdout, "", 0)
+	w.ReadConfig()
+	return w
 }
 
 func (w *StdOut) ReadConfig() {
@@ -77,7 +77,7 @@ func (w *StdOut) StartCollect() {
 
 	// prepare next channels
 	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}

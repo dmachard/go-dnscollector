@@ -177,7 +177,7 @@ func (c *DNSMessage) StartCollect() {
 
 	// prepare next channels
 	defaultRoutes, defaultNames := pkgutils.GetRoutes(c.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(c.GetDefaultRoutes())
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(c.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&c.GetConfig().IngoingTransformers, c.GetLogger(), c.GetName(), defaultRoutes, 0)
