@@ -56,7 +56,7 @@ func Test_DnstapRelay(t *testing.T) {
 
 			// start collector
 			c := NewDnstapProxifier([]pkgutils.Worker{g}, config, logger.New(false), "test")
-			go c.Run()
+			go c.StartCollect()
 
 			// start client
 			time.Sleep(1 * time.Second)

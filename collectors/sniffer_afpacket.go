@@ -20,7 +20,7 @@ func NewAfpacketSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger
 	return s
 }
 
-func (c *AfpacketSniffer) Run() {
+func (c *AfpacketSniffer) StartCollect() {
 	c.LogError("running collector failed...OS not supported!")
 	c.StopIsDone()
 }

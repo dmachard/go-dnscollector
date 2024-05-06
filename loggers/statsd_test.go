@@ -25,7 +25,7 @@ func TestStatsdRun(t *testing.T) {
 	defer fakeRcvr.Close()
 
 	// start the logger
-	go g.Run()
+	go g.StartCollect()
 
 	// send fake dns message to logger
 	dm := dnsutils.GetFakeDNSMessage()

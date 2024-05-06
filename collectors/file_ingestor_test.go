@@ -18,7 +18,7 @@ func Test_FileIngestor_Pcap(t *testing.T) {
 
 	// init collector
 	c := NewFileIngestor([]pkgutils.Worker{g}, config, logger.New(false), "test")
-	go c.Run()
+	go c.StartCollect()
 
 	// waiting message in channel
 	for {

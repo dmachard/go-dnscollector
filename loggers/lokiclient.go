@@ -202,8 +202,8 @@ func (c *LokiClient) Stop() {
 	<-c.doneProcess
 }
 
-func (c *LokiClient) Run() {
-	c.LogInfo("running in background...")
+func (c *LokiClient) StartCollect() {
+	c.LogInfo("worker is starting collection")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()

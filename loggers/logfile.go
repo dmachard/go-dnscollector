@@ -461,8 +461,8 @@ func (lf *LogFile) WriteToDnstap(data []byte) {
 	lf.fileSize += int64(n)
 }
 
-func (lf *LogFile) Run() {
-	lf.LogInfo("running in background...")
+func (lf *LogFile) StartCollect() {
+	lf.LogInfo("worker is starting collection")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := lf.RoutingHandler.GetDefaultRoutes()

@@ -83,7 +83,7 @@ func Test_KafkaProducer(t *testing.T) {
 
 			// start the logger
 			g := NewKafkaProducer(cfg, logger.New(false), "test")
-			go g.Run()
+			go g.StartCollect()
 
 			// wait connection
 			time.Sleep(1 * time.Second)

@@ -121,10 +121,9 @@ func (ec *ElasticSearchClient) Stop() {
 	<-ec.doneProcess
 }
 
-func (ec *ElasticSearchClient) Run() {
-	ec.LogInfo("waiting dnsmessage to process...")
+func (ec *ElasticSearchClient) StartCollect() {
+	ec.LogInfo("worker is starting collection")
 	defer func() {
-		ec.LogInfo("run terminated")
 		ec.doneRun <- true
 	}()
 

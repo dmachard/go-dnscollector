@@ -36,7 +36,7 @@ func Test_FalcoClient(t *testing.T) {
 			conf := pkgconfig.GetFakeConfig()
 			g := NewFalcoClient(conf, logger.New(false), "test")
 
-			go g.Run()
+			go g.StartCollect()
 
 			dm := dnsutils.GetFakeDNSMessage()
 			g.GetInputChannel() <- dm

@@ -15,7 +15,7 @@ func TestPowerDNS_Run(t *testing.T) {
 	g := pkgutils.NewFakeLogger()
 
 	c := NewProtobufPowerDNS([]pkgutils.Worker{g}, pkgconfig.GetFakeConfig(), logger.New(false), "test")
-	go c.Run()
+	go c.StartCollect()
 
 	// wait before to connect
 	time.Sleep(1 * time.Second)

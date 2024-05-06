@@ -92,8 +92,8 @@ func (ic *InfluxDBClient) Stop() {
 	<-ic.doneProcess
 }
 
-func (ic *InfluxDBClient) Run() {
-	ic.LogInfo("running in background...")
+func (ic *InfluxDBClient) StartCollect() {
+	ic.LogInfo("worker is starting collection")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := ic.RoutingHandler.GetDefaultRoutes()

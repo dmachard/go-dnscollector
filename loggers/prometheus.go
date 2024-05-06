@@ -1216,8 +1216,8 @@ func (c *Prometheus) ListenAndServe() {
 	c.doneAPI <- true
 }
 
-func (c *Prometheus) Run() {
-	c.LogInfo("running in background...")
+func (c *Prometheus) StartCollect() {
+	c.LogInfo("worker is starting collection")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()

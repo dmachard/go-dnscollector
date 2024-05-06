@@ -307,10 +307,9 @@ func (c *FileIngestor) RemoveEvent(filePath string) {
 	c.mu.Unlock()
 }
 
-func (c *FileIngestor) Run() {
-	c.LogInfo("running collector...")
+func (c *FileIngestor) StartCollect() {
+	c.LogInfo("worker is starting collection")
 	defer func() {
-		c.LogInfo("run terminated")
 		c.StopIsDone()
 	}()
 

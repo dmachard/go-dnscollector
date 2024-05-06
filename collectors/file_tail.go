@@ -40,10 +40,9 @@ func (c *Tail) Follow() error {
 	return nil
 }
 
-func (c *Tail) Run() {
-	c.LogInfo("running collector...")
+func (c *Tail) StartCollect() {
+	c.LogInfo("worker is starting collection")
 	defer func() {
-		c.LogInfo("run terminated")
 		c.StopIsDone()
 	}()
 
@@ -233,7 +232,7 @@ func (c *Tail) Run() {
 				select {
 				case defaultRoutes[i] <- dm: // Successful send to logger channel
 				default:
-					c.NextStanzaIsBusy(defaultNames[i])
+					c.WorkerIsBusy(defaultNames[i])
 				}
 			}
 		}

@@ -75,7 +75,7 @@ func Test_StdoutTextMode(t *testing.T) {
 			g := NewStdOut(cfg, logger.New(false), "test")
 			g.SetTextWriter(&stdout)
 
-			go g.Run()
+			go g.StartCollect()
 
 			// print dns message to stdout buffer
 			dm := dnsutils.GetFakeDNSMessage()
@@ -119,7 +119,7 @@ func Test_StdoutJsonMode(t *testing.T) {
 			g := NewStdOut(cfg, logger.New(false), "test")
 			g.SetTextWriter(&stdout)
 
-			go g.Run()
+			go g.StartCollect()
 
 			// print dns message to stdout buffer
 			dm := dnsutils.GetFakeDNSMessage()
@@ -150,7 +150,7 @@ func Test_StdoutPcapMode(t *testing.T) {
 	g := NewStdOut(cfg, logger.New(false), "test")
 	g.SetPcapWriter(&pcap)
 
-	go g.Run()
+	go g.StartCollect()
 
 	// send DNSMessage to channel
 	dm := dnsutils.GetFakeDNSMessageWithPayload()
@@ -191,7 +191,7 @@ func Test_StdoutPcapMode_NoDNSPayload(t *testing.T) {
 	g := NewStdOut(cfg, logger, "test")
 	g.SetPcapWriter(&pcap)
 
-	go g.Run()
+	go g.StartCollect()
 
 	// send DNSMessage to channel
 	dm := dnsutils.GetFakeDNSMessage()
@@ -228,7 +228,7 @@ func Test_StdoutBufferLoggerIsFull(t *testing.T) {
 	g.AddDefaultRoute(nxt)
 
 	// run collector
-	go g.Run()
+	go g.StartCollect()
 
 	// add a shot of dnsmessages to collector
 	dmIn := dnsutils.GetFakeDNSMessage()

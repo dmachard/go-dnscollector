@@ -275,8 +275,8 @@ func (c *RedisPub) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	*buf = nil
 }
 
-func (c *RedisPub) Run() {
-	c.LogInfo("running in background...")
+func (c *RedisPub) StartCollect() {
+	c.LogInfo("worker is starting collection")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()

@@ -107,8 +107,8 @@ func (o *ClickhouseClient) Stop() {
 	<-o.doneProcess
 }
 
-func (o *ClickhouseClient) Run() {
-	o.LogInfo("running in background...")
+func (o *ClickhouseClient) StartCollect() {
+	o.LogInfo("worker is starting collection")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := o.RoutingHandler.GetDefaultRoutes()

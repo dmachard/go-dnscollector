@@ -263,8 +263,8 @@ func (c *TCPClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	*buf = nil
 }
 
-func (c *TCPClient) Run() {
-	c.LogInfo("running in background...")
+func (c *TCPClient) StartCollect() {
+	c.LogInfo("worker is starting collection")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()

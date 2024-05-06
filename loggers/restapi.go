@@ -707,7 +707,9 @@ func (c *RestAPI) ListenAndServe() {
 	c.doneAPI <- true
 }
 
-func (c *RestAPI) Run() {
+func (c *RestAPI) StartCollect() {
+	c.LogInfo("worker is starting collection")
+
 	// prepare next channels
 	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
 	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()

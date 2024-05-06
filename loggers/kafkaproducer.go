@@ -259,8 +259,8 @@ func (k *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	*buf = nil
 }
 
-func (k *KafkaProducer) Run() {
-	k.LogInfo("waiting dnsmessage to process...")
+func (k *KafkaProducer) StartCollect() {
+	k.LogInfo("worker is starting collection")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := k.RoutingHandler.GetDefaultRoutes()

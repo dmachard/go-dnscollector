@@ -169,10 +169,9 @@ func (c *DNSMessage) LoadFromFile(filePath string, srcKind string) (MatchSource,
 	return matchSources, nil
 }
 
-func (c *DNSMessage) Run() {
-	c.LogInfo("running collector...")
+func (c *DNSMessage) StartCollect() {
+	c.LogInfo("worker is starting collection")
 	defer func() {
-		c.LogInfo("run terminated")
 		c.StopIsDone()
 	}()
 
@@ -197,7 +196,7 @@ func (c *DNSMessage) Run() {
 			c.SetConfig(cfg)
 			c.ReadConfig()
 
-		case dm, opened := <-c.inputChan:
+		case dm, opened := <-c.GetInputChannel():
 			if !opened {
 				c.LogInfo("channel closed, exit")
 				return
@@ -241,7 +240,7 @@ func (c *DNSMessage) Run() {
 						select {
 						case droppedRoutes[i] <- dm:
 						default:
-							c.NextStanzaIsBusy(droppedNames[i])
+							c.WorkerIsBusy(droppedNames[i])
 						}
 					}
 					continue
@@ -254,7 +253,7 @@ func (c *DNSMessage) Run() {
 					select {
 					case droppedRoutes[i] <- dm:
 					default:
-						c.NextStanzaIsBusy(droppedNames[i])
+						c.WorkerIsBusy(droppedNames[i])
 					}
 				}
 				continue
@@ -265,7 +264,7 @@ func (c *DNSMessage) Run() {
 				select {
 				case defaultRoutes[i] <- dm:
 				default:
-					c.NextStanzaIsBusy(defaultNames[i])
+					c.WorkerIsBusy(defaultNames[i])
 				}
 			}
 		}

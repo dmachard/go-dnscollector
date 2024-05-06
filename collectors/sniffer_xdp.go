@@ -34,10 +34,9 @@ func NewXDPSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *log
 	return s
 }
 
-func (c *XDPSniffer) Run() {
-	c.LogInfo("running collector...")
+func (c *XDPSniffer) StartCollect() {
+	c.LogInfo("worker is starting collection")
 	defer func() {
-		c.LogInfo("run terminated")
 		c.StopIsDone()
 	}()
 

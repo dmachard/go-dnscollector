@@ -90,8 +90,8 @@ func (fc *FalcoClient) Stop() {
 	<-fc.doneProcess
 }
 
-func (fc *FalcoClient) Run() {
-	fc.LogInfo("running in background...")
+func (fc *FalcoClient) StartCollect() {
+	fc.LogInfo("worker is starting collection")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := fc.RoutingHandler.GetDefaultRoutes()

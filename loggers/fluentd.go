@@ -229,8 +229,8 @@ func (fc *FluentdClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	*buf = nil
 }
 
-func (fc *FluentdClient) Run() {
-	fc.LogInfo("waiting dnsmessage to process...")
+func (fc *FluentdClient) StartCollect() {
+	fc.LogInfo("worker is starting collection")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := fc.RoutingHandler.GetDefaultRoutes()

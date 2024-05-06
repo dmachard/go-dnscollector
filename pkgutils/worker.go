@@ -14,24 +14,24 @@ type Worker interface {
 	SetLoggers(loggers []Worker)
 	GetName() string
 	Stop()
-	Run()
+	StartCollect()
 	GetInputChannel() chan dnsutils.DNSMessage
 	ReadConfig()
 	ReloadConfig(config *pkgconfig.Config)
 }
 
 type GenericWorker struct {
-	doneRun, stopRun, doneMonitor, stopMonitor chan bool
-	config                                     *pkgconfig.Config
-	configChan                                 chan *pkgconfig.Config
-	logger                                     *logger.Logger
-	name, descr                                string
-	droppedRoutes, defaultRoutes               []Worker
-	droppedProcessorCount                      int
-	droppedProcessor                           chan int
-	droppedStanza                              chan string
-	droppedStanzaCount                         map[string]int
-	dnsMessageIn, dnsMessageOut                chan dnsutils.DNSMessage
+	doneRun, stopRun, stopProcess, doneProcess, doneMonitor, stopMonitor chan bool
+	config                                                               *pkgconfig.Config
+	configChan                                                           chan *pkgconfig.Config
+	logger                                                               *logger.Logger
+	name, descr                                                          string
+	droppedRoutes, defaultRoutes                                         []Worker
+	droppedProcessorCount                                                int
+	droppedProcessor                                                     chan int
+	droppedStanza                                                        chan string
+	droppedStanzaCount                                                   map[string]int
+	dnsMessageIn, dnsMessageOut                                          chan dnsutils.DNSMessage
 }
 
 func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name string, descr string, bufferSize int) *GenericWorker {
@@ -44,8 +44,10 @@ func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name stri
 		descr:              descr,
 		doneRun:            make(chan bool),
 		doneMonitor:        make(chan bool),
+		doneProcess:        make(chan bool),
 		stopRun:            make(chan bool),
 		stopMonitor:        make(chan bool),
+		stopProcess:        make(chan bool),
 		droppedProcessor:   make(chan int),
 		droppedStanza:      make(chan string),
 		droppedStanzaCount: map[string]int{},
@@ -115,18 +117,31 @@ func (c *GenericWorker) OnStop() chan bool {
 	return c.stopRun
 }
 
+func (c *GenericWorker) OnLoggerStopped() chan bool {
+	return c.stopProcess
+}
+
+func (c *GenericWorker) StopLogger() {
+	c.stopProcess <- true
+	<-c.doneProcess
+}
+
 func (c *GenericWorker) StopIsDone() {
+	c.LogInfo("collection terminated")
 	c.doneRun <- true
 }
 
+func (c *GenericWorker) LoggerTerminated() {
+	c.LogInfo("logging terminated")
+	c.doneProcess <- true
+}
+
 func (c *GenericWorker) Stop() {
-	// stop monitor goroutine
 	c.LogInfo("stopping monitor...")
 	c.stopMonitor <- true
 	<-c.doneMonitor
 
-	// read done channel and block until run is terminated
-	c.LogInfo("stopping run...")
+	c.LogInfo("stopping collect...")
 	c.stopRun <- true
 	<-c.doneRun
 }
@@ -137,7 +152,7 @@ func (c *GenericWorker) Monitor() {
 		c.doneMonitor <- true
 	}()
 
-	c.LogInfo("start monitor")
+	c.LogInfo("start to monitor")
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 	for {
@@ -180,14 +195,20 @@ func (c *GenericWorker) ProcessorIsBusy() {
 	c.droppedProcessor <- 1
 }
 
-func (c *GenericWorker) NextStanzaIsBusy(name string) {
+func (c *GenericWorker) WorkerIsBusy(name string) {
 	c.droppedStanza <- name
 }
 
-func (c *GenericWorker) Run() {
-	c.LogInfo("running in background...")
+func (c *GenericWorker) StartCollect() {
+	c.LogInfo("worker is starting collection")
 	defer func() {
-		c.LogInfo("run terminated")
 		c.StopIsDone()
+	}()
+}
+
+func (c *GenericWorker) StartLogging() {
+	c.LogInfo("worker is starting logging")
+	defer func() {
+		c.LoggerTerminated()
 	}()
 }

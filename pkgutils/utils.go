@@ -46,4 +46,4 @@ func (c *FakeLogger) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 
-func (c *FakeLogger) Run() {}
+func (c *FakeLogger) StartCollect() {}

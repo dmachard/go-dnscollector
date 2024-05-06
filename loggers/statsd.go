@@ -243,8 +243,8 @@ func (c *StatsdClient) RecordDNSMessage(dm dnsutils.DNSMessage) {
 	)
 }
 
-func (c *StatsdClient) Run() {
-	c.LogInfo("running in background...")
+func (c *StatsdClient) StartCollect() {
+	c.LogInfo("worker is starting collection")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()

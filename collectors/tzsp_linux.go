@@ -74,10 +74,9 @@ func (c *TZSPSniffer) Listen() error {
 	return nil
 }
 
-func (c *TZSPSniffer) Run() {
-	c.LogInfo("running collector...")
+func (c *TZSPSniffer) StartCollect() {
+	c.LogInfo("worker is starting collection")
 	defer func() {
-		c.LogInfo("run terminated")
 		c.StopIsDone()
 	}()
 

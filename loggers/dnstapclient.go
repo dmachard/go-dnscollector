@@ -250,8 +250,8 @@ func (ds *DnstapSender) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	*buf = nil
 }
 
-func (ds *DnstapSender) Run() {
-	ds.LogInfo("running in background...")
+func (ds *DnstapSender) StartCollect() {
+	ds.LogInfo("worker is starting collection")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := ds.RoutingHandler.GetDefaultRoutes()

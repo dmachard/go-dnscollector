@@ -114,10 +114,9 @@ func (c *DnstapProxifier) HandleConn(conn net.Conn, connID uint64, forceClose ch
 	}
 }
 
-func (c *DnstapProxifier) Run() {
-	c.LogInfo("running collector...")
+func (c *DnstapProxifier) StartCollect() {
+	c.LogInfo("worker is starting collection")
 	defer func() {
-		c.LogInfo("run terminated")
 		c.StopIsDone()
 	}()
 

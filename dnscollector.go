@@ -184,10 +184,10 @@ func main() {
 	logger.Info("main - running...")
 
 	for _, l := range mapLoggers {
-		go l.Run()
+		go l.StartCollect()
 	}
 	for _, c := range mapCollectors {
-		go c.Run()
+		go c.StartCollect()
 	}
 
 	// block main

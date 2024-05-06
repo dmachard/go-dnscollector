@@ -51,7 +51,7 @@ func Test_TcpClientRun(t *testing.T) {
 			defer fakeRcvr.Close()
 
 			// start the logger
-			go g.Run()
+			go g.StartCollect()
 
 			// accept conn from logger
 			conn, err := fakeRcvr.Accept()
@@ -100,7 +100,7 @@ func Test_TcpClient_ConnectionAttempt(t *testing.T) {
 	g := NewTCPClient(cfg, logger.New(true), "test")
 
 	// start the logger
-	go g.Run()
+	go g.StartCollect()
 
 	// just way to get connect attempt
 	time.Sleep(time.Second * 3)

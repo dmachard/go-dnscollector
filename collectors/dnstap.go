@@ -175,10 +175,9 @@ func (c *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, 
 	}
 }
 
-func (c *Dnstap) Run() {
-	c.LogInfo("running collector...")
+func (c *Dnstap) StartCollect() {
+	c.LogInfo("worker is starting collection")
 	defer func() {
-		c.LogInfo("run terminated")
 		c.StopIsDone()
 	}()
 

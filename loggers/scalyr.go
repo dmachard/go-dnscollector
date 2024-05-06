@@ -152,8 +152,8 @@ func (c *ScalyrClient) ReloadConfig(config *pkgconfig.Config) {
 	c.configChan <- config
 }
 
-func (c *ScalyrClient) Run() {
-	c.LogInfo("running in background...")
+func (c *ScalyrClient) StartCollect() {
+	c.LogInfo("worker is starting collection")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()

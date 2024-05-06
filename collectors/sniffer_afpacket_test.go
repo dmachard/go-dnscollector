@@ -20,7 +20,7 @@ func TestAfpacketSnifferRun(t *testing.T) {
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector sniffer listening error: ", err)
 	}
-	go c.Run()
+	go c.StartCollect()
 
 	// send dns query
 	net.LookupIP("dns.collector")

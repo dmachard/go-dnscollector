@@ -80,8 +80,8 @@ func (so *DevNull) Stop() {
 	<-so.doneProcess
 }
 
-func (so *DevNull) Run() {
-	so.LogInfo("running in background...")
+func (so *DevNull) StartCollect() {
+	so.LogInfo("worker is starting collection")
 
 	// goroutine to process transformed dns messages
 	go so.Process()

@@ -258,8 +258,8 @@ func (s *Syslog) ConnectToRemote() {
 	}
 }
 
-func (s *Syslog) Run() {
-	s.LogInfo("running in background...")
+func (s *Syslog) StartCollect() {
+	s.LogInfo("worker is starting collection")
 
 	// prepare next channels
 	defaultRoutes, defaultNames := s.RoutingHandler.GetDefaultRoutes()

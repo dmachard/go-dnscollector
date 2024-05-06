@@ -39,7 +39,7 @@ func Test_ClickhouseClient(t *testing.T) {
 		t.Run(tc.mode, func(t *testing.T) {
 			g := NewClickhouseClient(cfg, logger.New(false), "test")
 
-			go g.Run()
+			go g.StartCollect()
 
 			dm := dnsutils.GetFakeDNSMessage()
 			g.Channel() <- dm
