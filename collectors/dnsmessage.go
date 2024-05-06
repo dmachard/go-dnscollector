@@ -236,37 +236,19 @@ func (c *DNSMessage) StartCollect() {
 			if matched {
 				subprocessors.InitDNSMessageFormat(&dm)
 				if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
-					for i := range droppedRoutes {
-						select {
-						case droppedRoutes[i] <- dm:
-						default:
-							c.WorkerIsBusy(droppedNames[i])
-						}
-					}
+					c.SendTo(droppedRoutes, droppedNames, dm)
 					continue
 				}
 			}
 
 			// drop packet ?
 			if !matched {
-				for i := range droppedRoutes {
-					select {
-					case droppedRoutes[i] <- dm:
-					default:
-						c.WorkerIsBusy(droppedNames[i])
-					}
-				}
+				c.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
 			// send to next
-			for i := range defaultRoutes {
-				select {
-				case defaultRoutes[i] <- dm:
-				default:
-					c.WorkerIsBusy(defaultNames[i])
-				}
-			}
+			c.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
 }

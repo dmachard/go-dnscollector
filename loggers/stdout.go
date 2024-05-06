@@ -3,7 +3,6 @@ package loggers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -87,11 +86,10 @@ func (w *StdOut) StartCollect() {
 	listChannel = append(listChannel, w.GetOutputChannel())
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), listChannel, 0)
 
-	// // goroutine to process transformed dns messages
+	// goroutine to process transformed dns messages
 	go w.StartLogging()
 
 	// loop to process incoming messages
-	// RUN_LOOP:
 	for {
 		select {
 		case <-w.OnStop():
@@ -114,28 +112,15 @@ func (w *StdOut) StartCollect() {
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
-				for i := range droppedRoutes {
-					select {
-					case droppedRoutes[i] <- dm:
-					default:
-						w.WorkerIsBusy(droppedNames[i])
-					}
-				}
+				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
 			// send to output channel
-			fmt.Println(dm)
 			w.GetOutputChannel() <- dm
 
 			// send to next ?
-			for i := range defaultRoutes {
-				select {
-				case defaultRoutes[i] <- dm:
-				default:
-					w.WorkerIsBusy(defaultNames[i])
-				}
-			}
+			w.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
 }

@@ -36,7 +36,7 @@ type GenericWorker struct {
 
 func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name string, descr string, bufferSize int) *GenericWorker {
 	logger.Info(PrefixLogCollector+"[%s] %s - enabled", name, descr)
-	c := &GenericWorker{
+	w := &GenericWorker{
 		config:             config,
 		configChan:         make(chan *pkgconfig.Config),
 		logger:             logger,
@@ -54,135 +54,135 @@ func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name stri
 		dnsMessageIn:       make(chan dnsutils.DNSMessage, bufferSize),
 		dnsMessageOut:      make(chan dnsutils.DNSMessage, bufferSize),
 	}
-	go c.Monitor()
-	return c
+	go w.Monitor()
+	return w
 }
 
-func (c *GenericWorker) GetName() string { return c.name }
+func (w *GenericWorker) GetName() string { return w.name }
 
-func (c *GenericWorker) GetConfig() *pkgconfig.Config { return c.config }
+func (w *GenericWorker) GetConfig() *pkgconfig.Config { return w.config }
 
-func (c *GenericWorker) SetConfig(config *pkgconfig.Config) { c.config = config }
+func (w *GenericWorker) SetConfig(config *pkgconfig.Config) { w.config = config }
 
-func (c *GenericWorker) ReadConfig() {}
+func (w *GenericWorker) ReadConfig() {}
 
-func (c *GenericWorker) NewConfig() chan *pkgconfig.Config { return c.configChan }
+func (w *GenericWorker) NewConfig() chan *pkgconfig.Config { return w.configChan }
 
-func (c *GenericWorker) GetLogger() *logger.Logger { return c.logger }
+func (w *GenericWorker) GetLogger() *logger.Logger { return w.logger }
 
-func (c *GenericWorker) GetDroppedRoutes() []Worker { return c.droppedRoutes }
+func (w *GenericWorker) GetDroppedRoutes() []Worker { return w.droppedRoutes }
 
-func (c *GenericWorker) GetDefaultRoutes() []Worker { return c.defaultRoutes }
+func (w *GenericWorker) GetDefaultRoutes() []Worker { return w.defaultRoutes }
 
-func (c *GenericWorker) GetInputChannel() chan dnsutils.DNSMessage { return c.dnsMessageIn }
+func (w *GenericWorker) GetInputChannel() chan dnsutils.DNSMessage { return w.dnsMessageIn }
 
-func (c *GenericWorker) GetOutputChannel() chan dnsutils.DNSMessage { return c.dnsMessageOut }
+func (w *GenericWorker) GetOutputChannel() chan dnsutils.DNSMessage { return w.dnsMessageOut }
 
-func (c *GenericWorker) AddDroppedRoute(wrk Worker) {
-	c.droppedRoutes = append(c.droppedRoutes, wrk)
+func (w *GenericWorker) AddDroppedRoute(wrk Worker) {
+	w.droppedRoutes = append(w.droppedRoutes, wrk)
 }
 
-func (c *GenericWorker) AddDefaultRoute(wrk Worker) {
-	c.defaultRoutes = append(c.defaultRoutes, wrk)
+func (w *GenericWorker) AddDefaultRoute(wrk Worker) {
+	w.defaultRoutes = append(w.defaultRoutes, wrk)
 }
 
-func (c *GenericWorker) SetDefaultRoutes(next []Worker) {
-	c.defaultRoutes = next
+func (w *GenericWorker) SetDefaultRoutes(next []Worker) {
+	w.defaultRoutes = next
 }
 
-func (c *GenericWorker) SetLoggers(loggers []Worker) { c.defaultRoutes = loggers }
+func (w *GenericWorker) SetLoggers(loggers []Worker) { w.defaultRoutes = loggers }
 
-func (c *GenericWorker) Loggers() ([]chan dnsutils.DNSMessage, []string) {
-	return GetRoutes(c.defaultRoutes)
+func (w *GenericWorker) Loggers() ([]chan dnsutils.DNSMessage, []string) {
+	return GetRoutes(w.defaultRoutes)
 }
 
-func (c *GenericWorker) ReloadConfig(config *pkgconfig.Config) {
-	c.LogInfo("reload configuration...")
-	c.configChan <- config
+func (w *GenericWorker) ReloadConfig(config *pkgconfig.Config) {
+	w.LogInfo("reload configuration...")
+	w.configChan <- config
 }
 
-func (c *GenericWorker) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info(PrefixLogCollector+"["+c.name+"] "+c.descr+" - "+msg, v...)
+func (w *GenericWorker) LogInfo(msg string, v ...interface{}) {
+	w.logger.Info(PrefixLogCollector+"["+w.name+"] "+w.descr+" - "+msg, v...)
 }
 
-func (c *GenericWorker) LogError(msg string, v ...interface{}) {
-	c.logger.Error(PrefixLogCollector+"["+c.name+"] "+c.descr+" - "+msg, v...)
+func (w *GenericWorker) LogError(msg string, v ...interface{}) {
+	w.logger.Error(PrefixLogCollector+"["+w.name+"] "+w.descr+" - "+msg, v...)
 }
 
-func (c *GenericWorker) LogFatal(v ...interface{}) {
-	c.logger.Fatal(v...)
+func (w *GenericWorker) LogFatal(v ...interface{}) {
+	w.logger.Fatal(v...)
 }
 
-func (c *GenericWorker) OnStop() chan bool {
-	return c.stopRun
+func (w *GenericWorker) OnStop() chan bool {
+	return w.stopRun
 }
 
-func (c *GenericWorker) OnLoggerStopped() chan bool {
-	return c.stopProcess
+func (w *GenericWorker) OnLoggerStopped() chan bool {
+	return w.stopProcess
 }
 
-func (c *GenericWorker) StopLogger() {
-	c.stopProcess <- true
-	<-c.doneProcess
+func (w *GenericWorker) StopLogger() {
+	w.stopProcess <- true
+	<-w.doneProcess
 }
 
-func (c *GenericWorker) StopIsDone() {
-	c.LogInfo("collection terminated")
-	c.doneRun <- true
+func (w *GenericWorker) StopIsDone() {
+	w.LogInfo("collection terminated")
+	w.doneRun <- true
 }
 
-func (c *GenericWorker) LoggerTerminated() {
-	c.LogInfo("logging terminated")
-	c.doneProcess <- true
+func (w *GenericWorker) LoggerTerminated() {
+	w.LogInfo("logging terminated")
+	w.doneProcess <- true
 }
 
-func (c *GenericWorker) Stop() {
-	c.LogInfo("stopping monitor...")
-	c.stopMonitor <- true
-	<-c.doneMonitor
+func (w *GenericWorker) Stop() {
+	w.LogInfo("stopping monitor...")
+	w.stopMonitor <- true
+	<-w.doneMonitor
 
-	c.LogInfo("stopping collect...")
-	c.stopRun <- true
-	<-c.doneRun
+	w.LogInfo("stopping collect...")
+	w.stopRun <- true
+	<-w.doneRun
 }
 
-func (c *GenericWorker) Monitor() {
+func (w *GenericWorker) Monitor() {
 	defer func() {
-		c.LogInfo("monitor terminated")
-		c.doneMonitor <- true
+		w.LogInfo("monitor terminated")
+		w.doneMonitor <- true
 	}()
 
-	c.LogInfo("start to monitor")
+	w.LogInfo("start to monitor")
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 	for {
 		select {
-		case <-c.droppedProcessor:
-			c.droppedProcessorCount++
+		case <-w.droppedProcessor:
+			w.droppedProcessorCount++
 
-		case loggerName := <-c.droppedStanza:
-			if _, ok := c.droppedStanzaCount[loggerName]; !ok {
-				c.droppedStanzaCount[loggerName] = 1
+		case loggerName := <-w.droppedStanza:
+			if _, ok := w.droppedStanzaCount[loggerName]; !ok {
+				w.droppedStanzaCount[loggerName] = 1
 			} else {
-				c.droppedStanzaCount[loggerName]++
+				w.droppedStanzaCount[loggerName]++
 			}
 
-		case <-c.stopMonitor:
-			close(c.droppedProcessor)
-			close(c.droppedStanza)
+		case <-w.stopMonitor:
+			close(w.droppedProcessor)
+			close(w.droppedStanza)
 			bufferFull.Stop()
 			return
 
 		case <-bufferFull.C:
-			if c.droppedProcessorCount > 0 {
-				c.LogError("processor buffer is full, %d dnsmessage(s) dropped", c.droppedProcessorCount)
-				c.droppedProcessorCount = 0
+			if w.droppedProcessorCount > 0 {
+				w.LogError("processor buffer is full, %d dnsmessage(s) dropped", w.droppedProcessorCount)
+				w.droppedProcessorCount = 0
 			}
 
-			for v, k := range c.droppedStanzaCount {
+			for v, k := range w.droppedStanzaCount {
 				if k > 0 {
-					c.LogError("worker[%s] buffer is full, %d dnsmessage(s) dropped", v, k)
-					c.droppedStanzaCount[v] = 0
+					w.LogError("worker[%s] buffer is full, %d dnsmessage(s) dropped", v, k)
+					w.droppedStanzaCount[v] = 0
 				}
 			}
 
@@ -191,24 +191,34 @@ func (c *GenericWorker) Monitor() {
 	}
 }
 
-func (c *GenericWorker) ProcessorIsBusy() {
-	c.droppedProcessor <- 1
+func (w *GenericWorker) ProcessorIsBusy() {
+	w.droppedProcessor <- 1
 }
 
-func (c *GenericWorker) WorkerIsBusy(name string) {
-	c.droppedStanza <- name
+func (w *GenericWorker) WorkerIsBusy(name string) {
+	w.droppedStanza <- name
 }
 
-func (c *GenericWorker) StartCollect() {
-	c.LogInfo("worker is starting collection")
+func (w *GenericWorker) StartCollect() {
+	w.LogInfo("worker is starting collection")
 	defer func() {
-		c.StopIsDone()
+		w.StopIsDone()
 	}()
 }
 
-func (c *GenericWorker) StartLogging() {
-	c.LogInfo("worker is starting logging")
+func (w *GenericWorker) StartLogging() {
+	w.LogInfo("worker is starting logging")
 	defer func() {
-		c.LoggerTerminated()
+		w.LoggerTerminated()
 	}()
+}
+
+func (w *GenericWorker) SendTo(routes []chan dnsutils.DNSMessage, routesName []string, dm dnsutils.DNSMessage) {
+	for i := range routes {
+		select {
+		case routes[i] <- dm:
+		default:
+			w.WorkerIsBusy(routesName[i])
+		}
+	}
 }
