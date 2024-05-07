@@ -595,3 +595,24 @@ func (c *ConfigLoggers) SetDefault() {
 func (c *ConfigLoggers) IsValid(userCfg map[string]interface{}) error {
 	return CheckConfigWithTags(reflect.ValueOf(*c), userCfg)
 }
+
+func (c *ConfigLoggers) GetNames() (ret []string) {
+	cl := reflect.TypeOf(*c)
+
+	for i := 0; i < cl.NumField(); i++ {
+		field := cl.Field(i)
+		tag := field.Tag.Get("yaml")
+		ret = append(ret, tag)
+	}
+	return ret
+}
+
+func (c *ConfigLoggers) IsExists(name string) bool {
+	tags := c.GetNames()
+	for i := range tags {
+		if name == tags[i] {
+			return true
+		}
+	}
+	return false
+}
