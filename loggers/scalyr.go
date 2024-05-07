@@ -26,14 +26,7 @@ import (
 // ScalyrClient is a client for Scalyr(https://www.dataset.com/)
 // This client is using the addEvents endpoint, described here: https://app.scalyr.com/help/api#addEvents
 type ScalyrClient struct {
-	stopProcess, doneProcess chan bool
-	stopRun, doneRun         chan bool
-	inputChan, outputChan    chan dnsutils.DNSMessage
-	logger                   *logger.Logger
-	name                     string
-	config                   *pkgconfig.Config
-	configChan               chan *pkgconfig.Config
-	RoutingHandler           pkgutils.RoutingHandler
+	*pkgutils.GenericWorker
 
 	mode       string
 	textFormat []string
@@ -46,85 +39,67 @@ type ScalyrClient struct {
 	parser     string       // Parser used by Scalyr
 	flush      *time.Ticker // Timer that allows us to flush events periodically
 
-	submissions chan []byte // Marshalled JSON to send to Scalyr
-
-	submitterDone chan bool // Will be written to when the HTTP submitter is done
+	submissions   chan []byte // Marshalled JSON to send to Scalyr
+	submitterDone chan bool   // Will be written to when the HTTP submitter is done
 }
 
 func NewScalyrClient(config *pkgconfig.Config, console *logger.Logger, name string) *ScalyrClient {
-	console.Info(pkgutils.PrefixLogLogger+"[%s] scalyr - starting", name)
-	c := &ScalyrClient{
-		stopProcess:    make(chan bool),
-		doneProcess:    make(chan bool),
-		stopRun:        make(chan bool),
-		doneRun:        make(chan bool),
-		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
-		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.ScalyrClient.ChannelBufferSize),
-		logger:         console,
-		name:           name,
-		config:         config,
-		configChan:     make(chan *pkgconfig.Config),
-		RoutingHandler: pkgutils.NewRoutingHandler(config, console, name),
-
-		mode: pkgconfig.ModeText,
-
-		endpoint: makeEndpoint("app.scalyr.com"),
-		flush:    time.NewTicker(30 * time.Second),
-
-		session: uuid.NewString(),
-
-		submissions:   make(chan []byte, 25),
-		submitterDone: make(chan bool),
-	}
-	c.ReadConfig()
-	return c
+	w := &ScalyrClient{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "scalyr", config.Loggers.ScalyrClient.ChannelBufferSize)}
+	w.mode = pkgconfig.ModeText
+	w.endpoint = makeEndpoint("app.scalyr.com")
+	w.flush = time.NewTicker(30 * time.Second)
+	w.session = uuid.NewString()
+	w.submissions = make(chan []byte, 25)
+	w.submitterDone = make(chan bool)
+	w.ReadConfig()
+	return w
 }
 
 func makeEndpoint(host string) string {
 	return fmt.Sprintf("https://%s/api/addEvents", host)
 }
 
-func (c *ScalyrClient) ReadConfig() {
-	if len(c.config.Loggers.ScalyrClient.APIKey) == 0 {
-		c.logger.Fatal("No API Key configured for Scalyr Client")
+func (w *ScalyrClient) ReadConfig() {
+	if len(w.GetConfig().Loggers.ScalyrClient.APIKey) == 0 {
+		w.LogFatal("No API Key configured for Scalyr Client")
 	}
-	c.apikey = c.config.Loggers.ScalyrClient.APIKey
+	w.apikey = w.GetConfig().Loggers.ScalyrClient.APIKey
 
-	if len(c.config.Loggers.ScalyrClient.Mode) != 0 {
-		c.mode = c.config.Loggers.ScalyrClient.Mode
+	if len(w.GetConfig().Loggers.ScalyrClient.Mode) != 0 {
+		w.mode = w.GetConfig().Loggers.ScalyrClient.Mode
 	}
 
-	if len(c.config.Loggers.ScalyrClient.Parser) == 0 && (c.mode == pkgconfig.ModeText || c.mode == pkgconfig.ModeJSON) {
-		c.logger.Fatal(fmt.Sprintf("No Scalyr parser configured for Scalyr Client in %s mode", c.mode))
+	if len(w.GetConfig().Loggers.ScalyrClient.Parser) == 0 && (w.mode == pkgconfig.ModeText || w.mode == pkgconfig.ModeJSON) {
+		w.LogFatal(fmt.Sprintf("No Scalyr parser configured for Scalyr Client in %s mode", w.mode))
 	}
-	c.parser = c.config.Loggers.ScalyrClient.Parser
+	w.parser = w.GetConfig().Loggers.ScalyrClient.Parser
 
-	if len(c.config.Loggers.ScalyrClient.TextFormat) > 0 {
-		c.textFormat = strings.Fields(c.config.Loggers.ScalyrClient.TextFormat)
+	if len(w.GetConfig().Loggers.ScalyrClient.TextFormat) > 0 {
+		w.textFormat = strings.Fields(w.GetConfig().Loggers.ScalyrClient.TextFormat)
 	} else {
-		c.textFormat = strings.Fields(c.config.Global.TextFormat)
+		w.textFormat = strings.Fields(w.GetConfig().Global.TextFormat)
 	}
 
-	if host := c.config.Loggers.ScalyrClient.ServerURL; host != "" {
-		c.endpoint = makeEndpoint(host)
+	if host := w.GetConfig().Loggers.ScalyrClient.ServerURL; host != "" {
+		w.endpoint = makeEndpoint(host)
 	}
 
-	if flushInterval := c.config.Loggers.ScalyrClient.FlushInterval; flushInterval != 0 {
-		c.flush = time.NewTicker(time.Duration(flushInterval) * time.Second)
+	if flushInterval := w.GetConfig().Loggers.ScalyrClient.FlushInterval; flushInterval != 0 {
+		w.flush = time.NewTicker(time.Duration(flushInterval) * time.Second)
 	}
 
 	// tls client config
 	tlsOptions := pkgconfig.TLSOptions{
-		InsecureSkipVerify: c.config.Loggers.ScalyrClient.TLSInsecure,
-		MinVersion:         c.config.Loggers.ScalyrClient.TLSMinVersion,
-		CAFile:             c.config.Loggers.ScalyrClient.CAFile,
-		CertFile:           c.config.Loggers.ScalyrClient.CertFile,
-		KeyFile:            c.config.Loggers.ScalyrClient.KeyFile,
+		InsecureSkipVerify: w.GetConfig().Loggers.ScalyrClient.TLSInsecure,
+		MinVersion:         w.GetConfig().Loggers.ScalyrClient.TLSMinVersion,
+		CAFile:             w.GetConfig().Loggers.ScalyrClient.CAFile,
+		CertFile:           w.GetConfig().Loggers.ScalyrClient.CertFile,
+		KeyFile:            w.GetConfig().Loggers.ScalyrClient.KeyFile,
 	}
 
 	tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
 	if err != nil {
-		c.logger.Fatal("unable to parse tls confgi: ", err)
+		w.LogFatal("unable to parse tls confgi: ", err)
 	}
 
 	// prepare http client
@@ -136,91 +111,83 @@ func (c *ScalyrClient) ReadConfig() {
 	}
 
 	// use proxy
-	if len(c.config.Loggers.ScalyrClient.ProxyURL) > 0 {
-		proxyURL, err := url.Parse(c.config.Loggers.ScalyrClient.ProxyURL)
+	if len(w.GetConfig().Loggers.ScalyrClient.ProxyURL) > 0 {
+		proxyURL, err := url.Parse(w.GetConfig().Loggers.ScalyrClient.ProxyURL)
 		if err != nil {
-			c.logger.Fatal("unable to parse proxy url: ", err)
+			w.LogFatal("unable to parse proxy url: ", err)
 		}
 		tr.Proxy = http.ProxyURL(proxyURL)
 	}
 
-	c.httpclient = &http.Client{Transport: tr}
+	w.httpclient = &http.Client{Transport: tr}
 }
 
-func (c *ScalyrClient) ReloadConfig(config *pkgconfig.Config) {
-	c.LogInfo("reload configuration!")
-	c.configChan <- config
-}
-
-func (c *ScalyrClient) StartCollect() {
-	c.LogInfo("worker is starting collection")
+func (w *ScalyrClient) StartCollect() {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
-	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
-	listChannel = append(listChannel, c.outputChan)
-	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
+	listChannel = append(listChannel, w.GetOutputChannel())
+	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go c.Process()
+	go w.StartLogging()
 
 	// loop to process incoming messages
-RUN_LOOP:
 	for {
 		select {
-		case <-c.stopRun:
-			// cleanup transformers
+		case <-w.OnStop():
+			w.StopLogger()
 			subprocessors.Reset()
+			return
 
-			c.doneRun <- true
-			break RUN_LOOP
-
-		case cfg, opened := <-c.configChan:
-			if !opened {
-				return
-			}
-			c.config = cfg
-			c.ReadConfig()
+			// new config provided?
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
+			w.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-c.inputChan:
+		case dm, opened := <-w.GetInputChannel():
 			if !opened {
-				c.LogInfo("input channel closed!")
+				w.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
-				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
-			// send to next ?
-			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
-
 			// send to output channel
-			c.outputChan <- dm
+			w.GetOutputChannel() <- dm
+
+			// send to next ?
+			w.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
-	c.LogInfo("run terminated")
 }
 
-func (c *ScalyrClient) Process() {
+func (w *ScalyrClient) StartLogging() {
+	w.LogInfo("worker is starting logging")
+	defer w.LoggingDone()
 
-	sInfo := c.config.Loggers.ScalyrClient.SessionInfo
+	sInfo := w.GetConfig().Loggers.ScalyrClient.SessionInfo
 	if sInfo == nil {
 		sInfo = make(map[string]string)
 	}
 	attrs := make(map[string]interface{})
-	for k, v := range c.config.Loggers.ScalyrClient.Attrs {
+	for k, v := range w.GetConfig().Loggers.ScalyrClient.Attrs {
 		attrs[k] = v
 	}
-	if len(c.parser) != 0 {
-		attrs["parser"] = c.parser
+	if len(w.parser) != 0 {
+		attrs["parser"] = w.parser
 	}
 	var events []event
 
@@ -232,46 +199,44 @@ func (c *ScalyrClient) Process() {
 		sInfo["serverHost"] = hostname
 	}
 
-	c.runSubmitter()
+	w.runSubmitter()
 
-	c.LogInfo("ready to process")
-PROCESS_LOOP:
 	for {
 		select {
-		case <-c.stopProcess:
+		case <-w.OnLoggerStopped():
 
 			if len(events) > 0 {
-				c.submitEventRecord(sInfo, events)
+				w.submitEventRecord(sInfo, events)
 			}
-			close(c.submissions)
+			close(w.submissions)
 
 			// Block until both threads are done
-			<-c.submitterDone
+			<-w.submitterDone
 
-			c.doneProcess <- true
-			break PROCESS_LOOP
-		// incoming dns message to process
-		case dm, opened := <-c.outputChan:
+			return
+
+			// incoming dns message to process
+		case dm, opened := <-w.GetOutputChannel():
 			if !opened {
-				c.LogInfo("output channel closed!")
+				w.LogInfo("output channel closed!")
 				return
 			}
 
-			switch c.mode {
+			switch w.mode {
 			case pkgconfig.ModeText:
-				attrs["message"] = string(dm.Bytes(c.textFormat,
-					c.config.Global.TextFormatDelimiter,
-					c.config.Global.TextFormatBoundary))
+				attrs["message"] = string(dm.Bytes(w.textFormat,
+					w.GetConfig().Global.TextFormatDelimiter,
+					w.GetConfig().Global.TextFormatBoundary))
 			case pkgconfig.ModeJSON:
 				attrs["message"] = dm
 			case pkgconfig.ModeFlatJSON:
 				var err error
 				if attrs, err = dm.Flatten(); err != nil {
-					c.LogError("unable to flatten: %e", err)
+					w.LogError("unable to flatten: %e", err)
 					break
 				}
 				// Add user's attrs without overwriting flattened ones
-				for k, v := range c.config.Loggers.ScalyrClient.Attrs {
+				for k, v := range w.GetConfig().Loggers.ScalyrClient.Attrs {
 					if _, ok := attrs[k]; !ok {
 						attrs[k] = v
 					}
@@ -285,57 +250,43 @@ PROCESS_LOOP:
 			if len(events) >= 400 {
 				// Maximum size of a POST is 6MB. 400 events would mean that each dnstap entry
 				// can be a little over 15 kB in JSON, which should be plenty.
-				c.submitEventRecord(sInfo, events)
+				w.submitEventRecord(sInfo, events)
 				events = []event{}
 			}
-		case <-c.flush.C:
+		case <-w.flush.C:
 			if len(events) > 0 {
-				c.submitEventRecord(sInfo, events)
+				w.submitEventRecord(sInfo, events)
 				events = []event{}
 			}
 		}
 	}
-	c.LogInfo("processing terminated")
 }
 
-func (c ScalyrClient) Stop() {
-	c.LogInfo("stopping logger...")
-	c.RoutingHandler.Stop()
-
-	c.LogInfo("stopping to run...")
-	c.stopRun <- true
-	<-c.doneRun
-
-	c.LogInfo("stopping to process...")
-	c.stopProcess <- true
-	<-c.doneProcess
-}
-
-func (c *ScalyrClient) submitEventRecord(sessionInfo map[string]string, events []event) {
+func (w *ScalyrClient) submitEventRecord(sessionInfo map[string]string, events []event) {
 	er := eventRecord{
-		Session:     c.session,
+		Session:     w.session,
 		SessionInfo: sessionInfo,
 		Events:      events,
 	}
 	buf, err := json.Marshal(er)
 	if err != nil {
 		// TODO should this panic?
-		c.LogError("Unable to create JSON from events: %e", err)
+		w.LogError("Unable to create JSON from events: %e", err)
 	}
-	c.submissions <- buf
+	w.submissions <- buf
 }
 
-func (c *ScalyrClient) runSubmitter() {
+func (w *ScalyrClient) runSubmitter() {
 	go func() {
-		for m := range c.submissions {
-			c.send(m)
+		for m := range w.submissions {
+			w.send(m)
 		}
-		c.submitterDone <- true
+		w.submitterDone <- true
 	}()
-	c.LogInfo("HTTP Submitter started")
+	w.LogInfo("HTTP Submitter started")
 }
 
-func (c *ScalyrClient) send(buf []byte) {
+func (w *ScalyrClient) send(buf []byte) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -350,20 +301,20 @@ func (c *ScalyrClient) send(buf []byte) {
 	})
 
 	for {
-		post, err := http.NewRequest("POST", c.endpoint, bytes.NewReader(buf))
+		post, err := http.NewRequest("POST", w.endpoint, bytes.NewReader(buf))
 		if err != nil {
-			c.LogError("new http error: %s", err)
+			w.LogError("new http error: %s", err)
 			return
 		}
 		post = post.WithContext(ctx)
 		post.Header.Set("Content-Type", "application/json")
 		post.Header.Set("User-Agent", "dnscollector")
-		post.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.apikey))
+		post.Header.Set("Authorization", fmt.Sprintf("Bearer %s", w.apikey))
 
 		// send post and read response
-		resp, err := c.httpclient.Do(post)
+		resp, err := w.httpclient.Do(post)
 		if err != nil {
-			c.LogError("do http error: %s", err)
+			w.LogError("do http error: %s", err)
 			return
 		}
 
@@ -376,9 +327,9 @@ func (c *ScalyrClient) send(buf []byte) {
 		if resp.StatusCode/100 != 2 {
 			response, err := parseServerResponse(resp.Body)
 			if err != nil {
-				c.LogError("server returned HTTP status %s (%d), unable to decode response: %e", resp.Status, resp.StatusCode, err)
+				w.LogError("server returned HTTP status %s (%d), unable to decode response: %e", resp.Status, resp.StatusCode, err)
 			} else {
-				c.LogError("server returned HTTP status %s (%d), %s", resp.Status, resp.StatusCode, response.Message)
+				w.LogError("server returned HTTP status %s (%d), %s", resp.Status, resp.StatusCode, response.Message)
 			}
 		}
 
@@ -400,14 +351,6 @@ func parseServerResponse(body io.ReadCloser) (response, error) {
 	}
 	err = json.Unmarshal(b, &response)
 	return response, err
-}
-
-func (c *ScalyrClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error(pkgutils.PrefixLogLogger+"["+c.name+"] scalyr - "+msg, v...)
-}
-
-func (c *ScalyrClient) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info(pkgutils.PrefixLogLogger+"["+c.name+"] scalyr - "+msg, v...)
 }
 
 // Models
@@ -446,20 +389,4 @@ type eventRecord struct {
 type response struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
-}
-
-func (c *ScalyrClient) GetName() string { return c.name }
-
-func (c *ScalyrClient) AddDroppedRoute(wrk pkgutils.Worker) {
-	c.RoutingHandler.AddDroppedRoute(wrk)
-}
-
-func (c *ScalyrClient) AddDefaultRoute(wrk pkgutils.Worker) {
-	c.RoutingHandler.AddDefaultRoute(wrk)
-}
-
-func (c *ScalyrClient) SetLoggers(loggers []pkgutils.Worker) {}
-
-func (c *ScalyrClient) GetInputChannel() chan dnsutils.DNSMessage {
-	return c.inputChan
 }

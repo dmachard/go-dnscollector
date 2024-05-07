@@ -301,7 +301,7 @@ func ensureMetricValue(t *testing.T, mf map[string]*dto.MetricFamily, name strin
 func getMetrics(prom *Prometheus, t *testing.T) map[string]*dto.MetricFamily {
 
 	request := httptest.NewRequest(http.MethodGet, "/metrics", strings.NewReader(""))
-	request.SetBasicAuth(prom.config.Loggers.Prometheus.BasicAuthLogin, prom.config.Loggers.Prometheus.BasicAuthPwd)
+	request.SetBasicAuth(prom.GetConfig().Loggers.Prometheus.BasicAuthLogin, prom.GetConfig().Loggers.Prometheus.BasicAuthPwd)
 	responseRecorder := httptest.NewRecorder()
 
 	// call handler

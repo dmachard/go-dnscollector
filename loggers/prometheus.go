@@ -162,16 +162,11 @@ func GetResolverIP(dm *dnsutils.DNSMessage) string {
 }
 
 type Prometheus struct {
-	doneAPI                  chan bool
-	stopProcess, doneProcess chan bool
-	stopRun, doneRun         chan bool
-	httpServer               *http.Server
-	netListener              net.Listener
-	inputChan, outputChan    chan dnsutils.DNSMessage
-	config                   *pkgconfig.Config
-	configChan               chan *pkgconfig.Config
-	logger                   *logger.Logger
-	promRegistry             *prometheus.Registry
+	*pkgutils.GenericWorker
+	doneAPI      chan bool
+	httpServer   *http.Server
+	netListener  net.Listener
+	promRegistry *prometheus.Registry
 
 	sync.Mutex
 	catalogueLabels []string
@@ -227,24 +222,21 @@ type Prometheus struct {
 	histogramRepliesLength *prometheus.HistogramVec
 	histogramQnamesLength  *prometheus.HistogramVec
 	histogramLatencies     *prometheus.HistogramVec
-
-	name           string
-	RoutingHandler pkgutils.RoutingHandler
 }
 
-func newPrometheusCounterSet(p *Prometheus, labels prometheus.Labels) *PrometheusCountersSet {
+func newPrometheusCounterSet(w *Prometheus, labels prometheus.Labels) *PrometheusCountersSet {
 	pcs := &PrometheusCountersSet{
-		prom:         p,
+		prom:         w,
 		labels:       labels,
-		requesters:   expirable.NewLRU[string, int](p.config.Loggers.Prometheus.RequestersCacheSize, nil, time.Second*time.Duration(p.config.Loggers.Prometheus.RequestersCacheTTL)),
-		allDomains:   expirable.NewLRU[string, int](p.config.Loggers.Prometheus.DomainsCacheSize, nil, time.Second*time.Duration(p.config.Loggers.Prometheus.DomainsCacheTTL)),
-		validDomains: expirable.NewLRU[string, int](p.config.Loggers.Prometheus.NoErrorDomainsCacheSize, nil, time.Second*time.Duration(p.config.Loggers.Prometheus.NoErrorDomainsCacheTTL)),
-		nxDomains:    expirable.NewLRU[string, int](p.config.Loggers.Prometheus.NXDomainsCacheSize, nil, time.Second*time.Duration(p.config.Loggers.Prometheus.NXDomainsCacheTTL)),
-		sfDomains:    expirable.NewLRU[string, int](p.config.Loggers.Prometheus.ServfailDomainsCacheSize, nil, time.Second*time.Duration(p.config.Loggers.Prometheus.ServfailDomainsCacheTTL)),
-		tlds:         expirable.NewLRU[string, int](p.config.Loggers.Prometheus.DefaultDomainsCacheSize, nil, time.Second*time.Duration(p.config.Loggers.Prometheus.DefaultDomainsCacheTTL)),
-		etldplusone:  expirable.NewLRU[string, int](p.config.Loggers.Prometheus.DefaultDomainsCacheSize, nil, time.Second*time.Duration(p.config.Loggers.Prometheus.DefaultDomainsCacheTTL)),
-		suspicious:   expirable.NewLRU[string, int](p.config.Loggers.Prometheus.DefaultDomainsCacheSize, nil, time.Second*time.Duration(p.config.Loggers.Prometheus.DefaultDomainsCacheTTL)),
-		evicted:      expirable.NewLRU[string, int](p.config.Loggers.Prometheus.DefaultDomainsCacheSize, nil, time.Second*time.Duration(p.config.Loggers.Prometheus.DefaultDomainsCacheTTL)),
+		requesters:   expirable.NewLRU[string, int](w.GetConfig().Loggers.Prometheus.RequestersCacheSize, nil, time.Second*time.Duration(w.GetConfig().Loggers.Prometheus.RequestersCacheTTL)),
+		allDomains:   expirable.NewLRU[string, int](w.GetConfig().Loggers.Prometheus.DomainsCacheSize, nil, time.Second*time.Duration(w.GetConfig().Loggers.Prometheus.DomainsCacheTTL)),
+		validDomains: expirable.NewLRU[string, int](w.GetConfig().Loggers.Prometheus.NoErrorDomainsCacheSize, nil, time.Second*time.Duration(w.GetConfig().Loggers.Prometheus.NoErrorDomainsCacheTTL)),
+		nxDomains:    expirable.NewLRU[string, int](w.GetConfig().Loggers.Prometheus.NXDomainsCacheSize, nil, time.Second*time.Duration(w.GetConfig().Loggers.Prometheus.NXDomainsCacheTTL)),
+		sfDomains:    expirable.NewLRU[string, int](w.GetConfig().Loggers.Prometheus.ServfailDomainsCacheSize, nil, time.Second*time.Duration(w.GetConfig().Loggers.Prometheus.ServfailDomainsCacheTTL)),
+		tlds:         expirable.NewLRU[string, int](w.GetConfig().Loggers.Prometheus.DefaultDomainsCacheSize, nil, time.Second*time.Duration(w.GetConfig().Loggers.Prometheus.DefaultDomainsCacheTTL)),
+		etldplusone:  expirable.NewLRU[string, int](w.GetConfig().Loggers.Prometheus.DefaultDomainsCacheSize, nil, time.Second*time.Duration(w.GetConfig().Loggers.Prometheus.DefaultDomainsCacheTTL)),
+		suspicious:   expirable.NewLRU[string, int](w.GetConfig().Loggers.Prometheus.DefaultDomainsCacheSize, nil, time.Second*time.Duration(w.GetConfig().Loggers.Prometheus.DefaultDomainsCacheTTL)),
+		evicted:      expirable.NewLRU[string, int](w.GetConfig().Loggers.Prometheus.DefaultDomainsCacheSize, nil, time.Second*time.Duration(w.GetConfig().Loggers.Prometheus.DefaultDomainsCacheTTL)),
 
 		epsCounters: EpsCounters{
 			TotalRcodes:     make(map[string]float64),
@@ -253,17 +245,17 @@ func newPrometheusCounterSet(p *Prometheus, labels prometheus.Labels) *Prometheu
 			TotalIPProtocol: make(map[string]float64),
 		},
 
-		topRequesters:   topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
-		topEvicted:      topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
-		topAllDomains:   topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
-		topValidDomains: topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
-		topSfDomains:    topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
-		topNxDomains:    topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
-		topTlds:         topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
-		topETLDPlusOne:  topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
-		topSuspicious:   topmap.NewTopMap(p.config.Loggers.Prometheus.TopN),
+		topRequesters:   topmap.NewTopMap(w.GetConfig().Loggers.Prometheus.TopN),
+		topEvicted:      topmap.NewTopMap(w.GetConfig().Loggers.Prometheus.TopN),
+		topAllDomains:   topmap.NewTopMap(w.GetConfig().Loggers.Prometheus.TopN),
+		topValidDomains: topmap.NewTopMap(w.GetConfig().Loggers.Prometheus.TopN),
+		topSfDomains:    topmap.NewTopMap(w.GetConfig().Loggers.Prometheus.TopN),
+		topNxDomains:    topmap.NewTopMap(w.GetConfig().Loggers.Prometheus.TopN),
+		topTlds:         topmap.NewTopMap(w.GetConfig().Loggers.Prometheus.TopN),
+		topETLDPlusOne:  topmap.NewTopMap(w.GetConfig().Loggers.Prometheus.TopN),
+		topSuspicious:   topmap.NewTopMap(w.GetConfig().Loggers.Prometheus.TopN),
 	}
-	prometheus.WrapRegistererWith(labels, p.promRegistry).MustRegister(pcs)
+	prometheus.WrapRegistererWith(labels, w.promRegistry).MustRegister(pcs)
 	return pcs
 }
 
@@ -328,14 +320,14 @@ func (w *PrometheusCountersSet) Record(dm dnsutils.DNSMessage) {
 	defer w.Unlock()
 
 	// count all uniq requesters if enabled
-	if w.prom.config.Loggers.Prometheus.RequestersMetricsEnabled {
+	if w.prom.GetConfig().Loggers.Prometheus.RequestersMetricsEnabled {
 		count, _ := w.requesters.Get(dm.NetworkInfo.QueryIP)
 		w.requesters.Add(dm.NetworkInfo.QueryIP, count+1)
 		w.topRequesters.Record(dm.NetworkInfo.QueryIP, count+1)
 	}
 
 	// count all uniq domains if enabled
-	if w.prom.config.Loggers.Prometheus.DomainsMetricsEnabled {
+	if w.prom.GetConfig().Loggers.Prometheus.DomainsMetricsEnabled {
 		count, _ := w.allDomains.Get(dm.DNS.Qname)
 		w.allDomains.Add(dm.DNS.Qname, count+1)
 		w.topAllDomains.Record(dm.DNS.Qname, count+1)
@@ -343,22 +335,22 @@ func (w *PrometheusCountersSet) Record(dm dnsutils.DNSMessage) {
 
 	// top domains
 	switch {
-	case dm.DNS.Rcode == dnsutils.DNSRcodeTimeout && w.prom.config.Loggers.Prometheus.TimeoutMetricsEnabled:
+	case dm.DNS.Rcode == dnsutils.DNSRcodeTimeout && w.prom.GetConfig().Loggers.Prometheus.TimeoutMetricsEnabled:
 		count, _ := w.evicted.Get(dm.DNS.Qname)
 		w.evicted.Add(dm.DNS.Qname, count+1)
 		w.topEvicted.Record(dm.DNS.Qname, count+1)
 
-	case dm.DNS.Rcode == dnsutils.DNSRcodeServFail && w.prom.config.Loggers.Prometheus.ServfailMetricsEnabled:
+	case dm.DNS.Rcode == dnsutils.DNSRcodeServFail && w.prom.GetConfig().Loggers.Prometheus.ServfailMetricsEnabled:
 		count, _ := w.sfDomains.Get(dm.DNS.Qname)
 		w.sfDomains.Add(dm.DNS.Qname, count+1)
 		w.topSfDomains.Record(dm.DNS.Qname, count+1)
 
-	case dm.DNS.Rcode == dnsutils.DNSRcodeNXDomain && w.prom.config.Loggers.Prometheus.NonExistentMetricsEnabled:
+	case dm.DNS.Rcode == dnsutils.DNSRcodeNXDomain && w.prom.GetConfig().Loggers.Prometheus.NonExistentMetricsEnabled:
 		count, _ := w.nxDomains.Get(dm.DNS.Qname)
 		w.nxDomains.Add(dm.DNS.Qname, count+1)
 		w.topNxDomains.Record(dm.DNS.Qname, count+1)
 
-	case dm.DNS.Rcode == dnsutils.DNSRcodeNoError && w.prom.config.Loggers.Prometheus.NoErrorMetricsEnabled:
+	case dm.DNS.Rcode == dnsutils.DNSRcodeNoError && w.prom.GetConfig().Loggers.Prometheus.NoErrorMetricsEnabled:
 		count, _ := w.validDomains.Get(dm.DNS.Qname)
 		w.validDomains.Add(dm.DNS.Qname, count+1)
 		w.topValidDomains.Record(dm.DNS.Qname, count+1)
@@ -386,7 +378,7 @@ func (w *PrometheusCountersSet) Record(dm dnsutils.DNSMessage) {
 	}
 
 	// compute histograms, no more enabled by default to avoid to hurt performance.
-	if w.prom.config.Loggers.Prometheus.HistogramMetricsEnabled {
+	if w.prom.GetConfig().Loggers.Prometheus.HistogramMetricsEnabled {
 		w.prom.histogramQnamesLength.With(w.labels).Observe(float64(len(dm.DNS.Qname)))
 
 		if dm.DNSTap.Latency > 0.0 {
@@ -638,18 +630,18 @@ func (w *PrometheusCountersSet) ComputeEventsPerSecond() {
 	}
 }
 
-func NewPromCounterCatalogueContainer(p *Prometheus, selLabels []string, l map[string]string) *PromCounterCatalogueContainer {
+func NewPromCounterCatalogueContainer(w *Prometheus, selLabels []string, l map[string]string) *PromCounterCatalogueContainer {
 	if len(selLabels) == 0 {
-		panic("Cannot create a new PromCounterCatalogueContainer with empty list of selLabels")
+		w.LogFatal("Cannot create a new PromCounterCatalogueContainer with empty list of selLabels")
 	}
 	sel, ok := catalogueSelectors[selLabels[0]]
 	if !ok {
-		panic(fmt.Sprintf("No selector for %v label", selLabels[0]))
+		w.LogFatal(fmt.Sprintf("No selector for %v label", selLabels[0]))
 	}
 
 	// copy all the data over, to make sure this container does not share memory with other containers
 	r := &PromCounterCatalogueContainer{
-		prom:       p,
+		prom:       w,
 		stats:      make(map[string]PrometheusCountersCatalogue),
 		selector:   sel,
 		labelNames: make([]string, len(selLabels)),
@@ -730,90 +722,61 @@ func (w *PromCounterCatalogueContainer) GetCountersSet(dm *dnsutils.DNSMessage) 
 
 // This function checks the configuration, to determine which label dimensions were requested
 // by configuration, and returns correct implementation of Catalogue.
-func CreateSystemCatalogue(o *Prometheus) ([]string, *PromCounterCatalogueContainer) {
-	lbls := o.config.Loggers.Prometheus.LabelsList
+func CreateSystemCatalogue(w *Prometheus) ([]string, *PromCounterCatalogueContainer) {
+	lbls := w.GetConfig().Loggers.Prometheus.LabelsList
 
 	// Default configuration is label with stream_id, to keep us backward compatible
 	if len(lbls) == 0 {
 		lbls = []string{"stream_id"}
 	}
-	return lbls, NewPromCounterCatalogueContainer(
-		o,
-		lbls,
-		make(map[string]string),
-	)
+	return lbls, NewPromCounterCatalogueContainer(w, lbls, make(map[string]string))
 }
 
 func NewPrometheus(config *pkgconfig.Config, logger *logger.Logger, name string) *Prometheus {
-	logger.Info(pkgutils.PrefixLogLogger+"[%s] prometheus - enabled", name)
-	o := &Prometheus{
-		doneAPI:        make(chan bool),
-		stopProcess:    make(chan bool),
-		doneProcess:    make(chan bool),
-		stopRun:        make(chan bool),
-		doneRun:        make(chan bool),
-		config:         config,
-		configChan:     make(chan *pkgconfig.Config),
-		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.Prometheus.ChannelBufferSize),
-		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.Prometheus.ChannelBufferSize),
-		logger:         logger,
-		promRegistry:   prometheus.NewPedanticRegistry(),
-		name:           name,
-		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
-	}
+	w := &Prometheus{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "prometheus", config.Loggers.Prometheus.ChannelBufferSize)}
+	w.doneAPI = make(chan bool)
+	w.promRegistry = prometheus.NewPedanticRegistry()
 
 	// This will create a catalogue of counters indexed by fileds requested by config
-	o.catalogueLabels, o.counters = CreateSystemCatalogue(o)
+	w.catalogueLabels, w.counters = CreateSystemCatalogue(w)
 
 	// init prometheus
-	o.InitProm()
+	w.InitProm()
 
 	// midleware to add basic authentication
 	authMiddleware := func(handler http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		return http.HandlerFunc(func(httpWriter http.ResponseWriter, r *http.Request) {
 			username, password, ok := r.BasicAuth()
-			if !ok || username != o.config.Loggers.Prometheus.BasicAuthLogin || password != o.config.Loggers.Prometheus.BasicAuthPwd {
-				w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-				w.WriteHeader(http.StatusUnauthorized)
-				fmt.Fprintf(w, "Unauthorized\n")
+			if !ok || username != w.GetConfig().Loggers.Prometheus.BasicAuthLogin || password != w.GetConfig().Loggers.Prometheus.BasicAuthPwd {
+				httpWriter.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+				httpWriter.WriteHeader(http.StatusUnauthorized)
+				fmt.Fprintf(httpWriter, "Unauthorized\n")
 				return
 			}
 
-			handler.ServeHTTP(w, r)
+			handler.ServeHTTP(httpWriter, r)
 		})
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("/metrics", promhttp.HandlerFor(o.promRegistry, promhttp.HandlerOpts{}))
+	mux.Handle("/metrics", promhttp.HandlerFor(w.promRegistry, promhttp.HandlerOpts{}))
 
 	handler := authMiddleware(mux)
 
-	o.httpServer = &http.Server{}
-	if o.config.Loggers.Prometheus.BasicAuthEnabled {
-		o.httpServer.Handler = handler
+	w.httpServer = &http.Server{}
+	if w.GetConfig().Loggers.Prometheus.BasicAuthEnabled {
+		w.httpServer.Handler = handler
 	} else {
-		o.httpServer.Handler = mux
+		w.httpServer.Handler = mux
 	}
 
-	o.httpServer.ErrorLog = o.logger.ErrorLogger()
-	return o
+	w.httpServer.ErrorLog = logger.ErrorLogger()
+	return w
 }
-
-func (w *Prometheus) GetName() string { return w.name }
-
-func (w *Prometheus) AddDroppedRoute(wrk pkgutils.Worker) {
-	w.RoutingHandler.AddDroppedRoute(wrk)
-}
-
-func (w *Prometheus) AddDefaultRoute(wrk pkgutils.Worker) {
-	w.RoutingHandler.AddDefaultRoute(wrk)
-}
-
-func (w *Prometheus) SetLoggers(loggers []pkgutils.Worker) {}
 
 func (w *Prometheus) InitProm() {
 
-	promPrefix := SanitizeMetricName(w.config.Loggers.Prometheus.PromPrefix)
+	promPrefix := SanitizeMetricName(w.GetConfig().Loggers.Prometheus.PromPrefix)
 
 	// register metric about current version information.
 	w.promRegistry.MustRegister(version.NewCollector(promPrefix))
@@ -1092,43 +1055,9 @@ func (w *Prometheus) InitProm() {
 }
 
 func (w *Prometheus) ReadConfig() {
-	if !pkgconfig.IsValidTLS(w.config.Loggers.Prometheus.TLSMinVersion) {
-		w.logger.Fatal(pkgutils.PrefixLogLogger + "[" + w.name + "] prometheus - invalid tls min version")
+	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.Prometheus.TLSMinVersion) {
+		w.LogFatal(pkgutils.PrefixLogLogger + "[" + w.GetName() + "] prometheus - invalid tls min version")
 	}
-}
-
-func (w *Prometheus) ReloadConfig(config *pkgconfig.Config) {
-	w.LogInfo("reload configuration!")
-	w.configChan <- config
-}
-
-func (w *Prometheus) LogInfo(msg string, v ...interface{}) {
-	w.logger.Info(pkgutils.PrefixLogLogger+"["+w.name+"] prometheus - "+msg, v...)
-}
-
-func (w *Prometheus) LogError(msg string, v ...interface{}) {
-	w.logger.Error(pkgutils.PrefixLogLogger+"["+w.name+"] prometheus - "+msg, v...)
-}
-
-func (w *Prometheus) GetInputChannel() chan dnsutils.DNSMessage {
-	return w.inputChan
-}
-
-func (w *Prometheus) Stop() {
-	w.LogInfo("stopping logger...")
-	w.RoutingHandler.Stop()
-
-	w.LogInfo("stopping to run...")
-	w.stopRun <- true
-	<-w.doneRun
-
-	w.LogInfo("stopping to process...")
-	w.stopProcess <- true
-	<-w.doneProcess
-
-	w.LogInfo("stopping http server...")
-	w.netListener.Close()
-	<-w.doneAPI
 }
 
 func (w *Prometheus) Record(dm dnsutils.DNSMessage) {
@@ -1161,14 +1090,14 @@ func (w *Prometheus) ListenAndServe() {
 
 	var err error
 	var listener net.Listener
-	addrlisten := w.config.Loggers.Prometheus.ListenIP + ":" + strconv.Itoa(w.config.Loggers.Prometheus.ListenPort)
+	addrlisten := w.GetConfig().Loggers.Prometheus.ListenIP + ":" + strconv.Itoa(w.GetConfig().Loggers.Prometheus.ListenPort)
 	// listening with tls enabled ?
-	if w.config.Loggers.Prometheus.TLSSupport {
+	if w.GetConfig().Loggers.Prometheus.TLSSupport {
 		w.LogInfo("tls support enabled")
 		var cer tls.Certificate
-		cer, err = tls.LoadX509KeyPair(w.config.Loggers.Prometheus.CertFile, w.config.Loggers.Prometheus.KeyFile)
+		cer, err = tls.LoadX509KeyPair(w.GetConfig().Loggers.Prometheus.CertFile, w.GetConfig().Loggers.Prometheus.KeyFile)
 		if err != nil {
-			w.logger.Fatal("loading certificate failed:", err)
+			w.LogFatal("loading certificate failed:", err)
 		}
 
 		// prepare tls configuration
@@ -1178,15 +1107,15 @@ func (w *Prometheus) ListenAndServe() {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = pkgconfig.TLSVersion[w.config.Loggers.Prometheus.TLSMinVersion]
+		tlsConfig.MinVersion = pkgconfig.TLSVersion[w.GetConfig().Loggers.Prometheus.TLSMinVersion]
 
-		if w.config.Loggers.Prometheus.TLSMutual {
+		if w.GetConfig().Loggers.Prometheus.TLSMutual {
 
 			// Create a CA certificate pool and add cert.pem to it
 			var caCert []byte
-			caCert, err = os.ReadFile(w.config.Loggers.Prometheus.CertFile)
+			caCert, err = os.ReadFile(w.GetConfig().Loggers.Prometheus.CertFile)
 			if err != nil {
-				w.logger.Fatal(err)
+				w.LogFatal(err)
 			}
 			caCertPool := x509.NewCertPool()
 			caCertPool.AppendCertsFromPEM(caCert)
@@ -1204,7 +1133,7 @@ func (w *Prometheus) ListenAndServe() {
 
 	// something wrong ?
 	if err != nil {
-		w.logger.Fatal("http server listening failed:", err)
+		w.LogFatal("http server listening failed:", err)
 	}
 
 	w.netListener = listener
@@ -1218,41 +1147,41 @@ func (w *Prometheus) ListenAndServe() {
 
 func (w *Prometheus) StartCollect() {
 	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := w.RoutingHandler.GetDefaultRoutes()
-	droppedRoutes, droppedNames := w.RoutingHandler.GetDroppedRoutes()
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
-	listChannel = append(listChannel, w.outputChan)
-	subprocessors := transformers.NewTransforms(&w.config.OutgoingTransformers, w.logger, w.name, listChannel, 0)
+	listChannel = append(listChannel, w.GetOutputChannel())
+	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), listChannel, 0)
 
 	// start http server
 	go w.ListenAndServe()
 
 	// goroutine to process transformed dns messages
-	go w.Process()
+	go w.StartLogging()
 
 	// loop to process incoming messages
-RUN_LOOP:
 	for {
 		select {
-		case <-w.stopRun:
-			// cleanup transformers
+		case <-w.OnStop():
+			w.StopLogger()
 			subprocessors.Reset()
-			w.doneRun <- true
-			break RUN_LOOP
+			w.LogInfo("stopping http server...")
+			w.netListener.Close()
+			<-w.doneAPI
+			return
 
-		case cfg, opened := <-w.configChan:
-			if !opened {
-				return
-			}
-			w.config = cfg
+			// new config provided?
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
 			w.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-w.inputChan:
+		case dm, opened := <-w.GetInputChannel():
 			if !opened {
 				w.LogInfo("input channel closed!")
 				return
@@ -1261,33 +1190,33 @@ RUN_LOOP:
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
-				w.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
-			// send to next ?
-			w.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
-
 			// send to output channel
-			w.outputChan <- dm
+			w.GetOutputChannel() <- dm
+
+			// send to next ?
+			w.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
-	w.LogInfo("run terminated")
 }
 
-func (w *Prometheus) Process() {
+func (w *Prometheus) StartLogging() {
+	w.LogInfo("worker is starting logging")
+	defer w.LoggingDone()
+
 	// init timer to compute qps
 	t1Interval := 1 * time.Second
 	t1 := time.NewTimer(t1Interval)
 
-	w.LogInfo("ready to process")
-PROCESS_LOOP:
 	for {
 		select {
-		case <-w.stopProcess:
-			w.doneProcess <- true
-			break PROCESS_LOOP
-		case dm, opened := <-w.outputChan:
+		case <-w.OnLoggerStopped():
+			return
+
+		case dm, opened := <-w.GetOutputChannel():
 			if !opened {
 				w.LogInfo("output channel closed!")
 				return
@@ -1304,7 +1233,6 @@ PROCESS_LOOP:
 			t1.Reset(t1Interval)
 		}
 	}
-	w.LogInfo("processing terminated")
 }
 
 /*
