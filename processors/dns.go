@@ -9,14 +9,7 @@ import (
 	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
-	"github.com/miekg/dns"
 )
-
-func GetFakeDNS() ([]byte, error) {
-	dnsmsg := new(dns.Msg)
-	dnsmsg.SetQuestion("dns.collector.", dns.TypeA)
-	return dnsmsg.Pack()
-}
 
 type DNSProcessor struct {
 	doneRun, stopRun         chan bool

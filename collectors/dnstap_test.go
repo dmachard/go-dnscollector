@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
@@ -96,7 +97,7 @@ func Test_DnstapCollector(t *testing.T) {
 				subFrame := &framestream.Frame{}
 
 				// get fake dns question
-				dnsquery, err := processors.GetFakeDNS()
+				dnsquery, err := dnsutils.GetFakeDNS()
 				if err != nil {
 					t.Fatalf("dns question pack error")
 				}
