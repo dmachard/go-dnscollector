@@ -3,7 +3,7 @@
 
 global:
   trace:
-    verbose: false
+    verbose: true
 
 pipelines:
   - name: tap

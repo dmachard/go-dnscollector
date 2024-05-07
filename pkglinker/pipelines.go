@@ -19,6 +19,13 @@ func GetStanzaConfig(config *pkgconfig.Config, item pkgconfig.ConfigPipelines) *
 
 	// Enable the provided collector or loggers
 	for k, p := range item.Params {
+		// is a logger or collector ?
+		if !config.Loggers.IsExists(k) && !config.Collectors.IsExists(k) {
+			panic(fmt.Sprintln("main - get stanza config error"))
+		}
+		if config.Loggers.IsExists(k) {
+			section = "loggers"
+		}
 		if p == nil {
 			item.Params[k] = make(map[string]interface{})
 		}
