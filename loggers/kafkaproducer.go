@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -21,169 +20,106 @@ import (
 )
 
 type KafkaProducer struct {
-	stopProcess, doneProcess   chan bool
-	stopRun, doneRun           chan bool
-	inputChan, outputChan      chan dnsutils.DNSMessage
-	config                     *pkgconfig.Config
-	configChan                 chan *pkgconfig.Config
-	logger                     *logger.Logger
+	*pkgutils.GenericWorker
 	textFormat                 []string
-	name                       string
 	kafkaConn                  *kafka.Conn
 	kafkaReady, kafkaReconnect chan bool
 	kafkaConnected             bool
 	compressCodec              compress.Codec
-	RoutingHandler             pkgutils.RoutingHandler
 }
 
 func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name string) *KafkaProducer {
-	logger.Info(pkgutils.PrefixLogLogger+"[%s] kafka - enabled", name)
-	k := &KafkaProducer{
-		stopProcess:    make(chan bool),
-		doneProcess:    make(chan bool),
-		stopRun:        make(chan bool),
-		doneRun:        make(chan bool),
-		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.KafkaProducer.ChannelBufferSize),
-		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.KafkaProducer.ChannelBufferSize),
-		logger:         logger,
-		config:         config,
-		configChan:     make(chan *pkgconfig.Config),
-		kafkaReady:     make(chan bool),
-		kafkaReconnect: make(chan bool),
-		name:           name,
-		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
-	}
-
-	k.ReadConfig()
-	return k
+	w := &KafkaProducer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "kafka", config.Loggers.KafkaProducer.ChannelBufferSize)}
+	w.kafkaReady = make(chan bool)
+	w.kafkaReconnect = make(chan bool)
+	w.ReadConfig()
+	return w
 }
 
-func (k *KafkaProducer) GetName() string { return k.name }
-
-func (k *KafkaProducer) AddDroppedRoute(wrk pkgutils.Worker) {
-	k.RoutingHandler.AddDroppedRoute(wrk)
-}
-
-func (k *KafkaProducer) AddDefaultRoute(wrk pkgutils.Worker) {
-	k.RoutingHandler.AddDefaultRoute(wrk)
-}
-
-func (k *KafkaProducer) SetLoggers(loggers []pkgutils.Worker) {}
-
-func (k *KafkaProducer) ReadConfig() {
-	if len(k.config.Loggers.KafkaProducer.TextFormat) > 0 {
-		k.textFormat = strings.Fields(k.config.Loggers.KafkaProducer.TextFormat)
+func (w *KafkaProducer) ReadConfig() {
+	if len(w.GetConfig().Loggers.KafkaProducer.TextFormat) > 0 {
+		w.textFormat = strings.Fields(w.GetConfig().Loggers.KafkaProducer.TextFormat)
 	} else {
-		k.textFormat = strings.Fields(k.config.Global.TextFormat)
+		w.textFormat = strings.Fields(w.GetConfig().Global.TextFormat)
 	}
 
-	if k.config.Loggers.KafkaProducer.Compression != pkgconfig.CompressNone {
-		switch k.config.Loggers.KafkaProducer.Compression {
+	if w.GetConfig().Loggers.KafkaProducer.Compression != pkgconfig.CompressNone {
+		switch w.GetConfig().Loggers.KafkaProducer.Compression {
 		case pkgconfig.CompressGzip:
-			k.compressCodec = &compress.GzipCodec
+			w.compressCodec = &compress.GzipCodec
 		case pkgconfig.CompressLz4:
-			k.compressCodec = &compress.Lz4Codec
+			w.compressCodec = &compress.Lz4Codec
 		case pkgconfig.CompressSnappy:
-			k.compressCodec = &compress.SnappyCodec
+			w.compressCodec = &compress.SnappyCodec
 		case pkgconfig.CompressZstd:
-			k.compressCodec = &compress.ZstdCodec
+			w.compressCodec = &compress.ZstdCodec
 		case pkgconfig.CompressNone:
-			k.compressCodec = nil
+			w.compressCodec = nil
 		default:
-			log.Fatal(pkgutils.PrefixLogLogger+"["+k.name+"] kafka - invalid compress mode: ", k.config.Loggers.KafkaProducer.Compression)
+			w.LogFatal(pkgutils.PrefixLogLogger+"["+w.GetName()+"] kafka - invalid compress mode: ", w.GetConfig().Loggers.KafkaProducer.Compression)
 		}
 	}
 }
 
-func (k *KafkaProducer) ReloadConfig(config *pkgconfig.Config) {
-	k.LogInfo("reload configuration!")
-	k.configChan <- config
-}
-
-func (k *KafkaProducer) LogInfo(msg string, v ...interface{}) {
-	k.logger.Info(pkgutils.PrefixLogLogger+"["+k.name+"] kafka - "+msg, v...)
-}
-
-func (k *KafkaProducer) LogError(msg string, v ...interface{}) {
-	k.logger.Error(pkgutils.PrefixLogLogger+"["+k.name+"] kafka - "+msg, v...)
-}
-
-func (k *KafkaProducer) GetInputChannel() chan dnsutils.DNSMessage {
-	return k.inputChan
-}
-
-func (k *KafkaProducer) Stop() {
-	k.LogInfo("stopping logger...")
-	k.RoutingHandler.Stop()
-
-	k.LogInfo("stopping to run...")
-	k.stopRun <- true
-	<-k.doneRun
-
-	k.LogInfo("stopping to process...")
-	k.stopProcess <- true
-	<-k.doneProcess
-}
-
-func (k *KafkaProducer) Disconnect() {
-	if k.kafkaConn != nil {
-		k.LogInfo("closing  connection")
-		k.kafkaConn.Close()
+func (w *KafkaProducer) Disconnect() {
+	if w.kafkaConn != nil {
+		w.LogInfo("closing  connection")
+		w.kafkaConn.Close()
 	}
 }
 
-func (k *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Timer) {
+func (w *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Timer) {
 	for {
 		readyTimer.Reset(time.Duration(10) * time.Second)
 
-		if k.kafkaConn != nil {
-			k.kafkaConn.Close()
-			k.kafkaConn = nil
+		if w.kafkaConn != nil {
+			w.kafkaConn.Close()
+			w.kafkaConn = nil
 		}
 
-		topic := k.config.Loggers.KafkaProducer.Topic
-		partition := k.config.Loggers.KafkaProducer.Partition
-		address := k.config.Loggers.KafkaProducer.RemoteAddress + ":" + strconv.Itoa(k.config.Loggers.KafkaProducer.RemotePort)
+		topic := w.GetConfig().Loggers.KafkaProducer.Topic
+		partition := w.GetConfig().Loggers.KafkaProducer.Partition
+		address := w.GetConfig().Loggers.KafkaProducer.RemoteAddress + ":" + strconv.Itoa(w.GetConfig().Loggers.KafkaProducer.RemotePort)
 
-		k.LogInfo("connecting to kafka=%s partition=%d topic=%s", address, partition, topic)
+		w.LogInfo("connecting to kafka=%s partition=%d topic=%s", address, partition, topic)
 
 		dialer := &kafka.Dialer{
-			Timeout:   time.Duration(k.config.Loggers.KafkaProducer.ConnectTimeout) * time.Second,
+			Timeout:   time.Duration(w.GetConfig().Loggers.KafkaProducer.ConnectTimeout) * time.Second,
 			Deadline:  time.Now().Add(5 * time.Second),
 			DualStack: true,
 		}
 
 		// enable TLS
-		if k.config.Loggers.KafkaProducer.TLSSupport {
+		if w.GetConfig().Loggers.KafkaProducer.TLSSupport {
 			tlsOptions := pkgconfig.TLSOptions{
-				InsecureSkipVerify: k.config.Loggers.KafkaProducer.TLSInsecure,
-				MinVersion:         k.config.Loggers.KafkaProducer.TLSMinVersion,
-				CAFile:             k.config.Loggers.KafkaProducer.CAFile,
-				CertFile:           k.config.Loggers.KafkaProducer.CertFile,
-				KeyFile:            k.config.Loggers.KafkaProducer.KeyFile,
+				InsecureSkipVerify: w.GetConfig().Loggers.KafkaProducer.TLSInsecure,
+				MinVersion:         w.GetConfig().Loggers.KafkaProducer.TLSMinVersion,
+				CAFile:             w.GetConfig().Loggers.KafkaProducer.CAFile,
+				CertFile:           w.GetConfig().Loggers.KafkaProducer.CertFile,
+				KeyFile:            w.GetConfig().Loggers.KafkaProducer.KeyFile,
 			}
 
 			tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
 			if err != nil {
-				k.logger.Fatal("logger=kafka - tls config failed:", err)
+				w.LogFatal("logger=kafka - tls config failed:", err)
 			}
 			dialer.TLS = tlsConfig
 		}
 
 		// SASL Support
-		if k.config.Loggers.KafkaProducer.SaslSupport {
-			switch k.config.Loggers.KafkaProducer.SaslMechanism {
+		if w.GetConfig().Loggers.KafkaProducer.SaslSupport {
+			switch w.GetConfig().Loggers.KafkaProducer.SaslMechanism {
 			case pkgconfig.SASLMechanismPlain:
 				mechanism := plain.Mechanism{
-					Username: k.config.Loggers.KafkaProducer.SaslUsername,
-					Password: k.config.Loggers.KafkaProducer.SaslPassword,
+					Username: w.GetConfig().Loggers.KafkaProducer.SaslUsername,
+					Password: w.GetConfig().Loggers.KafkaProducer.SaslPassword,
 				}
 				dialer.SASLMechanism = mechanism
 			case pkgconfig.SASLMechanismScram:
 				mechanism, err := scram.Mechanism(
 					scram.SHA512,
-					k.config.Loggers.KafkaProducer.SaslUsername,
-					k.config.Loggers.KafkaProducer.SaslPassword,
+					w.GetConfig().Loggers.KafkaProducer.SaslUsername,
+					w.GetConfig().Loggers.KafkaProducer.SaslPassword,
 				)
 				if err != nil {
 					panic(err)
@@ -196,29 +132,29 @@ func (k *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Tim
 		// connect
 		conn, err := dialer.DialLeader(ctx, "tcp", address, topic, partition)
 		if err != nil {
-			k.LogError("%s", err)
-			k.LogInfo("retry to connect in %d seconds", k.config.Loggers.KafkaProducer.RetryInterval)
-			time.Sleep(time.Duration(k.config.Loggers.KafkaProducer.RetryInterval) * time.Second)
+			w.LogError("%s", err)
+			w.LogInfo("retry to connect in %d seconds", w.GetConfig().Loggers.KafkaProducer.RetryInterval)
+			time.Sleep(time.Duration(w.GetConfig().Loggers.KafkaProducer.RetryInterval) * time.Second)
 			continue
 		}
 
-		k.kafkaConn = conn
+		w.kafkaConn = conn
 
 		// block until is ready
-		k.kafkaReady <- true
-		k.kafkaReconnect <- true
+		w.kafkaReady <- true
+		w.kafkaReconnect <- true
 	}
 }
 
-func (k *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
+func (w *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	msgs := []kafka.Message{}
 	buffer := new(bytes.Buffer)
 	strDm := ""
 
 	for _, dm := range *buf {
-		switch k.config.Loggers.KafkaProducer.Mode {
+		switch w.GetConfig().Loggers.KafkaProducer.Mode {
 		case pkgconfig.ModeText:
-			strDm = dm.String(k.textFormat, k.config.Global.TextFormatDelimiter, k.config.Global.TextFormatBoundary)
+			strDm = dm.String(w.textFormat, w.GetConfig().Global.TextFormatDelimiter, w.GetConfig().Global.TextFormatBoundary)
 		case pkgconfig.ModeJSON:
 			json.NewEncoder(buffer).Encode(dm)
 			strDm = buffer.String()
@@ -226,7 +162,7 @@ func (k *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 		case pkgconfig.ModeFlatJSON:
 			flat, err := dm.Flatten()
 			if err != nil {
-				k.LogError("flattening DNS message failed: %e", err)
+				w.LogError("flattening DNS message failed: %e", err)
 			}
 			json.NewEncoder(buffer).Encode(flat)
 			strDm = buffer.String()
@@ -243,81 +179,77 @@ func (k *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 
 	// add support for msg compression
 	var err error
-	if k.config.Loggers.KafkaProducer.Compression == pkgconfig.CompressNone {
-		_, err = k.kafkaConn.WriteMessages(msgs...)
+	if w.GetConfig().Loggers.KafkaProducer.Compression == pkgconfig.CompressNone {
+		_, err = w.kafkaConn.WriteMessages(msgs...)
 	} else {
-		_, err = k.kafkaConn.WriteCompressedMessages(k.compressCodec, msgs...)
+		_, err = w.kafkaConn.WriteCompressedMessages(w.compressCodec, msgs...)
 	}
 
 	if err != nil {
-		k.LogError("unable to write message", err.Error())
-		k.kafkaConnected = false
-		<-k.kafkaReconnect
+		w.LogError("unable to write message", err.Error())
+		w.kafkaConnected = false
+		<-w.kafkaReconnect
 	}
 
 	// reset buffer
 	*buf = nil
 }
 
-func (k *KafkaProducer) StartCollect() {
-	k.LogInfo("worker is starting collection")
+func (w *KafkaProducer) StartCollect() {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := k.RoutingHandler.GetDefaultRoutes()
-	droppedRoutes, droppedNames := k.RoutingHandler.GetDroppedRoutes()
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	listChannel := []chan dnsutils.DNSMessage{}
-	listChannel = append(listChannel, k.outputChan)
-	subprocessors := transformers.NewTransforms(&k.config.OutgoingTransformers, k.logger, k.name, listChannel, 0)
+	listChannel = append(listChannel, w.GetOutputChannel())
+	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), listChannel, 0)
 
 	// goroutine to process transformed dns messages
-	go k.ProcessDM()
+	go w.StartLogging()
 
 	// loop to process incoming messages
-RUN_LOOP:
 	for {
 		select {
-		case <-k.stopRun:
-			// cleanup transformers
+		case <-w.OnStop():
+			w.StopLogger()
 			subprocessors.Reset()
+			return
 
-			k.doneRun <- true
-			break RUN_LOOP
-
-		case cfg, opened := <-k.configChan:
-			if !opened {
-				return
-			}
-			k.config = cfg
-			k.ReadConfig()
+			// new config provided?
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
+			w.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-k.inputChan:
+		case dm, opened := <-w.GetInputChannel():
 			if !opened {
-				k.LogInfo("input channel closed!")
+				w.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
-				k.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
-			// send to next ?
-			k.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
-
 			// send to output channel
-			k.outputChan <- dm
+			w.GetOutputChannel() <- dm
+
+			// send to next ?
+			w.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
-	k.LogInfo("run terminated")
 }
 
-func (k *KafkaProducer) ProcessDM() {
-	k.LogInfo("waiting transformed dnsmessage to process...")
+func (w *KafkaProducer) StartLogging() {
+	w.LogInfo("worker is starting logging")
+	defer w.LoggingDone()
 
 	ctx, cancelKafka := context.WithCancel(context.Background())
 	defer cancelKafka() // Libérez les ressources liées au contexte
@@ -329,39 +261,37 @@ func (k *KafkaProducer) ProcessDM() {
 	readyTimer := time.NewTimer(time.Duration(10) * time.Second)
 
 	// init flust timer for buffer
-	flushInterval := time.Duration(k.config.Loggers.KafkaProducer.FlushInterval) * time.Second
+	flushInterval := time.Duration(w.GetConfig().Loggers.KafkaProducer.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
-	go k.ConnectToKafka(ctx, readyTimer)
+	go w.ConnectToKafka(ctx, readyTimer)
 
-PROCESS_LOOP:
 	for {
 		select {
-		case <-k.stopProcess:
+		case <-w.OnLoggerStopped():
 			// closing kafka connection if exist
-			k.Disconnect()
-			k.doneProcess <- true
-			break PROCESS_LOOP
+			w.Disconnect()
+			return
 
 		case <-readyTimer.C:
-			k.LogError("failed to established connection")
+			w.LogError("failed to established connection")
 			cancelKafka()
 
-		case <-k.kafkaReady:
-			k.LogInfo("connected with success")
+		case <-w.kafkaReady:
+			w.LogInfo("connected with success")
 			readyTimer.Stop()
-			k.kafkaConnected = true
+			w.kafkaConnected = true
 
 		// incoming dns message to process
-		case dm, opened := <-k.outputChan:
+		case dm, opened := <-w.GetOutputChannel():
 			if !opened {
-				k.LogInfo("output channel closed!")
+				w.LogInfo("output channel closed!")
 				return
 			}
 
 			// drop dns message if the connection is not ready to avoid memory leak or
 			// to block the channel
-			if !k.kafkaConnected {
+			if !w.kafkaConnected {
 				continue
 			}
 
@@ -369,23 +299,22 @@ PROCESS_LOOP:
 			bufferDm = append(bufferDm, dm)
 
 			// buffer is full ?
-			if len(bufferDm) >= k.config.Loggers.KafkaProducer.BufferSize {
-				k.FlushBuffer(&bufferDm)
+			if len(bufferDm) >= w.GetConfig().Loggers.KafkaProducer.BufferSize {
+				w.FlushBuffer(&bufferDm)
 			}
 
 		// flush the buffer
 		case <-flushTimer.C:
-			if !k.kafkaConnected {
+			if !w.kafkaConnected {
 				bufferDm = nil
 			}
 
 			if len(bufferDm) > 0 {
-				k.FlushBuffer(&bufferDm)
+				w.FlushBuffer(&bufferDm)
 			}
 
 			// restart timer
 			flushTimer.Reset(flushInterval)
 		}
 	}
-	k.LogInfo("processing terminated")
 }
