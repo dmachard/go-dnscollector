@@ -83,7 +83,7 @@ func Test_SyslogRunUdp(t *testing.T) {
 			defer fakeRcvr.Close()
 
 			// start the logger
-			go g.Run()
+			go g.StartCollect()
 
 			// send fake dns message to logger
 			time.Sleep(time.Second)
@@ -179,7 +179,7 @@ func Test_SyslogRunTcp(t *testing.T) {
 			defer fakeRcvr.Close()
 
 			// start the logger
-			go g.Run()
+			go g.StartCollect()
 
 			// accept conn from logger
 			conn, err := fakeRcvr.Accept()
@@ -229,7 +229,7 @@ func Test_SyslogRun_RemoveNullCharacter(t *testing.T) {
 	defer fakeRcvr.Close()
 
 	// start the logger
-	go g.Run()
+	go g.StartCollect()
 
 	// send fake dns message to logger
 	time.Sleep(time.Second)

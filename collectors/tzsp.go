@@ -10,17 +10,17 @@ import (
 )
 
 type TZSPSniffer struct {
-	*pkgutils.Collector
+	*pkgutils.GenericWorker
 }
 
 func NewTZSP(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
-	s := &TZSPSniffer{Collector: pkgutils.NewCollector(config, logger, name, "tzsp")}
-	s.SetDefaultRoutes(next)
-	s.ReadConfig()
-	return s
+	w := &TZSPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tzsp", pkgutils.DefaultBufferSize)}
+	w.SetDefaultRoutes(next)
+	w.ReadConfig()
+	return w
 }
 
-func (c *TZSPSniffer) Run() {
-	c.LogError("running collector failed...OS not supported!")
-	c.StopIsDone()
+func (w *TZSPSniffer) StartCollect() {
+	w.LogError("running collector failed...OS not supported!")
+	defer w.CollectDone()
 }

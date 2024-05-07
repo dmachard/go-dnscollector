@@ -5,18 +5,6 @@ import (
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 )
 
-type Worker interface {
-	AddDefaultRoute(wrk Worker)
-	AddDroppedRoute(wrk Worker)
-	SetLoggers(loggers []Worker)
-	GetName() string
-	Stop()
-	Run()
-	GetInputChannel() chan dnsutils.DNSMessage
-	ReadConfig()
-	ReloadConfig(config *pkgconfig.Config)
-}
-
 type FakeLogger struct {
 	inputChan, outputChan chan dnsutils.DNSMessage
 	name                  string
@@ -58,4 +46,4 @@ func (c *FakeLogger) GetInputChannel() chan dnsutils.DNSMessage {
 	return c.inputChan
 }
 
-func (c *FakeLogger) Run() {}
+func (c *FakeLogger) StartCollect() {}

@@ -45,98 +45,31 @@ type StreamStats struct {
 }
 
 type StatsdClient struct {
-	stopProcess, doneProcess chan bool
-	stopRun, doneRun         chan bool
-	inputChan, outputChan    chan dnsutils.DNSMessage
-	config                   *pkgconfig.Config
-	configChan               chan *pkgconfig.Config
-	logger                   *logger.Logger
-	name                     string
-	RoutingHandler           pkgutils.RoutingHandler
-
+	*pkgutils.GenericWorker
 	Stats StreamStats
 	sync.RWMutex
 }
 
 func NewStatsdClient(config *pkgconfig.Config, logger *logger.Logger, name string) *StatsdClient {
-	logger.Info(pkgutils.PrefixLogLogger+"[%s] statsd - enabled", name)
-
-	s := &StatsdClient{
-		stopProcess:    make(chan bool),
-		doneProcess:    make(chan bool),
-		stopRun:        make(chan bool),
-		doneRun:        make(chan bool),
-		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.Statsd.ChannelBufferSize),
-		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.Statsd.ChannelBufferSize),
-		logger:         logger,
-		config:         config,
-		configChan:     make(chan *pkgconfig.Config),
-		name:           name,
-		Stats:          StreamStats{Streams: make(map[string]*StatsPerStream)},
-		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
-	}
-
-	// check config
-	s.ReadConfig()
-
-	return s
+	w := &StatsdClient{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "statsd", config.Loggers.Statsd.ChannelBufferSize)}
+	w.Stats = StreamStats{Streams: make(map[string]*StatsPerStream)}
+	w.ReadConfig()
+	return w
 }
 
-func (c *StatsdClient) GetName() string { return c.name }
-
-func (c *StatsdClient) AddDroppedRoute(wrk pkgutils.Worker) {
-	c.RoutingHandler.AddDroppedRoute(wrk)
-}
-
-func (c *StatsdClient) AddDefaultRoute(wrk pkgutils.Worker) {
-	c.RoutingHandler.AddDefaultRoute(wrk)
-}
-
-func (c *StatsdClient) SetLoggers(loggers []pkgutils.Worker) {}
-
-func (c *StatsdClient) ReadConfig() {
-	if !pkgconfig.IsValidTLS(c.config.Loggers.Statsd.TLSMinVersion) {
-		c.logger.Fatal(pkgutils.PrefixLogLogger + "[" + c.name + "]statd - invalid tls min version")
+func (w *StatsdClient) ReadConfig() {
+	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.Statsd.TLSMinVersion) {
+		w.LogFatal(pkgutils.PrefixLogLogger + "[" + w.GetName() + "]statd - invalid tls min version")
 	}
 }
 
-func (c *StatsdClient) ReloadConfig(config *pkgconfig.Config) {
-	c.LogInfo("reload configuration!")
-	c.configChan <- config
-}
-
-func (c *StatsdClient) LogInfo(msg string, v ...interface{}) {
-	c.logger.Info(pkgutils.PrefixLogLogger+"["+c.name+"] statsd - "+msg, v...)
-}
-
-func (c *StatsdClient) LogError(msg string, v ...interface{}) {
-	c.logger.Error(pkgutils.PrefixLogLogger+"["+c.name+"] statsd - "+msg, v...)
-}
-
-func (c *StatsdClient) GetInputChannel() chan dnsutils.DNSMessage {
-	return c.inputChan
-}
-
-func (c *StatsdClient) Stop() {
-	c.LogInfo("stopping logger...")
-	c.RoutingHandler.Stop()
-
-	c.LogInfo("stopping to run...")
-	c.stopRun <- true
-	<-c.doneRun
-
-	c.LogInfo("stopping to process...")
-	c.stopProcess <- true
-	<-c.doneProcess
-}
-
-func (c *StatsdClient) RecordDNSMessage(dm dnsutils.DNSMessage) {
-	c.Lock()
-	defer c.Unlock()
+func (w *StatsdClient) RecordDNSMessage(dm dnsutils.DNSMessage) {
+	w.Lock()
+	defer w.Unlock()
 
 	// add stream
-	if _, exists := c.Stats.Streams[dm.DNSTap.Identity]; !exists {
-		c.Stats.Streams[dm.DNSTap.Identity] = &StatsPerStream{
+	if _, exists := w.Stats.Streams[dm.DNSTap.Identity]; !exists {
+		w.Stats.Streams[dm.DNSTap.Identity] = &StatsPerStream{
 			Clients:   make(map[string]int),
 			Domains:   make(map[string]int),
 			Nxdomains: make(map[string]int),
@@ -160,192 +93,186 @@ func (c *StatsdClient) RecordDNSMessage(dm dnsutils.DNSMessage) {
 	}
 
 	// global number of packets
-	c.Stats.Streams[dm.DNSTap.Identity].TotalPackets++
+	w.Stats.Streams[dm.DNSTap.Identity].TotalPackets++
 
 	if dm.DNS.Type == dnsutils.DNSQuery {
-		c.Stats.Streams[dm.DNSTap.Identity].TotalReceivedBytes += dm.DNS.Length
+		w.Stats.Streams[dm.DNSTap.Identity].TotalReceivedBytes += dm.DNS.Length
 	} else {
-		c.Stats.Streams[dm.DNSTap.Identity].TotalSentBytes += dm.DNS.Length
+		w.Stats.Streams[dm.DNSTap.Identity].TotalSentBytes += dm.DNS.Length
 	}
 
 	// count client and domains
-	if _, exists := c.Stats.Streams[dm.DNSTap.Identity].Domains[dm.DNS.Qname]; !exists {
-		c.Stats.Streams[dm.DNSTap.Identity].Domains[dm.DNS.Qname] = 1
+	if _, exists := w.Stats.Streams[dm.DNSTap.Identity].Domains[dm.DNS.Qname]; !exists {
+		w.Stats.Streams[dm.DNSTap.Identity].Domains[dm.DNS.Qname] = 1
 	} else {
-		c.Stats.Streams[dm.DNSTap.Identity].Domains[dm.DNS.Qname] += 1
+		w.Stats.Streams[dm.DNSTap.Identity].Domains[dm.DNS.Qname] += 1
 	}
 	if dm.DNS.Rcode == dnsutils.DNSRcodeNXDomain {
-		if _, exists := c.Stats.Streams[dm.DNSTap.Identity].Nxdomains[dm.DNS.Qname]; !exists {
-			c.Stats.Streams[dm.DNSTap.Identity].Nxdomains[dm.DNS.Qname] = 1
+		if _, exists := w.Stats.Streams[dm.DNSTap.Identity].Nxdomains[dm.DNS.Qname]; !exists {
+			w.Stats.Streams[dm.DNSTap.Identity].Nxdomains[dm.DNS.Qname] = 1
 		} else {
-			c.Stats.Streams[dm.DNSTap.Identity].Nxdomains[dm.DNS.Qname] += 1
+			w.Stats.Streams[dm.DNSTap.Identity].Nxdomains[dm.DNS.Qname] += 1
 		}
 	}
-	if _, exists := c.Stats.Streams[dm.DNSTap.Identity].Clients[dm.NetworkInfo.QueryIP]; !exists {
-		c.Stats.Streams[dm.DNSTap.Identity].Clients[dm.NetworkInfo.QueryIP] = 1
+	if _, exists := w.Stats.Streams[dm.DNSTap.Identity].Clients[dm.NetworkInfo.QueryIP]; !exists {
+		w.Stats.Streams[dm.DNSTap.Identity].Clients[dm.NetworkInfo.QueryIP] = 1
 	} else {
-		c.Stats.Streams[dm.DNSTap.Identity].Clients[dm.NetworkInfo.QueryIP] += 1
+		w.Stats.Streams[dm.DNSTap.Identity].Clients[dm.NetworkInfo.QueryIP] += 1
 	}
 
 	// record ip proto
-	if _, ok := c.Stats.Streams[dm.DNSTap.Identity].IPproto[dm.NetworkInfo.Family]; !ok {
-		c.Stats.Streams[dm.DNSTap.Identity].IPproto[dm.NetworkInfo.Family] = 1
+	if _, ok := w.Stats.Streams[dm.DNSTap.Identity].IPproto[dm.NetworkInfo.Family]; !ok {
+		w.Stats.Streams[dm.DNSTap.Identity].IPproto[dm.NetworkInfo.Family] = 1
 	} else {
-		c.Stats.Streams[dm.DNSTap.Identity].IPproto[dm.NetworkInfo.Family]++
+		w.Stats.Streams[dm.DNSTap.Identity].IPproto[dm.NetworkInfo.Family]++
 	}
-	c.Stats.Streams[dm.DNSTap.Identity].TopIPproto.Record(
+	w.Stats.Streams[dm.DNSTap.Identity].TopIPproto.Record(
 		dm.NetworkInfo.Family,
-		c.Stats.Streams[dm.DNSTap.Identity].IPproto[dm.NetworkInfo.Family],
+		w.Stats.Streams[dm.DNSTap.Identity].IPproto[dm.NetworkInfo.Family],
 	)
 
 	// record transports
-	if _, ok := c.Stats.Streams[dm.DNSTap.Identity].Transports[dm.NetworkInfo.Protocol]; !ok {
-		c.Stats.Streams[dm.DNSTap.Identity].Transports[dm.NetworkInfo.Protocol] = 1
+	if _, ok := w.Stats.Streams[dm.DNSTap.Identity].Transports[dm.NetworkInfo.Protocol]; !ok {
+		w.Stats.Streams[dm.DNSTap.Identity].Transports[dm.NetworkInfo.Protocol] = 1
 	} else {
-		c.Stats.Streams[dm.DNSTap.Identity].Transports[dm.NetworkInfo.Protocol]++
+		w.Stats.Streams[dm.DNSTap.Identity].Transports[dm.NetworkInfo.Protocol]++
 	}
-	c.Stats.Streams[dm.DNSTap.Identity].TopTransport.Record(
+	w.Stats.Streams[dm.DNSTap.Identity].TopTransport.Record(
 		dm.NetworkInfo.Protocol,
-		c.Stats.Streams[dm.DNSTap.Identity].Transports[dm.NetworkInfo.Protocol],
+		w.Stats.Streams[dm.DNSTap.Identity].Transports[dm.NetworkInfo.Protocol],
 	)
 
 	// record rrtypes
-	if _, ok := c.Stats.Streams[dm.DNSTap.Identity].RRtypes[dm.DNS.Qtype]; !ok {
-		c.Stats.Streams[dm.DNSTap.Identity].RRtypes[dm.DNS.Qtype] = 1
+	if _, ok := w.Stats.Streams[dm.DNSTap.Identity].RRtypes[dm.DNS.Qtype]; !ok {
+		w.Stats.Streams[dm.DNSTap.Identity].RRtypes[dm.DNS.Qtype] = 1
 	} else {
-		c.Stats.Streams[dm.DNSTap.Identity].RRtypes[dm.DNS.Qtype]++
+		w.Stats.Streams[dm.DNSTap.Identity].RRtypes[dm.DNS.Qtype]++
 	}
-	c.Stats.Streams[dm.DNSTap.Identity].TopRRtypes.Record(
+	w.Stats.Streams[dm.DNSTap.Identity].TopRRtypes.Record(
 		dm.DNS.Qtype,
-		c.Stats.Streams[dm.DNSTap.Identity].RRtypes[dm.DNS.Qtype],
+		w.Stats.Streams[dm.DNSTap.Identity].RRtypes[dm.DNS.Qtype],
 	)
 
 	// record rcodes
-	if _, ok := c.Stats.Streams[dm.DNSTap.Identity].Rcodes[dm.DNS.Rcode]; !ok {
-		c.Stats.Streams[dm.DNSTap.Identity].Rcodes[dm.DNS.Rcode] = 1
+	if _, ok := w.Stats.Streams[dm.DNSTap.Identity].Rcodes[dm.DNS.Rcode]; !ok {
+		w.Stats.Streams[dm.DNSTap.Identity].Rcodes[dm.DNS.Rcode] = 1
 	} else {
-		c.Stats.Streams[dm.DNSTap.Identity].Rcodes[dm.DNS.Rcode]++
+		w.Stats.Streams[dm.DNSTap.Identity].Rcodes[dm.DNS.Rcode]++
 	}
-	c.Stats.Streams[dm.DNSTap.Identity].TopRcodes.Record(
+	w.Stats.Streams[dm.DNSTap.Identity].TopRcodes.Record(
 		dm.DNS.Rcode,
-		c.Stats.Streams[dm.DNSTap.Identity].Rcodes[dm.DNS.Rcode],
+		w.Stats.Streams[dm.DNSTap.Identity].Rcodes[dm.DNS.Rcode],
 	)
 
 	// record operations
-	if _, ok := c.Stats.Streams[dm.DNSTap.Identity].Operations[dm.DNSTap.Operation]; !ok {
-		c.Stats.Streams[dm.DNSTap.Identity].Operations[dm.DNSTap.Operation] = 1
+	if _, ok := w.Stats.Streams[dm.DNSTap.Identity].Operations[dm.DNSTap.Operation]; !ok {
+		w.Stats.Streams[dm.DNSTap.Identity].Operations[dm.DNSTap.Operation] = 1
 	} else {
-		c.Stats.Streams[dm.DNSTap.Identity].Operations[dm.DNSTap.Operation]++
+		w.Stats.Streams[dm.DNSTap.Identity].Operations[dm.DNSTap.Operation]++
 	}
-	c.Stats.Streams[dm.DNSTap.Identity].TopOperations.Record(
+	w.Stats.Streams[dm.DNSTap.Identity].TopOperations.Record(
 		dm.DNSTap.Operation,
-		c.Stats.Streams[dm.DNSTap.Identity].Operations[dm.DNSTap.Operation],
+		w.Stats.Streams[dm.DNSTap.Identity].Operations[dm.DNSTap.Operation],
 	)
 }
 
-func (c *StatsdClient) Run() {
-	c.LogInfo("running in background...")
+func (w *StatsdClient) StartCollect() {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := c.RoutingHandler.GetDefaultRoutes()
-	droppedRoutes, droppedNames := c.RoutingHandler.GetDroppedRoutes()
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DNSMessage{}
-	listChannel = append(listChannel, c.outputChan)
-	subprocessors := transformers.NewTransforms(&c.config.OutgoingTransformers, c.logger, c.name, listChannel, 0)
+	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)
 
 	// goroutine to process transformed dns messages
-	go c.Process()
+	go w.StartLogging()
 
 	// loop to process incoming messages
-RUN_LOOP:
 	for {
 		select {
-		case <-c.stopRun:
-			// cleanup transformers
+		case <-w.OnStop():
+			w.StopLogger()
 			subprocessors.Reset()
+			return
 
-			c.doneRun <- true
-			break RUN_LOOP
-
-		case cfg, opened := <-c.configChan:
-			if !opened {
-				return
-			}
-			c.config = cfg
-			c.ReadConfig()
+			// new config provided?
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
+			w.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-c.inputChan:
+		case dm, opened := <-w.GetInputChannel():
 			if !opened {
-				c.LogInfo("input channel closed!")
+				w.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
-				c.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
-			// send to next ?
-			c.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
-
 			// send to output channel
-			c.outputChan <- dm
+			w.GetOutputChannel() <- dm
+
+			// send to next ?
+			w.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
-	c.LogInfo("run terminated")
 }
 
-func (c *StatsdClient) Process() {
+func (w *StatsdClient) StartLogging() {
+	w.LogInfo("worker is starting logging")
+	defer w.LoggingDone()
+
 	// statd timer to push data
-	t2Interval := time.Duration(c.config.Loggers.Statsd.FlushInterval) * time.Second
+	t2Interval := time.Duration(w.GetConfig().Loggers.Statsd.FlushInterval) * time.Second
 	t2 := time.NewTimer(t2Interval)
 
-	c.LogInfo("ready to process")
-PROCESS_LOOP:
 	for {
 		select {
-		case <-c.stopProcess:
-			c.doneProcess <- true
-			break PROCESS_LOOP
+		case <-w.OnLoggerStopped():
+			return
+
 		// incoming dns message to process
-		case dm, opened := <-c.outputChan:
+		case dm, opened := <-w.GetOutputChannel():
 			if !opened {
-				c.LogInfo("output channel closed!")
+				w.LogInfo("output channel closed!")
 				return
 			}
 
 			// record the dnstap message
-			c.RecordDNSMessage(dm)
+			w.RecordDNSMessage(dm)
 
 		case <-t2.C:
-			address := c.config.Loggers.Statsd.RemoteAddress + ":" + strconv.Itoa(c.config.Loggers.Statsd.RemotePort)
-			connTimeout := time.Duration(c.config.Loggers.Statsd.ConnectTimeout) * time.Second
+			address := w.GetConfig().Loggers.Statsd.RemoteAddress + ":" + strconv.Itoa(w.GetConfig().Loggers.Statsd.RemotePort)
+			connTimeout := time.Duration(w.GetConfig().Loggers.Statsd.ConnectTimeout) * time.Second
 
 			// make the connection
 			var conn net.Conn
 			var err error
 
-			switch c.config.Loggers.Statsd.Transport {
+			switch w.GetConfig().Loggers.Statsd.Transport {
 			case netutils.SocketTCP, netutils.SocketUDP:
-				c.LogInfo("connecting to %s://%s", c.config.Loggers.Statsd.Transport, address)
-				conn, err = net.DialTimeout(c.config.Loggers.Statsd.Transport, address, connTimeout)
+				w.LogInfo("connecting to %s://%s", w.GetConfig().Loggers.Statsd.Transport, address)
+				conn, err = net.DialTimeout(w.GetConfig().Loggers.Statsd.Transport, address, connTimeout)
 
 			case netutils.SocketTLS:
-				c.LogInfo("connecting to %s://%s", c.config.Loggers.Statsd.Transport, address)
+				w.LogInfo("connecting to %s://%s", w.GetConfig().Loggers.Statsd.Transport, address)
 
 				var tlsConfig *tls.Config
 
 				tlsOptions := pkgconfig.TLSOptions{
-					InsecureSkipVerify: c.config.Loggers.Statsd.TLSInsecure,
-					MinVersion:         c.config.Loggers.Statsd.TLSMinVersion,
-					CAFile:             c.config.Loggers.Statsd.CAFile,
-					CertFile:           c.config.Loggers.Statsd.CertFile,
-					KeyFile:            c.config.Loggers.Statsd.KeyFile,
+					InsecureSkipVerify: w.GetConfig().Loggers.Statsd.TLSInsecure,
+					MinVersion:         w.GetConfig().Loggers.Statsd.TLSMinVersion,
+					CAFile:             w.GetConfig().Loggers.Statsd.CAFile,
+					CertFile:           w.GetConfig().Loggers.Statsd.CertFile,
+					KeyFile:            w.GetConfig().Loggers.Statsd.KeyFile,
 				}
 
 				tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
@@ -354,21 +281,21 @@ PROCESS_LOOP:
 					conn, err = tls.DialWithDialer(dialer, netutils.SocketTCP, address, tlsConfig)
 				}
 			default:
-				c.logger.Fatal("logger=statsd - invalid transport:", c.config.Loggers.Statsd.Transport)
+				w.LogFatal("logger=statsd - invalid transport:", w.GetConfig().Loggers.Statsd.Transport)
 			}
 
 			// something is wrong during connection ?
 			if err != nil {
-				c.LogError("dial error: %s", err)
+				w.LogError("dial error: %s", err)
 			}
 
 			if conn != nil {
-				c.LogInfo("dialing with success, continue...")
+				w.LogInfo("dialing with success, continue...")
 
 				b := bufio.NewWriter(conn)
 
-				prefix := c.config.Loggers.Statsd.Prefix
-				for streamID, stream := range c.Stats.Streams {
+				prefix := w.GetConfig().Loggers.Statsd.Prefix
+				for streamID, stream := range w.Stats.Streams {
 					b.WriteString(fmt.Sprintf("%s_%s_total_bytes_received:%d|c\n", prefix, streamID, stream.TotalReceivedBytes))
 					b.WriteString(fmt.Sprintf("%s_%s_total_bytes_sent:%d|c\n", prefix, streamID, stream.TotalSentBytes))
 
@@ -403,7 +330,7 @@ PROCESS_LOOP:
 				// send data
 				err = b.Flush()
 				if err != nil {
-					c.LogError("sent data error:", err.Error())
+					w.LogError("sent data error:", err.Error())
 				}
 			}
 
@@ -411,5 +338,4 @@ PROCESS_LOOP:
 			t2.Reset(t2Interval)
 		}
 	}
-	c.LogInfo("processing terminated")
 }

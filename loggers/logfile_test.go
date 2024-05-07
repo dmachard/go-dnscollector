@@ -55,7 +55,7 @@ func Test_LogFileText(t *testing.T) {
 			g := NewLogFile(config, logger.New(false), "test")
 
 			// start the logger
-			go g.Run()
+			go g.StartCollect()
 
 			// send fake dns message to logger
 			dm := dnsutils.GetFakeDNSMessage()

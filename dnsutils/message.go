@@ -40,6 +40,12 @@ var (
 	ATagsDirectives           = regexp.MustCompile(`^atags*`)
 )
 
+func GetFakeDNS() ([]byte, error) {
+	dnsmsg := new(dns.Msg)
+	dnsmsg.SetQuestion("dns.collector.", dns.TypeA)
+	return dnsmsg.Pack()
+}
+
 func GetIPPort(dm *DNSMessage) (string, int, string, int) {
 	srcIP, srcPort := "0.0.0.0", 53
 	dstIP, dstPort := "0.0.0.0", 53

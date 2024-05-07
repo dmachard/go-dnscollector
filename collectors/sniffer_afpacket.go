@@ -10,17 +10,17 @@ import (
 )
 
 type AfpacketSniffer struct {
-	*pkgutils.Collector
+	*pkgutils.GenericWorker
 }
 
 func NewAfpacketSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	s := &AfpacketSniffer{Collector: pkgutils.NewCollector(config, logger, name, "AFPACKET sniffer")}
-	s.SetDefaultRoutes(next)
-	s.ReadConfig()
-	return s
+	w := &AfpacketSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "AFPACKET sniffer", pkgutils.DefaultBufferSize)}
+	w.SetDefaultRoutes(next)
+	w.ReadConfig()
+	return w
 }
 
-func (c *AfpacketSniffer) Run() {
-	c.LogError("running collector failed...OS not supported!")
-	c.StopIsDone()
+func (w *AfpacketSniffer) StartCollect() {
+	w.LogError("running collector failed...OS not supported!")
+	defer w.CollectDone()
 }

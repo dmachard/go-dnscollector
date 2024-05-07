@@ -18,161 +18,98 @@ import (
 )
 
 type DnstapSender struct {
-	stopProcess, doneProcess           chan bool
-	stopRun, doneRun                   chan bool
-	inputChan, outputChan              chan dnsutils.DNSMessage
-	config                             *pkgconfig.Config
-	configChan                         chan *pkgconfig.Config
-	logger                             *logger.Logger
+	*pkgutils.GenericWorker
 	fs                                 *framestream.Fstrm
 	fsReady                            bool
 	transport                          string
 	transportConn                      net.Conn
 	transportReady, transportReconnect chan bool
-	name                               string
-	RoutingHandler                     pkgutils.RoutingHandler
 }
 
 func NewDnstapSender(config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapSender {
-	logger.Info(pkgutils.PrefixLogLogger+"[%s] dnstap - enabled", name)
-	ds := &DnstapSender{
-		stopProcess:        make(chan bool),
-		doneProcess:        make(chan bool),
-		stopRun:            make(chan bool),
-		doneRun:            make(chan bool),
-		inputChan:          make(chan dnsutils.DNSMessage, config.Loggers.DNSTap.ChannelBufferSize),
-		outputChan:         make(chan dnsutils.DNSMessage, config.Loggers.DNSTap.ChannelBufferSize),
-		transportReady:     make(chan bool),
-		transportReconnect: make(chan bool),
-		logger:             logger,
-		config:             config,
-		configChan:         make(chan *pkgconfig.Config),
-		name:               name,
-		RoutingHandler:     pkgutils.NewRoutingHandler(config, logger, name),
-	}
-
-	ds.ReadConfig()
-	return ds
+	w := &DnstapSender{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap", config.Loggers.DNSTap.ChannelBufferSize)}
+	w.transportReady = make(chan bool)
+	w.transportReconnect = make(chan bool)
+	w.ReadConfig()
+	return w
 }
 
-func (ds *DnstapSender) GetName() string { return ds.name }
-
-func (ds *DnstapSender) AddDroppedRoute(wrk pkgutils.Worker) {
-	ds.RoutingHandler.AddDroppedRoute(wrk)
-}
-
-func (ds *DnstapSender) AddDefaultRoute(wrk pkgutils.Worker) {
-	ds.RoutingHandler.AddDefaultRoute(wrk)
-}
-
-func (ds *DnstapSender) SetLoggers(loggers []pkgutils.Worker) {}
-
-func (ds *DnstapSender) ReadConfig() {
-	ds.transport = ds.config.Loggers.DNSTap.Transport
+func (w *DnstapSender) ReadConfig() {
+	w.transport = w.GetConfig().Loggers.DNSTap.Transport
 
 	// begin backward compatibility
-	if ds.config.Loggers.DNSTap.TLSSupport {
-		ds.transport = netutils.SocketTLS
+	if w.GetConfig().Loggers.DNSTap.TLSSupport {
+		w.transport = netutils.SocketTLS
 	}
-	if len(ds.config.Loggers.DNSTap.SockPath) > 0 {
-		ds.transport = netutils.SocketUnix
+	if len(w.GetConfig().Loggers.DNSTap.SockPath) > 0 {
+		w.transport = netutils.SocketUnix
 	}
 	// end
 
 	// get hostname or global one
-	if ds.config.Loggers.DNSTap.ServerID == "" {
-		ds.config.Loggers.DNSTap.ServerID = ds.config.GetServerIdentity()
+	if w.GetConfig().Loggers.DNSTap.ServerID == "" {
+		w.GetConfig().Loggers.DNSTap.ServerID = w.GetConfig().GetServerIdentity()
 	}
 
-	if !pkgconfig.IsValidTLS(ds.config.Loggers.DNSTap.TLSMinVersion) {
-		ds.logger.Fatal(pkgutils.PrefixLogLogger + "[" + ds.name + "] dnstap - invalid tls min version")
+	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.DNSTap.TLSMinVersion) {
+		w.LogFatal(pkgutils.PrefixLogLogger + "invalid tls min version")
 	}
 }
 
-func (ds *DnstapSender) ReloadConfig(config *pkgconfig.Config) {
-	ds.LogInfo("reload configuration!")
-	ds.configChan <- config
-}
-
-func (ds *DnstapSender) LogInfo(msg string, v ...interface{}) {
-	ds.logger.Info(pkgutils.PrefixLogLogger+"["+ds.name+"] dnstap - "+msg, v...)
-}
-
-func (ds *DnstapSender) LogError(msg string, v ...interface{}) {
-	ds.logger.Error(pkgutils.PrefixLogLogger+"["+ds.name+"] dnstap - "+msg, v...)
-}
-
-func (ds *DnstapSender) GetInputChannel() chan dnsutils.DNSMessage {
-	return ds.inputChan
-}
-
-func (ds *DnstapSender) Stop() {
-	ds.LogInfo("stopping logger...")
-	ds.RoutingHandler.Stop()
-
-	ds.LogInfo("stopping to run...")
-	ds.stopRun <- true
-	<-ds.doneRun
-
-	ds.LogInfo("stopping to process...")
-	ds.stopProcess <- true
-	<-ds.doneProcess
-}
-
-func (ds *DnstapSender) Disconnect() {
-	if ds.transportConn != nil {
+func (w *DnstapSender) Disconnect() {
+	if w.transportConn != nil {
 		// reset framestream and ignore errors
-		ds.LogInfo("closing framestream")
-		ds.fs.ResetSender()
+		w.LogInfo("closing framestream")
+		w.fs.ResetSender()
 
 		// closing tcp
-		ds.LogInfo("closing tcp connection")
-		ds.transportConn.Close()
-		ds.LogInfo("closed")
+		w.LogInfo("closing tcp connection")
+		w.transportConn.Close()
+		w.LogInfo("closed")
 	}
 }
 
-func (ds *DnstapSender) ConnectToRemote() {
+func (w *DnstapSender) ConnectToRemote() {
 	for {
-		if ds.transportConn != nil {
-			ds.transportConn.Close()
-			ds.transportConn = nil
+		if w.transportConn != nil {
+			w.transportConn.Close()
+			w.transportConn = nil
 		}
 
 		address := net.JoinHostPort(
-			ds.config.Loggers.DNSTap.RemoteAddress,
-			strconv.Itoa(ds.config.Loggers.DNSTap.RemotePort),
+			w.GetConfig().Loggers.DNSTap.RemoteAddress,
+			strconv.Itoa(w.GetConfig().Loggers.DNSTap.RemotePort),
 		)
-		connTimeout := time.Duration(ds.config.Loggers.DNSTap.ConnectTimeout) * time.Second
+		connTimeout := time.Duration(w.GetConfig().Loggers.DNSTap.ConnectTimeout) * time.Second
 
 		// make the connection
 		var conn net.Conn
 		var err error
 
-		switch ds.transport {
+		switch w.transport {
 		case netutils.SocketUnix:
-			address = ds.config.Loggers.DNSTap.RemoteAddress
-			if len(ds.config.Loggers.DNSTap.SockPath) > 0 {
-				address = ds.config.Loggers.DNSTap.SockPath
+			address = w.GetConfig().Loggers.DNSTap.RemoteAddress
+			if len(w.GetConfig().Loggers.DNSTap.SockPath) > 0 {
+				address = w.GetConfig().Loggers.DNSTap.SockPath
 			}
-			ds.LogInfo("connecting to %s://%s", ds.transport, address)
-			conn, err = net.DialTimeout(ds.transport, address, connTimeout)
+			w.LogInfo("connecting to %s://%s", w.transport, address)
+			conn, err = net.DialTimeout(w.transport, address, connTimeout)
 
 		case netutils.SocketTCP:
-			ds.LogInfo("connecting to %s://%s", ds.transport, address)
-			conn, err = net.DialTimeout(ds.transport, address, connTimeout)
+			w.LogInfo("connecting to %s://%s", w.transport, address)
+			conn, err = net.DialTimeout(w.transport, address, connTimeout)
 
 		case netutils.SocketTLS:
-			ds.LogInfo("connecting to %s://%s", ds.transport, address)
+			w.LogInfo("connecting to %s://%s", w.transport, address)
 
 			var tlsConfig *tls.Config
 
 			tlsOptions := pkgconfig.TLSOptions{
-				InsecureSkipVerify: ds.config.Loggers.DNSTap.TLSInsecure,
-				MinVersion:         ds.config.Loggers.DNSTap.TLSMinVersion,
-				CAFile:             ds.config.Loggers.DNSTap.CAFile,
-				CertFile:           ds.config.Loggers.DNSTap.CertFile,
-				KeyFile:            ds.config.Loggers.DNSTap.KeyFile,
+				InsecureSkipVerify: w.GetConfig().Loggers.DNSTap.TLSInsecure,
+				MinVersion:         w.GetConfig().Loggers.DNSTap.TLSMinVersion,
+				CAFile:             w.GetConfig().Loggers.DNSTap.CAFile,
+				CertFile:           w.GetConfig().Loggers.DNSTap.CertFile,
+				KeyFile:            w.GetConfig().Loggers.DNSTap.KeyFile,
 			}
 
 			tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
@@ -181,28 +118,28 @@ func (ds *DnstapSender) ConnectToRemote() {
 				conn, err = tls.DialWithDialer(dialer, netutils.SocketTCP, address, tlsConfig)
 			}
 		default:
-			ds.logger.Fatal("logger=dnstap - invalid transport:", ds.transport)
+			w.LogFatal("invalid transport:", w.transport)
 		}
 
 		// something is wrong during connection ?
 		if err != nil {
-			ds.LogError("%s", err)
-			ds.LogInfo("retry to connect in %d seconds", ds.config.Loggers.DNSTap.RetryInterval)
-			time.Sleep(time.Duration(ds.config.Loggers.DNSTap.RetryInterval) * time.Second)
+			w.LogError("%s", err)
+			w.LogInfo("retry to connect in %d seconds", w.GetConfig().Loggers.DNSTap.RetryInterval)
+			time.Sleep(time.Duration(w.GetConfig().Loggers.DNSTap.RetryInterval) * time.Second)
 			continue
 		}
 
-		ds.transportConn = conn
+		w.transportConn = conn
 
 		// block until framestream is ready
-		ds.transportReady <- true
+		w.transportReady <- true
 
 		// block until an error occurred, need to reconnect
-		ds.transportReconnect <- true
+		w.transportReconnect <- true
 	}
 }
 
-func (ds *DnstapSender) FlushBuffer(buf *[]dnsutils.DNSMessage) {
+func (w *DnstapSender) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 
 	var data []byte
 	var err error
@@ -211,24 +148,24 @@ func (ds *DnstapSender) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 
 	for _, dm := range *buf {
 		// update identity ?
-		if ds.config.Loggers.DNSTap.OverwriteIdentity {
-			dm.DNSTap.Identity = ds.config.Loggers.DNSTap.ServerID
+		if w.GetConfig().Loggers.DNSTap.OverwriteIdentity {
+			dm.DNSTap.Identity = w.GetConfig().Loggers.DNSTap.ServerID
 		}
 
 		// encode dns message to dnstap protobuf binary
-		data, err = dm.ToDNSTap(ds.config.Loggers.DNSTap.ExtendedSupport)
+		data, err = dm.ToDNSTap(w.GetConfig().Loggers.DNSTap.ExtendedSupport)
 		if err != nil {
-			ds.LogError("failed to encode to DNStap protobuf: %s", err)
+			w.LogError("failed to encode to DNStap protobuf: %s", err)
 			continue
 		}
 
-		if ds.config.Loggers.DNSTap.Compression == pkgconfig.CompressNone {
+		if w.GetConfig().Loggers.DNSTap.Compression == pkgconfig.CompressNone {
 			// send the frame
 			bulkFrame.Write(data)
-			if err := ds.fs.SendFrame(bulkFrame); err != nil {
-				ds.LogError("send frame error %s", err)
-				ds.fsReady = false
-				<-ds.transportReconnect
+			if err := w.fs.SendFrame(bulkFrame); err != nil {
+				w.LogError("send frame error %s", err)
+				w.fsReady = false
+				<-w.transportReconnect
 				break
 			}
 		} else {
@@ -237,12 +174,12 @@ func (ds *DnstapSender) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 		}
 	}
 
-	if ds.config.Loggers.DNSTap.Compression != pkgconfig.CompressNone {
+	if w.GetConfig().Loggers.DNSTap.Compression != pkgconfig.CompressNone {
 		bulkFrame.Encode()
-		if err := ds.fs.SendCompressedFrame(&compress.GzipCodec, bulkFrame); err != nil {
-			ds.LogError("send bulk frame error %s", err)
-			ds.fsReady = false
-			<-ds.transportReconnect
+		if err := w.fs.SendCompressedFrame(&compress.GzipCodec, bulkFrame); err != nil {
+			w.LogError("send bulk frame error %s", err)
+			w.fsReady = false
+			<-w.transportReconnect
 		}
 	}
 
@@ -250,123 +187,106 @@ func (ds *DnstapSender) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	*buf = nil
 }
 
-func (ds *DnstapSender) Run() {
-	ds.LogInfo("running in background...")
+func (w *DnstapSender) StartCollect() {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := ds.RoutingHandler.GetDefaultRoutes()
-	droppedRoutes, droppedNames := ds.RoutingHandler.GetDroppedRoutes()
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DNSMessage{}
-	listChannel = append(listChannel, ds.outputChan)
-	subprocessors := transformers.NewTransforms(&ds.config.OutgoingTransformers, ds.logger, ds.name, listChannel, 0)
+	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)
 
 	// goroutine to process transformed dns messages
-	go ds.Process()
+	go w.StartLogging()
 
 	// init remote conn
-	go ds.ConnectToRemote()
+	go w.ConnectToRemote()
 
 	// loop to process incoming messages
-RUN_LOOP:
 	for {
 		select {
-		case <-ds.stopRun:
-			// cleanup transformers
+		case <-w.OnStop():
+			w.StopLogger()
 			subprocessors.Reset()
+			return
 
-			ds.doneRun <- true
-			break RUN_LOOP
-
-		case cfg, opened := <-ds.configChan:
-			if !opened {
-				return
-			}
-			ds.config = cfg
-			ds.ReadConfig()
+		// new config provided?
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
+			w.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-ds.inputChan:
+		case dm, opened := <-w.GetInputChannel():
 			if !opened {
-				ds.LogInfo("input channel closed!")
+				w.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
-				ds.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
-			// send to next ?
-			ds.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
-
 			// send to output channel
-			ds.outputChan <- dm
+			w.GetOutputChannel() <- dm
+
+			// send to next ?
+			w.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
-	ds.LogInfo("run terminated")
 }
 
-func (ds *DnstapSender) Process() {
+func (w *DnstapSender) StartLogging() {
+	w.LogInfo("worker is starting logging")
+	defer w.LoggingDone()
+
 	// init buffer
 	bufferDm := []dnsutils.DNSMessage{}
 
 	// init flust timer for buffer
-	flushInterval := time.Duration(ds.config.Loggers.DNSTap.FlushInterval) * time.Second
+	flushInterval := time.Duration(w.GetConfig().Loggers.DNSTap.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
-	// nextStanzaBufferInterval := 10 * time.Second
-	// nextStanzaBufferFull := time.NewTimer(nextStanzaBufferInterval)
-
-	ds.LogInfo("ready to process")
-PROCESS_LOOP:
+	w.LogInfo("ready to process")
 	for {
 		select {
-		case <-ds.stopProcess:
+		case <-w.OnLoggerStopped():
 			// closing remote connection if exist
-			ds.Disconnect()
-
-			ds.doneProcess <- true
-			break PROCESS_LOOP
-
-		// case stanzaName := <-ds.dropped:
-		// 	if _, ok := ds.droppedCount[stanzaName]; !ok {
-		// 		ds.droppedCount[stanzaName] = 1
-		// 	} else {
-		// 		ds.droppedCount[stanzaName]++
-		// 	}
+			w.Disconnect()
+			return
 
 		// init framestream
-		case <-ds.transportReady:
-			ds.LogInfo("transport connected with success")
+		case <-w.transportReady:
+			w.LogInfo("transport connected with success")
 			// frame stream library
-			r := bufio.NewReader(ds.transportConn)
-			w := bufio.NewWriter(ds.transportConn)
-			ds.fs = framestream.NewFstrm(r, w, ds.transportConn, 5*time.Second, []byte("protobuf:dnstap.Dnstap"), true)
+			fsReader := bufio.NewReader(w.transportConn)
+			fsWriter := bufio.NewWriter(w.transportConn)
+			w.fs = framestream.NewFstrm(fsReader, fsWriter, w.transportConn, 5*time.Second, []byte("protobuf:dnstap.Dnstap"), true)
 
 			// init framestream protocol
-			if err := ds.fs.InitSender(); err != nil {
-				ds.LogError("sender protocol initialization error %s", err)
-				ds.fsReady = false
-				ds.transportConn.Close()
-				<-ds.transportReconnect
+			if err := w.fs.InitSender(); err != nil {
+				w.LogError("sender protocol initialization error %s", err)
+				w.fsReady = false
+				w.transportConn.Close()
+				<-w.transportReconnect
 			} else {
-				ds.fsReady = true
-				ds.LogInfo("framestream initialized with success")
+				w.fsReady = true
+				w.LogInfo("framestream initialized with success")
 			}
-		// incoming dns message to process
-		case dm, opened := <-ds.outputChan:
+			// incoming dns message to process
+		case dm, opened := <-w.GetOutputChannel():
 			if !opened {
-				ds.LogInfo("output channel closed!")
+				w.LogInfo("output channel closed!")
 				return
 			}
 
 			// drop dns message if the connection is not ready to avoid memory leak or
 			// to block the channel
-			if !ds.fsReady {
+			if !w.fsReady {
 				continue
 			}
 
@@ -374,29 +294,19 @@ PROCESS_LOOP:
 			bufferDm = append(bufferDm, dm)
 
 			// buffer is full ?
-			if len(bufferDm) >= ds.config.Loggers.DNSTap.BufferSize {
-				ds.FlushBuffer(&bufferDm)
+			if len(bufferDm) >= w.GetConfig().Loggers.DNSTap.BufferSize {
+				w.FlushBuffer(&bufferDm)
 			}
 
 		// flush the buffer
 		case <-flushTimer.C:
 			// force to flush the buffer
 			if len(bufferDm) > 0 {
-				ds.FlushBuffer(&bufferDm)
+				w.FlushBuffer(&bufferDm)
 			}
 
 			// restart timer
 			flushTimer.Reset(flushInterval)
-
-			// case <-nextStanzaBufferFull.C:
-			// 	for v, k := range ds.droppedCount {
-			// 		if k > 0 {
-			// 			ds.LogError("stanza[%s] buffer is full, %d packet(s) dropped", v, k)
-			// 			ds.droppedCount[v] = 0
-			// 		}
-			// 	}
-			// 	nextStanzaBufferFull.Reset(nextStanzaBufferInterval)
 		}
 	}
-	ds.LogInfo("processing terminated")
 }

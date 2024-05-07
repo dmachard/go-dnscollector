@@ -52,7 +52,7 @@ func Test_LokiClientRun(t *testing.T) {
 			g := NewLokiClient(cfg, logger.New(false), "test")
 
 			// start the logger
-			go g.Run()
+			go g.StartCollect()
 
 			// send fake dns message to logger
 			dm := dnsutils.GetFakeDNSMessage()
@@ -155,7 +155,7 @@ func Test_LokiClientRelabel(t *testing.T) {
 				g := NewLokiClient(cfg, logger.New(false), "test")
 
 				// start the logger
-				go g.Run()
+				go g.StartCollect()
 
 				// send fake dns message to logger
 				dm := dnsutils.GetFakeDNSMessage()

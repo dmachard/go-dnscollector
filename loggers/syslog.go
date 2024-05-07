@@ -56,286 +56,214 @@ func GetPriority(facility string) (syslog.Priority, error) {
 }
 
 type Syslog struct {
-	stopProcess, doneProcess           chan bool
-	stopRun, doneRun                   chan bool
-	inputChan, outputChan              chan dnsutils.DNSMessage
-	config                             *pkgconfig.Config
-	configChan                         chan *pkgconfig.Config
-	logger                             *logger.Logger
+	*pkgutils.GenericWorker
 	severity, facility                 syslog.Priority
 	syslogWriter                       *syslog.Writer
 	syslogReady                        bool
 	transportReady, transportReconnect chan bool
 	textFormat                         []string
-	name                               string
-	RoutingHandler                     pkgutils.RoutingHandler
 }
 
 func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *Syslog {
-	console.Info(pkgutils.PrefixLogLogger+"[%s] syslog - enabled", name)
-	s := &Syslog{
-		stopProcess:        make(chan bool),
-		doneProcess:        make(chan bool),
-		stopRun:            make(chan bool),
-		doneRun:            make(chan bool),
-		inputChan:          make(chan dnsutils.DNSMessage, config.Loggers.Syslog.ChannelBufferSize),
-		outputChan:         make(chan dnsutils.DNSMessage, config.Loggers.Syslog.ChannelBufferSize),
-		transportReady:     make(chan bool),
-		transportReconnect: make(chan bool),
-		logger:             console,
-		config:             config,
-		configChan:         make(chan *pkgconfig.Config),
-		name:               name,
-		RoutingHandler:     pkgutils.NewRoutingHandler(config, console, name),
-	}
-	s.ReadConfig()
-	return s
+	w := &Syslog{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "syslog", config.Loggers.Syslog.ChannelBufferSize)}
+	w.transportReady = make(chan bool)
+	w.transportReconnect = make(chan bool)
+	w.ReadConfig()
+	return w
 }
 
-func (s *Syslog) GetName() string { return s.name }
-
-func (s *Syslog) AddDroppedRoute(wrk pkgutils.Worker) {
-	s.RoutingHandler.AddDroppedRoute(wrk)
-}
-
-func (s *Syslog) AddDefaultRoute(wrk pkgutils.Worker) {
-	s.RoutingHandler.AddDefaultRoute(wrk)
-}
-
-func (s *Syslog) SetLoggers(loggers []pkgutils.Worker) {}
-
-func (s *Syslog) ReadConfig() {
-	if !pkgconfig.IsValidTLS(s.config.Loggers.Syslog.TLSMinVersion) {
-		s.logger.Fatal(pkgutils.PrefixLogLogger + "[" + s.name + "] syslog - invalid tls min version")
+func (w *Syslog) ReadConfig() {
+	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.Syslog.TLSMinVersion) {
+		w.LogFatal(pkgutils.PrefixLogLogger + "invalid tls min version")
 	}
 
-	if !pkgconfig.IsValidMode(s.config.Loggers.Syslog.Mode) {
-		s.logger.Fatal(pkgutils.PrefixLogLogger + "[" + s.name + "] syslog - invalid mode text or json expected")
+	if !pkgconfig.IsValidMode(w.GetConfig().Loggers.Syslog.Mode) {
+		w.LogFatal(pkgutils.PrefixLogLogger + "invalid mode text or json expected")
 	}
-	severity, err := GetPriority(s.config.Loggers.Syslog.Severity)
+	severity, err := GetPriority(w.GetConfig().Loggers.Syslog.Severity)
 	if err != nil {
-		s.logger.Fatal(pkgutils.PrefixLogLogger + "[" + s.name + "] syslog - invalid severity")
+		w.LogFatal(pkgutils.PrefixLogLogger + "invalid severity")
 	}
-	s.severity = severity
+	w.severity = severity
 
-	facility, err := GetPriority(s.config.Loggers.Syslog.Facility)
+	facility, err := GetPriority(w.GetConfig().Loggers.Syslog.Facility)
 	if err != nil {
-		s.logger.Fatal(pkgutils.PrefixLogLogger + "[" + s.name + "] syslog - invalid facility")
+		w.LogFatal(pkgutils.PrefixLogLogger + "invalid facility")
 	}
-	s.facility = facility
+	w.facility = facility
 
-	if len(s.config.Loggers.Syslog.TextFormat) > 0 {
-		s.textFormat = strings.Fields(s.config.Loggers.Syslog.TextFormat)
+	if len(w.GetConfig().Loggers.Syslog.TextFormat) > 0 {
+		w.textFormat = strings.Fields(w.GetConfig().Loggers.Syslog.TextFormat)
 	} else {
-		s.textFormat = strings.Fields(s.config.Global.TextFormat)
+		w.textFormat = strings.Fields(w.GetConfig().Global.TextFormat)
 	}
 }
 
-func (s *Syslog) ReloadConfig(config *pkgconfig.Config) {
-	s.LogInfo("reload configuration!")
-	s.configChan <- config
-}
-
-func (s *Syslog) GetInputChannel() chan dnsutils.DNSMessage {
-	return s.inputChan
-}
-
-func (s *Syslog) LogInfo(msg string, v ...interface{}) {
-	s.logger.Info(pkgutils.PrefixLogLogger+"["+s.name+"] syslog - "+msg, v...)
-}
-
-func (s *Syslog) LogError(msg string, v ...interface{}) {
-	s.logger.Error(pkgutils.PrefixLogLogger+"["+s.name+"] syslog - "+msg, v...)
-}
-
-func (s *Syslog) Stop() {
-	s.LogInfo("stopping logger...")
-	s.RoutingHandler.Stop()
-
-	s.LogInfo("stopping to run...")
-	s.stopRun <- true
-	<-s.doneRun
-
-	s.LogInfo("stopping to process...")
-	s.stopProcess <- true
-	<-s.doneProcess
-}
-
-func (s *Syslog) ConnectToRemote() {
+func (w *Syslog) ConnectToRemote() {
 	for {
-		if s.syslogWriter != nil {
-			s.syslogWriter.Close()
-			s.syslogWriter = nil
+		if w.syslogWriter != nil {
+			w.syslogWriter.Close()
+			w.syslogWriter = nil
 		}
 
 		var logWriter *syslog.Writer
 		var tlsConfig *tls.Config
 		var err error
 
-		switch s.config.Loggers.Syslog.Transport {
+		switch w.GetConfig().Loggers.Syslog.Transport {
 		case "local":
-			s.LogInfo("connecting to local syslog...")
-			logWriter, err = syslog.New(s.facility|s.severity, "")
+			w.LogInfo("connecting to local syslog...")
+			logWriter, err = syslog.New(w.facility|w.severity, "")
 		case netutils.SocketUnix:
-			s.LogInfo("connecting to %s://%s ...",
-				s.config.Loggers.Syslog.Transport,
-				s.config.Loggers.Syslog.RemoteAddress)
+			w.LogInfo("connecting to %s://%s ...",
+				w.GetConfig().Loggers.Syslog.Transport,
+				w.GetConfig().Loggers.Syslog.RemoteAddress)
 			logWriter, err = syslog.Dial("",
-				s.config.Loggers.Syslog.RemoteAddress, s.facility|s.severity,
-				s.config.Loggers.Syslog.Tag)
+				w.GetConfig().Loggers.Syslog.RemoteAddress, w.facility|w.severity,
+				w.GetConfig().Loggers.Syslog.Tag)
 		case netutils.SocketUDP, netutils.SocketTCP:
-			s.LogInfo("connecting to %s://%s ...",
-				s.config.Loggers.Syslog.Transport,
-				s.config.Loggers.Syslog.RemoteAddress)
-			logWriter, err = syslog.Dial(s.config.Loggers.Syslog.Transport,
-				s.config.Loggers.Syslog.RemoteAddress, s.facility|s.severity,
-				s.config.Loggers.Syslog.Tag)
+			w.LogInfo("connecting to %s://%s ...",
+				w.GetConfig().Loggers.Syslog.Transport,
+				w.GetConfig().Loggers.Syslog.RemoteAddress)
+			logWriter, err = syslog.Dial(w.GetConfig().Loggers.Syslog.Transport,
+				w.GetConfig().Loggers.Syslog.RemoteAddress, w.facility|w.severity,
+				w.GetConfig().Loggers.Syslog.Tag)
 		case netutils.SocketTLS:
-			s.LogInfo("connecting to %s://%s ...",
-				s.config.Loggers.Syslog.Transport,
-				s.config.Loggers.Syslog.RemoteAddress)
+			w.LogInfo("connecting to %s://%s ...",
+				w.GetConfig().Loggers.Syslog.Transport,
+				w.GetConfig().Loggers.Syslog.RemoteAddress)
 
 			tlsOptions := pkgconfig.TLSOptions{
-				InsecureSkipVerify: s.config.Loggers.Syslog.TLSInsecure,
-				MinVersion:         s.config.Loggers.Syslog.TLSMinVersion,
-				CAFile:             s.config.Loggers.Syslog.CAFile,
-				CertFile:           s.config.Loggers.Syslog.CertFile,
-				KeyFile:            s.config.Loggers.Syslog.KeyFile,
+				InsecureSkipVerify: w.GetConfig().Loggers.Syslog.TLSInsecure,
+				MinVersion:         w.GetConfig().Loggers.Syslog.TLSMinVersion,
+				CAFile:             w.GetConfig().Loggers.Syslog.CAFile,
+				CertFile:           w.GetConfig().Loggers.Syslog.CertFile,
+				KeyFile:            w.GetConfig().Loggers.Syslog.KeyFile,
 			}
 
 			tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
 			if err == nil {
-				logWriter, err = syslog.DialWithTLSConfig(s.config.Loggers.Syslog.Transport,
-					s.config.Loggers.Syslog.RemoteAddress, s.facility|s.severity,
-					s.config.Loggers.Syslog.Tag,
+				logWriter, err = syslog.DialWithTLSConfig(w.GetConfig().Loggers.Syslog.Transport,
+					w.GetConfig().Loggers.Syslog.RemoteAddress, w.facility|w.severity,
+					w.GetConfig().Loggers.Syslog.Tag,
 					tlsConfig)
 			}
 		default:
-			s.logger.Fatal("invalid syslog transport: ", s.config.Loggers.Syslog.Transport)
+			w.LogFatal("invalid syslog transport: ", w.GetConfig().Loggers.Syslog.Transport)
 		}
 
 		// something is wrong during connection ?
 		if err != nil {
-			s.LogError("%s", err)
-			s.LogInfo("retry to connect in %d seconds", s.config.Loggers.Syslog.RetryInterval)
-			time.Sleep(time.Duration(s.config.Loggers.Syslog.RetryInterval) * time.Second)
+			w.LogError("%s", err)
+			w.LogInfo("retry to connect in %d seconds", w.GetConfig().Loggers.Syslog.RetryInterval)
+			time.Sleep(time.Duration(w.GetConfig().Loggers.Syslog.RetryInterval) * time.Second)
 			continue
 		}
 
-		s.syslogWriter = logWriter
+		w.syslogWriter = logWriter
 
 		// set syslog format
-		switch strings.ToLower(s.config.Loggers.Syslog.Formatter) {
+		switch strings.ToLower(w.GetConfig().Loggers.Syslog.Formatter) {
 		case "unix":
-			s.syslogWriter.SetFormatter(syslog.UnixFormatter)
+			w.syslogWriter.SetFormatter(syslog.UnixFormatter)
 		case "rfc3164":
-			s.syslogWriter.SetFormatter(syslog.RFC3164Formatter)
+			w.syslogWriter.SetFormatter(syslog.RFC3164Formatter)
 		case "rfc5424", "":
-			s.syslogWriter.SetFormatter(syslog.RFC5424Formatter)
+			w.syslogWriter.SetFormatter(syslog.RFC5424Formatter)
 		}
 
 		// set syslog framer
-		switch strings.ToLower(s.config.Loggers.Syslog.Framer) {
+		switch strings.ToLower(w.GetConfig().Loggers.Syslog.Framer) {
 		case "none", "":
-			s.syslogWriter.SetFramer(syslog.DefaultFramer)
+			w.syslogWriter.SetFramer(syslog.DefaultFramer)
 		case "rfc5425":
-			s.syslogWriter.SetFramer(syslog.RFC5425MessageLengthFramer)
+			w.syslogWriter.SetFramer(syslog.RFC5425MessageLengthFramer)
 		}
 
 		// custom hostname
-		if len(s.config.Loggers.Syslog.Hostname) > 0 {
-			s.syslogWriter.SetHostname(s.config.Loggers.Syslog.Hostname)
+		if len(w.GetConfig().Loggers.Syslog.Hostname) > 0 {
+			w.syslogWriter.SetHostname(w.GetConfig().Loggers.Syslog.Hostname)
 		}
 		// custom program name
-		if len(s.config.Loggers.Syslog.AppName) > 0 {
-			s.syslogWriter.SetProgram(s.config.Loggers.Syslog.AppName)
+		if len(w.GetConfig().Loggers.Syslog.AppName) > 0 {
+			w.syslogWriter.SetProgram(w.GetConfig().Loggers.Syslog.AppName)
 		}
 
 		// notify process that the transport is ready
 		// block the loop until a reconnect is needed
-		s.transportReady <- true
-		s.transportReconnect <- true
+		w.transportReady <- true
+		w.transportReconnect <- true
 	}
 }
 
-func (s *Syslog) Run() {
-	s.LogInfo("running in background...")
+func (w *Syslog) StartCollect() {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := s.RoutingHandler.GetDefaultRoutes()
-	droppedRoutes, droppedNames := s.RoutingHandler.GetDroppedRoutes()
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DNSMessage{}
-	listChannel = append(listChannel, s.outputChan)
-	subprocessors := transformers.NewTransforms(&s.config.OutgoingTransformers, s.logger, s.name, listChannel, 0)
+	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)
 
 	// goroutine to process transformed dns messages
-	go s.Process()
+	go w.StartLogging()
 
 	// init remote conn
-	go s.ConnectToRemote()
+	go w.ConnectToRemote()
 
 	// loop to process incoming messages
-RUN_LOOP:
 	for {
 		select {
-		case <-s.stopRun:
-			// cleanup transformers
+		case <-w.OnStop():
+			w.StopLogger()
 			subprocessors.Reset()
-
-			s.doneRun <- true
-			break RUN_LOOP
+			return
 
 		// new config provided?
-		case cfg, opened := <-s.configChan:
-			if !opened {
-				return
-			}
-			s.config = cfg
-			s.ReadConfig()
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
+			w.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-s.inputChan:
+		case dm, opened := <-w.GetInputChannel():
 			if !opened {
-				s.LogInfo("input channel closed!")
+				w.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
-				s.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
-			// send to next ?
-			s.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
-
 			// send to output channel
-			s.outputChan <- dm
+			w.GetOutputChannel() <- dm
+
+			// send to next ?
+			w.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
-	s.LogInfo("run terminated")
 }
 
-func (s *Syslog) FlushBuffer(buf *[]dnsutils.DNSMessage) {
+func (w *Syslog) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	buffer := new(bytes.Buffer)
 	var err error
 
 	for _, dm := range *buf {
-		switch s.config.Loggers.Syslog.Mode {
+		switch w.GetConfig().Loggers.Syslog.Mode {
 		case pkgconfig.ModeText:
 			// write the text line to the buffer
-			buffer.Write(dm.Bytes(s.textFormat,
-				s.config.Global.TextFormatDelimiter,
-				s.config.Global.TextFormatBoundary))
+			buffer.Write(dm.Bytes(w.textFormat, w.GetConfig().Global.TextFormatDelimiter, w.GetConfig().Global.TextFormatBoundary))
 
 			// replace NULL char from text line directly in the buffer
 			// because the NULL is a end of log in syslog
 			for i := 0; i < buffer.Len(); i++ {
 				if buffer.Bytes()[i] == 0 {
-					buffer.Bytes()[i] = s.config.Loggers.Syslog.ReplaceNullChar[0]
+					buffer.Bytes()[i] = w.GetConfig().Loggers.Syslog.ReplaceNullChar[0]
 				}
 			}
 
@@ -344,7 +272,7 @@ func (s *Syslog) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 
 			// write the modified content of the buffer to s.syslogWriter
 			// and reset the buffer
-			_, err = buffer.WriteTo(s.syslogWriter)
+			_, err = buffer.WriteTo(w.syslogWriter)
 
 		case pkgconfig.ModeJSON:
 			// encode to json the dns message
@@ -352,13 +280,13 @@ func (s *Syslog) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 
 			// write the content of the buffer to s.syslogWriter
 			// and reset the buffer
-			_, err = buffer.WriteTo(s.syslogWriter)
+			_, err = buffer.WriteTo(w.syslogWriter)
 
 		case pkgconfig.ModeFlatJSON:
 			// get flatten object
 			flat, errflat := dm.Flatten()
 			if errflat != nil {
-				s.LogError("flattening DNS message failed: %e", err)
+				w.LogError("flattening DNS message failed: %e", err)
 				continue
 			}
 
@@ -367,13 +295,13 @@ func (s *Syslog) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 
 			// write the content of the buffer to s.syslogWriter
 			// and reset the buffer
-			_, err = buffer.WriteTo(s.syslogWriter)
+			_, err = buffer.WriteTo(w.syslogWriter)
 		}
 
 		if err != nil {
-			s.LogError("write error %s", err)
-			s.syslogReady = false
-			<-s.transportReconnect
+			w.LogError("write error %s", err)
+			w.syslogReady = false
+			<-w.transportReconnect
 			break
 		}
 	}
@@ -382,62 +310,62 @@ func (s *Syslog) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	*buf = nil
 }
 
-func (s *Syslog) Process() {
+func (w *Syslog) StartLogging() {
+	w.LogInfo("worker is starting logging")
+	defer w.LoggingDone()
+
 	// init buffer
 	bufferDm := []dnsutils.DNSMessage{}
 
 	// init flust timer for buffer
-	flushInterval := time.Duration(s.config.Loggers.Syslog.FlushInterval) * time.Second
+	flushInterval := time.Duration(w.GetConfig().Loggers.Syslog.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
 
-	s.LogInfo("processing dns messages...")
-PROCESS_LOOP:
+	w.LogInfo("processing dns messages...")
 	for {
 		select {
-		case <-s.stopProcess:
+		case <-w.OnLoggerStopped():
 			// close connection
-			if s.syslogWriter != nil {
-				s.syslogWriter.Close()
+			if w.syslogWriter != nil {
+				w.syslogWriter.Close()
 			}
-			s.doneProcess <- true
-			break PROCESS_LOOP
+			return
 
-		case <-s.transportReady:
-			s.LogInfo("syslog transport is ready")
-			s.syslogReady = true
+		case <-w.transportReady:
+			w.LogInfo("syslog transport is ready")
+			w.syslogReady = true
 
-		// incoming dns message to process
-		case dm, opened := <-s.outputChan:
+			// incoming dns message to process
+		case dm, opened := <-w.GetOutputChannel():
 			if !opened {
-				s.LogInfo("output channel closed!")
+				w.LogInfo("output channel closed!")
 				return
 			}
 
 			// discar dns message if the connection is not ready
-			if !s.syslogReady {
+			if !w.syslogReady {
 				continue
 			}
 			// append dns message to buffer
 			bufferDm = append(bufferDm, dm)
 
 			// buffer is full ?
-			if len(bufferDm) >= s.config.Loggers.Syslog.BufferSize {
-				s.FlushBuffer(&bufferDm)
+			if len(bufferDm) >= w.GetConfig().Loggers.Syslog.BufferSize {
+				w.FlushBuffer(&bufferDm)
 			}
 
 			// flush the buffer
 		case <-flushTimer.C:
-			if !s.syslogReady {
+			if !w.syslogReady {
 				bufferDm = nil
 			}
 
 			if len(bufferDm) > 0 {
-				s.FlushBuffer(&bufferDm)
+				w.FlushBuffer(&bufferDm)
 			}
 
 			// restart timer
 			flushTimer.Reset(flushInterval)
 		}
 	}
-	s.LogInfo("processing terminated")
 }

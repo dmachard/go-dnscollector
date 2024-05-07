@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
@@ -56,7 +57,7 @@ func Test_DnstapRelay(t *testing.T) {
 
 			// start collector
 			c := NewDnstapProxifier([]pkgutils.Worker{g}, config, logger.New(false), "test")
-			go c.Run()
+			go c.StartCollect()
 
 			// start client
 			time.Sleep(1 * time.Second)
@@ -75,7 +76,7 @@ func Test_DnstapRelay(t *testing.T) {
 				frame := &framestream.Frame{}
 
 				// get fake dns question
-				dnsquery, err := processors.GetFakeDNS()
+				dnsquery, err := dnsutils.GetFakeDNS()
 				if err != nil {
 					t.Fatalf("dns question pack error")
 				}

@@ -10,17 +10,17 @@ import (
 )
 
 type XDPSniffer struct {
-	*pkgutils.Collector
+	*pkgutils.GenericWorker
 }
 
 func NewXDPSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
-	s := &XDPSniffer{Collector: pkgutils.NewCollector(config, logger, name, "xdp sniffer")}
-	s.SetDefaultRoutes(next)
-	s.ReadConfig()
-	return s
+	w := &XDPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "xdp sniffer", pkgutils.DefaultBufferSize)}
+	w.SetDefaultRoutes(next)
+	w.ReadConfig()
+	return w
 }
 
-func (c *XDPSniffer) Run() {
-	c.LogError("running collector failed...OS not supported!")
-	c.StopIsDone()
+func (w *XDPSniffer) StartCollect() {
+	w.LogError("running collector failed...OS not supported!")
+	defer w.CollectDone()
 }

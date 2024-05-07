@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
@@ -76,7 +77,7 @@ func Test_DnstapCollector(t *testing.T) {
 
 			// start the collector
 			c := NewDnstap([]pkgutils.Worker{g}, config, logger.New(false), "test")
-			go c.Run()
+			go c.StartCollect()
 
 			// wait before to connect
 			time.Sleep(1 * time.Second)
@@ -96,7 +97,7 @@ func Test_DnstapCollector(t *testing.T) {
 				subFrame := &framestream.Frame{}
 
 				// get fake dns question
-				dnsquery, err := processors.GetFakeDNS()
+				dnsquery, err := dnsutils.GetFakeDNS()
 				if err != nil {
 					t.Fatalf("dns question pack error")
 				}
@@ -155,7 +156,7 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	// start the collector in unix mode
 	g := pkgutils.NewFakeLogger()
 	c := NewDnstap([]pkgutils.Worker{g}, config, lg, "test")
-	go c.Run()
+	go c.StartCollect()
 
 	// simulate dns server connection to collector
 	time.Sleep(1 * time.Second)

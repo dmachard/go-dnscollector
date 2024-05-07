@@ -28,7 +28,7 @@ func Test_DnsMessage_BufferLoggerIsFull(t *testing.T) {
 	c.AddDefaultRoute(nxt)
 
 	// run collector
-	go c.Run()
+	go c.StartCollect()
 
 	// add a shot of dnsmessages to collector
 	dmIn := dnsutils.GetFakeDNSMessage()

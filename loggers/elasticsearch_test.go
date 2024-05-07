@@ -45,7 +45,7 @@ func Test_ElasticSearchClient_BulkSize_Exceeded(t *testing.T) {
 			conf.Loggers.ElasticSearchClient.BulkChannelSize = 50
 			g := NewElasticSearchClient(conf, logger.New(false), "test")
 
-			go g.Run()
+			go g.StartCollect()
 
 			dm := dnsutils.GetFakeDNSMessage()
 
@@ -133,7 +133,7 @@ func Test_ElasticSearchClient_FlushInterval_Exceeded(t *testing.T) {
 			g := NewElasticSearchClient(conf, logger.New(true), "test")
 
 			// run logger
-			go g.Run()
+			go g.StartCollect()
 			time.Sleep(1 * time.Second)
 
 			// send DNSmessage

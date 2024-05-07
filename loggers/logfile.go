@@ -46,116 +46,51 @@ func IsValidMode(mode string) bool {
 }
 
 type LogFile struct {
-	stopProcess, doneProcess               chan bool
-	stopRun, doneRun                       chan bool
-	inputChan, outputChan                  chan dnsutils.DNSMessage
+	*pkgutils.GenericWorker
 	writerPlain                            *bufio.Writer
 	writerPcap                             *pcapgo.Writer
 	writerDnstap                           *framestream.Encoder
-	config                                 *pkgconfig.Config
-	configChan                             chan *pkgconfig.Config
-	logger                                 *logger.Logger
 	fileFd                                 *os.File
 	fileSize                               int64
 	fileDir, fileName, fileExt, filePrefix string
 	commpressTimer                         *time.Timer
 	textFormat                             []string
-	name                                   string
-	RoutingHandler                         pkgutils.RoutingHandler
 }
 
 func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *LogFile {
-	logger.Info(pkgutils.PrefixLogLogger+"[%s] file - enabled", name)
-	lf := &LogFile{
-		stopProcess:    make(chan bool),
-		doneProcess:    make(chan bool),
-		stopRun:        make(chan bool),
-		doneRun:        make(chan bool),
-		inputChan:      make(chan dnsutils.DNSMessage, config.Loggers.LogFile.ChannelBufferSize),
-		outputChan:     make(chan dnsutils.DNSMessage, config.Loggers.LogFile.ChannelBufferSize),
-		config:         config,
-		configChan:     make(chan *pkgconfig.Config),
-		logger:         logger,
-		name:           name,
-		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
+	w := &LogFile{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "file", config.Loggers.LogFile.ChannelBufferSize)}
+	w.ReadConfig()
+	if err := w.OpenFile(); err != nil {
+		w.LogFatal(pkgutils.PrefixLogLogger+"["+name+"] file - unable to open output file:", err)
 	}
+	return w
+}
 
-	lf.ReadConfig()
-
-	if err := lf.OpenFile(); err != nil {
-		lf.logger.Fatal(pkgutils.PrefixLogLogger+"["+name+"] file - unable to open output file:", err)
+func (w *LogFile) ReadConfig() {
+	if !IsValidMode(w.GetConfig().Loggers.LogFile.Mode) {
+		w.LogFatal("["+w.GetName()+"] logger=file - invalid mode: ", w.GetConfig().Loggers.LogFile.Mode)
 	}
+	w.fileDir = filepath.Dir(w.GetConfig().Loggers.LogFile.FilePath)
+	w.fileName = filepath.Base(w.GetConfig().Loggers.LogFile.FilePath)
+	w.fileExt = filepath.Ext(w.fileName)
+	w.filePrefix = strings.TrimSuffix(w.fileName, w.fileExt)
 
-	return lf
-}
-
-func (lf *LogFile) GetName() string { return lf.name }
-
-func (lf *LogFile) AddDroppedRoute(wrk pkgutils.Worker) {
-	lf.RoutingHandler.AddDroppedRoute(wrk)
-}
-
-func (lf *LogFile) AddDefaultRoute(wrk pkgutils.Worker) {
-	lf.RoutingHandler.AddDefaultRoute(wrk)
-}
-
-func (lf *LogFile) SetLoggers(loggers []pkgutils.Worker) {}
-
-func (lf *LogFile) GetInputChannel() chan dnsutils.DNSMessage {
-	return lf.inputChan
-}
-
-func (lf *LogFile) ReadConfig() {
-	if !IsValidMode(lf.config.Loggers.LogFile.Mode) {
-		lf.logger.Fatal("["+lf.name+"] logger=file - invalid mode: ", lf.config.Loggers.LogFile.Mode)
-	}
-	lf.fileDir = filepath.Dir(lf.config.Loggers.LogFile.FilePath)
-	lf.fileName = filepath.Base(lf.config.Loggers.LogFile.FilePath)
-	lf.fileExt = filepath.Ext(lf.fileName)
-	lf.filePrefix = strings.TrimSuffix(lf.fileName, lf.fileExt)
-
-	if len(lf.config.Loggers.LogFile.TextFormat) > 0 {
-		lf.textFormat = strings.Fields(lf.config.Loggers.LogFile.TextFormat)
+	if len(w.GetConfig().Loggers.LogFile.TextFormat) > 0 {
+		w.textFormat = strings.Fields(w.GetConfig().Loggers.LogFile.TextFormat)
 	} else {
-		lf.textFormat = strings.Fields(lf.config.Global.TextFormat)
+		w.textFormat = strings.Fields(w.GetConfig().Global.TextFormat)
 	}
 
-	lf.LogInfo("running in mode: %s", lf.config.Loggers.LogFile.Mode)
+	w.LogInfo("running in mode: %s", w.GetConfig().Loggers.LogFile.Mode)
 }
 
-func (lf *LogFile) ReloadConfig(config *pkgconfig.Config) {
-	lf.LogInfo("reload configuration!")
-	lf.configChan <- config
-}
-
-func (lf *LogFile) LogInfo(msg string, v ...interface{}) {
-	lf.logger.Info(pkgutils.PrefixLogLogger+"["+lf.name+"] file - "+msg, v...)
-}
-
-func (lf *LogFile) LogError(msg string, v ...interface{}) {
-	lf.logger.Error(pkgutils.PrefixLogLogger+"["+lf.name+"] file - "+msg, v...)
-}
-
-func (lf *LogFile) Stop() {
-	lf.LogInfo("stopping logger...")
-	lf.RoutingHandler.Stop()
-
-	lf.LogInfo("stopping to run...")
-	lf.stopRun <- true
-	<-lf.doneRun
-
-	lf.LogInfo("stopping to process...")
-	lf.stopProcess <- true
-	<-lf.doneProcess
-}
-
-func (lf *LogFile) Cleanup() error {
-	if lf.config.Loggers.LogFile.MaxFiles == 0 {
+func (w *LogFile) Cleanup() error {
+	if w.GetConfig().Loggers.LogFile.MaxFiles == 0 {
 		return nil
 	}
 
 	// remove old files ? keep only max files number
-	entries, err := os.ReadDir(lf.fileDir)
+	entries, err := os.ReadDir(w.fileDir)
 	if err != nil {
 		return err
 	}
@@ -167,7 +102,7 @@ func (lf *LogFile) Cleanup() error {
 		}
 
 		// extract timestamp from filename
-		re := regexp.MustCompile(`^` + lf.filePrefix + `-(?P<ts>\d+)` + lf.fileExt)
+		re := regexp.MustCompile(`^` + w.filePrefix + `-(?P<ts>\d+)` + w.fileExt)
 		matches := re.FindStringSubmatch(entry.Name())
 
 		if len(matches) == 0 {
@@ -185,13 +120,13 @@ func (lf *LogFile) Cleanup() error {
 	sort.Ints(logFiles)
 
 	// too much log files ?
-	diffNB := len(logFiles) - lf.config.Loggers.LogFile.MaxFiles
+	diffNB := len(logFiles) - w.GetConfig().Loggers.LogFile.MaxFiles
 	if diffNB > 0 {
 		for i := 0; i < diffNB; i++ {
-			filename := fmt.Sprintf("%s-%d%s", lf.filePrefix, logFiles[i], lf.fileExt)
-			f := filepath.Join(lf.fileDir, filename)
+			filename := fmt.Sprintf("%s-%d%s", w.filePrefix, logFiles[i], w.fileExt)
+			f := filepath.Join(w.fileDir, filename)
 			if _, err := os.Stat(f); os.IsNotExist(err) {
-				f = filepath.Join(lf.fileDir, filename+compressSuffix)
+				f = filepath.Join(w.fileDir, filename+compressSuffix)
 			}
 
 			// ignore errors on deletion
@@ -202,55 +137,55 @@ func (lf *LogFile) Cleanup() error {
 	return nil
 }
 
-func (lf *LogFile) OpenFile() error {
+func (w *LogFile) OpenFile() error {
 
-	fd, err := os.OpenFile(lf.config.Loggers.LogFile.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	fd, err := os.OpenFile(w.GetConfig().Loggers.LogFile.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return err
 	}
-	lf.fileFd = fd
+	w.fileFd = fd
 
-	fileinfo, err := os.Stat(lf.config.Loggers.LogFile.FilePath)
+	fileinfo, err := os.Stat(w.GetConfig().Loggers.LogFile.FilePath)
 	if err != nil {
 		return err
 	}
 
-	lf.fileSize = fileinfo.Size()
+	w.fileSize = fileinfo.Size()
 
-	switch lf.config.Loggers.LogFile.Mode {
+	switch w.GetConfig().Loggers.LogFile.Mode {
 	case pkgconfig.ModeText, pkgconfig.ModeJSON, pkgconfig.ModeFlatJSON:
 		bufferSize := 4096
-		lf.writerPlain = bufio.NewWriterSize(fd, bufferSize)
+		w.writerPlain = bufio.NewWriterSize(fd, bufferSize)
 
 	case pkgconfig.ModePCAP:
-		lf.writerPcap = pcapgo.NewWriter(fd)
-		if lf.fileSize == 0 {
-			if err := lf.writerPcap.WriteFileHeader(65536, layers.LinkTypeEthernet); err != nil {
+		w.writerPcap = pcapgo.NewWriter(fd)
+		if w.fileSize == 0 {
+			if err := w.writerPcap.WriteFileHeader(65536, layers.LinkTypeEthernet); err != nil {
 				return err
 			}
 		}
 
 	case pkgconfig.ModeDNSTap:
 		fsOptions := &framestream.EncoderOptions{ContentType: []byte("protobuf:dnstap.Dnstap"), Bidirectional: false}
-		lf.writerDnstap, err = framestream.NewEncoder(fd, fsOptions)
+		w.writerDnstap, err = framestream.NewEncoder(fd, fsOptions)
 		if err != nil {
 			return err
 		}
 
 	}
 
-	lf.LogInfo("file opened with success: %s", lf.config.Loggers.LogFile.FilePath)
+	w.LogInfo("file opened with success: %s", w.GetConfig().Loggers.LogFile.FilePath)
 	return nil
 }
 
-func (lf *LogFile) GetMaxSize() int64 {
-	return int64(1024*1024) * int64(lf.config.Loggers.LogFile.MaxSize)
+func (w *LogFile) GetMaxSize() int64 {
+	return int64(1024*1024) * int64(w.GetConfig().Loggers.LogFile.MaxSize)
 }
 
-func (lf *LogFile) CompressFile() {
-	entries, err := os.ReadDir(lf.fileDir)
+func (w *LogFile) CompressFile() {
+	entries, err := os.ReadDir(w.fileDir)
 	if err != nil {
-		lf.LogError("unable to list all files: %s", err)
+		w.LogError("unable to list all files: %s", err)
 		return
 	}
 
@@ -260,27 +195,27 @@ func (lf *LogFile) CompressFile() {
 			continue
 		}
 
-		matched, _ := regexp.MatchString(`^`+lf.filePrefix+`-\d+`+lf.fileExt+`$`, entry.Name())
+		matched, _ := regexp.MatchString(`^`+w.filePrefix+`-\d+`+w.fileExt+`$`, entry.Name())
 		if matched {
-			src := filepath.Join(lf.fileDir, entry.Name())
-			dst := filepath.Join(lf.fileDir, entry.Name()+compressSuffix)
+			src := filepath.Join(w.fileDir, entry.Name())
+			dst := filepath.Join(w.fileDir, entry.Name()+compressSuffix)
 
 			fd, err := os.Open(src)
 			if err != nil {
-				lf.LogError("compress - failed to open file: ", err)
+				w.LogError("compress - failed to open file: ", err)
 				continue
 			}
 			defer fd.Close()
 
 			fi, err := os.Stat(src)
 			if err != nil {
-				lf.LogError("compress - failed to stat file: ", err)
+				w.LogError("compress - failed to stat file: ", err)
 				continue
 			}
 
 			gzf, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, fi.Mode())
 			if err != nil {
-				lf.LogError("compress - failed to open compressed file: ", err)
+				w.LogError("compress - failed to open compressed file: ", err)
 				continue
 			}
 			defer gzf.Close()
@@ -288,111 +223,111 @@ func (lf *LogFile) CompressFile() {
 			gz := gzip.NewWriter(gzf)
 
 			if _, err := io.Copy(gz, fd); err != nil {
-				lf.LogError("compress - failed to compress file: ", err)
+				w.LogError("compress - failed to compress file: ", err)
 				os.Remove(dst)
 				continue
 			}
 			if err := gz.Close(); err != nil {
-				lf.LogError("compress - failed to close gz writer: ", err)
+				w.LogError("compress - failed to close gz writer: ", err)
 				os.Remove(dst)
 				continue
 			}
 			if err := gzf.Close(); err != nil {
-				lf.LogError("compress - failed to close gz file: ", err)
+				w.LogError("compress - failed to close gz file: ", err)
 				os.Remove(dst)
 				continue
 			}
 
 			if err := fd.Close(); err != nil {
-				lf.LogError("compress - failed to close log file: ", err)
+				w.LogError("compress - failed to close log file: ", err)
 				os.Remove(dst)
 				continue
 			}
 			if err := os.Remove(src); err != nil {
-				lf.LogError("compress - failed to remove log file: ", err)
+				w.LogError("compress - failed to remove log file: ", err)
 				os.Remove(dst)
 				continue
 			}
 
 			// post rotate command?
-			lf.CompressPostRotateCommand(dst)
+			w.CompressPostRotateCommand(dst)
 		}
 	}
 
-	lf.commpressTimer.Reset(time.Duration(lf.config.Loggers.LogFile.CompressInterval) * time.Second)
+	w.commpressTimer.Reset(time.Duration(w.GetConfig().Loggers.LogFile.CompressInterval) * time.Second)
 }
 
-func (lf *LogFile) PostRotateCommand(filename string) {
-	if len(lf.config.Loggers.LogFile.PostRotateCommand) > 0 {
-		lf.LogInfo("execute postrotate command: %s", filename)
-		_, err := exec.Command(lf.config.Loggers.LogFile.PostRotateCommand, filename).Output()
+func (w *LogFile) PostRotateCommand(filename string) {
+	if len(w.GetConfig().Loggers.LogFile.PostRotateCommand) > 0 {
+		w.LogInfo("execute postrotate command: %s", filename)
+		_, err := exec.Command(w.GetConfig().Loggers.LogFile.PostRotateCommand, filename).Output()
 		if err != nil {
-			lf.LogError("postrotate command error: %s", err)
-		} else if lf.config.Loggers.LogFile.PostRotateDelete {
+			w.LogError("postrotate command error: %s", err)
+		} else if w.GetConfig().Loggers.LogFile.PostRotateDelete {
 			os.Remove(filename)
 		}
 	}
 }
 
-func (lf *LogFile) CompressPostRotateCommand(filename string) {
-	if len(lf.config.Loggers.LogFile.CompressPostCommand) > 0 {
+func (w *LogFile) CompressPostRotateCommand(filename string) {
+	if len(w.GetConfig().Loggers.LogFile.CompressPostCommand) > 0 {
 
-		lf.LogInfo("execute compress postrotate command: %s", filename)
-		_, err := exec.Command(lf.config.Loggers.LogFile.CompressPostCommand, filename).Output()
+		w.LogInfo("execute compress postrotate command: %s", filename)
+		_, err := exec.Command(w.GetConfig().Loggers.LogFile.CompressPostCommand, filename).Output()
 		if err != nil {
-			lf.LogError("compress - postcommand error: %s", err)
+			w.LogError("compress - postcommand error: %s", err)
 		}
 	}
 }
 
-func (lf *LogFile) FlushWriters() {
-	switch lf.config.Loggers.LogFile.Mode {
+func (w *LogFile) FlushWriters() {
+	switch w.GetConfig().Loggers.LogFile.Mode {
 	case pkgconfig.ModeText, pkgconfig.ModeJSON, pkgconfig.ModeFlatJSON:
-		lf.writerPlain.Flush()
+		w.writerPlain.Flush()
 	case pkgconfig.ModeDNSTap:
-		lf.writerDnstap.Flush()
+		w.writerDnstap.Flush()
 	}
 }
 
-func (lf *LogFile) RotateFile() error {
+func (w *LogFile) RotateFile() error {
 	// close writer and existing file
-	lf.FlushWriters()
+	w.FlushWriters()
 
-	if lf.config.Loggers.LogFile.Mode == pkgconfig.ModeDNSTap {
-		lf.writerDnstap.Close()
+	if w.GetConfig().Loggers.LogFile.Mode == pkgconfig.ModeDNSTap {
+		w.writerDnstap.Close()
 	}
 
-	if err := lf.fileFd.Close(); err != nil {
+	if err := w.fileFd.Close(); err != nil {
 		return err
 	}
 
 	// Rename current log file
-	bfpath := filepath.Join(lf.fileDir, fmt.Sprintf("%s-%d%s", lf.filePrefix, time.Now().UnixNano(), lf.fileExt))
-	err := os.Rename(lf.config.Loggers.LogFile.FilePath, bfpath)
+	bfpath := filepath.Join(w.fileDir, fmt.Sprintf("%s-%d%s", w.filePrefix, time.Now().UnixNano(), w.fileExt))
+	err := os.Rename(w.GetConfig().Loggers.LogFile.FilePath, bfpath)
 	if err != nil {
 		return err
 	}
 
 	// post rotate command?
-	lf.PostRotateCommand(bfpath)
+	w.PostRotateCommand(bfpath)
 
 	// keep only max files
-	err = lf.Cleanup()
+	err = w.Cleanup()
 	if err != nil {
-		lf.LogError("unable to cleanup log files: %s", err)
+		w.LogError("unable to cleanup log files: %s", err)
 		return err
 	}
 
 	// re-create new one
-	if err := lf.OpenFile(); err != nil {
-		lf.LogError("unable to re-create file: %s", err)
+	if err := w.OpenFile(); err != nil {
+		w.LogError("unable to re-create file: %s", err)
 		return err
 	}
 
 	return nil
 }
 
-func (lf *LogFile) WriteToPcap(dm dnsutils.DNSMessage, pkt []gopacket.SerializableLayer) {
+func (w *LogFile) WriteToPcap(dm dnsutils.DNSMessage, pkt []gopacket.SerializableLayer) {
 	// create the packet with the layers
 	buf := gopacket.NewSerializeBuffer()
 	opts := gopacket.SerializeOptions{
@@ -406,9 +341,9 @@ func (lf *LogFile) WriteToPcap(dm dnsutils.DNSMessage, pkt []gopacket.Serializab
 	// rotate pcap file ?
 	bufSize := len(buf.Bytes())
 
-	if (lf.fileSize + int64(bufSize)) > lf.GetMaxSize() {
-		if err := lf.RotateFile(); err != nil {
-			lf.LogError("failed to rotate file: %s", err)
+	if (w.fileSize + int64(bufSize)) > w.GetMaxSize() {
+		if err := w.RotateFile(); err != nil {
+			w.LogError("failed to rotate file: %s", err)
 			return
 		}
 	}
@@ -419,206 +354,199 @@ func (lf *LogFile) WriteToPcap(dm dnsutils.DNSMessage, pkt []gopacket.Serializab
 		Length:        bufSize,
 	}
 
-	lf.writerPcap.WritePacket(ci, buf.Bytes())
+	w.writerPcap.WritePacket(ci, buf.Bytes())
 
 	// increase size file
-	lf.fileSize += int64(bufSize)
+	w.fileSize += int64(bufSize)
 }
 
-func (lf *LogFile) WriteToPlain(data []byte) {
+func (w *LogFile) WriteToPlain(data []byte) {
 	dataSize := int64(len(data))
 
 	// rotate file ?
-	if (lf.fileSize + dataSize) > lf.GetMaxSize() {
-		if err := lf.RotateFile(); err != nil {
-			lf.LogError("failed to rotate file: %s", err)
+	if (w.fileSize + dataSize) > w.GetMaxSize() {
+		if err := w.RotateFile(); err != nil {
+			w.LogError("failed to rotate file: %s", err)
 			return
 		}
 	}
 
 	// write log to file
-	n, _ := lf.writerPlain.Write(data)
+	n, _ := w.writerPlain.Write(data)
 
 	// increase size file
-	lf.fileSize += int64(n)
+	w.fileSize += int64(n)
 }
 
-func (lf *LogFile) WriteToDnstap(data []byte) {
+func (w *LogFile) WriteToDnstap(data []byte) {
 	dataSize := int64(len(data))
 
 	// rotate file ?
-	if (lf.fileSize + dataSize) > lf.GetMaxSize() {
-		if err := lf.RotateFile(); err != nil {
-			lf.LogError("failed to rotate file: %s", err)
+	if (w.fileSize + dataSize) > w.GetMaxSize() {
+		if err := w.RotateFile(); err != nil {
+			w.LogError("failed to rotate file: %s", err)
 			return
 		}
 	}
 
 	// write log to file
-	n, _ := lf.writerDnstap.Write(data)
+	n, _ := w.writerDnstap.Write(data)
 
 	// increase size file
-	lf.fileSize += int64(n)
+	w.fileSize += int64(n)
 }
 
-func (lf *LogFile) Run() {
-	lf.LogInfo("running in background...")
+func (w *LogFile) StartCollect() {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := lf.RoutingHandler.GetDefaultRoutes()
-	droppedRoutes, droppedNames := lf.RoutingHandler.GetDroppedRoutes()
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DNSMessage{}
-	listChannel = append(listChannel, lf.outputChan)
-	subprocessors := transformers.NewTransforms(&lf.config.OutgoingTransformers, lf.logger, lf.name, listChannel, 0)
+	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)
 
 	// goroutine to process transformed dns messages
-	go lf.Process()
+	go w.StartLogging()
 
 	// loop to process incoming messages
-RUN_LOOP:
 	for {
 		select {
-		case <-lf.stopRun:
-			// cleanup transformers
+		case <-w.OnStop():
+			w.StopLogger()
 			subprocessors.Reset()
-			lf.doneRun <- true
-			break RUN_LOOP
+			return
 
-		case cfg, opened := <-lf.configChan:
-			if !opened {
-				return
-			}
-			lf.config = cfg
-			lf.ReadConfig()
+			// new config provided?
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
+			w.ReadConfig()
 			subprocessors.ReloadConfig(&cfg.OutgoingTransformers)
 
-		case dm, opened := <-lf.inputChan:
+		case dm, opened := <-w.GetInputChannel():
 			if !opened {
-				lf.LogInfo("input channel closed!")
+				w.LogInfo("input channel closed!")
 				return
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
-				lf.RoutingHandler.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
-			// send to next ?
-			lf.RoutingHandler.SendTo(defaultRoutes, defaultNames, dm)
-
 			// send to output channel
-			lf.outputChan <- dm
+			w.GetOutputChannel() <- dm
+
+			// send to next ?
+			w.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
-	lf.LogInfo("run terminated")
 }
 
-func (lf *LogFile) Process() {
+func (w *LogFile) StartLogging() {
+	w.LogInfo("worker is starting logging")
+	defer w.LoggingDone()
+
 	// prepare some timers
-	flushInterval := time.Duration(lf.config.Loggers.LogFile.FlushInterval) * time.Second
+	flushInterval := time.Duration(w.GetConfig().Loggers.LogFile.FlushInterval) * time.Second
 	flushTimer := time.NewTimer(flushInterval)
-	lf.commpressTimer = time.NewTimer(time.Duration(lf.config.Loggers.LogFile.CompressInterval) * time.Second)
+	w.commpressTimer = time.NewTimer(time.Duration(w.GetConfig().Loggers.LogFile.CompressInterval) * time.Second)
 
 	buffer := new(bytes.Buffer)
 	var data []byte
 	var err error
 
-	lf.LogInfo("ready to process")
-PROCESS_LOOP:
 	for {
 		select {
-		case <-lf.stopProcess:
+		case <-w.OnLoggerStopped():
 			// stop timer
 			flushTimer.Stop()
-			lf.commpressTimer.Stop()
+			w.commpressTimer.Stop()
 
 			// flush writer
-			lf.FlushWriters()
+			w.FlushWriters()
 
 			// closing file
-			lf.LogInfo("closing log file")
-			if lf.config.Loggers.LogFile.Mode == pkgconfig.ModeDNSTap {
-				lf.writerDnstap.Close()
+			w.LogInfo("closing log file")
+			if w.GetConfig().Loggers.LogFile.Mode == pkgconfig.ModeDNSTap {
+				w.writerDnstap.Close()
 			}
-			lf.fileFd.Close()
+			w.fileFd.Close()
 
-			lf.doneProcess <- true
-			break PROCESS_LOOP
+			return
 
-		case dm, opened := <-lf.outputChan:
+		case dm, opened := <-w.GetOutputChannel():
 			if !opened {
-				lf.LogInfo("output channel closed!")
+				w.LogInfo("output channel closed!")
 				return
 			}
 
 			// write to file
-			switch lf.config.Loggers.LogFile.Mode {
+			switch w.GetConfig().Loggers.LogFile.Mode {
 
 			// with basic text mode
 			case pkgconfig.ModeText:
-				lf.WriteToPlain(dm.Bytes(lf.textFormat,
-					lf.config.Global.TextFormatDelimiter,
-					lf.config.Global.TextFormatBoundary))
+				w.WriteToPlain(dm.Bytes(w.textFormat,
+					w.GetConfig().Global.TextFormatDelimiter,
+					w.GetConfig().Global.TextFormatBoundary))
 
 				var delimiter bytes.Buffer
 				delimiter.WriteString("\n")
-				lf.WriteToPlain(delimiter.Bytes())
+				w.WriteToPlain(delimiter.Bytes())
 
 			// with json mode
 			case pkgconfig.ModeFlatJSON:
 				flat, err := dm.Flatten()
 				if err != nil {
-					lf.LogError("flattening DNS message failed: %e", err)
+					w.LogError("flattening DNS message failed: %e", err)
 				}
 				json.NewEncoder(buffer).Encode(flat)
-				lf.WriteToPlain(buffer.Bytes())
+				w.WriteToPlain(buffer.Bytes())
 				buffer.Reset()
 
 			// with json mode
 			case pkgconfig.ModeJSON:
 				json.NewEncoder(buffer).Encode(dm)
-				lf.WriteToPlain(buffer.Bytes())
+				w.WriteToPlain(buffer.Bytes())
 				buffer.Reset()
 
 			// with dnstap mode
 			case pkgconfig.ModeDNSTap:
-				data, err = dm.ToDNSTap(lf.config.Loggers.LogFile.ExtendedSupport)
+				data, err = dm.ToDNSTap(w.GetConfig().Loggers.LogFile.ExtendedSupport)
 				if err != nil {
-					lf.LogError("failed to encode to DNStap protobuf: %s", err)
+					w.LogError("failed to encode to DNStap protobuf: %s", err)
 					continue
 				}
-				lf.WriteToDnstap(data)
+				w.WriteToDnstap(data)
 
 			// with pcap mode
 			case pkgconfig.ModePCAP:
 				pkt, err := dm.ToPacketLayer()
 				if err != nil {
-					lf.LogError("failed to encode to packet layer: %s", err)
+					w.LogError("failed to encode to packet layer: %s", err)
 					continue
 				}
 
 				// write the packet
-				lf.WriteToPcap(dm, pkt)
+				w.WriteToPcap(dm, pkt)
 			}
 
 		case <-flushTimer.C:
 			// flush writer
-			lf.FlushWriters()
+			w.FlushWriters()
 
 			// reset flush timer and buffer
 			buffer.Reset()
 			flushTimer.Reset(flushInterval)
 
-		case <-lf.commpressTimer.C:
-			if lf.config.Loggers.LogFile.Compress {
-				lf.CompressFile()
+		case <-w.commpressTimer.C:
+			if w.GetConfig().Loggers.LogFile.Compress {
+				w.CompressFile()
 			}
 
 		}
 	}
-	lf.LogInfo("processing terminated")
 }
