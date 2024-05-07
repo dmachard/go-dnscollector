@@ -24,34 +24,34 @@ type Tail struct {
 }
 
 func NewTail(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Tail {
-	s := &Tail{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tail", pkgutils.DefaultBufferSize)}
-	s.SetDefaultRoutes(next)
-	return s
+	w := &Tail{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tail", pkgutils.DefaultBufferSize)}
+	w.SetDefaultRoutes(next)
+	return w
 }
 
-func (c *Tail) Follow() error {
+func (w *Tail) Follow() error {
 	var err error
 	location := tail.SeekInfo{Offset: 0, Whence: io.SeekEnd}
 	config := tail.Config{Location: &location, ReOpen: true, Follow: true, Logger: tail.DiscardingLogger, Poll: true, MustExist: true}
-	c.tailf, err = tail.TailFile(c.GetConfig().Collectors.Tail.FilePath, config)
+	w.tailf, err = tail.TailFile(w.GetConfig().Collectors.Tail.FilePath, config)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *Tail) StartCollect() {
-	c.LogInfo("worker is starting collection")
-	defer c.CollectDone()
+func (w *Tail) StartCollect() {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
-	err := c.Follow()
+	err := w.Follow()
 	if err != nil {
-		c.LogFatal("collector tail - unable to follow file: ", err)
+		w.LogFatal("collector tail - unable to follow file: ", err)
 	}
 
 	// prepare enabled transformers
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(c.GetDefaultRoutes())
-	subprocessors := transformers.NewTransforms(&c.GetConfig().IngoingTransformers, c.GetLogger(), c.GetName(), defaultRoutes, 0)
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	subprocessors := transformers.NewTransforms(&w.GetConfig().IngoingTransformers, w.GetLogger(), w.GetName(), defaultRoutes, 0)
 
 	// init dns message
 	dm := dnsutils.DNSMessage{}
@@ -70,28 +70,28 @@ func (c *Tail) StartCollect() {
 	for {
 		select {
 		// save the new config
-		case cfg := <-c.NewConfig():
-			c.SetConfig(cfg)
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
 			subprocessors.ReloadConfig(&cfg.IngoingTransformers)
 
-		case <-c.OnStop():
-			c.LogInfo("stopping...")
+		case <-w.OnStop():
+			w.LogInfo("stopping...")
 			subprocessors.Reset()
 			return
 
-		case line := <-c.tailf.Lines:
+		case line := <-w.tailf.Lines:
 			var matches []string
 			var re *regexp.Regexp
 
-			if len(c.GetConfig().Collectors.Tail.PatternQuery) > 0 {
-				re = regexp.MustCompile(c.GetConfig().Collectors.Tail.PatternQuery)
+			if len(w.GetConfig().Collectors.Tail.PatternQuery) > 0 {
+				re = regexp.MustCompile(w.GetConfig().Collectors.Tail.PatternQuery)
 				matches = re.FindStringSubmatch(line.Text)
 				dm.DNS.Type = dnsutils.DNSQuery
 				dm.DNSTap.Operation = dnsutils.DNSTapOperationQuery
 			}
 
-			if len(c.GetConfig().Collectors.Tail.PatternReply) > 0 && len(matches) == 0 {
-				re = regexp.MustCompile(c.GetConfig().Collectors.Tail.PatternReply)
+			if len(w.GetConfig().Collectors.Tail.PatternReply) > 0 && len(matches) == 0 {
+				re = regexp.MustCompile(w.GetConfig().Collectors.Tail.PatternReply)
 				matches = re.FindStringSubmatch(line.Text)
 				dm.DNS.Type = dnsutils.DNSReply
 				dm.DNSTap.Operation = dnsutils.DNSTapOperationReply
@@ -109,7 +109,7 @@ func (c *Tail) StartCollect() {
 			var t time.Time
 			timestampIndex := re.SubexpIndex("timestamp")
 			if timestampIndex != -1 {
-				t, err = time.Parse(c.GetConfig().Collectors.Tail.TimeLayout, matches[timestampIndex])
+				t, err = time.Parse(w.GetConfig().Collectors.Tail.TimeLayout, matches[timestampIndex])
 				if err != nil {
 					continue
 				}
@@ -230,7 +230,7 @@ func (c *Tail) StartCollect() {
 				select {
 				case defaultRoutes[i] <- dm: // Successful send to logger channel
 				default:
-					c.WorkerIsBusy(defaultNames[i])
+					w.WorkerIsBusy(defaultNames[i])
 				}
 			}
 		}

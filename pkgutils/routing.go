@@ -8,24 +8,6 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func GetRoutes(routes []Worker) ([]chan dnsutils.DNSMessage, []string) {
-	channels := []chan dnsutils.DNSMessage{}
-	names := []string{}
-	for _, p := range routes {
-		if c := p.GetInputChannel(); c != nil {
-			channels = append(channels, c)
-			names = append(names, p.GetName())
-		} else {
-			panic("default routing to stanza=[" + p.GetName() + "] not supported")
-		}
-	}
-	return channels, names
-}
-
-func GetName(name string) string {
-	return "[" + name + "] - "
-}
-
 type RoutingHandler struct {
 	name                         string
 	logger                       *logger.Logger

@@ -23,34 +23,34 @@ type ProtobufPowerDNS struct {
 }
 
 func NewProtobufPowerDNS(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *ProtobufPowerDNS {
-	s := &ProtobufPowerDNS{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "powerdns", pkgutils.DefaultBufferSize)}
-	s.SetDefaultRoutes(next)
-	s.CheckConfig()
-	return s
+	w := &ProtobufPowerDNS{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "powerdns", pkgutils.DefaultBufferSize)}
+	w.SetDefaultRoutes(next)
+	w.CheckConfig()
+	return w
 }
 
-func (c *ProtobufPowerDNS) CheckConfig() {
-	if !pkgconfig.IsValidTLS(c.GetConfig().Collectors.PowerDNS.TLSMinVersion) {
-		c.LogFatal(pkgutils.PrefixLogCollector + "[" + c.GetName() + "] invalid tls min version")
+func (w *ProtobufPowerDNS) CheckConfig() {
+	if !pkgconfig.IsValidTLS(w.GetConfig().Collectors.PowerDNS.TLSMinVersion) {
+		w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] invalid tls min version")
 	}
 }
 
-func (c *ProtobufPowerDNS) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, wg *sync.WaitGroup) {
+func (w *ProtobufPowerDNS) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, wg *sync.WaitGroup) {
 	// close connection on function exit
 	defer func() {
-		c.LogInfo("conn #%d - connection handler terminated", connID)
-		netutils.Close(conn, c.GetConfig().Collectors.Dnstap.ResetConn)
+		w.LogInfo("conn #%d - connection handler terminated", connID)
+		netutils.Close(conn, w.GetConfig().Collectors.Dnstap.ResetConn)
 		wg.Done()
 	}()
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
 	peerName := netutils.GetPeerName(peer)
-	c.LogInfo("new connection #%d from %s (%s)", connID, peer, peerName)
+	w.LogInfo("new connection #%d from %s (%s)", connID, peer, peerName)
 
 	// start protobuf subprocessor
-	pdnsProcessor := processors.NewPdnsProcessor(int(connID), peerName, c.GetConfig(), c.GetLogger(), c.GetName(), c.GetConfig().Collectors.PowerDNS.ChannelBufferSize)
-	go pdnsProcessor.Run(c.GetDefaultRoutes(), c.GetDroppedRoutes())
+	pdnsProcessor := processors.NewPdnsProcessor(int(connID), peerName, w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.PowerDNS.ChannelBufferSize)
+	go pdnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
 
 	r := bufio.NewReader(conn)
 	pbs := powerdns_protobuf.NewProtobufStream(r, conn, 5*time.Second)
@@ -63,17 +63,17 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn, connID uint64, forceClose c
 	go func() {
 		defer func() {
 			pdnsProcessor.Stop()
-			c.LogInfo("conn #%d - cleanup connection handler terminated", connID)
+			w.LogInfo("conn #%d - cleanup connection handler terminated", connID)
 		}()
 
 		for {
 			select {
 			case <-forceClose:
-				c.LogInfo("conn #%d - force to cleanup the connection handler", connID)
-				netutils.Close(conn, c.GetConfig().Collectors.Dnstap.ResetConn)
+				w.LogInfo("conn #%d - force to cleanup the connection handler", connID)
+				netutils.Close(conn, w.GetConfig().Collectors.Dnstap.ResetConn)
 				return
 			case <-cleanup:
-				c.LogInfo("conn #%d - cleanup the connection handler", connID)
+				w.LogInfo("conn #%d - cleanup the connection handler", connID)
 				return
 			}
 		}
@@ -95,9 +95,9 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn, connID uint64, forceClose c
 			}
 
 			if connClosed {
-				c.LogInfo("conn #%d - connection closed with peer %s", connID, peer)
+				w.LogInfo("conn #%d - connection closed with peer %s", connID, peer)
 			} else {
-				c.LogError("conn #%d - powerdns reader error: %s", connID, err)
+				w.LogError("conn #%d - powerdns reader error: %s", connID, err)
 			}
 
 			// exit goroutine
@@ -109,18 +109,18 @@ func (c *ProtobufPowerDNS) HandleConn(conn net.Conn, connID uint64, forceClose c
 		select {
 		case pdnsProcessor.GetChannel() <- payload.Data(): // Successful send
 		default:
-			c.ProcessorIsBusy()
+			w.ProcessorIsBusy()
 		}
 	}
 }
 
-func (c *ProtobufPowerDNS) StartCollect() {
-	c.LogInfo("worker is starting collection")
-	defer c.CollectDone()
+func (w *ProtobufPowerDNS) StartCollect() {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
 	var connWG sync.WaitGroup
 	connCleanup := make(chan bool)
-	cfg := c.GetConfig().Collectors.PowerDNS
+	cfg := w.GetConfig().Collectors.PowerDNS
 
 	// start to listen
 	listener, err := netutils.StartToListen(
@@ -128,9 +128,9 @@ func (c *ProtobufPowerDNS) StartCollect() {
 		cfg.TLSSupport, pkgconfig.TLSVersion[cfg.TLSMinVersion],
 		cfg.CertFile, cfg.KeyFile)
 	if err != nil {
-		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] listening failed: ", err)
+		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] listening failed: ", err)
 	}
-	c.LogInfo("listening on %s", listener.Addr())
+	w.LogInfo("listening on %s", listener.Addr())
 
 	// goroutine to Accept() blocks waiting for new connection.
 	acceptChan := make(chan net.Conn)
@@ -139,37 +139,37 @@ func (c *ProtobufPowerDNS) StartCollect() {
 	// main loop
 	for {
 		select {
-		case <-c.OnStop():
-			c.LogInfo("stop to listen...")
+		case <-w.OnStop():
+			w.LogInfo("stop to listen...")
 			listener.Close()
 
-			c.LogInfo("closing connected peers...")
+			w.LogInfo("closing connected peers...")
 			close(connCleanup)
 			connWG.Wait()
 			return
 
 			// save the new config
-		case cfg := <-c.NewConfig():
-			c.SetConfig(cfg)
-			c.CheckConfig()
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
+			w.CheckConfig()
 
 		case conn, opened := <-acceptChan:
 			if !opened {
 				return
 			}
 
-			if c.GetConfig().Collectors.Dnstap.RcvBufSize > 0 {
+			if w.GetConfig().Collectors.Dnstap.RcvBufSize > 0 {
 				before, actual, err := netutils.SetSockRCVBUF(conn, cfg.RcvBufSize, cfg.TLSSupport)
 				if err != nil {
-					c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] unable to set SO_RCVBUF: ", err)
+					w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] unable to set SO_RCVBUF: ", err)
 				}
-				c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before, cfg.RcvBufSize, actual)
+				w.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before, cfg.RcvBufSize, actual)
 			}
 
 			// handle the connection
 			connWG.Add(1)
-			connID := atomic.AddUint64(&c.connCounter, 1)
-			go c.HandleConn(conn, connID, connCleanup, &connWG)
+			connID := atomic.AddUint64(&w.connCounter, 1)
+			go w.HandleConn(conn, connID, connCleanup, &connWG)
 
 		}
 	}

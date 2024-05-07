@@ -28,12 +28,12 @@ type AfpacketSniffer struct {
 }
 
 func NewAfpacketSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	s := &AfpacketSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "afpacket sniffer", pkgutils.DefaultBufferSize)}
-	s.SetDefaultRoutes(next)
-	return s
+	w := &AfpacketSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "afpacket sniffer", pkgutils.DefaultBufferSize)}
+	w.SetDefaultRoutes(next)
+	return w
 }
 
-func (c *AfpacketSniffer) Listen() error {
+func (w *AfpacketSniffer) Listen() error {
 	// raw socket
 	fd, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_RAW, netutils.Htons(syscall.ETH_P_ALL))
 	if err != nil {
@@ -41,8 +41,8 @@ func (c *AfpacketSniffer) Listen() error {
 	}
 
 	// bind to device ?
-	if c.GetConfig().Collectors.AfpacketLiveCapture.Device != "" {
-		iface, err := net.InterfaceByName(c.GetConfig().Collectors.AfpacketLiveCapture.Device)
+	if w.GetConfig().Collectors.AfpacketLiveCapture.Device != "" {
+		iface, err := net.InterfaceByName(w.GetConfig().Collectors.AfpacketLiveCapture.Device)
 		if err != nil {
 			return err
 		}
@@ -55,7 +55,7 @@ func (c *AfpacketSniffer) Listen() error {
 			return err
 		}
 
-		c.LogInfo("binding with success to iface %q (index %d)", iface.Name, iface.Index)
+		w.LogInfo("binding with success to iface %q (index %d)", iface.Name, iface.Index)
 	}
 
 	// set nano timestamp
@@ -64,31 +64,31 @@ func (c *AfpacketSniffer) Listen() error {
 		return err
 	}
 
-	filter := netutils.GetBpfFilter(c.GetConfig().Collectors.AfpacketLiveCapture.Port)
+	filter := netutils.GetBpfFilter(w.GetConfig().Collectors.AfpacketLiveCapture.Port)
 	err = netutils.ApplyBpfFilter(filter, fd)
 	if err != nil {
 		return err
 	}
 
-	c.LogInfo("BPF filter applied")
+	w.LogInfo("BPF filter applied")
 
-	c.fd = fd
+	w.fd = fd
 	return nil
 }
 
-func (c *AfpacketSniffer) StartCollect() {
-	c.LogInfo("worker is starting collection")
-	defer c.CollectDone()
+func (w *AfpacketSniffer) StartCollect() {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
-	if c.fd == 0 {
-		if err := c.Listen(); err != nil {
-			c.LogError("init raw socket failed: %v\n", err)
+	if w.fd == 0 {
+		if err := w.Listen(); err != nil {
+			w.LogError("init raw socket failed: %v\n", err)
 			os.Exit(1) // nolint
 		}
 	}
 
-	dnsProcessor := processors.NewDNSProcessor(c.GetConfig(), c.GetLogger(), c.GetName(), c.GetConfig().Collectors.AfpacketLiveCapture.ChannelBufferSize)
-	go dnsProcessor.Run(c.GetDefaultRoutes(), c.GetDroppedRoutes())
+	dnsProcessor := processors.NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.AfpacketLiveCapture.ChannelBufferSize)
+	go dnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
 
 	dnsChan := make(chan netutils.DNSPacket)
 	udpChan := make(chan gopacket.Packet)
@@ -99,9 +99,9 @@ func (c *AfpacketSniffer) StartCollect() {
 	netDecoder := &netutils.NetDecoder{}
 
 	// defrag ipv4
-	go netutils.IPDefragger(fragIP4Chan, udpChan, tcpChan, c.GetConfig().Collectors.AfpacketLiveCapture.Port)
+	go netutils.IPDefragger(fragIP4Chan, udpChan, tcpChan, w.GetConfig().Collectors.AfpacketLiveCapture.Port)
 	// defrag ipv6
-	go netutils.IPDefragger(fragIP6Chan, udpChan, tcpChan, c.GetConfig().Collectors.AfpacketLiveCapture.Port)
+	go netutils.IPDefragger(fragIP6Chan, udpChan, tcpChan, w.GetConfig().Collectors.AfpacketLiveCapture.Port)
 	// tcp assembly
 	go netutils.TCPAssembler(tcpChan, dnsChan, 0)
 	// udp processor
@@ -112,9 +112,9 @@ func (c *AfpacketSniffer) StartCollect() {
 	go func(ctx context.Context) {
 		defer func() {
 			dnsProcessor.Stop()
-			netutils.RemoveBpfFilter(c.fd)
-			syscall.Close(c.fd)
-			c.LogInfo("read data terminated")
+			netutils.RemoveBpfFilter(w.fd)
+			syscall.Close(w.fd)
+			w.LogInfo("read data terminated")
 			defer close(done)
 		}()
 
@@ -124,14 +124,14 @@ func (c *AfpacketSniffer) StartCollect() {
 		for {
 			select {
 			case <-ctx.Done():
-				c.LogInfo("stopping sniffer...")
-				syscall.Close(c.fd)
+				w.LogInfo("stopping sniffer...")
+				syscall.Close(w.fd)
 				return
 			default:
 				var fdSet syscall.FdSet
-				fdSet.Bits[c.fd/64] |= 1 << (uint(c.fd) % 64)
+				fdSet.Bits[w.fd/64] |= 1 << (uint(w.fd) % 64)
 
-				nReady, err := syscall.Select(c.fd+1, &fdSet, nil, nil, &syscall.Timeval{Sec: 1, Usec: 0})
+				nReady, err := syscall.Select(w.fd+1, &fdSet, nil, nil, &syscall.Timeval{Sec: 1, Usec: 0})
 				if err != nil {
 					if errors.Is(err, syscall.EINTR) {
 						continue
@@ -142,34 +142,34 @@ func (c *AfpacketSniffer) StartCollect() {
 					continue
 				}
 
-				bufN, oobn, _, _, err := syscall.Recvmsg(c.fd, buf, oob, syscall.MSG_DONTWAIT)
+				bufN, oobn, _, _, err := syscall.Recvmsg(w.fd, buf, oob, syscall.MSG_DONTWAIT)
 				if err != nil {
 					if errors.Is(err, syscall.EINTR) || errors.Is(err, syscall.EAGAIN) || errors.Is(err, syscall.EWOULDBLOCK) {
 						continue
 					} else {
-						c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"read data", err)
+						w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"read data", err)
 					}
 				}
 				if bufN == 0 {
-					c.LogFatal(pkgutils.PrefixLogCollector + "[" + c.GetName() + "] buf empty")
+					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] buf empty")
 				}
 				if bufN > len(buf) {
-					c.LogFatal(pkgutils.PrefixLogCollector + "[" + c.GetName() + "] buf overflow")
+					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] buf overflow")
 				}
 				if oobn == 0 {
-					c.LogFatal(pkgutils.PrefixLogCollector + "[" + c.GetName() + "] oob missing")
+					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] oob missing")
 				}
 
 				scms, err := syscall.ParseSocketControlMessage(oob[:oobn])
 				if err != nil {
-					c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] control msg", err)
+					w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] control msg", err)
 				}
 				if len(scms) != 1 {
 					continue
 				}
 				scm := scms[0]
 				if scm.Header.Type != syscall.SCM_TIMESTAMPNS {
-					c.LogFatal(pkgutils.PrefixLogCollector + "[" + c.GetName() + "] scm timestampns missing")
+					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] scm timestampns missing")
 				}
 				tsec := binary.LittleEndian.Uint32(scm.Data[:4])
 				nsec := binary.LittleEndian.Uint32(scm.Data[8:12])
@@ -195,7 +195,7 @@ func (c *AfpacketSniffer) StartCollect() {
 
 				// ipv4 fragmented packet ?
 				if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
-					if !c.GetConfig().Collectors.AfpacketLiveCapture.FragmentSupport {
+					if !w.GetConfig().Collectors.AfpacketLiveCapture.FragmentSupport {
 						continue
 					}
 					ip4 := packet.NetworkLayer().(*layers.IPv4)
@@ -207,7 +207,7 @@ func (c *AfpacketSniffer) StartCollect() {
 
 				// ipv6 fragmented packet ?
 				if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
-					if !c.GetConfig().Collectors.AfpacketLiveCapture.FragmentSupport {
+					if !w.GetConfig().Collectors.AfpacketLiveCapture.FragmentSupport {
 						continue
 					}
 					v6frag := packet.Layer(layers.LayerTypeIPv6Fragment)
@@ -235,16 +235,15 @@ func (c *AfpacketSniffer) StartCollect() {
 
 	for {
 		select {
-		case <-c.OnStop():
-			c.LogInfo("stop to listen...")
+		case <-w.OnStop():
+			w.LogInfo("stop to listen...")
 			cancel()
 			<-done
 			return
 
 		// new config provided?
-		case cfg := <-c.NewConfig():
-			c.SetConfig(cfg)
-
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
 			// send the config to the dns processor
 			dnsProcessor.ConfigChan <- cfg
 
@@ -263,7 +262,7 @@ func (c *AfpacketSniffer) StartCollect() {
 			dm.DNS.Payload = dnsPacket.Payload
 			dm.DNS.Length = len(dnsPacket.Payload)
 
-			dm.DNSTap.Identity = c.GetConfig().GetServerIdentity()
+			dm.DNSTap.Identity = w.GetConfig().GetServerIdentity()
 
 			timestamp := dnsPacket.Timestamp.UnixNano()
 			seconds := timestamp / int64(time.Second)

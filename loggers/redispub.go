@@ -216,9 +216,7 @@ func (w *RedisPub) StartCollect() {
 	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
-	listChannel := []chan dnsutils.DNSMessage{}
-	listChannel = append(listChannel, w.GetOutputChannel())
-	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), listChannel, 0)
+	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)
 
 	// goroutine to process transformed dns messages
 	go w.StartLogging()

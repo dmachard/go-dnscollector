@@ -78,6 +78,12 @@ func (w *GenericWorker) GetInputChannel() chan dnsutils.DNSMessage { return w.dn
 
 func (w *GenericWorker) GetOutputChannel() chan dnsutils.DNSMessage { return w.dnsMessageOut }
 
+func (w *GenericWorker) GetOutputChannelAsList() []chan dnsutils.DNSMessage {
+	listChannel := []chan dnsutils.DNSMessage{}
+	listChannel = append(listChannel, w.GetOutputChannel())
+	return listChannel
+}
+
 func (w *GenericWorker) AddDroppedRoute(wrk Worker) {
 	w.droppedRoutes = append(w.droppedRoutes, wrk)
 }
@@ -217,4 +223,22 @@ func (w *GenericWorker) SendTo(routes []chan dnsutils.DNSMessage, routesName []s
 			w.WorkerIsBusy(routesName[i])
 		}
 	}
+}
+
+func GetRoutes(routes []Worker) ([]chan dnsutils.DNSMessage, []string) {
+	channels := []chan dnsutils.DNSMessage{}
+	names := []string{}
+	for _, p := range routes {
+		if c := p.GetInputChannel(); c != nil {
+			channels = append(channels, c)
+			names = append(names, p.GetName())
+		} else {
+			panic("default routing to stanza=[" + p.GetName() + "] not supported")
+		}
+	}
+	return channels, names
+}
+
+func GetName(name string) string {
+	return "[" + name + "] - "
 }

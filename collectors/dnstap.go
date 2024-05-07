@@ -31,39 +31,39 @@ func NewDnstap(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.
 	return s
 }
 
-func (c *Dnstap) CheckConfig() {
-	if !pkgconfig.IsValidTLS(c.GetConfig().Collectors.Dnstap.TLSMinVersion) {
-		c.LogFatal(pkgutils.PrefixLogCollector + "[" + c.GetName() + "] dnstap - invalid tls min version")
+func (w *Dnstap) CheckConfig() {
+	if !pkgconfig.IsValidTLS(w.GetConfig().Collectors.Dnstap.TLSMinVersion) {
+		w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] dnstap - invalid tls min version")
 	}
 }
 
-func (c *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, wg *sync.WaitGroup) {
+func (w *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, wg *sync.WaitGroup) {
 	// close connection on function exit
 	defer func() {
-		c.LogInfo("conn #%d - connection handler terminated", connID)
-		netutils.Close(conn, c.GetConfig().Collectors.Dnstap.ResetConn)
+		w.LogInfo("conn #%d - connection handler terminated", connID)
+		netutils.Close(conn, w.GetConfig().Collectors.Dnstap.ResetConn)
 		wg.Done()
 	}()
 
 	// get peer address
 	peer := conn.RemoteAddr().String()
 	peerName := netutils.GetPeerName(peer)
-	c.LogInfo("new connection #%d from %s (%s)", connID, peer, peerName)
+	w.LogInfo("new connection #%d from %s (%s)", connID, peer, peerName)
 
 	// start dnstap processor and run it
-	dnstapProcessor := processors.NewDNSTapProcessor(int(connID), peerName, c.GetConfig(), c.GetLogger(), c.GetName(), c.GetConfig().Collectors.Dnstap.ChannelBufferSize)
-	go dnstapProcessor.Run(c.GetDefaultRoutes(), c.GetDroppedRoutes())
+	dnstapProcessor := processors.NewDNSTapProcessor(int(connID), peerName, w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.Dnstap.ChannelBufferSize)
+	go dnstapProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
 
 	// init frame stream library
-	r := bufio.NewReader(conn)
-	w := bufio.NewWriter(conn)
-	fs := framestream.NewFstrm(r, w, conn, 5*time.Second, []byte("protobuf:dnstap.Dnstap"), true)
+	fsReader := bufio.NewReader(conn)
+	fsWriter := bufio.NewWriter(conn)
+	fs := framestream.NewFstrm(fsReader, fsWriter, conn, 5*time.Second, []byte("protobuf:dnstap.Dnstap"), true)
 
 	// framestream as receiver
 	if err := fs.InitReceiver(); err != nil {
-		c.LogError("conn #%d - stream initialization: %s", connID, err)
+		w.LogError("conn #%d - stream initialization: %s", connID, err)
 	} else {
-		c.LogInfo("conn #%d - receiver framestream initialized", connID)
+		w.LogInfo("conn #%d - receiver framestream initialized", connID)
 	}
 
 	// process incoming frame and send it to dnstap consumer channel
@@ -75,17 +75,17 @@ func (c *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, 
 	go func() {
 		defer func() {
 			dnstapProcessor.Stop()
-			c.LogInfo("conn #%d - cleanup connection handler terminated", connID)
+			w.LogInfo("conn #%d - cleanup connection handler terminated", connID)
 		}()
 
 		for {
 			select {
 			case <-forceClose:
-				c.LogInfo("conn #%d - force to cleanup the connection handler", connID)
-				netutils.Close(conn, c.GetConfig().Collectors.Dnstap.ResetConn)
+				w.LogInfo("conn #%d - force to cleanup the connection handler", connID)
+				netutils.Close(conn, w.GetConfig().Collectors.Dnstap.ResetConn)
 				return
 			case <-cleanup:
-				c.LogInfo("conn #%d - cleanup the connection handler", connID)
+				w.LogInfo("conn #%d - cleanup the connection handler", connID)
 				return
 			}
 		}
@@ -93,7 +93,7 @@ func (c *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, 
 
 	// handle incoming frame
 	for {
-		if c.GetConfig().Collectors.Dnstap.Compression == pkgconfig.CompressNone {
+		if w.GetConfig().Collectors.Dnstap.Compression == pkgconfig.CompressNone {
 			frame, err = fs.RecvFrame(false)
 		} else {
 			frame, err = fs.RecvCompressedFrame(&compress.GzipCodec, false)
@@ -112,9 +112,9 @@ func (c *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, 
 			}
 
 			if connClosed {
-				c.LogInfo("conn #%d - connection closed with peer %s", connID, peer)
+				w.LogInfo("conn #%d - connection closed with peer %s", connID, peer)
 			} else {
-				c.LogError("conn #%d - framestream reader error: %s", connID, err)
+				w.LogError("conn #%d - framestream reader error: %s", connID, err)
 			}
 			// exit goroutine
 			close(cleanup)
@@ -124,9 +124,9 @@ func (c *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, 
 		if frame.IsControl() {
 			if err := fs.ResetReceiver(frame); err != nil {
 				if errors.Is(err, io.EOF) {
-					c.LogInfo("conn #%d - framestream reseted by sender", connID)
+					w.LogInfo("conn #%d - framestream reseted by sender", connID)
 				} else {
-					c.LogError("conn #%d - unexpected control framestream: %s", connID, err)
+					w.LogError("conn #%d - unexpected control framestream: %s", connID, err)
 				}
 
 			}
@@ -136,12 +136,12 @@ func (c *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, 
 			break
 		}
 
-		if c.GetConfig().Collectors.Dnstap.Compression == pkgconfig.CompressNone {
+		if w.GetConfig().Collectors.Dnstap.Compression == pkgconfig.CompressNone {
 			// send payload to the channel
 			select {
 			case dnstapProcessor.GetChannel() <- frame.Data(): // Successful send to channel
 			default:
-				c.ProcessorIsBusy()
+				w.ProcessorIsBusy()
 			}
 		} else {
 			// ignore first 4 bytes
@@ -161,27 +161,27 @@ func (c *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, 
 				select {
 				case dnstapProcessor.GetChannel() <- data[:payloadSize]: // Successful send to channel
 				default:
-					c.ProcessorIsBusy()
+					w.ProcessorIsBusy()
 				}
 
 				// continue for next
 				data = data[payloadSize:]
 			}
 			if !validFrame {
-				c.LogError("conn #%d - invalid compressed frame received", connID)
+				w.LogError("conn #%d - invalid compressed frame received", connID)
 				continue
 			}
 		}
 	}
 }
 
-func (c *Dnstap) StartCollect() {
-	c.LogInfo("worker is starting collection")
-	defer c.CollectDone()
+func (w *Dnstap) StartCollect() {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
 	var connWG sync.WaitGroup
 	connCleanup := make(chan bool)
-	cfg := c.GetConfig().Collectors.Dnstap
+	cfg := w.GetConfig().Collectors.Dnstap
 
 	// start to listen
 	listener, err := netutils.StartToListen(
@@ -189,9 +189,9 @@ func (c *Dnstap) StartCollect() {
 		cfg.TLSSupport, pkgconfig.TLSVersion[cfg.TLSMinVersion],
 		cfg.CertFile, cfg.KeyFile)
 	if err != nil {
-		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] listen error: ", err)
+		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] listen error: ", err)
 	}
-	c.LogInfo("listening on %s", listener.Addr())
+	w.LogInfo("listening on %s", listener.Addr())
 
 	// goroutine to Accept() blocks waiting for new connection.
 	acceptChan := make(chan net.Conn)
@@ -200,19 +200,19 @@ func (c *Dnstap) StartCollect() {
 	// main loop
 	for {
 		select {
-		case <-c.OnStop():
-			c.LogInfo("stop to listen...")
+		case <-w.OnStop():
+			w.LogInfo("stop to listen...")
 			listener.Close()
 
-			c.LogInfo("closing connected peers...")
+			w.LogInfo("closing connected peers...")
 			close(connCleanup)
 			connWG.Wait()
 			return
 
 		// save the new config
-		case cfg := <-c.NewConfig():
-			c.SetConfig(cfg)
-			c.CheckConfig()
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
+			w.CheckConfig()
 
 		// new incoming connection
 		case conn, opened := <-acceptChan:
@@ -223,15 +223,15 @@ func (c *Dnstap) StartCollect() {
 			if len(cfg.SockPath) == 0 && cfg.RcvBufSize > 0 {
 				before, actual, err := netutils.SetSockRCVBUF(conn, cfg.RcvBufSize, cfg.TLSSupport)
 				if err != nil {
-					c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] unable to set SO_RCVBUF: ", err)
+					w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] unable to set SO_RCVBUF: ", err)
 				}
-				c.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before, cfg.RcvBufSize, actual)
+				w.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before, cfg.RcvBufSize, actual)
 			}
 
 			// handle the connection
 			connWG.Add(1)
-			connID := atomic.AddUint64(&c.connCounter, 1)
-			go c.HandleConn(conn, connID, connCleanup, &connWG)
+			connID := atomic.AddUint64(&w.connCounter, 1)
+			go w.HandleConn(conn, connID, connCleanup, &connWG)
 		}
 
 	}

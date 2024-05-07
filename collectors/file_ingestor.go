@@ -44,46 +44,46 @@ type FileIngestor struct {
 }
 
 func NewFileIngestor(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
-	s := &FileIngestor{
+	w := &FileIngestor{
 		GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "fileingestor", pkgutils.DefaultBufferSize),
 		watcherTimers: make(map[string]*time.Timer)}
-	s.SetDefaultRoutes(next)
-	s.CheckConfig()
-	return s
+	w.SetDefaultRoutes(next)
+	w.CheckConfig()
+	return w
 }
 
-func (c *FileIngestor) CheckConfig() {
-	if !IsValidMode(c.GetConfig().Collectors.FileIngestor.WatchMode) {
-		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] - invalid mode: ", c.GetConfig().Collectors.FileIngestor.WatchMode)
+func (w *FileIngestor) CheckConfig() {
+	if !IsValidMode(w.GetConfig().Collectors.FileIngestor.WatchMode) {
+		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] - invalid mode: ", w.GetConfig().Collectors.FileIngestor.WatchMode)
 	}
 
-	c.LogInfo("watching directory [%s] to find [%s] files",
-		c.GetConfig().Collectors.FileIngestor.WatchDir,
-		c.GetConfig().Collectors.FileIngestor.WatchMode)
+	w.LogInfo("watching directory [%s] to find [%s] files",
+		w.GetConfig().Collectors.FileIngestor.WatchDir,
+		w.GetConfig().Collectors.FileIngestor.WatchMode)
 }
 
-func (c *FileIngestor) ProcessFile(filePath string) {
-	switch c.GetConfig().Collectors.FileIngestor.WatchMode {
+func (w *FileIngestor) ProcessFile(filePath string) {
+	switch w.GetConfig().Collectors.FileIngestor.WatchMode {
 	case pkgconfig.ModePCAP:
 		// process file with pcap extension only
 		if filepath.Ext(filePath) == ".pcap" || filepath.Ext(filePath) == ".pcap.gz" {
-			c.LogInfo("file ready to process %s", filePath)
-			go c.ProcessPcap(filePath)
+			w.LogInfo("file ready to process %s", filePath)
+			go w.ProcessPcap(filePath)
 		}
 	case pkgconfig.ModeDNSTap:
 		// process dnstap
 		if filepath.Ext(filePath) == ".fstrm" {
-			c.LogInfo("file ready to process %s", filePath)
-			go c.ProcessDnstap(filePath)
+			w.LogInfo("file ready to process %s", filePath)
+			go w.ProcessDnstap(filePath)
 		}
 	}
 }
 
-func (c *FileIngestor) ProcessPcap(filePath string) {
+func (w *FileIngestor) ProcessPcap(filePath string) {
 	// open the file
 	f, err := os.Open(filePath)
 	if err != nil {
-		c.LogError("unable to read file: %s", err)
+		w.LogError("unable to read file: %s", err)
 		return
 	}
 	defer f.Close()
@@ -91,15 +91,15 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 	// it is a pcap file ?
 	pcapHandler, err := pcapgo.NewReader(f)
 	if err != nil {
-		c.LogError("unable to read pcap file: %s", err)
+		w.LogError("unable to read pcap file: %s", err)
 		return
 	}
 
 	fileName := filepath.Base(filePath)
-	c.LogInfo("processing pcap file [%s]...", fileName)
+	w.LogInfo("processing pcap file [%s]...", fileName)
 
 	if pcapHandler.LinkType() != layers.LinkTypeEthernet {
-		c.LogError("pcap file [%s] ignored: %s", filePath, pcapHandler.LinkType())
+		w.LogError("pcap file [%s] ignored: %s", filePath, pcapHandler.LinkType())
 		return
 	}
 
@@ -114,13 +114,13 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 	packetSource.NoCopy = true
 
 	// defrag ipv4
-	go netutils.IPDefragger(fragIP4Chan, udpChan, tcpChan, c.GetConfig().Collectors.FileIngestor.PcapDNSPort)
+	go netutils.IPDefragger(fragIP4Chan, udpChan, tcpChan, w.GetConfig().Collectors.FileIngestor.PcapDNSPort)
 	// defrag ipv6
-	go netutils.IPDefragger(fragIP6Chan, udpChan, tcpChan, c.GetConfig().Collectors.FileIngestor.PcapDNSPort)
+	go netutils.IPDefragger(fragIP6Chan, udpChan, tcpChan, w.GetConfig().Collectors.FileIngestor.PcapDNSPort)
 	// tcp assembly
-	go netutils.TCPAssembler(tcpChan, dnsChan, c.GetConfig().Collectors.FileIngestor.PcapDNSPort)
+	go netutils.TCPAssembler(tcpChan, dnsChan, w.GetConfig().Collectors.FileIngestor.PcapDNSPort)
 	// udp processor
-	go netutils.UDPProcessor(udpChan, dnsChan, c.GetConfig().Collectors.FileIngestor.PcapDNSPort)
+	go netutils.UDPProcessor(udpChan, dnsChan, w.GetConfig().Collectors.FileIngestor.PcapDNSPort)
 
 	go func() {
 		nbPackets := 0
@@ -149,7 +149,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 				dm.DNS.Payload = dnsPacket.Payload
 				dm.DNS.Length = len(dnsPacket.Payload)
 
-				dm.DNSTap.Identity = c.GetConfig().GetServerIdentity()
+				dm.DNSTap.Identity = w.GetConfig().GetServerIdentity()
 				dm.DNSTap.TimeSec = dnsPacket.Timestamp.Second()
 				dm.DNSTap.TimeNsec = int(dnsPacket.Timestamp.UnixNano())
 
@@ -157,7 +157,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 				nbPackets++
 
 				// send DNS message to DNS processor
-				c.dnsProcessor.GetChannel() <- dm
+				w.dnsProcessor.GetChannel() <- dm
 			case <-time.After(10 * time.Second):
 				elapsed := time.Since(lastReceivedTime)
 				if elapsed >= 10*time.Second {
@@ -166,7 +166,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 			}
 		}
 	end:
-		c.LogInfo("pcap file [%s]: %d DNS packet(s) detected", fileName, nbPackets)
+		w.LogInfo("pcap file [%s]: %d DNS packet(s) detected", fileName, nbPackets)
 	}()
 
 	nbPackets := 0
@@ -177,7 +177,7 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 			break
 		}
 		if err != nil {
-			c.LogError("unable to read packet: %s", err)
+			w.LogError("unable to read packet: %s", err)
 			break
 		}
 
@@ -219,11 +219,11 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 
 	}
 
-	c.LogInfo("pcap file [%s] processing terminated, %d packet(s) read", fileName, nbPackets)
+	w.LogInfo("pcap file [%s] processing terminated, %d packet(s) read", fileName, nbPackets)
 
 	// remove it ?
-	if c.GetConfig().Collectors.FileIngestor.DeleteAfter {
-		c.LogInfo("delete file [%s]", fileName)
+	if w.GetConfig().Collectors.FileIngestor.DeleteAfter {
+		w.LogInfo("delete file [%s]", fileName)
 		os.Remove(filePath)
 	}
 
@@ -234,10 +234,10 @@ func (c *FileIngestor) ProcessPcap(filePath string) {
 	close(tcpChan)
 
 	// remove event timer for this file
-	c.RemoveEvent(filePath)
+	w.RemoveEvent(filePath)
 }
 
-func (c *FileIngestor) ProcessDnstap(filePath string) error {
+func (w *FileIngestor) ProcessDnstap(filePath string) error {
 	// open the file
 	f, err := os.Open(filePath)
 	if err != nil {
@@ -255,7 +255,7 @@ func (c *FileIngestor) ProcessDnstap(filePath string) error {
 	}
 
 	fileName := filepath.Base(filePath)
-	c.LogInfo("processing dnstap file [%s]", fileName)
+	w.LogInfo("processing dnstap file [%s]", fileName)
 	for {
 		buf, err := dnstapDecoder.Decode()
 		if errors.Is(err, io.EOF) {
@@ -265,63 +265,63 @@ func (c *FileIngestor) ProcessDnstap(filePath string) error {
 		newbuf := make([]byte, len(buf))
 		copy(newbuf, buf)
 
-		c.dnstapProcessor.GetChannel() <- newbuf
+		w.dnstapProcessor.GetChannel() <- newbuf
 	}
 
 	// remove it ?
-	c.LogInfo("processing of [%s] terminated", fileName)
-	if c.GetConfig().Collectors.FileIngestor.DeleteAfter {
-		c.LogInfo("delete file [%s]", fileName)
+	w.LogInfo("processing of [%s] terminated", fileName)
+	if w.GetConfig().Collectors.FileIngestor.DeleteAfter {
+		w.LogInfo("delete file [%s]", fileName)
 		os.Remove(filePath)
 	}
 
 	// remove event timer for this file
-	c.RemoveEvent(filePath)
+	w.RemoveEvent(filePath)
 
 	return nil
 }
 
-func (c *FileIngestor) RegisterEvent(filePath string) {
+func (w *FileIngestor) RegisterEvent(filePath string) {
 	// Get timer.
-	c.mu.Lock()
-	t, ok := c.watcherTimers[filePath]
-	c.mu.Unlock()
+	w.mu.Lock()
+	t, ok := w.watcherTimers[filePath]
+	w.mu.Unlock()
 
 	// No timer yet, so create one.
 	if !ok {
-		t = time.AfterFunc(math.MaxInt64, func() { c.ProcessFile(filePath) })
+		t = time.AfterFunc(math.MaxInt64, func() { w.ProcessFile(filePath) })
 		t.Stop()
 
-		c.mu.Lock()
-		c.watcherTimers[filePath] = t
-		c.mu.Unlock()
+		w.mu.Lock()
+		w.watcherTimers[filePath] = t
+		w.mu.Unlock()
 	}
 
 	// Reset the timer for this path, so it will start from 100ms again.
 	t.Reset(waitFor)
 }
 
-func (c *FileIngestor) RemoveEvent(filePath string) {
-	c.mu.Lock()
-	delete(c.watcherTimers, filePath)
-	c.mu.Unlock()
+func (w *FileIngestor) RemoveEvent(filePath string) {
+	w.mu.Lock()
+	delete(w.watcherTimers, filePath)
+	w.mu.Unlock()
 }
 
-func (c *FileIngestor) StartCollect() {
-	c.LogInfo("worker is starting collection")
-	defer c.CollectDone()
+func (w *FileIngestor) StartCollect() {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
-	c.dnsProcessor = processors.NewDNSProcessor(c.GetConfig(), c.GetLogger(), c.GetName(), c.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
-	go c.dnsProcessor.Run(c.GetDefaultRoutes(), c.GetDroppedRoutes())
+	w.dnsProcessor = processors.NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
+	go w.dnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
 
 	// start dnstap subprocessor
-	c.dnstapProcessor = processors.NewDNSTapProcessor(0, "", c.GetConfig(), c.GetLogger(), c.GetName(), c.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
-	go c.dnstapProcessor.Run(c.GetDefaultRoutes(), c.GetDroppedRoutes())
+	w.dnstapProcessor = processors.NewDNSTapProcessor(0, "", w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
+	go w.dnstapProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
 
 	// read current folder content
-	entries, err := os.ReadDir(c.GetConfig().Collectors.FileIngestor.WatchDir)
+	entries, err := os.ReadDir(w.GetConfig().Collectors.FileIngestor.WatchDir)
 	if err != nil {
-		c.LogError("unable to read folder: %s", err)
+		w.LogError("unable to read folder: %s", err)
 	}
 
 	for _, entry := range entries {
@@ -331,18 +331,18 @@ func (c *FileIngestor) StartCollect() {
 		}
 
 		// prepare filepath
-		fn := filepath.Join(c.GetConfig().Collectors.FileIngestor.WatchDir, entry.Name())
+		fn := filepath.Join(w.GetConfig().Collectors.FileIngestor.WatchDir, entry.Name())
 
-		switch c.GetConfig().Collectors.FileIngestor.WatchMode {
+		switch w.GetConfig().Collectors.FileIngestor.WatchMode {
 		case pkgconfig.ModePCAP:
 			// process file with pcap extension
 			if filepath.Ext(fn) == ".pcap" || filepath.Ext(fn) == ".pcap.gz" {
-				go c.ProcessPcap(fn)
+				go w.ProcessPcap(fn)
 			}
 		case pkgconfig.ModeDNSTap:
 			// process dnstap
 			if filepath.Ext(fn) == ".fstrm" {
-				go c.ProcessDnstap(fn)
+				go w.ProcessDnstap(fn)
 			}
 		}
 	}
@@ -350,34 +350,34 @@ func (c *FileIngestor) StartCollect() {
 	// then watch for new one
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] new watcher: ", err)
+		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] new watcher: ", err)
 	}
 	// register the folder to watch
-	err = watcher.Add(c.GetConfig().Collectors.FileIngestor.WatchDir)
+	err = watcher.Add(w.GetConfig().Collectors.FileIngestor.WatchDir)
 	if err != nil {
-		c.LogFatal(pkgutils.PrefixLogCollector+"["+c.GetName()+"] register folder: ", err)
+		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] register folder: ", err)
 	}
 
 	for {
 		select {
-		case <-c.OnStop():
-			c.LogInfo("stop to listen...")
+		case <-w.OnStop():
+			w.LogInfo("stop to listen...")
 
 			// stop watching
 			watcher.Close()
 
 			// stop processors
-			c.dnsProcessor.Stop()
-			c.dnstapProcessor.Stop()
+			w.dnsProcessor.Stop()
+			w.dnstapProcessor.Stop()
 			return
 
 		// save the new config
-		case cfg := <-c.NewConfig():
-			c.SetConfig(cfg)
-			c.CheckConfig()
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
+			w.CheckConfig()
 
-			c.dnsProcessor.ConfigChan <- cfg
-			c.dnstapProcessor.ConfigChan <- cfg
+			w.dnsProcessor.ConfigChan <- cfg
+			w.dnstapProcessor.ConfigChan <- cfg
 
 		case event, ok := <-watcher.Events:
 			if !ok { // Channel was closed (i.e. Watcher.Close() was called).
@@ -390,13 +390,13 @@ func (c *FileIngestor) StartCollect() {
 			}
 
 			// register the event by the name
-			c.RegisterEvent(event.Name)
+			w.RegisterEvent(event.Name)
 
 		case err, ok := <-watcher.Errors:
 			if !ok {
 				return
 			}
-			c.LogError("error:", err)
+			w.LogError("error:", err)
 		}
 	}
 }

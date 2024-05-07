@@ -14,13 +14,13 @@ type TZSPSniffer struct {
 }
 
 func NewTZSP(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
-	s := &TZSPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tzsp", pkgutils.DefaultBufferSize)}
-	s.SetDefaultRoutes(next)
-	s.ReadConfig()
-	return s
+	w := &TZSPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tzsp", pkgutils.DefaultBufferSize)}
+	w.SetDefaultRoutes(next)
+	w.ReadConfig()
+	return w
 }
 
-func (c *TZSPSniffer) StartCollect() {
-	c.LogError("running collector failed...OS not supported!")
-	defer c.CollectDone()
+func (w *TZSPSniffer) StartCollect() {
+	w.LogError("running collector failed...OS not supported!")
+	defer w.CollectDone()
 }
