@@ -12,6 +12,10 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
+var (
+	separator = "','"
+)
+
 type ClickhouseData struct {
 	Identity  string `json:"identity"`
 	QueryIP   string `json:"query_ip"`
@@ -120,10 +124,11 @@ func (w *ClickhouseClient) StartLogging() {
 				TimeNSec:  timensec,
 				TimeStamp: strconv.Itoa(int(int64(dm.DNSTap.TimeSec))),
 			}
-			// nolint
 			url := w.GetConfig().Loggers.ClickhouseClient.URL + "?query=INSERT%20INTO%20"
 			url += w.GetConfig().Loggers.ClickhouseClient.Database + "." + w.GetConfig().Loggers.ClickhouseClient.Table
-			url += "(identity,queryip,qname,operation,family,protocol,qtype,rcode,timensec,timestamp)%20VALUES%20('" + data.Identity + "','" + data.QueryIP + "','" + data.QName + "','" + data.Operation + "','" + data.Family + "','" + data.Protocol + "','" + data.QType + "','" + data.RCode + "','" + data.TimeNSec + "','" + data.TimeStamp + "')"
+			url += "(identity,queryip,qname,operation,family,protocol,qtype,rcode,timensec,timestamp)%20VALUES%20('" + data.Identity + separator
+			url += data.QueryIP + separator + data.QName + separator + data.Operation + separator + data.Family + separator + data.Protocol
+			url += separator + data.QType + separator + data.RCode + separator + data.TimeNSec + separator + data.TimeStamp + "')"
 			req, _ := http.NewRequest("POST", url, nil)
 
 			req.Header.Add("Accept", "*/*")
