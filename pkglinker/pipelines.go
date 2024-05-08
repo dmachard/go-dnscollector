@@ -3,10 +3,9 @@ package pkglinker
 import (
 	"fmt"
 
-	"github.com/dmachard/go-dnscollector/collectors"
-	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
+	"github.com/dmachard/go-dnscollector/workers"
 	"github.com/dmachard/go-logger"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -125,84 +124,84 @@ func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]pk
 func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map[string]pkgutils.Worker, mapLoggers map[string]pkgutils.Worker, logger *logger.Logger) {
 	// register the logger if enabled
 	if config.Loggers.RestAPI.Enable {
-		mapLoggers[stanzaName] = loggers.NewRestAPI(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewRestAPI(config, logger, stanzaName)
 	}
 	if config.Loggers.Prometheus.Enable {
-		mapLoggers[stanzaName] = loggers.NewPrometheus(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewPrometheus(config, logger, stanzaName)
 	}
 	if config.Loggers.Stdout.Enable {
-		mapLoggers[stanzaName] = loggers.NewStdOut(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewStdOut(config, logger, stanzaName)
 	}
 	if config.Loggers.LogFile.Enable {
-		mapLoggers[stanzaName] = loggers.NewLogFile(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewLogFile(config, logger, stanzaName)
 	}
 	if config.Loggers.DNSTap.Enable {
-		mapLoggers[stanzaName] = loggers.NewDnstapSender(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewDnstapSender(config, logger, stanzaName)
 	}
 	if config.Loggers.TCPClient.Enable {
-		mapLoggers[stanzaName] = loggers.NewTCPClient(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewTCPClient(config, logger, stanzaName)
 	}
 	if config.Loggers.Syslog.Enable {
-		mapLoggers[stanzaName] = loggers.NewSyslog(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewSyslog(config, logger, stanzaName)
 	}
 	if config.Loggers.Fluentd.Enable {
-		mapLoggers[stanzaName] = loggers.NewFluentdClient(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewFluentdClient(config, logger, stanzaName)
 	}
 	if config.Loggers.InfluxDB.Enable {
-		mapLoggers[stanzaName] = loggers.NewInfluxDBClient(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewInfluxDBClient(config, logger, stanzaName)
 	}
 	if config.Loggers.LokiClient.Enable {
-		mapLoggers[stanzaName] = loggers.NewLokiClient(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewLokiClient(config, logger, stanzaName)
 	}
 	if config.Loggers.Statsd.Enable {
-		mapLoggers[stanzaName] = loggers.NewStatsdClient(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewStatsdClient(config, logger, stanzaName)
 	}
 	if config.Loggers.ElasticSearchClient.Enable {
-		mapLoggers[stanzaName] = loggers.NewElasticSearchClient(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewElasticSearchClient(config, logger, stanzaName)
 	}
 	if config.Loggers.ScalyrClient.Enable {
-		mapLoggers[stanzaName] = loggers.NewScalyrClient(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewScalyrClient(config, logger, stanzaName)
 	}
 	if config.Loggers.RedisPub.Enable {
-		mapLoggers[stanzaName] = loggers.NewRedisPub(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewRedisPub(config, logger, stanzaName)
 	}
 	if config.Loggers.KafkaProducer.Enable {
-		mapLoggers[stanzaName] = loggers.NewKafkaProducer(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewKafkaProducer(config, logger, stanzaName)
 	}
 	if config.Loggers.FalcoClient.Enable {
-		mapLoggers[stanzaName] = loggers.NewFalcoClient(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewFalcoClient(config, logger, stanzaName)
 	}
 	if config.Loggers.ClickhouseClient.Enable {
-		mapLoggers[stanzaName] = loggers.NewClickhouseClient(config, logger, stanzaName)
+		mapLoggers[stanzaName] = workers.NewClickhouseClient(config, logger, stanzaName)
 	}
 
 	// register the collector if enabled
 	if config.Collectors.DNSMessage.Enable {
-		mapCollectors[stanzaName] = collectors.NewDNSMessage(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName] = workers.NewDNSMessage(nil, config, logger, stanzaName)
 	}
 	if config.Collectors.Dnstap.Enable {
-		mapCollectors[stanzaName] = collectors.NewDnstap(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName] = workers.NewDnstap(nil, config, logger, stanzaName)
 	}
 	if config.Collectors.DnstapProxifier.Enable {
-		mapCollectors[stanzaName] = collectors.NewDnstapProxifier(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName] = workers.NewDnstapProxifier(nil, config, logger, stanzaName)
 	}
 	if config.Collectors.AfpacketLiveCapture.Enable {
-		mapCollectors[stanzaName] = collectors.NewAfpacketSniffer(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName] = workers.NewAfpacketSniffer(nil, config, logger, stanzaName)
 	}
 	if config.Collectors.XdpLiveCapture.Enable {
-		mapCollectors[stanzaName] = collectors.NewXDPSniffer(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName] = workers.NewXDPSniffer(nil, config, logger, stanzaName)
 	}
 	if config.Collectors.Tail.Enable {
-		mapCollectors[stanzaName] = collectors.NewTail(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName] = workers.NewTail(nil, config, logger, stanzaName)
 	}
 	if config.Collectors.PowerDNS.Enable {
-		mapCollectors[stanzaName] = collectors.NewProtobufPowerDNS(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName] = workers.NewProtobufPowerDNS(nil, config, logger, stanzaName)
 	}
 	if config.Collectors.FileIngestor.Enable {
-		mapCollectors[stanzaName] = collectors.NewFileIngestor(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName] = workers.NewFileIngestor(nil, config, logger, stanzaName)
 	}
 	if config.Collectors.Tzsp.Enable {
-		mapCollectors[stanzaName] = collectors.NewTZSP(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName] = workers.NewTZSP(nil, config, logger, stanzaName)
 	}
 }
 
