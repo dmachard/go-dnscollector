@@ -10,7 +10,6 @@ import (
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
-	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 	"google.golang.org/protobuf/proto"
@@ -82,7 +81,7 @@ func Test_DnstapRelay(t *testing.T) {
 				}
 
 				// get fake dnstap message
-				dtQuery := processors.GetFakeDNSTap(dnsquery)
+				dtQuery := GetFakeDNSTap(dnsquery)
 
 				// serialize to bytes
 				data, err := proto.Marshal(dtQuery)

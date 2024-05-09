@@ -39,7 +39,7 @@ type FileIngestor struct {
 	*pkgutils.GenericWorker
 	watcherTimers   map[string]*time.Timer
 	dnsProcessor    processors.DNSProcessor
-	dnstapProcessor processors.DNSTapProcessor
+	dnstapProcessor DNSTapProcessor
 	mu              sync.Mutex
 }
 
@@ -315,7 +315,7 @@ func (w *FileIngestor) StartCollect() {
 	go w.dnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
 
 	// start dnstap subprocessor
-	w.dnstapProcessor = processors.NewDNSTapProcessor(0, "", w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
+	w.dnstapProcessor = NewDNSTapProcessor(0, "", w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
 	go w.dnstapProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
 
 	// read current folder content
