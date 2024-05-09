@@ -1,4 +1,4 @@
-package processors
+package workers
 
 import (
 	"bytes"

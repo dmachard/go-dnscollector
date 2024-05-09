@@ -19,7 +19,6 @@ import (
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
-	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -84,7 +83,7 @@ func (w *TZSPSniffer) StartCollect() {
 	}
 
 	// init dns processor
-	dnsProcessor := processors.NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.Tzsp.ChannelBufferSize)
+	dnsProcessor := NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.Tzsp.ChannelBufferSize)
 	go dnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
 
 	ctx, cancel := context.WithCancel(context.Background())

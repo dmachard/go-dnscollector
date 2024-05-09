@@ -14,7 +14,6 @@ import (
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
-	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 	framestream "github.com/farsightsec/golang-framestream"
 	"github.com/fsnotify/fsnotify"
@@ -38,7 +37,7 @@ func IsValidMode(mode string) bool {
 type FileIngestor struct {
 	*pkgutils.GenericWorker
 	watcherTimers   map[string]*time.Timer
-	dnsProcessor    processors.DNSProcessor
+	dnsProcessor    DNSProcessor
 	dnstapProcessor DNSTapProcessor
 	mu              sync.Mutex
 }
@@ -311,7 +310,7 @@ func (w *FileIngestor) StartCollect() {
 	w.LogInfo("worker is starting collection")
 	defer w.CollectDone()
 
-	w.dnsProcessor = processors.NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
+	w.dnsProcessor = NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
 	go w.dnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
 
 	// start dnstap subprocessor

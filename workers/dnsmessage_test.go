@@ -9,7 +9,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
-	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-logger"
 )
 
@@ -41,7 +40,7 @@ func Test_DnsMessage_BufferLoggerIsFull(t *testing.T) {
 
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(processors.ExpectedBufferMsg511)
+		pattern := regexp.MustCompile(ExpectedBufferMsg511)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -49,7 +48,7 @@ func Test_DnsMessage_BufferLoggerIsFull(t *testing.T) {
 
 	// read dnsmessage from next logger
 	dmOut := <-nxt.GetInputChannel()
-	if dmOut.DNS.Qname != processors.ExpectedQname2 {
+	if dmOut.DNS.Qname != ExpectedQname2 {
 		t.Errorf("invalid qname in dns message: %s", dmOut.DNS.Qname)
 	}
 
@@ -63,14 +62,14 @@ func Test_DnsMessage_BufferLoggerIsFull(t *testing.T) {
 
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(processors.ExpectedBufferMsg1023)
+		pattern := regexp.MustCompile(ExpectedBufferMsg1023)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
 	}
 	// read dnsmessage from next logger
 	dm2 := <-nxt.GetInputChannel()
-	if dm2.DNS.Qname != processors.ExpectedQname2 {
+	if dm2.DNS.Qname != ExpectedQname2 {
 		t.Errorf("invalid qname in dns message: %s", dm2.DNS.Qname)
 	}
 

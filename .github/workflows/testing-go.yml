@@ -32,7 +32,6 @@ jobs:
           - 'workers'
           - 'transformers'
           - 'netutils'
-          - 'processors'
     
     runs-on: ${{ matrix.os-version }}
 
@@ -144,7 +143,7 @@ jobs:
 
     - id: count_tests
       run: |
-        data=$(sudo go test -timeout 360s  -v ./workers ./processors ./dnsutils ./netutils ./transformers ./pkgconfig ./pkglinker ./pkgutils ././ 2>&1 | grep -c RUN)
+        data=$(sudo go test -timeout 360s  -v ./workers ./dnsutils ./netutils ./transformers ./pkgconfig ./pkglinker ./pkgutils ././ 2>&1 | grep -c RUN)
         echo "Count of Tests: $data"
         echo "data=$data" >> $GITHUB_OUTPUT
 

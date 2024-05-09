@@ -18,7 +18,6 @@ import (
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
-	"github.com/dmachard/go-dnscollector/processors"
 	"github.com/dmachard/go-dnscollector/xdp"
 	"github.com/dmachard/go-logger"
 	"golang.org/x/sys/unix"
@@ -39,7 +38,7 @@ func (w *XDPSniffer) StartCollect() {
 	defer w.CollectDone()
 
 	// init dns processor
-	dnsProcessor := processors.NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.XdpLiveCapture.ChannelBufferSize)
+	dnsProcessor := NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.XdpLiveCapture.ChannelBufferSize)
 	go dnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
 
 	// get network interface by name
