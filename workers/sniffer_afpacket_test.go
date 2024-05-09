@@ -23,12 +23,12 @@ func TestAfpacketSnifferRun(t *testing.T) {
 	go c.StartCollect()
 
 	// send dns query
-	net.LookupIP("dns.collector")
+	net.LookupIP(pkgconfig.ProgQname)
 
 	// waiting message in channel
 	for {
 		msg := <-g.GetInputChannel()
-		if msg.DNSTap.Operation == dnsutils.DNSTapClientQuery && msg.DNS.Qname == "dns.collector" {
+		if msg.DNSTap.Operation == dnsutils.DNSTapClientQuery && msg.DNS.Qname == pkgconfig.ProgQname {
 			break
 		}
 	}

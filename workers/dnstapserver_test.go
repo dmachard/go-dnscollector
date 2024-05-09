@@ -76,7 +76,7 @@ func Test_DnstapCollector(t *testing.T) {
 			config.Collectors.Dnstap.Compression = tc.compression
 
 			// start the collector
-			c := NewDnstap([]pkgutils.Worker{g}, config, logger.New(false), "test")
+			c := NewDnstapServer([]pkgutils.Worker{g}, config, logger.New(false), "test")
 			go c.StartCollect()
 
 			// wait before to connect
@@ -155,7 +155,7 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 
 	// start the collector in unix mode
 	g := pkgutils.NewFakeLogger()
-	c := NewDnstap([]pkgutils.Worker{g}, config, lg, "test")
+	c := NewDnstapServer([]pkgutils.Worker{g}, config, lg, "test")
 	go c.StartCollect()
 
 	// simulate dns server connection to collector

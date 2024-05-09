@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/netutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -1830,7 +1831,7 @@ func GetFakeDNSMessage() DNSMessage {
 	dm.DNSTap.Identity = "collector"
 	dm.DNSTap.Operation = "CLIENT_QUERY"
 	dm.DNS.Type = DNSQuery
-	dm.DNS.Qname = "dns.collector"
+	dm.DNS.Qname = pkgconfig.ProgQname
 	dm.NetworkInfo.QueryIP = "1.2.3.4"
 	dm.NetworkInfo.QueryPort = "1234"
 	dm.NetworkInfo.ResponseIP = "4.3.2.1"

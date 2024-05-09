@@ -96,7 +96,7 @@ func Test_FluentdClient(t *testing.T) {
 					t.Errorf("Decode tag: %v", err)
 					break
 				}
-				if tag != "dns.collector" {
+				if tag != pkgconfig.ProgQname {
 					t.Errorf("invalid tag: %s", tag)
 					break
 				}

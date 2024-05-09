@@ -180,7 +180,7 @@ func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map
 		mapCollectors[stanzaName] = workers.NewDNSMessage(nil, config, logger, stanzaName)
 	}
 	if config.Collectors.Dnstap.Enable {
-		mapCollectors[stanzaName] = workers.NewDnstap(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName] = workers.NewDnstapServer(nil, config, logger, stanzaName)
 	}
 	if config.Collectors.DnstapProxifier.Enable {
 		mapCollectors[stanzaName] = workers.NewDnstapProxifier(nil, config, logger, stanzaName)

@@ -20,7 +20,7 @@ func Test_ClickhouseClient(t *testing.T) {
 	}{
 		{
 			mode:    pkgconfig.ModeJSON,
-			pattern: "dns.collector",
+			pattern: pkgconfig.ProgQname,
 		},
 	}
 	cfg := pkgconfig.GetFakeConfig()

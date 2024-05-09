@@ -163,7 +163,7 @@ func InitMultiplexer(mapLoggers map[string]pkgutils.Worker, mapCollectors map[st
 
 		// register the collector if enabled
 		if subcfg.Collectors.Dnstap.Enable && IsCollectorRouted(config, input.Name) {
-			mapCollectors[input.Name] = workers.NewDnstap(nil, subcfg, logger, input.Name)
+			mapCollectors[input.Name] = workers.NewDnstapServer(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.DnstapProxifier.Enable && IsCollectorRouted(config, input.Name) {
 			mapCollectors[input.Name] = workers.NewDnstapProxifier(nil, subcfg, logger, input.Name)

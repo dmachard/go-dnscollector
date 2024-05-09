@@ -19,25 +19,25 @@ import (
 	"github.com/segmentio/kafka-go/compress"
 )
 
-type Dnstap struct {
+type DnstapServer struct {
 	*pkgutils.GenericWorker
 	connCounter uint64
 }
 
-func NewDnstap(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Dnstap {
-	s := &Dnstap{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap", pkgutils.DefaultBufferSize)}
-	s.SetDefaultRoutes(next)
-	s.CheckConfig()
-	return s
+func NewDnstapServer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapServer {
+	w := &DnstapServer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap", pkgutils.DefaultBufferSize)}
+	w.SetDefaultRoutes(next)
+	w.CheckConfig()
+	return w
 }
 
-func (w *Dnstap) CheckConfig() {
+func (w *DnstapServer) CheckConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Collectors.Dnstap.TLSMinVersion) {
 		w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] dnstap - invalid tls min version")
 	}
 }
 
-func (w *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, wg *sync.WaitGroup) {
+func (w *DnstapServer) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, wg *sync.WaitGroup) {
 	// close connection on function exit
 	defer func() {
 		w.LogInfo("conn #%d - connection handler terminated", connID)
@@ -175,7 +175,7 @@ func (w *Dnstap) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, 
 	}
 }
 
-func (w *Dnstap) StartCollect() {
+func (w *DnstapServer) StartCollect() {
 	w.LogInfo("worker is starting collection")
 	defer w.CollectDone()
 
