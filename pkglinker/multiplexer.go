@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dmachard/go-dnscollector/collectors"
-	"github.com/dmachard/go-dnscollector/loggers"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkgutils"
+	"github.com/dmachard/go-dnscollector/workers"
 	"github.com/dmachard/go-logger"
 	"gopkg.in/yaml.v2"
 )
@@ -101,58 +100,58 @@ func InitMultiplexer(mapLoggers map[string]pkgutils.Worker, mapCollectors map[st
 
 		// registor the logger if enabled
 		if subcfg.Loggers.DevNull.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewDevNull(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewDevNull(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.RestAPI.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewRestAPI(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewRestAPI(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.Prometheus.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewPrometheus(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewPrometheus(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.Stdout.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewStdOut(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewStdOut(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.LogFile.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewLogFile(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewLogFile(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.DNSTap.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewDnstapSender(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewDnstapSender(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.TCPClient.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewTCPClient(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewTCPClient(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.Syslog.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewSyslog(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewSyslog(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.Fluentd.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewFluentdClient(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewFluentdClient(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.InfluxDB.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewInfluxDBClient(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewInfluxDBClient(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.LokiClient.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewLokiClient(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewLokiClient(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.Statsd.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewStatsdClient(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewStatsdClient(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.ElasticSearchClient.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewElasticSearchClient(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewElasticSearchClient(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.ScalyrClient.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewScalyrClient(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewScalyrClient(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.RedisPub.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewRedisPub(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewRedisPub(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.KafkaProducer.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewKafkaProducer(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewKafkaProducer(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.FalcoClient.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewFalcoClient(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewFalcoClient(subcfg, logger, output.Name)
 		}
 		if subcfg.Loggers.ClickhouseClient.Enable && IsLoggerRouted(config, output.Name) {
-			mapLoggers[output.Name] = loggers.NewClickhouseClient(subcfg, logger, output.Name)
+			mapLoggers[output.Name] = workers.NewClickhouseClient(subcfg, logger, output.Name)
 		}
 	}
 
@@ -164,28 +163,28 @@ func InitMultiplexer(mapLoggers map[string]pkgutils.Worker, mapCollectors map[st
 
 		// register the collector if enabled
 		if subcfg.Collectors.Dnstap.Enable && IsCollectorRouted(config, input.Name) {
-			mapCollectors[input.Name] = collectors.NewDnstap(nil, subcfg, logger, input.Name)
+			mapCollectors[input.Name] = workers.NewDnstapServer(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.DnstapProxifier.Enable && IsCollectorRouted(config, input.Name) {
-			mapCollectors[input.Name] = collectors.NewDnstapProxifier(nil, subcfg, logger, input.Name)
+			mapCollectors[input.Name] = workers.NewDnstapProxifier(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.AfpacketLiveCapture.Enable && IsCollectorRouted(config, input.Name) {
-			mapCollectors[input.Name] = collectors.NewAfpacketSniffer(nil, subcfg, logger, input.Name)
+			mapCollectors[input.Name] = workers.NewAfpacketSniffer(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.XdpLiveCapture.Enable && IsCollectorRouted(config, input.Name) {
-			mapCollectors[input.Name] = collectors.NewXDPSniffer(nil, subcfg, logger, input.Name)
+			mapCollectors[input.Name] = workers.NewXDPSniffer(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.Tail.Enable && IsCollectorRouted(config, input.Name) {
-			mapCollectors[input.Name] = collectors.NewTail(nil, subcfg, logger, input.Name)
+			mapCollectors[input.Name] = workers.NewTail(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.PowerDNS.Enable && IsCollectorRouted(config, input.Name) {
-			mapCollectors[input.Name] = collectors.NewProtobufPowerDNS(nil, subcfg, logger, input.Name)
+			mapCollectors[input.Name] = workers.NewPdnsServer(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.FileIngestor.Enable && IsCollectorRouted(config, input.Name) {
-			mapCollectors[input.Name] = collectors.NewFileIngestor(nil, subcfg, logger, input.Name)
+			mapCollectors[input.Name] = workers.NewFileIngestor(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.Tzsp.Enable && IsCollectorRouted(config, input.Name) {
-			mapCollectors[input.Name] = collectors.NewTZSP(nil, subcfg, logger, input.Name)
+			mapCollectors[input.Name] = workers.NewTZSP(nil, subcfg, logger, input.Name)
 		}
 	}
 

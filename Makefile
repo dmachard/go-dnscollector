@@ -74,9 +74,7 @@ tests: check-go
 	@go test ./netutils/ -race -cover -v
 	@go test -timeout 90s ./dnsutils/ -race -cover -v
 	@go test -timeout 90s ./transformers/ -race -cover -v
-	@go test -timeout 90s ./collectors/ -race -cover -v
-	@go test -timeout 90s ./loggers/ -race -cover -v
-	@go test -timeout 90s ./processors/ -race -cover -v
+	@go test -timeout 180s ./workers/ -race -cover -v
 
 # Cleans the project using go clean.
 clean: check-go

@@ -7,6 +7,7 @@ import (
 const (
 	StrUnknown = "UNKNOWN"
 
+	ProgQname   = "dns.collector"
 	ProgName    = "dnscollector"
 	LocalhostIP = "127.0.0.1"
 	AnyIP       = "0.0.0.0"

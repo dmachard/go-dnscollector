@@ -29,14 +29,9 @@ jobs:
           - 'pkglinker'
           - 'pkgutils'
           - 'dnsutils'
-          - 'collectors'
-          - 'loggers'
+          - 'workers'
           - 'transformers'
           - 'netutils'
-          - 'processors'
-        # exclude:
-        #   - os-version: macos-latest
-        #     go-version: '1.20'
     
     runs-on: ${{ matrix.os-version }}
 
@@ -64,7 +59,7 @@ jobs:
         sudo go version
         
     - name: Test ${{ matrix.package }}
-      run: sudo go test -timeout 120s ./${{ matrix.package }}/ -race -cover -v
+      run: sudo go test -timeout 240s ./${{ matrix.package }}/ -race -cover -v
       
   int:
     runs-on: ubuntu-22.04
@@ -148,7 +143,7 @@ jobs:
 
     - id: count_tests
       run: |
-        data=$(sudo go test -timeout 360s  -v ./collectors ./processors ./dnsutils ./netutils ./loggers ./transformers ./pkgconfig ./pkglinker ./pkgutils ././ 2>&1 | grep -c RUN)
+        data=$(sudo go test -timeout 360s  -v ./workers ./dnsutils ./netutils ./transformers ./pkgconfig ./pkglinker ./pkgutils ././ 2>&1 | grep -c RUN)
         echo "Count of Tests: $data"
         echo "data=$data" >> $GITHUB_OUTPUT
 

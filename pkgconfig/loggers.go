@@ -457,7 +457,7 @@ func (c *ConfigLoggers) SetDefault() {
 	c.Fluentd.CAFile = ""
 	c.Fluentd.CertFile = ""
 	c.Fluentd.KeyFile = ""
-	c.Fluentd.Tag = "dns.collector"
+	c.Fluentd.Tag = ProgQname
 	c.Fluentd.BufferSize = 100
 	c.Fluentd.ChannelBufferSize = 4096
 
