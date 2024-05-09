@@ -195,7 +195,7 @@ func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map
 		mapCollectors[stanzaName] = workers.NewTail(nil, config, logger, stanzaName)
 	}
 	if config.Collectors.PowerDNS.Enable {
-		mapCollectors[stanzaName] = workers.NewProtobufPowerDNS(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName] = workers.NewPdnsServer(nil, config, logger, stanzaName)
 	}
 	if config.Collectors.FileIngestor.Enable {
 		mapCollectors[stanzaName] = workers.NewFileIngestor(nil, config, logger, stanzaName)

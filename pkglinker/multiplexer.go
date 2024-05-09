@@ -178,7 +178,7 @@ func InitMultiplexer(mapLoggers map[string]pkgutils.Worker, mapCollectors map[st
 			mapCollectors[input.Name] = workers.NewTail(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.PowerDNS.Enable && IsCollectorRouted(config, input.Name) {
-			mapCollectors[input.Name] = workers.NewProtobufPowerDNS(nil, subcfg, logger, input.Name)
+			mapCollectors[input.Name] = workers.NewPdnsServer(nil, subcfg, logger, input.Name)
 		}
 		if subcfg.Collectors.FileIngestor.Enable && IsCollectorRouted(config, input.Name) {
 			mapCollectors[input.Name] = workers.NewFileIngestor(nil, subcfg, logger, input.Name)

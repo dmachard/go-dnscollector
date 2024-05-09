@@ -44,7 +44,7 @@ func Test_StdoutTextMode(t *testing.T) {
 			name:      "default_boundary",
 			delimiter: cfg.Global.TextFormatDelimiter,
 			boundary:  cfg.Global.TextFormatBoundary,
-			qname:     pkgconfig.ProgQname,
+			qname:     "dns. collector",
 			expected:  "- collector CLIENT_QUERY NOERROR 1.2.3.4 1234 - - 0b \"dns. collector\" A -\n",
 		},
 		{
