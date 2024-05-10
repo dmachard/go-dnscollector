@@ -244,7 +244,7 @@ func (w *AfpacketSniffer) StartCollect() {
 		case cfg := <-w.NewConfig():
 			w.SetConfig(cfg)
 			// send the config to the dns processor
-			dnsProcessor.ConfigChan <- cfg
+			dnsProcessor.NewConfig() <- cfg
 
 		// dns message to read ?
 		case dnsPacket := <-dnsChan:
@@ -269,7 +269,7 @@ func (w *AfpacketSniffer) StartCollect() {
 			dm.DNSTap.TimeNsec = int(timestamp - seconds*int64(time.Second)*int64(time.Nanosecond))
 
 			// send DNS message to DNS processor
-			dnsProcessor.GetChannel() <- dm
+			dnsProcessor.GetInputChannel() <- dm
 		}
 	}
 }

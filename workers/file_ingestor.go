@@ -156,7 +156,7 @@ func (w *FileIngestor) ProcessPcap(filePath string) {
 				nbPackets++
 
 				// send DNS message to DNS processor
-				w.dnsProcessor.GetChannel() <- dm
+				w.dnsProcessor.GetInputChannel() <- dm
 			case <-time.After(10 * time.Second):
 				elapsed := time.Since(lastReceivedTime)
 				if elapsed >= 10*time.Second {
@@ -375,7 +375,7 @@ func (w *FileIngestor) StartCollect() {
 			w.SetConfig(cfg)
 			w.CheckConfig()
 
-			w.dnsProcessor.ConfigChan <- cfg
+			w.dnsProcessor.NewConfig() <- cfg
 			w.dnstapProcessor.ConfigChan <- cfg
 
 		case event, ok := <-watcher.Events:

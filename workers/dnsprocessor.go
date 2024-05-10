@@ -12,96 +12,39 @@ import (
 )
 
 type DNSProcessor struct {
-	doneRun, stopRun         chan bool
-	doneMonitor, stopMonitor chan bool
-	recvFrom                 chan dnsutils.DNSMessage
-	logger                   *logger.Logger
-	config                   *pkgconfig.Config
-	ConfigChan               chan *pkgconfig.Config
-	name                     string
-	RoutingHandler           pkgutils.RoutingHandler
-	dropped                  chan string
-	droppedCount             map[string]int
+	*pkgutils.GenericWorker
 }
 
 func NewDNSProcessor(config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSProcessor {
-	logger.Info(pkgutils.PrefixLogProcessor+"[%s] dns - initialization...", name)
-	d := DNSProcessor{
-		doneMonitor:    make(chan bool),
-		doneRun:        make(chan bool),
-		stopMonitor:    make(chan bool),
-		stopRun:        make(chan bool),
-		recvFrom:       make(chan dnsutils.DNSMessage, size),
-		logger:         logger,
-		config:         config,
-		ConfigChan:     make(chan *pkgconfig.Config),
-		name:           name,
-		dropped:        make(chan string),
-		droppedCount:   map[string]int{},
-		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
-	}
-	return d
+	w := DNSProcessor{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dns processor", size)}
+	return w
 }
 
-func (d *DNSProcessor) LogInfo(msg string, v ...interface{}) {
-	d.logger.Info(pkgutils.PrefixLogProcessor+"["+d.name+"] dns - "+msg, v...)
-}
+func (w *DNSProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
-func (d *DNSProcessor) LogError(msg string, v ...interface{}) {
-	d.logger.Error(pkgutils.PrefixLogProcessor+"["+d.name+"] dns - "+msg, v...)
-}
-
-func (d *DNSProcessor) GetChannel() chan dnsutils.DNSMessage {
-	return d.recvFrom
-}
-
-func (d *DNSProcessor) GetChannelList() []chan dnsutils.DNSMessage {
-	channel := []chan dnsutils.DNSMessage{}
-	channel = append(channel, d.recvFrom)
-	return channel
-}
-
-func (d *DNSProcessor) Stop() {
-	d.LogInfo("stopping processor...")
-	d.RoutingHandler.Stop()
-
-	d.LogInfo("stopping to process...")
-	d.stopRun <- true
-	<-d.doneRun
-
-	d.LogInfo("stopping monitor...")
-	d.stopMonitor <- true
-	<-d.doneMonitor
-}
-
-func (d *DNSProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
 	// prepare next channels
 	defaultRoutes, defaultNames := pkgutils.GetRoutes(defaultWorkers)
 	droppedRoutes, droppedNames := pkgutils.GetRoutes(droppedworkers)
 
 	// prepare enabled transformers
-	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, defaultRoutes, 0)
-
-	// start goroutine to count dropped messsages
-	go d.MonitorLoggers()
+	transforms := transformers.NewTransforms(&w.GetConfig().IngoingTransformers, w.GetLogger(), w.GetName(), defaultRoutes, 0)
 
 	// read incoming dns message
-	d.LogInfo("waiting dns message to process...")
-RUN_LOOP:
 	for {
 		select {
-		case cfg := <-d.ConfigChan:
-			d.config = cfg
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
 			transforms.ReloadConfig(&cfg.IngoingTransformers)
 
-		case <-d.stopRun:
+		case <-w.OnStop():
 			transforms.Reset()
-			d.doneRun <- true
-			break RUN_LOOP
+			return
 
-		case dm, opened := <-d.recvFrom:
+		case dm, opened := <-w.GetInputChannel():
 			if !opened {
-				d.LogInfo("channel closed, exit")
+				w.LogInfo("channel closed, exit")
 				return
 			}
 
@@ -117,7 +60,7 @@ RUN_LOOP:
 			dnsHeader, err := dnsutils.DecodeDNS(dm.DNS.Payload)
 			if err != nil {
 				dm.DNS.MalformedPacket = true
-				d.LogError("dns parser malformed packet: %s - %v+", err, dm)
+				w.LogError("dns parser malformed packet: %s - %v+", err, dm)
 			}
 
 			// dns reply ?
@@ -135,25 +78,19 @@ RUN_LOOP:
 				dm.DNSTap.Operation = dnsutils.DNSTapClientQuery
 			}
 
-			if err = dnsutils.DecodePayload(&dm, &dnsHeader, d.config); err != nil {
-				d.LogError("%v - %v", err, dm)
+			if err = dnsutils.DecodePayload(&dm, &dnsHeader, w.GetConfig()); err != nil {
+				w.LogError("%v - %v", err, dm)
 			}
 
 			if dm.DNS.MalformedPacket {
-				if d.config.Global.Trace.LogMalformed {
-					d.LogInfo("payload: %v", dm.DNS.Payload)
+				if w.GetConfig().Global.Trace.LogMalformed {
+					w.LogInfo("payload: %v", dm.DNS.Payload)
 				}
 			}
 
 			// apply all enabled transformers
 			if transforms.ProcessMessage(&dm) == transformers.ReturnDrop {
-				for i := range droppedRoutes {
-					select {
-					case droppedRoutes[i] <- dm: // Successful send to logger channel
-					default:
-						d.dropped <- droppedNames[i]
-					}
-				}
+				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
@@ -161,49 +98,7 @@ RUN_LOOP:
 			dm.DNSTap.LatencySec = fmt.Sprintf("%.6f", dm.DNSTap.Latency)
 
 			// dispatch dns message to all generators
-			for i := range defaultRoutes {
-				select {
-				case defaultRoutes[i] <- dm: // Successful send to logger channel
-				default:
-					d.dropped <- defaultNames[i]
-				}
-			}
-
+			w.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
-	d.LogInfo("processing terminated")
-}
-
-func (d *DNSProcessor) MonitorLoggers() {
-	watchInterval := 10 * time.Second
-	bufferFull := time.NewTimer(watchInterval)
-FOLLOW_LOOP:
-	for {
-		select {
-		case <-d.stopMonitor:
-			close(d.dropped)
-			bufferFull.Stop()
-			d.doneMonitor <- true
-			break FOLLOW_LOOP
-
-		case loggerName := <-d.dropped:
-			if _, ok := d.droppedCount[loggerName]; !ok {
-				d.droppedCount[loggerName] = 1
-			} else {
-				d.droppedCount[loggerName]++
-			}
-
-		case <-bufferFull.C:
-
-			for v, k := range d.droppedCount {
-				if k > 0 {
-					d.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
-					d.droppedCount[v] = 0
-				}
-			}
-			bufferFull.Reset(watchInterval)
-
-		}
-	}
-	d.LogInfo("monitor terminated")
 }

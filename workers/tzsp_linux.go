@@ -216,7 +216,7 @@ func (w *TZSPSniffer) StartCollect() {
 						continue
 					}
 
-					dnsProcessor.GetChannel() <- dm
+					dnsProcessor.GetInputChannel() <- dm
 				}
 			}
 		}

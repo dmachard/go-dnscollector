@@ -183,7 +183,7 @@ func (w *XDPSniffer) StartCollect() {
 			w.SetConfig(cfg)
 
 			// send the config to the dns processor
-			dnsProcessor.ConfigChan <- cfg
+			dnsProcessor.NewConfig() <- cfg
 
 		// dns message to read ?
 		case dm := <-dnsChan:
@@ -191,7 +191,7 @@ func (w *XDPSniffer) StartCollect() {
 			// update identity with config ?
 			dm.DNSTap.Identity = w.GetConfig().GetServerIdentity()
 
-			dnsProcessor.GetChannel() <- dm
+			dnsProcessor.GetInputChannel() <- dm
 		}
 	}
 }

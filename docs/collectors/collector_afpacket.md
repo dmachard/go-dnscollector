@@ -34,6 +34,6 @@ Defaults:
   afpacket-sniffer:
     port: 53
     device: wlp2s0
-    enable-fragment-support: true
+    enable-defrag-ip: true
     chan-buffer-size: 65535
 ```

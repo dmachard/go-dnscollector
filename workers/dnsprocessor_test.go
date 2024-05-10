@@ -25,7 +25,7 @@ func Test_DnsProcessor(t *testing.T) {
 	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
 
 	dm := dnsutils.GetFakeDNSMessageWithPayload()
-	consumer.GetChannel() <- dm
+	consumer.GetInputChannel() <- dm
 
 	// read dns message from dnstap consumer
 	dmOut := <-fl.GetInputChannel()
@@ -50,7 +50,7 @@ func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// add packets to consumer
 	for i := 0; i < 512; i++ {
-		consumer.GetChannel() <- dm
+		consumer.GetInputChannel() <- dm
 	}
 
 	// waiting monitor to run in consumer
@@ -72,7 +72,7 @@ func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// send second shot of packets to consumer
 	for i := 0; i < 1024; i++ {
-		consumer.GetChannel() <- dm
+		consumer.GetInputChannel() <- dm
 	}
 
 	// waiting monitor to run in consumer
