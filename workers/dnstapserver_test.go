@@ -502,10 +502,10 @@ func Test_DnstapProcessor_Extended(t *testing.T) {
 // test for issue https://github.com/dmachard/go-dnscollector/issues/568
 func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLogger()
+	fl := pkgutils.NewFakeLoggerWithBufferSize(1)
 
 	// redirect stdout output to bytes buffer
-	logsChan := make(chan logger.LogEntry, 10)
+	logsChan := make(chan logger.LogEntry, 30)
 	lg := logger.New(true)
 	lg.SetOutputChannel((logsChan))
 
