@@ -59,7 +59,7 @@ func NewStatsdClient(config *pkgconfig.Config, logger *logger.Logger, name strin
 
 func (w *StatsdClient) ReadConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.Statsd.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogLogger + "[" + w.GetName() + "]statd - invalid tls min version")
+		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "]statd - invalid tls min version")
 	}
 }
 

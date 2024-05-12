@@ -61,7 +61,7 @@ func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *L
 	w := &LogFile{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "file", config.Loggers.LogFile.ChannelBufferSize)}
 	w.ReadConfig()
 	if err := w.OpenFile(); err != nil {
-		w.LogFatal(pkgutils.PrefixLogLogger+"["+name+"] file - unable to open output file:", err)
+		w.LogFatal(pkgutils.PrefixLogWorker+"["+name+"] file - unable to open output file:", err)
 	}
 	return w
 }

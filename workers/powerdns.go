@@ -37,7 +37,7 @@ func NewPdnsServer(next []pkgutils.Worker, config *pkgconfig.Config, logger *log
 
 func (w *PdnsServer) CheckConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Collectors.PowerDNS.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] invalid tls min version")
+		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] invalid tls min version")
 	}
 }
 
@@ -136,7 +136,7 @@ func (w *PdnsServer) StartCollect() {
 		cfg.TLSSupport, pkgconfig.TLSVersion[cfg.TLSMinVersion],
 		cfg.CertFile, cfg.KeyFile)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] listening failed: ", err)
+		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] listening failed: ", err)
 	}
 	w.LogInfo("listening on %s", listener.Addr())
 
@@ -169,7 +169,7 @@ func (w *PdnsServer) StartCollect() {
 			if w.GetConfig().Collectors.Dnstap.RcvBufSize > 0 {
 				before, actual, err := netutils.SetSockRCVBUF(conn, cfg.RcvBufSize, cfg.TLSSupport)
 				if err != nil {
-					w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] unable to set SO_RCVBUF: ", err)
+					w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] unable to set SO_RCVBUF: ", err)
 				}
 				w.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before, cfg.RcvBufSize, actual)
 			}
@@ -207,42 +207,9 @@ func NewPdnsProcessor(connID int, peerName string, config *pkgconfig.Config, log
 	return w
 }
 
-// func (w *PdnsProcessor) LogInfo(msg string, v ...interface{}) {
-// 	var log string
-// 	if p.ConnID == 0 {
-// 		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - ", p.name)
-// 	} else {
-// 		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - conn #%d - ", p.name, p.ConnID)
-// 	}
-// 	w.logger.Info(log+msg, v...)
-// }
-
-// func (w *PdnsProcessor) LogError(msg string, v ...interface{}) {
-// 	var log string
-// 	if p.ConnID == 0 {
-// 		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - ", p.name)
-// 	} else {
-// 		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - conn #%d - ", p.name, p.ConnID)
-// 	}
-// 	w.logger.Error(log+msg, v...)
-// }
-
 func (w *PdnsProcessor) GetDataChannel() chan []byte {
 	return w.dataChannel
 }
-
-// func (w *PdnsProcessor) Stop() {
-// 	w.LogInfo("stopping processor...")
-// 	w.RoutingHandler.Stop()
-
-// 	w.LogInfo("stopping to process...")
-// 	w.stopRun <- true
-// 	<-p.doneRun
-
-// 	w.LogInfo("stopping to monitor loggers...")
-// 	w.stopMonitor <- true
-// 	<-p.doneMonitor
-// }
 
 func (w *PdnsProcessor) StartCollect() {
 	w.LogInfo("worker is starting collection")

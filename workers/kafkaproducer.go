@@ -56,7 +56,7 @@ func (w *KafkaProducer) ReadConfig() {
 		case pkgconfig.CompressNone:
 			w.compressCodec = nil
 		default:
-			w.LogFatal(pkgutils.PrefixLogLogger+"["+w.GetName()+"] kafka - invalid compress mode: ", w.GetConfig().Loggers.KafkaProducer.Compression)
+			w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] kafka - invalid compress mode: ", w.GetConfig().Loggers.KafkaProducer.Compression)
 		}
 	}
 }

@@ -1056,7 +1056,7 @@ func (w *Prometheus) InitProm() {
 
 func (w *Prometheus) ReadConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.Prometheus.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogLogger + "[" + w.GetName() + "] prometheus - invalid tls min version")
+		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] prometheus - invalid tls min version")
 	}
 }
 

@@ -89,7 +89,7 @@ func NewRestAPI(config *pkgconfig.Config, logger *logger.Logger, name string) *R
 
 func (w *RestAPI) ReadConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.RestAPI.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogLogger + "[" + w.GetName() + "]restapi - invalid tls min version")
+		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "]restapi - invalid tls min version")
 	}
 }
 

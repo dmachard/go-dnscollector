@@ -52,7 +52,7 @@ func (w *DnstapSender) ReadConfig() {
 	}
 
 	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.DNSTap.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogLogger + "invalid tls min version")
+		w.LogFatal(pkgutils.PrefixLogWorker + "invalid tls min version")
 	}
 }
 

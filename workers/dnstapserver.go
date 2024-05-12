@@ -38,7 +38,7 @@ func NewDnstapServer(next []pkgutils.Worker, config *pkgconfig.Config, logger *l
 
 func (w *DnstapServer) CheckConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Collectors.Dnstap.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] dnstap - invalid tls min version")
+		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] dnstap - invalid tls min version")
 	}
 }
 
@@ -196,7 +196,7 @@ func (w *DnstapServer) StartCollect() {
 		cfg.TLSSupport, pkgconfig.TLSVersion[cfg.TLSMinVersion],
 		cfg.CertFile, cfg.KeyFile)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] listen error: ", err)
+		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] listen error: ", err)
 	}
 	w.LogInfo("listening on %s", listener.Addr())
 
@@ -230,7 +230,7 @@ func (w *DnstapServer) StartCollect() {
 			if len(cfg.SockPath) == 0 && cfg.RcvBufSize > 0 {
 				before, actual, err := netutils.SetSockRCVBUF(conn, cfg.RcvBufSize, cfg.TLSSupport)
 				if err != nil {
-					w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] unable to set SO_RCVBUF: ", err)
+					w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] unable to set SO_RCVBUF: ", err)
 				}
 				w.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before, cfg.RcvBufSize, actual)
 			}

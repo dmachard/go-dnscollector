@@ -33,7 +33,7 @@ type GenericWorker struct {
 }
 
 func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name string, descr string, bufferSize int) *GenericWorker {
-	logger.Info(PrefixLogCollector+"[%s] %s - enabled", name, descr)
+	logger.Info(PrefixLogWorker+"[%s] %s - enabled", name, descr)
 	w := &GenericWorker{
 		config:             config,
 		configChan:         make(chan *pkgconfig.Config),
@@ -115,11 +115,11 @@ func (w *GenericWorker) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (w *GenericWorker) LogInfo(msg string, v ...interface{}) {
-	w.logger.Info(PrefixLogCollector+"["+w.name+"] "+w.descr+" - "+msg, v...)
+	w.logger.Info(PrefixLogWorker+"["+w.name+"] "+w.descr+" - "+msg, v...)
 }
 
 func (w *GenericWorker) LogError(msg string, v ...interface{}) {
-	w.logger.Error(PrefixLogCollector+"["+w.name+"] "+w.descr+" - "+msg, v...)
+	w.logger.Error(PrefixLogWorker+"["+w.name+"] "+w.descr+" - "+msg, v...)
 }
 
 func (w *GenericWorker) LogFatal(v ...interface{}) {

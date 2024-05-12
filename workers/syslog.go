@@ -74,21 +74,21 @@ func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *S
 
 func (w *Syslog) ReadConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.Syslog.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogLogger + "invalid tls min version")
+		w.LogFatal(pkgutils.PrefixLogWorker + "invalid tls min version")
 	}
 
 	if !pkgconfig.IsValidMode(w.GetConfig().Loggers.Syslog.Mode) {
-		w.LogFatal(pkgutils.PrefixLogLogger + "invalid mode text or json expected")
+		w.LogFatal(pkgutils.PrefixLogWorker + "invalid mode text or json expected")
 	}
 	severity, err := GetPriority(w.GetConfig().Loggers.Syslog.Severity)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogLogger + "invalid severity")
+		w.LogFatal(pkgutils.PrefixLogWorker + "invalid severity")
 	}
 	w.severity = severity
 
 	facility, err := GetPriority(w.GetConfig().Loggers.Syslog.Facility)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogLogger + "invalid facility")
+		w.LogFatal(pkgutils.PrefixLogWorker + "invalid facility")
 	}
 	w.facility = facility
 

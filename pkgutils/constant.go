@@ -1,10 +1,7 @@
 package pkgutils
 
 var (
-	PrefixLogProcessor   = "processor - "
-	PrefixLogCollector   = "collector - "
-	PrefixLogLogger      = "logger - "
-	PrefixLogRouting     = "routing - "
+	PrefixLogWorker      = "worker - "
 	PrefixLogTransformer = "transformer - "
 	DefaultBufferSize    = 1
 )

@@ -38,7 +38,7 @@ func (w *ElasticSearchClient) ReadConfig() {
 		case pkgconfig.CompressGzip:
 			w.LogInfo("gzip compression is enabled")
 		default:
-			w.LogFatal(pkgutils.PrefixLogLogger+"["+w.GetName()+"] elasticsearch - invalid compress mode: ", w.GetConfig().Loggers.ElasticSearchClient.Compression)
+			w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] elasticsearch - invalid compress mode: ", w.GetConfig().Loggers.ElasticSearchClient.Compression)
 		}
 	}
 

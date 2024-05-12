@@ -148,29 +148,29 @@ func (w *AfpacketSniffer) StartCollect() {
 					if errors.Is(err, syscall.EINTR) || errors.Is(err, syscall.EAGAIN) || errors.Is(err, syscall.EWOULDBLOCK) {
 						continue
 					} else {
-						w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"read data", err)
+						w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"read data", err)
 					}
 				}
 				if bufN == 0 {
-					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] buf empty")
+					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] buf empty")
 				}
 				if bufN > len(buf) {
-					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] buf overflow")
+					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] buf overflow")
 				}
 				if oobn == 0 {
-					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] oob missing")
+					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] oob missing")
 				}
 
 				scms, err := syscall.ParseSocketControlMessage(oob[:oobn])
 				if err != nil {
-					w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] control msg", err)
+					w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] control msg", err)
 				}
 				if len(scms) != 1 {
 					continue
 				}
 				scm := scms[0]
 				if scm.Header.Type != syscall.SCM_TIMESTAMPNS {
-					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] scm timestampns missing")
+					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] scm timestampns missing")
 				}
 				tsec := binary.LittleEndian.Uint32(scm.Data[:4])
 				nsec := binary.LittleEndian.Uint32(scm.Data[8:12])

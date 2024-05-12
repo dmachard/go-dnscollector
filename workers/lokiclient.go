@@ -106,7 +106,7 @@ func (w *LokiClient) ReadConfig() {
 
 	tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogLogger+"["+w.GetName()+"] loki - tls config failed:", err)
+		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] loki - tls config failed:", err)
 	}
 
 	// prepare http client

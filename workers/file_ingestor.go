@@ -53,7 +53,7 @@ func NewFileIngestor(next []pkgutils.Worker, config *pkgconfig.Config, logger *l
 
 func (w *FileIngestor) CheckConfig() {
 	if !IsValidMode(w.GetConfig().Collectors.FileIngestor.WatchMode) {
-		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] - invalid mode: ", w.GetConfig().Collectors.FileIngestor.WatchMode)
+		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] - invalid mode: ", w.GetConfig().Collectors.FileIngestor.WatchMode)
 	}
 
 	w.LogInfo("watching directory [%s] to find [%s] files",
@@ -356,12 +356,12 @@ func (w *FileIngestor) StartCollect() {
 	// then watch for new one
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] new watcher: ", err)
+		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] new watcher: ", err)
 	}
 	// register the folder to watch
 	err = watcher.Add(w.GetConfig().Collectors.FileIngestor.WatchDir)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] register folder: ", err)
+		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] register folder: ", err)
 	}
 
 	for {
