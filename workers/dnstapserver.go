@@ -522,7 +522,6 @@ func (w *DNSTapProcessor) StartCollect() {
 
 			// dispatch dns message to connected routes
 			w.SendTo(defaultRoutes, defaultNames, dm)
-
 		}
 	}
 }
