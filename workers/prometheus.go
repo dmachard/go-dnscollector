@@ -733,7 +733,7 @@ func CreateSystemCatalogue(w *Prometheus) ([]string, *PromCounterCatalogueContai
 }
 
 func NewPrometheus(config *pkgconfig.Config, logger *logger.Logger, name string) *Prometheus {
-	w := &Prometheus{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "prometheus", config.Loggers.Prometheus.ChannelBufferSize)}
+	w := &Prometheus{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "prometheus", config.Loggers.Prometheus.ChannelBufferSize, pkgutils.DefaultMonitor)}
 	w.doneAPI = make(chan bool)
 	w.promRegistry = prometheus.NewPedanticRegistry()
 
@@ -1056,7 +1056,7 @@ func (w *Prometheus) InitProm() {
 
 func (w *Prometheus) ReadConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.Prometheus.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogLogger + "[" + w.GetName() + "] prometheus - invalid tls min version")
+		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] prometheus - invalid tls min version")
 	}
 }
 

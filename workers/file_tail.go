@@ -24,7 +24,7 @@ type Tail struct {
 }
 
 func NewTail(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Tail {
-	w := &Tail{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tail", pkgutils.DefaultBufferSize)}
+	w := &Tail{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tail", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	return w
 }

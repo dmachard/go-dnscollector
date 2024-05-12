@@ -27,7 +27,7 @@ type AfpacketSniffer struct {
 }
 
 func NewAfpacketSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	w := &AfpacketSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "afpacket sniffer", pkgutils.DefaultBufferSize)}
+	w := &AfpacketSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "afpacket sniffer", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	return w
 }
@@ -87,7 +87,9 @@ func (w *AfpacketSniffer) StartCollect() {
 	}
 
 	dnsProcessor := NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.AfpacketLiveCapture.ChannelBufferSize)
-	go dnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
+	dnsProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
+	dnsProcessor.SetDefaultDropped(w.GetDroppedRoutes())
+	go dnsProcessor.StartCollect()
 
 	dnsChan := make(chan netutils.DNSPacket)
 	udpChan := make(chan gopacket.Packet)
@@ -146,29 +148,29 @@ func (w *AfpacketSniffer) StartCollect() {
 					if errors.Is(err, syscall.EINTR) || errors.Is(err, syscall.EAGAIN) || errors.Is(err, syscall.EWOULDBLOCK) {
 						continue
 					} else {
-						w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"read data", err)
+						w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"read data", err)
 					}
 				}
 				if bufN == 0 {
-					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] buf empty")
+					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] buf empty")
 				}
 				if bufN > len(buf) {
-					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] buf overflow")
+					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] buf overflow")
 				}
 				if oobn == 0 {
-					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] oob missing")
+					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] oob missing")
 				}
 
 				scms, err := syscall.ParseSocketControlMessage(oob[:oobn])
 				if err != nil {
-					w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] control msg", err)
+					w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] control msg", err)
 				}
 				if len(scms) != 1 {
 					continue
 				}
 				scm := scms[0]
 				if scm.Header.Type != syscall.SCM_TIMESTAMPNS {
-					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] scm timestampns missing")
+					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] scm timestampns missing")
 				}
 				tsec := binary.LittleEndian.Uint32(scm.Data[:4])
 				nsec := binary.LittleEndian.Uint32(scm.Data[8:12])
@@ -244,7 +246,7 @@ func (w *AfpacketSniffer) StartCollect() {
 		case cfg := <-w.NewConfig():
 			w.SetConfig(cfg)
 			// send the config to the dns processor
-			dnsProcessor.ConfigChan <- cfg
+			dnsProcessor.NewConfig() <- cfg
 
 		// dns message to read ?
 		case dnsPacket := <-dnsChan:
@@ -269,7 +271,7 @@ func (w *AfpacketSniffer) StartCollect() {
 			dm.DNSTap.TimeNsec = int(timestamp - seconds*int64(time.Second)*int64(time.Nanosecond))
 
 			// send DNS message to DNS processor
-			dnsProcessor.GetChannel() <- dm
+			dnsProcessor.GetInputChannel() <- dm
 		}
 	}
 }

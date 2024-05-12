@@ -6,7 +6,7 @@ First, make sure your golang version is `1.20` or higher
 
 How to userguides:
 
-- [Add a new worker](#add-worker)
+- [Add a new worker](#add-a-worker-collector-or-logger)
 - [Add a new transform](#add-transformer)
 
 ## Build and run from source
@@ -59,7 +59,7 @@ sudo make tests
 Execute a test for one specific testcase in a package
 
 ```bash
-go test -timeout 10s -cover -v ./loggers -run Test_SyslogRun
+go test -timeout 10s -cover -v ./workers -run Test_SyslogRun
 ```
 
 Run bench

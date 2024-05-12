@@ -34,7 +34,7 @@ func Test_RedisPubRun(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.mode, func(t *testing.T) {
 			// init logger
-			cfg := pkgconfig.GetFakeConfig()
+			cfg := pkgconfig.GetDefaultConfig()
 			cfg.Loggers.RedisPub.FlushInterval = 1
 			cfg.Loggers.RedisPub.BufferSize = 0
 			cfg.Loggers.RedisPub.Mode = tc.mode

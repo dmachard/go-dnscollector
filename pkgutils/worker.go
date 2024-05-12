@@ -27,15 +27,13 @@ type GenericWorker struct {
 	logger                                                               *logger.Logger
 	name, descr                                                          string
 	droppedRoutes, defaultRoutes                                         []Worker
-	droppedProcessorCount                                                int
-	droppedProcessor                                                     chan int
-	droppedStanza                                                        chan string
-	droppedStanzaCount                                                   map[string]int
+	droppedWorker                                                        chan string
+	droppedWorkerCount                                                   map[string]int
 	dnsMessageIn, dnsMessageOut                                          chan dnsutils.DNSMessage
 }
 
-func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name string, descr string, bufferSize int) *GenericWorker {
-	logger.Info(PrefixLogCollector+"[%s] %s - enabled", name, descr)
+func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name string, descr string, bufferSize int, monitor bool) *GenericWorker {
+	logger.Info(PrefixLogWorker+"[%s] %s - enabled", name, descr)
 	w := &GenericWorker{
 		config:             config,
 		configChan:         make(chan *pkgconfig.Config),
@@ -48,13 +46,14 @@ func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name stri
 		stopRun:            make(chan bool),
 		stopMonitor:        make(chan bool),
 		stopProcess:        make(chan bool),
-		droppedProcessor:   make(chan int),
-		droppedStanza:      make(chan string),
-		droppedStanzaCount: map[string]int{},
+		droppedWorker:      make(chan string),
+		droppedWorkerCount: map[string]int{},
 		dnsMessageIn:       make(chan dnsutils.DNSMessage, bufferSize),
 		dnsMessageOut:      make(chan dnsutils.DNSMessage, bufferSize),
 	}
-	go w.Monitor()
+	if monitor {
+		go w.Monitor()
+	}
 	return w
 }
 
@@ -76,6 +75,12 @@ func (w *GenericWorker) GetDefaultRoutes() []Worker { return w.defaultRoutes }
 
 func (w *GenericWorker) GetInputChannel() chan dnsutils.DNSMessage { return w.dnsMessageIn }
 
+func (w *GenericWorker) GetInputChannelAsList() []chan dnsutils.DNSMessage {
+	listChannel := []chan dnsutils.DNSMessage{}
+	listChannel = append(listChannel, w.GetInputChannel())
+	return listChannel
+}
+
 func (w *GenericWorker) GetOutputChannel() chan dnsutils.DNSMessage { return w.dnsMessageOut }
 
 func (w *GenericWorker) GetOutputChannelAsList() []chan dnsutils.DNSMessage {
@@ -92,8 +97,12 @@ func (w *GenericWorker) AddDefaultRoute(wrk Worker) {
 	w.defaultRoutes = append(w.defaultRoutes, wrk)
 }
 
-func (w *GenericWorker) SetDefaultRoutes(next []Worker) {
-	w.defaultRoutes = next
+func (w *GenericWorker) SetDefaultRoutes(workers []Worker) {
+	w.defaultRoutes = workers
+}
+
+func (w *GenericWorker) SetDefaultDropped(workers []Worker) {
+	w.droppedRoutes = workers
 }
 
 func (w *GenericWorker) SetLoggers(loggers []Worker) { w.defaultRoutes = loggers }
@@ -108,11 +117,11 @@ func (w *GenericWorker) ReloadConfig(config *pkgconfig.Config) {
 }
 
 func (w *GenericWorker) LogInfo(msg string, v ...interface{}) {
-	w.logger.Info(PrefixLogCollector+"["+w.name+"] "+w.descr+" - "+msg, v...)
+	w.logger.Info(PrefixLogWorker+"["+w.name+"] "+w.descr+" - "+msg, v...)
 }
 
 func (w *GenericWorker) LogError(msg string, v ...interface{}) {
-	w.logger.Error(PrefixLogCollector+"["+w.name+"] "+w.descr+" - "+msg, v...)
+	w.logger.Error(PrefixLogWorker+"["+w.name+"] "+w.descr+" - "+msg, v...)
 }
 
 func (w *GenericWorker) LogFatal(v ...interface{}) {
@@ -163,32 +172,23 @@ func (w *GenericWorker) Monitor() {
 	bufferFull := time.NewTimer(watchInterval)
 	for {
 		select {
-		case <-w.droppedProcessor:
-			w.droppedProcessorCount++
-
-		case loggerName := <-w.droppedStanza:
-			if _, ok := w.droppedStanzaCount[loggerName]; !ok {
-				w.droppedStanzaCount[loggerName] = 1
+		case loggerName := <-w.droppedWorker:
+			if _, ok := w.droppedWorkerCount[loggerName]; !ok {
+				w.droppedWorkerCount[loggerName] = 1
 			} else {
-				w.droppedStanzaCount[loggerName]++
+				w.droppedWorkerCount[loggerName]++
 			}
 
 		case <-w.stopMonitor:
-			close(w.droppedProcessor)
-			close(w.droppedStanza)
+			close(w.droppedWorker)
 			bufferFull.Stop()
 			return
 
 		case <-bufferFull.C:
-			if w.droppedProcessorCount > 0 {
-				w.LogError("processor buffer is full, %d dnsmessage(s) dropped", w.droppedProcessorCount)
-				w.droppedProcessorCount = 0
-			}
-
-			for v, k := range w.droppedStanzaCount {
+			for v, k := range w.droppedWorkerCount {
 				if k > 0 {
 					w.LogError("worker[%s] buffer is full, %d dnsmessage(s) dropped", v, k)
-					w.droppedStanzaCount[v] = 0
+					w.droppedWorkerCount[v] = 0
 				}
 			}
 
@@ -197,12 +197,8 @@ func (w *GenericWorker) Monitor() {
 	}
 }
 
-func (w *GenericWorker) ProcessorIsBusy() {
-	w.droppedProcessor <- 1
-}
-
 func (w *GenericWorker) WorkerIsBusy(name string) {
-	w.droppedStanza <- name
+	w.droppedWorker <- name
 }
 
 func (w *GenericWorker) StartCollect() {
@@ -241,4 +237,8 @@ func GetRoutes(routes []Worker) ([]chan dnsutils.DNSMessage, []string) {
 
 func GetName(name string) string {
 	return "[" + name + "] - "
+}
+
+func GetWorkerForTest(bufferSize int) *GenericWorker {
+	return NewGenericWorker(pkgconfig.GetDefaultConfig(), logger.New(false), "testonly", "", bufferSize, WorkerMonitorDisabled)
 }

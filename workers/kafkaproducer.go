@@ -29,7 +29,7 @@ type KafkaProducer struct {
 }
 
 func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name string) *KafkaProducer {
-	w := &KafkaProducer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "kafka", config.Loggers.KafkaProducer.ChannelBufferSize)}
+	w := &KafkaProducer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "kafka", config.Loggers.KafkaProducer.ChannelBufferSize, pkgutils.DefaultMonitor)}
 	w.kafkaReady = make(chan bool)
 	w.kafkaReconnect = make(chan bool)
 	w.ReadConfig()
@@ -56,7 +56,7 @@ func (w *KafkaProducer) ReadConfig() {
 		case pkgconfig.CompressNone:
 			w.compressCodec = nil
 		default:
-			w.LogFatal(pkgutils.PrefixLogLogger+"["+w.GetName()+"] kafka - invalid compress mode: ", w.GetConfig().Loggers.KafkaProducer.Compression)
+			w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] kafka - invalid compress mode: ", w.GetConfig().Loggers.KafkaProducer.Compression)
 		}
 	}
 }

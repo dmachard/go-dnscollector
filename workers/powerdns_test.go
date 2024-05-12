@@ -17,9 +17,9 @@ import (
 )
 
 func TestPowerDNS_Run(t *testing.T) {
-	g := pkgutils.NewFakeLogger()
+	g := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
 
-	c := NewPdnsServer([]pkgutils.Worker{g}, pkgconfig.GetFakeConfig(), logger.New(false), "test")
+	c := NewPdnsServer([]pkgutils.Worker{g}, pkgconfig.GetDefaultConfig(), logger.New(false), "test")
 	go c.StartCollect()
 
 	// wait before to connect
@@ -32,15 +32,20 @@ func TestPowerDNS_Run(t *testing.T) {
 }
 
 func Test_PowerDNSProcessor(t *testing.T) {
+
+	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+
 	// init the dnstap consumer
-	consumer := NewPdnsProcessor(0, "peername", pkgconfig.GetFakeConfig(), logger.New(false), "test", 512)
+	consumer := NewPdnsProcessor(0, "peername", pkgconfig.GetDefaultConfig(), logger.New(false), "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
 
 	// init the powerdns processor
 	dnsQname := pkgconfig.ValidDomain
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
 	dm := &powerdns_protobuf.PBDNSMessage{}
-	dm.ServerIdentity = []byte(ExpectedIdentity)
+	dm.ServerIdentity = []byte(pkgutils.ExpectedIdentity)
 	dm.Type = powerdns_protobuf.PBDNSMessage_DNSQueryType.Enum()
 	dm.SocketProtocol = powerdns_protobuf.PBDNSMessage_DNSCryptUDP.Enum()
 	dm.SocketFamily = powerdns_protobuf.PBDNSMessage_INET.Enum()
@@ -49,32 +54,36 @@ func Test_PowerDNSProcessor(t *testing.T) {
 	data, _ := proto.Marshal(dm)
 
 	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLogger()
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	go consumer.StartCollect()
 
 	// add packet to consumer
-	consumer.GetChannel() <- data
+	consumer.GetDataChannel() <- data
 
 	// read dns message from dnstap consumer
 	msg := <-fl.GetInputChannel()
-	if msg.DNSTap.Identity != ExpectedIdentity {
+	if msg.DNSTap.Identity != pkgutils.ExpectedIdentity {
 		t.Errorf("invalid identity in dns message: %s", msg.DNSTap.Identity)
 	}
 }
 
 func Test_PowerDNSProcessor_AddDNSPayload_Valid(t *testing.T) {
-	cfg := pkgconfig.GetFakeConfig()
+	// run the consumer with a fake logger
+	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+
+	cfg := pkgconfig.GetDefaultConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the powerdns processor
 	consumer := NewPdnsProcessor(0, "peername", cfg, logger.New(false), "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
 
 	// prepare powerdns message
 	dnsQname := pkgconfig.ValidDomain
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
 	dm := &powerdns_protobuf.PBDNSMessage{}
-	dm.ServerIdentity = []byte(ExpectedIdentity)
+	dm.ServerIdentity = []byte(pkgutils.ExpectedIdentity)
 	dm.Id = proto.Uint32(2000)
 	dm.Type = powerdns_protobuf.PBDNSMessage_DNSQueryType.Enum()
 	dm.SocketProtocol = powerdns_protobuf.PBDNSMessage_DNSCryptUDP.Enum()
@@ -84,11 +93,9 @@ func Test_PowerDNSProcessor_AddDNSPayload_Valid(t *testing.T) {
 	data, _ := proto.Marshal(dm)
 
 	// start the consumer and add packet
-	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLogger()
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	go consumer.StartCollect()
 
-	consumer.GetChannel() <- data
+	consumer.GetDataChannel() <- data
 
 	// read dns message
 	msg := <-fl.GetInputChannel()
@@ -113,11 +120,16 @@ func Test_PowerDNSProcessor_AddDNSPayload_Valid(t *testing.T) {
 }
 
 func Test_PowerDNSProcessor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
-	cfg := pkgconfig.GetFakeConfig()
+
+	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+
+	cfg := pkgconfig.GetDefaultConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the dnstap consumer
 	consumer := NewPdnsProcessor(0, "peername", cfg, logger.New(false), "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
 
 	// prepare dnstap
 	dnsQname := pkgconfig.BadDomainLabel
@@ -134,11 +146,10 @@ func Test_PowerDNSProcessor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
 	data, _ := proto.Marshal(dm)
 
 	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLogger()
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	go consumer.StartCollect()
 
 	// add packet to consumer
-	consumer.GetChannel() <- data
+	consumer.GetDataChannel() <- data
 
 	// read dns message from dnstap consumer
 	msg := <-fl.GetInputChannel()
@@ -148,11 +159,16 @@ func Test_PowerDNSProcessor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
 }
 
 func Test_PowerDNSProcessor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
-	cfg := pkgconfig.GetFakeConfig()
+
+	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+
+	cfg := pkgconfig.GetDefaultConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the dnstap consumer
 	consumer := NewPdnsProcessor(0, "peername", cfg, logger.New(false), "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
 
 	// prepare dnstap
 	dnsQname := pkgconfig.BadVeryLongDomain
@@ -168,11 +184,10 @@ func Test_PowerDNSProcessor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
 	data, _ := proto.Marshal(dm)
 
 	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLogger()
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	go consumer.StartCollect()
 
 	// add packet to consumer
-	consumer.GetChannel() <- data
+	consumer.GetDataChannel() <- data
 
 	// read dns message from dnstap consumer
 	msg := <-fl.GetInputChannel()
@@ -182,11 +197,16 @@ func Test_PowerDNSProcessor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
 }
 
 func Test_PowerDNSProcessor_AddDNSPayload_AnswersTooLongDomain(t *testing.T) {
-	cfg := pkgconfig.GetFakeConfig()
+
+	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+
+	cfg := pkgconfig.GetDefaultConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the dnstap consumer
 	consumer := NewPdnsProcessor(0, "peername", cfg, logger.New(false), "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
 
 	// prepare dnstap
 	dnsQname := pkgconfig.ValidDomain
@@ -213,11 +233,10 @@ func Test_PowerDNSProcessor_AddDNSPayload_AnswersTooLongDomain(t *testing.T) {
 	data, _ := proto.Marshal(dm)
 
 	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLogger()
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	go consumer.StartCollect()
 
 	// add packet to consumer
-	consumer.GetChannel() <- data
+	consumer.GetDataChannel() <- data
 
 	// read dns message from dnstap consumer
 	msg := <-fl.GetInputChannel()
@@ -230,21 +249,26 @@ func Test_PowerDNSProcessor_AddDNSPayload_AnswersTooLongDomain(t *testing.T) {
 
 // test for issue https://github.com/dmachard/go-dnscollector/issues/568
 func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
+
+	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferOne)
+
 	// redirect stdout output to bytes buffer
 	logsChan := make(chan logger.LogEntry, 10)
 	lg := logger.New(true)
 	lg.SetOutputChannel((logsChan))
 
 	// init the dnstap consumer
-	cfg := pkgconfig.GetFakeConfig()
+	cfg := pkgconfig.GetDefaultConfig()
 	consumer := NewPdnsProcessor(0, "peername", cfg, lg, "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
 
 	// init the powerdns processor
 	dnsQname := pkgconfig.ValidDomain
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
 	dm := &powerdns_protobuf.PBDNSMessage{}
-	dm.ServerIdentity = []byte(ExpectedIdentity)
+	dm.ServerIdentity = []byte(pkgutils.ExpectedIdentity)
 	dm.Type = powerdns_protobuf.PBDNSMessage_DNSQueryType.Enum()
 	dm.SocketProtocol = powerdns_protobuf.PBDNSMessage_DNSCryptUDP.Enum()
 	dm.SocketFamily = powerdns_protobuf.PBDNSMessage_INET.Enum()
@@ -253,12 +277,11 @@ func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
 	data, _ := proto.Marshal(dm)
 
 	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLoggerWithBufferSize(1)
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	go consumer.StartCollect()
 
 	// add packets to consumer
 	for i := 0; i < 512; i++ {
-		consumer.GetChannel() <- data
+		consumer.GetDataChannel() <- data
 	}
 
 	// waiting monitor to run in consumer
@@ -266,7 +289,7 @@ func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(ExpectedBufferMsg511)
+		pattern := regexp.MustCompile(pkgutils.ExpectedBufferMsg511)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -274,20 +297,20 @@ func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	msg := <-fl.GetInputChannel()
-	if msg.DNSTap.Identity != ExpectedIdentity {
+	if msg.DNSTap.Identity != pkgutils.ExpectedIdentity {
 		t.Errorf("invalid identity in dns message: %s", msg.DNSTap.Identity)
 	}
 
 	// send second shot of packets to consumer
 	for i := 0; i < 1024; i++ {
-		consumer.GetChannel() <- data
+		consumer.GetDataChannel() <- data
 	}
 
 	// waiting monitor to run in consumer
 	time.Sleep(12 * time.Second)
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(ExpectedBufferMsg1023)
+		pattern := regexp.MustCompile(pkgutils.ExpectedBufferMsg1023)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -295,7 +318,7 @@ func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// read just one dns message from dnstap consumer
 	msg2 := <-fl.GetInputChannel()
-	if msg2.DNSTap.Identity != ExpectedIdentity {
+	if msg2.DNSTap.Identity != pkgutils.ExpectedIdentity {
 		t.Errorf("invalid identity in second dns message: %s", msg2.DNSTap.Identity)
 	}
 }

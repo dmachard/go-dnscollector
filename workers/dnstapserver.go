@@ -30,7 +30,7 @@ type DnstapServer struct {
 }
 
 func NewDnstapServer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapServer {
-	w := &DnstapServer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap", pkgutils.DefaultBufferSize)}
+	w := &DnstapServer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	w.CheckConfig()
 	return w
@@ -38,7 +38,7 @@ func NewDnstapServer(next []pkgutils.Worker, config *pkgconfig.Config, logger *l
 
 func (w *DnstapServer) CheckConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Collectors.Dnstap.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] dnstap - invalid tls min version")
+		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] dnstap - invalid tls min version")
 	}
 }
 
@@ -57,7 +57,9 @@ func (w *DnstapServer) HandleConn(conn net.Conn, connID uint64, forceClose chan 
 
 	// start dnstap processor and run it
 	dnstapProcessor := NewDNSTapProcessor(int(connID), peerName, w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.Dnstap.ChannelBufferSize)
-	go dnstapProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
+	dnstapProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
+	dnstapProcessor.SetDefaultDropped(w.GetDroppedRoutes())
+	go dnstapProcessor.StartCollect()
 
 	// init frame stream library
 	fsReader := bufio.NewReader(conn)
@@ -144,9 +146,9 @@ func (w *DnstapServer) HandleConn(conn net.Conn, connID uint64, forceClose chan 
 		if w.GetConfig().Collectors.Dnstap.Compression == pkgconfig.CompressNone {
 			// send payload to the channel
 			select {
-			case dnstapProcessor.GetChannel() <- frame.Data(): // Successful send to channel
+			case dnstapProcessor.GetDataChannel() <- frame.Data(): // Successful send to channel
 			default:
-				w.ProcessorIsBusy()
+				w.WorkerIsBusy("dnstap-processor")
 			}
 		} else {
 			// ignore first 4 bytes
@@ -164,9 +166,9 @@ func (w *DnstapServer) HandleConn(conn net.Conn, connID uint64, forceClose chan 
 				}
 				// send payload to the channel
 				select {
-				case dnstapProcessor.GetChannel() <- data[:payloadSize]: // Successful send to channel
+				case dnstapProcessor.GetDataChannel() <- data[:payloadSize]: // Successful send to channel
 				default:
-					w.ProcessorIsBusy()
+					w.WorkerIsBusy("dnstap-processor")
 				}
 
 				// continue for next
@@ -194,7 +196,7 @@ func (w *DnstapServer) StartCollect() {
 		cfg.TLSSupport, pkgconfig.TLSVersion[cfg.TLSMinVersion],
 		cfg.CertFile, cfg.KeyFile)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] listen error: ", err)
+		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] listen error: ", err)
 	}
 	w.LogInfo("listening on %s", listener.Addr())
 
@@ -228,7 +230,7 @@ func (w *DnstapServer) StartCollect() {
 			if len(cfg.SockPath) == 0 && cfg.RcvBufSize > 0 {
 				before, actual, err := netutils.SetSockRCVBUF(conn, cfg.RcvBufSize, cfg.TLSSupport)
 				if err != nil {
-					w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] unable to set SO_RCVBUF: ", err)
+					w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] unable to set SO_RCVBUF: ", err)
 				}
 				w.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before, cfg.RcvBufSize, actual)
 			}
@@ -278,112 +280,53 @@ func GetFakeDNSTap(dnsquery []byte) *dnstap.Dnstap {
 }
 
 type DNSTapProcessor struct {
-	ConnID                   int
-	PeerName                 string
-	doneRun, stopRun         chan bool
-	doneMonitor, stopMonitor chan bool
-	recvFrom                 chan []byte
-	logger                   *logger.Logger
-	config                   *pkgconfig.Config
-	ConfigChan               chan *pkgconfig.Config
-	name                     string
-	chanSize                 int
-	RoutingHandler           pkgutils.RoutingHandler
-	dropped                  chan string
-	droppedCount             map[string]int
+	*pkgutils.GenericWorker
+	ConnID      int
+	PeerName    string
+	dataChannel chan []byte
 }
 
 func NewDNSTapProcessor(connID int, peerName string, config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
-	logger.Info(pkgutils.PrefixLogProcessor+"[%s] dnstap - conn #%d - initialization...", name, connID)
-	d := DNSTapProcessor{
-		ConnID:         connID,
-		PeerName:       peerName,
-		doneMonitor:    make(chan bool),
-		doneRun:        make(chan bool),
-		stopMonitor:    make(chan bool),
-		stopRun:        make(chan bool),
-		recvFrom:       make(chan []byte, size),
-		chanSize:       size,
-		logger:         logger,
-		config:         config,
-		ConfigChan:     make(chan *pkgconfig.Config),
-		name:           name,
-		dropped:        make(chan string),
-		droppedCount:   map[string]int{},
-		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
-	}
-
-	return d
+	w := DNSTapProcessor{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap processor #"+strconv.Itoa(connID), size, pkgutils.DefaultMonitor)}
+	w.ConnID = connID
+	w.PeerName = peerName
+	w.dataChannel = make(chan []byte, size)
+	return w
 }
 
-func (d *DNSTapProcessor) LogInfo(msg string, v ...interface{}) {
-	var log string
-	if d.ConnID == 0 {
-		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] dnstap - ", d.name)
-	} else {
-		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] dnstap - conn #%d - ", d.name, d.ConnID)
-	}
-	d.logger.Info(log+msg, v...)
+func (w *DNSTapProcessor) GetDataChannel() chan []byte {
+	return w.dataChannel
 }
 
-func (d *DNSTapProcessor) LogError(msg string, v ...interface{}) {
-	var log string
-	if d.ConnID == 0 {
-		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] dnstap - ", d.name)
-	} else {
-		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] dnstap - conn #%d - ", d.name, d.ConnID)
-	}
-	d.logger.Error(log+msg, v...)
-}
+func (w *DNSTapProcessor) StartCollect() {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
-func (d *DNSTapProcessor) GetChannel() chan []byte {
-	return d.recvFrom
-}
-
-func (d *DNSTapProcessor) Stop() {
-	d.LogInfo("stopping processor...")
-	d.RoutingHandler.Stop()
-
-	d.LogInfo("stopping to process...")
-	d.stopRun <- true
-	<-d.doneRun
-
-	d.LogInfo("stopping monitor...")
-	d.stopMonitor <- true
-	<-d.doneMonitor
-}
-
-func (d *DNSTapProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
 	dt := &dnstap.Dnstap{}
 	edt := &dnsutils.ExtendedDnstap{}
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(defaultWorkers)
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(droppedworkers)
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
 
 	// prepare enabled transformers
-	transforms := transformers.NewTransforms(&d.config.IngoingTransformers, d.logger, d.name, defaultRoutes, d.ConnID)
-
-	// start goroutine to count dropped messsages
-	go d.MonitorLoggers()
+	transforms := transformers.NewTransforms(&w.GetConfig().IngoingTransformers, w.GetLogger(), w.GetName(), defaultRoutes, w.ConnID)
 
 	// read incoming dns message
-	d.LogInfo("waiting dns message to process...")
-RUN_LOOP:
 	for {
 		select {
-		case cfg := <-d.ConfigChan:
-			d.config = cfg
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
 			transforms.ReloadConfig(&cfg.IngoingTransformers)
 
-		case <-d.stopRun:
+		case <-w.OnStop():
 			transforms.Reset()
-			d.doneRun <- true
-			break RUN_LOOP
+			close(w.GetDataChannel())
+			return
 
-		case data, opened := <-d.recvFrom:
+		case data, opened := <-w.GetDataChannel():
 			if !opened {
-				d.LogInfo("channel closed, exit")
+				w.LogInfo("channel closed, exit")
 				return
 			}
 
@@ -396,7 +339,7 @@ RUN_LOOP:
 			dm := dnsutils.DNSMessage{}
 			dm.Init()
 
-			dm.DNSTap.PeerName = d.PeerName
+			dm.DNSTap.PeerName = w.PeerName
 
 			// init dns message with additionnals parts
 			transforms.InitDNSMessageFormat(&dm)
@@ -412,7 +355,7 @@ RUN_LOOP:
 			dm.DNSTap.Operation = dt.GetMessage().GetType().String()
 
 			// extended extra field ?
-			if d.config.Collectors.Dnstap.ExtendedSupport {
+			if w.GetConfig().Collectors.Dnstap.ExtendedSupport {
 				err := proto.Unmarshal(dt.GetExtra(), edt)
 				if err != nil {
 					continue
@@ -534,7 +477,7 @@ RUN_LOOP:
 			if len(queryZone) > 0 {
 				qz, _, err := dnsutils.ParseLabels(0, queryZone)
 				if err != nil {
-					d.LogError("invalid query zone: %v - %v", err, queryZone)
+					w.LogError("invalid query zone: %v - %v", err, queryZone)
 				}
 				dm.DNSTap.QueryZone = qz
 			}
@@ -545,38 +488,32 @@ RUN_LOOP:
 			dm.DNSTap.TimestampRFC3339 = ts.UTC().Format(time.RFC3339Nano)
 
 			// decode payload if provided
-			if !d.config.Collectors.Dnstap.DisableDNSParser && len(dm.DNS.Payload) > 0 {
+			if !w.GetConfig().Collectors.Dnstap.DisableDNSParser && len(dm.DNS.Payload) > 0 {
 				// decode the dns payload to get id, rcode and the number of question
 				// number of answer, ignore invalid packet
 				dnsHeader, err := dnsutils.DecodeDNS(dm.DNS.Payload)
 				if err != nil {
 					dm.DNS.MalformedPacket = true
-					d.LogInfo("dns header parser stopped: %s", err)
-					if d.config.Global.Trace.LogMalformed {
-						d.LogError("%v", dm)
-						d.LogError("dump invalid dns headr: %v", dm.DNS.Payload)
+					w.LogInfo("dns header parser stopped: %s", err)
+					if w.GetConfig().Global.Trace.LogMalformed {
+						w.LogError("%v", dm)
+						w.LogError("dump invalid dns headr: %v", dm.DNS.Payload)
 					}
 				}
 
-				if err = dnsutils.DecodePayload(&dm, &dnsHeader, d.config); err != nil {
+				if err = dnsutils.DecodePayload(&dm, &dnsHeader, w.GetConfig()); err != nil {
 					dm.DNS.MalformedPacket = true
-					d.LogInfo("dns payload parser stopped: %s", err)
-					if d.config.Global.Trace.LogMalformed {
-						d.LogError("%v", dm)
-						d.LogError("dump invalid dns payload: %v", dm.DNS.Payload)
+					w.LogInfo("dns payload parser stopped: %s", err)
+					if w.GetConfig().Global.Trace.LogMalformed {
+						w.LogError("%v", dm)
+						w.LogError("dump invalid dns payload: %v", dm.DNS.Payload)
 					}
 				}
 			}
 
 			// apply all enabled transformers
 			if transforms.ProcessMessage(&dm) == transformers.ReturnDrop {
-				for i := range droppedRoutes {
-					select {
-					case droppedRoutes[i] <- dm: // Successful send to logger channel
-					default:
-						d.dropped <- droppedNames[i]
-					}
-				}
+				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
@@ -584,49 +521,7 @@ RUN_LOOP:
 			dm.DNSTap.LatencySec = fmt.Sprintf("%.6f", dm.DNSTap.Latency)
 
 			// dispatch dns message to connected routes
-			for i := range defaultRoutes {
-				select {
-				case defaultRoutes[i] <- dm: // Successful send to logger channel
-				default:
-					d.dropped <- defaultNames[i]
-				}
-			}
-
+			w.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
-
-	d.LogInfo("processing terminated")
-}
-
-func (d *DNSTapProcessor) MonitorLoggers() {
-	watchInterval := 10 * time.Second
-	bufferFull := time.NewTimer(watchInterval)
-MONITOR_LOOP:
-	for {
-		select {
-		case <-d.stopMonitor:
-			close(d.dropped)
-			bufferFull.Stop()
-			d.doneMonitor <- true
-			break MONITOR_LOOP
-
-		case loggerName := <-d.dropped:
-			if _, ok := d.droppedCount[loggerName]; !ok {
-				d.droppedCount[loggerName] = 1
-			} else {
-				d.droppedCount[loggerName]++
-			}
-
-		case <-bufferFull.C:
-			for v, k := range d.droppedCount {
-				if k > 0 {
-					d.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
-					d.droppedCount[v] = 0
-				}
-			}
-			bufferFull.Reset(watchInterval)
-
-		}
-	}
-	d.LogInfo("monitor terminated")
 }

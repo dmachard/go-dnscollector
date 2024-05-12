@@ -21,7 +21,7 @@ const (
 
 func TestPrometheus_BadAuth(t *testing.T) {
 	// init the logger
-	config := pkgconfig.GetFakeConfig()
+	config := pkgconfig.GetDefaultConfig()
 	g := NewPrometheus(config, logger.New(false), "test")
 
 	tt := []struct {
@@ -60,7 +60,7 @@ func TestPrometheus_BadAuth(t *testing.T) {
 
 func TestPrometheus_GetMetrics(t *testing.T) {
 	// init the logger
-	config := pkgconfig.GetFakeConfig()
+	config := pkgconfig.GetDefaultConfig()
 	config.Loggers.Prometheus.HistogramMetricsEnabled = true
 
 	// By default, prometheus uses 'stream_id' as the label
@@ -164,7 +164,7 @@ func getMetricsTestCase(config *pkgconfig.Config, labels map[string]string) func
 
 // Test that EPS (Events Per Second) Counters increment correctly
 func TestPrometheus_EPS_Counters(t *testing.T) {
-	config := pkgconfig.GetFakeConfig()
+	config := pkgconfig.GetDefaultConfig()
 	g := NewPrometheus(config, logger.New(false), "test")
 
 	// record one dns message to simulate some incoming data
@@ -196,7 +196,7 @@ func TestPrometheus_EPS_Counters(t *testing.T) {
 }
 
 func TestPrometheus_BuildInfo(t *testing.T) {
-	config := pkgconfig.GetFakeConfig()
+	config := pkgconfig.GetDefaultConfig()
 	// config.Loggers.Prometheus.HistogramMetricsEnabled = true
 	g := NewPrometheus(config, logger.New(false), "test")
 
@@ -209,7 +209,7 @@ func TestPrometheus_BuildInfo(t *testing.T) {
 }
 
 func TestPrometheus_ConfirmDifferentResolvers(t *testing.T) {
-	config := pkgconfig.GetFakeConfig()
+	config := pkgconfig.GetDefaultConfig()
 	config.Loggers.Prometheus.LabelsList = []string{"resolver"}
 	g := NewPrometheus(config, logger.New(false), "test")
 	noErrorRecord := dnsutils.GetFakeDNSMessage()
@@ -226,7 +226,7 @@ func TestPrometheus_ConfirmDifferentResolvers(t *testing.T) {
 }
 
 func TestPrometheus_Etldplusone(t *testing.T) {
-	config := pkgconfig.GetFakeConfig()
+	config := pkgconfig.GetDefaultConfig()
 	config.Loggers.Prometheus.LabelsList = []string{"stream_id"}
 	g := NewPrometheus(config, logger.New(false), "test")
 
@@ -321,7 +321,7 @@ func getMetrics(prom *Prometheus, t *testing.T) map[string]*dto.MetricFamily {
 }
 
 func TestPrometheus_QnameInvalidChars(t *testing.T) {
-	config := pkgconfig.GetFakeConfig()
+	config := pkgconfig.GetDefaultConfig()
 	// config.Loggers.Prometheus.HistogramMetricsEnabled = true
 	g := NewPrometheus(config, logger.New(false), "test")
 

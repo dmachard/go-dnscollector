@@ -22,7 +22,7 @@ func TestMuxIsDisabled(t *testing.T) {
 }
 
 func TestMuxIsLoggerRouted(t *testing.T) {
-	config := pkgconfig.GetFakeConfig()
+	config := pkgconfig.GetDefaultConfig()
 	config.Multiplexer.Routes = append(config.Multiplexer.Routes, pkgconfig.MultiplexRoutes{Dst: []string{"logger1"}})
 
 	if !IsLoggerRouted(config, "logger1") {
@@ -34,7 +34,7 @@ func TestMuxIsLoggerRouted(t *testing.T) {
 }
 
 func TestMuxIsCollectorRouted(t *testing.T) {
-	config := pkgconfig.GetFakeConfig()
+	config := pkgconfig.GetDefaultConfig()
 	config.Multiplexer.Routes = append(config.Multiplexer.Routes, pkgconfig.MultiplexRoutes{Src: []string{"collector1"}})
 
 	if !IsCollectorRouted(config, "collector1") {
@@ -46,7 +46,7 @@ func TestMuxIsCollectorRouted(t *testing.T) {
 }
 
 func TestMuxRouteIsInvalid(t *testing.T) {
-	config := pkgconfig.GetFakeConfig()
+	config := pkgconfig.GetDefaultConfig()
 	config.Multiplexer.Routes = append(config.Multiplexer.Routes, pkgconfig.MultiplexRoutes{Src: []string{"collector1"}})
 
 	err := AreRoutesValid(config)

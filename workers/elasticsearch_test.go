@@ -38,7 +38,7 @@ func Test_ElasticSearchClient_BulkSize_Exceeded(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.mode, func(t *testing.T) {
-			conf := pkgconfig.GetFakeConfig()
+			conf := pkgconfig.GetDefaultConfig()
 			conf.Loggers.ElasticSearchClient.Index = "indexname"
 			conf.Loggers.ElasticSearchClient.Server = "http://127.0.0.1:59200/"
 			conf.Loggers.ElasticSearchClient.BulkSize = tc.bulkSize
@@ -125,7 +125,7 @@ func Test_ElasticSearchClient_FlushInterval_Exceeded(t *testing.T) {
 	for _, tc := range testcases {
 		totalDm := 0
 		t.Run(tc.mode, func(t *testing.T) {
-			conf := pkgconfig.GetFakeConfig()
+			conf := pkgconfig.GetDefaultConfig()
 			conf.Loggers.ElasticSearchClient.Index = "indexname"
 			conf.Loggers.ElasticSearchClient.Server = "http://127.0.0.1:59200/"
 			conf.Loggers.ElasticSearchClient.BulkSize = tc.bulkSize

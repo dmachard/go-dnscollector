@@ -43,7 +43,7 @@ type ScalyrClient struct {
 }
 
 func NewScalyrClient(config *pkgconfig.Config, console *logger.Logger, name string) *ScalyrClient {
-	w := &ScalyrClient{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "scalyr", config.Loggers.ScalyrClient.ChannelBufferSize)}
+	w := &ScalyrClient{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "scalyr", config.Loggers.ScalyrClient.ChannelBufferSize, pkgutils.DefaultMonitor)}
 	w.mode = pkgconfig.ModeText
 	w.endpoint = makeEndpoint("app.scalyr.com")
 	w.flush = time.NewTicker(30 * time.Second)

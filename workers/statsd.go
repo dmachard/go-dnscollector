@@ -51,7 +51,7 @@ type StatsdClient struct {
 }
 
 func NewStatsdClient(config *pkgconfig.Config, logger *logger.Logger, name string) *StatsdClient {
-	w := &StatsdClient{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "statsd", config.Loggers.Statsd.ChannelBufferSize)}
+	w := &StatsdClient{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "statsd", config.Loggers.Statsd.ChannelBufferSize, pkgutils.DefaultMonitor)}
 	w.Stats = StreamStats{Streams: make(map[string]*StatsPerStream)}
 	w.ReadConfig()
 	return w
@@ -59,7 +59,7 @@ func NewStatsdClient(config *pkgconfig.Config, logger *logger.Logger, name strin
 
 func (w *StatsdClient) ReadConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.Statsd.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogLogger + "[" + w.GetName() + "]statd - invalid tls min version")
+		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "]statd - invalid tls min version")
 	}
 }
 

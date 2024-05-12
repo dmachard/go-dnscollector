@@ -31,7 +31,7 @@ type TZSPSniffer struct {
 }
 
 func NewTZSP(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
-	s := &TZSPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tzsp", pkgutils.DefaultBufferSize)}
+	s := &TZSPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tzsp", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
 	s.SetDefaultRoutes(next)
 	return s
 }
@@ -79,12 +79,14 @@ func (w *TZSPSniffer) StartCollect() {
 
 	// start server
 	if err := w.Listen(); err != nil {
-		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] listening failed: ", err)
+		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] listening failed: ", err)
 	}
 
 	// init dns processor
 	dnsProcessor := NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.Tzsp.ChannelBufferSize)
-	go dnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
+	dnsProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
+	dnsProcessor.SetDefaultDropped(w.GetDroppedRoutes())
+	go dnsProcessor.StartCollect()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
@@ -113,20 +115,20 @@ func (w *TZSPSniffer) StartCollect() {
 					if errors.As(err, &netErr) && netErr.Timeout() {
 						continue
 					}
-					w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] read msg", err)
+					w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] read msg", err)
 				}
 				if bufN == 0 {
-					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] read msg, buffer is empty")
+					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] read msg, buffer is empty")
 				}
 				if bufN > len(buf) {
-					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] read msg, bufer overflow")
+					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] read msg, bufer overflow")
 				}
 				if oobn == 0 {
-					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] read msg, oob missing")
+					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] read msg, oob missing")
 				}
 				scms, err := syscall.ParseSocketControlMessage(oob[:oobn])
 				if err != nil {
-					w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] parse control msg", err)
+					w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] parse control msg", err)
 				}
 				if len(scms) != 1 {
 					w.LogInfo("len(scms) != 1")
@@ -134,7 +136,7 @@ func (w *TZSPSniffer) StartCollect() {
 				}
 				scm := scms[0]
 				if scm.Header.Type != syscall.SCM_TIMESTAMPNS {
-					w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] scm timestampns missing")
+					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] scm timestampns missing")
 				}
 				tsec := binary.LittleEndian.Uint32(scm.Data[:4])
 				nsec := binary.LittleEndian.Uint32(scm.Data[8:12])
@@ -216,7 +218,7 @@ func (w *TZSPSniffer) StartCollect() {
 						continue
 					}
 
-					dnsProcessor.GetChannel() <- dm
+					dnsProcessor.GetInputChannel() <- dm
 				}
 			}
 		}

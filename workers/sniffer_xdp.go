@@ -28,7 +28,7 @@ type XDPSniffer struct {
 }
 
 func NewXDPSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
-	w := &XDPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "xdp sniffer", pkgutils.DefaultBufferSize)}
+	w := &XDPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "xdp sniffer", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	return w
 }
@@ -39,18 +39,20 @@ func (w *XDPSniffer) StartCollect() {
 
 	// init dns processor
 	dnsProcessor := NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.XdpLiveCapture.ChannelBufferSize)
-	go dnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
+	dnsProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
+	dnsProcessor.SetDefaultDropped(w.GetDroppedRoutes())
+	go dnsProcessor.StartCollect()
 
 	// get network interface by name
 	iface, err := net.InterfaceByName(w.GetConfig().Collectors.XdpLiveCapture.Device)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] lookup network iface: ", err)
+		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] lookup network iface: ", err)
 	}
 
 	// Load pre-compiled programs into the kernel.
 	objs := xdp.BpfObjects{}
 	if err := xdp.LoadBpfObjects(&objs, nil); err != nil {
-		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] loading BPF objects: ", err)
+		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] loading BPF objects: ", err)
 	}
 	defer objs.Close()
 
@@ -60,7 +62,7 @@ func (w *XDPSniffer) StartCollect() {
 		Interface: iface.Index,
 	})
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] could not attach XDP program: ", err)
+		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] could not attach XDP program: ", err)
 	}
 	defer l.Close()
 
@@ -68,7 +70,7 @@ func (w *XDPSniffer) StartCollect() {
 
 	perfEvent, err := perf.NewReader(objs.Pkts, 1<<24)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] read event: ", err)
+		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] read event: ", err)
 	}
 
 	dnsChan := make(chan dnsutils.DNSMessage)
@@ -183,7 +185,7 @@ func (w *XDPSniffer) StartCollect() {
 			w.SetConfig(cfg)
 
 			// send the config to the dns processor
-			dnsProcessor.ConfigChan <- cfg
+			dnsProcessor.NewConfig() <- cfg
 
 		// dns message to read ?
 		case dm := <-dnsChan:
@@ -191,7 +193,7 @@ func (w *XDPSniffer) StartCollect() {
 			// update identity with config ?
 			dm.DNSTap.Identity = w.GetConfig().GetServerIdentity()
 
-			dnsProcessor.GetChannel() <- dm
+			dnsProcessor.GetInputChannel() <- dm
 		}
 	}
 }

@@ -24,7 +24,7 @@ type ElasticSearchClient struct {
 }
 
 func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, name string) *ElasticSearchClient {
-	w := &ElasticSearchClient{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "elasticsearch", config.Loggers.ElasticSearchClient.ChannelBufferSize)}
+	w := &ElasticSearchClient{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "elasticsearch", config.Loggers.ElasticSearchClient.ChannelBufferSize, pkgutils.DefaultMonitor)}
 	w.ReadConfig()
 	w.httpClient = &http.Client{Timeout: 5 * time.Second}
 	return w
@@ -38,7 +38,7 @@ func (w *ElasticSearchClient) ReadConfig() {
 		case pkgconfig.CompressGzip:
 			w.LogInfo("gzip compression is enabled")
 		default:
-			w.LogFatal(pkgutils.PrefixLogLogger+"["+w.GetName()+"] elasticsearch - invalid compress mode: ", w.GetConfig().Loggers.ElasticSearchClient.Compression)
+			w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] elasticsearch - invalid compress mode: ", w.GetConfig().Loggers.ElasticSearchClient.Compression)
 		}
 	}
 

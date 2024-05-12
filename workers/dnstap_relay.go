@@ -21,7 +21,7 @@ type DnstapProxifier struct {
 }
 
 func NewDnstapProxifier(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
-	s := &DnstapProxifier{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstaprelay", pkgutils.DefaultBufferSize)}
+	s := &DnstapProxifier{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstaprelay", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
 	s.SetDefaultRoutes(next)
 	s.CheckConfig()
 	return s
@@ -29,7 +29,7 @@ func NewDnstapProxifier(next []pkgutils.Worker, config *pkgconfig.Config, logger
 
 func (w *DnstapProxifier) CheckConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Collectors.DnstapProxifier.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] dnstaprelay - invalid tls min version")
+		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] dnstaprelay - invalid tls min version")
 	}
 }
 

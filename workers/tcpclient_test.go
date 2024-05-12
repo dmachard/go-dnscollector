@@ -34,7 +34,7 @@ func Test_TcpClientRun(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.mode, func(t *testing.T) {
 			// init logger
-			cfg := pkgconfig.GetFakeConfig()
+			cfg := pkgconfig.GetDefaultConfig()
 			cfg.Loggers.TCPClient.FlushInterval = 1
 			cfg.Loggers.TCPClient.BufferSize = 0
 			cfg.Loggers.TCPClient.Mode = tc.mode
@@ -89,7 +89,7 @@ func Test_TcpClientRun(t *testing.T) {
 
 func Test_TcpClient_ConnectionAttempt(t *testing.T) {
 	// init logger
-	cfg := pkgconfig.GetFakeConfig()
+	cfg := pkgconfig.GetDefaultConfig()
 	cfg.Loggers.TCPClient.FlushInterval = 1
 	cfg.Loggers.TCPClient.Mode = pkgconfig.ModeText
 	cfg.Loggers.TCPClient.RemoteAddress = "127.0.0.1"

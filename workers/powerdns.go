@@ -29,7 +29,7 @@ type PdnsServer struct {
 }
 
 func NewPdnsServer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *PdnsServer {
-	w := &PdnsServer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "powerdns", pkgutils.DefaultBufferSize)}
+	w := &PdnsServer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "powerdns", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	w.CheckConfig()
 	return w
@@ -37,7 +37,7 @@ func NewPdnsServer(next []pkgutils.Worker, config *pkgconfig.Config, logger *log
 
 func (w *PdnsServer) CheckConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Collectors.PowerDNS.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogCollector + "[" + w.GetName() + "] invalid tls min version")
+		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] invalid tls min version")
 	}
 }
 
@@ -56,7 +56,9 @@ func (w *PdnsServer) HandleConn(conn net.Conn, connID uint64, forceClose chan bo
 
 	// start protobuf subprocessor
 	pdnsProcessor := NewPdnsProcessor(int(connID), peerName, w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.PowerDNS.ChannelBufferSize)
-	go pdnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
+	pdnsProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
+	pdnsProcessor.SetDefaultDropped(w.GetDroppedRoutes())
+	go pdnsProcessor.StartCollect()
 
 	r := bufio.NewReader(conn)
 	pbs := powerdns_protobuf.NewProtobufStream(r, conn, 5*time.Second)
@@ -113,9 +115,9 @@ func (w *PdnsServer) HandleConn(conn net.Conn, connID uint64, forceClose chan bo
 
 		// send payload to the channel
 		select {
-		case pdnsProcessor.GetChannel() <- payload.Data(): // Successful send
+		case pdnsProcessor.GetDataChannel() <- payload.Data(): // Successful send
 		default:
-			w.ProcessorIsBusy()
+			w.WorkerIsBusy("dnstap-processor")
 		}
 	}
 }
@@ -134,7 +136,7 @@ func (w *PdnsServer) StartCollect() {
 		cfg.TLSSupport, pkgconfig.TLSVersion[cfg.TLSMinVersion],
 		cfg.CertFile, cfg.KeyFile)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] listening failed: ", err)
+		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] listening failed: ", err)
 	}
 	w.LogInfo("listening on %s", listener.Addr())
 
@@ -167,7 +169,7 @@ func (w *PdnsServer) StartCollect() {
 			if w.GetConfig().Collectors.Dnstap.RcvBufSize > 0 {
 				before, actual, err := netutils.SetSockRCVBUF(conn, cfg.RcvBufSize, cfg.TLSSupport)
 				if err != nil {
-					w.LogFatal(pkgutils.PrefixLogCollector+"["+w.GetName()+"] unable to set SO_RCVBUF: ", err)
+					w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] unable to set SO_RCVBUF: ", err)
 				}
 				w.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before, cfg.RcvBufSize, actual)
 			}
@@ -191,116 +193,58 @@ var (
 )
 
 type PdnsProcessor struct {
-	ConnID                   int
-	PeerName                 string
-	doneRun, stopRun         chan bool
-	doneMonitor, stopMonitor chan bool
-	recvFrom                 chan []byte
-	logger                   *logger.Logger
-	config                   *pkgconfig.Config
-	ConfigChan               chan *pkgconfig.Config
-	name                     string
-	chanSize                 int
-	RoutingHandler           pkgutils.RoutingHandler
-	dropped                  chan string
-	droppedCount             map[string]int
+	*pkgutils.GenericWorker
+	ConnID      int
+	PeerName    string
+	dataChannel chan []byte
 }
 
 func NewPdnsProcessor(connID int, peerName string, config *pkgconfig.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
-	logger.Info(pkgutils.PrefixLogProcessor+"[%s] powerdns - conn #%d - initialization...", name, connID)
-	d := PdnsProcessor{
-		ConnID:         connID,
-		PeerName:       peerName,
-		doneMonitor:    make(chan bool),
-		doneRun:        make(chan bool),
-		stopMonitor:    make(chan bool),
-		stopRun:        make(chan bool),
-		recvFrom:       make(chan []byte, size),
-		chanSize:       size,
-		logger:         logger,
-		config:         config,
-		ConfigChan:     make(chan *pkgconfig.Config),
-		name:           name,
-		RoutingHandler: pkgutils.NewRoutingHandler(config, logger, name),
-		dropped:        make(chan string),
-		droppedCount:   map[string]int{},
-	}
-	return d
+	w := PdnsProcessor{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "powerdns processor #"+strconv.Itoa(connID), size, pkgutils.DefaultMonitor)}
+	w.ConnID = connID
+	w.PeerName = peerName
+	w.dataChannel = make(chan []byte, size)
+	return w
 }
 
-func (p *PdnsProcessor) LogInfo(msg string, v ...interface{}) {
-	var log string
-	if p.ConnID == 0 {
-		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - ", p.name)
-	} else {
-		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - conn #%d - ", p.name, p.ConnID)
-	}
-	p.logger.Info(log+msg, v...)
+func (w *PdnsProcessor) GetDataChannel() chan []byte {
+	return w.dataChannel
 }
 
-func (p *PdnsProcessor) LogError(msg string, v ...interface{}) {
-	var log string
-	if p.ConnID == 0 {
-		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - ", p.name)
-	} else {
-		log = fmt.Sprintf(pkgutils.PrefixLogProcessor+"[%s] powerdns - conn #%d - ", p.name, p.ConnID)
-	}
-	p.logger.Error(log+msg, v...)
-}
+func (w *PdnsProcessor) StartCollect() {
+	w.LogInfo("worker is starting collection")
+	defer w.CollectDone()
 
-func (p *PdnsProcessor) GetChannel() chan []byte {
-	return p.recvFrom
-}
-
-func (p *PdnsProcessor) Stop() {
-	p.LogInfo("stopping processor...")
-	p.RoutingHandler.Stop()
-
-	p.LogInfo("stopping to process...")
-	p.stopRun <- true
-	<-p.doneRun
-
-	p.LogInfo("stopping to monitor loggers...")
-	p.stopMonitor <- true
-	<-p.doneMonitor
-}
-
-func (p *PdnsProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(defaultWorkers)
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(droppedworkers)
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
 
 	// prepare enabled transformers
-	transforms := transformers.NewTransforms(&p.config.IngoingTransformers, p.logger, p.name, defaultRoutes, p.ConnID)
-
-	// start goroutine to count dropped messsages
-	go p.MonitorLoggers()
+	transforms := transformers.NewTransforms(&w.GetConfig().IngoingTransformers, w.GetLogger(), w.GetName(), defaultRoutes, w.ConnID)
 
 	// read incoming dns message
-	p.LogInfo("waiting dns message to process...")
-RUN_LOOP:
 	for {
 		select {
-		case cfg := <-p.ConfigChan:
-			p.config = cfg
+		case cfg := <-w.NewConfig():
+			w.SetConfig(cfg)
 			transforms.ReloadConfig(&cfg.IngoingTransformers)
 
-		case <-p.stopRun:
+		case <-w.OnStop():
 			transforms.Reset()
-			p.doneRun <- true
-			break RUN_LOOP
+			close(w.GetDataChannel())
+			return
 
-		case data, opened := <-p.recvFrom:
+		case data, opened := <-w.GetDataChannel():
 			if !opened {
-				p.LogInfo("channel closed, exit")
+				w.LogInfo("channel closed, exit")
 				return
 			}
 
 			err := proto.Unmarshal(data, pbdm)
 			if err != nil {
-				p.LogError("pbdm decoding, %s", err)
+				w.LogError("pbdm decoding, %s", err)
 				continue
 			}
 
@@ -439,7 +383,7 @@ RUN_LOOP:
 			}
 			dm.DNS.DNSRRs.Answers = answers
 
-			if p.config.Collectors.PowerDNS.AddDNSPayload {
+			if w.GetConfig().Collectors.PowerDNS.AddDNSPayload {
 
 				qname := dns.Fqdn(pbdm.Question.GetQName())
 				newDNS := new(dns.Msg)
@@ -502,59 +446,12 @@ RUN_LOOP:
 
 			// apply all enabled transformers
 			if transforms.ProcessMessage(&dm) == transformers.ReturnDrop {
-				for i := range droppedRoutes {
-					select {
-					case droppedRoutes[i] <- dm: // Successful send to logger channel
-					default:
-						p.dropped <- droppedNames[i]
-					}
-				}
+				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
 			// dispatch dns messages to connected loggers
-			for i := range defaultRoutes {
-				select {
-				case defaultRoutes[i] <- dm: // Successful send to logger channel
-				default:
-					p.dropped <- defaultNames[i]
-				}
-			}
+			w.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
-	p.LogInfo("processing terminated")
-}
-
-func (p *PdnsProcessor) MonitorLoggers() {
-	watchInterval := 10 * time.Second
-	bufferFull := time.NewTimer(watchInterval)
-FOLLOW_LOOP:
-	for {
-		select {
-		case <-p.stopMonitor:
-			close(p.dropped)
-			bufferFull.Stop()
-			p.doneMonitor <- true
-			break FOLLOW_LOOP
-
-		case loggerName := <-p.dropped:
-			if _, ok := p.droppedCount[loggerName]; !ok {
-				p.droppedCount[loggerName] = 1
-			} else {
-				p.droppedCount[loggerName]++
-			}
-
-		case <-bufferFull.C:
-
-			for v, k := range p.droppedCount {
-				if k > 0 {
-					p.LogError("logger[%s] buffer is full, %d packet(s) dropped", v, k)
-					p.droppedCount[v] = 0
-				}
-			}
-			bufferFull.Reset(watchInterval)
-
-		}
-	}
-	p.LogInfo("monitor terminated")
 }

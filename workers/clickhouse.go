@@ -33,7 +33,7 @@ type ClickhouseClient struct {
 }
 
 func NewClickhouseClient(config *pkgconfig.Config, console *logger.Logger, name string) *ClickhouseClient {
-	w := &ClickhouseClient{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "clickhouse", pkgutils.DefaultBufferSize)}
+	w := &ClickhouseClient{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "clickhouse", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
 	w.ReadConfig()
 	return w
 }
