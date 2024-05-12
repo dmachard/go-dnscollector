@@ -21,7 +21,7 @@ type DnstapProxifier struct {
 }
 
 func NewDnstapProxifier(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
-	s := &DnstapProxifier{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstaprelay", pkgutils.DefaultBufferSize)}
+	s := &DnstapProxifier{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstaprelay", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
 	s.SetDefaultRoutes(next)
 	s.CheckConfig()
 	return s

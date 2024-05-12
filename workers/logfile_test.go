@@ -46,7 +46,7 @@ func Test_LogFileText(t *testing.T) {
 			defer os.Remove(f.Name()) // clean up
 
 			// config
-			config := pkgconfig.GetFakeConfig()
+			config := pkgconfig.GetDefaultConfig()
 			config.Loggers.LogFile.FilePath = f.Name()
 			config.Loggers.LogFile.Mode = tc.mode
 			config.Loggers.LogFile.FlushInterval = 0
@@ -89,7 +89,7 @@ func Test_LogFileWrite_PcapMode(t *testing.T) {
 	defer os.Remove(f.Name()) // clean up
 
 	// config
-	config := pkgconfig.GetFakeConfig()
+	config := pkgconfig.GetDefaultConfig()
 	config.Loggers.LogFile.FilePath = f.Name()
 	config.Loggers.LogFile.Mode = pkgconfig.ModePCAP
 

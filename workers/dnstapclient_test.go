@@ -47,7 +47,7 @@ func Test_DnstapClient(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			// init logger
-			cfg := pkgconfig.GetFakeConfig()
+			cfg := pkgconfig.GetDefaultConfig()
 			cfg.Loggers.DNSTap.FlushInterval = 1
 			cfg.Loggers.DNSTap.BufferSize = 0
 			cfg.Loggers.DNSTap.Compression = tc.compression

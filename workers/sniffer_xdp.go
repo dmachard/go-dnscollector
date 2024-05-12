@@ -28,7 +28,7 @@ type XDPSniffer struct {
 }
 
 func NewXDPSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
-	w := &XDPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "xdp sniffer", pkgutils.DefaultBufferSize)}
+	w := &XDPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "xdp sniffer", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	return w
 }

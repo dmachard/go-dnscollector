@@ -10,8 +10,8 @@ import (
 )
 
 func Test_FileIngestor_Pcap(t *testing.T) {
-	g := pkgutils.NewFakeLogger()
-	config := pkgconfig.GetFakeConfig()
+	g := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+	config := pkgconfig.GetDefaultConfig()
 
 	// watch tests data folder
 	config.Collectors.FileIngestor.WatchDir = "./../testsdata/pcap/"

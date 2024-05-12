@@ -33,7 +33,7 @@ func Test_FalcoClient(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.mode, func(t *testing.T) {
-			conf := pkgconfig.GetFakeConfig()
+			conf := pkgconfig.GetDefaultConfig()
 			g := NewFalcoClient(conf, logger.New(false), "test")
 
 			go g.StartCollect()

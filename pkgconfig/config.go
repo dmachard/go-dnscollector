@@ -97,7 +97,7 @@ func (c *Config) GetServerIdentity() string {
 	}
 }
 
-func GetFakeConfig() *Config {
+func GetDefaultConfig() *Config {
 	config := &Config{}
 	config.SetDefault()
 	return config

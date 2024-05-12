@@ -14,7 +14,7 @@ type TZSPSniffer struct {
 }
 
 func NewTZSP(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
-	w := &TZSPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tzsp", pkgutils.DefaultBufferSize)}
+	w := &TZSPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tzsp", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	w.ReadConfig()
 	return w

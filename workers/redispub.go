@@ -32,7 +32,7 @@ type RedisPub struct {
 }
 
 func NewRedisPub(config *pkgconfig.Config, logger *logger.Logger, name string) *RedisPub {
-	w := &RedisPub{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "redispub", config.Loggers.RedisPub.ChannelBufferSize)}
+	w := &RedisPub{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "redispub", config.Loggers.RedisPub.ChannelBufferSize, pkgutils.DefaultMonitor)}
 	w.stopRead = make(chan bool)
 	w.doneRead = make(chan bool)
 	w.transportReady = make(chan bool)

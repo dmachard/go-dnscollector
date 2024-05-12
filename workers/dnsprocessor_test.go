@@ -19,9 +19,9 @@ func Test_DnsProcessor(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init and run the dns processor
-	fl := pkgutils.NewFakeLogger()
+	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
 
-	consumer := NewDNSProcessor(pkgconfig.GetFakeConfig(), logger, "test", 512)
+	consumer := NewDNSProcessor(pkgconfig.GetDefaultConfig(), logger, "test", 512)
 	consumer.AddDefaultRoute(fl)
 	consumer.AddDroppedRoute(fl)
 	go consumer.StartCollect()
@@ -31,7 +31,7 @@ func Test_DnsProcessor(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dmOut := <-fl.GetInputChannel()
-	if dmOut.DNS.Qname != ExpectedQname {
+	if dmOut.DNS.Qname != pkgutils.ExpectedQname {
 		t.Errorf("invalid qname in dns message: %s", dm.DNS.Qname)
 	}
 }
@@ -43,8 +43,8 @@ func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
 	lg.SetOutputChannel((logsChan))
 
 	// init and run the dns processor
-	fl := pkgutils.NewFakeLoggerWithBufferSize(1)
-	consumer := NewDNSProcessor(pkgconfig.GetFakeConfig(), lg, "test", 512)
+	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferOne)
+	consumer := NewDNSProcessor(pkgconfig.GetDefaultConfig(), lg, "test", 512)
 	consumer.AddDefaultRoute(fl)
 	consumer.AddDroppedRoute(fl)
 	go consumer.StartCollect()
@@ -61,7 +61,7 @@ func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(ExpectedBufferMsg511)
+		pattern := regexp.MustCompile(pkgutils.ExpectedBufferMsg511)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -69,7 +69,7 @@ func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dmOut := <-fl.GetInputChannel()
-	if dmOut.DNS.Qname != ExpectedQname {
+	if dmOut.DNS.Qname != pkgutils.ExpectedQname {
 		t.Errorf("invalid qname in dns message: %s", dmOut.DNS.Qname)
 	}
 
@@ -83,7 +83,7 @@ func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(ExpectedBufferMsg1023)
+		pattern := regexp.MustCompile(pkgutils.ExpectedBufferMsg1023)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -91,7 +91,7 @@ func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm2 := <-fl.GetInputChannel()
-	if dm2.DNS.Qname != ExpectedQname {
+	if dm2.DNS.Qname != pkgutils.ExpectedQname {
 		t.Errorf("invalid qname in second dns message: %s", dm2.DNS.Qname)
 	}
 }

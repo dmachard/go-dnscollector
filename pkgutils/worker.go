@@ -32,7 +32,7 @@ type GenericWorker struct {
 	dnsMessageIn, dnsMessageOut                                          chan dnsutils.DNSMessage
 }
 
-func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name string, descr string, bufferSize int) *GenericWorker {
+func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name string, descr string, bufferSize int, monitor bool) *GenericWorker {
 	logger.Info(PrefixLogWorker+"[%s] %s - enabled", name, descr)
 	w := &GenericWorker{
 		config:             config,
@@ -51,7 +51,9 @@ func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name stri
 		dnsMessageIn:       make(chan dnsutils.DNSMessage, bufferSize),
 		dnsMessageOut:      make(chan dnsutils.DNSMessage, bufferSize),
 	}
-	go w.Monitor()
+	if monitor {
+		go w.Monitor()
+	}
 	return w
 }
 
@@ -235,4 +237,8 @@ func GetRoutes(routes []Worker) ([]chan dnsutils.DNSMessage, []string) {
 
 func GetName(name string) string {
 	return "[" + name + "] - "
+}
+
+func GetWorkerForTest(bufferSize int) *GenericWorker {
+	return NewGenericWorker(pkgconfig.GetDefaultConfig(), logger.New(false), "testonly", "", bufferSize, WorkerMonitorDisabled)
 }

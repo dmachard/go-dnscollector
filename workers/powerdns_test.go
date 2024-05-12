@@ -17,9 +17,9 @@ import (
 )
 
 func TestPowerDNS_Run(t *testing.T) {
-	g := pkgutils.NewFakeLogger()
+	g := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
 
-	c := NewPdnsServer([]pkgutils.Worker{g}, pkgconfig.GetFakeConfig(), logger.New(false), "test")
+	c := NewPdnsServer([]pkgutils.Worker{g}, pkgconfig.GetDefaultConfig(), logger.New(false), "test")
 	go c.StartCollect()
 
 	// wait before to connect
@@ -33,10 +33,10 @@ func TestPowerDNS_Run(t *testing.T) {
 
 func Test_PowerDNSProcessor(t *testing.T) {
 
-	fl := pkgutils.NewFakeLogger()
+	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
 
 	// init the dnstap consumer
-	consumer := NewPdnsProcessor(0, "peername", pkgconfig.GetFakeConfig(), logger.New(false), "test", 512)
+	consumer := NewPdnsProcessor(0, "peername", pkgconfig.GetDefaultConfig(), logger.New(false), "test", 512)
 	consumer.AddDefaultRoute(fl)
 	consumer.AddDroppedRoute(fl)
 
@@ -45,7 +45,7 @@ func Test_PowerDNSProcessor(t *testing.T) {
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
 	dm := &powerdns_protobuf.PBDNSMessage{}
-	dm.ServerIdentity = []byte(ExpectedIdentity)
+	dm.ServerIdentity = []byte(pkgutils.ExpectedIdentity)
 	dm.Type = powerdns_protobuf.PBDNSMessage_DNSQueryType.Enum()
 	dm.SocketProtocol = powerdns_protobuf.PBDNSMessage_DNSCryptUDP.Enum()
 	dm.SocketFamily = powerdns_protobuf.PBDNSMessage_INET.Enum()
@@ -61,16 +61,16 @@ func Test_PowerDNSProcessor(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	msg := <-fl.GetInputChannel()
-	if msg.DNSTap.Identity != ExpectedIdentity {
+	if msg.DNSTap.Identity != pkgutils.ExpectedIdentity {
 		t.Errorf("invalid identity in dns message: %s", msg.DNSTap.Identity)
 	}
 }
 
 func Test_PowerDNSProcessor_AddDNSPayload_Valid(t *testing.T) {
 	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLogger()
+	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
 
-	cfg := pkgconfig.GetFakeConfig()
+	cfg := pkgconfig.GetDefaultConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the powerdns processor
@@ -83,7 +83,7 @@ func Test_PowerDNSProcessor_AddDNSPayload_Valid(t *testing.T) {
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
 	dm := &powerdns_protobuf.PBDNSMessage{}
-	dm.ServerIdentity = []byte(ExpectedIdentity)
+	dm.ServerIdentity = []byte(pkgutils.ExpectedIdentity)
 	dm.Id = proto.Uint32(2000)
 	dm.Type = powerdns_protobuf.PBDNSMessage_DNSQueryType.Enum()
 	dm.SocketProtocol = powerdns_protobuf.PBDNSMessage_DNSCryptUDP.Enum()
@@ -121,9 +121,9 @@ func Test_PowerDNSProcessor_AddDNSPayload_Valid(t *testing.T) {
 
 func Test_PowerDNSProcessor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
 
-	fl := pkgutils.NewFakeLogger()
+	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
 
-	cfg := pkgconfig.GetFakeConfig()
+	cfg := pkgconfig.GetDefaultConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the dnstap consumer
@@ -160,9 +160,9 @@ func Test_PowerDNSProcessor_AddDNSPayload_InvalidLabelLength(t *testing.T) {
 
 func Test_PowerDNSProcessor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
 
-	fl := pkgutils.NewFakeLogger()
+	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
 
-	cfg := pkgconfig.GetFakeConfig()
+	cfg := pkgconfig.GetDefaultConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the dnstap consumer
@@ -198,9 +198,9 @@ func Test_PowerDNSProcessor_AddDNSPayload_QnameTooLongDomain(t *testing.T) {
 
 func Test_PowerDNSProcessor_AddDNSPayload_AnswersTooLongDomain(t *testing.T) {
 
-	fl := pkgutils.NewFakeLogger()
+	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
 
-	cfg := pkgconfig.GetFakeConfig()
+	cfg := pkgconfig.GetDefaultConfig()
 	cfg.Collectors.PowerDNS.AddDNSPayload = true
 
 	// init the dnstap consumer
@@ -250,7 +250,7 @@ func Test_PowerDNSProcessor_AddDNSPayload_AnswersTooLongDomain(t *testing.T) {
 // test for issue https://github.com/dmachard/go-dnscollector/issues/568
 func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
 
-	fl := pkgutils.NewFakeLoggerWithBufferSize(1)
+	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferOne)
 
 	// redirect stdout output to bytes buffer
 	logsChan := make(chan logger.LogEntry, 10)
@@ -258,7 +258,7 @@ func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
 	lg.SetOutputChannel((logsChan))
 
 	// init the dnstap consumer
-	cfg := pkgconfig.GetFakeConfig()
+	cfg := pkgconfig.GetDefaultConfig()
 	consumer := NewPdnsProcessor(0, "peername", cfg, lg, "test", 512)
 	consumer.AddDefaultRoute(fl)
 	consumer.AddDroppedRoute(fl)
@@ -268,7 +268,7 @@ func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
 	dnsQuestion := powerdns_protobuf.PBDNSMessage_DNSQuestion{QName: &dnsQname}
 
 	dm := &powerdns_protobuf.PBDNSMessage{}
-	dm.ServerIdentity = []byte(ExpectedIdentity)
+	dm.ServerIdentity = []byte(pkgutils.ExpectedIdentity)
 	dm.Type = powerdns_protobuf.PBDNSMessage_DNSQueryType.Enum()
 	dm.SocketProtocol = powerdns_protobuf.PBDNSMessage_DNSCryptUDP.Enum()
 	dm.SocketFamily = powerdns_protobuf.PBDNSMessage_INET.Enum()
@@ -289,7 +289,7 @@ func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(ExpectedBufferMsg511)
+		pattern := regexp.MustCompile(pkgutils.ExpectedBufferMsg511)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -297,7 +297,7 @@ func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	msg := <-fl.GetInputChannel()
-	if msg.DNSTap.Identity != ExpectedIdentity {
+	if msg.DNSTap.Identity != pkgutils.ExpectedIdentity {
 		t.Errorf("invalid identity in dns message: %s", msg.DNSTap.Identity)
 	}
 
@@ -310,7 +310,7 @@ func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
 	time.Sleep(12 * time.Second)
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(ExpectedBufferMsg1023)
+		pattern := regexp.MustCompile(pkgutils.ExpectedBufferMsg1023)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -318,7 +318,7 @@ func Test_PowerDNSProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// read just one dns message from dnstap consumer
 	msg2 := <-fl.GetInputChannel()
-	if msg2.DNSTap.Identity != ExpectedIdentity {
+	if msg2.DNSTap.Identity != pkgutils.ExpectedIdentity {
 		t.Errorf("invalid identity in second dns message: %s", msg2.DNSTap.Identity)
 	}
 }

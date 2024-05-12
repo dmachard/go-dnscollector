@@ -16,7 +16,7 @@ import (
 
 func Test_StdoutTextMode(t *testing.T) {
 
-	cfg := pkgconfig.GetFakeConfig()
+	cfg := pkgconfig.GetDefaultConfig()
 
 	testcases := []struct {
 		name      string
@@ -67,7 +67,7 @@ func Test_StdoutTextMode(t *testing.T) {
 			// init logger and redirect stdout output to bytes buffer
 			var stdout bytes.Buffer
 
-			cfg := pkgconfig.GetFakeConfig()
+			cfg := pkgconfig.GetDefaultConfig()
 			cfg.Global.TextFormatDelimiter = tc.delimiter
 			cfg.Global.TextFormatBoundary = tc.boundary
 
@@ -113,7 +113,7 @@ func Test_StdoutJsonMode(t *testing.T) {
 			// init logger and redirect stdout output to bytes buffer
 			var stdout bytes.Buffer
 
-			cfg := pkgconfig.GetFakeConfig()
+			cfg := pkgconfig.GetDefaultConfig()
 			cfg.Loggers.Stdout.Mode = tc.mode
 			g := NewStdOut(cfg, logger.New(false), "test")
 			g.SetTextWriter(&stdout)
@@ -143,7 +143,7 @@ func Test_StdoutPcapMode(t *testing.T) {
 	var pcap bytes.Buffer
 
 	// init logger and run
-	cfg := pkgconfig.GetFakeConfig()
+	cfg := pkgconfig.GetDefaultConfig()
 	cfg.Loggers.Stdout.Mode = "pcap"
 
 	g := NewStdOut(cfg, logger.New(false), "test")
@@ -184,7 +184,7 @@ func Test_StdoutPcapMode_NoDNSPayload(t *testing.T) {
 	var pcap bytes.Buffer
 
 	// init logger and run
-	cfg := pkgconfig.GetFakeConfig()
+	cfg := pkgconfig.GetDefaultConfig()
 	cfg.Loggers.Stdout.Mode = "pcap"
 
 	g := NewStdOut(cfg, logger, "test")
@@ -218,12 +218,12 @@ func Test_StdoutBufferLoggerIsFull(t *testing.T) {
 
 	// init logger and redirect stdout output to bytes buffer
 	var stdout bytes.Buffer
-	cfg := pkgconfig.GetFakeConfig()
+	cfg := pkgconfig.GetDefaultConfig()
 	g := NewStdOut(cfg, lg, "test")
 	g.SetTextWriter(&stdout)
 
 	// init next logger with a buffer of one element
-	nxt := pkgutils.NewFakeLoggerWithBufferSize(1)
+	nxt := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferOne)
 	g.AddDefaultRoute(nxt)
 
 	// run collector
@@ -240,7 +240,7 @@ func Test_StdoutBufferLoggerIsFull(t *testing.T) {
 
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(ExpectedBufferMsg511)
+		pattern := regexp.MustCompile(pkgutils.ExpectedBufferMsg511)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -248,7 +248,7 @@ func Test_StdoutBufferLoggerIsFull(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dmOut := <-nxt.GetInputChannel()
-	if dmOut.DNS.Qname != ExpectedQname2 {
+	if dmOut.DNS.Qname != pkgutils.ExpectedQname2 {
 		t.Errorf("invalid qname in dns message: %s", dmOut.DNS.Qname)
 	}
 
@@ -261,7 +261,7 @@ func Test_StdoutBufferLoggerIsFull(t *testing.T) {
 	time.Sleep(12 * time.Second)
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(ExpectedBufferMsg1023)
+		pattern := regexp.MustCompile(pkgutils.ExpectedBufferMsg1023)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -269,7 +269,7 @@ func Test_StdoutBufferLoggerIsFull(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dmOut2 := <-nxt.GetInputChannel()
-	if dmOut2.DNS.Qname != ExpectedQname2 {
+	if dmOut2.DNS.Qname != pkgutils.ExpectedQname2 {
 		t.Errorf("invalid qname in second dns message: %s", dmOut2.DNS.Qname)
 	}
 

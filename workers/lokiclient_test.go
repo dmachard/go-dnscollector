@@ -46,7 +46,7 @@ func Test_LokiClientRun(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.mode, func(t *testing.T) {
 			// init logger
-			cfg := pkgconfig.GetFakeConfig()
+			cfg := pkgconfig.GetDefaultConfig()
 			cfg.Loggers.LokiClient.Mode = tc.mode
 			cfg.Loggers.LokiClient.BatchSize = 0
 			g := NewLokiClient(cfg, logger.New(false), "test")
@@ -148,7 +148,7 @@ func Test_LokiClientRelabel(t *testing.T) {
 		for _, m := range []string{pkgconfig.ModeText, pkgconfig.ModeJSON, pkgconfig.ModeFlatJSON} {
 			t.Run(fmt.Sprint(m, tc.relabelConfig, tc.labelsPattern), func(t *testing.T) {
 				// init logger
-				cfg := pkgconfig.GetFakeConfig()
+				cfg := pkgconfig.GetDefaultConfig()
 				cfg.Loggers.LokiClient.Mode = m
 				cfg.Loggers.LokiClient.BatchSize = 0
 				cfg.Loggers.LokiClient.RelabelConfigs = tc.relabelConfig

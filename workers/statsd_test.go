@@ -12,7 +12,7 @@ import (
 
 func TestStatsdRun(t *testing.T) {
 	// init logger
-	config := pkgconfig.GetFakeConfig()
+	config := pkgconfig.GetDefaultConfig()
 	config.Loggers.Statsd.FlushInterval = 1
 
 	g := NewStatsdClient(config, logger.New(false), "test")

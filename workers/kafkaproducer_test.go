@@ -48,7 +48,7 @@ func Test_KafkaProducer(t *testing.T) {
 			defer mockListener.Close()
 
 			// init logger
-			cfg := pkgconfig.GetFakeConfig()
+			cfg := pkgconfig.GetDefaultConfig()
 			cfg.Loggers.KafkaProducer.BufferSize = 0
 			cfg.Loggers.KafkaProducer.RemotePort = 9092
 			cfg.Loggers.KafkaProducer.Topic = tc.topic

@@ -31,7 +31,7 @@ type TCPClient struct {
 }
 
 func NewTCPClient(config *pkgconfig.Config, logger *logger.Logger, name string) *TCPClient {
-	w := &TCPClient{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tcpclient", config.Loggers.TCPClient.ChannelBufferSize)}
+	w := &TCPClient{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tcpclient", config.Loggers.TCPClient.ChannelBufferSize, pkgutils.DefaultMonitor)}
 	w.transportReady = make(chan bool)
 	w.transportReconnect = make(chan bool)
 	w.stopRead = make(chan bool)

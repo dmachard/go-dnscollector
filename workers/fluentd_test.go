@@ -33,7 +33,7 @@ func Test_FluentdClient(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			// init logger
-			cfg := pkgconfig.GetFakeConfig()
+			cfg := pkgconfig.GetDefaultConfig()
 			cfg.Loggers.Fluentd.FlushInterval = tc.flushInterval
 			cfg.Loggers.Fluentd.BufferSize = tc.bufferSize
 			g := NewFluentdClient(cfg, logger.New(false), "test")

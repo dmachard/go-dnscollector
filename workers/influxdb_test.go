@@ -15,7 +15,7 @@ import (
 
 func Test_InfluxDB(t *testing.T) {
 	// init logger
-	g := NewInfluxDBClient(pkgconfig.GetFakeConfig(), logger.New(false), "test")
+	g := NewInfluxDBClient(pkgconfig.GetDefaultConfig(), logger.New(false), "test")
 
 	// fake msgpack receiver
 	fakeRcvr, err := net.Listen(netutils.SocketTCP, "127.0.0.1:8086")

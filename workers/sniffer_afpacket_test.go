@@ -15,8 +15,8 @@ import (
 )
 
 func TestAfpacketSnifferRun(t *testing.T) {
-	g := pkgutils.NewFakeLogger()
-	c := NewAfpacketSniffer([]pkgutils.Worker{g}, pkgconfig.GetFakeConfig(), logger.New(false), "test")
+	g := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+	c := NewAfpacketSniffer([]pkgutils.Worker{g}, pkgconfig.GetDefaultConfig(), logger.New(false), "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector sniffer listening error: ", err)
 	}

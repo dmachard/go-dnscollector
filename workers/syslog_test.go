@@ -64,7 +64,7 @@ func Test_SyslogRunUdp(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			// init logger
-			config := pkgconfig.GetFakeConfig()
+			config := pkgconfig.GetDefaultConfig()
 			config.Loggers.Syslog.Transport = tc.transport
 			config.Loggers.Syslog.RemoteAddress = tc.listenAddr
 			config.Loggers.Syslog.Mode = tc.mode
@@ -160,7 +160,7 @@ func Test_SyslogRunTcp(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			// init logger
-			config := pkgconfig.GetFakeConfig()
+			config := pkgconfig.GetDefaultConfig()
 			config.Loggers.Syslog.Transport = tc.transport
 			config.Loggers.Syslog.RemoteAddress = tc.listenAddr
 			config.Loggers.Syslog.Mode = tc.mode
@@ -210,7 +210,7 @@ func Test_SyslogRunTcp(t *testing.T) {
 
 func Test_SyslogRun_RemoveNullCharacter(t *testing.T) {
 	// init logger
-	config := pkgconfig.GetFakeConfig()
+	config := pkgconfig.GetDefaultConfig()
 	config.Loggers.Syslog.Transport = netutils.SocketUDP
 	config.Loggers.Syslog.RemoteAddress = ":4000"
 	config.Loggers.Syslog.Mode = pkgconfig.ModeText

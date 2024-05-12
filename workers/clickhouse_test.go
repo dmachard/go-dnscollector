@@ -23,7 +23,7 @@ func Test_ClickhouseClient(t *testing.T) {
 			pattern: pkgconfig.ProgQname,
 		},
 	}
-	cfg := pkgconfig.GetFakeConfig()
+	cfg := pkgconfig.GetDefaultConfig()
 	cfg.Loggers.ClickhouseClient.URL = "http://127.0.0.1:8123"
 	cfg.Loggers.ClickhouseClient.User = "default"
 	cfg.Loggers.ClickhouseClient.Password = "password"

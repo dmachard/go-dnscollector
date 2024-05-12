@@ -16,7 +16,7 @@ type DNSProcessor struct {
 }
 
 func NewDNSProcessor(config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSProcessor {
-	w := DNSProcessor{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dns processor", size)}
+	w := DNSProcessor{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dns processor", size, pkgutils.DefaultMonitor)}
 	return w
 }
 

@@ -21,13 +21,13 @@ func TestTailRun(t *testing.T) {
 	defer os.Remove(tmpFile.Name()) // clean up
 
 	// config
-	config := pkgconfig.GetFakeConfig()
+	config := pkgconfig.GetDefaultConfig()
 	config.Collectors.Tail.TimeLayout = "2006-01-02T15:04:05.999999999Z07:00"
 	config.Collectors.Tail.FilePath = tmpFile.Name()
 	config.Collectors.Tail.PatternQuery = "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_QUERY) (?P<rcode>[^ ]*) (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
 
 	// init collector
-	g := pkgutils.NewFakeLogger()
+	g := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
 	c := NewTail([]pkgutils.Worker{g}, config, logger.New(false), "test")
 	if err := c.Follow(); err != nil {
 		t.Errorf("collector tail following error: %e", err)

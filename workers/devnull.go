@@ -11,7 +11,7 @@ type DevNull struct {
 }
 
 func NewDevNull(config *pkgconfig.Config, console *logger.Logger, name string) *DevNull {
-	s := &DevNull{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "devnull", config.Loggers.DevNull.ChannelBufferSize)}
+	s := &DevNull{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "devnull", config.Loggers.DevNull.ChannelBufferSize, pkgutils.DefaultMonitor)}
 	s.ReadConfig()
 	return s
 }

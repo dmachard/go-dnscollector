@@ -38,7 +38,7 @@ type StdOut struct {
 }
 
 func NewStdOut(config *pkgconfig.Config, console *logger.Logger, name string) *StdOut {
-	w := &StdOut{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "stdout", config.Loggers.Stdout.ChannelBufferSize)}
+	w := &StdOut{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "stdout", config.Loggers.Stdout.ChannelBufferSize, pkgutils.DefaultMonitor)}
 	w.writerText = log.New(os.Stdout, "", 0)
 	w.ReadConfig()
 	return w

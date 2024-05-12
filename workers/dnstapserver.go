@@ -30,7 +30,7 @@ type DnstapServer struct {
 }
 
 func NewDnstapServer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapServer {
-	w := &DnstapServer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap", pkgutils.DefaultBufferSize)}
+	w := &DnstapServer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	w.CheckConfig()
 	return w
@@ -287,7 +287,7 @@ type DNSTapProcessor struct {
 }
 
 func NewDNSTapProcessor(connID int, peerName string, config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
-	w := DNSTapProcessor{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap processor #"+strconv.Itoa(connID), size)}
+	w := DNSTapProcessor{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap processor #"+strconv.Itoa(connID), size, pkgutils.DefaultMonitor)}
 	w.ConnID = connID
 	w.PeerName = peerName
 	w.dataChannel = make(chan []byte, size)

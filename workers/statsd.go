@@ -51,7 +51,7 @@ type StatsdClient struct {
 }
 
 func NewStatsdClient(config *pkgconfig.Config, logger *logger.Logger, name string) *StatsdClient {
-	w := &StatsdClient{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "statsd", config.Loggers.Statsd.ChannelBufferSize)}
+	w := &StatsdClient{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "statsd", config.Loggers.Statsd.ChannelBufferSize, pkgutils.DefaultMonitor)}
 	w.Stats = StreamStats{Streams: make(map[string]*StatsPerStream)}
 	w.ReadConfig()
 	return w

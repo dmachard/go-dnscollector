@@ -29,7 +29,7 @@ type PdnsServer struct {
 }
 
 func NewPdnsServer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *PdnsServer {
-	w := &PdnsServer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "powerdns", pkgutils.DefaultBufferSize)}
+	w := &PdnsServer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "powerdns", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	w.CheckConfig()
 	return w
@@ -200,7 +200,7 @@ type PdnsProcessor struct {
 }
 
 func NewPdnsProcessor(connID int, peerName string, config *pkgconfig.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
-	w := PdnsProcessor{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "powerdns processor #"+strconv.Itoa(connID), size)}
+	w := PdnsProcessor{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "powerdns processor #"+strconv.Itoa(connID), size, pkgutils.DefaultMonitor)}
 	w.ConnID = connID
 	w.PeerName = peerName
 	w.dataChannel = make(chan []byte, size)

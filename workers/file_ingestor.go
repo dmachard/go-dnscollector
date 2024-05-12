@@ -44,7 +44,7 @@ type FileIngestor struct {
 
 func NewFileIngestor(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
 	w := &FileIngestor{
-		GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "fileingestor", pkgutils.DefaultBufferSize),
+		GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "fileingestor", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor),
 		watcherTimers: make(map[string]*time.Timer)}
 	w.SetDefaultRoutes(next)
 	w.CheckConfig()
