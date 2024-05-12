@@ -20,13 +20,13 @@ func NewDNSProcessor(config *pkgconfig.Config, logger *logger.Logger, name strin
 	return w
 }
 
-func (w *DNSProcessor) Run(defaultWorkers []pkgutils.Worker, droppedworkers []pkgutils.Worker) {
+func (w *DNSProcessor) StartCollect() {
 	w.LogInfo("worker is starting collection")
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(defaultWorkers)
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(droppedworkers)
+	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
 
 	// prepare enabled transformers
 	transforms := transformers.NewTransforms(&w.GetConfig().IngoingTransformers, w.GetLogger(), w.GetName(), defaultRoutes, 0)

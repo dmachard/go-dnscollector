@@ -264,7 +264,7 @@ func (w *FileIngestor) ProcessDnstap(filePath string) error {
 		newbuf := make([]byte, len(buf))
 		copy(newbuf, buf)
 
-		w.dnstapProcessor.GetChannel() <- newbuf
+		w.dnstapProcessor.GetDataChannel() <- newbuf
 	}
 
 	// remove it ?
@@ -310,12 +310,19 @@ func (w *FileIngestor) StartCollect() {
 	w.LogInfo("worker is starting collection")
 	defer w.CollectDone()
 
-	w.dnsProcessor = NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
-	go w.dnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
+	dnsProcessor := NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
+	dnsProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
+	dnsProcessor.SetDefaultDropped(w.GetDroppedRoutes())
+	go dnsProcessor.StartCollect()
 
 	// start dnstap subprocessor
-	w.dnstapProcessor = NewDNSTapProcessor(0, "", w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
-	go w.dnstapProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
+	dnstapProcessor := NewDNSTapProcessor(0, "", w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
+	dnstapProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
+	dnstapProcessor.SetDefaultDropped(w.GetDroppedRoutes())
+	go dnsProcessor.StartCollect()
+
+	w.dnstapProcessor = dnstapProcessor
+	w.dnsProcessor = dnsProcessor
 
 	// read current folder content
 	entries, err := os.ReadDir(w.GetConfig().Collectors.FileIngestor.WatchDir)
@@ -366,8 +373,8 @@ func (w *FileIngestor) StartCollect() {
 			watcher.Close()
 
 			// stop processors
-			w.dnsProcessor.Stop()
-			w.dnstapProcessor.Stop()
+			dnsProcessor.Stop()
+			dnstapProcessor.Stop()
 			return
 
 		// save the new config
@@ -375,8 +382,8 @@ func (w *FileIngestor) StartCollect() {
 			w.SetConfig(cfg)
 			w.CheckConfig()
 
-			w.dnsProcessor.NewConfig() <- cfg
-			w.dnstapProcessor.ConfigChan <- cfg
+			dnsProcessor.NewConfig() <- cfg
+			dnstapProcessor.NewConfig() <- cfg
 
 		case event, ok := <-watcher.Events:
 			if !ok { // Channel was closed (i.e. Watcher.Close() was called).

@@ -84,7 +84,9 @@ func (w *TZSPSniffer) StartCollect() {
 
 	// init dns processor
 	dnsProcessor := NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.Tzsp.ChannelBufferSize)
-	go dnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
+	dnsProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
+	dnsProcessor.SetDefaultDropped(w.GetDroppedRoutes())
+	go dnsProcessor.StartCollect()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})

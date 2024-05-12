@@ -14,7 +14,7 @@
 <img src="https://img.shields.io/github/v/release/dmachard/go-dnscollector?logo=github&sort=semver" alt="release"/>
 </p>
 
-`DNS-collector` acts as a passive high speed **ingestor** with **pipelining** support for your DNS logs, written in **Golang**. It allows enhancing your DNS logs by adding metadata, extracting usage patterns, and facilitating security analysis. The DNS traffic can be collected and aggregated from simultaneously [sources](./docs/collectors.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](./docs/loggers.md) with some [transformations](./docs/transformers.md) on it ([traffic filtering](./docs/transformers.md#dns-filtering), [user privacy](./docs/transformers.md#user-privacy), ...).
+`DNS-collector` acts as a passive high speed **ingestor** with **pipelining** support for your DNS logs, written in **Golang**. It allows enhancing your DNS logs by adding metadata, extracting usage patterns, and facilitating security analysis. The DNS traffic can be collected and aggregated from simultaneously [sources](./docs/workers.md) like DNStap streams, network interface or log files and relays it to multiple other [listeners](./docs/workers.md) with some [transformations](./docs/transformers.md) on it ([traffic filtering](./docs/transformers.md#dns-filtering), [user privacy](./docs/transformers.md#user-privacy), ...).
 
 > Additionally, DNS-collector also support
 >
@@ -32,7 +32,7 @@
 
   [![overview](./docs/_images/overview.png)](./docs/running_mode.md)
 
-- **[Collectors](./docs/collectors.md)**
+- **[Collectors & Loggers](./docs/workers.md)**
 
   - *Listen for logging traffic with streaming network protocols*
     - [`DNStap`](docs/collectors/collector_dnstap.md#dns-tap) with `tls`|`tcp`|`unix` transports support and [`proxifier`](docs/collectors/collector_dnstap.md#dns-tap-proxifier)
@@ -45,9 +45,6 @@
   - *Read text or binary files as input*
     - Read and tail on [`Plain text`](docs/collectors/collector_tail.md) files
     - Ingest [`PCAP`](docs/collectors/collector_fileingestor.md) or [`DNSTap`](docs/collectors/collector_fileingestor.md) files by watching a directory
-
-- **[Loggers](./docs/loggers.md)**
-
   - *Local storage of your DNS logs in text or binary formats*
     - [`Stdout`](docs/loggers/logger_stdout.md) console in text or binary output
     - [`File`](docs/loggers/logger_file.md) with automatic rotation and compression

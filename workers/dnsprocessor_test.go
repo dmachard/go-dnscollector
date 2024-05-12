@@ -19,10 +19,12 @@ func Test_DnsProcessor(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// init and run the dns processor
-	consumer := NewDNSProcessor(pkgconfig.GetFakeConfig(), logger, "test", 512)
-
 	fl := pkgutils.NewFakeLogger()
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+
+	consumer := NewDNSProcessor(pkgconfig.GetFakeConfig(), logger, "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
+	go consumer.StartCollect()
 
 	dm := dnsutils.GetFakeDNSMessageWithPayload()
 	consumer.GetInputChannel() <- dm
@@ -41,10 +43,11 @@ func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
 	lg.SetOutputChannel((logsChan))
 
 	// init and run the dns processor
-	consumer := NewDNSProcessor(pkgconfig.GetFakeConfig(), lg, "test", 512)
-
 	fl := pkgutils.NewFakeLoggerWithBufferSize(1)
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	consumer := NewDNSProcessor(pkgconfig.GetFakeConfig(), lg, "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
+	go consumer.StartCollect()
 
 	dm := dnsutils.GetFakeDNSMessageWithPayload()
 

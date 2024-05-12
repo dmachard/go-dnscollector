@@ -205,8 +205,13 @@ func Test_DnstapProcessor(t *testing.T) {
 	var o bytes.Buffer
 	logger.SetOutput(&o)
 
+	// run the consumer with a fake logger
+	fl := pkgutils.NewFakeLogger()
+
 	// init the dnstap consumer
 	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), logger, "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
@@ -223,12 +228,11 @@ func Test_DnstapProcessor(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLogger()
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	// start the consumer
+	go consumer.StartCollect()
 
 	// add packet to consumer
-	consumer.GetChannel() <- data
+	consumer.GetDataChannel() <- data
 
 	// read dns message from dnstap consumer
 	dm := <-fl.GetInputChannel()
@@ -238,9 +242,14 @@ func Test_DnstapProcessor(t *testing.T) {
 }
 
 func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
+	// run the consumer with a fake logger
+	fl := pkgutils.NewFakeLogger()
+
 	// init the dnstap consumer
 	logger := logger.New(false)
 	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), logger, "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
@@ -257,12 +266,11 @@ func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLogger()
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	// start the consumer
+	go consumer.StartCollect()
 
 	// add packet to consumer
-	consumer.GetChannel() <- data
+	consumer.GetDataChannel() <- data
 
 	// read dns message from dnstap consumer
 	dm := <-fl.GetInputChannel()
@@ -272,9 +280,14 @@ func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
 }
 
 func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
+	// run the consumer with a fake logger
+	fl := pkgutils.NewFakeLogger()
+
 	// init the dnstap consumer
 	logger := logger.New(false)
 	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), logger, "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
 
 	// prepare dns query
 	dnsquestion := []byte{88, 27, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 15, 100, 110, 115, 116, 97, 112,
@@ -290,12 +303,11 @@ func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLogger()
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	// start the consumer
+	go consumer.StartCollect()
 
 	// add packet to consumer
-	consumer.GetChannel() <- data
+	consumer.GetDataChannel() <- data
 
 	// read dns message from dnstap consumer
 	dm := <-fl.GetInputChannel()
@@ -305,9 +317,14 @@ func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 }
 
 func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
+	// run the consumer with a fake logger
+	fl := pkgutils.NewFakeLogger()
+
 	// init the dnstap consumer
 	logger := logger.New(false)
 	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), logger, "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
 
 	// prepare dns query
 	dnsanswer := []byte{46, 172, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 15, 100, 110, 115, 116, 97, 112, 99, 111, 108, 108, 101, 99, 116,
@@ -324,12 +341,11 @@ func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLogger()
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	// start the consumer
+	go consumer.StartCollect()
 
 	// add packet to consumer
-	consumer.GetChannel() <- data
+	consumer.GetDataChannel() <- data
 
 	// read dns message from dnstap consumer
 	dm := <-fl.GetInputChannel()
@@ -339,9 +355,14 @@ func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 }
 
 func Test_DnstapProcessor_EmptyDnsPayload(t *testing.T) {
+	// run the consumer with a fake logger
+	fl := pkgutils.NewFakeLogger()
+
 	// init the dnstap consumer
 	logger := logger.New(false)
 	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), logger, "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
 
 	// prepare dnstap
 	dt := &dnstap.Dnstap{}
@@ -352,12 +373,11 @@ func Test_DnstapProcessor_EmptyDnsPayload(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLogger()
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	// start the consumer
+	go consumer.StartCollect()
 
 	// add packet to consumer
-	consumer.GetChannel() <- data
+	consumer.GetDataChannel() <- data
 
 	// read dns message from dnstap consumer
 	dm := <-fl.GetInputChannel()
@@ -367,12 +387,17 @@ func Test_DnstapProcessor_EmptyDnsPayload(t *testing.T) {
 }
 
 func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
+	// run the consumer with a fake logger
+	fl := pkgutils.NewFakeLogger()
+
 	// init the dnstap consumer
 	cfg := pkgconfig.GetFakeConfig()
 	cfg.Collectors.Dnstap.DisableDNSParser = true
 
 	logger := logger.New(false)
 	consumer := NewDNSTapProcessor(0, "peertest", cfg, logger, "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
@@ -389,12 +414,11 @@ func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLogger()
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	// start the consumer
+	go consumer.StartCollect()
 
 	// add packet to consumer
-	consumer.GetChannel() <- data
+	consumer.GetDataChannel() <- data
 
 	// read dns message from dnstap consumer
 	dm := <-fl.GetInputChannel()
@@ -405,6 +429,9 @@ func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
 
 // test to decode the extended part
 func Test_DnstapProcessor_Extended(t *testing.T) {
+	// run the consumer with a fake logger
+	fl := pkgutils.NewFakeLogger()
+
 	logger := logger.New(true)
 	var o bytes.Buffer
 	logger.SetOutput(&o)
@@ -414,6 +441,8 @@ func Test_DnstapProcessor_Extended(t *testing.T) {
 	cfg.Collectors.Dnstap.ExtendedSupport = true
 
 	consumer := NewDNSTapProcessor(0, "peertest", cfg, logger, "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
@@ -445,12 +474,11 @@ func Test_DnstapProcessor_Extended(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLogger()
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	// start the consumer
+	go consumer.StartCollect()
 
 	// add packet to consumer
-	consumer.GetChannel() <- data
+	consumer.GetDataChannel() <- data
 
 	// read dns message from dnstap consumer
 	dm := <-fl.GetInputChannel()
@@ -473,6 +501,9 @@ func Test_DnstapProcessor_Extended(t *testing.T) {
 
 // test for issue https://github.com/dmachard/go-dnscollector/issues/568
 func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
+	// run the consumer with a fake logger
+	fl := pkgutils.NewFakeLogger()
+
 	// redirect stdout output to bytes buffer
 	logsChan := make(chan logger.LogEntry, 10)
 	lg := logger.New(true)
@@ -480,6 +511,8 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// init the dnstap consumer
 	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetFakeConfig(), lg, "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
@@ -496,13 +529,12 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	data, _ := proto.Marshal(dt)
 
-	// run the consumer with a fake logger
-	fl := pkgutils.NewFakeLoggerWithBufferSize(1)
-	go consumer.Run([]pkgutils.Worker{fl}, []pkgutils.Worker{fl})
+	// start the consumer
+	go consumer.StartCollect()
 
 	// add packets to consumer
 	for i := 0; i < 512; i++ {
-		consumer.GetChannel() <- data
+		consumer.GetDataChannel() <- data
 	}
 
 	// waiting monitor to run in consumer
@@ -524,7 +556,7 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// send second shot of packets to consumer
 	for i := 0; i < 1024; i++ {
-		consumer.GetChannel() <- data
+		consumer.GetDataChannel() <- data
 	}
 
 	// waiting monitor to run in consumer

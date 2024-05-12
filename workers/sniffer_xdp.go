@@ -39,7 +39,9 @@ func (w *XDPSniffer) StartCollect() {
 
 	// init dns processor
 	dnsProcessor := NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.XdpLiveCapture.ChannelBufferSize)
-	go dnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
+	dnsProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
+	dnsProcessor.SetDefaultDropped(w.GetDroppedRoutes())
+	go dnsProcessor.StartCollect()
 
 	// get network interface by name
 	iface, err := net.InterfaceByName(w.GetConfig().Collectors.XdpLiveCapture.Device)

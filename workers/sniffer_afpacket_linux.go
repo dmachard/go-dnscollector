@@ -87,7 +87,9 @@ func (w *AfpacketSniffer) StartCollect() {
 	}
 
 	dnsProcessor := NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.AfpacketLiveCapture.ChannelBufferSize)
-	go dnsProcessor.Run(w.GetDefaultRoutes(), w.GetDroppedRoutes())
+	dnsProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
+	dnsProcessor.SetDefaultDropped(w.GetDroppedRoutes())
+	go dnsProcessor.StartCollect()
 
 	dnsChan := make(chan netutils.DNSPacket)
 	udpChan := make(chan gopacket.Packet)
