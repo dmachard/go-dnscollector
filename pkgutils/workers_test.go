@@ -1,5 +1,12 @@
 package pkgutils
 
-// func TestFakeLoggerImplementsWorkerInterface(t *testing.T) {
-// 	var _ Worker = &FakeLogger{}
-// }
+import (
+	"testing"
+
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-logger"
+)
+
+func TestGenericWorker(t *testing.T) {
+	NewGenericWorker(pkgconfig.GetDefaultConfig(), logger.New(false), "testonly", "", DefaultBufferSize, WorkerMonitorDisabled)
+}
