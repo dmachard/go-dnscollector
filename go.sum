@@ -467,8 +467,8 @@ github.com/deepmap/oapi-codegen v1.12.4/go.mod h1:3lgHGMu6myQ2vqbbTXH2H1o4eXFTGn
 github.com/dennwc/varint v1.0.0 h1:kGNFFSSw8ToIy3obO/kKr8U9GZYUAxQEVuix4zfDWzE=
 github.com/dennwc/varint v1.0.0/go.mod h1:hnItb35rvZvJrbTALZtY/iQfDs48JKRG1RPpgziApxA=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
-github.com/dmachard/go-clientsyslog v0.3.0 h1:CV6PlG6mr6nYoKjcEZP1RFJudw+Lr7D3abVdWRyM0tc=
-github.com/dmachard/go-clientsyslog v0.3.0/go.mod h1:llRfIIzxlTNsEQbVF6GKUzxORDWTiSvld3ElJcUtyCo=
+github.com/dmachard/go-clientsyslog v0.4.0 h1:1eL/XIzfRCB9g2kVsY4bHAQE7uPVPv472qtXvzU6u6Y=
+github.com/dmachard/go-clientsyslog v0.4.0/go.mod h1:llRfIIzxlTNsEQbVF6GKUzxORDWTiSvld3ElJcUtyCo=
 github.com/dmachard/go-dnstap-protobuf v1.0.1 h1:Fu5/SWpRzUPqLPmERw/6CoqcDlYSk5FGC7JzmIKz/F4=
 github.com/dmachard/go-dnstap-protobuf v1.0.1/go.mod h1:eU6ktwd2+GWAhorMaRSk3O9hMb8pI41uOKDSB08elOk=
 github.com/dmachard/go-framestream v0.10.0 h1:NzDOkpJOdrgV/c0XKCsVxijILbdTxsUcUlSwp4y34mw=
