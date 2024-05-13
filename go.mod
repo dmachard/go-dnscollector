@@ -6,7 +6,7 @@ toolchain go1.22.1
 
 require (
 	github.com/IBM/fluent-forward-go v0.2.2
-	github.com/IBM/sarama v1.43.1
+	github.com/IBM/sarama v1.43.2
 	github.com/cilium/ebpf v0.15.0
 	github.com/dmachard/go-clientsyslog v0.4.0
 	github.com/dmachard/go-dnstap-protobuf v1.0.1
@@ -123,7 +123,7 @@ require (
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
-	golang.org/x/sync v0.6.0 // indirect
+	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
