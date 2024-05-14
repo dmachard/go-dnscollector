@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"strings"
@@ -18,42 +17,6 @@ import (
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
-
-func GetPriority(facility string) (syslog.Priority, error) {
-	facility = strings.ToUpper(facility)
-	switch facility {
-	// level
-	case "WARNING":
-		return syslog.LOG_WARNING, nil
-	case "NOTICE":
-		return syslog.LOG_NOTICE, nil
-	case "INFO":
-		return syslog.LOG_INFO, nil
-	case "DEBUG":
-		return syslog.LOG_DEBUG, nil
-	// facility
-	case "DAEMON":
-		return syslog.LOG_DAEMON, nil
-	case "LOCAL0":
-		return syslog.LOG_LOCAL0, nil
-	case "LOCAL1":
-		return syslog.LOG_LOCAL1, nil
-	case "LOCAL2":
-		return syslog.LOG_LOCAL2, nil
-	case "LOCAL3":
-		return syslog.LOG_LOCAL3, nil
-	case "LOCAL4":
-		return syslog.LOG_LOCAL4, nil
-	case "LOCAL5":
-		return syslog.LOG_LOCAL5, nil
-	case "LOCAL6":
-		return syslog.LOG_LOCAL6, nil
-	case "LOCAL7":
-		return syslog.LOG_LOCAL7, nil
-	default:
-		return 0, fmt.Errorf("invalid syslog priority: %s", facility)
-	}
-}
 
 type Syslog struct {
 	*pkgutils.GenericWorker
@@ -80,13 +43,13 @@ func (w *Syslog) ReadConfig() {
 	if !pkgconfig.IsValidMode(w.GetConfig().Loggers.Syslog.Mode) {
 		w.LogFatal(pkgutils.PrefixLogWorker + "invalid mode text or json expected")
 	}
-	severity, err := GetPriority(w.GetConfig().Loggers.Syslog.Severity)
+	severity, err := syslog.GetPriority(w.GetConfig().Loggers.Syslog.Severity)
 	if err != nil {
 		w.LogFatal(pkgutils.PrefixLogWorker + "invalid severity")
 	}
 	w.severity = severity
 
-	facility, err := GetPriority(w.GetConfig().Loggers.Syslog.Facility)
+	facility, err := syslog.GetPriority(w.GetConfig().Loggers.Syslog.Facility)
 	if err != nil {
 		w.LogFatal(pkgutils.PrefixLogWorker + "invalid facility")
 	}
