@@ -47,7 +47,7 @@ jobs:
 
     - name: Deploy docker image
       run: |
-        sudo docker run -d --network="host" --name=unbound --volume=$PWD/testsdata/unbound/unbound_${{ matrix.mode }}.conf:/opt/unbound/etc/unbound/unbound.conf:z -v /tmp/:/opt/unbound/etc/unbound/tmp/:z mvance/unbound:${{ matrix.unbound }}
+        sudo docker run -d --network="host" --name=unbound --volume=$PWD/tests/testsdata/unbound/unbound_${{ matrix.mode }}.conf:/opt/unbound/etc/unbound/unbound.conf:z -v /tmp/:/opt/unbound/etc/unbound/tmp/:z mvance/unbound:${{ matrix.unbound }}
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Test ${{ matrix.mode }}
@@ -82,7 +82,7 @@ jobs:
 
     - name: Deploy coredns docker image
       run: |
-        sudo docker run -d --network="host" --name=coredns -v $PWD/testsdata/:$PWD/testsdata/ -v /tmp/:/tmp/ coredns/coredns:${{ matrix.coredns }} -conf $PWD/testsdata/coredns/coredns_${{ matrix.mode }}.conf
+        sudo docker run -d --network="host" --name=coredns -v $PWD/tests/testsdata/:$PWD/tests/testsdata/ -v /tmp/:/tmp/ coredns/coredns:${{ matrix.coredns }} -conf $PWD/tests/testsdata/coredns/coredns_${{ matrix.mode }}.conf
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Test ${{ matrix.mode }}
@@ -122,12 +122,12 @@ jobs:
         openssl req -new -passin file:passphrase.txt -key server.key -out server.csr -subj "/C=FR/O=krkr/OU=Domain Control Validated/CN=*.krkr.io"
         openssl rsa -in server.key -passin file:passphrase.txt -out dnscollector.key
         openssl x509 -req -days 36500 -in server.csr -signkey dnscollector.key -out dnscollector.crt
-        mv dnscollector.key ./testsdata/
-        mv dnscollector.crt ./testsdata/
+        mv dnscollector.key ./tests/testsdata/
+        mv dnscollector.crt ./tests/testsdata/
         
     - name: Deploy coredns docker image
       run: |
-        sudo docker run -d --network="host" --name=coredns -v $PWD/testsdata/:$PWD/testsdata/ -v /tmp/:/tmp/ coredns/coredns:${{ matrix.coredns }} -conf $PWD/testsdata/coredns/coredns_${{ matrix.mode }}.conf
+        sudo docker run -d --network="host" --name=coredns -v $PWD/tests/testsdata/:$PWD/tests/testsdata/ -v /tmp/:/tmp/ coredns/coredns:${{ matrix.coredns }} -conf $PWD/tests/testsdata/coredns/coredns_${{ matrix.mode }}.conf
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Test ${{ matrix.mode }}
@@ -170,7 +170,7 @@ jobs:
 
     - name: Deploy dnsdist docker image
       run: |
-        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/testsdata/powerdns/dnsdist_${{ matrix.mode }}.conf:/etc/dnsdist/conf.d/dnsdist.conf:z -v /tmp/:/tmp/ powerdns/dnsdist-${{ matrix.dnsdist }}
+        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/testsdata/powerdns/dnsdist_${{ matrix.mode }}.conf:/etc/dnsdist/conf.d/dnsdist.conf:z -v /tmp/:/tmp/ powerdns/dnsdist-${{ matrix.dnsdist }}
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Test ${{ matrix.mode }}
@@ -218,7 +218,7 @@ jobs:
 
     - name: Deploy dnsdist docker image
       run: |
-        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/testsdata/powerdns/dnsdist_dox.conf:/etc/dnsdist/conf.d/dnsdist.conf:z --volume=$PWD/server.key:/etc/dnsdist/conf.d/server.key:z --volume=$PWD/server.crt:/etc/dnsdist/conf.d/server.crt:z powerdns/dnsdist-${{ matrix.dnsdist }}
+        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/testsdata/powerdns/dnsdist_dox.conf:/etc/dnsdist/conf.d/dnsdist.conf:z --volume=$PWD/server.key:/etc/dnsdist/conf.d/server.key:z --volume=$PWD/server.crt:/etc/dnsdist/conf.d/server.crt:z powerdns/dnsdist-${{ matrix.dnsdist }}
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Tests
