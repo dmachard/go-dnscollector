@@ -79,7 +79,7 @@ func TestTransformsGeoIPLookupCountry(t *testing.T) {
 	// enable geoip
 	config := pkgconfig.GetFakeConfigTransformers()
 	config.GeoIP.Enable = true
-	config.GeoIP.DBCountryFile = "../testsdata/GeoLite2-Country.mmdb"
+	config.GeoIP.DBCountryFile = "../tests/testsdata/GeoLite2-Country.mmdb"
 
 	// init processor
 	channels := []chan dnsutils.DNSMessage{}
@@ -108,7 +108,7 @@ func TestTransformsGeoIPLookupAsn(t *testing.T) {
 	// enable geoip
 	config := pkgconfig.GetFakeConfigTransformers()
 	config.GeoIP.Enable = true
-	config.GeoIP.DBASNFile = "../testsdata/GeoLite2-ASN.mmdb"
+	config.GeoIP.DBASNFile = "../tests/testsdata/GeoLite2-ASN.mmdb"
 
 	// init the processor
 	channels := []chan dnsutils.DNSMessage{}
@@ -304,7 +304,7 @@ func TestTransformAndFilter(t *testing.T) {
 
 	// file contains google.fr, test.github.com
 	config.Filtering.Enable = true
-	config.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains.txt"
+	config.Filtering.KeepDomainFile = "../tests/testsdata/filtering_keep_domains.txt"
 
 	testURL1 := "mail.google.com"
 	testURL2 := "test.github.com"

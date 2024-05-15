@@ -64,7 +64,7 @@ func TestGeoIP_Json(t *testing.T) {
 func TestGeoIP_LookupCountry(t *testing.T) {
 	// enable geoip
 	config := pkgconfig.GetFakeConfigTransformers()
-	config.GeoIP.DBCountryFile = "../testsdata/GeoLite2-Country.mmdb"
+	config.GeoIP.DBCountryFile = "../tests/testsdata/GeoLite2-Country.mmdb"
 
 	outChans := []chan dnsutils.DNSMessage{}
 
@@ -94,7 +94,7 @@ func TestGeoIP_LookupCountry(t *testing.T) {
 func TestGeoIP_LookupAsn(t *testing.T) {
 	// enable geoip
 	config := pkgconfig.GetFakeConfigTransformers()
-	config.GeoIP.DBASNFile = "../testsdata/GeoLite2-ASN.mmdb"
+	config.GeoIP.DBASNFile = "../tests/testsdata/GeoLite2-ASN.mmdb"
 
 	outChans := []chan dnsutils.DNSMessage{}
 

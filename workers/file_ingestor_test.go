@@ -13,7 +13,7 @@ func Test_FileIngestor_Pcap(t *testing.T) {
 	config := pkgconfig.GetDefaultConfig()
 
 	// watch tests data folder
-	config.Collectors.FileIngestor.WatchDir = "./../testsdata/pcap/"
+	config.Collectors.FileIngestor.WatchDir = "./../tests/testsdata/pcap/"
 
 	// init collector
 	c := NewFileIngestor([]Worker{g}, config, logger.New(false), "test")

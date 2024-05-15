@@ -18,31 +18,31 @@ func Test_TcpAssembly(t *testing.T) {
 	}{
 		{
 			name:      "DNS UDP",
-			pcapFile:  "./../testsdata/pcap/dnsdump_udp.pcap",
+			pcapFile:  "./../tests/testsdata/pcap/dnsdump_udp.pcap",
 			nbPackets: 33,
 		},
 
 		{
 			name:      "DNS TCP",
-			pcapFile:  "./../testsdata/pcap/dnsdump_tcp.pcap",
+			pcapFile:  "./../tests/testsdata/pcap/dnsdump_tcp.pcap",
 			nbPackets: 10,
 		},
 
 		{
 			name:      "DNS UDP+TCP",
-			pcapFile:  "./../testsdata/pcap/dnsdump_udp+tcp.pcap",
+			pcapFile:  "./../tests/testsdata/pcap/dnsdump_udp+tcp.pcap",
 			nbPackets: 4,
 		},
 
 		{
 			name:      "DNS UDP Truncated + TCP fragmented",
-			pcapFile:  "./../testsdata/pcap/dnsdump_udp_truncated+tcp_fragmented.pcap",
+			pcapFile:  "./../tests/testsdata/pcap/dnsdump_udp_truncated+tcp_fragmented.pcap",
 			nbPackets: 4,
 		},
 
 		{
 			name:      "DNS TCP FASTOPEN",
-			pcapFile:  "./../testsdata/pcap/dnsdump_tcp_fastopen.pcap",
+			pcapFile:  "./../tests/testsdata/pcap/dnsdump_tcp_fastopen.pcap",
 			nbPackets: 8,
 		},
 	}
