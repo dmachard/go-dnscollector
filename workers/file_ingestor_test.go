@@ -5,19 +5,18 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 )
 
 func Test_FileIngestor_Pcap(t *testing.T) {
-	g := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+	g := GetWorkerForTest(pkgconfig.DefaultBufferSize)
 	config := pkgconfig.GetDefaultConfig()
 
 	// watch tests data folder
-	config.Collectors.FileIngestor.WatchDir = "./../testsdata/pcap/"
+	config.Collectors.FileIngestor.WatchDir = "./../tests/testsdata/pcap/"
 
 	// init collector
-	c := NewFileIngestor([]pkgutils.Worker{g}, config, logger.New(false), "test")
+	c := NewFileIngestor([]Worker{g}, config, logger.New(false), "test")
 	go c.StartCollect()
 
 	// waiting message in channel

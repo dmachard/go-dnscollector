@@ -7,17 +7,16 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
 
 type FalcoClient struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 }
 
 func NewFalcoClient(config *pkgconfig.Config, console *logger.Logger, name string) *FalcoClient {
-	w := &FalcoClient{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "falco", config.Loggers.FalcoClient.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	w := &FalcoClient{GenericWorker: NewGenericWorker(config, console, name, "falco", config.Loggers.FalcoClient.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	w.ReadConfig()
 	return w
 }
@@ -27,8 +26,8 @@ func (w *FalcoClient) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)

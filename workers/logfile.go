@@ -18,7 +18,6 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
@@ -46,7 +45,7 @@ func IsValid(mode string) bool {
 }
 
 type LogFile struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	writerPlain                            *bufio.Writer
 	writerPcap                             *pcapgo.Writer
 	writerDnstap                           *framestream.Encoder
@@ -58,10 +57,10 @@ type LogFile struct {
 }
 
 func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *LogFile {
-	w := &LogFile{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "file", config.Loggers.LogFile.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	w := &LogFile{GenericWorker: NewGenericWorker(config, logger, name, "file", config.Loggers.LogFile.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	w.ReadConfig()
 	if err := w.OpenFile(); err != nil {
-		w.LogFatal(pkgutils.PrefixLogWorker+"["+name+"] file - unable to open output file:", err)
+		w.LogFatal(pkgconfig.PrefixLogWorker+"["+name+"] file - unable to open output file:", err)
 	}
 	return w
 }
@@ -401,8 +400,8 @@ func (w *LogFile) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)

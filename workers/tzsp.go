@@ -5,16 +5,15 @@ package workers
 
 import (
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 )
 
 type TZSPSniffer struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 }
 
-func NewTZSP(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
-	w := &TZSPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tzsp", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
+func NewTZSP(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
+	w := &TZSPSniffer{GenericWorker: NewGenericWorker(config, logger, name, "tzsp", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	w.ReadConfig()
 	return w

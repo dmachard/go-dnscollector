@@ -2,16 +2,15 @@ package workers
 
 import (
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 )
 
 type DevNull struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 }
 
 func NewDevNull(config *pkgconfig.Config, console *logger.Logger, name string) *DevNull {
-	s := &DevNull{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "devnull", config.Loggers.DevNull.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	s := &DevNull{GenericWorker: NewGenericWorker(config, console, name, "devnull", config.Loggers.DevNull.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	s.ReadConfig()
 	return s
 }

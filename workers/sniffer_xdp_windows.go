@@ -5,16 +5,15 @@ package workers
 
 import (
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 )
 
 type XDPSniffer struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 }
 
-func NewXDPSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
-	w := &XDPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "xdp sniffer", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
+func NewXDPSniffer(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
+	w := &XDPSniffer{GenericWorker: NewGenericWorker(config, logger, name, "xdp sniffer", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	w.ReadConfig()
 	return w

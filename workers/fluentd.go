@@ -10,13 +10,12 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
 
 type FluentdClient struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	transport                          string
 	fluentConn                         *client.Client
 	transportReady, transportReconnect chan bool
@@ -24,7 +23,7 @@ type FluentdClient struct {
 }
 
 func NewFluentdClient(config *pkgconfig.Config, logger *logger.Logger, name string) *FluentdClient {
-	w := &FluentdClient{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "fluentd", config.Loggers.Fluentd.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	w := &FluentdClient{GenericWorker: NewGenericWorker(config, logger, name, "fluentd", config.Loggers.Fluentd.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	w.transportReady = make(chan bool)
 	w.transportReconnect = make(chan bool)
 	w.ReadConfig()
@@ -171,8 +170,8 @@ func (w *FluentdClient) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)

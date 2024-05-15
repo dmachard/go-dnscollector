@@ -81,7 +81,7 @@ func TestFilteringByKeepQueryIp(t *testing.T) {
 	// config
 	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
-	config.Filtering.KeepQueryIPFile = "../testsdata/filtering_queryip_keep.txt"
+	config.Filtering.KeepQueryIPFile = "../tests/testsdata/filtering_queryip_keep.txt"
 
 	outChans := []chan dnsutils.DNSMessage{}
 
@@ -112,7 +112,7 @@ func TestFilteringByDropQueryIp(t *testing.T) {
 	// config
 	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
-	config.Filtering.DropQueryIPFile = "../testsdata/filtering_queryip.txt"
+	config.Filtering.DropQueryIPFile = "../tests/testsdata/filtering_queryip.txt"
 
 	outChans := []chan dnsutils.DNSMessage{}
 
@@ -143,7 +143,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 	// config
 	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
-	config.Filtering.KeepRdataFile = "../testsdata/filtering_rdataip_keep.txt"
+	config.Filtering.KeepRdataFile = "../tests/testsdata/filtering_rdataip_keep.txt"
 
 	outChans := []chan dnsutils.DNSMessage{}
 
@@ -238,7 +238,7 @@ func TestFilteringByFqdn(t *testing.T) {
 	// config
 	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
-	config.Filtering.DropFqdnFile = "../testsdata/filtering_fqdn.txt"
+	config.Filtering.DropFqdnFile = "../tests/testsdata/filtering_fqdn.txt"
 
 	outChans := []chan dnsutils.DNSMessage{}
 
@@ -263,7 +263,7 @@ func TestFilteringByDomainRegex(t *testing.T) {
 	// config
 	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
-	config.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
+	config.Filtering.DropDomainFile = "../tests/testsdata/filtering_fqdn_regex.txt"
 
 	outChans := []chan dnsutils.DNSMessage{}
 
@@ -297,7 +297,7 @@ func TestFilteringByKeepDomain(t *testing.T) {
 
 	// file contains google.fr, test.github.com
 	config.Filtering.Enable = true
-	config.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains.txt"
+	config.Filtering.KeepDomainFile = "../tests/testsdata/filtering_keep_domains.txt"
 
 	// init subproccesor
 	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
@@ -338,7 +338,7 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 	.+.google.com$
 	*/
 	config.Filtering.Enable = true
-	config.Filtering.KeepDomainFile = "../testsdata/filtering_keep_domains_regex.txt"
+	config.Filtering.KeepDomainFile = "../tests/testsdata/filtering_keep_domains_regex.txt"
 
 	// init subproccesor
 	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
@@ -462,8 +462,8 @@ func TestFilteringMultipleFilters(t *testing.T) {
 	// config
 	config := pkgconfig.GetFakeConfigTransformers()
 	config.Filtering.Enable = true
-	config.Filtering.DropDomainFile = "../testsdata/filtering_fqdn_regex.txt"
-	config.Filtering.DropQueryIPFile = "../testsdata/filtering_queryip.txt"
+	config.Filtering.DropDomainFile = "../tests/testsdata/filtering_fqdn_regex.txt"
+	config.Filtering.DropQueryIPFile = "../tests/testsdata/filtering_queryip.txt"
 
 	outChans := []chan dnsutils.DNSMessage{}
 

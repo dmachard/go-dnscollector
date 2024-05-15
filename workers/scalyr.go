@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/dskit/backoff"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -25,7 +24,7 @@ import (
 // ScalyrClient is a client for Scalyr(https://www.dataset.com/)
 // This client is using the addEvents endpoint, described here: https://app.scalyr.com/help/api#addEvents
 type ScalyrClient struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 
 	mode       string
 	textFormat []string
@@ -43,7 +42,7 @@ type ScalyrClient struct {
 }
 
 func NewScalyrClient(config *pkgconfig.Config, console *logger.Logger, name string) *ScalyrClient {
-	w := &ScalyrClient{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "scalyr", config.Loggers.ScalyrClient.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	w := &ScalyrClient{GenericWorker: NewGenericWorker(config, console, name, "scalyr", config.Loggers.ScalyrClient.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	w.mode = pkgconfig.ModeText
 	w.endpoint = makeEndpoint("app.scalyr.com")
 	w.flush = time.NewTicker(30 * time.Second)
@@ -126,8 +125,8 @@ func (w *ScalyrClient) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)

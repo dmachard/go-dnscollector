@@ -9,7 +9,6 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket/pcapgo"
 )
@@ -223,7 +222,7 @@ func Test_StdoutBufferLoggerIsFull(t *testing.T) {
 	g.SetTextWriter(&stdout)
 
 	// init next logger with a buffer of one element
-	nxt := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferOne)
+	nxt := GetWorkerForTest(pkgconfig.DefaultBufferOne)
 	g.AddDefaultRoute(nxt)
 
 	// run collector
@@ -240,7 +239,7 @@ func Test_StdoutBufferLoggerIsFull(t *testing.T) {
 
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(pkgutils.ExpectedBufferMsg511)
+		pattern := regexp.MustCompile(pkgconfig.ExpectedBufferMsg511)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -248,7 +247,7 @@ func Test_StdoutBufferLoggerIsFull(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dmOut := <-nxt.GetInputChannel()
-	if dmOut.DNS.Qname != pkgutils.ExpectedQname2 {
+	if dmOut.DNS.Qname != pkgconfig.ExpectedQname2 {
 		t.Errorf("invalid qname in dns message: %s", dmOut.DNS.Qname)
 	}
 
@@ -261,7 +260,7 @@ func Test_StdoutBufferLoggerIsFull(t *testing.T) {
 	time.Sleep(12 * time.Second)
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(pkgutils.ExpectedBufferMsg1023)
+		pattern := regexp.MustCompile(pkgconfig.ExpectedBufferMsg1023)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -269,7 +268,7 @@ func Test_StdoutBufferLoggerIsFull(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dmOut2 := <-nxt.GetInputChannel()
-	if dmOut2.DNS.Qname != pkgutils.ExpectedQname2 {
+	if dmOut2.DNS.Qname != pkgconfig.ExpectedQname2 {
 		t.Errorf("invalid qname in second dns message: %s", dmOut2.DNS.Qname)
 	}
 

@@ -11,7 +11,6 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -30,11 +29,11 @@ type MatchSource struct {
 }
 
 type DNSMessage struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 }
 
-func NewDNSMessage(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DNSMessage {
-	s := &DNSMessage{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnsmessage", config.Collectors.DNSMessage.ChannelBufferSize, pkgutils.DefaultMonitor)}
+func NewDNSMessage(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DNSMessage {
+	s := &DNSMessage{GenericWorker: NewGenericWorker(config, logger, name, "dnsmessage", config.Collectors.DNSMessage.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	s.SetDefaultRoutes(next)
 	s.ReadConfig()
 	return s
@@ -168,8 +167,8 @@ func (w *DNSMessage) StartCollect() {
 	var err error
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().IngoingTransformers, w.GetLogger(), w.GetName(), defaultRoutes, 0)

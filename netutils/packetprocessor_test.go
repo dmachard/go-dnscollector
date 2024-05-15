@@ -18,13 +18,13 @@ func Test_IpDefrag(t *testing.T) {
 	}{
 		{
 			name:      "DNS UDP with IPv4 Fragmented",
-			pcapFile:  "./../testsdata/pcap/dnsdump_ip4_fragmented+udp.pcap",
+			pcapFile:  "./../tests/testsdata/pcap/dnsdump_ip4_fragmented+udp.pcap",
 			nbPackets: 2,
 		},
 
 		{
 			name:      "DNS UDP with IPv6 Fragmented",
-			pcapFile:  "./../testsdata/pcap/dnsdump_ip6_fragmented+udp.pcap",
+			pcapFile:  "./../tests/testsdata/pcap/dnsdump_ip6_fragmented+udp.pcap",
 			nbPackets: 2,
 		},
 	}

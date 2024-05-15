@@ -11,7 +11,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/hpcloud/tail"
@@ -19,12 +18,12 @@ import (
 )
 
 type Tail struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	tailf *tail.Tail
 }
 
-func NewTail(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Tail {
-	w := &Tail{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tail", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
+func NewTail(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *Tail {
+	w := &Tail{GenericWorker: NewGenericWorker(config, logger, name, "tail", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	return w
 }
@@ -50,7 +49,7 @@ func (w *Tail) StartCollect() {
 	}
 
 	// prepare enabled transformers
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
 	subprocessors := transformers.NewTransforms(&w.GetConfig().IngoingTransformers, w.GetLogger(), w.GetName(), defaultRoutes, 0)
 
 	// init dns message

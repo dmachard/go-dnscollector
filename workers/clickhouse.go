@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
@@ -29,11 +28,11 @@ type ClickhouseData struct {
 }
 
 type ClickhouseClient struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 }
 
 func NewClickhouseClient(config *pkgconfig.Config, console *logger.Logger, name string) *ClickhouseClient {
-	w := &ClickhouseClient{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "clickhouse", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
+	w := &ClickhouseClient{GenericWorker: NewGenericWorker(config, console, name, "clickhouse", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
 	w.ReadConfig()
 	return w
 }
@@ -43,8 +42,8 @@ func (w *ClickhouseClient) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)

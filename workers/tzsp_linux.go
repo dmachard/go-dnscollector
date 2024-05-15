@@ -18,7 +18,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -26,12 +25,12 @@ import (
 )
 
 type TZSPSniffer struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	listen net.UDPConn
 }
 
-func NewTZSP(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
-	s := &TZSPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tzsp", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
+func NewTZSP(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
+	s := &TZSPSniffer{GenericWorker: NewGenericWorker(config, logger, name, "tzsp", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
 	s.SetDefaultRoutes(next)
 	return s
 }
@@ -79,7 +78,7 @@ func (w *TZSPSniffer) StartCollect() {
 
 	// start server
 	if err := w.Listen(); err != nil {
-		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] listening failed: ", err)
+		w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] listening failed: ", err)
 	}
 
 	// init dns processor
@@ -115,20 +114,20 @@ func (w *TZSPSniffer) StartCollect() {
 					if errors.As(err, &netErr) && netErr.Timeout() {
 						continue
 					}
-					w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] read msg", err)
+					w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] read msg", err)
 				}
 				if bufN == 0 {
-					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] read msg, buffer is empty")
+					w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] read msg, buffer is empty")
 				}
 				if bufN > len(buf) {
-					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] read msg, bufer overflow")
+					w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] read msg, bufer overflow")
 				}
 				if oobn == 0 {
-					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] read msg, oob missing")
+					w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] read msg, oob missing")
 				}
 				scms, err := syscall.ParseSocketControlMessage(oob[:oobn])
 				if err != nil {
-					w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] parse control msg", err)
+					w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] parse control msg", err)
 				}
 				if len(scms) != 1 {
 					w.LogInfo("len(scms) != 1")
@@ -136,7 +135,7 @@ func (w *TZSPSniffer) StartCollect() {
 				}
 				scm := scms[0]
 				if scm.Header.Type != syscall.SCM_TIMESTAMPNS {
-					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] scm timestampns missing")
+					w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] scm timestampns missing")
 				}
 				tsec := binary.LittleEndian.Uint32(scm.Data[:4])
 				nsec := binary.LittleEndian.Uint32(scm.Data[8:12])

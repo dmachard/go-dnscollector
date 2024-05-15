@@ -1421,7 +1421,7 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
 
 // map can be provided by user in the config
 // dns.qname:
-// match-source: "file://./testsdata/filtering_keep_domains_regex.txt"
+// match-source: "file://./tests/testsdata/filtering_keep_domains_regex.txt"
 // source-kind: "regexp_list"
 func matchUserMap(realValue, expectedValue reflect.Value) (bool, error) {
 	for _, opKey := range expectedValue.MapKeys() {

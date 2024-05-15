@@ -15,7 +15,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
@@ -24,12 +23,12 @@ import (
 )
 
 type PdnsServer struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	connCounter uint64
 }
 
-func NewPdnsServer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *PdnsServer {
-	w := &PdnsServer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "powerdns", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
+func NewPdnsServer(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *PdnsServer {
+	w := &PdnsServer{GenericWorker: NewGenericWorker(config, logger, name, "powerdns", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	w.CheckConfig()
 	return w
@@ -37,7 +36,7 @@ func NewPdnsServer(next []pkgutils.Worker, config *pkgconfig.Config, logger *log
 
 func (w *PdnsServer) CheckConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Collectors.PowerDNS.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] invalid tls min version")
+		w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] invalid tls min version")
 	}
 }
 
@@ -136,7 +135,7 @@ func (w *PdnsServer) StartCollect() {
 		cfg.TLSSupport, pkgconfig.TLSVersion[cfg.TLSMinVersion],
 		cfg.CertFile, cfg.KeyFile)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] listening failed: ", err)
+		w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] listening failed: ", err)
 	}
 	w.LogInfo("listening on %s", listener.Addr())
 
@@ -169,7 +168,7 @@ func (w *PdnsServer) StartCollect() {
 			if w.GetConfig().Collectors.Dnstap.RcvBufSize > 0 {
 				before, actual, err := netutils.SetSockRCVBUF(conn, cfg.RcvBufSize, cfg.TLSSupport)
 				if err != nil {
-					w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] unable to set SO_RCVBUF: ", err)
+					w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] unable to set SO_RCVBUF: ", err)
 				}
 				w.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before, cfg.RcvBufSize, actual)
 			}
@@ -193,14 +192,14 @@ var (
 )
 
 type PdnsProcessor struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	ConnID      int
 	PeerName    string
 	dataChannel chan []byte
 }
 
 func NewPdnsProcessor(connID int, peerName string, config *pkgconfig.Config, logger *logger.Logger, name string, size int) PdnsProcessor {
-	w := PdnsProcessor{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "powerdns processor #"+strconv.Itoa(connID), size, pkgutils.DefaultMonitor)}
+	w := PdnsProcessor{GenericWorker: NewGenericWorker(config, logger, name, "powerdns processor #"+strconv.Itoa(connID), size, pkgconfig.DefaultMonitor)}
 	w.ConnID = connID
 	w.PeerName = peerName
 	w.dataChannel = make(chan []byte, size)
@@ -218,8 +217,8 @@ func (w *PdnsProcessor) StartCollect() {
 	pbdm := &powerdns_protobuf.PBDNSMessage{}
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare enabled transformers
 	transforms := transformers.NewTransforms(&w.GetConfig().IngoingTransformers, w.GetLogger(), w.GetName(), defaultRoutes, w.ConnID)

@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 
@@ -13,13 +12,13 @@ import (
 )
 
 type InfluxDBClient struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	influxdbConn influxdb2.Client
 	writeAPI     api.WriteAPI
 }
 
 func NewInfluxDBClient(config *pkgconfig.Config, logger *logger.Logger, name string) *InfluxDBClient {
-	w := &InfluxDBClient{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "influxdb", config.Loggers.InfluxDB.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	w := &InfluxDBClient{GenericWorker: NewGenericWorker(config, logger, name, "influxdb", config.Loggers.InfluxDB.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	w.ReadConfig()
 	return w
 }
@@ -29,8 +28,8 @@ func (w *InfluxDBClient) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)

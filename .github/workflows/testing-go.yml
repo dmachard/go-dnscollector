@@ -27,7 +27,6 @@ jobs:
           - '.'
           - 'pkgconfig'
           - 'pkglinker'
-          - 'pkgutils'
           - 'dnsutils'
           - 'workers'
           - 'transformers'
@@ -110,7 +109,7 @@ jobs:
         CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: run collector
-      run: ./go-dnscollector -config ./testsdata/config_prom.yml &
+      run: ./go-dnscollector -config ./tests/testsdata/config_prom.yml &
 
     - name: download dnstap generator
       run: |
@@ -143,7 +142,7 @@ jobs:
 
     - id: count_tests
       run: |
-        data=$(sudo go test -timeout 360s  -v ./workers ./dnsutils ./netutils ./transformers ./pkgconfig ./pkglinker ./pkgutils ././ 2>&1 | grep -c RUN)
+        data=$(sudo go test -timeout 360s  -v ./workers ./dnsutils ./netutils ./transformers ./pkgconfig ./pkglinker ././ 2>&1 | grep -c RUN)
         echo "Count of Tests: $data"
         echo "data=$data" >> $GITHUB_OUTPUT
 

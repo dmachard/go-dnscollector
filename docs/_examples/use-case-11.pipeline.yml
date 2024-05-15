@@ -12,7 +12,7 @@ pipelines:
       listen-port: 6000
     transforms:
       geoip:
-        mmdb-country-file: "./testsdata/GeoLite2-Country.mmdb"
+        mmdb-country-file: "./tests/testsdata/GeoLite2-Country.mmdb"
     routing-policy:
       default: [ console ]
 

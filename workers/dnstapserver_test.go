@@ -12,7 +12,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -66,7 +65,7 @@ func Test_DnstapCollector(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			g := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+			g := GetWorkerForTest(pkgconfig.DefaultBufferSize)
 
 			config := pkgconfig.GetDefaultConfig()
 			if tc.listenPort > 0 {
@@ -78,7 +77,7 @@ func Test_DnstapCollector(t *testing.T) {
 			config.Collectors.Dnstap.Compression = tc.compression
 
 			// start the collector
-			c := NewDnstapServer([]pkgutils.Worker{g}, config, logger.New(false), "test")
+			c := NewDnstapServer([]Worker{g}, config, logger.New(false), "test")
 			go c.StartCollect()
 
 			// wait before to connect
@@ -156,8 +155,8 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	config.Collectors.Dnstap.SockPath = "/tmp/dnscollector.sock"
 
 	// start the collector in unix mode
-	g := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
-	c := NewDnstapServer([]pkgutils.Worker{g}, config, lg, "test")
+	g := GetWorkerForTest(pkgconfig.DefaultBufferSize)
+	c := NewDnstapServer([]Worker{g}, config, lg, "test")
 	go c.StartCollect()
 
 	// simulate dns server connection to collector
@@ -206,7 +205,7 @@ func Test_DnstapProcessor(t *testing.T) {
 	logger.SetOutput(&o)
 
 	// run the consumer with a fake logger
-	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+	fl := GetWorkerForTest(pkgconfig.DefaultBufferSize)
 
 	// init the dnstap consumer
 	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetDefaultConfig(), logger, "test", 512)
@@ -215,7 +214,7 @@ func Test_DnstapProcessor(t *testing.T) {
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
-	dnsmsg.SetQuestion(pkgutils.ExpectedQname+".", dns.TypeA)
+	dnsmsg.SetQuestion(pkgconfig.ExpectedQname+".", dns.TypeA)
 	dnsquestion, _ := dnsmsg.Pack()
 
 	// prepare dnstap
@@ -236,14 +235,14 @@ func Test_DnstapProcessor(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm := <-fl.GetInputChannel()
-	if dm.DNS.Qname != pkgutils.ExpectedQname {
+	if dm.DNS.Qname != pkgconfig.ExpectedQname {
 		t.Errorf("invalid qname in dns message: %s", dm.DNS.Qname)
 	}
 }
 
 func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
 	// run the consumer with a fake logger
-	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+	fl := GetWorkerForTest(pkgconfig.DefaultBufferSize)
 
 	// init the dnstap consumer
 	logger := logger.New(false)
@@ -281,7 +280,7 @@ func Test_DnstapProcessor_MalformedDnsHeader(t *testing.T) {
 
 func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 	// run the consumer with a fake logger
-	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+	fl := GetWorkerForTest(pkgconfig.DefaultBufferSize)
 
 	// init the dnstap consumer
 	logger := logger.New(false)
@@ -318,7 +317,7 @@ func Test_DnstapProcessor_MalformedDnsQuestion(t *testing.T) {
 
 func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 	// run the consumer with a fake logger
-	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+	fl := GetWorkerForTest(pkgconfig.DefaultBufferSize)
 
 	// init the dnstap consumer
 	logger := logger.New(false)
@@ -356,7 +355,7 @@ func Test_DnstapProcessor_MalformedDnsAnswer(t *testing.T) {
 
 func Test_DnstapProcessor_EmptyDnsPayload(t *testing.T) {
 	// run the consumer with a fake logger
-	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+	fl := GetWorkerForTest(pkgconfig.DefaultBufferSize)
 
 	// init the dnstap consumer
 	logger := logger.New(false)
@@ -388,7 +387,7 @@ func Test_DnstapProcessor_EmptyDnsPayload(t *testing.T) {
 
 func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
 	// run the consumer with a fake logger
-	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+	fl := GetWorkerForTest(pkgconfig.DefaultBufferSize)
 
 	// init the dnstap consumer
 	cfg := pkgconfig.GetDefaultConfig()
@@ -430,7 +429,7 @@ func Test_DnstapProcessor_DisableDNSParser(t *testing.T) {
 // test to decode the extended part
 func Test_DnstapProcessor_Extended(t *testing.T) {
 	// run the consumer with a fake logger
-	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+	fl := GetWorkerForTest(pkgconfig.DefaultBufferSize)
 
 	logger := logger.New(true)
 	var o bytes.Buffer
@@ -502,7 +501,7 @@ func Test_DnstapProcessor_Extended(t *testing.T) {
 // test for issue https://github.com/dmachard/go-dnscollector/issues/568
 func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 	// run the consumer with a fake logger
-	fl := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferOne)
+	fl := GetWorkerForTest(pkgconfig.DefaultBufferOne)
 
 	// redirect stdout output to bytes buffer
 	logsChan := make(chan logger.LogEntry, 30)
@@ -516,7 +515,7 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// prepare dns query
 	dnsmsg := new(dns.Msg)
-	dnsmsg.SetQuestion(pkgutils.ExpectedQname+".", dns.TypeA)
+	dnsmsg.SetQuestion(pkgconfig.ExpectedQname+".", dns.TypeA)
 	dnsquestion, _ := dnsmsg.Pack()
 
 	// prepare dnstap
@@ -542,7 +541,7 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(pkgutils.ExpectedBufferMsg511)
+		pattern := regexp.MustCompile(pkgconfig.ExpectedBufferMsg511)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -550,7 +549,7 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm := <-fl.GetInputChannel()
-	if dm.DNS.Qname != pkgutils.ExpectedQname {
+	if dm.DNS.Qname != pkgconfig.ExpectedQname {
 		t.Errorf("invalid qname in dns message: %s", dm.DNS.Qname)
 	}
 
@@ -564,7 +563,7 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	for entry := range logsChan {
 		fmt.Println(entry)
-		pattern := regexp.MustCompile(pkgutils.ExpectedBufferMsg1023)
+		pattern := regexp.MustCompile(pkgconfig.ExpectedBufferMsg1023)
 		if pattern.MatchString(entry.Message) {
 			break
 		}
@@ -572,7 +571,7 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 
 	// read dns message from dnstap consumer
 	dm2 := <-fl.GetInputChannel()
-	if dm2.DNS.Qname != pkgutils.ExpectedQname {
+	if dm2.DNS.Qname != pkgconfig.ExpectedQname {
 		t.Errorf("invalid qname in second dns message: %s", dm2.DNS.Qname)
 	}
 }

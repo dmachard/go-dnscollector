@@ -16,7 +16,7 @@ func Htons(v uint16) int {
 	return int((v << 8) | (v >> 8))
 }
 
-func GetBpfFilter(port int) []bpf.Instruction {
+func GetBpfFilterPort(port int) []bpf.Instruction {
 	// bpf filter: (ip  or ip6 ) and (udp or tcp) and port 53
 	// fragmented packets are ignored
 	var filter = []bpf.Instruction{

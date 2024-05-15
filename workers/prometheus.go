@@ -16,7 +16,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/dmachard/go-topmap"
@@ -162,7 +161,7 @@ func GetResolverIP(dm *dnsutils.DNSMessage) string {
 }
 
 type Prometheus struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	doneAPI      chan bool
 	httpServer   *http.Server
 	netListener  net.Listener
@@ -733,7 +732,7 @@ func CreateSystemCatalogue(w *Prometheus) ([]string, *PromCounterCatalogueContai
 }
 
 func NewPrometheus(config *pkgconfig.Config, logger *logger.Logger, name string) *Prometheus {
-	w := &Prometheus{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "prometheus", config.Loggers.Prometheus.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	w := &Prometheus{GenericWorker: NewGenericWorker(config, logger, name, "prometheus", config.Loggers.Prometheus.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	w.doneAPI = make(chan bool)
 	w.promRegistry = prometheus.NewPedanticRegistry()
 
@@ -1056,7 +1055,7 @@ func (w *Prometheus) InitProm() {
 
 func (w *Prometheus) ReadConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.Prometheus.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] prometheus - invalid tls min version")
+		w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] prometheus - invalid tls min version")
 	}
 }
 
@@ -1150,8 +1149,8 @@ func (w *Prometheus) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)

@@ -10,7 +10,6 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/segmentio/kafka-go"
@@ -20,7 +19,7 @@ import (
 )
 
 type KafkaProducer struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	textFormat                 []string
 	kafkaConn                  *kafka.Conn
 	kafkaReady, kafkaReconnect chan bool
@@ -29,7 +28,7 @@ type KafkaProducer struct {
 }
 
 func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name string) *KafkaProducer {
-	w := &KafkaProducer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "kafka", config.Loggers.KafkaProducer.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	w := &KafkaProducer{GenericWorker: NewGenericWorker(config, logger, name, "kafka", config.Loggers.KafkaProducer.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	w.kafkaReady = make(chan bool)
 	w.kafkaReconnect = make(chan bool)
 	w.ReadConfig()
@@ -56,7 +55,7 @@ func (w *KafkaProducer) ReadConfig() {
 		case pkgconfig.CompressNone:
 			w.compressCodec = nil
 		default:
-			w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] kafka - invalid compress mode: ", w.GetConfig().Loggers.KafkaProducer.Compression)
+			w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] kafka - invalid compress mode: ", w.GetConfig().Loggers.KafkaProducer.Compression)
 		}
 	}
 }
@@ -200,8 +199,8 @@ func (w *KafkaProducer) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)
