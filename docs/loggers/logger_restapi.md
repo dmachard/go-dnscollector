@@ -52,8 +52,8 @@ restapi:
   basic-auth-pwd: changeme
   tls-support: true
   tls-min-version: 1.2
-  cert-file: "./testsdata/server.crt"
-  key-file: "./testsdata/server.key"
+  cert-file: "./tests/testsdata/server.crt"
+  key-file: "./tests/testsdata/server.key"
   top-n: 100
   chan-buffer-size: 65535
 ```
