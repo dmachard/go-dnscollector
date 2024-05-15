@@ -17,18 +17,17 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/xdp"
 	"github.com/dmachard/go-logger"
 	"golang.org/x/sys/unix"
 )
 
 type XDPSniffer struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 }
 
-func NewXDPSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
-	w := &XDPSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "xdp sniffer", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
+func NewXDPSniffer(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
+	w := &XDPSniffer{GenericWorker: NewGenericWorker(config, logger, name, "xdp sniffer", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	return w
 }
@@ -46,13 +45,13 @@ func (w *XDPSniffer) StartCollect() {
 	// get network interface by name
 	iface, err := net.InterfaceByName(w.GetConfig().Collectors.XdpLiveCapture.Device)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] lookup network iface: ", err)
+		w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] lookup network iface: ", err)
 	}
 
 	// Load pre-compiled programs into the kernel.
 	objs := xdp.BpfObjects{}
 	if err := xdp.LoadBpfObjects(&objs, nil); err != nil {
-		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] loading BPF objects: ", err)
+		w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] loading BPF objects: ", err)
 	}
 	defer objs.Close()
 
@@ -62,7 +61,7 @@ func (w *XDPSniffer) StartCollect() {
 		Interface: iface.Index,
 	})
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] could not attach XDP program: ", err)
+		w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] could not attach XDP program: ", err)
 	}
 	defer l.Close()
 
@@ -70,7 +69,7 @@ func (w *XDPSniffer) StartCollect() {
 
 	perfEvent, err := perf.NewReader(objs.Pkts, 1<<24)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] read event: ", err)
+		w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] read event: ", err)
 	}
 
 	dnsChan := make(chan dnsutils.DNSMessage)

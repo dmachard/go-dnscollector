@@ -14,13 +14,12 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
 
 type TCPClient struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	stopRead, doneRead                 chan bool
 	textFormat                         []string
 	transport                          string
@@ -31,7 +30,7 @@ type TCPClient struct {
 }
 
 func NewTCPClient(config *pkgconfig.Config, logger *logger.Logger, name string) *TCPClient {
-	w := &TCPClient{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "tcpclient", config.Loggers.TCPClient.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	w := &TCPClient{GenericWorker: NewGenericWorker(config, logger, name, "tcpclient", config.Loggers.TCPClient.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	w.transportReady = make(chan bool)
 	w.transportReconnect = make(chan bool)
 	w.stopRead = make(chan bool)
@@ -200,8 +199,8 @@ func (w *TCPClient) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)

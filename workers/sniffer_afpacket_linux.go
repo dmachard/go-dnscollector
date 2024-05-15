@@ -15,19 +15,18 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 )
 
 type AfpacketSniffer struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	fd int
 }
 
-func NewAfpacketSniffer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	w := &AfpacketSniffer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "afpacket sniffer", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
+func NewAfpacketSniffer(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
+	w := &AfpacketSniffer{GenericWorker: NewGenericWorker(config, logger, name, "afpacket sniffer", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	return w
 }
@@ -63,7 +62,7 @@ func (w *AfpacketSniffer) Listen() error {
 		return err
 	}
 
-	filter := netutils.GetBpfFilter(w.GetConfig().Collectors.AfpacketLiveCapture.Port)
+	filter := netutils.GetBpfFilterPort(w.GetConfig().Collectors.AfpacketLiveCapture.Port)
 	err = netutils.ApplyBpfFilter(filter, fd)
 	if err != nil {
 		return err
@@ -148,29 +147,29 @@ func (w *AfpacketSniffer) StartCollect() {
 					if errors.Is(err, syscall.EINTR) || errors.Is(err, syscall.EAGAIN) || errors.Is(err, syscall.EWOULDBLOCK) {
 						continue
 					} else {
-						w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"read data", err)
+						w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"read data", err)
 					}
 				}
 				if bufN == 0 {
-					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] buf empty")
+					w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] buf empty")
 				}
 				if bufN > len(buf) {
-					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] buf overflow")
+					w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] buf overflow")
 				}
 				if oobn == 0 {
-					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] oob missing")
+					w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] oob missing")
 				}
 
 				scms, err := syscall.ParseSocketControlMessage(oob[:oobn])
 				if err != nil {
-					w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] control msg", err)
+					w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] control msg", err)
 				}
 				if len(scms) != 1 {
 					continue
 				}
 				scm := scms[0]
 				if scm.Header.Type != syscall.SCM_TIMESTAMPNS {
-					w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] scm timestampns missing")
+					w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] scm timestampns missing")
 				}
 				tsec := binary.LittleEndian.Uint32(scm.Data[:4])
 				nsec := binary.LittleEndian.Uint32(scm.Data[8:12])

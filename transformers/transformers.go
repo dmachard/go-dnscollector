@@ -5,7 +5,6 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 )
 
@@ -226,11 +225,11 @@ func (p *Transforms) Reset() {
 }
 
 func (p *Transforms) LogInfo(msg string, v ...interface{}) {
-	p.logger.Info(pkgutils.PrefixLogTransformer+"["+p.name+"] "+msg, v...)
+	p.logger.Info(pkgconfig.PrefixLogTransformer+"["+p.name+"] "+msg, v...)
 }
 
 func (p *Transforms) LogError(msg string, v ...interface{}) {
-	p.logger.Error(pkgutils.PrefixLogTransformer+"["+p.name+"] "+msg, v...)
+	p.logger.Error(pkgconfig.PrefixLogTransformer+"["+p.name+"] "+msg, v...)
 }
 
 // transform functions: return code

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/workers"
 	"github.com/dmachard/go-logger"
 	"github.com/pkg/errors"
@@ -81,8 +80,8 @@ func IsRouteExist(target string, config *pkgconfig.Config) (ret error) {
 	return fmt.Errorf("route=%s doest not exist", target)
 }
 
-func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]pkgutils.Worker, mapLoggers map[string]pkgutils.Worker, logger *logger.Logger) {
-	var currentStanza pkgutils.Worker
+func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]workers.Worker, mapLoggers map[string]workers.Worker, logger *logger.Logger) {
+	var currentStanza workers.Worker
 	if collector, ok := mapCollectors[stanza.Name]; ok {
 		currentStanza = collector
 	}
@@ -121,7 +120,7 @@ func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]pk
 	}
 }
 
-func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map[string]pkgutils.Worker, mapLoggers map[string]pkgutils.Worker, logger *logger.Logger) {
+func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map[string]workers.Worker, mapLoggers map[string]workers.Worker, logger *logger.Logger) {
 	// register the logger if enabled
 	if config.Loggers.RestAPI.Enable {
 		mapLoggers[stanzaName] = workers.NewRestAPI(config, logger, stanzaName)
@@ -205,7 +204,7 @@ func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map
 	}
 }
 
-func InitPipelines(mapLoggers map[string]pkgutils.Worker, mapCollectors map[string]pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger) error {
+func InitPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[string]workers.Worker, config *pkgconfig.Config, logger *logger.Logger) error {
 	// check if the name of each stanza is uniq
 	for _, stanza := range config.Pipelines {
 		if err := StanzaNameIsUniq(stanza.Name, config); err != nil {

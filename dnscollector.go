@@ -11,7 +11,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkglinker"
-	"github.com/dmachard/go-dnscollector/pkgutils"
+	"github.com/dmachard/go-dnscollector/workers"
 	"github.com/dmachard/go-logger"
 	"github.com/natefinch/lumberjack"
 	"github.com/prometheus/common/version"
@@ -107,8 +107,8 @@ func main() {
 	logger.Info("main - starting dns-collector...")
 
 	// init active collectors and loggers
-	mapLoggers := make(map[string]pkgutils.Worker)
-	mapCollectors := make(map[string]pkgutils.Worker)
+	mapLoggers := make(map[string]workers.Worker)
+	mapCollectors := make(map[string]workers.Worker)
 
 	// running mode,
 	// multiplexer ?

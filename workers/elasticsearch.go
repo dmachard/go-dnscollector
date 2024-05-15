@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 
@@ -18,13 +17,13 @@ import (
 )
 
 type ElasticSearchClient struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	server, index, bulkURL string
 	httpClient             *http.Client
 }
 
 func NewElasticSearchClient(config *pkgconfig.Config, console *logger.Logger, name string) *ElasticSearchClient {
-	w := &ElasticSearchClient{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "elasticsearch", config.Loggers.ElasticSearchClient.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	w := &ElasticSearchClient{GenericWorker: NewGenericWorker(config, console, name, "elasticsearch", config.Loggers.ElasticSearchClient.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	w.ReadConfig()
 	w.httpClient = &http.Client{Timeout: 5 * time.Second}
 	return w
@@ -38,7 +37,7 @@ func (w *ElasticSearchClient) ReadConfig() {
 		case pkgconfig.CompressGzip:
 			w.LogInfo("gzip compression is enabled")
 		default:
-			w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] elasticsearch - invalid compress mode: ", w.GetConfig().Loggers.ElasticSearchClient.Compression)
+			w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] elasticsearch - invalid compress mode: ", w.GetConfig().Loggers.ElasticSearchClient.Compression)
 		}
 	}
 
@@ -58,8 +57,8 @@ func (w *ElasticSearchClient) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)

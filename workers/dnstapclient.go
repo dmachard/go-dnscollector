@@ -10,7 +10,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -18,7 +17,7 @@ import (
 )
 
 type DnstapSender struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	fs                                 *framestream.Fstrm
 	fsReady                            bool
 	transport                          string
@@ -27,7 +26,7 @@ type DnstapSender struct {
 }
 
 func NewDnstapSender(config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapSender {
-	w := &DnstapSender{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap", config.Loggers.DNSTap.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	w := &DnstapSender{GenericWorker: NewGenericWorker(config, logger, name, "dnstap", config.Loggers.DNSTap.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	w.transportReady = make(chan bool)
 	w.transportReconnect = make(chan bool)
 	w.ReadConfig()
@@ -52,7 +51,7 @@ func (w *DnstapSender) ReadConfig() {
 	}
 
 	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.DNSTap.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogWorker + "invalid tls min version")
+		w.LogFatal(pkgconfig.PrefixLogWorker + "invalid tls min version")
 	}
 }
 
@@ -192,8 +191,8 @@ func (w *DnstapSender) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)

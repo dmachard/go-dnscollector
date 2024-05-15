@@ -27,7 +27,6 @@ jobs:
           - '.'
           - 'pkgconfig'
           - 'pkglinker'
-          - 'pkgutils'
           - 'dnsutils'
           - 'workers'
           - 'transformers'

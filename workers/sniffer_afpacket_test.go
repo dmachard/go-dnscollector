@@ -10,13 +10,12 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 )
 
 func TestAfpacketSnifferRun(t *testing.T) {
-	g := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
-	c := NewAfpacketSniffer([]pkgutils.Worker{g}, pkgconfig.GetDefaultConfig(), logger.New(false), "test")
+	g := GetWorkerForTest(pkgconfig.DefaultBufferSize)
+	c := NewAfpacketSniffer([]Worker{g}, pkgconfig.GetDefaultConfig(), logger.New(false), "test")
 	if err := c.Listen(); err != nil {
 		log.Fatal("collector sniffer listening error: ", err)
 	}

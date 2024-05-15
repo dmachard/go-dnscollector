@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/google/gopacket"
@@ -31,14 +30,14 @@ func IsStdoutValidMode(mode string) bool {
 }
 
 type StdOut struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	textFormat []string
 	writerText *log.Logger
 	writerPcap *pcapgo.Writer
 }
 
 func NewStdOut(config *pkgconfig.Config, console *logger.Logger, name string) *StdOut {
-	w := &StdOut{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "stdout", config.Loggers.Stdout.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	w := &StdOut{GenericWorker: NewGenericWorker(config, console, name, "stdout", config.Loggers.Stdout.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	w.writerText = log.New(os.Stdout, "", 0)
 	w.ReadConfig()
 	return w
@@ -75,8 +74,8 @@ func (w *StdOut) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)

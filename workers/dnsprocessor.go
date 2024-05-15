@@ -6,17 +6,16 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
 
 type DNSProcessor struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 }
 
 func NewDNSProcessor(config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSProcessor {
-	w := DNSProcessor{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dns processor", size, pkgutils.DefaultMonitor)}
+	w := DNSProcessor{GenericWorker: NewGenericWorker(config, logger, name, "dns processor", size, pkgconfig.DefaultMonitor)}
 	return w
 }
 
@@ -25,8 +24,8 @@ func (w *DNSProcessor) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare enabled transformers
 	transforms := transformers.NewTransforms(&w.GetConfig().IngoingTransformers, w.GetLogger(), w.GetName(), defaultRoutes, 0)

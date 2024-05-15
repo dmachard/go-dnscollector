@@ -15,13 +15,12 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
 
 type RedisPub struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	stopRead, doneRead                 chan bool
 	textFormat                         []string
 	transport                          string
@@ -32,7 +31,7 @@ type RedisPub struct {
 }
 
 func NewRedisPub(config *pkgconfig.Config, logger *logger.Logger, name string) *RedisPub {
-	w := &RedisPub{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "redispub", config.Loggers.RedisPub.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	w := &RedisPub{GenericWorker: NewGenericWorker(config, logger, name, "redispub", config.Loggers.RedisPub.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	w.stopRead = make(chan bool)
 	w.doneRead = make(chan bool)
 	w.transportReady = make(chan bool)
@@ -212,8 +211,8 @@ func (w *RedisPub) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)

@@ -13,13 +13,12 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 )
 
 type Syslog struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	severity, facility                 syslog.Priority
 	syslogWriter                       *syslog.Writer
 	syslogReady                        bool
@@ -28,7 +27,7 @@ type Syslog struct {
 }
 
 func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *Syslog {
-	w := &Syslog{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "syslog", config.Loggers.Syslog.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	w := &Syslog{GenericWorker: NewGenericWorker(config, console, name, "syslog", config.Loggers.Syslog.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	w.transportReady = make(chan bool)
 	w.transportReconnect = make(chan bool)
 	w.ReadConfig()
@@ -37,21 +36,21 @@ func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *S
 
 func (w *Syslog) ReadConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.Syslog.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogWorker + "invalid tls min version")
+		w.LogFatal(pkgconfig.PrefixLogWorker + "invalid tls min version")
 	}
 
 	if !pkgconfig.IsValidMode(w.GetConfig().Loggers.Syslog.Mode) {
-		w.LogFatal(pkgutils.PrefixLogWorker + "invalid mode text or json expected")
+		w.LogFatal(pkgconfig.PrefixLogWorker + "invalid mode text or json expected")
 	}
 	severity, err := syslog.GetPriority(w.GetConfig().Loggers.Syslog.Severity)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogWorker + "invalid severity")
+		w.LogFatal(pkgconfig.PrefixLogWorker + "invalid severity")
 	}
 	w.severity = severity
 
 	facility, err := syslog.GetPriority(w.GetConfig().Loggers.Syslog.Facility)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogWorker + "invalid facility")
+		w.LogFatal(pkgconfig.PrefixLogWorker + "invalid facility")
 	}
 	w.facility = facility
 
@@ -164,8 +163,8 @@ func (w *Syslog) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)

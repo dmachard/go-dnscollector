@@ -178,11 +178,11 @@ import (
 )
 
 type MyWorker struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 }
 
 func NewMyWorker(config *pkgconfig.Config, console *logger.Logger, name string) *MyWorker {
-	s := &MyWorker{GenericWorker: pkgutils.NewGenericWorker(config, console, name, "worker", DefaultBufferSize)}
+	s := &MyWorker{GenericWorker: NewGenericWorker(config, console, name, "worker", DefaultBufferSize)}
 	s.ReadConfig()
 	return s
 }

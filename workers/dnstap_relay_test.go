@@ -9,7 +9,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 	"google.golang.org/protobuf/proto"
@@ -44,7 +43,7 @@ func Test_DnstapRelay(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			g := pkgutils.GetWorkerForTest(pkgutils.DefaultBufferSize)
+			g := GetWorkerForTest(pkgconfig.DefaultBufferSize)
 
 			config := pkgconfig.GetDefaultConfig()
 			if tc.listenPort > 0 {
@@ -55,7 +54,7 @@ func Test_DnstapRelay(t *testing.T) {
 			}
 
 			// start collector
-			c := NewDnstapProxifier([]pkgutils.Worker{g}, config, logger.New(false), "test")
+			c := NewDnstapProxifier([]Worker{g}, config, logger.New(false), "test")
 			go c.StartCollect()
 
 			// start client

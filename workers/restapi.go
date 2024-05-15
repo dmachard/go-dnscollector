@@ -11,7 +11,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/dmachard/go-topmap"
@@ -46,7 +45,7 @@ type KeyHit struct {
 }
 
 type RestAPI struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	doneAPI    chan bool
 	httpserver net.Listener
 	httpmux    *http.ServeMux
@@ -66,7 +65,7 @@ type RestAPI struct {
 }
 
 func NewRestAPI(config *pkgconfig.Config, logger *logger.Logger, name string) *RestAPI {
-	w := &RestAPI{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "restapi", config.Loggers.RestAPI.ChannelBufferSize, pkgutils.DefaultMonitor)}
+	w := &RestAPI{GenericWorker: NewGenericWorker(config, logger, name, "restapi", config.Loggers.RestAPI.ChannelBufferSize, pkgconfig.DefaultMonitor)}
 	w.HitsStream = HitsStream{
 		Streams: make(map[string]SearchBy),
 	}
@@ -89,7 +88,7 @@ func NewRestAPI(config *pkgconfig.Config, logger *logger.Logger, name string) *R
 
 func (w *RestAPI) ReadConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.RestAPI.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "]restapi - invalid tls min version")
+		w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "]restapi - invalid tls min version")
 	}
 }
 
@@ -642,8 +641,8 @@ func (w *RestAPI) StartCollect() {
 	defer w.CollectDone()
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare transforms
 	subprocessors := transformers.NewTransforms(&w.GetConfig().OutgoingTransformers, w.GetLogger(), w.GetName(), w.GetOutputChannelAsList(), 0)

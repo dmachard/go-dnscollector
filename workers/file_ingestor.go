@@ -13,7 +13,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-logger"
 	framestream "github.com/farsightsec/golang-framestream"
 	"github.com/fsnotify/fsnotify"
@@ -35,16 +34,16 @@ func IsValidMode(mode string) bool {
 }
 
 type FileIngestor struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	watcherTimers   map[string]*time.Timer
 	dnsProcessor    DNSProcessor
 	dnstapProcessor DNSTapProcessor
 	mu              sync.Mutex
 }
 
-func NewFileIngestor(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
+func NewFileIngestor(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
 	w := &FileIngestor{
-		GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "fileingestor", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor),
+		GenericWorker: NewGenericWorker(config, logger, name, "fileingestor", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor),
 		watcherTimers: make(map[string]*time.Timer)}
 	w.SetDefaultRoutes(next)
 	w.CheckConfig()
@@ -53,7 +52,7 @@ func NewFileIngestor(next []pkgutils.Worker, config *pkgconfig.Config, logger *l
 
 func (w *FileIngestor) CheckConfig() {
 	if !IsValidMode(w.GetConfig().Collectors.FileIngestor.WatchMode) {
-		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] - invalid mode: ", w.GetConfig().Collectors.FileIngestor.WatchMode)
+		w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] - invalid mode: ", w.GetConfig().Collectors.FileIngestor.WatchMode)
 	}
 
 	w.LogInfo("watching directory [%s] to find [%s] files",
@@ -356,12 +355,12 @@ func (w *FileIngestor) StartCollect() {
 	// then watch for new one
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] new watcher: ", err)
+		w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] new watcher: ", err)
 	}
 	// register the folder to watch
 	err = watcher.Add(w.GetConfig().Collectors.FileIngestor.WatchDir)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] register folder: ", err)
+		w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] register folder: ", err)
 	}
 
 	for {

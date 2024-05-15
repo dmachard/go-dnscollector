@@ -15,7 +15,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-framestream"
@@ -25,12 +24,12 @@ import (
 )
 
 type DnstapServer struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	connCounter uint64
 }
 
-func NewDnstapServer(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapServer {
-	w := &DnstapServer{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
+func NewDnstapServer(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapServer {
+	w := &DnstapServer{GenericWorker: NewGenericWorker(config, logger, name, "dnstap", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	w.CheckConfig()
 	return w
@@ -38,7 +37,7 @@ func NewDnstapServer(next []pkgutils.Worker, config *pkgconfig.Config, logger *l
 
 func (w *DnstapServer) CheckConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Collectors.Dnstap.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] dnstap - invalid tls min version")
+		w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] dnstap - invalid tls min version")
 	}
 }
 
@@ -196,7 +195,7 @@ func (w *DnstapServer) StartCollect() {
 		cfg.TLSSupport, pkgconfig.TLSVersion[cfg.TLSMinVersion],
 		cfg.CertFile, cfg.KeyFile)
 	if err != nil {
-		w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] listen error: ", err)
+		w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] listen error: ", err)
 	}
 	w.LogInfo("listening on %s", listener.Addr())
 
@@ -230,7 +229,7 @@ func (w *DnstapServer) StartCollect() {
 			if len(cfg.SockPath) == 0 && cfg.RcvBufSize > 0 {
 				before, actual, err := netutils.SetSockRCVBUF(conn, cfg.RcvBufSize, cfg.TLSSupport)
 				if err != nil {
-					w.LogFatal(pkgutils.PrefixLogWorker+"["+w.GetName()+"] unable to set SO_RCVBUF: ", err)
+					w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] unable to set SO_RCVBUF: ", err)
 				}
 				w.LogInfo("set SO_RCVBUF option, value before: %d, desired: %d, actual: %d", before, cfg.RcvBufSize, actual)
 			}
@@ -280,14 +279,14 @@ func GetFakeDNSTap(dnsquery []byte) *dnstap.Dnstap {
 }
 
 type DNSTapProcessor struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	ConnID      int
 	PeerName    string
 	dataChannel chan []byte
 }
 
 func NewDNSTapProcessor(connID int, peerName string, config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
-	w := DNSTapProcessor{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstap processor #"+strconv.Itoa(connID), size, pkgutils.DefaultMonitor)}
+	w := DNSTapProcessor{GenericWorker: NewGenericWorker(config, logger, name, "dnstap processor #"+strconv.Itoa(connID), size, pkgconfig.DefaultMonitor)}
 	w.ConnID = connID
 	w.PeerName = peerName
 	w.dataChannel = make(chan []byte, size)
@@ -306,8 +305,8 @@ func (w *DNSTapProcessor) StartCollect() {
 	edt := &dnsutils.ExtendedDnstap{}
 
 	// prepare next channels
-	defaultRoutes, defaultNames := pkgutils.GetRoutes(w.GetDefaultRoutes())
-	droppedRoutes, droppedNames := pkgutils.GetRoutes(w.GetDroppedRoutes())
+	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 
 	// prepare enabled transformers
 	transforms := transformers.NewTransforms(&w.GetConfig().IngoingTransformers, w.GetLogger(), w.GetName(), defaultRoutes, w.ConnID)

@@ -10,18 +10,17 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkgutils"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
 )
 
 type DnstapProxifier struct {
-	*pkgutils.GenericWorker
+	*GenericWorker
 	connCounter uint64
 }
 
-func NewDnstapProxifier(next []pkgutils.Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
-	s := &DnstapProxifier{GenericWorker: pkgutils.NewGenericWorker(config, logger, name, "dnstaprelay", pkgutils.DefaultBufferSize, pkgutils.DefaultMonitor)}
+func NewDnstapProxifier(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
+	s := &DnstapProxifier{GenericWorker: NewGenericWorker(config, logger, name, "dnstaprelay", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
 	s.SetDefaultRoutes(next)
 	s.CheckConfig()
 	return s
@@ -29,7 +28,7 @@ func NewDnstapProxifier(next []pkgutils.Worker, config *pkgconfig.Config, logger
 
 func (w *DnstapProxifier) CheckConfig() {
 	if !pkgconfig.IsValidTLS(w.GetConfig().Collectors.DnstapProxifier.TLSMinVersion) {
-		w.LogFatal(pkgutils.PrefixLogWorker + "[" + w.GetName() + "] dnstaprelay - invalid tls min version")
+		w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] dnstaprelay - invalid tls min version")
 	}
 }
 
@@ -65,7 +64,7 @@ func (w *DnstapProxifier) HandleConn(conn net.Conn, connID uint64, forceClose ch
 	w.LogInfo("new connection from %s\n", peer)
 
 	recvChan := make(chan []byte, 512)
-	defaultRoutes, _ := pkgutils.GetRoutes(w.GetDefaultRoutes())
+	defaultRoutes, _ := GetRoutes(w.GetDefaultRoutes())
 	go w.HandleFrame(recvChan, defaultRoutes)
 
 	// frame stream library
