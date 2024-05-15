@@ -10,6 +10,7 @@ require (
 	github.com/dmachard/go-dnstap-protobuf v1.0.1
 	github.com/dmachard/go-framestream v0.10.0
 	github.com/dmachard/go-logger v0.4.0
+	github.com/dmachard/go-netutils v0.0.2
 	github.com/dmachard/go-powerdns-protobuf v1.1.1
 	github.com/dmachard/go-topmap v1.0.0
 	github.com/farsightsec/golang-framestream v0.3.0
@@ -48,7 +49,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deepmap/oapi-codegen v1.12.4 // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
-	github.com/dmachard/go-netutils v0.0.2 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/eapache/go-resiliency v1.6.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3 // indirect
