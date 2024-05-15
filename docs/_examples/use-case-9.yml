@@ -23,7 +23,7 @@ multiplexer:
       transforms:
         filtering:
           downsample: 1
-          keep-domain-file: ./testsdata/filtering_fqdn.txt
+          keep-domain-file: ./tests/testsdata/filtering_fqdn.txt
 
   # Print DNS messages on standard output with TEXT format
   loggers:

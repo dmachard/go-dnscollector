@@ -12,7 +12,7 @@ pipelines:
       listen-port: 6000
     transforms:
       filtering:
-        keep-domain-file: ./testsdata/filtering_fqdn.txt
+        keep-domain-file: ./tests/testsdata/filtering_fqdn.txt
     routing-policy:
       default: [ console ]
 
