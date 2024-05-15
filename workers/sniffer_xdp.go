@@ -17,7 +17,6 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/xdp"
 	"github.com/dmachard/go-logger"
 	"golang.org/x/sys/unix"
 )
@@ -49,8 +48,8 @@ func (w *XDPSniffer) StartCollect() {
 	}
 
 	// Load pre-compiled programs into the kernel.
-	objs := xdp.BpfObjects{}
-	if err := xdp.LoadBpfObjects(&objs, nil); err != nil {
+	objs := netutils.BpfObjects{}
+	if err := netutils.LoadBpfObjects(&objs, nil); err != nil {
 		w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] loading BPF objects: ", err)
 	}
 	defer objs.Close()
@@ -84,7 +83,7 @@ func (w *XDPSniffer) StartCollect() {
 			defer close(done)
 		}()
 
-		var pkt xdp.BpfPktEvent
+		var pkt netutils.BpfPktEvent
 		var netErr net.Error
 		for {
 			select {
