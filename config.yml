@@ -26,12 +26,16 @@ multiplexer:
       transforms:
         normalize:
           qname-lowercase: true
+    - name: sniffer
+      xdp-sniffer:
+        device: wlp2s0
+        chan-buffer-size: 65535
   loggers:
     - name: console
       stdout:
         mode: text
   routes:
-    - from: [ tap ]
+    - from: [ sniffer ]
       to: [ console ]
 
 ################################################

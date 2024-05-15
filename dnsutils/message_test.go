@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnstap-protobuf"
+	"github.com/dmachard/go-netutils"
 	"github.com/miekg/dns"
 	"google.golang.org/protobuf/proto"
 )
