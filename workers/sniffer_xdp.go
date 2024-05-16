@@ -75,6 +75,7 @@ func (w *XDPSniffer) StartCollect() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
+	stopChan := make(chan struct{})
 
 	go func(ctx context.Context) {
 		defer func() {
@@ -165,7 +166,11 @@ func (w *XDPSniffer) StartCollect() {
 					dm.DNS.Length = len(dm.DNS.Payload)
 				}
 
-				dnsChan <- dm
+				select {
+				case <-stopChan:
+					return
+				case dnsChan <- dm:
+				}
 			}
 		}
 	}(ctx)
@@ -175,6 +180,7 @@ func (w *XDPSniffer) StartCollect() {
 		case <-w.OnStop():
 			w.LogInfo("stop to listen...")
 			cancel()
+			close(stopChan)
 			<-done
 			return
 
