@@ -2,159 +2,96 @@ package pkgconfig
 
 import (
 	"reflect"
+
+	"github.com/creasty/defaults"
 )
 
 type ConfigCollectors struct {
 	DNSMessage struct {
-		Enable            bool `yaml:"enable"`
-		ChannelBufferSize int  `yaml:"chan-buffer-size"`
+		Enable            bool `yaml:"enable" default:"false"`
+		ChannelBufferSize int  `yaml:"chan-buffer-size" default:"65535"`
 		Matching          struct {
 			Include map[string]interface{} `yaml:"include"`
 			Exclude map[string]interface{} `yaml:"exclude"`
 		} `yaml:"matching"`
 	} `yaml:"dnsmessage"`
 	Tail struct {
-		Enable       bool   `yaml:"enable"`
-		TimeLayout   string `yaml:"time-layout"`
-		PatternQuery string `yaml:"pattern-query"`
-		PatternReply string `yaml:"pattern-reply"`
-		FilePath     string `yaml:"file-path"`
+		Enable       bool   `yaml:"enable" default:"false"`
+		TimeLayout   string `yaml:"time-layout" default:""`
+		PatternQuery string `yaml:"pattern-query" default:""`
+		PatternReply string `yaml:"pattern-reply" default:""`
+		FilePath     string `yaml:"file-path" default:""`
 	} `yaml:"tail"`
 	Dnstap struct {
-		Enable            bool   `yaml:"enable"`
-		ListenIP          string `yaml:"listen-ip"`
-		ListenPort        int    `yaml:"listen-port"`
-		SockPath          string `yaml:"sock-path"`
-		TLSSupport        bool   `yaml:"tls-support"`
-		TLSMinVersion     string `yaml:"tls-min-version"`
-		CertFile          string `yaml:"cert-file"`
-		KeyFile           string `yaml:"key-file"`
-		RcvBufSize        int    `yaml:"sock-rcvbuf"`
-		ResetConn         bool   `yaml:"reset-conn"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size"`
-		DisableDNSParser  bool   `yaml:"disable-dnsparser"`
-		ExtendedSupport   bool   `yaml:"extended-support"`
-		Compression       string `yaml:"compression"`
+		Enable            bool   `yaml:"enable" default:"false"`
+		ListenIP          string `yaml:"listen-ip" default:"0.0.0.0"`
+		ListenPort        int    `yaml:"listen-port" default:"6000"`
+		SockPath          string `yaml:"sock-path" default:""`
+		TLSSupport        bool   `yaml:"tls-support" default:"false"`
+		TLSMinVersion     string `yaml:"tls-min-version" default:"1.2"`
+		CertFile          string `yaml:"cert-file" default:""`
+		KeyFile           string `yaml:"key-file" default:""`
+		RcvBufSize        int    `yaml:"sock-rcvbuf" default:"0"`
+		ResetConn         bool   `yaml:"reset-conn" default:"true"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		DisableDNSParser  bool   `yaml:"disable-dnsparser" default:"false"`
+		ExtendedSupport   bool   `yaml:"extended-support" default:"false"`
+		Compression       string `yaml:"compression" default:"none"`
 	} `yaml:"dnstap"`
 	DnstapProxifier struct {
-		Enable        bool   `yaml:"enable"`
-		ListenIP      string `yaml:"listen-ip"`
-		ListenPort    int    `yaml:"listen-port"`
-		SockPath      string `yaml:"sock-path"`
-		TLSSupport    bool   `yaml:"tls-support"`
-		TLSMinVersion string `yaml:"tls-min-version"`
-		CertFile      string `yaml:"cert-file"`
-		KeyFile       string `yaml:"key-file"`
+		Enable        bool   `yaml:"enable" default:"false"`
+		ListenIP      string `yaml:"listen-ip" default:"0.0.0.0"`
+		ListenPort    int    `yaml:"listen-port" default:"6000"`
+		SockPath      string `yaml:"sock-path" default:""`
+		TLSSupport    bool   `yaml:"tls-support" default:"false"`
+		TLSMinVersion string `yaml:"tls-min-version" default:"1.2"`
+		CertFile      string `yaml:"cert-file" default:""`
+		KeyFile       string `yaml:"key-file" default:""`
 	} `yaml:"dnstap-relay"`
 	AfpacketLiveCapture struct {
-		Enable            bool   `yaml:"enable"`
-		Port              int    `yaml:"port"`
-		Device            string `yaml:"device"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size"`
-		FragmentSupport   bool   `yaml:"enable-defrag-ip"`
+		Enable            bool   `yaml:"enable" default:"false"`
+		Port              int    `yaml:"port" default:"53"`
+		Device            string `yaml:"device" default:""`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		FragmentSupport   bool   `yaml:"enable-defrag-ip" default:"true"`
 	} `yaml:"afpacket-sniffer"`
 	XdpLiveCapture struct {
-		Enable            bool   `yaml:"enable"`
-		Port              int    `yaml:"port"`
-		Device            string `yaml:"device"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size"`
+		Enable            bool   `yaml:"enable" default:"false"`
+		Port              int    `yaml:"port" default:"53"`
+		Device            string `yaml:"device" default:""`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
 	} `yaml:"xdp-sniffer"`
 	PowerDNS struct {
-		Enable            bool   `yaml:"enable"`
-		ListenIP          string `yaml:"listen-ip"`
-		ListenPort        int    `yaml:"listen-port"`
-		TLSSupport        bool   `yaml:"tls-support"`
-		TLSMinVersion     string `yaml:"tls-min-version"`
-		CertFile          string `yaml:"cert-file"`
-		KeyFile           string `yaml:"key-file"`
-		AddDNSPayload     bool   `yaml:"add-dns-payload"`
-		RcvBufSize        int    `yaml:"sock-rcvbuf"`
-		ResetConn         bool   `yaml:"reset-conn"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size"`
+		Enable            bool   `yaml:"enable" default:"false"`
+		ListenIP          string `yaml:"listen-ip" default:"0.0.0.0"`
+		ListenPort        int    `yaml:"listen-port" default:"6001"`
+		TLSSupport        bool   `yaml:"tls-support" default:"false"`
+		TLSMinVersion     string `yaml:"tls-min-version" default:"1.2	"`
+		CertFile          string `yaml:"cert-file" default:""`
+		KeyFile           string `yaml:"key-file" default:""`
+		AddDNSPayload     bool   `yaml:"add-dns-payload" default:"false"`
+		RcvBufSize        int    `yaml:"sock-rcvbuf" default:"0"`
+		ResetConn         bool   `yaml:"reset-conn" default:"true"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
 	} `yaml:"powerdns"`
 	FileIngestor struct {
-		Enable            bool   `yaml:"enable"`
-		WatchDir          string `yaml:"watch-dir"`
-		WatchMode         string `yaml:"watch-mode"`
-		PcapDNSPort       int    `yaml:"pcap-dns-port"`
-		DeleteAfter       bool   `yaml:"delete-after"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size"`
+		Enable            bool   `yaml:"enable" default:"false"`
+		WatchDir          string `yaml:"watch-dir" default:""`
+		WatchMode         string `yaml:"watch-mode" default:"pcap"`
+		PcapDNSPort       int    `yaml:"pcap-dns-port" default:"53"`
+		DeleteAfter       bool   `yaml:"delete-after" default:"false"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
 	} `yaml:"file-ingestor"`
 	Tzsp struct {
-		Enable            bool   `yaml:"enable"`
-		ListenIP          string `yaml:"listen-ip"`
-		ListenPort        int    `yaml:"listen-port"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size"`
+		Enable            bool   `yaml:"enable" default:"false"`
+		ListenIP          string `yaml:"listen-ip" default:"0.0.0.0"`
+		ListenPort        int    `yaml:"listen-port" default:"10000"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
 	} `yaml:"tzsp"`
 }
 
 func (c *ConfigCollectors) SetDefault() {
-	c.DNSMessage.Enable = false
-	c.DNSMessage.ChannelBufferSize = 65535
-
-	c.Tail.Enable = false
-	c.Tail.TimeLayout = ""
-	c.Tail.PatternQuery = ""
-	c.Tail.PatternReply = ""
-	c.Tail.FilePath = ""
-
-	c.Dnstap.Enable = false
-	c.Dnstap.ListenIP = AnyIP
-	c.Dnstap.ListenPort = 6000
-	c.Dnstap.SockPath = ""
-	c.Dnstap.TLSSupport = false
-	c.Dnstap.TLSMinVersion = TLSV12
-	c.Dnstap.CertFile = ""
-	c.Dnstap.KeyFile = ""
-	c.Dnstap.RcvBufSize = 0
-	c.Dnstap.ResetConn = true
-	c.Dnstap.ChannelBufferSize = 65535
-	c.Dnstap.DisableDNSParser = false
-	c.Dnstap.ExtendedSupport = false
-	c.Dnstap.Compression = CompressNone
-
-	c.DnstapProxifier.Enable = false
-	c.DnstapProxifier.ListenIP = AnyIP
-	c.DnstapProxifier.ListenPort = 6000
-	c.DnstapProxifier.SockPath = ""
-	c.DnstapProxifier.TLSSupport = false
-	c.DnstapProxifier.TLSMinVersion = TLSV12
-	c.DnstapProxifier.CertFile = ""
-	c.DnstapProxifier.KeyFile = ""
-
-	c.XdpLiveCapture.Enable = false
-	c.XdpLiveCapture.Device = ""
-	c.XdpLiveCapture.ChannelBufferSize = 65535
-
-	c.AfpacketLiveCapture.Enable = false
-	c.AfpacketLiveCapture.Port = 53
-	c.AfpacketLiveCapture.Device = ""
-	c.AfpacketLiveCapture.ChannelBufferSize = 65535
-	c.AfpacketLiveCapture.FragmentSupport = true
-
-	c.PowerDNS.Enable = false
-	c.PowerDNS.ListenIP = AnyIP
-	c.PowerDNS.ListenPort = 6001
-	c.PowerDNS.TLSSupport = false
-	c.PowerDNS.TLSMinVersion = TLSV12
-	c.PowerDNS.CertFile = ""
-	c.PowerDNS.KeyFile = ""
-	c.PowerDNS.AddDNSPayload = false
-	c.PowerDNS.RcvBufSize = 0
-	c.PowerDNS.ResetConn = true
-	c.PowerDNS.ChannelBufferSize = 65535
-
-	c.FileIngestor.Enable = false
-	c.FileIngestor.WatchDir = ""
-	c.FileIngestor.PcapDNSPort = 53
-	c.FileIngestor.WatchMode = ModePCAP
-	c.FileIngestor.DeleteAfter = false
-	c.FileIngestor.ChannelBufferSize = 65535
-
-	c.Tzsp.Enable = false
-	c.Tzsp.ListenIP = AnyIP
-	c.Tzsp.ListenPort = 10000
-	c.Tzsp.ChannelBufferSize = 65535
+	defaults.Set(c)
 }
 
 func (c *ConfigCollectors) IsValid(userCfg map[string]interface{}) error {
