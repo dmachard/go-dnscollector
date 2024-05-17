@@ -2,34 +2,26 @@ package pkgconfig
 
 import (
 	"reflect"
+
+	"github.com/creasty/defaults"
 )
 
 type ConfigGlobal struct {
-	TextFormat          string `yaml:"text-format"`
-	TextFormatDelimiter string `yaml:"text-format-delimiter"`
-	TextFormatBoundary  string `yaml:"text-format-boundary"`
+	TextFormat          string `yaml:"text-format" default:"timestamp identity operation rcode queryip queryport family protocol length-unit qname qtype latency"`
+	TextFormatDelimiter string `yaml:"text-format-delimiter" default:" "`
+	TextFormatBoundary  string `yaml:"text-format-boundary" default:"\""`
 	Trace               struct {
-		Verbose      bool   `yaml:"verbose"`
-		LogMalformed bool   `yaml:"log-malformed"`
-		Filename     string `yaml:"filename"`
-		MaxSize      int    `yaml:"max-size"`
-		MaxBackups   int    `yaml:"max-backups"`
+		Verbose      bool   `yaml:"verbose" default:"false"`
+		LogMalformed bool   `yaml:"log-malformed" default:"false"`
+		Filename     string `yaml:"filename" default:""`
+		MaxSize      int    `yaml:"max-size" default:"10"`
+		MaxBackups   int    `yaml:"max-backups" default:"10"`
 	} `yaml:"trace"`
-	ServerIdentity string `yaml:"server-identity"`
+	ServerIdentity string `yaml:"server-identity" default:""`
 }
 
 func (c *ConfigGlobal) SetDefault() {
-	// global config
-	c.TextFormat = "timestamp identity operation rcode queryip queryport family protocol length-unit qname qtype latency"
-	c.TextFormatDelimiter = " "
-	c.TextFormatBoundary = "\""
-
-	c.Trace.Verbose = false
-	c.Trace.LogMalformed = false
-	c.Trace.Filename = ""
-	c.Trace.MaxSize = 10
-	c.Trace.MaxBackups = 10
-	c.ServerIdentity = ""
+	defaults.Set(c)
 }
 
 func (c *ConfigGlobal) Check(userCfg map[string]interface{}) error {
