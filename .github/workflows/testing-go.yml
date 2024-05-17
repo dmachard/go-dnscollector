@@ -26,7 +26,7 @@ jobs:
         package:
           - '.'
           - 'pkgconfig'
-          - 'pkglinker'
+          - 'pkginit'
           - 'dnsutils'
           - 'workers'
           - 'transformers'
@@ -141,7 +141,7 @@ jobs:
 
     - id: count_tests
       run: |
-        data=$(sudo go test -timeout 360s  -v ./workers ./dnsutils ./transformers ./pkgconfig ./pkglinker ././ 2>&1 | grep -c RUN)
+        data=$(sudo go test -timeout 360s  -v ./workers ./dnsutils ./transformers ./pkgconfig ./pkginit ././ 2>&1 | grep -c RUN)
         echo "Count of Tests: $data"
         echo "data=$data" >> $GITHUB_OUTPUT
 
