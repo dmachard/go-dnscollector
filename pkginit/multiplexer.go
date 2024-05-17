@@ -1,4 +1,4 @@
-package pkglinker
+package pkginit
 
 import (
 	"fmt"

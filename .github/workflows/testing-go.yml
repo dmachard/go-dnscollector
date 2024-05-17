@@ -26,11 +26,10 @@ jobs:
         package:
           - '.'
           - 'pkgconfig'
-          - 'pkglinker'
+          - 'pkginit'
           - 'dnsutils'
           - 'workers'
           - 'transformers'
-          - 'netutils'
     
     runs-on: ${{ matrix.os-version }}
 
@@ -117,7 +116,7 @@ jobs:
         tar xf go-dnstap-generator_${{ env.GENTAP }}_linux_amd64.tar.gz
         ./go-dnstap-generator -i 127.0.0.1 -p 6000 -n 1
       env:
-        GENTAP: "0.6.0"
+        GENTAP: "0.7.0"
 
     - name: check prometheus format metrics
       run: |
@@ -142,7 +141,7 @@ jobs:
 
     - id: count_tests
       run: |
-        data=$(sudo go test -timeout 360s  -v ./workers ./dnsutils ./netutils ./transformers ./pkgconfig ./pkglinker ././ 2>&1 | grep -c RUN)
+        data=$(sudo go test -timeout 360s  -v ./workers ./dnsutils ./transformers ./pkgconfig ./pkginit ././ 2>&1 | grep -c RUN)
         echo "Count of Tests: $data"
         echo "data=$data" >> $GITHUB_OUTPUT
 

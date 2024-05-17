@@ -10,7 +10,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkglinker"
+	"github.com/dmachard/go-dnscollector/pkginit"
 	"github.com/dmachard/go-dnscollector/workers"
 	"github.com/dmachard/go-logger"
 	"github.com/natefinch/lumberjack"
@@ -112,15 +112,15 @@ func main() {
 
 	// running mode,
 	// multiplexer ?
-	if pkglinker.IsMuxEnabled(config) {
+	if pkginit.IsMuxEnabled(config) {
 		logger.Info("main - multiplexer mode enabled")
-		pkglinker.InitMultiplexer(mapLoggers, mapCollectors, config, logger)
+		pkginit.InitMultiplexer(mapLoggers, mapCollectors, config, logger)
 	}
 
 	// or pipeline ?
 	if len(config.Pipelines) > 0 {
 		logger.Info("main - pipelines mode enabled")
-		err := pkglinker.InitPipelines(mapLoggers, mapCollectors, config, logger)
+		err := pkginit.InitPipelines(mapLoggers, mapCollectors, config, logger)
 		if err != nil {
 			logger.Error("main - %s", err.Error())
 			os.Exit(1)
@@ -148,8 +148,8 @@ func main() {
 
 				// reload logger and multiplexer
 				InitLogger(logger, config)
-				if pkglinker.IsMuxEnabled(config) {
-					pkglinker.ReloadMultiplexer(mapLoggers, mapCollectors, config, logger)
+				if pkginit.IsMuxEnabled(config) {
+					pkginit.ReloadMultiplexer(mapLoggers, mapCollectors, config, logger)
 				}
 
 			case <-sigTerm:

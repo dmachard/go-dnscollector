@@ -13,10 +13,10 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
+	"github.com/dmachard/go-netutils"
 	powerdns_protobuf "github.com/dmachard/go-powerdns-protobuf"
 	"github.com/miekg/dns"
 	"google.golang.org/protobuf/proto"
