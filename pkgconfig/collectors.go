@@ -66,7 +66,7 @@ type ConfigCollectors struct {
 		ListenIP          string `yaml:"listen-ip" default:"0.0.0.0"`
 		ListenPort        int    `yaml:"listen-port" default:"6001"`
 		TLSSupport        bool   `yaml:"tls-support" default:"false"`
-		TLSMinVersion     string `yaml:"tls-min-version" default:"1.2	"`
+		TLSMinVersion     string `yaml:"tls-min-version" default:"1.2"`
 		CertFile          string `yaml:"cert-file" default:""`
 		KeyFile           string `yaml:"key-file" default:""`
 		AddDNSPayload     bool   `yaml:"add-dns-payload" default:"false"`
