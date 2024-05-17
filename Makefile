@@ -8,6 +8,7 @@ GO_DNSTAP_PROTOBUF := 1.0.1
 GO_FRAMESTREAM := 0.10.0
 GO_CLIENTSYSLOG := 0.4.0
 GO_TOPMAP := 1.0.0
+GO_NETUTILS := 0.1.0
 
 BUILD_TIME := $(shell LANG=en_US date +"%F_%T_%z")
 COMMIT := $(shell git rev-parse --short HEAD)
@@ -47,6 +48,7 @@ dep: goversion
 	@go get github.com/dmachard/go-framestream@v$(GO_FRAMESTREAM)
 	@go get github.com/dmachard/go-clientsyslog@v$(GO_CLIENTSYSLOG)
 	@go get github.com/dmachard/go-topmap@v$(GO_TOPMAP)
+	@go get github.com/dmachard/go-netutils@v$(GO_NETUTILS)
 	@go mod edit -go=$(GO_VERSION)
 	@go mod tidy
 
@@ -72,7 +74,6 @@ tests: check-go
 	@go test ./pkgconfig/ -race -cover -v
 	@go test ./pkglinker/ -race -cover -v
 	@go test ./netutils/ -race -cover -v
-	@go test -timeout 90s ./dnsutils/ -race -cover -v
 	@go test -timeout 90s ./transformers/ -race -cover -v
 	@go test -timeout 180s ./workers/ -race -cover -v
 

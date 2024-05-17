@@ -16,9 +16,9 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
+	"github.com/dmachard/go-netutils"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/rs/tzsp"

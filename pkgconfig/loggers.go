@@ -3,7 +3,7 @@ package pkgconfig
 import (
 	"reflect"
 
-	"github.com/dmachard/go-dnscollector/netutils"
+	"github.com/dmachard/go-netutils"
 	"github.com/prometheus/prometheus/model/relabel"
 )
 

@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
-	"github.com/dmachard/go-dnscollector/netutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
+	"github.com/dmachard/go-netutils"
 )
 
 func Test_RedisPubRun(t *testing.T) {
