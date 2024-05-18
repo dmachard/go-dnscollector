@@ -166,7 +166,7 @@ type ConfigLoggers struct {
 		CAFile            string `yaml:"ca-file" default:""`
 		CertFile          string `yaml:"cert-file" default:""`
 		KeyFile           string `yaml:"key-file" default:""`
-		Tag               string `yaml:"tag" default:"dnscollector"`
+		Tag               string `yaml:"tag" default:"dns.collector"`
 		BufferSize        int    `yaml:"buffer-size" default:"100"`
 		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"4096"`
 	} `yaml:"fluentd"`
