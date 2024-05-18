@@ -35,7 +35,7 @@ func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *S
 }
 
 func (w *Syslog) ReadConfig() {
-	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.Syslog.TLSMinVersion) {
+	if !netutils.IsValidTLS(w.GetConfig().Loggers.Syslog.TLSMinVersion) {
 		w.LogFatal(pkgconfig.PrefixLogWorker + "invalid tls min version")
 	}
 
@@ -95,7 +95,7 @@ func (w *Syslog) ConnectToRemote() {
 				w.GetConfig().Loggers.Syslog.Transport,
 				w.GetConfig().Loggers.Syslog.RemoteAddress)
 
-			tlsOptions := pkgconfig.TLSOptions{
+			tlsOptions := netutils.TLSOptions{
 				InsecureSkipVerify: w.GetConfig().Loggers.Syslog.TLSInsecure,
 				MinVersion:         w.GetConfig().Loggers.Syslog.TLSMinVersion,
 				CAFile:             w.GetConfig().Loggers.Syslog.CAFile,
@@ -103,7 +103,7 @@ func (w *Syslog) ConnectToRemote() {
 				KeyFile:            w.GetConfig().Loggers.Syslog.KeyFile,
 			}
 
-			tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
+			tlsConfig, err = netutils.TLSClientConfig(tlsOptions)
 			if err == nil {
 				logWriter, err = syslog.DialWithTLSConfig(w.GetConfig().Loggers.Syslog.Transport,
 					w.GetConfig().Loggers.Syslog.RemoteAddress, w.facility|w.severity,

@@ -35,7 +35,7 @@ func NewPdnsServer(next []Worker, config *pkgconfig.Config, logger *logger.Logge
 }
 
 func (w *PdnsServer) CheckConfig() {
-	if !pkgconfig.IsValidTLS(w.GetConfig().Collectors.PowerDNS.TLSMinVersion) {
+	if !netutils.IsValidTLS(w.GetConfig().Collectors.PowerDNS.TLSMinVersion) {
 		w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] invalid tls min version")
 	}
 }
@@ -132,7 +132,7 @@ func (w *PdnsServer) StartCollect() {
 	// start to listen
 	listener, err := netutils.StartToListen(
 		cfg.ListenIP, cfg.ListenPort, "",
-		cfg.TLSSupport, pkgconfig.TLSVersion[cfg.TLSMinVersion],
+		cfg.TLSSupport, netutils.TLSVersion[cfg.TLSMinVersion],
 		cfg.CertFile, cfg.KeyFile)
 	if err != nil {
 		w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] listening failed: ", err)

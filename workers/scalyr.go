@@ -19,6 +19,7 @@ import (
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
+	"github.com/dmachard/go-netutils"
 )
 
 // ScalyrClient is a client for Scalyr(https://www.dataset.com/)
@@ -87,7 +88,7 @@ func (w *ScalyrClient) ReadConfig() {
 	}
 
 	// tls client config
-	tlsOptions := pkgconfig.TLSOptions{
+	tlsOptions := netutils.TLSOptions{
 		InsecureSkipVerify: w.GetConfig().Loggers.ScalyrClient.TLSInsecure,
 		MinVersion:         w.GetConfig().Loggers.ScalyrClient.TLSMinVersion,
 		CAFile:             w.GetConfig().Loggers.ScalyrClient.CAFile,
@@ -95,7 +96,7 @@ func (w *ScalyrClient) ReadConfig() {
 		KeyFile:            w.GetConfig().Loggers.ScalyrClient.KeyFile,
 	}
 
-	tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
+	tlsConfig, err := netutils.TLSClientConfig(tlsOptions)
 	if err != nil {
 		w.LogFatal("unable to parse tls confgi: ", err)
 	}

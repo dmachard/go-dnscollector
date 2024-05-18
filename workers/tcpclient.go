@@ -121,7 +121,7 @@ func (w *TCPClient) ConnectToRemote() {
 
 			var tlsConfig *tls.Config
 
-			tlsOptions := pkgconfig.TLSOptions{
+			tlsOptions := netutils.TLSOptions{
 				InsecureSkipVerify: w.GetConfig().Loggers.TCPClient.TLSInsecure,
 				MinVersion:         w.GetConfig().Loggers.TCPClient.TLSMinVersion,
 				CAFile:             w.GetConfig().Loggers.TCPClient.CAFile,
@@ -129,7 +129,7 @@ func (w *TCPClient) ConnectToRemote() {
 				KeyFile:            w.GetConfig().Loggers.TCPClient.KeyFile,
 			}
 
-			tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
+			tlsConfig, err = netutils.TLSClientConfig(tlsOptions)
 			if err == nil {
 				dialer := &net.Dialer{Timeout: connTimeout}
 				conn, err = tls.DialWithDialer(dialer, netutils.SocketTCP, address, tlsConfig)

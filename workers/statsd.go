@@ -57,7 +57,7 @@ func NewStatsdClient(config *pkgconfig.Config, logger *logger.Logger, name strin
 }
 
 func (w *StatsdClient) ReadConfig() {
-	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.Statsd.TLSMinVersion) {
+	if !netutils.IsValidTLS(w.GetConfig().Loggers.Statsd.TLSMinVersion) {
 		w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "]statd - invalid tls min version")
 	}
 }
@@ -266,7 +266,7 @@ func (w *StatsdClient) StartLogging() {
 
 				var tlsConfig *tls.Config
 
-				tlsOptions := pkgconfig.TLSOptions{
+				tlsOptions := netutils.TLSOptions{
 					InsecureSkipVerify: w.GetConfig().Loggers.Statsd.TLSInsecure,
 					MinVersion:         w.GetConfig().Loggers.Statsd.TLSMinVersion,
 					CAFile:             w.GetConfig().Loggers.Statsd.CAFile,
@@ -274,7 +274,7 @@ func (w *StatsdClient) StartLogging() {
 					KeyFile:            w.GetConfig().Loggers.Statsd.KeyFile,
 				}
 
-				tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
+				tlsConfig, err = netutils.TLSClientConfig(tlsOptions)
 				if err == nil {
 					dialer := &net.Dialer{Timeout: connTimeout}
 					conn, err = tls.DialWithDialer(dialer, netutils.SocketTCP, address, tlsConfig)

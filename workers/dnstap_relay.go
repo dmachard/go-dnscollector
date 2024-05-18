@@ -27,7 +27,7 @@ func NewDnstapProxifier(next []Worker, config *pkgconfig.Config, logger *logger.
 }
 
 func (w *DnstapProxifier) CheckConfig() {
-	if !pkgconfig.IsValidTLS(w.GetConfig().Collectors.DnstapProxifier.TLSMinVersion) {
+	if !netutils.IsValidTLS(w.GetConfig().Collectors.DnstapProxifier.TLSMinVersion) {
 		w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] dnstaprelay - invalid tls min version")
 	}
 }
@@ -124,7 +124,7 @@ func (w *DnstapProxifier) StartCollect() {
 	listener, err := netutils.StartToListen(
 		w.GetConfig().Collectors.DnstapProxifier.ListenIP, w.GetConfig().Collectors.DnstapProxifier.ListenPort,
 		w.GetConfig().Collectors.DnstapProxifier.SockPath,
-		w.GetConfig().Collectors.DnstapProxifier.TLSSupport, pkgconfig.TLSVersion[w.GetConfig().Collectors.DnstapProxifier.TLSMinVersion],
+		w.GetConfig().Collectors.DnstapProxifier.TLSSupport, netutils.TLSVersion[w.GetConfig().Collectors.DnstapProxifier.TLSMinVersion],
 		w.GetConfig().Collectors.DnstapProxifier.CertFile, w.GetConfig().Collectors.DnstapProxifier.KeyFile)
 	if err != nil {
 		w.LogFatal("collector dnstaprelay listening failed: ", err)
