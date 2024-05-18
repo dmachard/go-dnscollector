@@ -8,6 +8,7 @@ require (
 	github.com/IBM/fluent-forward-go v0.2.2
 	github.com/IBM/sarama v1.43.2
 	github.com/cilium/ebpf v0.15.0
+	github.com/creasty/defaults v1.7.0
 	github.com/dmachard/go-clientsyslog v0.4.0
 	github.com/dmachard/go-dnstap-protobuf v1.0.1
 	github.com/dmachard/go-framestream v0.10.0
@@ -48,7 +49,6 @@ require (
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
-	github.com/creasty/defaults v1.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deepmap/oapi-codegen v1.12.4 // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
