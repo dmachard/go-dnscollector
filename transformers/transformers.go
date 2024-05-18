@@ -23,6 +23,7 @@ type Transformer struct {
 	logger            *logger.Logger
 	outChannels       []chan dnsutils.DNSMessage
 	LogInfo, LogError func(msg string, v ...interface{})
+	activeTransforms  []func(dm *dnsutils.DNSMessage) int
 }
 
 func NewTransformer(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, outChannels []chan dnsutils.DNSMessage) Transformer {
@@ -59,7 +60,7 @@ type Transforms struct {
 	ReducerTransform         *ReducerProcessor
 	ExtractProcessor         ExtractProcessor
 	MachineLearningTransform MlProcessor
-	ATagsTransform           ATagsProcessor
+	ATagsTransform           ATagsTransform
 	RelabelTransform         RelabelProcessor
 
 	activeTransforms []func(dm *dnsutils.DNSMessage) int
