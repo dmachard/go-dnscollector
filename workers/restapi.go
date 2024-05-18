@@ -87,7 +87,7 @@ func NewRestAPI(config *pkgconfig.Config, logger *logger.Logger, name string) *R
 }
 
 func (w *RestAPI) ReadConfig() {
-	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.RestAPI.TLSMinVersion) {
+	if !netutils.IsValidTLS(w.GetConfig().Loggers.RestAPI.TLSMinVersion) {
 		w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "]restapi - invalid tls min version")
 	}
 }
@@ -612,7 +612,7 @@ func (w *RestAPI) ListenAndServe() {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = pkgconfig.TLSVersion[w.GetConfig().Loggers.RestAPI.TLSMinVersion]
+		tlsConfig.MinVersion = netutils.TLSVersion[w.GetConfig().Loggers.RestAPI.TLSMinVersion]
 
 		listener, err = tls.Listen(netutils.SocketTCP, addrlisten, tlsConfig)
 

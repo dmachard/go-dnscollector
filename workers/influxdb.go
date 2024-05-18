@@ -6,6 +6,7 @@ import (
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
+	"github.com/dmachard/go-netutils"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go"
 	"github.com/influxdata/influxdb-client-go/api"
@@ -81,7 +82,7 @@ func (w *InfluxDBClient) StartLogging() {
 	opts := influxdb2.DefaultOptions()
 	opts.SetUseGZip(true)
 	if w.GetConfig().Loggers.InfluxDB.TLSSupport {
-		tlsOptions := pkgconfig.TLSOptions{
+		tlsOptions := netutils.TLSOptions{
 			InsecureSkipVerify: w.GetConfig().Loggers.InfluxDB.TLSInsecure,
 			MinVersion:         w.GetConfig().Loggers.InfluxDB.TLSMinVersion,
 			CAFile:             w.GetConfig().Loggers.InfluxDB.CAFile,
@@ -89,7 +90,7 @@ func (w *InfluxDBClient) StartLogging() {
 			KeyFile:            w.GetConfig().Loggers.InfluxDB.KeyFile,
 		}
 
-		tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
+		tlsConfig, err := netutils.TLSClientConfig(tlsOptions)
 		if err != nil {
 			w.LogFatal("logger=influxdb - tls config failed:", err)
 		}

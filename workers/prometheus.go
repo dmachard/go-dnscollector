@@ -1054,7 +1054,7 @@ func (w *Prometheus) InitProm() {
 }
 
 func (w *Prometheus) ReadConfig() {
-	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.Prometheus.TLSMinVersion) {
+	if !netutils.IsValidTLS(w.GetConfig().Loggers.Prometheus.TLSMinVersion) {
 		w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] prometheus - invalid tls min version")
 	}
 }
@@ -1106,7 +1106,7 @@ func (w *Prometheus) ListenAndServe() {
 		}
 
 		// update tls min version according to the user config
-		tlsConfig.MinVersion = pkgconfig.TLSVersion[w.GetConfig().Loggers.Prometheus.TLSMinVersion]
+		tlsConfig.MinVersion = netutils.TLSVersion[w.GetConfig().Loggers.Prometheus.TLSMinVersion]
 
 		if w.GetConfig().Loggers.Prometheus.TLSMutual {
 

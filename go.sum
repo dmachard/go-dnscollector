@@ -457,6 +457,8 @@ github.com/coreos/go-systemd/v22 v22.3.2/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSV
 github.com/coreos/go-systemd/v22 v22.5.0 h1:RrqgGjYQKalulkV8NGVIfkXQf6YYmOyiJKk8iXXhfZs=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
+github.com/creasty/defaults v1.7.0 h1:eNdqZvc5B509z18lD8yc212CAqJNvfT1Jq6L8WowdBA=
+github.com/creasty/defaults v1.7.0/go.mod h1:iGzKe6pbEHnpMPtfDXZEr0NVxWnPTjb1bbDy08fPzYM=
 github.com/cyberdelia/templates v0.0.0-20141128023046-ca7fffd4298c/go.mod h1:GyV+0YP4qX0UQ7r2MoYZ+AvYDp12OF5yg4q8rGnyNh4=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
@@ -477,6 +479,8 @@ github.com/dmachard/go-logger v0.4.0 h1:JJJW8C5Ri6OaWIECAE6dUNqLs4ym1+WX3xD6h5Mx
 github.com/dmachard/go-logger v0.4.0/go.mod h1:Gf6Au3CX5l3rZ+Tb3yX31u6h4lwVeZQSBklUI3h8gCA=
 github.com/dmachard/go-netutils v0.1.0 h1:VdlUeUvpv7t4iPbNfHIKRC0itE/OwEZRl/GIdsc0mqc=
 github.com/dmachard/go-netutils v0.1.0/go.mod h1:KgAYMuJcF+1Xwtm0SlpJ4S7jBvkFghj+7tFesaHv3BY=
+github.com/dmachard/go-netutils v0.2.0 h1:jizdNnEftIPOf+f3bUg2yWorX8wDQjBfeXYPAS6zGp8=
+github.com/dmachard/go-netutils v0.2.0/go.mod h1:KgAYMuJcF+1Xwtm0SlpJ4S7jBvkFghj+7tFesaHv3BY=
 github.com/dmachard/go-powerdns-protobuf v1.1.1 h1:HhgkjPGJN9QCLVFWxiTIwP3E0He8ET9uJZaT7/+6HXw=
 github.com/dmachard/go-powerdns-protobuf v1.1.1/go.mod h1:3sewpdCN4u5KpXBxrLpidHAC18v24y+f4OZ4GKfLaME=
 github.com/dmachard/go-topmap v1.0.0 h1:FzCnB80WJMSPhpEfWt/79y97XotTQjhlrsXKR6435ow=

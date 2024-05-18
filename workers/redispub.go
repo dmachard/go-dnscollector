@@ -122,7 +122,7 @@ func (w *RedisPub) ConnectToRemote() {
 
 			var tlsConfig *tls.Config
 
-			tlsOptions := pkgconfig.TLSOptions{
+			tlsOptions := netutils.TLSOptions{
 				InsecureSkipVerify: w.GetConfig().Loggers.RedisPub.TLSInsecure,
 				MinVersion:         w.GetConfig().Loggers.RedisPub.TLSMinVersion,
 				CAFile:             w.GetConfig().Loggers.RedisPub.CAFile,
@@ -130,7 +130,7 @@ func (w *RedisPub) ConnectToRemote() {
 				KeyFile:            w.GetConfig().Loggers.RedisPub.KeyFile,
 			}
 
-			tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
+			tlsConfig, err = netutils.TLSClientConfig(tlsOptions)
 			if err == nil {
 				dialer := &net.Dialer{Timeout: connTimeout}
 				conn, err = tls.DialWithDialer(dialer, netutils.SocketTCP, address, tlsConfig)

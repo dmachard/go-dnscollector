@@ -50,7 +50,7 @@ func (w *DnstapSender) ReadConfig() {
 		w.GetConfig().Loggers.DNSTap.ServerID = w.GetConfig().GetServerIdentity()
 	}
 
-	if !pkgconfig.IsValidTLS(w.GetConfig().Loggers.DNSTap.TLSMinVersion) {
+	if !netutils.IsValidTLS(w.GetConfig().Loggers.DNSTap.TLSMinVersion) {
 		w.LogFatal(pkgconfig.PrefixLogWorker + "invalid tls min version")
 	}
 }
@@ -103,15 +103,12 @@ func (w *DnstapSender) ConnectToRemote() {
 
 			var tlsConfig *tls.Config
 
-			tlsOptions := pkgconfig.TLSOptions{
-				InsecureSkipVerify: w.GetConfig().Loggers.DNSTap.TLSInsecure,
-				MinVersion:         w.GetConfig().Loggers.DNSTap.TLSMinVersion,
-				CAFile:             w.GetConfig().Loggers.DNSTap.CAFile,
-				CertFile:           w.GetConfig().Loggers.DNSTap.CertFile,
-				KeyFile:            w.GetConfig().Loggers.DNSTap.KeyFile,
+			tlsOptions := netutils.TLSOptions{
+				InsecureSkipVerify: w.GetConfig().Loggers.DNSTap.TLSInsecure, MinVersion: w.GetConfig().Loggers.DNSTap.TLSMinVersion,
+				CAFile: w.GetConfig().Loggers.DNSTap.CAFile, CertFile: w.GetConfig().Loggers.DNSTap.CertFile, KeyFile: w.GetConfig().Loggers.DNSTap.KeyFile,
 			}
 
-			tlsConfig, err = pkgconfig.TLSClientConfig(tlsOptions)
+			tlsConfig, err = netutils.TLSClientConfig(tlsOptions)
 			if err == nil {
 				dialer := &net.Dialer{Timeout: connTimeout}
 				conn, err = tls.DialWithDialer(dialer, netutils.SocketTCP, address, tlsConfig)

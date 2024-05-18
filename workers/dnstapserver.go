@@ -36,7 +36,7 @@ func NewDnstapServer(next []Worker, config *pkgconfig.Config, logger *logger.Log
 }
 
 func (w *DnstapServer) CheckConfig() {
-	if !pkgconfig.IsValidTLS(w.GetConfig().Collectors.Dnstap.TLSMinVersion) {
+	if !netutils.IsValidTLS(w.GetConfig().Collectors.Dnstap.TLSMinVersion) {
 		w.LogFatal(pkgconfig.PrefixLogWorker + "[" + w.GetName() + "] dnstap - invalid tls min version")
 	}
 }
@@ -192,7 +192,7 @@ func (w *DnstapServer) StartCollect() {
 	// start to listen
 	listener, err := netutils.StartToListen(
 		cfg.ListenIP, cfg.ListenPort, cfg.SockPath,
-		cfg.TLSSupport, pkgconfig.TLSVersion[cfg.TLSMinVersion],
+		cfg.TLSSupport, netutils.TLSVersion[cfg.TLSMinVersion],
 		cfg.CertFile, cfg.KeyFile)
 	if err != nil {
 		w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] listen error: ", err)

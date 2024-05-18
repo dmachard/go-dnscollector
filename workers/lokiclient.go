@@ -16,6 +16,7 @@ import (
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
+	"github.com/dmachard/go-netutils"
 	"github.com/gogo/protobuf/proto"
 	"github.com/grafana/dskit/backoff"
 	"github.com/klauspost/compress/snappy"
@@ -95,7 +96,7 @@ func (w *LokiClient) ReadConfig() {
 	}
 
 	// tls client config
-	tlsOptions := pkgconfig.TLSOptions{
+	tlsOptions := netutils.TLSOptions{
 		InsecureSkipVerify: w.GetConfig().Loggers.LokiClient.TLSInsecure,
 		MinVersion:         w.GetConfig().Loggers.LokiClient.TLSMinVersion,
 		CAFile:             w.GetConfig().Loggers.LokiClient.CAFile,
@@ -103,7 +104,7 @@ func (w *LokiClient) ReadConfig() {
 		KeyFile:            w.GetConfig().Loggers.LokiClient.KeyFile,
 	}
 
-	tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
+	tlsConfig, err := netutils.TLSClientConfig(tlsOptions)
 	if err != nil {
 		w.LogFatal(pkgconfig.PrefixLogWorker+"["+w.GetName()+"] loki - tls config failed:", err)
 	}

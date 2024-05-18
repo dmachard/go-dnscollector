@@ -81,7 +81,7 @@ func TestSuspicious_MalformedPacket(t *testing.T) {
 	suspicious.CheckIfSuspicious(&dm)
 
 	if dm.Suspicious.Score != 1.0 {
-		t.Errorf("suspicious score should be equal to 1.0")
+		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
 	}
 
 	if dm.Suspicious.MalformedPacket != true {
@@ -110,7 +110,7 @@ func TestSuspicious_LongDomain(t *testing.T) {
 	suspicious.CheckIfSuspicious(&dm)
 
 	if dm.Suspicious.Score != 1.0 {
-		t.Errorf("suspicious score should be equal to 1.0")
+		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
 	}
 
 	if dm.Suspicious.LongDomain != true {
@@ -139,7 +139,7 @@ func TestSuspicious_SlowDomain(t *testing.T) {
 	suspicious.CheckIfSuspicious(&dm)
 
 	if dm.Suspicious.Score != 1.0 {
-		t.Errorf("suspicious score should be equal to 1.0")
+		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
 	}
 
 	if dm.Suspicious.SlowDomain != true {
@@ -168,7 +168,7 @@ func TestSuspicious_LargePacket(t *testing.T) {
 	suspicious.CheckIfSuspicious(&dm)
 
 	if dm.Suspicious.Score != 1.0 {
-		t.Errorf("suspicious score should be equal to 1.0")
+		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
 	}
 
 	if dm.Suspicious.LargePacket != true {
@@ -196,7 +196,7 @@ func TestSuspicious_UncommonQtype(t *testing.T) {
 	suspicious.CheckIfSuspicious(&dm)
 
 	if dm.Suspicious.Score != 1.0 {
-		t.Errorf("suspicious score should be equal to 1.0")
+		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
 	}
 
 	if dm.Suspicious.UncommonQtypes != true {
@@ -225,7 +225,7 @@ func TestSuspicious_ExceedMaxLabels(t *testing.T) {
 	suspicious.CheckIfSuspicious(&dm)
 
 	if dm.Suspicious.Score != 1.0 {
-		t.Errorf("suspicious score should be equal to 1.0")
+		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
 	}
 
 	if dm.Suspicious.ExcessiveNumberLabels != true {
@@ -253,7 +253,7 @@ func TestSuspicious_UnallowedChars(t *testing.T) {
 	suspicious.CheckIfSuspicious(&dm)
 
 	if dm.Suspicious.Score != 1.0 {
-		t.Errorf("suspicious score should be equal to 1.0")
+		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
 	}
 
 	if dm.Suspicious.UnallowedChars != true {

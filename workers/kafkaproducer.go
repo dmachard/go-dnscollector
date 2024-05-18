@@ -12,6 +12,7 @@ import (
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
+	"github.com/dmachard/go-netutils"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/compress"
 	"github.com/segmentio/kafka-go/sasl/plain"
@@ -90,7 +91,7 @@ func (w *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Tim
 
 		// enable TLS
 		if w.GetConfig().Loggers.KafkaProducer.TLSSupport {
-			tlsOptions := pkgconfig.TLSOptions{
+			tlsOptions := netutils.TLSOptions{
 				InsecureSkipVerify: w.GetConfig().Loggers.KafkaProducer.TLSInsecure,
 				MinVersion:         w.GetConfig().Loggers.KafkaProducer.TLSMinVersion,
 				CAFile:             w.GetConfig().Loggers.KafkaProducer.CAFile,
@@ -98,7 +99,7 @@ func (w *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Tim
 				KeyFile:            w.GetConfig().Loggers.KafkaProducer.KeyFile,
 			}
 
-			tlsConfig, err := pkgconfig.TLSClientConfig(tlsOptions)
+			tlsConfig, err := netutils.TLSClientConfig(tlsOptions)
 			if err != nil {
 				w.LogFatal("logger=kafka - tls config failed:", err)
 			}

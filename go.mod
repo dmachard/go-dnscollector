@@ -8,11 +8,12 @@ require (
 	github.com/IBM/fluent-forward-go v0.2.2
 	github.com/IBM/sarama v1.43.2
 	github.com/cilium/ebpf v0.15.0
+	github.com/creasty/defaults v1.7.0
 	github.com/dmachard/go-clientsyslog v0.4.0
 	github.com/dmachard/go-dnstap-protobuf v1.0.1
 	github.com/dmachard/go-framestream v0.10.0
 	github.com/dmachard/go-logger v0.4.0
-	github.com/dmachard/go-netutils v0.1.0
+	github.com/dmachard/go-netutils v0.2.0
 	github.com/dmachard/go-powerdns-protobuf v1.1.1
 	github.com/dmachard/go-topmap v1.0.0
 	github.com/farsightsec/golang-framestream v0.3.0

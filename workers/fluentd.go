@@ -93,14 +93,14 @@ func (w *FluentdClient) ConnectToRemote() {
 
 			var tlsConfig *tls.Config
 
-			tlsOptions := pkgconfig.TLSOptions{
+			tlsOptions := netutils.TLSOptions{
 				InsecureSkipVerify: w.GetConfig().Loggers.Fluentd.TLSInsecure,
 				MinVersion:         w.GetConfig().Loggers.Fluentd.TLSMinVersion,
 				CAFile:             w.GetConfig().Loggers.Fluentd.CAFile,
 				CertFile:           w.GetConfig().Loggers.Fluentd.CertFile,
 				KeyFile:            w.GetConfig().Loggers.Fluentd.KeyFile,
 			}
-			tlsConfig, _ = pkgconfig.TLSClientConfig(tlsOptions)
+			tlsConfig, _ = netutils.TLSClientConfig(tlsOptions)
 
 			c = client.New(client.ConnectionOptions{
 				Factory: &client.ConnFactory{
