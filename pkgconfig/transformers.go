@@ -67,9 +67,9 @@ type ConfigTransformers struct {
 		ThresholdPacketLen int      `yaml:"threshold-packet-len" default:"1000"`
 		ThresholdSlow      float64  `yaml:"threshold-slow" default:"1.0"`
 		CommonQtypes       []string `yaml:"common-qtypes,flow" default:"[\"A\", \"AAAA\", \"TXT\", \"CNAME\", \"PTR\", \"NAPTR\", \"DNSKEY\", \"SRV\", \"SOA\", \"NS\", \"MX\", \"DS\", \"HTTPS\"]"`
-		UnallowedChars     []string `yaml:"unallowed-chars,flow" default:"[\"\"\", \"==\", \"/\", \":\"]"`
+		UnallowedChars     []string `yaml:"unallowed-chars,flow" default:"[\"\\\"\", \"==\", \"/\", \":\"]"`
 		ThresholdMaxLabels int      `yaml:"threshold-max-labels" default:"10"`
-		WhitelistDomains   []string `yaml:"whitelist-domains,flow" default:"[\"\\.ip6\\.arpa\"]"`
+		WhitelistDomains   []string `yaml:"whitelist-domains,flow" default:"[\"\\\\.ip6\\\\.arpa\"]"`
 	} `yaml:"suspicious"`
 	Extract struct {
 		Enable     bool `yaml:"enable" default:"false"`
