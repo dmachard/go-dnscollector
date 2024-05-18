@@ -18,6 +18,32 @@ var (
 	ReturnError   = 3
 )
 
+type Transformer struct {
+	config            *pkgconfig.ConfigTransformers
+	logger            *logger.Logger
+	outChannels       []chan dnsutils.DNSMessage
+	LogInfo, LogError func(msg string, v ...interface{})
+}
+
+func NewTransformer(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, outChannels []chan dnsutils.DNSMessage) Transformer {
+	t := Transformer{config: config, logger: logger, outChannels: outChannels}
+
+	t.LogInfo = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("worker - [%s] transformer #%d - atags - ", name, instance)
+		logger.Info(log+msg, v...)
+	}
+
+	t.LogError = func(msg string, v ...interface{}) {
+		log := fmt.Sprintf("worker - [%s] transformer #%d - atags - ", name, instance)
+		logger.Error(log+msg, v...)
+	}
+	return t
+}
+
+func (t *Transformer) ReloadConfig(config *pkgconfig.ConfigTransformers) {
+	t.config = config
+}
+
 type Transforms struct {
 	config   *pkgconfig.ConfigTransformers
 	logger   *logger.Logger
