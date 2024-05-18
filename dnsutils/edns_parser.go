@@ -17,13 +17,7 @@ var ErrDecodeEdnsTooManyOpts = errors.New("edns, packet contained too many OPT R
 
 var (
 	OptCodes = map[int]string{
-		3:  "NSID",
-		8:  "CSUBNET",
-		9:  "EXPIRE",
-		10: "COOKIE",
-		11: "KEEPALIVE",
-		12: "PADDING",
-		15: "ERRORS",
+		3: "NSID", 8: "CSUBNET", 9: "EXPIRE", 10: "COOKIE", 11: "KEEPALIVE", 12: "PADDING", 15: "ERRORS",
 	}
 	ErrorCodeToString = map[int]string{
 		0:  "Other",
