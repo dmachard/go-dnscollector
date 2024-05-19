@@ -235,6 +235,20 @@ multiplexer:
 `,
 			wantErr: false,
 		},
+		{
+			name: "Valid tranforms key with flow argument",
+			content: `
+multiplexer:
+  collectors:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+    transforms:
+      atags:
+        tags: [ "TXT:google", "MX:apple" ]
+`,
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {

@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -112,12 +113,16 @@ func CheckConfigWithTags(v reflect.Value, userCfg map[string]interface{}) error 
 		for i := 0; i < v.NumField(); i++ {
 			fieldValue := v.Field(i)
 			fieldType := t.Field(i)
-			fieldTag := fieldType.Tag.Get("yaml")
 
-			if fieldTag == k {
+			// get name from yaml tag
+			fieldTag := fieldType.Tag.Get("yaml")
+			tagClean := strings.TrimSuffix(fieldTag, ",flow")
+
+			// compare
+			if tagClean == k {
 				keyExist = true
 			}
-			if fieldValue.Kind() == reflect.Struct && fieldTag == k {
+			if fieldValue.Kind() == reflect.Struct && tagClean == k {
 				if kvMap, ok := kv.(map[string]interface{}); ok {
 					err := CheckConfigWithTags(fieldValue, kvMap)
 					if err != nil {
