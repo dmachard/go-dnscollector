@@ -65,34 +65,29 @@ type Transforms struct {
 	name     string
 	instance int
 
-	SuspiciousTransform  SuspiciousTransform
-	GeoipTransform       GeoIPProcessor
-	FilteringTransform   FilteringProcessor
-	UserPrivacyTransform UserPrivacyProcessor
-	// NormalizeTransform       NormalizeProcessor
+	SuspiciousTransform      SuspiciousTransform
+	GeoipTransform           GeoIPProcessor
+	FilteringTransform       FilteringProcessor
+	UserPrivacyTransform     UserPrivacyProcessor
 	LatencyTransform         *LatencyProcessor
 	ReducerTransform         *ReducerProcessor
 	ExtractProcessor         ExtractProcessor
 	MachineLearningTransform MlProcessor
-	// ATagsTransform           ATagsTransform
-	// RelabelTransform RelabelTransform
 
 	availableTransforms []TransformEntry
 	activeTransforms    []func(dm *dnsutils.DNSMessage) int
-
-	// activeTransforms2 []Transformation
 }
 
 func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DNSMessage, instance int) Transforms {
 
 	d := Transforms{config: config, logger: logger, name: name, instance: instance}
 
+	// order definition important
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewNormalizeTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewATagsTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewRelabelTransform(config, logger, name, instance, outChannels)})
 
 	d.SuspiciousTransform = NewSuspiciousTransform(config, logger, name, instance, outChannels)
-	// d.NormalizeTransform = NewNormalizeTransform(config, logger, name, instance, outChannels)
 	d.ExtractProcessor = NewExtractTransform(config, logger, name, instance, outChannels)
 	d.LatencyTransform = NewLatencyTransform(config, logger, name, instance, outChannels)
 	d.ReducerTransform = NewReducerTransform(config, logger, name, instance, outChannels)
@@ -100,8 +95,6 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 	d.FilteringTransform = NewFilteringTransform(config, logger, name, instance, outChannels)
 	d.GeoipTransform = NewDNSGeoIPTransform(config, logger, name, instance, outChannels)
 	d.MachineLearningTransform = NewMachineLearningTransform(config, logger, name, instance, outChannels)
-	// d.ATagsTransform = NewATagsTransform(config, logger, name, instance, outChannels)
-	//	d.RelabelTransform = NewRelabelTransform(config, logger, name, instance, outChannels)
 
 	d.Prepare()
 	return d
@@ -109,7 +102,7 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 
 func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
-	// p.NormalizeTransform.ReloadConfig(config)
+
 	p.GeoipTransform.ReloadConfig(config)
 	p.FilteringTransform.ReloadConfig(config)
 	p.UserPrivacyTransform.ReloadConfig(config)
@@ -118,9 +111,6 @@ func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.ReducerTransform.ReloadConfig(config)
 	p.ExtractProcessor.ReloadConfig(config)
 	p.MachineLearningTransform.ReloadConfig(config)
-	// p.ATagsTransform.ReloadConfig(config)
-	//	p.RelabelTransform.ReloadConfig(config)
-
 	for _, transform := range p.availableTransforms {
 		transform.ReloadConfig(config)
 	}
@@ -150,11 +140,6 @@ func (p *Transforms) Prepare() error {
 	} else {
 		prefixlog = ""
 	}
-
-	// if p.config.Normalize.Enable {
-	// 	p.LogInfo(prefixlog + "transformer=normalize is " + enabled)
-	// 	p.NormalizeTransform.LoadActiveProcessors()
-	// }
 
 	if p.config.GeoIP.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.geoipTransform)
@@ -228,15 +213,6 @@ func (p *Transforms) Prepare() error {
 		p.LogInfo(prefixlog + "transformer=machinelearning is" + enabled)
 	}
 
-	// if p.config.ATags.Enable {
-	// 	p.activeTransforms = append(p.activeTransforms, p.ATagsTransform.AddTags)
-	// 	p.LogInfo(prefixlog + "transformer=atags is enabled")
-	// }
-
-	// if p.config.Relabeling.Enable {
-	// 	p.LogInfo(prefixlog + "transformer=relabeling is enabled")
-	// }
-
 	return nil
 }
 
@@ -253,12 +229,6 @@ func (p *Transforms) InitDNSMessageFormat(dm *dnsutils.DNSMessage) {
 		p.SuspiciousTransform.InitDNSMessage(dm)
 	}
 
-	// if p.config.Normalize.Enable {
-	// 	if p.config.Normalize.AddTld || p.config.Normalize.AddTldPlusOne {
-	// 		p.NormalizeTransform.InitDNSMessage(dm)
-	// 	}
-	// }
-
 	if p.config.Extract.Enable {
 		if p.config.Extract.AddPayload {
 			p.ExtractProcessor.InitDNSMessage(dm)
@@ -272,14 +242,6 @@ func (p *Transforms) InitDNSMessageFormat(dm *dnsutils.DNSMessage) {
 	if p.config.MachineLearning.Enable {
 		p.MachineLearningTransform.InitDNSMessage(dm)
 	}
-
-	// if p.config.ATags.Enable {
-	// 	p.ATagsTransform.InitDNSMessage(dm)
-	// }
-
-	// if p.config.Relabeling.Enable {
-	// 	p.RelabelTransform.InitDNSMessage(dm)
-	// }
 }
 
 func (p *Transforms) Reset() {
