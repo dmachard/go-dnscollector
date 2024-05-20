@@ -86,27 +86,17 @@ type PrometheusCountersSet struct {
 	prom *Prometheus
 
 	// LRU cache counters per domains and IP
-	requesters   *expirable.LRU[string, int] // Requests number made by a specific requestor
-	allDomains   *expirable.LRU[string, int] // Requests number made to find out about a specific domain
-	validDomains *expirable.LRU[string, int] // Requests number ended up in NOERROR
-	nxDomains    *expirable.LRU[string, int] // Requests number ended up in NXDOMAIN
-	sfDomains    *expirable.LRU[string, int] // Requests number ended up in SERVFAIL
-	tlds         *expirable.LRU[string, int] // Requests number for a specific TLD
-	etldplusone  *expirable.LRU[string, int] // Requests number for a specific eTLD+1
-	suspicious   *expirable.LRU[string, int] // Requests number for a specific name that looked suspicious
-	evicted      *expirable.LRU[string, int] // Requests number for a specific name that timed out
+	requesters, allDomains             *expirable.LRU[string, int] // Requests number made by a specific requestor and to find out about a specific domain
+	validDomains, nxDomains, sfDomains *expirable.LRU[string, int] // Requests number ended up  in NOERROR, NXDOMAIN and  in SERVFAIL
+	tlds, etldplusone                  *expirable.LRU[string, int] // Requests number for a specific TLD and  eTLD+1
+	suspicious, evicted                *expirable.LRU[string, int] // Requests number for a specific name that looked suspicious and for a specific name that timed out
 
 	epsCounters EpsCounters
 
-	topRequesters   *topmap.TopMap
-	topAllDomains   *topmap.TopMap
-	topEvicted      *topmap.TopMap
-	topValidDomains *topmap.TopMap
-	topSfDomains    *topmap.TopMap
-	topNxDomains    *topmap.TopMap
-	topTlds         *topmap.TopMap
-	topETLDPlusOne  *topmap.TopMap
-	topSuspicious   *topmap.TopMap
+	topRequesters, topAllDomains, topEvicted    *topmap.TopMap
+	topValidDomains, topSfDomains, topNxDomains *topmap.TopMap
+	topTlds, topETLDPlusOne                     *topmap.TopMap
+	topSuspicious                               *topmap.TopMap
 
 	labels     prometheus.Labels // Do we really need to keep that map outside of registration?
 	sync.Mutex                   // Each PrometheusCountersSet locks independently
@@ -172,55 +162,32 @@ type Prometheus struct {
 	counters        *PromCounterCatalogueContainer
 
 	// All metrics use these descriptions when regestering
-	gaugeTopDomains      *prometheus.Desc
-	gaugeTopNoerrDomains *prometheus.Desc
-	gaugeTopNxDomains    *prometheus.Desc
-	gaugeTopSfDomains    *prometheus.Desc
-	gaugeTopRequesters   *prometheus.Desc
-	gaugeTopTlds         *prometheus.Desc
-	gaugeTopETldsPlusOne *prometheus.Desc
-	gaugeTopSuspicious   *prometheus.Desc
-	gaugeTopEvicted      *prometheus.Desc
+	gaugeTopDomains, gaugeTopRequesters                        *prometheus.Desc
+	gaugeTopNoerrDomains, gaugeTopNxDomains, gaugeTopSfDomains *prometheus.Desc
+	gaugeTopTlds, gaugeTopETldsPlusOne                         *prometheus.Desc
+	gaugeTopSuspicious, gaugeTopEvicted                        *prometheus.Desc
 
-	gaugeDomainsAll   *prometheus.Desc
-	gaugeDomainsValid *prometheus.Desc
-	gaugeDomainsNx    *prometheus.Desc
-	gaugeDomainsSf    *prometheus.Desc
-	gaugeRequesters   *prometheus.Desc
-	gaugeTlds         *prometheus.Desc
-	gaugeETldPlusOne  *prometheus.Desc
-	gaugeSuspicious   *prometheus.Desc
-	gaugeEvicted      *prometheus.Desc
+	gaugeDomainsAll, gaugeRequesters                  *prometheus.Desc
+	gaugeDomainsValid, gaugeDomainsNx, gaugeDomainsSf *prometheus.Desc
+	gaugeTlds, gaugeETldPlusOne                       *prometheus.Desc
+	gaugeSuspicious, gaugeEvicted                     *prometheus.Desc
 
-	gaugeEps    *prometheus.Desc
-	gaugeEpsMax *prometheus.Desc
+	gaugeEps, gaugeEpsMax *prometheus.Desc
 
-	counterQtypes      *prometheus.Desc
-	counterRcodes      *prometheus.Desc
-	counterIPProtocol  *prometheus.Desc
-	counterIPVersion   *prometheus.Desc
-	counterDNSMessages *prometheus.Desc
-	counterDNSQueries  *prometheus.Desc
-	counterDNSReplies  *prometheus.Desc
+	counterQtypes, counterRcodes                             *prometheus.Desc
+	counterIPProtocol, counterIPVersion                      *prometheus.Desc
+	counterDNSMessages, counterDNSQueries, counterDNSReplies *prometheus.Desc
 
-	counterFlagsTC          *prometheus.Desc
-	counterFlagsAA          *prometheus.Desc
-	counterFlagsRA          *prometheus.Desc
-	counterFlagsAD          *prometheus.Desc
-	counterFlagsMalformed   *prometheus.Desc
-	counterFlagsFragmented  *prometheus.Desc
-	counterFlagsReassembled *prometheus.Desc
+	counterFlagsTC, counterFlagsAA                                         *prometheus.Desc
+	counterFlagsRA, counterFlagsAD                                         *prometheus.Desc
+	counterFlagsMalformed, counterFlagsFragmented, counterFlagsReassembled *prometheus.Desc
 
-	totalBytes         *prometheus.Desc
-	totalReceivedBytes *prometheus.Desc
-	totalSentBytes     *prometheus.Desc
+	totalBytes, totalReceivedBytes, totalSentBytes *prometheus.Desc
 
 	// Histograms are heavy and expensive, turned off
 	// by default in configuration
-	histogramQueriesLength *prometheus.HistogramVec
-	histogramRepliesLength *prometheus.HistogramVec
-	histogramQnamesLength  *prometheus.HistogramVec
-	histogramLatencies     *prometheus.HistogramVec
+	histogramQueriesLength, histogramRepliesLength *prometheus.HistogramVec
+	histogramQnamesLength, histogramLatencies      *prometheus.HistogramVec
 }
 
 func newPrometheusCounterSet(w *Prometheus, labels prometheus.Labels) *PrometheusCountersSet {
@@ -238,10 +205,8 @@ func newPrometheusCounterSet(w *Prometheus, labels prometheus.Labels) *Prometheu
 		evicted:      expirable.NewLRU[string, int](w.GetConfig().Loggers.Prometheus.DefaultDomainsCacheSize, nil, time.Second*time.Duration(w.GetConfig().Loggers.Prometheus.DefaultDomainsCacheTTL)),
 
 		epsCounters: EpsCounters{
-			TotalRcodes:     make(map[string]float64),
-			TotalQtypes:     make(map[string]float64),
-			TotalIPVersion:  make(map[string]float64),
-			TotalIPProtocol: make(map[string]float64),
+			TotalRcodes: make(map[string]float64), TotalQtypes: make(map[string]float64),
+			TotalIPVersion: make(map[string]float64), TotalIPProtocol: make(map[string]float64),
 		},
 
 		topRequesters:   topmap.NewTopMap(w.GetConfig().Loggers.Prometheus.TopN),
