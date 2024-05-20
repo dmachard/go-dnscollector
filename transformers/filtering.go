@@ -2,7 +2,6 @@ package transformers
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -13,240 +12,205 @@ import (
 	"inet.af/netaddr"
 )
 
-type FilteringProcessor struct {
-	config                                 *pkgconfig.ConfigTransformers
-	logger                                 *logger.Logger
+type FilteringTransform struct {
+	GenericTransformer
 	dropDomains, keepDomains               bool
 	mapRcodes                              map[string]bool
 	ipsetDrop, ipsetKeep, rDataIpsetKeep   *netaddr.IPSet
 	listFqdns, listKeepFqdns               map[string]bool
 	listDomainsRegex, listKeepDomainsRegex map[string]*regexp.Regexp
 	downsample, downsampleCount            int
-	activeFilters                          []func(dm *dnsutils.DNSMessage) bool
-	outChannels                            []chan dnsutils.DNSMessage
-	LogInfo, LogError                      func(msg string, v ...interface{})
 }
 
-func NewFilteringTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage) FilteringProcessor {
-	d := FilteringProcessor{
-		config:               config,
-		logger:               logger,
-		mapRcodes:            make(map[string]bool),
-		ipsetDrop:            &netaddr.IPSet{},
-		ipsetKeep:            &netaddr.IPSet{},
-		rDataIpsetKeep:       &netaddr.IPSet{},
-		listFqdns:            make(map[string]bool),
-		listDomainsRegex:     make(map[string]*regexp.Regexp),
-		listKeepFqdns:        make(map[string]bool),
-		listKeepDomainsRegex: make(map[string]*regexp.Regexp),
-		outChannels:          outChannels,
-	}
-
-	d.LogInfo = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)
-		logger.Info(log+msg, v...)
-	}
-
-	d.LogError = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)
-		logger.Error(log+msg, v...)
-	}
-
-	return d
+func NewFilteringTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, nextWorkers []chan dnsutils.DNSMessage) *FilteringTransform {
+	t := &FilteringTransform{GenericTransformer: NewTransformer(config, logger, "filtering", name, instance, nextWorkers)}
+	t.mapRcodes = make(map[string]bool)
+	t.ipsetDrop = &netaddr.IPSet{}
+	t.ipsetKeep = &netaddr.IPSet{}
+	t.rDataIpsetKeep = &netaddr.IPSet{}
+	t.listFqdns = make(map[string]bool)
+	t.listDomainsRegex = make(map[string]*regexp.Regexp)
+	t.listKeepFqdns = make(map[string]bool)
+	t.listKeepDomainsRegex = make(map[string]*regexp.Regexp)
+	return t
 }
 
-func (p *FilteringProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
-	p.config = config
+func (t *FilteringTransform) GetTransforms() ([]Subtransform, error) {
+	subtransforms := []Subtransform{}
+
+	t.LoadRcodes()
+	t.LoadDomainsList()
+	t.LoadQueryIPList()
+	t.LoadrDataIPList()
+
+	if !t.config.Filtering.LogQueries {
+		subtransforms = append(subtransforms, Subtransform{name: "filtering:drop-queries", processFunc: t.dropQueryFilter})
+	}
+	if !t.config.Filtering.LogReplies {
+		subtransforms = append(subtransforms, Subtransform{name: "filtering:drop-replies", processFunc: t.dropReplyFilter})
+	}
+	if len(t.mapRcodes) > 0 {
+		subtransforms = append(subtransforms, Subtransform{name: "filtering:drop-rcode", processFunc: t.dropRCodeFilter})
+	}
+	if len(t.config.Filtering.KeepQueryIPFile) > 0 {
+		subtransforms = append(subtransforms, Subtransform{name: "filtering:keep-queryip", processFunc: t.keepQueryIPFilter})
+	}
+	if len(t.config.Filtering.DropQueryIPFile) > 0 {
+		subtransforms = append(subtransforms, Subtransform{name: "filtering:drop-queryip", processFunc: t.dropQueryIPFilter})
+	}
+	if len(t.config.Filtering.KeepRdataFile) > 0 {
+		subtransforms = append(subtransforms, Subtransform{name: "filtering:keep-rdata", processFunc: t.keepRdataFilter})
+	}
+	if len(t.listFqdns) > 0 {
+		subtransforms = append(subtransforms, Subtransform{name: "filtering:drop-fqdn", processFunc: t.dropFqdnFilter})
+	}
+	if len(t.listDomainsRegex) > 0 {
+		subtransforms = append(subtransforms, Subtransform{name: "filtering:drop-domain", processFunc: t.dropDomainRegexFilter})
+	}
+	if len(t.listKeepFqdns) > 0 {
+		subtransforms = append(subtransforms, Subtransform{name: "filtering:keep-fqdn", processFunc: t.keepFqdnFilter})
+	}
+	if len(t.listKeepDomainsRegex) > 0 {
+		subtransforms = append(subtransforms, Subtransform{name: "filtering:keep-domain", processFunc: t.keepDomainRegexFilter})
+	}
+	if t.config.Filtering.Downsample > 0 {
+		t.downsample = t.config.Filtering.Downsample
+		t.downsampleCount = 0
+		subtransforms = append(subtransforms, Subtransform{name: "filtering:downsampling", processFunc: t.downsampleFilter})
+	}
+	return subtransforms, nil
 }
 
-func (p *FilteringProcessor) LoadActiveFilters() {
-	// TODO: Change to iteration through Filtering to add filters in custom order.
-
-	// clean the slice
-	p.activeFilters = p.activeFilters[:0]
-
-	if !p.config.Filtering.LogQueries {
-		p.activeFilters = append(p.activeFilters, p.ignoreQueryFilter)
-		p.LogInfo("drop queries transformer is enabled")
-	}
-
-	if !p.config.Filtering.LogReplies {
-		p.activeFilters = append(p.activeFilters, p.ignoreReplyFilter)
-		p.LogInfo("drop replies transformer is enabled")
-	}
-
-	if len(p.mapRcodes) > 0 {
-		p.activeFilters = append(p.activeFilters, p.rCodeFilter)
-	}
-
-	if len(p.config.Filtering.KeepQueryIPFile) > 0 {
-		p.activeFilters = append(p.activeFilters, p.keepQueryIPFilter)
-	}
-
-	if len(p.config.Filtering.DropQueryIPFile) > 0 {
-		p.activeFilters = append(p.activeFilters, p.DropQueryIPFilter)
-	}
-
-	if len(p.config.Filtering.KeepRdataFile) > 0 {
-		p.activeFilters = append(p.activeFilters, p.keepRdataFilter)
-	}
-
-	if len(p.listFqdns) > 0 {
-		p.activeFilters = append(p.activeFilters, p.dropFqdnFilter)
-	}
-
-	if len(p.listDomainsRegex) > 0 {
-		p.activeFilters = append(p.activeFilters, p.dropDomainRegexFilter)
-	}
-
-	if len(p.listKeepFqdns) > 0 {
-		p.activeFilters = append(p.activeFilters, p.keepFqdnFilter)
-	}
-
-	if len(p.listKeepDomainsRegex) > 0 {
-		p.activeFilters = append(p.activeFilters, p.keepDomainRegexFilter)
-	}
-
-	// set downsample if desired
-	if p.config.Filtering.Downsample > 0 {
-		p.downsample = p.config.Filtering.Downsample
-		p.downsampleCount = 0
-		p.activeFilters = append(p.activeFilters, p.downsampleFilter)
-		p.LogInfo("transformer=downsampling is enabled")
-	}
-}
-
-func (p *FilteringProcessor) LoadRcodes() {
+func (t *FilteringTransform) LoadRcodes() {
 	// empty
-	for key := range p.mapRcodes {
-		delete(p.mapRcodes, key)
+	for key := range t.mapRcodes {
+		delete(t.mapRcodes, key)
 	}
 
 	// add
-	for _, v := range p.config.Filtering.DropRcodes {
-		p.mapRcodes[v] = true
+	for _, v := range t.config.Filtering.DropRcodes {
+		t.mapRcodes[v] = true
 	}
 }
 
-func (p *FilteringProcessor) LoadQueryIPList() {
-	if len(p.config.Filtering.DropQueryIPFile) > 0 {
-		read, err := p.loadQueryIPList(p.config.Filtering.DropQueryIPFile, true)
+func (t *FilteringTransform) LoadQueryIPList() {
+	if len(t.config.Filtering.DropQueryIPFile) > 0 {
+		read, err := t.loadQueryIPList(t.config.Filtering.DropQueryIPFile, true)
 		if err != nil {
-			p.LogError("unable to open query ip file: ", err)
+			t.LogError("unable to open query ip file: ", err)
 		}
-		p.LogInfo("loaded with %d query ip to the drop list", read)
+		t.LogInfo("loaded with %d query ip to the drop list", read)
 	}
 
-	if len(p.config.Filtering.KeepQueryIPFile) > 0 {
-		read, err := p.loadQueryIPList(p.config.Filtering.KeepQueryIPFile, false)
+	if len(t.config.Filtering.KeepQueryIPFile) > 0 {
+		read, err := t.loadQueryIPList(t.config.Filtering.KeepQueryIPFile, false)
 		if err != nil {
-			p.LogError("unable to open query ip file: ", err)
+			t.LogError("unable to open query ip file: ", err)
 		}
-		p.LogInfo("loaded with %d query ip to the keep list", read)
-	}
-}
-
-func (p *FilteringProcessor) LoadrDataIPList() {
-	if len(p.config.Filtering.KeepRdataFile) > 0 {
-		read, err := p.loadKeepRdataIPList(p.config.Filtering.KeepRdataFile)
-		if err != nil {
-			p.LogError("unable to open rdata ip file: ", err)
-		}
-		p.LogInfo("loaded with %d rdata ip to the keep list", read)
+		t.LogInfo("loaded with %d query ip to the keep list", read)
 	}
 }
 
-func (p *FilteringProcessor) LoadDomainsList() {
+func (t *FilteringTransform) LoadrDataIPList() {
+	if len(t.config.Filtering.KeepRdataFile) > 0 {
+		read, err := t.loadKeepRdataIPList(t.config.Filtering.KeepRdataFile)
+		if err != nil {
+			t.LogError("unable to open rdata ip file: ", err)
+		}
+		t.LogInfo("loaded with %d rdata ip to the keep list", read)
+	}
+}
+
+func (t *FilteringTransform) LoadDomainsList() {
 	// before to start, reset all maps
-	p.dropDomains = false
-	p.keepDomains = false
+	t.dropDomains = false
+	t.keepDomains = false
 
-	for key := range p.listFqdns {
-		delete(p.listFqdns, key)
+	for key := range t.listFqdns {
+		delete(t.listFqdns, key)
 	}
-	for key := range p.listDomainsRegex {
-		delete(p.listDomainsRegex, key)
+	for key := range t.listDomainsRegex {
+		delete(t.listDomainsRegex, key)
 	}
-	for key := range p.listKeepFqdns {
-		delete(p.listKeepFqdns, key)
+	for key := range t.listKeepFqdns {
+		delete(t.listKeepFqdns, key)
 	}
-	for key := range p.listKeepDomainsRegex {
-		delete(p.listKeepDomainsRegex, key)
+	for key := range t.listKeepDomainsRegex {
+		delete(t.listKeepDomainsRegex, key)
 	}
 
-	if len(p.config.Filtering.DropFqdnFile) > 0 {
-		file, err := os.Open(p.config.Filtering.DropFqdnFile)
+	if len(t.config.Filtering.DropFqdnFile) > 0 {
+		file, err := os.Open(t.config.Filtering.DropFqdnFile)
 		if err != nil {
-			p.LogError("unable to open fqdn file: ", err)
-			p.dropDomains = true
+			t.LogError("unable to open fqdn file: ", err)
+			t.dropDomains = true
 		} else {
 
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				fqdn := strings.ToLower(scanner.Text())
-				p.listFqdns[fqdn] = true
+				t.listFqdns[fqdn] = true
 			}
-			p.LogInfo("loaded with %d fqdn to the drop list", len(p.listFqdns))
-			p.dropDomains = true
+			t.LogInfo("loaded with %d fqdn to the drop list", len(t.listFqdns))
+			t.dropDomains = true
 		}
 
 	}
 
-	if len(p.config.Filtering.DropDomainFile) > 0 {
-		file, err := os.Open(p.config.Filtering.DropDomainFile)
+	if len(t.config.Filtering.DropDomainFile) > 0 {
+		file, err := os.Open(t.config.Filtering.DropDomainFile)
 		if err != nil {
-			p.LogError("unable to open regex list file: ", err)
-			p.dropDomains = true
+			t.LogError("unable to open regex list file: ", err)
+			t.dropDomains = true
 		} else {
 
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				domain := strings.ToLower(scanner.Text())
-				p.listDomainsRegex[domain] = regexp.MustCompile(domain)
+				t.listDomainsRegex[domain] = regexp.MustCompile(domain)
 			}
-			p.LogInfo("loaded with %d domains to the drop list", len(p.listDomainsRegex))
-			p.dropDomains = true
+			t.LogInfo("loaded with %d domains to the drop list", len(t.listDomainsRegex))
+			t.dropDomains = true
 		}
 	}
 
-	if len(p.config.Filtering.KeepFqdnFile) > 0 {
-		file, err := os.Open(p.config.Filtering.KeepFqdnFile)
+	if len(t.config.Filtering.KeepFqdnFile) > 0 {
+		file, err := os.Open(t.config.Filtering.KeepFqdnFile)
 		if err != nil {
-			p.LogError("unable to open KeepFqdnFile file: ", err)
-			p.keepDomains = false
+			t.LogError("unable to open KeepFqdnFile file: ", err)
+			t.keepDomains = false
 		} else {
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				keepDomain := strings.ToLower(scanner.Text())
-				p.listKeepFqdns[keepDomain] = true
+				t.listKeepFqdns[keepDomain] = true
 			}
-			p.LogInfo("loaded with %d fqdns to the keep list", len(p.listKeepFqdns))
-			p.keepDomains = true
+			t.LogInfo("loaded with %d fqdn(s) to the keep list", len(t.listKeepFqdns))
+			t.keepDomains = true
 		}
 	}
 
-	if len(p.config.Filtering.KeepDomainFile) > 0 {
-		file, err := os.Open(p.config.Filtering.KeepDomainFile)
+	if len(t.config.Filtering.KeepDomainFile) > 0 {
+		file, err := os.Open(t.config.Filtering.KeepDomainFile)
 		if err != nil {
-			p.LogError("unable to open KeepDomainFile file: ", err)
-			p.keepDomains = false
+			t.LogError("unable to open KeepDomainFile file: ", err)
+			t.keepDomains = false
 		} else {
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				keepDomain := strings.ToLower(scanner.Text())
-				p.listKeepDomainsRegex[keepDomain] = regexp.MustCompile(keepDomain)
+				t.listKeepDomainsRegex[keepDomain] = regexp.MustCompile(keepDomain)
 			}
-			p.LogInfo("loaded with %d domains to the keep list", len(p.listKeepDomainsRegex))
-			p.keepDomains = true
+			t.LogInfo("loaded with %d domains to the keep list", len(t.listKeepDomainsRegex))
+			t.keepDomains = true
 		}
 	}
 }
 
-func (p *FilteringProcessor) loadQueryIPList(fname string, drop bool) (uint64, error) {
+func (t *FilteringTransform) loadQueryIPList(fname string, drop bool) (uint64, error) {
 	var emptyIPSet *netaddr.IPSet
-	p.ipsetDrop = emptyIPSet
-	p.ipsetKeep = emptyIPSet
+	t.ipsetDrop = emptyIPSet
+	t.ipsetKeep = emptyIPSet
 
 	file, err := os.Open(fname)
 	if err != nil {
@@ -263,7 +227,7 @@ func (p *FilteringProcessor) loadQueryIPList(fname string, drop bool) (uint64, e
 		if err != nil {
 			ip, err := netaddr.ParseIP(ipOrPrefix)
 			if err != nil {
-				p.LogError("%s in in %s is neither an IP address nor a prefix", ipOrPrefix, fname)
+				t.LogError("%s in in %s is neither an IP address nor a prefix", ipOrPrefix, fname)
 				continue
 			}
 			ipsetbuilder.Add(ip)
@@ -275,17 +239,17 @@ func (p *FilteringProcessor) loadQueryIPList(fname string, drop bool) (uint64, e
 	file.Close()
 
 	if drop {
-		p.ipsetDrop, err = ipsetbuilder.IPSet()
+		t.ipsetDrop, err = ipsetbuilder.IPSet()
 	} else {
-		p.ipsetKeep, err = ipsetbuilder.IPSet()
+		t.ipsetKeep, err = ipsetbuilder.IPSet()
 	}
 
 	return read, err
 }
 
-func (p *FilteringProcessor) loadKeepRdataIPList(fname string) (uint64, error) {
+func (t *FilteringTransform) loadKeepRdataIPList(fname string) (uint64, error) {
 	var emptyIPSet *netaddr.IPSet
-	p.rDataIpsetKeep = emptyIPSet
+	t.rDataIpsetKeep = emptyIPSet
 
 	file, err := os.Open(fname)
 	if err != nil {
@@ -302,7 +266,7 @@ func (p *FilteringProcessor) loadKeepRdataIPList(fname string) (uint64, error) {
 		if err != nil {
 			ip, err := netaddr.ParseIP(ipOrPrefix)
 			if err != nil {
-				p.LogError("%s in in %s is neither an IP address nor a prefix", ipOrPrefix, fname)
+				t.LogError("%s in in %s is neither an IP address nor a prefix", ipOrPrefix, fname)
 				continue
 			}
 			ipsetbuilder.Add(ip)
@@ -313,129 +277,121 @@ func (p *FilteringProcessor) loadKeepRdataIPList(fname string) (uint64, error) {
 
 	file.Close()
 
-	p.rDataIpsetKeep, err = ipsetbuilder.IPSet()
+	t.rDataIpsetKeep, err = ipsetbuilder.IPSet()
 
 	return read, err
 }
 
-func (p *FilteringProcessor) ignoreQueryFilter(dm *dnsutils.DNSMessage) bool {
-	return dm.DNS.Type == dnsutils.DNSQuery
-}
-
-func (p *FilteringProcessor) ignoreReplyFilter(dm *dnsutils.DNSMessage) bool {
-	return dm.DNS.Type == dnsutils.DNSReply
-}
-
-func (p *FilteringProcessor) rCodeFilter(dm *dnsutils.DNSMessage) bool {
-	// drop according to the rcode ?
-	if _, ok := p.mapRcodes[dm.DNS.Rcode]; ok {
-		return true
+func (t *FilteringTransform) dropQueryFilter(dm *dnsutils.DNSMessage) int {
+	if dm.DNS.Type == dnsutils.DNSQuery {
+		return ReturnDrop
 	}
-	return false
+	return ReturnKeep
 }
 
-func (p *FilteringProcessor) keepQueryIPFilter(dm *dnsutils.DNSMessage) bool {
+func (t *FilteringTransform) dropReplyFilter(dm *dnsutils.DNSMessage) int {
+	if dm.DNS.Type == dnsutils.DNSReply {
+		return ReturnDrop
+	}
+	return ReturnKeep
+}
+
+func (t *FilteringTransform) dropRCodeFilter(dm *dnsutils.DNSMessage) int {
+	// drop according to the rcode ?
+	if _, ok := t.mapRcodes[dm.DNS.Rcode]; ok {
+		return ReturnDrop
+	}
+	return ReturnKeep
+}
+
+func (t *FilteringTransform) keepQueryIPFilter(dm *dnsutils.DNSMessage) int {
 	ip, _ := netaddr.ParseIP(dm.NetworkInfo.QueryIP)
-	return !p.ipsetKeep.Contains(ip)
+	if t.ipsetKeep.Contains(ip) {
+		return ReturnKeep
+	}
+	return ReturnDrop
 }
 
-func (p *FilteringProcessor) DropQueryIPFilter(dm *dnsutils.DNSMessage) bool {
+func (t *FilteringTransform) dropQueryIPFilter(dm *dnsutils.DNSMessage) int {
 	ip, _ := netaddr.ParseIP(dm.NetworkInfo.QueryIP)
-	return p.ipsetDrop.Contains(ip)
+	if t.ipsetDrop.Contains(ip) {
+		return ReturnDrop
+	}
+	return ReturnKeep
 }
 
-func (p *FilteringProcessor) keepRdataFilter(dm *dnsutils.DNSMessage) bool {
+func (t *FilteringTransform) keepRdataFilter(dm *dnsutils.DNSMessage) int {
 	if len(dm.DNS.DNSRRs.Answers) > 0 {
 		// If even one exists in filter list then pass through filter
 		for _, answer := range dm.DNS.DNSRRs.Answers {
 			if answer.Rdatatype == "A" || answer.Rdatatype == "AAAA" {
 				ip, _ := netaddr.ParseIP(answer.Rdata)
-				if p.rDataIpsetKeep.Contains(ip) {
-					return false
+				if t.rDataIpsetKeep.Contains(ip) {
+					return ReturnKeep
 				}
 			}
 		}
 	}
-	return true
+	return ReturnDrop
 }
 
-func (p *FilteringProcessor) dropFqdnFilter(dm *dnsutils.DNSMessage) bool {
-	if _, ok := p.listFqdns[dm.DNS.Qname]; ok {
-		return true
+func (t *FilteringTransform) dropFqdnFilter(dm *dnsutils.DNSMessage) int {
+	if _, ok := t.listFqdns[dm.DNS.Qname]; ok {
+		return ReturnDrop
 	}
-	return false
+	return ReturnKeep
 }
 
-func (p *FilteringProcessor) dropDomainRegexFilter(dm *dnsutils.DNSMessage) bool {
+func (t *FilteringTransform) dropDomainRegexFilter(dm *dnsutils.DNSMessage) int {
 	// partial fqdn with regexp
-	for _, d := range p.listDomainsRegex {
+	for _, d := range t.listDomainsRegex {
 		if d.MatchString(dm.DNS.Qname) {
-			return true
+			return ReturnDrop
 		}
 	}
-	return false
+	return ReturnKeep
 }
 
-func (p *FilteringProcessor) keepFqdnFilter(dm *dnsutils.DNSMessage) bool {
-	if _, ok := p.listKeepFqdns[dm.DNS.Qname]; ok {
-		return false
+func (t *FilteringTransform) keepFqdnFilter(dm *dnsutils.DNSMessage) int {
+	if _, ok := t.listKeepFqdns[dm.DNS.Qname]; ok {
+		return ReturnKeep
 	}
-	return true
+	return ReturnDrop
 }
 
-func (p *FilteringProcessor) keepDomainRegexFilter(dm *dnsutils.DNSMessage) bool {
+func (t *FilteringTransform) keepDomainRegexFilter(dm *dnsutils.DNSMessage) int {
 	// partial fqdn with regexp
-	for _, d := range p.listKeepDomainsRegex {
+	for _, d := range t.listKeepDomainsRegex {
 		if d.MatchString(dm.DNS.Qname) {
-			return false
+			return ReturnKeep
 		}
 	}
-	return true
+	return ReturnDrop
 }
 
 // drop all except every nth entry
-func (p *FilteringProcessor) downsampleFilter(dm *dnsutils.DNSMessage) bool {
+func (t *FilteringTransform) downsampleFilter(dm *dnsutils.DNSMessage) int {
+	if dm.Filtering == nil {
+		dm.Filtering = &dnsutils.TransformFiltering{SampleRate: 0}
+	}
+
 	// Increment the downsampleCount for each processed DNS message.
-	p.downsampleCount += 1
+	t.downsampleCount += 1
 
 	// Calculate the remainder once and add sampling rate to DNS message
-	remainder := p.downsampleCount % p.downsample
+	remainder := t.downsampleCount % t.downsample
 	if dm.Filtering != nil {
-		dm.Filtering.SampleRate = p.downsample
+		dm.Filtering.SampleRate = t.downsample
 	}
 
 	switch remainder {
 	// If the remainder is zero, reset the downsampleCount to 0 and drop the DNS message by returning false.
 	case 0:
-		p.downsampleCount = 0
-		return false
+		t.downsampleCount = 0
+		return ReturnDrop
 
 	// If the remainder is not zero, keep the DNS message and return true.
 	default:
-		return true
-	}
-}
-
-func (p *FilteringProcessor) CheckIfDrop(dm *dnsutils.DNSMessage) bool {
-	if len(p.activeFilters) == 0 {
-		return false
-	}
-
-	var value bool
-	for _, fn := range p.activeFilters {
-		value = fn(dm)
-		if value {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (p *FilteringProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
-	if dm.Filtering == nil {
-		dm.Filtering = &dnsutils.TransformFiltering{
-			SampleRate: 0,
-		}
+		return ReturnKeep
 	}
 }

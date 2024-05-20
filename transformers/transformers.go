@@ -14,6 +14,7 @@ const (
 
 var (
 	ReturnSuccess = 1
+	ReturnKeep    = 1
 	ReturnDrop    = 2
 	ReturnError   = 3
 )
@@ -24,7 +25,7 @@ type Subtransform struct {
 }
 
 type Transformation interface {
-	GetTransforms() []Subtransform
+	GetTransforms() ([]Subtransform, error)
 	ReloadConfig(config *pkgconfig.ConfigTransformers)
 }
 
@@ -67,7 +68,6 @@ type Transforms struct {
 
 	SuspiciousTransform      SuspiciousTransform
 	GeoipTransform           GeoIPProcessor
-	FilteringTransform       FilteringProcessor
 	UserPrivacyTransform     UserPrivacyProcessor
 	LatencyTransform         *LatencyProcessor
 	ReducerTransform         *ReducerProcessor
@@ -84,6 +84,7 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 
 	// order definition important
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewNormalizeTransform(config, logger, name, instance, outChannels)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewFilteringTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewATagsTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewRelabelTransform(config, logger, name, instance, outChannels)})
 
@@ -92,7 +93,6 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 	d.LatencyTransform = NewLatencyTransform(config, logger, name, instance, outChannels)
 	d.ReducerTransform = NewReducerTransform(config, logger, name, instance, outChannels)
 	d.UserPrivacyTransform = NewUserPrivacyTransform(config, logger, name, instance, outChannels)
-	d.FilteringTransform = NewFilteringTransform(config, logger, name, instance, outChannels)
 	d.GeoipTransform = NewDNSGeoIPTransform(config, logger, name, instance, outChannels)
 	d.MachineLearningTransform = NewMachineLearningTransform(config, logger, name, instance, outChannels)
 
@@ -104,7 +104,6 @@ func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
 
 	p.GeoipTransform.ReloadConfig(config)
-	p.FilteringTransform.ReloadConfig(config)
 	p.UserPrivacyTransform.ReloadConfig(config)
 	p.LatencyTransform.ReloadConfig(config)
 	p.SuspiciousTransform.ReloadConfig(config)
@@ -124,9 +123,14 @@ func (p *Transforms) Prepare() error {
 	tranformsList := []string{}
 
 	for _, transform := range p.availableTransforms {
-		for _, subprocessor := range transform.GetTransforms() {
-			p.activeTransforms = append(p.activeTransforms, subprocessor.processFunc)
-			tranformsList = append(tranformsList, subprocessor.name)
+		subtransforms, err := transform.GetTransforms()
+		if err != nil {
+			p.LogError("error on init subtransforms:", err)
+			continue
+		}
+		for _, subtransform := range subtransforms {
+			p.activeTransforms = append(p.activeTransforms, subtransform.processFunc)
+			tranformsList = append(tranformsList, subtransform.name)
 		}
 	}
 
@@ -168,17 +172,6 @@ func (p *Transforms) Prepare() error {
 		}
 	}
 
-	if p.config.Filtering.Enable {
-		p.LogInfo(prefixlog + "transformer=filtering is " + enabled)
-
-		p.FilteringTransform.LoadRcodes()
-		p.FilteringTransform.LoadDomainsList()
-		p.FilteringTransform.LoadQueryIPList()
-		p.FilteringTransform.LoadrDataIPList()
-
-		p.FilteringTransform.LoadActiveFilters()
-	}
-
 	if p.config.Latency.Enable {
 		if p.config.Latency.MeasureLatency {
 			p.activeTransforms = append(p.activeTransforms, p.measureLatency)
@@ -217,9 +210,9 @@ func (p *Transforms) Prepare() error {
 }
 
 func (p *Transforms) InitDNSMessageFormat(dm *dnsutils.DNSMessage) {
-	if p.config.Filtering.Enable {
-		p.FilteringTransform.InitDNSMessage(dm)
-	}
+	// if p.config.Filtering.Enable {
+	// 	p.FilteringTransform.InitDNSMessage(dm)
+	// }
 
 	if p.config.GeoIP.Enable {
 		p.GeoipTransform.InitDNSMessage(dm)
@@ -320,23 +313,21 @@ func (p *Transforms) addBase64Payload(dm *dnsutils.DNSMessage) int {
 
 func (p *Transforms) ProcessMessage(dm *dnsutils.DNSMessage) int {
 	// Begin to normalize
-	//p.NormalizeTransform.ProcessDNSMessage(dm)
+	// p.NormalizeTransform.ProcessDNSMessage(dm)
 
 	// Traffic filtering ?
-	if p.FilteringTransform.CheckIfDrop(dm) {
-		return ReturnDrop
-	}
+	// if p.FilteringTransform.CheckIfDrop(dm) {
+	// 	return ReturnDrop
+	// }
 
 	// Traffic reducer ?
-	if p.ReducerTransform.ProcessDNSMessage(dm) == ReturnDrop {
-		return ReturnDrop
-	}
+	// if p.ReducerTransform.ProcessDNSMessage(dm) == ReturnDrop {
+	// 	return ReturnDrop
+	// }
 
-	//  and finally apply other transformation
-	var rCode int
-	for _, fn := range p.activeTransforms {
-		rCode = fn(dm)
-		if rCode == ReturnDrop {
+	//
+	for _, transform := range p.activeTransforms {
+		if transform(dm) == ReturnDrop {
 			return ReturnDrop
 		}
 	}

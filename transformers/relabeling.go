@@ -18,13 +18,13 @@ func NewRelabelTransform(config *pkgconfig.ConfigTransformers, logger *logger.Lo
 	return t
 }
 
-func (t *RelabelTransform) GetTransforms() []Subtransform {
-	subprocessors := []Subtransform{}
+func (t *RelabelTransform) GetTransforms() ([]Subtransform, error) {
+	subtransforms := []Subtransform{}
 	if len(t.config.Relabeling.Rename) > 0 || len(t.config.Relabeling.Remove) > 0 {
 		actions := t.Precompile()
-		subprocessors = append(subprocessors, Subtransform{name: "relabeling:" + actions, processFunc: t.AddRules})
+		subtransforms = append(subtransforms, Subtransform{name: "relabeling:" + actions, processFunc: t.AddRules})
 	}
-	return subprocessors
+	return subtransforms, nil
 }
 
 // Pre-compile regular expressions
@@ -62,9 +62,7 @@ func (t *RelabelTransform) Precompile() string {
 
 func (t *RelabelTransform) AddRules(dm *dnsutils.DNSMessage) int {
 	if dm.Relabeling == nil {
-		dm.Relabeling = &dnsutils.TransformRelabeling{
-			Rules: t.RelabelingRules,
-		}
+		dm.Relabeling = &dnsutils.TransformRelabeling{Rules: t.RelabelingRules}
 	}
 	return ReturnSuccess
 }

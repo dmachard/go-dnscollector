@@ -15,12 +15,12 @@ func NewATagsTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logg
 	return t
 }
 
-func (t *ATagsTransform) GetTransforms() []Subtransform {
-	subprocessors := []Subtransform{}
+func (t *ATagsTransform) GetTransforms() ([]Subtransform, error) {
+	subtransforms := []Subtransform{}
 	if len(t.config.ATags.AddTags) > 0 {
-		subprocessors = append(subprocessors, Subtransform{name: "atags:add", processFunc: t.addTags})
+		subtransforms = append(subtransforms, Subtransform{name: "atags:add", processFunc: t.addTags})
 	}
-	return subprocessors
+	return subtransforms, nil
 }
 
 func (t *ATagsTransform) addTags(dm *dnsutils.DNSMessage) int {

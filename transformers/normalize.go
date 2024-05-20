@@ -54,7 +54,7 @@ func NewNormalizeTransform(config *pkgconfig.ConfigTransformers, logger *logger.
 	return t
 }
 
-func (t *NormalizeTransform) GetTransforms() []Subtransform {
+func (t *NormalizeTransform) GetTransforms() ([]Subtransform, error) {
 	subprocessors := []Subtransform{}
 	if t.config.Normalize.RRLowerCase {
 		subprocessors = append(subprocessors, Subtransform{name: "normalize:rr-lowercase", processFunc: t.RRLowercase})
@@ -72,18 +72,8 @@ func (t *NormalizeTransform) GetTransforms() []Subtransform {
 	if t.config.Normalize.AddTldPlusOne {
 		subprocessors = append(subprocessors, Subtransform{name: "normalize:add-etld+1", processFunc: t.GetEffectiveTldPlusOne})
 	}
-	return subprocessors
+	return subprocessors, nil
 }
-
-// func (t *NormalizeTransform) InitDNSMessage(dm *dnsutils.DNSMessage) {
-// 	if dm.PublicSuffix == nil {
-// 		dm.PublicSuffix = &dnsutils.TransformPublicSuffix{
-// 			QnamePublicSuffix:        "-",
-// 			QnameEffectiveTLDPlusOne: "-",
-// 			ManagedByICANN:           false,
-// 		}
-// 	}
-// }
 
 func (t *NormalizeTransform) QnameLowercase(dm *dnsutils.DNSMessage) int {
 	dm.DNS.Qname = strings.ToLower(dm.DNS.Qname)
@@ -153,19 +143,3 @@ func (t *NormalizeTransform) GetEffectiveTldPlusOne(dm *dnsutils.DNSMessage) int
 
 	return ReturnSuccess
 }
-
-// func (t *NormalizeTransform) ProcessDNSMessage(dm *dnsutils.DNSMessage) int {
-// 	if len(t.activeProcessors) == 0 {
-// 		return ReturnSuccess
-// 	}
-
-// 	var rCode int
-// 	for _, fn := range t.activeProcessors {
-// 		rCode = fn(dm)
-// 		if rCode != ReturnSuccess {
-// 			return rCode
-// 		}
-// 	}
-
-// 	return ReturnSuccess
-// }
