@@ -75,12 +75,12 @@ type Transforms struct {
 	ExtractProcessor         ExtractProcessor
 	MachineLearningTransform MlProcessor
 	// ATagsTransform           ATagsTransform
-	//RelabelTransform RelabelTransform
+	// RelabelTransform RelabelTransform
 
 	availableTransforms []TransformEntry
 	activeTransforms    []func(dm *dnsutils.DNSMessage) int
 
-	//activeTransforms2 []Transformation
+	// activeTransforms2 []Transformation
 }
 
 func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DNSMessage, instance int) Transforms {
@@ -99,7 +99,7 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 	d.FilteringTransform = NewFilteringTransform(config, logger, name, instance, outChannels)
 	d.GeoipTransform = NewDNSGeoIPTransform(config, logger, name, instance, outChannels)
 	d.MachineLearningTransform = NewMachineLearningTransform(config, logger, name, instance, outChannels)
-	//d.ATagsTransform = NewATagsTransform(config, logger, name, instance, outChannels)
+	// d.ATagsTransform = NewATagsTransform(config, logger, name, instance, outChannels)
 	//	d.RelabelTransform = NewRelabelTransform(config, logger, name, instance, outChannels)
 
 	d.Prepare()

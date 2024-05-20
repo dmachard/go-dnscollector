@@ -29,15 +29,15 @@ func (t *RelabelTransform) GetTransforms() []Subtransform {
 
 // Pre-compile regular expressions
 func (t *RelabelTransform) Precompile() string {
-	action_rename := false
-	action_drop := false
+	actionRename := false
+	actionRemove := false
 	for _, label := range t.config.Relabeling.Rename {
 		t.RelabelingRules = append(t.RelabelingRules, dnsutils.RelabelingRule{
 			Regex:       regexp.MustCompile(label.Regex),
 			Replacement: label.Replacement,
 			Action:      "rename",
 		})
-		action_rename = true
+		actionRename = true
 	}
 	for _, label := range t.config.Relabeling.Remove {
 		t.RelabelingRules = append(t.RelabelingRules, dnsutils.RelabelingRule{
@@ -45,16 +45,16 @@ func (t *RelabelTransform) Precompile() string {
 			Replacement: label.Replacement,
 			Action:      "drop",
 		})
-		action_drop = true
+		actionRemove = true
 	}
 
-	if action_rename && action_drop {
+	if actionRename && actionRemove {
 		return "rename+remove"
 	}
-	if action_rename && !action_drop {
+	if actionRename && !actionRemove {
 		return "rename"
 	}
-	if !action_rename && action_drop {
+	if !actionRename && actionRemove {
 		return "remove"
 	}
 	return "error"
