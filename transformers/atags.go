@@ -7,33 +7,27 @@ import (
 )
 
 type ATagsTransform struct {
-	Transformer
+	GenericTransformer
 }
 
-func NewATagsTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, nextWorkers []chan dnsutils.DNSMessage) ATagsTransform {
-	return ATagsTransform{Transformer: NewTransformer(config, logger, name, instance, nextWorkers)}
+func NewATagsTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, nextWorkers []chan dnsutils.DNSMessage) *ATagsTransform {
+	t := &ATagsTransform{GenericTransformer: NewTransformer(config, logger, "atags", name, instance, nextWorkers)}
+	return t
 }
 
-func (t *ATagsTransform) InitDNSMessage(dm *dnsutils.DNSMessage) {
-	if dm.ATags != nil {
-		return
+func (t *ATagsTransform) GetTransforms() []Subtransform {
+	subprocessors := []Subtransform{}
+	if len(t.config.ATags.AddTags) > 0 {
+		subprocessors = append(subprocessors, Subtransform{name: "atags:add", processFunc: t.addTags})
 	}
-	dm.ATags = &dnsutils.TransformATags{Tags: []string{}}
+	return subprocessors
 }
 
-func (t *ATagsTransform) IsEnabled() bool { return t.config.ATags.Enable }
-
-func (t *ATagsTransform) GetTransforms() []func(dm *dnsutils.DNSMessage) int {
-	if t.IsEnabled() {
-		t.LogInfo("transformer=atags is enabled")
-		t.activeTransforms = append(t.activeTransforms, t.AddTags)
+func (t *ATagsTransform) addTags(dm *dnsutils.DNSMessage) int {
+	if dm.ATags == nil {
+		dm.ATags = &dnsutils.TransformATags{Tags: []string{}}
 	}
-	return t.activeTransforms
-}
 
-func (t *ATagsTransform) AddTags(dm *dnsutils.DNSMessage) int {
-	if t.IsEnabled() {
-		dm.ATags.Tags = append(dm.ATags.Tags, t.config.ATags.Tags...)
-	}
+	dm.ATags.Tags = append(dm.ATags.Tags, t.config.ATags.AddTags...)
 	return ReturnSuccess
 }

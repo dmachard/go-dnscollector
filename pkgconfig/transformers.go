@@ -80,8 +80,8 @@ type ConfigTransformers struct {
 		AddFeatures bool `yaml:"add-features" default:"false"`
 	} `yaml:"machine-learning"`
 	ATags struct {
-		Enable bool     `yaml:"enable" default:"false"`
-		Tags   []string `yaml:"tags,flow" default:"[]"`
+		Enable  bool     `yaml:"enable" default:"false"`
+		AddTags []string `yaml:"add-tags,flow" default:"[]"`
 	} `yaml:"atags"`
 	Relabeling struct {
 		Enable bool               `yaml:"enable" default:"false"`

@@ -286,7 +286,7 @@ type DNSTapProcessor struct {
 }
 
 func NewDNSTapProcessor(connID int, peerName string, config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
-	w := DNSTapProcessor{GenericWorker: NewGenericWorker(config, logger, name, "dnstap processor #"+strconv.Itoa(connID), size, pkgconfig.DefaultMonitor)}
+	w := DNSTapProcessor{GenericWorker: NewGenericWorker(config, logger, name, "[conn=#"+strconv.Itoa(connID)+"] dnstap processor", size, pkgconfig.DefaultMonitor)}
 	w.ConnID = connID
 	w.PeerName = peerName
 	w.dataChannel = make(chan []byte, size)

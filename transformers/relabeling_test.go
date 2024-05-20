@@ -24,10 +24,6 @@ func TestRelabeling_CompileRegex(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 	relabelingProc := NewRelabelTransform(config, logger.New(false), "test", 0, outChans)
 
-	if !relabelingProc.IsEnabled() {
-		t.Errorf("subprocessor should be enabled")
-	}
-
 	if len(relabelingProc.RelabelingRules) != 2 {
 		t.Errorf("invalid number of rules")
 	}

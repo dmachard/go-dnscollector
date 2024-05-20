@@ -18,31 +18,45 @@ var (
 	ReturnError   = 3
 )
 
-type Transformer struct {
-	config            *pkgconfig.ConfigTransformers
-	logger            *logger.Logger
-	outChannels       []chan dnsutils.DNSMessage
-	LogInfo, LogError func(msg string, v ...interface{})
-	activeTransforms  []func(dm *dnsutils.DNSMessage) int
+type Subtransform struct {
+	name        string
+	processFunc func(dm *dnsutils.DNSMessage) int
 }
 
-func NewTransformer(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, outChannels []chan dnsutils.DNSMessage) Transformer {
-	t := Transformer{config: config, logger: logger, outChannels: outChannels}
+type Transformation interface {
+	GetTransforms() []Subtransform
+	ReloadConfig(config *pkgconfig.ConfigTransformers)
+}
+
+type GenericTransformer struct {
+	config            *pkgconfig.ConfigTransformers
+	logger            *logger.Logger
+	name              string
+	nextWorkers       []chan dnsutils.DNSMessage
+	LogInfo, LogError func(msg string, v ...interface{})
+}
+
+func NewTransformer(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, workerName string, instance int, nextWorkers []chan dnsutils.DNSMessage) GenericTransformer {
+	t := GenericTransformer{config: config, logger: logger, nextWorkers: nextWorkers, name: name}
 
 	t.LogInfo = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("worker - [%s] transformer #%d - atags - ", name, instance)
+		log := fmt.Sprintf("worker - [%s] [conn=#%d] [transform=%s] - ", workerName, instance, name)
 		logger.Info(log+msg, v...)
 	}
 
 	t.LogError = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("worker - [%s] transformer #%d - atags - ", name, instance)
+		log := fmt.Sprintf("worker - [%s] [conn=#%d] [transform=%s] - ", workerName, instance, name)
 		logger.Error(log+msg, v...)
 	}
 	return t
 }
 
-func (t *Transformer) ReloadConfig(config *pkgconfig.ConfigTransformers) {
+func (t *GenericTransformer) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	t.config = config
+}
+
+type TransformEntry struct {
+	Transformation
 }
 
 type Transforms struct {
@@ -60,15 +74,21 @@ type Transforms struct {
 	ReducerTransform         *ReducerProcessor
 	ExtractProcessor         ExtractProcessor
 	MachineLearningTransform MlProcessor
-	ATagsTransform           ATagsTransform
-	RelabelTransform         RelabelProcessor
+	// ATagsTransform           ATagsTransform
+	//RelabelTransform RelabelTransform
 
-	activeTransforms []func(dm *dnsutils.DNSMessage) int
+	availableTransforms []TransformEntry
+	activeTransforms    []func(dm *dnsutils.DNSMessage) int
+
+	//activeTransforms2 []Transformation
 }
 
 func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DNSMessage, instance int) Transforms {
 
 	d := Transforms{config: config, logger: logger, name: name, instance: instance}
+
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewATagsTransform(config, logger, name, instance, outChannels)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewRelabelTransform(config, logger, name, instance, outChannels)})
 
 	d.SuspiciousTransform = NewSuspiciousTransform(config, logger, name, instance, outChannels)
 	d.NormalizeTransform = NewNormalizeTransform(config, logger, name, instance, outChannels)
@@ -79,8 +99,8 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 	d.FilteringTransform = NewFilteringTransform(config, logger, name, instance, outChannels)
 	d.GeoipTransform = NewDNSGeoIPTransform(config, logger, name, instance, outChannels)
 	d.MachineLearningTransform = NewMachineLearningTransform(config, logger, name, instance, outChannels)
-	d.ATagsTransform = NewATagsTransform(config, logger, name, instance, outChannels)
-	d.RelabelTransform = NewRelabelTransform(config, logger, name, instance, outChannels)
+	//d.ATagsTransform = NewATagsTransform(config, logger, name, instance, outChannels)
+	//	d.RelabelTransform = NewRelabelTransform(config, logger, name, instance, outChannels)
 
 	d.Prepare()
 	return d
@@ -97,8 +117,12 @@ func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.ReducerTransform.ReloadConfig(config)
 	p.ExtractProcessor.ReloadConfig(config)
 	p.MachineLearningTransform.ReloadConfig(config)
-	p.ATagsTransform.ReloadConfig(config)
-	p.RelabelTransform.ReloadConfig(config)
+	// p.ATagsTransform.ReloadConfig(config)
+	//	p.RelabelTransform.ReloadConfig(config)
+
+	for _, transform := range p.availableTransforms {
+		transform.ReloadConfig(config)
+	}
 
 	p.Prepare()
 }
@@ -106,6 +130,18 @@ func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 func (p *Transforms) Prepare() error {
 	// clean the slice
 	p.activeTransforms = p.activeTransforms[:0]
+	tranformsList := []string{}
+
+	for _, transform := range p.availableTransforms {
+		for _, subprocessor := range transform.GetTransforms() {
+			p.activeTransforms = append(p.activeTransforms, subprocessor.processFunc)
+			tranformsList = append(tranformsList, subprocessor.name)
+		}
+	}
+
+	if len(tranformsList) > 0 {
+		p.LogInfo("enabled transformers: %v", tranformsList)
+	}
 
 	var prefixlog string
 	if p.instance > 0 {
@@ -191,14 +227,14 @@ func (p *Transforms) Prepare() error {
 		p.LogInfo(prefixlog + "transformer=machinelearning is" + enabled)
 	}
 
-	if p.config.ATags.Enable {
-		p.activeTransforms = append(p.activeTransforms, p.ATagsTransform.AddTags)
-		p.LogInfo(prefixlog + "transformer=atags is enabled")
-	}
+	// if p.config.ATags.Enable {
+	// 	p.activeTransforms = append(p.activeTransforms, p.ATagsTransform.AddTags)
+	// 	p.LogInfo(prefixlog + "transformer=atags is enabled")
+	// }
 
-	if p.config.Relabeling.Enable {
-		p.LogInfo(prefixlog + "transformer=relabeling is enabled")
-	}
+	// if p.config.Relabeling.Enable {
+	// 	p.LogInfo(prefixlog + "transformer=relabeling is enabled")
+	// }
 
 	return nil
 }
@@ -236,13 +272,13 @@ func (p *Transforms) InitDNSMessageFormat(dm *dnsutils.DNSMessage) {
 		p.MachineLearningTransform.InitDNSMessage(dm)
 	}
 
-	if p.config.ATags.Enable {
-		p.ATagsTransform.InitDNSMessage(dm)
-	}
+	// if p.config.ATags.Enable {
+	// 	p.ATagsTransform.InitDNSMessage(dm)
+	// }
 
-	if p.config.Relabeling.Enable {
-		p.RelabelTransform.InitDNSMessage(dm)
-	}
+	// if p.config.Relabeling.Enable {
+	// 	p.RelabelTransform.InitDNSMessage(dm)
+	// }
 }
 
 func (p *Transforms) Reset() {

@@ -12,25 +12,21 @@ func TestATags_AddTag(t *testing.T) {
 	// enable feature
 	config := pkgconfig.GetFakeConfigTransformers()
 	config.ATags.Enable = true
-	config.ATags.Tags = append(config.ATags.Tags, "tag1")
-	config.ATags.Tags = append(config.ATags.Tags, "tag2")
+	config.ATags.AddTags = append(config.ATags.AddTags, "tag1")
+	config.ATags.AddTags = append(config.ATags.AddTags, "tag2")
 
 	// init the processor
 	outChans := []chan dnsutils.DNSMessage{}
 	transform := NewATagsTransform(config, logger.New(false), "test", 0, outChans)
 
-	if !transform.IsEnabled() {
-		t.Errorf("subprocessor should be enabled")
-	}
-
+	// add tags
 	dm := dnsutils.GetFakeDNSMessage()
+	transform.addTags(&dm)
 
-	transform.InitDNSMessage(&dm)
+	// check results
 	if dm.ATags == nil {
 		t.Errorf("DNSMessage.Atags should be not nil")
 	}
-
-	transform.AddTags(&dm)
 	if len(dm.ATags.Tags) != 2 {
 		t.Errorf("incorrect number of tag in DNSMessage")
 	}
