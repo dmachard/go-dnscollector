@@ -17,11 +17,11 @@ func TestATags_AddTag(t *testing.T) {
 
 	// init the processor
 	outChans := []chan dnsutils.DNSMessage{}
-	transform := NewATagsTransform(config, logger.New(false), "test", 0, outChans)
+	atags := NewATagsTransform(config, logger.New(false), "test", 0, outChans)
 
 	// add tags
 	dm := dnsutils.GetFakeDNSMessage()
-	transform.addTags(&dm)
+	atags.addTags(&dm)
 
 	// check results
 	if dm.ATags == nil {
