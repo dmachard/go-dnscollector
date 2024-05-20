@@ -65,11 +65,11 @@ type Transforms struct {
 	name     string
 	instance int
 
-	SuspiciousTransform      SuspiciousTransform
-	GeoipTransform           GeoIPProcessor
-	FilteringTransform       FilteringProcessor
-	UserPrivacyTransform     UserPrivacyProcessor
-	NormalizeTransform       NormalizeProcessor
+	SuspiciousTransform  SuspiciousTransform
+	GeoipTransform       GeoIPProcessor
+	FilteringTransform   FilteringProcessor
+	UserPrivacyTransform UserPrivacyProcessor
+	// NormalizeTransform       NormalizeProcessor
 	LatencyTransform         *LatencyProcessor
 	ReducerTransform         *ReducerProcessor
 	ExtractProcessor         ExtractProcessor
@@ -87,11 +87,12 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 
 	d := Transforms{config: config, logger: logger, name: name, instance: instance}
 
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewNormalizeTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewATagsTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewRelabelTransform(config, logger, name, instance, outChannels)})
 
 	d.SuspiciousTransform = NewSuspiciousTransform(config, logger, name, instance, outChannels)
-	d.NormalizeTransform = NewNormalizeTransform(config, logger, name, instance, outChannels)
+	// d.NormalizeTransform = NewNormalizeTransform(config, logger, name, instance, outChannels)
 	d.ExtractProcessor = NewExtractTransform(config, logger, name, instance, outChannels)
 	d.LatencyTransform = NewLatencyTransform(config, logger, name, instance, outChannels)
 	d.ReducerTransform = NewReducerTransform(config, logger, name, instance, outChannels)
@@ -108,7 +109,7 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 
 func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
-	p.NormalizeTransform.ReloadConfig(config)
+	// p.NormalizeTransform.ReloadConfig(config)
 	p.GeoipTransform.ReloadConfig(config)
 	p.FilteringTransform.ReloadConfig(config)
 	p.UserPrivacyTransform.ReloadConfig(config)
@@ -140,7 +141,7 @@ func (p *Transforms) Prepare() error {
 	}
 
 	if len(tranformsList) > 0 {
-		p.LogInfo("enabled transformers: %v", tranformsList)
+		p.LogInfo("transformers applied: %v", tranformsList)
 	}
 
 	var prefixlog string
@@ -150,10 +151,10 @@ func (p *Transforms) Prepare() error {
 		prefixlog = ""
 	}
 
-	if p.config.Normalize.Enable {
-		p.LogInfo(prefixlog + "transformer=normalize is " + enabled)
-		p.NormalizeTransform.LoadActiveProcessors()
-	}
+	// if p.config.Normalize.Enable {
+	// 	p.LogInfo(prefixlog + "transformer=normalize is " + enabled)
+	// 	p.NormalizeTransform.LoadActiveProcessors()
+	// }
 
 	if p.config.GeoIP.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.geoipTransform)
@@ -252,11 +253,11 @@ func (p *Transforms) InitDNSMessageFormat(dm *dnsutils.DNSMessage) {
 		p.SuspiciousTransform.InitDNSMessage(dm)
 	}
 
-	if p.config.Normalize.Enable {
-		if p.config.Normalize.AddTld || p.config.Normalize.AddTldPlusOne {
-			p.NormalizeTransform.InitDNSMessage(dm)
-		}
-	}
+	// if p.config.Normalize.Enable {
+	// 	if p.config.Normalize.AddTld || p.config.Normalize.AddTldPlusOne {
+	// 		p.NormalizeTransform.InitDNSMessage(dm)
+	// 	}
+	// }
 
 	if p.config.Extract.Enable {
 		if p.config.Extract.AddPayload {
@@ -357,7 +358,7 @@ func (p *Transforms) addBase64Payload(dm *dnsutils.DNSMessage) int {
 
 func (p *Transforms) ProcessMessage(dm *dnsutils.DNSMessage) int {
 	// Begin to normalize
-	p.NormalizeTransform.ProcessDNSMessage(dm)
+	//p.NormalizeTransform.ProcessDNSMessage(dm)
 
 	// Traffic filtering ?
 	if p.FilteringTransform.CheckIfDrop(dm) {
@@ -373,8 +374,8 @@ func (p *Transforms) ProcessMessage(dm *dnsutils.DNSMessage) int {
 	var rCode int
 	for _, fn := range p.activeTransforms {
 		rCode = fn(dm)
-		if rCode != ReturnSuccess {
-			return rCode
+		if rCode == ReturnDrop {
+			return ReturnDrop
 		}
 	}
 

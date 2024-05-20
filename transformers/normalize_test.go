@@ -127,7 +127,7 @@ func TestNormalize_AddTLD(t *testing.T) {
 			dm := dnsutils.GetFakeDNSMessage()
 			dm.DNS.Qname = tc.qname
 
-			psl.InitDNSMessage(&dm)
+			// psl.InitDNSMessage(&dm)
 
 			psl.GetEffectiveTld(&dm)
 			if dm.PublicSuffix.QnamePublicSuffix != tc.want {
@@ -172,7 +172,7 @@ func TestNormalize_AddTldPlusOne(t *testing.T) {
 			dm := dnsutils.GetFakeDNSMessage()
 			dm.DNS.Qname = tc.qname
 
-			psl.InitDNSMessage(&dm)
+			// psl.InitDNSMessage(&dm)
 
 			psl.GetEffectiveTldPlusOne(&dm)
 			if dm.PublicSuffix.QnameEffectiveTLDPlusOne != tc.want {
@@ -201,7 +201,7 @@ func TestNormalize_SuffixUnmanaged(t *testing.T) {
 	dm.DNS.Qname = "play.googleapis.com"
 	// // ===END PRIVATE DOMAINS===
 
-	psl.InitDNSMessage(&dm)
+	// psl.InitDNSMessage(&dm)
 	psl.GetEffectiveTld(&dm)
 	if dm.PublicSuffix.ManagedByICANN {
 		t.Errorf("Qname %s should be private domains", dm.DNS.Qname)
@@ -225,7 +225,7 @@ func TestNormalize_SuffixICANNManaged(t *testing.T) {
 	// ..
 	// // ===END PRIVATE DOMAINS===
 
-	psl.InitDNSMessage(&dm)
+	// psl.InitDNSMessage(&dm)
 	psl.GetEffectiveTld(&dm)
 	if !dm.PublicSuffix.ManagedByICANN {
 		t.Errorf("Qname %s should be ICANN managed", dm.DNS.Qname)
@@ -244,7 +244,7 @@ func BenchmarkNormalize_GetEffectiveTld(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		subprocessor.InitDNSMessage(&dm)
+		// subprocessor.InitDNSMessage(&dm)
 		subprocessor.GetEffectiveTld(&dm)
 	}
 }
@@ -259,7 +259,7 @@ func BenchmarkNormalize_GetEffectiveTldPlusOne(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		subprocessor.InitDNSMessage(&dm)
+		// subprocessor.InitDNSMessage(&dm)
 		subprocessor.GetEffectiveTld(&dm)
 	}
 }
