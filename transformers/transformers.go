@@ -70,7 +70,6 @@ type Transforms struct {
 	GeoipTransform           GeoIPProcessor
 	UserPrivacyTransform     UserPrivacyProcessor
 	LatencyTransform         *LatencyProcessor
-	ReducerTransform         *ReducerProcessor
 	ExtractProcessor         ExtractProcessor
 	MachineLearningTransform MlProcessor
 
@@ -85,13 +84,13 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 	// order definition important
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewNormalizeTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewFilteringTransform(config, logger, name, instance, outChannels)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewReducerTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewATagsTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewRelabelTransform(config, logger, name, instance, outChannels)})
 
 	d.SuspiciousTransform = NewSuspiciousTransform(config, logger, name, instance, outChannels)
 	d.ExtractProcessor = NewExtractTransform(config, logger, name, instance, outChannels)
 	d.LatencyTransform = NewLatencyTransform(config, logger, name, instance, outChannels)
-	d.ReducerTransform = NewReducerTransform(config, logger, name, instance, outChannels)
 	d.UserPrivacyTransform = NewUserPrivacyTransform(config, logger, name, instance, outChannels)
 	d.GeoipTransform = NewDNSGeoIPTransform(config, logger, name, instance, outChannels)
 	d.MachineLearningTransform = NewMachineLearningTransform(config, logger, name, instance, outChannels)
@@ -107,9 +106,9 @@ func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.UserPrivacyTransform.ReloadConfig(config)
 	p.LatencyTransform.ReloadConfig(config)
 	p.SuspiciousTransform.ReloadConfig(config)
-	p.ReducerTransform.ReloadConfig(config)
 	p.ExtractProcessor.ReloadConfig(config)
 	p.MachineLearningTransform.ReloadConfig(config)
+
 	for _, transform := range p.availableTransforms {
 		transform.ReloadConfig(config)
 	}
@@ -188,12 +187,6 @@ func (p *Transforms) Prepare() error {
 		p.LogInfo(prefixlog + "transformer=suspicious is " + enabled)
 	}
 
-	if p.config.Reducer.Enable {
-		p.LogInfo(prefixlog + "transformer=reducer is " + enabled)
-
-		p.ReducerTransform.LoadActiveReducers()
-	}
-
 	if p.config.Extract.Enable {
 		if p.config.Extract.AddPayload {
 			p.activeTransforms = append(p.activeTransforms, p.addBase64Payload)
@@ -210,10 +203,6 @@ func (p *Transforms) Prepare() error {
 }
 
 func (p *Transforms) InitDNSMessageFormat(dm *dnsutils.DNSMessage) {
-	// if p.config.Filtering.Enable {
-	// 	p.FilteringTransform.InitDNSMessage(dm)
-	// }
-
 	if p.config.GeoIP.Enable {
 		p.GeoipTransform.InitDNSMessage(dm)
 	}
@@ -226,10 +215,6 @@ func (p *Transforms) InitDNSMessageFormat(dm *dnsutils.DNSMessage) {
 		if p.config.Extract.AddPayload {
 			p.ExtractProcessor.InitDNSMessage(dm)
 		}
-	}
-
-	if p.config.Reducer.Enable {
-		p.ReducerTransform.InitDNSMessage(dm)
 	}
 
 	if p.config.MachineLearning.Enable {
@@ -312,25 +297,10 @@ func (p *Transforms) addBase64Payload(dm *dnsutils.DNSMessage) int {
 }
 
 func (p *Transforms) ProcessMessage(dm *dnsutils.DNSMessage) int {
-	// Begin to normalize
-	// p.NormalizeTransform.ProcessDNSMessage(dm)
-
-	// Traffic filtering ?
-	// if p.FilteringTransform.CheckIfDrop(dm) {
-	// 	return ReturnDrop
-	// }
-
-	// Traffic reducer ?
-	// if p.ReducerTransform.ProcessDNSMessage(dm) == ReturnDrop {
-	// 	return ReturnDrop
-	// }
-
-	//
 	for _, transform := range p.activeTransforms {
 		if transform(dm) == ReturnDrop {
 			return ReturnDrop
 		}
 	}
-
-	return ReturnSuccess
+	return ReturnKeep
 }
