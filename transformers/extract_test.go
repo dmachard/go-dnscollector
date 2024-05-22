@@ -3,6 +3,7 @@ package transformers
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -17,22 +18,24 @@ func TestExtract_Json(t *testing.T) {
 	outChans := []chan dnsutils.DNSMessage{}
 	outChans = append(outChans, make(chan dnsutils.DNSMessage, 1))
 
-	// get fake
-	dm := dnsutils.GetFakeDNSMessage()
-	dm.Init()
+	// get dns message
+	dm := dnsutils.GetFakeDNSMessageWithPayload()
 
 	// init subproccesor
 	extract := NewExtractTransform(config, logger.New(false), "test", 0, outChans)
-	extract.InitDNSMessage(&dm)
+	extract.GetTransforms()
+	extract.addBase64Payload(&dm)
+
+	encodedPayload := base64.StdEncoding.EncodeToString(dm.DNS.Payload)
 
 	// expected json
-	refJSON := `
+	refJSON := fmt.Sprintf(`
 			{
 				"extracted":{
-					"dns_payload": "LQ=="
+					"dns_payload": "%s"
 				}
 			}
-			`
+			`, encodedPayload)
 
 	var dmMap map[string]interface{}
 	err := json.Unmarshal([]byte(dm.ToJSON()), &dmMap)
@@ -52,31 +55,5 @@ func TestExtract_Json(t *testing.T) {
 
 	if !reflect.DeepEqual(dmMap["extracted"], refMap["extracted"]) {
 		t.Errorf("json format different from reference")
-	}
-}
-
-func TestExtract_AddPayload(t *testing.T) {
-	// enable geoip
-	config := pkgconfig.GetFakeConfigTransformers()
-	config.Extract.Enable = true
-	config.Extract.AddPayload = true
-
-	outChans := []chan dnsutils.DNSMessage{}
-
-	// init the processor
-	extract := NewExtractTransform(config, logger.New(false), "test", 0, outChans)
-
-	// feature is enabled ?
-	if !extract.IsEnabled() {
-		t.Fatalf("extract should be enabled")
-	}
-
-	dm := dnsutils.GetFakeDNSMessage()
-	src := []byte("P6CBgAABAAEAAAABD29yYW5nZS1zYW5ndWluZQJmcgAAAQABwAwAAQABAABUYAAEwcvvUQAAKQTQAAAAAAAA")
-	dst := make([]byte, base64.StdEncoding.DecodedLen(len(src)))
-	base64.StdEncoding.Decode(dst, src)
-	dm.DNS.Payload = dst
-	if reflect.DeepEqual(extract.AddBase64Payload(&dm), src) {
-		t.Errorf("dns payload base64 encoding should match.")
 	}
 }

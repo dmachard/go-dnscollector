@@ -69,7 +69,6 @@ type Transforms struct {
 	SuspiciousTransform      SuspiciousTransform
 	GeoipTransform           GeoIPProcessor
 	LatencyTransform         *LatencyProcessor
-	ExtractProcessor         ExtractProcessor
 	MachineLearningTransform MlProcessor
 
 	availableTransforms []TransformEntry
@@ -87,9 +86,9 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewATagsTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewRelabelTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewUserPrivacyTransform(config, logger, name, instance, outChannels)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewExtractTransform(config, logger, name, instance, outChannels)})
 
 	d.SuspiciousTransform = NewSuspiciousTransform(config, logger, name, instance, outChannels)
-	d.ExtractProcessor = NewExtractTransform(config, logger, name, instance, outChannels)
 	d.LatencyTransform = NewLatencyTransform(config, logger, name, instance, outChannels)
 	d.GeoipTransform = NewDNSGeoIPTransform(config, logger, name, instance, outChannels)
 	d.MachineLearningTransform = NewMachineLearningTransform(config, logger, name, instance, outChannels)
@@ -104,7 +103,6 @@ func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.GeoipTransform.ReloadConfig(config)
 	p.LatencyTransform.ReloadConfig(config)
 	p.SuspiciousTransform.ReloadConfig(config)
-	p.ExtractProcessor.ReloadConfig(config)
 	p.MachineLearningTransform.ReloadConfig(config)
 
 	for _, transform := range p.availableTransforms {
@@ -167,13 +165,6 @@ func (p *Transforms) Prepare() error {
 		p.LogInfo(prefixlog + "transformer=suspicious is " + enabled)
 	}
 
-	if p.config.Extract.Enable {
-		if p.config.Extract.AddPayload {
-			p.activeTransforms = append(p.activeTransforms, p.addBase64Payload)
-			p.LogInfo(prefixlog + "transformer=extract is enabled")
-		}
-	}
-
 	if p.config.MachineLearning.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.machineLearningTransform)
 		p.LogInfo(prefixlog + "transformer=machinelearning is" + enabled)
@@ -189,12 +180,6 @@ func (p *Transforms) InitDNSMessageFormat(dm *dnsutils.DNSMessage) {
 
 	if p.config.Suspicious.Enable {
 		p.SuspiciousTransform.InitDNSMessage(dm)
-	}
-
-	if p.config.Extract.Enable {
-		if p.config.Extract.AddPayload {
-			p.ExtractProcessor.InitDNSMessage(dm)
-		}
 	}
 
 	if p.config.MachineLearning.Enable {
@@ -250,11 +235,6 @@ func (p *Transforms) measureLatency(dm *dnsutils.DNSMessage) (int, error) {
 
 func (p *Transforms) detectEvictedTimeout(dm *dnsutils.DNSMessage) (int, error) {
 	p.LatencyTransform.DetectEvictedTimeout(dm)
-	return ReturnKeep, nil
-}
-
-func (p *Transforms) addBase64Payload(dm *dnsutils.DNSMessage) (int, error) {
-	dm.Extracted.Base64Payload = p.ExtractProcessor.AddBase64Payload(dm)
 	return ReturnKeep, nil
 }
 
