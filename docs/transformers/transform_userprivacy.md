@@ -17,8 +17,11 @@ Options:
 * `anonymize-v6bits` (string)
   > summarize IPv6 down to the /integer level, default is `::/64`
 
-* `hash-ip` (boolean)
-  > hashes the query and response IP with the specified algorithm.
+* `hash-query-ip` (boolean)
+  > hashes the query IP with the specified algorithm.
+
+* `hash-reply-ip` (boolean)
+  > hashes the response IP with the specified algorithm.
 
 * `hash-ip-algo` (string)
   > algorithm to use for IP hashing, currently supported `sha1` (default), `sha256`, `sha512`
@@ -32,7 +35,8 @@ transforms:
     anonymize-ip: false
     anonymize-v4bits: "/16"
     anonymize-v6bits: "::/64"
-    hash-ip: false
+    hash-query-ip: false
+    hash-reply-ip: false
     hash-ip-algo: "sha1"
     minimaze-qname: false
 ```

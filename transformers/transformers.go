@@ -21,7 +21,7 @@ var (
 
 type Subtransform struct {
 	name        string
-	processFunc func(dm *dnsutils.DNSMessage) int
+	processFunc func(dm *dnsutils.DNSMessage) (int, error)
 }
 
 type Transformation interface {
@@ -68,13 +68,12 @@ type Transforms struct {
 
 	SuspiciousTransform      SuspiciousTransform
 	GeoipTransform           GeoIPProcessor
-	UserPrivacyTransform     UserPrivacyProcessor
 	LatencyTransform         *LatencyProcessor
 	ExtractProcessor         ExtractProcessor
 	MachineLearningTransform MlProcessor
 
 	availableTransforms []TransformEntry
-	activeTransforms    []func(dm *dnsutils.DNSMessage) int
+	activeTransforms    []func(dm *dnsutils.DNSMessage) (int, error)
 }
 
 func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DNSMessage, instance int) Transforms {
@@ -87,11 +86,11 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewReducerTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewATagsTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewRelabelTransform(config, logger, name, instance, outChannels)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewUserPrivacyTransform(config, logger, name, instance, outChannels)})
 
 	d.SuspiciousTransform = NewSuspiciousTransform(config, logger, name, instance, outChannels)
 	d.ExtractProcessor = NewExtractTransform(config, logger, name, instance, outChannels)
 	d.LatencyTransform = NewLatencyTransform(config, logger, name, instance, outChannels)
-	d.UserPrivacyTransform = NewUserPrivacyTransform(config, logger, name, instance, outChannels)
 	d.GeoipTransform = NewDNSGeoIPTransform(config, logger, name, instance, outChannels)
 	d.MachineLearningTransform = NewMachineLearningTransform(config, logger, name, instance, outChannels)
 
@@ -103,7 +102,6 @@ func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
 
 	p.GeoipTransform.ReloadConfig(config)
-	p.UserPrivacyTransform.ReloadConfig(config)
 	p.LatencyTransform.ReloadConfig(config)
 	p.SuspiciousTransform.ReloadConfig(config)
 	p.ExtractProcessor.ReloadConfig(config)
@@ -150,24 +148,6 @@ func (p *Transforms) Prepare() error {
 
 		if err := p.GeoipTransform.Open(); err != nil {
 			p.LogError(prefixlog+"transformer=geoip - open error %v", err)
-		}
-	}
-
-	if p.config.UserPrivacy.Enable {
-		// Apply user privacy on qname and query ip
-		if p.config.UserPrivacy.AnonymizeIP {
-			p.activeTransforms = append(p.activeTransforms, p.anonymizeIP)
-			p.LogInfo(prefixlog + "transformer=ip_anonymization is enabled")
-		}
-
-		if p.config.UserPrivacy.MinimazeQname {
-			p.activeTransforms = append(p.activeTransforms, p.minimazeQname)
-			p.LogInfo(prefixlog + "transformer=minimaze_qname is enabled")
-		}
-
-		if p.config.UserPrivacy.HashIP {
-			p.activeTransforms = append(p.activeTransforms, p.hashIP)
-			p.LogInfo(prefixlog + "transformer=hash_ip is enabled")
 		}
 	}
 
@@ -237,21 +217,21 @@ func (p *Transforms) LogError(msg string, v ...interface{}) {
 }
 
 // transform functions: return code
-func (p *Transforms) machineLearningTransform(dm *dnsutils.DNSMessage) int {
+func (p *Transforms) machineLearningTransform(dm *dnsutils.DNSMessage) (int, error) {
 	p.MachineLearningTransform.AddFeatures(dm)
-	return ReturnSuccess
+	return ReturnKeep, nil
 }
 
-func (p *Transforms) suspiciousTransform(dm *dnsutils.DNSMessage) int {
+func (p *Transforms) suspiciousTransform(dm *dnsutils.DNSMessage) (int, error) {
 	p.SuspiciousTransform.CheckIfSuspicious(dm)
-	return ReturnSuccess
+	return ReturnKeep, nil
 }
 
-func (p *Transforms) geoipTransform(dm *dnsutils.DNSMessage) int {
+func (p *Transforms) geoipTransform(dm *dnsutils.DNSMessage) (int, error) {
 	geoInfo, err := p.GeoipTransform.Lookup(dm.NetworkInfo.QueryIP)
 	if err != nil {
 		p.LogError("geoip lookup error %v", err)
-		return ReturnError
+		return ReturnKeep, err
 	}
 
 	dm.Geo.Continent = geoInfo.Continent
@@ -260,45 +240,30 @@ func (p *Transforms) geoipTransform(dm *dnsutils.DNSMessage) int {
 	dm.Geo.AutonomousSystemNumber = geoInfo.ASN
 	dm.Geo.AutonomousSystemOrg = geoInfo.ASO
 
-	return ReturnSuccess
+	return ReturnKeep, nil
 }
 
-func (p *Transforms) anonymizeIP(dm *dnsutils.DNSMessage) int {
-	dm.NetworkInfo.QueryIP = p.UserPrivacyTransform.AnonymizeIP(dm.NetworkInfo.QueryIP)
-
-	return ReturnSuccess
-}
-
-func (p *Transforms) hashIP(dm *dnsutils.DNSMessage) int {
-	dm.NetworkInfo.QueryIP = p.UserPrivacyTransform.HashIP(dm.NetworkInfo.QueryIP)
-	dm.NetworkInfo.ResponseIP = p.UserPrivacyTransform.HashIP(dm.NetworkInfo.ResponseIP)
-	return ReturnSuccess
-}
-
-func (p *Transforms) measureLatency(dm *dnsutils.DNSMessage) int {
+func (p *Transforms) measureLatency(dm *dnsutils.DNSMessage) (int, error) {
 	p.LatencyTransform.MeasureLatency(dm)
-	return ReturnSuccess
+	return ReturnKeep, nil
 }
 
-func (p *Transforms) detectEvictedTimeout(dm *dnsutils.DNSMessage) int {
+func (p *Transforms) detectEvictedTimeout(dm *dnsutils.DNSMessage) (int, error) {
 	p.LatencyTransform.DetectEvictedTimeout(dm)
-	return ReturnSuccess
+	return ReturnKeep, nil
 }
 
-func (p *Transforms) minimazeQname(dm *dnsutils.DNSMessage) int {
-	dm.DNS.Qname = p.UserPrivacyTransform.MinimazeQname(dm.DNS.Qname)
-
-	return ReturnSuccess
-}
-
-func (p *Transforms) addBase64Payload(dm *dnsutils.DNSMessage) int {
+func (p *Transforms) addBase64Payload(dm *dnsutils.DNSMessage) (int, error) {
 	dm.Extracted.Base64Payload = p.ExtractProcessor.AddBase64Payload(dm)
-	return ReturnSuccess
+	return ReturnKeep, nil
 }
 
 func (p *Transforms) ProcessMessage(dm *dnsutils.DNSMessage) int {
 	for _, transform := range p.activeTransforms {
-		if transform(dm) == ReturnDrop {
+		if result, err := transform(dm); err != nil {
+			p.LogError("transform err", err)
+			return ReturnKeep
+		} else if result == ReturnDrop {
 			return ReturnDrop
 		}
 	}

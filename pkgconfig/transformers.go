@@ -18,7 +18,8 @@ type ConfigTransformers struct {
 		AnonymizeIPV4Bits string `yaml:"anonymize-v4bits" default:"0.0.0.0/16"`
 		AnonymizeIPV6Bits string `yaml:"anonymize-v6bits" default:"::/64"`
 		MinimazeQname     bool   `yaml:"minimaze-qname" default:"false"`
-		HashIP            bool   `yaml:"hash-ip" default:"false"`
+		HashQueryIP       bool   `yaml:"hash-query-ip" default:"false"`
+		HashReplyIP       bool   `yaml:"hash-reply-ip" default:"false"`
 		HashIPAlgo        string `yaml:"hash-ip-algo" default:"sha1"`
 	} `yaml:"user-privacy"`
 	Normalize struct {

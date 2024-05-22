@@ -32,12 +32,12 @@ func TestFilteringQR(t *testing.T) {
 	}
 
 	dm := dnsutils.GetFakeDNSMessage()
-	if filtering.dropQueryFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.dropQueryFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped")
 	}
 
 	dm.DNS.Type = dnsutils.DNSReply
-	if filtering.dropReplyFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.dropReplyFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns reply should be dropped")
 	}
 }
@@ -60,7 +60,7 @@ func TestFilteringByRcodeNOERROR(t *testing.T) {
 	}
 
 	dm := dnsutils.GetFakeDNSMessage()
-	if filtering.dropRCodeFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.dropRCodeFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped")
 	}
 }
@@ -102,17 +102,17 @@ func TestFilteringByKeepQueryIp(t *testing.T) {
 
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.NetworkInfo.QueryIP = "192.168.0.1"
-	if filtering.keepQueryIPFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.keepQueryIPFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
 	dm.NetworkInfo.QueryIP = "192.168.1.10"
-	if filtering.keepQueryIPFilter(&dm) != ReturnKeep {
+	if result, _ := filtering.keepQueryIPFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
 	dm.NetworkInfo.QueryIP = "192.3.2.1" // kept by subnet
-	if filtering.keepQueryIPFilter(&dm) != ReturnKeep {
+	if result, _ := filtering.keepQueryIPFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 }
@@ -136,17 +136,17 @@ func TestFilteringByDropQueryIp(t *testing.T) {
 
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.NetworkInfo.QueryIP = "192.168.0.1"
-	if filtering.dropQueryIPFilter(&dm) != ReturnKeep {
+	if result, _ := filtering.dropQueryIPFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
 	dm.NetworkInfo.QueryIP = "192.168.1.15"
-	if filtering.dropQueryIPFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.dropQueryIPFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
 	dm.NetworkInfo.QueryIP = "192.0.2.3" // dropped by subnet
-	if filtering.dropQueryIPFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.dropQueryIPFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
@@ -176,7 +176,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "192.168.0.1",
 		},
 	}
-	if filtering.keepRdataFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
@@ -186,7 +186,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "192.168.1.10",
 		},
 	}
-	if filtering.keepRdataFilter(&dm) != ReturnKeep {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
@@ -196,7 +196,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "192.168.1.11", // included in subnet
 		},
 	}
-	if filtering.keepRdataFilter(&dm) != ReturnKeep {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
@@ -206,7 +206,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "192.0.2.3", // dropped by subnet
 		},
 	}
-	if filtering.keepRdataFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
@@ -216,7 +216,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "192.0.2.1",
 		},
 	}
-	if filtering.keepRdataFilter(&dm) != ReturnKeep {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
@@ -226,7 +226,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "2001:db8:85a3::8a2e:370:7334",
 		},
 	}
-	if filtering.keepRdataFilter(&dm) != ReturnKeep {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
@@ -236,7 +236,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "2041::7334",
 		},
 	}
-	if filtering.keepRdataFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
@@ -246,7 +246,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "2001:0dbd:85a3::0001",
 		},
 	}
-	if filtering.keepRdataFilter(&dm) != ReturnKeep {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 }
@@ -270,12 +270,12 @@ func TestFilteringByFqdn(t *testing.T) {
 
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = "www.microsoft.com"
-	if filtering.dropFqdnFilter(&dm) != ReturnKeep {
+	if result, _ := filtering.dropFqdnFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
 	dm.DNS.Qname = testURL1
-	if filtering.dropFqdnFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.dropFqdnFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 }
@@ -299,17 +299,17 @@ func TestFilteringByDomainRegex(t *testing.T) {
 
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = testURL1
-	if filtering.dropDomainRegexFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.dropDomainRegexFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
 	dm.DNS.Qname = testURL2
-	if filtering.dropDomainRegexFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.dropDomainRegexFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
 	dm.DNS.Qname = "github.fr"
-	if filtering.dropDomainRegexFilter(&dm) != ReturnKeep {
+	if result, _ := filtering.dropDomainRegexFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 }
@@ -335,22 +335,22 @@ func TestFilteringByKeepDomain(t *testing.T) {
 
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = testURL1
-	if filtering.keepFqdnFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.keepFqdnFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped! Domain: %s", dm.DNS.Qname)
 	}
 
 	dm.DNS.Qname = "example.com"
-	if filtering.keepFqdnFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.keepFqdnFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped! Domain: %s", dm.DNS.Qname)
 	}
 
 	dm.DNS.Qname = testURL2
-	if filtering.keepFqdnFilter(&dm) != ReturnKeep {
+	if result, _ := filtering.keepFqdnFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
 	dm.DNS.Qname = "google.fr"
-	if filtering.keepFqdnFilter(&dm) != ReturnKeep {
+	if result, _ := filtering.keepFqdnFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 }
@@ -380,24 +380,24 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = testURL1
-	if filtering.keepDomainRegexFilter(&dm) != ReturnKeep {
+	if result, _ := filtering.keepDomainRegexFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
 	dm.DNS.Qname = "test.google.com.ru"
-	if filtering.keepDomainRegexFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.keepDomainRegexFilter(&dm); result != ReturnDrop {
 
 		// If this passes then these are not terminated.
 		t.Errorf("dns query should be dropped!")
 	}
 
 	dm.DNS.Qname = testURL2
-	if filtering.keepDomainRegexFilter(&dm) != ReturnKeep {
+	if result, _ := filtering.keepDomainRegexFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
 	dm.DNS.Qname = "test.github.com.malware.ru"
-	if filtering.keepDomainRegexFilter(&dm) != ReturnDrop {
+	if result, _ := filtering.keepDomainRegexFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 }

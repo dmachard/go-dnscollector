@@ -154,7 +154,10 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			for _, dmIn := range tc.dnsMessagesIn {
-				ret := reducer.repetitiveTrafficDetector(&dmIn)
+				ret, err := reducer.repetitiveTrafficDetector(&dmIn)
+				if err != nil {
+					t.Errorf("transform error - %v", err)
+				}
 				if ret != ReturnDrop {
 					t.Errorf("DNS message should be dropped")
 				}
@@ -223,7 +226,10 @@ func TestReducer_QnamePlusOne(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			for _, dmIn := range tc.dnsMessagesIn {
-				ret := reducer.repetitiveTrafficDetector(&dmIn)
+				ret, err := reducer.repetitiveTrafficDetector(&dmIn)
+				if err != nil {
+					t.Errorf("transform error - %v", err)
+				}
 				if ret != ReturnDrop {
 					t.Errorf("DNS message should be dropped")
 				}

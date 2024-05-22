@@ -282,95 +282,95 @@ func (t *FilteringTransform) loadKeepRdataIPList(fname string) (uint64, error) {
 	return read, err
 }
 
-func (t *FilteringTransform) dropQueryFilter(dm *dnsutils.DNSMessage) int {
+func (t *FilteringTransform) dropQueryFilter(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.DNS.Type == dnsutils.DNSQuery {
-		return ReturnDrop
+		return ReturnDrop, nil
 	}
-	return ReturnKeep
+	return ReturnKeep, nil
 }
 
-func (t *FilteringTransform) dropReplyFilter(dm *dnsutils.DNSMessage) int {
+func (t *FilteringTransform) dropReplyFilter(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.DNS.Type == dnsutils.DNSReply {
-		return ReturnDrop
+		return ReturnDrop, nil
 	}
-	return ReturnKeep
+	return ReturnKeep, nil
 }
 
-func (t *FilteringTransform) dropRCodeFilter(dm *dnsutils.DNSMessage) int {
+func (t *FilteringTransform) dropRCodeFilter(dm *dnsutils.DNSMessage) (int, error) {
 	// drop according to the rcode ?
 	if _, ok := t.mapRcodes[dm.DNS.Rcode]; ok {
-		return ReturnDrop
+		return ReturnDrop, nil
 	}
-	return ReturnKeep
+	return ReturnKeep, nil
 }
 
-func (t *FilteringTransform) keepQueryIPFilter(dm *dnsutils.DNSMessage) int {
+func (t *FilteringTransform) keepQueryIPFilter(dm *dnsutils.DNSMessage) (int, error) {
 	ip, _ := netaddr.ParseIP(dm.NetworkInfo.QueryIP)
 	if t.ipsetKeep.Contains(ip) {
-		return ReturnKeep
+		return ReturnKeep, nil
 	}
-	return ReturnDrop
+	return ReturnDrop, nil
 }
 
-func (t *FilteringTransform) dropQueryIPFilter(dm *dnsutils.DNSMessage) int {
+func (t *FilteringTransform) dropQueryIPFilter(dm *dnsutils.DNSMessage) (int, error) {
 	ip, _ := netaddr.ParseIP(dm.NetworkInfo.QueryIP)
 	if t.ipsetDrop.Contains(ip) {
-		return ReturnDrop
+		return ReturnDrop, nil
 	}
-	return ReturnKeep
+	return ReturnKeep, nil
 }
 
-func (t *FilteringTransform) keepRdataFilter(dm *dnsutils.DNSMessage) int {
+func (t *FilteringTransform) keepRdataFilter(dm *dnsutils.DNSMessage) (int, error) {
 	if len(dm.DNS.DNSRRs.Answers) > 0 {
 		// If even one exists in filter list then pass through filter
 		for _, answer := range dm.DNS.DNSRRs.Answers {
 			if answer.Rdatatype == "A" || answer.Rdatatype == "AAAA" {
 				ip, _ := netaddr.ParseIP(answer.Rdata)
 				if t.rDataIpsetKeep.Contains(ip) {
-					return ReturnKeep
+					return ReturnKeep, nil
 				}
 			}
 		}
 	}
-	return ReturnDrop
+	return ReturnDrop, nil
 }
 
-func (t *FilteringTransform) dropFqdnFilter(dm *dnsutils.DNSMessage) int {
+func (t *FilteringTransform) dropFqdnFilter(dm *dnsutils.DNSMessage) (int, error) {
 	if _, ok := t.listFqdns[dm.DNS.Qname]; ok {
-		return ReturnDrop
+		return ReturnDrop, nil
 	}
-	return ReturnKeep
+	return ReturnKeep, nil
 }
 
-func (t *FilteringTransform) dropDomainRegexFilter(dm *dnsutils.DNSMessage) int {
+func (t *FilteringTransform) dropDomainRegexFilter(dm *dnsutils.DNSMessage) (int, error) {
 	// partial fqdn with regexp
 	for _, d := range t.listDomainsRegex {
 		if d.MatchString(dm.DNS.Qname) {
-			return ReturnDrop
+			return ReturnDrop, nil
 		}
 	}
-	return ReturnKeep
+	return ReturnKeep, nil
 }
 
-func (t *FilteringTransform) keepFqdnFilter(dm *dnsutils.DNSMessage) int {
+func (t *FilteringTransform) keepFqdnFilter(dm *dnsutils.DNSMessage) (int, error) {
 	if _, ok := t.listKeepFqdns[dm.DNS.Qname]; ok {
-		return ReturnKeep
+		return ReturnKeep, nil
 	}
-	return ReturnDrop
+	return ReturnDrop, nil
 }
 
-func (t *FilteringTransform) keepDomainRegexFilter(dm *dnsutils.DNSMessage) int {
+func (t *FilteringTransform) keepDomainRegexFilter(dm *dnsutils.DNSMessage) (int, error) {
 	// partial fqdn with regexp
 	for _, d := range t.listKeepDomainsRegex {
 		if d.MatchString(dm.DNS.Qname) {
-			return ReturnKeep
+			return ReturnKeep, nil
 		}
 	}
-	return ReturnDrop
+	return ReturnDrop, nil
 }
 
 // drop all except every nth entry
-func (t *FilteringTransform) downsampleFilter(dm *dnsutils.DNSMessage) int {
+func (t *FilteringTransform) downsampleFilter(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.Filtering == nil {
 		dm.Filtering = &dnsutils.TransformFiltering{SampleRate: 0}
 	}
@@ -388,10 +388,10 @@ func (t *FilteringTransform) downsampleFilter(dm *dnsutils.DNSMessage) int {
 	// If the remainder is zero, reset the downsampleCount to 0 and drop the DNS message by returning false.
 	case 0:
 		t.downsampleCount = 0
-		return ReturnDrop
+		return ReturnDrop, nil
 
 	// If the remainder is not zero, keep the DNS message and return true.
 	default:
-		return ReturnKeep
+		return ReturnKeep, nil
 	}
 }

@@ -75,19 +75,19 @@ func (t *NormalizeTransform) GetTransforms() ([]Subtransform, error) {
 	return subprocessors, nil
 }
 
-func (t *NormalizeTransform) QnameLowercase(dm *dnsutils.DNSMessage) int {
+func (t *NormalizeTransform) QnameLowercase(dm *dnsutils.DNSMessage) (int, error) {
 	dm.DNS.Qname = strings.ToLower(dm.DNS.Qname)
-	return ReturnSuccess
+	return ReturnSuccess, nil
 }
 
-func (t *NormalizeTransform) RRLowercase(dm *dnsutils.DNSMessage) int {
+func (t *NormalizeTransform) RRLowercase(dm *dnsutils.DNSMessage) (int, error) {
 	processRecords(dm.DNS.DNSRRs.Answers)
 	processRecords(dm.DNS.DNSRRs.Nameservers)
 	processRecords(dm.DNS.DNSRRs.Records)
-	return ReturnSuccess
+	return ReturnSuccess, nil
 }
 
-func (t *NormalizeTransform) QuietText(dm *dnsutils.DNSMessage) int {
+func (t *NormalizeTransform) QuietText(dm *dnsutils.DNSMessage) (int, error) {
 	if v, found := DnstapMessage[dm.DNSTap.Operation]; found {
 		dm.DNSTap.Operation = v
 	}
@@ -100,10 +100,10 @@ func (t *NormalizeTransform) QuietText(dm *dnsutils.DNSMessage) int {
 	if v, found := Rcodes[dm.DNS.Rcode]; found {
 		dm.DNS.Rcode = v
 	}
-	return ReturnSuccess
+	return ReturnSuccess, nil
 }
 
-func (t *NormalizeTransform) GetEffectiveTld(dm *dnsutils.DNSMessage) int {
+func (t *NormalizeTransform) GetEffectiveTld(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.PublicSuffix == nil {
 		dm.PublicSuffix = &dnsutils.TransformPublicSuffix{
 			QnamePublicSuffix: "-", QnameEffectiveTLDPlusOne: "-", ManagedByICANN: false,
@@ -123,10 +123,10 @@ func (t *NormalizeTransform) GetEffectiveTld(dm *dnsutils.DNSMessage) int {
 	} else {
 		dm.PublicSuffix.ManagedByICANN = false
 	}
-	return ReturnSuccess
+	return ReturnSuccess, nil
 }
 
-func (t *NormalizeTransform) GetEffectiveTldPlusOne(dm *dnsutils.DNSMessage) int {
+func (t *NormalizeTransform) GetEffectiveTldPlusOne(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.PublicSuffix == nil {
 		dm.PublicSuffix = &dnsutils.TransformPublicSuffix{
 			QnamePublicSuffix: "-", QnameEffectiveTLDPlusOne: "-", ManagedByICANN: false,
@@ -141,5 +141,5 @@ func (t *NormalizeTransform) GetEffectiveTldPlusOne(dm *dnsutils.DNSMessage) int
 		dm.PublicSuffix.QnameEffectiveTLDPlusOne = etld
 	}
 
-	return ReturnSuccess
+	return ReturnSuccess, nil
 }

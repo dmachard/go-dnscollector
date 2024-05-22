@@ -127,7 +127,7 @@ func (t *ReducerTransform) GetTransforms() ([]Subtransform, error) {
 	return subtransforms, nil
 }
 
-func (t *ReducerTransform) repetitiveTrafficDetector(dm *dnsutils.DNSMessage) int {
+func (t *ReducerTransform) repetitiveTrafficDetector(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.Reducer == nil {
 		dm.Reducer = &dnsutils.TransformReducer{Occurrences: 0, CumulativeLength: 0}
 	}
@@ -150,5 +150,5 @@ func (t *ReducerTransform) repetitiveTrafficDetector(dm *dnsutils.DNSMessage) in
 	dmCopy := *dm
 	t.mapTraffic.Set(dmTag, &dmCopy)
 
-	return ReturnDrop
+	return ReturnDrop, nil
 }

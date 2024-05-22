@@ -1,6 +1,6 @@
 module github.com/dmachard/go-dnscollector
 
-go 1.21.0
+go 1.22
 
 toolchain go1.22.1
 
@@ -13,7 +13,7 @@ require (
 	github.com/dmachard/go-dnstap-protobuf v1.0.1
 	github.com/dmachard/go-framestream v0.10.0
 	github.com/dmachard/go-logger v0.4.0
-	github.com/dmachard/go-netutils v0.2.0
+	github.com/dmachard/go-netutils v0.4.0
 	github.com/dmachard/go-powerdns-protobuf v1.1.1
 	github.com/dmachard/go-topmap v1.0.0
 	github.com/farsightsec/golang-framestream v0.3.0

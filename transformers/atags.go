@@ -23,11 +23,11 @@ func (t *ATagsTransform) GetTransforms() ([]Subtransform, error) {
 	return subtransforms, nil
 }
 
-func (t *ATagsTransform) addTags(dm *dnsutils.DNSMessage) int {
+func (t *ATagsTransform) addTags(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.ATags == nil {
 		dm.ATags = &dnsutils.TransformATags{Tags: []string{}}
 	}
 
 	dm.ATags.Tags = append(dm.ATags.Tags, t.config.ATags.AddTags...)
-	return ReturnSuccess
+	return ReturnSuccess, nil
 }
