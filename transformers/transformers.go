@@ -66,7 +66,6 @@ type Transforms struct {
 	name     string
 	instance int
 
-	SuspiciousTransform      SuspiciousTransform
 	GeoipTransform           GeoIPProcessor
 	LatencyTransform         *LatencyProcessor
 	MachineLearningTransform MlProcessor
@@ -87,8 +86,8 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewRelabelTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewUserPrivacyTransform(config, logger, name, instance, outChannels)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewExtractTransform(config, logger, name, instance, outChannels)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewSuspiciousTransform(config, logger, name, instance, outChannels)})
 
-	d.SuspiciousTransform = NewSuspiciousTransform(config, logger, name, instance, outChannels)
 	d.LatencyTransform = NewLatencyTransform(config, logger, name, instance, outChannels)
 	d.GeoipTransform = NewDNSGeoIPTransform(config, logger, name, instance, outChannels)
 	d.MachineLearningTransform = NewMachineLearningTransform(config, logger, name, instance, outChannels)
@@ -102,7 +101,6 @@ func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 
 	p.GeoipTransform.ReloadConfig(config)
 	p.LatencyTransform.ReloadConfig(config)
-	p.SuspiciousTransform.ReloadConfig(config)
 	p.MachineLearningTransform.ReloadConfig(config)
 
 	for _, transform := range p.availableTransforms {
@@ -160,11 +158,6 @@ func (p *Transforms) Prepare() error {
 		}
 	}
 
-	if p.config.Suspicious.Enable {
-		p.activeTransforms = append(p.activeTransforms, p.suspiciousTransform)
-		p.LogInfo(prefixlog + "transformer=suspicious is " + enabled)
-	}
-
 	if p.config.MachineLearning.Enable {
 		p.activeTransforms = append(p.activeTransforms, p.machineLearningTransform)
 		p.LogInfo(prefixlog + "transformer=machinelearning is" + enabled)
@@ -176,10 +169,6 @@ func (p *Transforms) Prepare() error {
 func (p *Transforms) InitDNSMessageFormat(dm *dnsutils.DNSMessage) {
 	if p.config.GeoIP.Enable {
 		p.GeoipTransform.InitDNSMessage(dm)
-	}
-
-	if p.config.Suspicious.Enable {
-		p.SuspiciousTransform.InitDNSMessage(dm)
 	}
 
 	if p.config.MachineLearning.Enable {
@@ -204,11 +193,6 @@ func (p *Transforms) LogError(msg string, v ...interface{}) {
 // transform functions: return code
 func (p *Transforms) machineLearningTransform(dm *dnsutils.DNSMessage) (int, error) {
 	p.MachineLearningTransform.AddFeatures(dm)
-	return ReturnKeep, nil
-}
-
-func (p *Transforms) suspiciousTransform(dm *dnsutils.DNSMessage) (int, error) {
-	p.SuspiciousTransform.CheckIfSuspicious(dm)
 	return ReturnKeep, nil
 }
 
