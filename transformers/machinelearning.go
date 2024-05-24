@@ -187,5 +187,5 @@ func (t *MlTransform) addFeatures(dm *dnsutils.DNSMessage) (int, error) {
 	dm.MachineLearning.ConsecutiveDigits = consecutiveDigitCount
 	dm.MachineLearning.ConsecutiveConsonants = consecutiveConsonantCount
 
-	return ReturnSuccess, nil
+	return ReturnKeep, nil
 }

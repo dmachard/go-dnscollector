@@ -43,7 +43,7 @@ func (t *GeoIPTransform) GetTransforms() ([]Subtransform, error) {
 	subtransforms := []Subtransform{}
 	if t.config.GeoIP.Enable {
 		if err := t.Open(); err != nil {
-			return nil, fmt.Errorf("open error %v", err)
+			return nil, fmt.Errorf("open error %w", err)
 		}
 		subtransforms = append(subtransforms, Subtransform{name: "geoip:lookup", processFunc: t.geoipTransform})
 	}
@@ -56,51 +56,51 @@ func (t *GeoIPTransform) Reset() {
 	}
 }
 
-func (p *GeoIPTransform) Open() (err error) {
+func (t *GeoIPTransform) Open() (err error) {
 	// before to open, close all files
 	// because open can be called also on reload
-	p.Close()
+	t.Close()
 
 	// open files ?
-	if len(p.config.GeoIP.DBCountryFile) > 0 {
-		p.dbCountry, err = maxminddb.Open(p.config.GeoIP.DBCountryFile)
+	if len(t.config.GeoIP.DBCountryFile) > 0 {
+		t.dbCountry, err = maxminddb.Open(t.config.GeoIP.DBCountryFile)
 		if err != nil {
 			return err
 		}
-		p.LogInfo("country database loaded (%d records)", p.dbCountry.Metadata.NodeCount)
+		t.LogInfo("country database loaded (%d records)", t.dbCountry.Metadata.NodeCount)
 	}
 
-	if len(p.config.GeoIP.DBCityFile) > 0 {
-		p.dbCity, err = maxminddb.Open(p.config.GeoIP.DBCityFile)
+	if len(t.config.GeoIP.DBCityFile) > 0 {
+		t.dbCity, err = maxminddb.Open(t.config.GeoIP.DBCityFile)
 		if err != nil {
 			return err
 		}
-		p.LogInfo("city database loaded (%d records)", p.dbCity.Metadata.NodeCount)
+		t.LogInfo("city database loaded (%d records)", t.dbCity.Metadata.NodeCount)
 	}
 
-	if len(p.config.GeoIP.DBASNFile) > 0 {
-		p.dbAsn, err = maxminddb.Open(p.config.GeoIP.DBASNFile)
+	if len(t.config.GeoIP.DBASNFile) > 0 {
+		t.dbAsn, err = maxminddb.Open(t.config.GeoIP.DBASNFile)
 		if err != nil {
 			return err
 		}
-		p.LogInfo("asn database loaded (%d records)", p.dbAsn.Metadata.NodeCount)
+		t.LogInfo("asn database loaded (%d records)", t.dbAsn.Metadata.NodeCount)
 	}
 	return nil
 }
 
-func (p *GeoIPTransform) Close() {
-	if p.dbCountry != nil {
-		p.dbCountry.Close()
+func (t *GeoIPTransform) Close() {
+	if t.dbCountry != nil {
+		t.dbCountry.Close()
 	}
-	if p.dbCity != nil {
-		p.dbCity.Close()
+	if t.dbCity != nil {
+		t.dbCity.Close()
 	}
-	if p.dbAsn != nil {
-		p.dbAsn.Close()
+	if t.dbAsn != nil {
+		t.dbAsn.Close()
 	}
 }
 
-func (p *GeoIPTransform) Lookup(ip string) (GeoRecord, error) {
+func (t *GeoIPTransform) Lookup(ip string) (GeoRecord, error) {
 	record := &MaxminddbRecord{}
 	rec := GeoRecord{Continent: "-",
 		CountryISOCode: "-",
@@ -108,8 +108,8 @@ func (p *GeoIPTransform) Lookup(ip string) (GeoRecord, error) {
 		ASN:            "-",
 		ASO:            "-"}
 
-	if p.dbAsn != nil {
-		err := p.dbAsn.Lookup(net.ParseIP(ip), &record)
+	if t.dbAsn != nil {
+		err := t.dbAsn.Lookup(net.ParseIP(ip), &record)
 		if err != nil {
 			return rec, err
 		}
@@ -117,8 +117,8 @@ func (p *GeoIPTransform) Lookup(ip string) (GeoRecord, error) {
 		rec.ASO = record.AutonomousSystemOrganization
 	}
 
-	if p.dbCity != nil {
-		err := p.dbCity.Lookup(net.ParseIP(ip), &record)
+	if t.dbCity != nil {
+		err := t.dbCity.Lookup(net.ParseIP(ip), &record)
 		if err != nil {
 			return rec, err
 		}
@@ -126,8 +126,8 @@ func (p *GeoIPTransform) Lookup(ip string) (GeoRecord, error) {
 		rec.CountryISOCode = record.Country.ISOCode
 		rec.Continent = record.Continent.Code
 
-	} else if p.dbCountry != nil {
-		err := p.dbCountry.Lookup(net.ParseIP(ip), &record)
+	} else if t.dbCountry != nil {
+		err := t.dbCountry.Lookup(net.ParseIP(ip), &record)
 		if err != nil {
 			return rec, err
 		}
@@ -138,7 +138,7 @@ func (p *GeoIPTransform) Lookup(ip string) (GeoRecord, error) {
 	return rec, nil
 }
 
-func (p *GeoIPTransform) geoipTransform(dm *dnsutils.DNSMessage) (int, error) {
+func (t *GeoIPTransform) geoipTransform(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.Geo == nil {
 		dm.Geo = &dnsutils.TransformDNSGeo{
 			CountryIsoCode: "-", City: "-", Continent: "-",
@@ -146,9 +146,9 @@ func (p *GeoIPTransform) geoipTransform(dm *dnsutils.DNSMessage) (int, error) {
 		}
 	}
 
-	geoInfo, err := p.Lookup(dm.NetworkInfo.QueryIP)
+	geoInfo, err := t.Lookup(dm.NetworkInfo.QueryIP)
 	if err != nil {
-		p.LogError("geoip lookup error %v", err)
+		t.LogError("geoip lookup error %v", err)
 		return ReturnKeep, err
 	}
 

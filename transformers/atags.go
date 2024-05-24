@@ -29,5 +29,5 @@ func (t *ATagsTransform) addTags(dm *dnsutils.DNSMessage) (int, error) {
 	}
 
 	dm.ATags.Tags = append(dm.ATags.Tags, t.config.ATags.AddTags...)
-	return ReturnSuccess, nil
+	return ReturnKeep, nil
 }

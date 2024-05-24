@@ -64,5 +64,5 @@ func (t *RelabelTransform) AddRules(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.Relabeling == nil {
 		dm.Relabeling = &dnsutils.TransformRelabeling{Rules: t.RelabelingRules}
 	}
-	return ReturnSuccess, nil
+	return ReturnKeep, nil
 }

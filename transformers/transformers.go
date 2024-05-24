@@ -8,15 +8,10 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-const (
-	enabled = "enabled"
-)
-
 var (
-	ReturnSuccess = 1
-	ReturnKeep    = 1
-	ReturnDrop    = 2
-	ReturnError   = 3
+	ReturnKeep  = 1
+	ReturnDrop  = 2
+	ReturnError = 3
 )
 
 type Subtransform struct {

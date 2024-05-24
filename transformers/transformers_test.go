@@ -66,8 +66,8 @@ func TestTransformsSuspicious(t *testing.T) {
 		t.Errorf("suspicious malformed packet flag should be equal to true")
 	}
 
-	if returnCode != ReturnSuccess {
-		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnSuccess)
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnKeep)
 	}
 }
 
@@ -92,8 +92,8 @@ func TestTransformsGeoIPLookupCountry(t *testing.T) {
 		t.Errorf("country invalid want: FR got: %s", dm.Geo.CountryIsoCode)
 	}
 
-	if returnCode != ReturnSuccess {
-		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnSuccess)
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnKeep)
 	}
 }
 
@@ -118,8 +118,8 @@ func TestTransformsGeoIPLookupAsn(t *testing.T) {
 		t.Errorf("asn organisation invalid want: Orange got: %s", dm.Geo.AutonomousSystemOrg)
 	}
 
-	if returnCode != ReturnSuccess {
-		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnSuccess)
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnKeep)
 	}
 }
 
@@ -143,8 +143,8 @@ func TestTransformsReduceQname(t *testing.T) {
 	if dm.DNS.Qname != "google.com" {
 		t.Errorf("Qname minimization failed, got %s", dm.DNS.Qname)
 	}
-	if returnCode != ReturnSuccess {
-		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnSuccess)
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnKeep)
 	}
 
 	// test 2: localhost
@@ -154,8 +154,8 @@ func TestTransformsReduceQname(t *testing.T) {
 	if dm.DNS.Qname != Localhost {
 		t.Errorf("Qname minimization failed, got %s", dm.DNS.Qname)
 	}
-	if returnCode != ReturnSuccess {
-		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnSuccess)
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnKeep)
 	}
 
 	// test 3: local.home
@@ -166,8 +166,8 @@ func TestTransformsReduceQname(t *testing.T) {
 	if dm.DNS.Qname != "localtest.home" {
 		t.Errorf("Qname minimization failed, got %s", dm.DNS.Qname)
 	}
-	if returnCode != ReturnSuccess {
-		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnSuccess)
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnKeep)
 	}
 }
 
@@ -189,8 +189,8 @@ func TestTransformsAnonymizeIPv4(t *testing.T) {
 	if dm.NetworkInfo.QueryIP != "192.168.0.0" {
 		t.Errorf("Ipv4 anonymization failed, got %v", dm.NetworkInfo.QueryIP)
 	}
-	if returnCode != ReturnSuccess {
-		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnSuccess)
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnKeep)
 	}
 }
 
@@ -214,8 +214,8 @@ func TestTransformsAnonymizeIPv6(t *testing.T) {
 	if dm.NetworkInfo.QueryIP != IPv6ShortND {
 		t.Errorf("Ipv6 anonymization failed, got %s", dm.NetworkInfo.QueryIP)
 	}
-	if returnCode != ReturnSuccess {
-		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnSuccess)
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnKeep)
 	}
 }
 
@@ -238,8 +238,8 @@ func TestTransformsNormalizeLowercaseQname(t *testing.T) {
 	if dm.DNS.Qname != NormAddress {
 		t.Errorf("Qname to lowercase failed, got %s", dm.DNS.Qname)
 	}
-	if returnCode != ReturnSuccess {
-		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnSuccess)
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnKeep)
 	}
 }
 
@@ -267,8 +267,8 @@ func TestMultiTransforms(t *testing.T) {
 	if dm.NetworkInfo.QueryIP != IPv6ShortND {
 		t.Errorf("Ipv6 anonymization failed, got %s", dm.NetworkInfo.QueryIP)
 	}
-	if returnCode != ReturnSuccess {
-		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnSuccess)
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnKeep)
 	}
 }
 
@@ -308,8 +308,8 @@ func TestTransformAndFilter(t *testing.T) {
 	dm.DNS.Qname = testURL2
 	dm.NetworkInfo.QueryIP = IPv6Address
 	returnCode = subprocessors.ProcessMessage(&dm)
-	if returnCode != ReturnSuccess {
-		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnSuccess)
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v and not RETURN_SUCCESS (%v)", returnCode, ReturnKeep)
 	}
 	if dm.NetworkInfo.QueryIP != IPv6ShortND {
 		t.Errorf("Ipv6 anonymization failed, got %s", dm.NetworkInfo.QueryIP)

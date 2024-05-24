@@ -77,14 +77,14 @@ func (t *NormalizeTransform) GetTransforms() ([]Subtransform, error) {
 
 func (t *NormalizeTransform) QnameLowercase(dm *dnsutils.DNSMessage) (int, error) {
 	dm.DNS.Qname = strings.ToLower(dm.DNS.Qname)
-	return ReturnSuccess, nil
+	return ReturnKeep, nil
 }
 
 func (t *NormalizeTransform) RRLowercase(dm *dnsutils.DNSMessage) (int, error) {
 	processRecords(dm.DNS.DNSRRs.Answers)
 	processRecords(dm.DNS.DNSRRs.Nameservers)
 	processRecords(dm.DNS.DNSRRs.Records)
-	return ReturnSuccess, nil
+	return ReturnKeep, nil
 }
 
 func (t *NormalizeTransform) QuietText(dm *dnsutils.DNSMessage) (int, error) {
@@ -100,7 +100,7 @@ func (t *NormalizeTransform) QuietText(dm *dnsutils.DNSMessage) (int, error) {
 	if v, found := Rcodes[dm.DNS.Rcode]; found {
 		dm.DNS.Rcode = v
 	}
-	return ReturnSuccess, nil
+	return ReturnKeep, nil
 }
 
 func (t *NormalizeTransform) GetEffectiveTld(dm *dnsutils.DNSMessage) (int, error) {
@@ -123,7 +123,7 @@ func (t *NormalizeTransform) GetEffectiveTld(dm *dnsutils.DNSMessage) (int, erro
 	} else {
 		dm.PublicSuffix.ManagedByICANN = false
 	}
-	return ReturnSuccess, nil
+	return ReturnKeep, nil
 }
 
 func (t *NormalizeTransform) GetEffectiveTldPlusOne(dm *dnsutils.DNSMessage) (int, error) {
@@ -141,5 +141,5 @@ func (t *NormalizeTransform) GetEffectiveTldPlusOne(dm *dnsutils.DNSMessage) (in
 		dm.PublicSuffix.QnameEffectiveTLDPlusOne = etld
 	}
 
-	return ReturnSuccess, nil
+	return ReturnKeep, nil
 }
