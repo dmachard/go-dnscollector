@@ -17,7 +17,8 @@ func TestLatency_MeasureLatency(t *testing.T) {
 	outChannels := []chan dnsutils.DNSMessage{}
 
 	// init transformer
-	latencyProcessor := NewLatencyTransform(config, logger.New(true), "test", 0, outChannels)
+	latency := NewLatencyTransform(config, logger.New(true), "test", 0, outChannels)
+	latency.GetTransforms()
 
 	testcases := []struct {
 		name string
@@ -44,7 +45,7 @@ func TestLatency_MeasureLatency(t *testing.T) {
 			CQ.DNSTap.Timestamp = 1704486841216166066
 
 			// Measure latency
-			latencyProcessor.MeasureLatency(&CQ)
+			latency.measureLatency(&CQ)
 
 			// Register Query
 			CR := dnsutils.GetFakeDNSMessage()
@@ -52,7 +53,7 @@ func TestLatency_MeasureLatency(t *testing.T) {
 			CR.DNSTap.Timestamp = 1704486841227961611
 
 			// Measure latency
-			latencyProcessor.MeasureLatency(&CR)
+			latency.measureLatency(&CR)
 
 			if CR.DNSTap.Latency == 0.0 {
 				t.Errorf("incorrect latency, got 0.0")
@@ -71,7 +72,8 @@ func TestLatency_DetectEvictedTimeout(t *testing.T) {
 	outChannels = append(outChannels, make(chan dnsutils.DNSMessage, 1))
 
 	// init transformer
-	latencyProcessor := NewLatencyTransform(config, logger.New(true), "test", 0, outChannels)
+	latency := NewLatencyTransform(config, logger.New(true), "test", 0, outChannels)
+	latency.GetTransforms()
 
 	testcases := []struct {
 		name string
@@ -98,7 +100,7 @@ func TestLatency_DetectEvictedTimeout(t *testing.T) {
 			CQ.DNSTap.Timestamp = 1704486841216166066
 
 			// Measure latency
-			latencyProcessor.DetectEvictedTimeout(&CQ)
+			latency.detectEvictedTimeout(&CQ)
 
 			time.Sleep(2 * time.Second)
 

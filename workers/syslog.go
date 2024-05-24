@@ -196,7 +196,6 @@ func (w *Syslog) StartCollect() {
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDNSMessageFormat(&dm)
 			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
 				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue

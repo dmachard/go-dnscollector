@@ -15,16 +15,14 @@ func TestML_AddFeatures(t *testing.T) {
 
 	// init the processor
 	outChans := []chan dnsutils.DNSMessage{}
-	transform := NewMachineLearningTransform(config, logger.New(false), "test", 0, outChans)
+	ml := NewMachineLearningTransform(config, logger.New(false), "test", 0, outChans)
 
 	dm := dnsutils.GetFakeDNSMessage()
 
-	transform.InitDNSMessage(&dm)
-	if dm.MachineLearning == nil {
-		t.Errorf("DNSMessage.MachineLearning should be not nil")
-	}
+	// init transforms and check
+	ml.GetTransforms()
+	ml.addFeatures(&dm)
 
-	transform.AddFeatures(&dm)
 	if dm.MachineLearning.Labels != 2 {
 		t.Errorf("incorrect feature label value in DNSMessage: %d", dm.MachineLearning.Labels)
 	}

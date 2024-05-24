@@ -1,7 +1,6 @@
 package transformers
 
 import (
-	"fmt"
 	"math"
 	"strings"
 	"unicode"
@@ -22,63 +21,33 @@ func isConsonant(char rune) bool {
 	return true
 }
 
-type MlProcessor struct {
-	config            *pkgconfig.ConfigTransformers
-	outChannels       []chan dnsutils.DNSMessage
-	LogInfo, LogError func(msg string, v ...interface{})
+type MlTransform struct {
+	GenericTransformer
 }
 
-func NewMachineLearningTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage) MlProcessor {
-	s := MlProcessor{config: config, outChannels: outChannels}
+func NewMachineLearningTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, nextWorkers []chan dnsutils.DNSMessage) *MlTransform {
+	t := &MlTransform{GenericTransformer: NewTransformer(config, logger, "machinelearning", name, instance, nextWorkers)}
+	return t
+}
 
-	s.LogInfo = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)
-		logger.Info(log+msg, v...)
+func (t *MlTransform) GetTransforms() ([]Subtransform, error) {
+	subtransforms := []Subtransform{}
+	if t.config.MachineLearning.Enable {
+		subtransforms = append(subtransforms, Subtransform{name: "machinelearning:add-feature", processFunc: t.addFeatures})
 	}
-
-	s.LogError = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)
-		logger.Error(log+msg, v...)
-	}
-
-	return s
+	return subtransforms, nil
 }
 
-func (p *MlProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
-	p.config = config
-}
+func (t *MlTransform) addFeatures(dm *dnsutils.DNSMessage) (int, error) {
 
-func (p *MlProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
 	if dm.MachineLearning == nil {
 		dm.MachineLearning = &dnsutils.TransformML{
-			Entropy:               0,
-			Length:                0,
-			Digits:                0,
-			Lowers:                0,
-			Uppers:                0,
-			Labels:                0,
-			Specials:              0,
-			RatioDigits:           0,
-			RatioLetters:          0,
-			RatioSpecials:         0,
-			Others:                0,
-			ConsecutiveChars:      0,
-			ConsecutiveVowels:     0,
-			ConsecutiveDigits:     0,
-			ConsecutiveConsonants: 0,
-			Size:                  0,
-			Occurrences:           0,
-			UncommonQtypes:        0,
+			Entropy: 0, Length: 0, Digits: 0,
+			Lowers: 0, Uppers: 0, Labels: 0, Specials: 0,
+			RatioDigits: 0, RatioLetters: 0, RatioSpecials: 0, Others: 0,
+			ConsecutiveChars: 0, ConsecutiveVowels: 0, ConsecutiveDigits: 0, ConsecutiveConsonants: 0, Size: 0,
+			Occurrences: 0, UncommonQtypes: 0,
 		}
-	}
-}
-
-func (p *MlProcessor) AddFeatures(dm *dnsutils.DNSMessage) {
-
-	if dm.MachineLearning == nil {
-		p.LogError("transformer is not properly initialized")
-		return
 	}
 
 	// count global number of chars
@@ -217,4 +186,6 @@ func (p *MlProcessor) AddFeatures(dm *dnsutils.DNSMessage) {
 	dm.MachineLearning.ConsecutiveVowels = consecutiveVowelCount
 	dm.MachineLearning.ConsecutiveDigits = consecutiveDigitCount
 	dm.MachineLearning.ConsecutiveConsonants = consecutiveConsonantCount
+
+	return ReturnSuccess, nil
 }

@@ -47,9 +47,6 @@ func (w *DNSProcessor) StartCollect() {
 				return
 			}
 
-			// init dns message with additionnals parts
-			transforms.InitDNSMessageFormat(&dm)
-
 			// compute timestamp
 			ts := time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec))
 			dm.DNSTap.Timestamp = ts.UnixNano()

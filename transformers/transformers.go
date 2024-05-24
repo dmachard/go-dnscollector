@@ -27,6 +27,7 @@ type Subtransform struct {
 type Transformation interface {
 	GetTransforms() ([]Subtransform, error)
 	ReloadConfig(config *pkgconfig.ConfigTransformers)
+	Reset()
 }
 
 type GenericTransformer struct {
@@ -56,6 +57,8 @@ func (t *GenericTransformer) ReloadConfig(config *pkgconfig.ConfigTransformers) 
 	t.config = config
 }
 
+func (t *GenericTransformer) Reset() {}
+
 type TransformEntry struct {
 	Transformation
 }
@@ -66,31 +69,26 @@ type Transforms struct {
 	name     string
 	instance int
 
-	GeoipTransform           GeoIPProcessor
-	LatencyTransform         *LatencyProcessor
-	MachineLearningTransform MlProcessor
-
 	availableTransforms []TransformEntry
 	activeTransforms    []func(dm *dnsutils.DNSMessage) (int, error)
 }
 
-func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, outChannels []chan dnsutils.DNSMessage, instance int) Transforms {
+func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, nextWorkers []chan dnsutils.DNSMessage, instance int) Transforms {
 
 	d := Transforms{config: config, logger: logger, name: name, instance: instance}
 
 	// order definition important
-	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewNormalizeTransform(config, logger, name, instance, outChannels)})
-	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewFilteringTransform(config, logger, name, instance, outChannels)})
-	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewReducerTransform(config, logger, name, instance, outChannels)})
-	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewATagsTransform(config, logger, name, instance, outChannels)})
-	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewRelabelTransform(config, logger, name, instance, outChannels)})
-	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewUserPrivacyTransform(config, logger, name, instance, outChannels)})
-	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewExtractTransform(config, logger, name, instance, outChannels)})
-	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewSuspiciousTransform(config, logger, name, instance, outChannels)})
-
-	d.LatencyTransform = NewLatencyTransform(config, logger, name, instance, outChannels)
-	d.GeoipTransform = NewDNSGeoIPTransform(config, logger, name, instance, outChannels)
-	d.MachineLearningTransform = NewMachineLearningTransform(config, logger, name, instance, outChannels)
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewNormalizeTransform(config, logger, name, instance, nextWorkers)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewFilteringTransform(config, logger, name, instance, nextWorkers)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewReducerTransform(config, logger, name, instance, nextWorkers)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewATagsTransform(config, logger, name, instance, nextWorkers)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewRelabelTransform(config, logger, name, instance, nextWorkers)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewUserPrivacyTransform(config, logger, name, instance, nextWorkers)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewExtractTransform(config, logger, name, instance, nextWorkers)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewSuspiciousTransform(config, logger, name, instance, nextWorkers)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewMachineLearningTransform(config, logger, name, instance, nextWorkers)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewLatencyTransform(config, logger, name, instance, nextWorkers)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewDNSGeoIPTransform(config, logger, name, instance, nextWorkers)})
 
 	d.Prepare()
 	return d
@@ -98,10 +96,6 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 
 func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 	p.config = config
-
-	p.GeoipTransform.ReloadConfig(config)
-	p.LatencyTransform.ReloadConfig(config)
-	p.MachineLearningTransform.ReloadConfig(config)
 
 	for _, transform := range p.availableTransforms {
 		transform.ReloadConfig(config)
@@ -130,96 +124,22 @@ func (p *Transforms) Prepare() error {
 	if len(tranformsList) > 0 {
 		p.LogInfo("transformers applied: %v", tranformsList)
 	}
-
-	var prefixlog string
-	if p.instance > 0 {
-		prefixlog = fmt.Sprintf("conn #%d - ", p.instance)
-	} else {
-		prefixlog = ""
-	}
-
-	if p.config.GeoIP.Enable {
-		p.activeTransforms = append(p.activeTransforms, p.geoipTransform)
-		p.LogInfo(prefixlog + "transformer=geoip is " + enabled)
-
-		if err := p.GeoipTransform.Open(); err != nil {
-			p.LogError(prefixlog+"transformer=geoip - open error %v", err)
-		}
-	}
-
-	if p.config.Latency.Enable {
-		if p.config.Latency.MeasureLatency {
-			p.activeTransforms = append(p.activeTransforms, p.measureLatency)
-			p.LogInfo(prefixlog + "transformer=measure_latency is enabled")
-		}
-		if p.config.Latency.UnansweredQueries {
-			p.activeTransforms = append(p.activeTransforms, p.detectEvictedTimeout)
-			p.LogInfo(prefixlog + "transformer=unanswered_queries is enabled")
-		}
-	}
-
-	if p.config.MachineLearning.Enable {
-		p.activeTransforms = append(p.activeTransforms, p.machineLearningTransform)
-		p.LogInfo(prefixlog + "transformer=machinelearning is" + enabled)
-	}
-
 	return nil
 }
 
-func (p *Transforms) InitDNSMessageFormat(dm *dnsutils.DNSMessage) {
-	if p.config.GeoIP.Enable {
-		p.GeoipTransform.InitDNSMessage(dm)
-	}
-
-	if p.config.MachineLearning.Enable {
-		p.MachineLearningTransform.InitDNSMessage(dm)
-	}
-}
-
 func (p *Transforms) Reset() {
-	if p.config.GeoIP.Enable {
-		p.GeoipTransform.Close()
+	for _, transform := range p.availableTransforms {
+		transform.Reset()
 	}
 }
 
 func (p *Transforms) LogInfo(msg string, v ...interface{}) {
-	p.logger.Info(pkgconfig.PrefixLogTransformer+"["+p.name+"] "+msg, v...)
+	connlog := fmt.Sprintf("(conn #%d) ", p.instance)
+	p.logger.Info(pkgconfig.PrefixLogWorker+"["+p.name+"] "+connlog+msg, v...)
 }
 
 func (p *Transforms) LogError(msg string, v ...interface{}) {
-	p.logger.Error(pkgconfig.PrefixLogTransformer+"["+p.name+"] "+msg, v...)
-}
-
-// transform functions: return code
-func (p *Transforms) machineLearningTransform(dm *dnsutils.DNSMessage) (int, error) {
-	p.MachineLearningTransform.AddFeatures(dm)
-	return ReturnKeep, nil
-}
-
-func (p *Transforms) geoipTransform(dm *dnsutils.DNSMessage) (int, error) {
-	geoInfo, err := p.GeoipTransform.Lookup(dm.NetworkInfo.QueryIP)
-	if err != nil {
-		p.LogError("geoip lookup error %v", err)
-		return ReturnKeep, err
-	}
-
-	dm.Geo.Continent = geoInfo.Continent
-	dm.Geo.CountryIsoCode = geoInfo.CountryISOCode
-	dm.Geo.City = geoInfo.City
-	dm.Geo.AutonomousSystemNumber = geoInfo.ASN
-	dm.Geo.AutonomousSystemOrg = geoInfo.ASO
-
-	return ReturnKeep, nil
-}
-
-func (p *Transforms) measureLatency(dm *dnsutils.DNSMessage) (int, error) {
-	p.LatencyTransform.MeasureLatency(dm)
-	return ReturnKeep, nil
-}
-
-func (p *Transforms) detectEvictedTimeout(dm *dnsutils.DNSMessage) (int, error) {
-	p.LatencyTransform.DetectEvictedTimeout(dm)
-	return ReturnKeep, nil
+	p.logger.Error(pkgconfig.PrefixLogWorker+"["+p.name+"] "+msg, v...)
 }
 
 func (p *Transforms) ProcessMessage(dm *dnsutils.DNSMessage) int {

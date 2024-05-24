@@ -29,91 +29,66 @@ type GeoRecord struct {
 	Continent, CountryISOCode, City, ASN, ASO string
 }
 
-type GeoIPProcessor struct {
-	config                   *pkgconfig.ConfigTransformers
-	logger                   *logger.Logger
+type GeoIPTransform struct {
+	GenericTransformer
 	dbCountry, dbCity, dbAsn *maxminddb.Reader
-	enabled                  bool
-	outChannels              []chan dnsutils.DNSMessage
-	LogInfo, LogError        func(msg string, v ...interface{})
 }
 
-func NewDNSGeoIPTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage) GeoIPProcessor {
-	d := GeoIPProcessor{config: config, logger: logger, outChannels: outChannels}
-
-	d.LogInfo = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("transformer - [%s] conn #%d - geoip - ", name, instance)
-		logger.Info(log+msg, v...)
-	}
-
-	d.LogError = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("transformer - [%s] conn #%d - geoip - ", name, instance)
-		logger.Error(log+msg, v...)
-	}
-	return d
+func NewDNSGeoIPTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, nextWorkers []chan dnsutils.DNSMessage) *GeoIPTransform {
+	t := &GeoIPTransform{GenericTransformer: NewTransformer(config, logger, "geoip", name, instance, nextWorkers)}
+	return t
 }
 
-func (p *GeoIPProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
-	p.config = config
-}
-
-func (p *GeoIPProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
-	if dm.Geo == nil {
-		dm.Geo = &dnsutils.TransformDNSGeo{
-			CountryIsoCode:         "-",
-			City:                   "-",
-			Continent:              "-",
-			AutonomousSystemNumber: "-",
-			AutonomousSystemOrg:    "-",
+func (t *GeoIPTransform) GetTransforms() ([]Subtransform, error) {
+	subtransforms := []Subtransform{}
+	if t.config.GeoIP.Enable {
+		if err := t.Open(); err != nil {
+			return nil, fmt.Errorf("open error %v", err)
 		}
+		subtransforms = append(subtransforms, Subtransform{name: "geoip:lookup", processFunc: t.geoipTransform})
+	}
+	return subtransforms, nil
+}
+
+func (t *GeoIPTransform) Reset() {
+	if t.config.GeoIP.Enable {
+		t.Close()
 	}
 }
 
-func (p *GeoIPProcessor) Open() (err error) {
+func (p *GeoIPTransform) Open() (err error) {
 	// before to open, close all files
 	// because open can be called also on reload
-	p.enabled = false
 	p.Close()
 
 	// open files ?
 	if len(p.config.GeoIP.DBCountryFile) > 0 {
 		p.dbCountry, err = maxminddb.Open(p.config.GeoIP.DBCountryFile)
 		if err != nil {
-			p.enabled = false
-			return
+			return err
 		}
-		p.enabled = true
 		p.LogInfo("country database loaded (%d records)", p.dbCountry.Metadata.NodeCount)
 	}
 
 	if len(p.config.GeoIP.DBCityFile) > 0 {
 		p.dbCity, err = maxminddb.Open(p.config.GeoIP.DBCityFile)
 		if err != nil {
-			p.enabled = false
-			return
+			return err
 		}
-		p.enabled = true
 		p.LogInfo("city database loaded (%d records)", p.dbCity.Metadata.NodeCount)
 	}
 
 	if len(p.config.GeoIP.DBASNFile) > 0 {
 		p.dbAsn, err = maxminddb.Open(p.config.GeoIP.DBASNFile)
 		if err != nil {
-			p.enabled = false
-			return
+			return err
 		}
-		p.enabled = true
 		p.LogInfo("asn database loaded (%d records)", p.dbAsn.Metadata.NodeCount)
 	}
 	return nil
 }
 
-func (p *GeoIPProcessor) IsEnabled() bool {
-	return p.enabled
-}
-
-func (p *GeoIPProcessor) Close() {
+func (p *GeoIPTransform) Close() {
 	if p.dbCountry != nil {
 		p.dbCountry.Close()
 	}
@@ -125,7 +100,7 @@ func (p *GeoIPProcessor) Close() {
 	}
 }
 
-func (p *GeoIPProcessor) Lookup(ip string) (GeoRecord, error) {
+func (p *GeoIPTransform) Lookup(ip string) (GeoRecord, error) {
 	record := &MaxminddbRecord{}
 	rec := GeoRecord{Continent: "-",
 		CountryISOCode: "-",
@@ -161,4 +136,27 @@ func (p *GeoIPProcessor) Lookup(ip string) (GeoRecord, error) {
 	}
 
 	return rec, nil
+}
+
+func (p *GeoIPTransform) geoipTransform(dm *dnsutils.DNSMessage) (int, error) {
+	if dm.Geo == nil {
+		dm.Geo = &dnsutils.TransformDNSGeo{
+			CountryIsoCode: "-", City: "-", Continent: "-",
+			AutonomousSystemNumber: "-", AutonomousSystemOrg: "-",
+		}
+	}
+
+	geoInfo, err := p.Lookup(dm.NetworkInfo.QueryIP)
+	if err != nil {
+		p.LogError("geoip lookup error %v", err)
+		return ReturnKeep, err
+	}
+
+	dm.Geo.Continent = geoInfo.Continent
+	dm.Geo.CountryIsoCode = geoInfo.CountryISOCode
+	dm.Geo.City = geoInfo.City
+	dm.Geo.AutonomousSystemNumber = geoInfo.ASN
+	dm.Geo.AutonomousSystemOrg = geoInfo.ASO
+
+	return ReturnKeep, nil
 }

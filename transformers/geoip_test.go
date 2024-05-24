@@ -25,7 +25,9 @@ func TestGeoIP_Json(t *testing.T) {
 		t.Fatalf("geoip init failed: %v+", err)
 	}
 	defer geoip.Close()
-	geoip.InitDNSMessage(&dm)
+
+	geoip.GetTransforms()
+	geoip.geoipTransform(&dm)
 
 	// expected json
 	refJSON := `
@@ -75,11 +77,6 @@ func TestGeoIP_LookupCountry(t *testing.T) {
 	}
 	defer geoip.Close()
 
-	// feature is enabled ?
-	if !geoip.IsEnabled() {
-		t.Fatalf("geoip should be enabled")
-	}
-
 	// lookup
 	geoInfo, err := geoip.Lookup("92.184.1.1")
 	if err != nil {
@@ -104,11 +101,6 @@ func TestGeoIP_LookupAsn(t *testing.T) {
 		t.Fatalf("geoip init failed: %v", err)
 	}
 	defer geoip.Close()
-
-	// feature is enabled ?
-	if !geoip.IsEnabled() {
-		t.Fatalf("geoip should be enabled")
-	}
 
 	// lookup
 	geoInfo, err := geoip.Lookup("83.112.146.176")

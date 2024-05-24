@@ -251,9 +251,6 @@ func (w *PdnsProcessor) StartCollect() {
 			dm := dnsutils.DNSMessage{}
 			dm.Init()
 
-			// init dns message with additionnals parts
-			transforms.InitDNSMessageFormat(&dm)
-
 			// init powerdns with default values
 			dm.PowerDNS = &dnsutils.PowerDNS{
 				Tags:                  []string{},
