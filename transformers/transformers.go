@@ -9,9 +9,8 @@ import (
 )
 
 var (
-	ReturnKeep  = 1
-	ReturnDrop  = 2
-	ReturnError = 3
+	ReturnKeep = 1
+	ReturnDrop = 2
 )
 
 type Subtransform struct {

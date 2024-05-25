@@ -24,9 +24,16 @@ func TestNormalize_LowercaseQname(t *testing.T) {
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = qname
 
-	normTransformer.QnameLowercase(&dm)
-	if dm.DNS.Qname != strings.ToLower(qname) {
+	returnCode, err := normTransformer.QnameLowercase(&dm)
+	if err != nil {
+		t.Errorf("process transform err %s", err.Error())
+	}
+
+	if dm.DNS.Qname != NormAddress {
 		t.Errorf("Qname to lowercase failed, got %s", dm.DNS.Qname)
+	}
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v and not RETURN_KEEP (%v)", returnCode, ReturnKeep)
 	}
 }
 
@@ -49,7 +56,13 @@ func TestNormalize_RRLowercaseQname(t *testing.T) {
 	dm.DNS.DNSRRs.Records = append(dm.DNS.DNSRRs.Records, dnsutils.DNSAnswer{Name: rrqname})
 
 	// process DNSMessage
-	normTransformer.RRLowercase(&dm)
+	returnCode, err := normTransformer.RRLowercase(&dm)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v, want %v", returnCode, ReturnKeep)
+	}
 
 	// checks
 	if dm.DNS.DNSRRs.Answers[0].Name != strings.ToLower(rrqname) {

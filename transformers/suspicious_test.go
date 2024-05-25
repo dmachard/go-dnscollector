@@ -24,7 +24,13 @@ func TestSuspicious_Json(t *testing.T) {
 
 	// init transforms and check
 	suspicious.GetTransforms()
-	suspicious.checkIfSuspicious(&dm)
+	returnCode, err := suspicious.checkIfSuspicious(&dm)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v, want keep(%v)", returnCode, ReturnKeep)
+	}
 
 	// expected json
 	refJSON := `
@@ -43,7 +49,7 @@ func TestSuspicious_Json(t *testing.T) {
 			`
 
 	var dmMap map[string]interface{}
-	err := json.Unmarshal([]byte(dm.ToJSON()), &dmMap)
+	err = json.Unmarshal([]byte(dm.ToJSON()), &dmMap)
 	if err != nil {
 		t.Fatalf("could not unmarshal dm json: %s\n", err)
 	}
@@ -79,7 +85,14 @@ func TestSuspicious_MalformedPacket(t *testing.T) {
 
 	// init transforms and check
 	suspicious.GetTransforms()
-	suspicious.checkIfSuspicious(&dm)
+
+	returnCode, err := suspicious.checkIfSuspicious(&dm)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v, want keep(%v)", returnCode, ReturnKeep)
+	}
 
 	if dm.Suspicious.Score != 1.0 {
 		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
@@ -107,7 +120,13 @@ func TestSuspicious_LongDomain(t *testing.T) {
 
 	// init transforms and check
 	suspicious.GetTransforms()
-	suspicious.checkIfSuspicious(&dm)
+	returnCode, err := suspicious.checkIfSuspicious(&dm)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v, want keep(%v)", returnCode, ReturnKeep)
+	}
 
 	if dm.Suspicious.Score != 1.0 {
 		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
@@ -135,7 +154,13 @@ func TestSuspicious_SlowDomain(t *testing.T) {
 
 	// init transforms and check
 	suspicious.GetTransforms()
-	suspicious.checkIfSuspicious(&dm)
+	returnCode, err := suspicious.checkIfSuspicious(&dm)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v, want keep(%v)", returnCode, ReturnKeep)
+	}
 
 	if dm.Suspicious.Score != 1.0 {
 		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
@@ -163,7 +188,13 @@ func TestSuspicious_LargePacket(t *testing.T) {
 
 	// init transforms and check
 	suspicious.GetTransforms()
-	suspicious.checkIfSuspicious(&dm)
+	returnCode, err := suspicious.checkIfSuspicious(&dm)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v, want keep(%v)", returnCode, ReturnKeep)
+	}
 
 	if dm.Suspicious.Score != 1.0 {
 		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
@@ -190,7 +221,13 @@ func TestSuspicious_UncommonQtype(t *testing.T) {
 
 	// init transforms and check
 	suspicious.GetTransforms()
-	suspicious.checkIfSuspicious(&dm)
+	returnCode, err := suspicious.checkIfSuspicious(&dm)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v, want keep(%v)", returnCode, ReturnKeep)
+	}
 
 	if dm.Suspicious.Score != 1.0 {
 		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
@@ -218,7 +255,13 @@ func TestSuspicious_ExceedMaxLabels(t *testing.T) {
 
 	// init transforms and check
 	suspicious.GetTransforms()
-	suspicious.checkIfSuspicious(&dm)
+	returnCode, err := suspicious.checkIfSuspicious(&dm)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v, want keep(%v)", returnCode, ReturnKeep)
+	}
 
 	if dm.Suspicious.Score != 1.0 {
 		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
@@ -245,7 +288,13 @@ func TestSuspicious_UnallowedChars(t *testing.T) {
 
 	// init transforms and check
 	suspicious.GetTransforms()
-	suspicious.checkIfSuspicious(&dm)
+	returnCode, err := suspicious.checkIfSuspicious(&dm)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v, want keep(%v)", returnCode, ReturnKeep)
+	}
 
 	if dm.Suspicious.Score != 1.0 {
 		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))
@@ -271,7 +320,13 @@ func TestSuspicious_WhitelistDomains(t *testing.T) {
 	dm.DNS.Qname = "0.f.e.d.c.b.a.9.8.7.6.5.4.3.2.1.ip6.arpa"
 
 	suspicious.GetTransforms()
-	suspicious.checkIfSuspicious(&dm)
+	returnCode, err := suspicious.checkIfSuspicious(&dm)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v, want keep(%v)", returnCode, ReturnKeep)
+	}
 
 	if dm.Suspicious.Score != 0.0 {
 		t.Errorf("suspicious score should be equal to 0.0, got: %d", int(dm.Suspicious.Score))

@@ -72,7 +72,8 @@ func TestGeoIP_LookupCountry(t *testing.T) {
 
 	// init the processor
 	geoip := NewDNSGeoIPTransform(config, logger.New(false), "test", 0, outChans)
-	if err := geoip.Open(); err != nil {
+	_, err := geoip.GetTransforms()
+	if err != nil {
 		t.Fatalf("geoip init failed: %v+", err)
 	}
 	defer geoip.Close()
@@ -85,6 +86,24 @@ func TestGeoIP_LookupCountry(t *testing.T) {
 
 	if geoInfo.CountryISOCode != "FR" {
 		t.Errorf("country invalid want: XX got: %s", geoInfo.CountryISOCode)
+	}
+
+	// create test message
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.NetworkInfo.QueryIP = "83.112.146.176"
+
+	// apply subprocessors
+	returnCode, err := geoip.geoipTransform(&dm)
+	if err != nil {
+		t.Errorf("process transform err: %v", err)
+	}
+
+	if dm.Geo.CountryIsoCode != "FR" {
+		t.Errorf("country invalid want: FR got: %s", dm.Geo.CountryIsoCode)
+	}
+
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v and not RETURN_KEEP (%v)", returnCode, ReturnKeep)
 	}
 }
 
