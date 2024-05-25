@@ -102,11 +102,7 @@ func (t *GeoIPTransform) Close() {
 
 func (t *GeoIPTransform) Lookup(ip string) (GeoRecord, error) {
 	record := &MaxminddbRecord{}
-	rec := GeoRecord{Continent: "-",
-		CountryISOCode: "-",
-		City:           "-",
-		ASN:            "-",
-		ASO:            "-"}
+	rec := GeoRecord{Continent: "-", CountryISOCode: "-", City: "-", ASN: "-", ASO: "-"}
 
 	if t.dbAsn != nil {
 		err := t.dbAsn.Lookup(net.ParseIP(ip), &record)
@@ -134,7 +130,6 @@ func (t *GeoIPTransform) Lookup(ip string) (GeoRecord, error) {
 		rec.CountryISOCode = record.Country.ISOCode
 		rec.Continent = record.Continent.Code
 	}
-
 	return rec, nil
 }
 
@@ -145,7 +140,6 @@ func (t *GeoIPTransform) geoipTransform(dm *dnsutils.DNSMessage) (int, error) {
 
 	geoInfo, err := t.Lookup(dm.NetworkInfo.QueryIP)
 	if err != nil {
-		t.LogError("geoip lookup error %v", err)
 		return ReturnKeep, err
 	}
 

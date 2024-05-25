@@ -66,6 +66,7 @@ func TestGeoIP_Json(t *testing.T) {
 func TestGeoIP_LookupCountry(t *testing.T) {
 	// enable geoip
 	config := pkgconfig.GetFakeConfigTransformers()
+	config.GeoIP.Enable = true
 	config.GeoIP.DBCountryFile = "../tests/testsdata/GeoLite2-Country.mmdb"
 
 	outChans := []chan dnsutils.DNSMessage{}
@@ -77,16 +78,6 @@ func TestGeoIP_LookupCountry(t *testing.T) {
 		t.Fatalf("geoip init failed: %v+", err)
 	}
 	defer geoip.Close()
-
-	// lookup
-	geoInfo, err := geoip.Lookup("92.184.1.1")
-	if err != nil {
-		t.Errorf("geoip loopkup failed: %v+", err)
-	}
-
-	if geoInfo.CountryISOCode != "FR" {
-		t.Errorf("country invalid want: XX got: %s", geoInfo.CountryISOCode)
-	}
 
 	// create test message
 	dm := dnsutils.GetFakeDNSMessage()
@@ -110,6 +101,7 @@ func TestGeoIP_LookupCountry(t *testing.T) {
 func TestGeoIP_LookupAsn(t *testing.T) {
 	// enable geoip
 	config := pkgconfig.GetFakeConfigTransformers()
+	config.GeoIP.Enable = true
 	config.GeoIP.DBASNFile = "../tests/testsdata/GeoLite2-ASN.mmdb"
 
 	outChans := []chan dnsutils.DNSMessage{}
