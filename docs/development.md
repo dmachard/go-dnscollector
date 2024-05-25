@@ -97,32 +97,20 @@ func (c *ConfigTransformers) SetDefault() {
 }
 ```
 
-Create the following file `transformers/mytransform.go` and `loggers/mytransform_test.go`
+Create the following file `transformers/mytransform.go` and `transformers/mytransform_test.go`
 
 ```golang
 type MyTransform struct {
- config *pkgconfig.ConfigTransformers
+	GenericTransformer
 }
 
-func NewMyTransform(config *pkgconfig.ConfigTransformers) MyTransform {
- s := MyTransform{
-  config: config,
- }
-
- return s
+func MyTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, nextWorkers []chan dnsutils.DNSMessage) *MyTransform {
+	t := &MyTransform{GenericTransformer: NewTransformer(config, logger, "mytransform", name, instance, nextWorkers)}
+	return t
 }
 ```
 
-Declare the transfomer in the following file `subprocessor.go`
-
-```golang
-func NewTransforms(
-    d := Transforms{
-            MyTransform:     NewMyTransform(config, logger, name, outChannels),
-    }
-}
-```
-
+Declare the transfomer in the following file `tranformers.go`
 Finally update the docs `doc/transformers.md` and `README.md`
 
 ### Add a worker (collector or logger)
