@@ -41,13 +41,7 @@ func (t *MlTransform) GetTransforms() ([]Subtransform, error) {
 func (t *MlTransform) addFeatures(dm *dnsutils.DNSMessage) (int, error) {
 
 	if dm.MachineLearning == nil {
-		dm.MachineLearning = &dnsutils.TransformML{
-			Entropy: 0, Length: 0, Digits: 0,
-			Lowers: 0, Uppers: 0, Labels: 0, Specials: 0,
-			RatioDigits: 0, RatioLetters: 0, RatioSpecials: 0, Others: 0,
-			ConsecutiveChars: 0, ConsecutiveVowels: 0, ConsecutiveDigits: 0, ConsecutiveConsonants: 0, Size: 0,
-			Occurrences: 0, UncommonQtypes: 0,
-		}
+		dm.MachineLearning = &dnsutils.TransformML{}
 	}
 
 	// count global number of chars

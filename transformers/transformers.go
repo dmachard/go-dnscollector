@@ -37,12 +37,12 @@ func NewTransformer(config *pkgconfig.ConfigTransformers, logger *logger.Logger,
 	t := GenericTransformer{config: config, logger: logger, nextWorkers: nextWorkers, name: name}
 
 	t.LogInfo = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("worker - [%s] [conn=#%d] [transform=%s] - ", workerName, instance, name)
+		log := fmt.Sprintf("worker - [%s] (conn #%d) [transform=%s] - ", workerName, instance, name)
 		logger.Info(log+msg, v...)
 	}
 
 	t.LogError = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("worker - [%s] [conn=#%d] [transform=%s] - ", workerName, instance, name)
+		log := fmt.Sprintf("worker - [%s] (conn #%d) [transform=%s] - ", workerName, instance, name)
 		logger.Error(log+msg, v...)
 	}
 	return t
@@ -137,14 +137,13 @@ func (p *Transforms) LogError(msg string, v ...interface{}) {
 	p.logger.Error(pkgconfig.PrefixLogWorker+"["+p.name+"] "+msg, v...)
 }
 
-func (p *Transforms) ProcessMessage(dm *dnsutils.DNSMessage) int {
+func (p *Transforms) ProcessMessage(dm *dnsutils.DNSMessage) (int, error) {
 	for _, transform := range p.activeTransforms {
 		if result, err := transform(dm); err != nil {
-			p.LogError("transform err", err)
-			return ReturnKeep
+			return ReturnKeep, fmt.Errorf("error on transform processing: %v", err.Error())
 		} else if result == ReturnDrop {
-			return ReturnDrop
+			return ReturnDrop, nil
 		}
 	}
-	return ReturnKeep
+	return ReturnKeep, nil
 }

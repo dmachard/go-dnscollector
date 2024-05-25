@@ -129,7 +129,7 @@ func (t *ReducerTransform) GetTransforms() ([]Subtransform, error) {
 
 func (t *ReducerTransform) repetitiveTrafficDetector(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.Reducer == nil {
-		dm.Reducer = &dnsutils.TransformReducer{Occurrences: 0, CumulativeLength: 0}
+		dm.Reducer = &dnsutils.TransformReducer{}
 	}
 
 	t.strBuilder.Reset()

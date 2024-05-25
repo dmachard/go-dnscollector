@@ -230,7 +230,11 @@ func (w *KafkaProducer) StartCollect() {
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+			transformResult, err := subprocessors.ProcessMessage(&dm)
+			if err != nil {
+				w.LogError(err.Error())
+			}
+			if transformResult == transformers.ReturnDrop {
 				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}

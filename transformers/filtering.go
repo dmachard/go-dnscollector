@@ -2,6 +2,7 @@ package transformers
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -14,7 +15,6 @@ import (
 
 type FilteringTransform struct {
 	GenericTransformer
-	dropDomains, keepDomains               bool
 	mapRcodes                              map[string]bool
 	ipsetDrop, ipsetKeep, rDataIpsetKeep   *netaddr.IPSet
 	listFqdns, listKeepFqdns               map[string]bool
@@ -38,10 +38,18 @@ func NewFilteringTransform(config *pkgconfig.ConfigTransformers, logger *logger.
 func (t *FilteringTransform) GetTransforms() ([]Subtransform, error) {
 	subtransforms := []Subtransform{}
 
-	t.LoadRcodes()
-	t.LoadDomainsList()
-	t.LoadQueryIPList()
-	t.LoadrDataIPList()
+	if err := t.LoadRcodes(); err != nil {
+		return nil, err
+	}
+	if err := t.LoadDomainsList(); err != nil {
+		return nil, err
+	}
+	if err := t.LoadQueryIPList(); err != nil {
+		return nil, err
+	}
+	if err := t.LoadrDataIPList(); err != nil {
+		return nil, err
+	}
 
 	if !t.config.Filtering.LogQueries {
 		subtransforms = append(subtransforms, Subtransform{name: "filtering:drop-queries", processFunc: t.dropQueryFilter})
@@ -81,7 +89,7 @@ func (t *FilteringTransform) GetTransforms() ([]Subtransform, error) {
 	return subtransforms, nil
 }
 
-func (t *FilteringTransform) LoadRcodes() {
+func (t *FilteringTransform) LoadRcodes() error {
 	// empty
 	for key := range t.mapRcodes {
 		delete(t.mapRcodes, key)
@@ -91,13 +99,14 @@ func (t *FilteringTransform) LoadRcodes() {
 	for _, v := range t.config.Filtering.DropRcodes {
 		t.mapRcodes[v] = true
 	}
+	return nil
 }
 
-func (t *FilteringTransform) LoadQueryIPList() {
+func (t *FilteringTransform) LoadQueryIPList() error {
 	if len(t.config.Filtering.DropQueryIPFile) > 0 {
 		read, err := t.loadQueryIPList(t.config.Filtering.DropQueryIPFile, true)
 		if err != nil {
-			t.LogError("unable to open query ip file: ", err)
+			return fmt.Errorf("unable to open query ip file: %w", err)
 		}
 		t.LogInfo("loaded with %d query ip to the drop list", read)
 	}
@@ -105,27 +114,26 @@ func (t *FilteringTransform) LoadQueryIPList() {
 	if len(t.config.Filtering.KeepQueryIPFile) > 0 {
 		read, err := t.loadQueryIPList(t.config.Filtering.KeepQueryIPFile, false)
 		if err != nil {
-			t.LogError("unable to open query ip file: ", err)
+			return fmt.Errorf("unable to open query ip file: %w", err)
 		}
 		t.LogInfo("loaded with %d query ip to the keep list", read)
 	}
+	return nil
 }
 
-func (t *FilteringTransform) LoadrDataIPList() {
+func (t *FilteringTransform) LoadrDataIPList() error {
 	if len(t.config.Filtering.KeepRdataFile) > 0 {
 		read, err := t.loadKeepRdataIPList(t.config.Filtering.KeepRdataFile)
 		if err != nil {
-			t.LogError("unable to open rdata ip file: ", err)
+			return fmt.Errorf("unable to open rdata ip file: %w", err)
 		}
 		t.LogInfo("loaded with %d rdata ip to the keep list", read)
 	}
+	return nil
 }
 
-func (t *FilteringTransform) LoadDomainsList() {
+func (t *FilteringTransform) LoadDomainsList() error {
 	// before to start, reset all maps
-	t.dropDomains = false
-	t.keepDomains = false
-
 	for key := range t.listFqdns {
 		delete(t.listFqdns, key)
 	}
@@ -142,8 +150,7 @@ func (t *FilteringTransform) LoadDomainsList() {
 	if len(t.config.Filtering.DropFqdnFile) > 0 {
 		file, err := os.Open(t.config.Filtering.DropFqdnFile)
 		if err != nil {
-			t.LogError("unable to open fqdn file: ", err)
-			t.dropDomains = true
+			return fmt.Errorf("unable to open fqdn file: %w", err)
 		} else {
 
 			scanner := bufio.NewScanner(file)
@@ -152,7 +159,6 @@ func (t *FilteringTransform) LoadDomainsList() {
 				t.listFqdns[fqdn] = true
 			}
 			t.LogInfo("loaded with %d fqdn to the drop list", len(t.listFqdns))
-			t.dropDomains = true
 		}
 
 	}
@@ -160,8 +166,7 @@ func (t *FilteringTransform) LoadDomainsList() {
 	if len(t.config.Filtering.DropDomainFile) > 0 {
 		file, err := os.Open(t.config.Filtering.DropDomainFile)
 		if err != nil {
-			t.LogError("unable to open regex list file: ", err)
-			t.dropDomains = true
+			return fmt.Errorf("unable to open regex list file: %w", err)
 		} else {
 
 			scanner := bufio.NewScanner(file)
@@ -170,15 +175,13 @@ func (t *FilteringTransform) LoadDomainsList() {
 				t.listDomainsRegex[domain] = regexp.MustCompile(domain)
 			}
 			t.LogInfo("loaded with %d domains to the drop list", len(t.listDomainsRegex))
-			t.dropDomains = true
 		}
 	}
 
 	if len(t.config.Filtering.KeepFqdnFile) > 0 {
 		file, err := os.Open(t.config.Filtering.KeepFqdnFile)
 		if err != nil {
-			t.LogError("unable to open KeepFqdnFile file: ", err)
-			t.keepDomains = false
+			return fmt.Errorf("unable to open KeepFqdnFile file: %w", err)
 		} else {
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
@@ -186,15 +189,13 @@ func (t *FilteringTransform) LoadDomainsList() {
 				t.listKeepFqdns[keepDomain] = true
 			}
 			t.LogInfo("loaded with %d fqdn(s) to the keep list", len(t.listKeepFqdns))
-			t.keepDomains = true
 		}
 	}
 
 	if len(t.config.Filtering.KeepDomainFile) > 0 {
 		file, err := os.Open(t.config.Filtering.KeepDomainFile)
 		if err != nil {
-			t.LogError("unable to open KeepDomainFile file: ", err)
-			t.keepDomains = false
+			return fmt.Errorf("unable to open KeepDomainFile file: %w", err)
 		} else {
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
@@ -202,9 +203,9 @@ func (t *FilteringTransform) LoadDomainsList() {
 				t.listKeepDomainsRegex[keepDomain] = regexp.MustCompile(keepDomain)
 			}
 			t.LogInfo("loaded with %d domains to the keep list", len(t.listKeepDomainsRegex))
-			t.keepDomains = true
 		}
 	}
+	return nil
 }
 
 func (t *FilteringTransform) loadQueryIPList(fname string, drop bool) (uint64, error) {
@@ -372,7 +373,7 @@ func (t *FilteringTransform) keepDomainRegexFilter(dm *dnsutils.DNSMessage) (int
 // drop all except every nth entry
 func (t *FilteringTransform) downsampleFilter(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.Filtering == nil {
-		dm.Filtering = &dnsutils.TransformFiltering{SampleRate: 0}
+		dm.Filtering = &dnsutils.TransformFiltering{}
 	}
 
 	// Increment the downsampleCount for each processed DNS message.

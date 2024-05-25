@@ -101,24 +101,37 @@ func TestUserPrivacy_ReduceQname(t *testing.T) {
 	userPrivacy := NewUserPrivacyTransform(config, logger.New(false), "test", 0, outChans)
 	userPrivacy.GetTransforms()
 
-	dm := dnsutils.GetFakeDNSMessage()
-	dm.DNS.Qname = "www.google.com"
-
-	userPrivacy.minimazeQname(&dm)
-	if dm.DNS.Qname != "google.com" {
-		t.Errorf("Qname minimization failed, got %s", dm.DNS.Qname)
+	testCases := []struct {
+		input      string
+		expected   string
+		returnCode int
+	}{
+		{"www.google.com", "google.com", ReturnKeep},
+		{"localhost", "localhost", ReturnKeep},
+		{"null", "null", ReturnKeep},
+		{"invalid", "invalid", ReturnKeep},
+		{"localhost.domain.local.home", "local.home", ReturnKeep},
 	}
 
-	dm.DNS.Qname = "localhost"
-	userPrivacy.minimazeQname(&dm)
-	if dm.DNS.Qname != "localhost" {
-		t.Errorf("Qname minimization failed, got %s", dm.DNS.Qname)
-	}
+	// Execute test cases
+	for _, tc := range testCases {
+		t.Run(tc.input, func(t *testing.T) {
+			dm := dnsutils.GetFakeDNSMessage()
+			dm.DNS.Qname = tc.input
 
-	dm.DNS.Qname = "localhost.domain.local.home"
-	userPrivacy.minimazeQname(&dm)
-	if dm.DNS.Qname != "local.home" {
-		t.Errorf("Qname minimization failed, got %s", dm.DNS.Qname)
+			returnCode, err := userPrivacy.minimazeQname(&dm)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			if dm.DNS.Qname != tc.expected {
+				t.Errorf("Qname minimization failed, got %s, want %s", dm.DNS.Qname, tc.expected)
+			}
+
+			if returnCode != tc.returnCode {
+				t.Errorf("Return code is %v, want %v", returnCode, tc.returnCode)
+			}
+		})
 	}
 }
 

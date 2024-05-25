@@ -50,10 +50,7 @@ func (t *SuspiciousTransform) GetTransforms() ([]Subtransform, error) {
 func (t *SuspiciousTransform) checkIfSuspicious(dm *dnsutils.DNSMessage) (int, error) {
 
 	if dm.Suspicious == nil {
-		dm.Suspicious = &dnsutils.TransformSuspicious{
-			Score: 0.0, MalformedPacket: false, LargePacket: false, LongDomain: false,
-			SlowDomain: false, UnallowedChars: false, UncommonQtypes: false, ExcessiveNumberLabels: false,
-		}
+		dm.Suspicious = &dnsutils.TransformSuspicious{}
 	}
 
 	// ignore some domains ?

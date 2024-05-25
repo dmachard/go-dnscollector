@@ -106,10 +106,8 @@ func (t *UserPrivacyTransform) hashReplyIP(dm *dnsutils.DNSMessage) (int, error)
 }
 
 func (t *UserPrivacyTransform) minimazeQname(dm *dnsutils.DNSMessage) (int, error) {
-	if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err != nil {
-		return ReturnKeep, err
-	} else {
+	if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
 		dm.DNS.Qname = etpo
-		return ReturnKeep, nil
 	}
+	return ReturnKeep, nil
 }

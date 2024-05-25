@@ -140,10 +140,7 @@ func (t *GeoIPTransform) Lookup(ip string) (GeoRecord, error) {
 
 func (t *GeoIPTransform) geoipTransform(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.Geo == nil {
-		dm.Geo = &dnsutils.TransformDNSGeo{
-			CountryIsoCode: "-", City: "-", Continent: "-",
-			AutonomousSystemNumber: "-", AutonomousSystemOrg: "-",
-		}
+		dm.Geo = &dnsutils.TransformDNSGeo{CountryIsoCode: "-", City: "-", Continent: "-", AutonomousSystemNumber: "-", AutonomousSystemOrg: "-"}
 	}
 
 	geoInfo, err := t.Lookup(dm.NetworkInfo.QueryIP)

@@ -218,7 +218,11 @@ func (w *Tail) StartCollect() {
 			dm.DNS.Length = len(dm.DNS.Payload)
 
 			// apply all enabled transformers
-			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+			transformResult, err := subprocessors.ProcessMessage(&dm)
+			if err != nil {
+				w.LogError(err.Error())
+			}
+			if transformResult == transformers.ReturnDrop {
 				continue
 			}
 

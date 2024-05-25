@@ -105,9 +105,7 @@ func (t *NormalizeTransform) QuietText(dm *dnsutils.DNSMessage) (int, error) {
 
 func (t *NormalizeTransform) GetEffectiveTld(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.PublicSuffix == nil {
-		dm.PublicSuffix = &dnsutils.TransformPublicSuffix{
-			QnamePublicSuffix: "-", QnameEffectiveTLDPlusOne: "-", ManagedByICANN: false,
-		}
+		dm.PublicSuffix = &dnsutils.TransformPublicSuffix{QnamePublicSuffix: "-", QnameEffectiveTLDPlusOne: "-"}
 	}
 
 	// PublicSuffix is case sensitive.
@@ -128,16 +126,15 @@ func (t *NormalizeTransform) GetEffectiveTld(dm *dnsutils.DNSMessage) (int, erro
 
 func (t *NormalizeTransform) GetEffectiveTldPlusOne(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.PublicSuffix == nil {
-		dm.PublicSuffix = &dnsutils.TransformPublicSuffix{
-			QnamePublicSuffix: "-", QnameEffectiveTLDPlusOne: "-", ManagedByICANN: false,
-		}
+		dm.PublicSuffix = &dnsutils.TransformPublicSuffix{QnamePublicSuffix: "-", QnameEffectiveTLDPlusOne: "-"}
 	}
 
 	// PublicSuffix is case sensitive, remove ending dot ?
 	qname := strings.ToLower(dm.DNS.Qname)
 	qname = strings.TrimSuffix(qname, ".")
 
-	if etld, err := publicsuffixlist.EffectiveTLDPlusOne(qname); err == nil {
+	etld, err := publicsuffixlist.EffectiveTLDPlusOne(qname)
+	if err == nil {
 		dm.PublicSuffix.QnameEffectiveTLDPlusOne = etld
 	}
 
