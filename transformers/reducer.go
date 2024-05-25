@@ -2,7 +2,6 @@ package transformers
 
 import (
 	"container/list"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -101,97 +100,55 @@ func (mp *MapTraffic) ProcessExpiredKeys() {
 	}
 }
 
-type ReducerProcessor struct {
-	config            *pkgconfig.ConfigTransformers
-	logger            *logger.Logger
-	outChannels       []chan dnsutils.DNSMessage
-	activeProcessors  []func(dm *dnsutils.DNSMessage) int
-	mapTraffic        MapTraffic
-	LogInfo, LogError func(msg string, v ...interface{})
-	strBuilder        strings.Builder
+type ReducerTransform struct {
+	GenericTransformer
+	mapTraffic MapTraffic
+	strBuilder strings.Builder
 }
 
-func NewReducerTransform(
-	config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage) *ReducerProcessor {
-	s := ReducerProcessor{config: config, logger: logger, outChannels: outChannels}
+func NewReducerTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, nextWorkers []chan dnsutils.DNSMessage) *ReducerTransform {
+	t := &ReducerTransform{GenericTransformer: NewTransformer(config, logger, "reducer", name, instance, nextWorkers)}
+	t.mapTraffic = NewMapTraffic(time.Duration(config.Reducer.WatchInterval)*time.Second, nextWorkers, t.LogInfo, t.LogError)
+	return t
+}
 
-	s.LogInfo = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("transformer - [%s] conn #%d - reducer - ", name, instance)
-		logger.Info(log+msg, v...)
+func (t *ReducerTransform) ReloadConfig(config *pkgconfig.ConfigTransformers) {
+	t.GenericTransformer.ReloadConfig(config)
+	t.mapTraffic.SetTTL(time.Duration(config.Reducer.WatchInterval) * time.Second)
+	t.GetTransforms()
+}
+
+func (t *ReducerTransform) GetTransforms() ([]Subtransform, error) {
+	subtransforms := []Subtransform{}
+	if t.config.Reducer.RepetitiveTrafficDetector {
+		subtransforms = append(subtransforms, Subtransform{name: "reducer", processFunc: t.repetitiveTrafficDetector})
+		go t.mapTraffic.Run()
 	}
-
-	s.LogError = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("transformer - [%s] conn #%d - reducer - ", name, instance)
-		logger.Error(log+msg, v...)
-	}
-
-	s.mapTraffic = NewMapTraffic(time.Duration(config.Reducer.WatchInterval)*time.Second, outChannels, s.LogInfo, s.LogError)
-
-	return &s
+	return subtransforms, nil
 }
 
-func (p *ReducerProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
-	p.config = config
-	p.mapTraffic.SetTTL(time.Duration(config.Reducer.WatchInterval) * time.Second)
-
-	p.LoadActiveReducers()
-}
-
-func (p *ReducerProcessor) LoadActiveReducers() {
-	// clean the slice
-	p.activeProcessors = p.activeProcessors[:0]
-
-	if p.config.Reducer.RepetitiveTrafficDetector {
-		p.activeProcessors = append(p.activeProcessors, p.RepetitiveTrafficDetector)
-		go p.mapTraffic.Run()
-	}
-}
-
-func (p *ReducerProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
+func (t *ReducerTransform) repetitiveTrafficDetector(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.Reducer == nil {
-		dm.Reducer = &dnsutils.TransformReducer{
-			Occurrences:      0,
-			CumulativeLength: 0,
-		}
+		dm.Reducer = &dnsutils.TransformReducer{}
 	}
-}
 
-func (p *ReducerProcessor) RepetitiveTrafficDetector(dm *dnsutils.DNSMessage) int {
-	p.strBuilder.Reset()
-	p.strBuilder.WriteString(dm.DNSTap.Identity)
-	p.strBuilder.WriteString(dm.DNSTap.Operation)
-	p.strBuilder.WriteString(dm.NetworkInfo.QueryIP)
-	if p.config.Reducer.QnamePlusOne {
+	t.strBuilder.Reset()
+	t.strBuilder.WriteString(dm.DNSTap.Identity)
+	t.strBuilder.WriteString(dm.DNSTap.Operation)
+	t.strBuilder.WriteString(dm.NetworkInfo.QueryIP)
+	if t.config.Reducer.QnamePlusOne {
 		qname := strings.ToLower(dm.DNS.Qname)
 		qname = strings.TrimSuffix(qname, ".")
 		if etld, err := publicsuffixlist.EffectiveTLDPlusOne(qname); err == nil {
 			dm.DNS.Qname = etld
 		}
 	}
-	p.strBuilder.WriteString(dm.DNS.Qname)
-	p.strBuilder.WriteString(dm.DNS.Qtype)
-	dmTag := p.strBuilder.String()
+	t.strBuilder.WriteString(dm.DNS.Qname)
+	t.strBuilder.WriteString(dm.DNS.Qtype)
+	dmTag := t.strBuilder.String()
 
-	p.mapTraffic.Set(dmTag, dm)
-
-	return ReturnDrop
-}
-
-func (p *ReducerProcessor) ProcessDNSMessage(dm *dnsutils.DNSMessage) int {
 	dmCopy := *dm
+	t.mapTraffic.Set(dmTag, &dmCopy)
 
-	if len(p.activeProcessors) == 0 {
-		return ReturnSuccess
-	}
-
-	var rCode int
-	for _, fn := range p.activeProcessors {
-		rCode = fn(&dmCopy)
-		if rCode != ReturnSuccess {
-			return rCode
-		}
-	}
-
-	return ReturnSuccess
+	return ReturnDrop, nil
 }

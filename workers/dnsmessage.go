@@ -223,8 +223,11 @@ func (w *DNSMessage) StartCollect() {
 			// apply tranforms on matched packets only
 			// init dns message with additionnals parts if necessary
 			if matched {
-				subprocessors.InitDNSMessageFormat(&dm)
-				if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+				transformResult, err := subprocessors.ProcessMessage(&dm)
+				if err != nil {
+					w.LogError(err.Error())
+				}
+				if transformResult == transformers.ReturnDrop {
 					w.SendTo(droppedRoutes, droppedNames, dm)
 					continue
 				}

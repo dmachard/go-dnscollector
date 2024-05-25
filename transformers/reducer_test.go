@@ -24,13 +24,13 @@ func TestReducer_Json(t *testing.T) {
 	// init subproccesor
 
 	reducer := NewReducerTransform(config, logger.New(false), "test", 0, outChans)
-	reducer.InitDNSMessage(&dm)
+	reducer.repetitiveTrafficDetector(&dm)
 
 	// expected json
 	refJSON := `
 			{
 				"reducer": {
-				  "occurrences": 0,
+				  "occurrences": 1,
 				  "cumulative-length": 0
 				}
 			}
@@ -69,7 +69,10 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 
 	// init subproccesor
 	reducer := NewReducerTransform(config, logger.New(false), "test", 0, outChans)
-	reducer.LoadActiveReducers()
+	subtransforms, _ := reducer.GetTransforms()
+	if len(subtransforms) != 1 {
+		t.Errorf("invalid number of subtransforms enabled")
+	}
 
 	// malformed DNS message
 	testcases := []struct {
@@ -145,12 +148,16 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 		},
 	}
 
+	time.Sleep(1 * time.Second)
+
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 
 			for _, dmIn := range tc.dnsMessagesIn {
-				reducer.InitDNSMessage(&dmIn)
-				ret := reducer.ProcessDNSMessage(&dmIn)
+				ret, err := reducer.repetitiveTrafficDetector(&dmIn)
+				if err != nil {
+					t.Errorf("transform error - %v", err)
+				}
 				if ret != ReturnDrop {
 					t.Errorf("DNS message should be dropped")
 				}
@@ -182,7 +189,10 @@ func TestReducer_QnamePlusOne(t *testing.T) {
 
 	// init subproccesor
 	reducer := NewReducerTransform(config, logger.New(false), "test", 0, outChans)
-	reducer.LoadActiveReducers()
+	subtransforms, _ := reducer.GetTransforms()
+	if len(subtransforms) != 1 {
+		t.Errorf("invalid number of subtransforms enabled")
+	}
 
 	testcases := []struct {
 		name           string
@@ -216,8 +226,10 @@ func TestReducer_QnamePlusOne(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			for _, dmIn := range tc.dnsMessagesIn {
-				reducer.InitDNSMessage(&dmIn)
-				ret := reducer.ProcessDNSMessage(&dmIn)
+				ret, err := reducer.repetitiveTrafficDetector(&dmIn)
+				if err != nil {
+					t.Errorf("transform error - %v", err)
+				}
 				if ret != ReturnDrop {
 					t.Errorf("DNS message should be dropped")
 				}

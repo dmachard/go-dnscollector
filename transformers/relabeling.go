@@ -1,7 +1,6 @@
 package transformers
 
 import (
-	"fmt"
 	"regexp"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -9,62 +8,61 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-type RelabelProcessor struct {
-	config            *pkgconfig.ConfigTransformers
-	logger            *logger.Logger
-	outChannels       []chan dnsutils.DNSMessage
-	LogInfo, LogError func(msg string, v ...interface{})
-	RelabelingRules   []dnsutils.RelabelingRule
+type RelabelTransform struct {
+	GenericTransformer
+	RelabelingRules []dnsutils.RelabelingRule
 }
 
-func NewRelabelTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage) RelabelProcessor {
-	s := RelabelProcessor{config: config, logger: logger, outChannels: outChannels}
+func NewRelabelTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, nextWorkers []chan dnsutils.DNSMessage) *RelabelTransform {
+	t := &RelabelTransform{GenericTransformer: NewTransformer(config, logger, "relabeling", name, instance, nextWorkers)}
+	return t
+}
 
-	s.LogInfo = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("transformer - [%s] conn #%d - relabeling - ", name, instance)
-		logger.Info(log+msg, v...)
+func (t *RelabelTransform) GetTransforms() ([]Subtransform, error) {
+	subtransforms := []Subtransform{}
+	if len(t.config.Relabeling.Rename) > 0 || len(t.config.Relabeling.Remove) > 0 {
+		actions := t.Precompile()
+		subtransforms = append(subtransforms, Subtransform{name: "relabeling:" + actions, processFunc: t.AddRules})
 	}
-
-	s.LogError = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("transformer - [%s] conn #%d - relabeling - ", name, instance)
-		logger.Error(log+msg, v...)
-	}
-
-	s.Precompile()
-	return s
+	return subtransforms, nil
 }
 
-func (p *RelabelProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
-	p.config = config
-}
-
-func (p *RelabelProcessor) Precompile() {
-	// Pre-compile regular expressions
-	for _, label := range p.config.Relabeling.Rename {
-		p.RelabelingRules = append(p.RelabelingRules, dnsutils.RelabelingRule{
+// Pre-compile regular expressions
+func (t *RelabelTransform) Precompile() string {
+	actionRename := false
+	actionRemove := false
+	for _, label := range t.config.Relabeling.Rename {
+		t.RelabelingRules = append(t.RelabelingRules, dnsutils.RelabelingRule{
 			Regex:       regexp.MustCompile(label.Regex),
 			Replacement: label.Replacement,
 			Action:      "rename",
 		})
+		actionRename = true
 	}
-	for _, label := range p.config.Relabeling.Remove {
-		p.RelabelingRules = append(p.RelabelingRules, dnsutils.RelabelingRule{
+	for _, label := range t.config.Relabeling.Remove {
+		t.RelabelingRules = append(t.RelabelingRules, dnsutils.RelabelingRule{
 			Regex:       regexp.MustCompile(label.Regex),
 			Replacement: label.Replacement,
 			Action:      "drop",
 		})
+		actionRemove = true
 	}
+
+	if actionRename && actionRemove {
+		return "rename+remove"
+	}
+	if actionRename && !actionRemove {
+		return "rename"
+	}
+	if !actionRename && actionRemove {
+		return "remove"
+	}
+	return "error"
 }
 
-func (p *RelabelProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
+func (t *RelabelTransform) AddRules(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.Relabeling == nil {
-		dm.Relabeling = &dnsutils.TransformRelabeling{
-			Rules: p.RelabelingRules,
-		}
+		dm.Relabeling = &dnsutils.TransformRelabeling{Rules: t.RelabelingRules}
 	}
-}
-
-func (p *RelabelProcessor) IsEnabled() bool {
-	return p.config.Relabeling.Enable
+	return ReturnKeep, nil
 }

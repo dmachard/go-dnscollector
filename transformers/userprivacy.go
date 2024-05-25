@@ -6,112 +6,17 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"net"
-	"strconv"
 	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
+	"github.com/dmachard/go-netutils"
 	"golang.org/x/net/publicsuffix"
 )
 
-func parseCIDRMask(mask string) (net.IPMask, error) {
-	parts := strings.Split(mask, "/")
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid mask format, expected /integer: %s", mask)
-	}
-
-	ones, err := strconv.Atoi(parts[1])
-	if err != nil {
-		return nil, fmt.Errorf("invalid /%s cidr", mask)
-	}
-
-	if strings.Contains(parts[0], ":") {
-		ipv6Mask := net.CIDRMask(ones, 128)
-		return ipv6Mask, nil
-	}
-
-	ipv4Mask := net.CIDRMask(ones, 32)
-	return ipv4Mask, nil
-}
-
-type UserPrivacyProcessor struct {
-	config            *pkgconfig.ConfigTransformers
-	v4Mask, v6Mask    net.IPMask
-	outChannels       []chan dnsutils.DNSMessage
-	LogInfo, LogError func(msg string, v ...interface{})
-}
-
-func NewUserPrivacyTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage) UserPrivacyProcessor {
-	s := UserPrivacyProcessor{config: config, outChannels: outChannels}
-
-	s.LogInfo = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)
-		logger.Info(log+msg, v...)
-	}
-
-	s.LogError = func(msg string, v ...interface{}) {
-		log := fmt.Sprintf("transformer - [%s] conn #%d - userprivacy - ", name, instance)
-		logger.Error(log+msg, v...)
-	}
-
-	s.ReadConfig()
-	return s
-}
-
-func (s *UserPrivacyProcessor) ReadConfig() {
-
-	var err error
-	s.v4Mask, err = parseCIDRMask(s.config.UserPrivacy.AnonymizeIPV4Bits)
-	if err != nil {
-		s.LogError("unable to init v4 mask: %v", err)
-	}
-
-	if !strings.Contains(s.config.UserPrivacy.AnonymizeIPV6Bits, ":") {
-		s.LogError("invalid v6 mask, expect format ::/integer")
-	}
-	s.v6Mask, err = parseCIDRMask(s.config.UserPrivacy.AnonymizeIPV6Bits)
-	if err != nil {
-		s.LogError("unable to init v6 mask: %v", err)
-	}
-}
-
-func (s *UserPrivacyProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
-	s.config = config
-}
-
-func (s *UserPrivacyProcessor) MinimazeQname(qname string) string {
-	if etpo, err := publicsuffix.EffectiveTLDPlusOne(qname); err == nil {
-		return etpo
-	}
-
-	return qname
-}
-
-func (s *UserPrivacyProcessor) AnonymizeIP(ip string) string {
-	// if mask is nil, something is wrong
-	if s.v4Mask == nil {
-		return ip
-	}
-	if s.v6Mask == nil {
-		return ip
-	}
-
-	ipaddr := net.ParseIP(ip)
-	isipv4 := strings.LastIndex(ip, ".")
-
-	// ipv4, /16 mask
-	if isipv4 != -1 {
-		return ipaddr.Mask(s.v4Mask).String()
-	}
-
-	// ipv6, /64 mask
-	return ipaddr.Mask(s.v6Mask).String()
-}
-
-func (s *UserPrivacyProcessor) HashIP(ip string) string {
-	switch s.config.UserPrivacy.HashIPAlgo {
+func HashIP(ip string, algo string) string {
+	switch algo {
 	case "sha1":
 		hash := sha1.New()
 		hash.Write([]byte(ip))
@@ -127,4 +32,82 @@ func (s *UserPrivacyProcessor) HashIP(ip string) string {
 	default:
 		return ip
 	}
+}
+
+type UserPrivacyTransform struct {
+	GenericTransformer
+	v4Mask, v6Mask net.IPMask
+}
+
+func NewUserPrivacyTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, nextWorkers []chan dnsutils.DNSMessage) *UserPrivacyTransform {
+	t := &UserPrivacyTransform{GenericTransformer: NewTransformer(config, logger, "userprivacy", name, instance, nextWorkers)}
+	return t
+}
+
+func (t *UserPrivacyTransform) GetTransforms() ([]Subtransform, error) {
+	subprocessors := []Subtransform{}
+
+	var err error
+	t.v4Mask, err = netutils.ParseCIDRMask(t.config.UserPrivacy.AnonymizeIPV4Bits)
+	if err != nil {
+		return nil, fmt.Errorf("unable to init v4 mask: %w", err)
+	}
+
+	if !strings.Contains(t.config.UserPrivacy.AnonymizeIPV6Bits, ":") {
+		return nil, fmt.Errorf("invalid v6 mask, expect format ::/integer")
+	}
+	t.v6Mask, err = netutils.ParseCIDRMask(t.config.UserPrivacy.AnonymizeIPV6Bits)
+	if err != nil {
+		return nil, fmt.Errorf("unable to init v6 mask: %w", err)
+	}
+
+	if t.config.UserPrivacy.AnonymizeIP {
+		subprocessors = append(subprocessors, Subtransform{name: "userprivacy:ip-anonymization", processFunc: t.anonymizeQueryIP})
+	}
+
+	if t.config.UserPrivacy.MinimazeQname {
+		subprocessors = append(subprocessors, Subtransform{name: "userprivacy:minimaze-qname", processFunc: t.minimazeQname})
+	}
+
+	if t.config.UserPrivacy.HashQueryIP {
+		subprocessors = append(subprocessors, Subtransform{name: "userprivacy:hash-query-ip", processFunc: t.hashQueryIP})
+	}
+	if t.config.UserPrivacy.HashReplyIP {
+		subprocessors = append(subprocessors, Subtransform{name: "userprivacy:hash-reply-ip", processFunc: t.hashReplyIP})
+	}
+
+	return subprocessors, nil
+}
+
+func (t *UserPrivacyTransform) anonymizeQueryIP(dm *dnsutils.DNSMessage) (int, error) {
+	queryIP := net.ParseIP(dm.NetworkInfo.QueryIP)
+	if queryIP == nil {
+		return ReturnKeep, fmt.Errorf("not a valid query ip: %v", dm.NetworkInfo.QueryIP)
+	}
+
+	switch {
+	case queryIP.To4() != nil:
+		dm.NetworkInfo.QueryIP = queryIP.Mask(t.v4Mask).String()
+	default:
+		dm.NetworkInfo.QueryIP = queryIP.Mask(t.v6Mask).String()
+	}
+
+	return ReturnKeep, nil
+}
+
+func (t *UserPrivacyTransform) hashQueryIP(dm *dnsutils.DNSMessage) (int, error) {
+	dm.NetworkInfo.QueryIP = HashIP(dm.NetworkInfo.QueryIP, t.config.UserPrivacy.HashIPAlgo)
+	return ReturnKeep, nil
+}
+
+func (t *UserPrivacyTransform) hashReplyIP(dm *dnsutils.DNSMessage) (int, error) {
+	dm.NetworkInfo.ResponseIP = HashIP(dm.NetworkInfo.ResponseIP, t.config.UserPrivacy.HashIPAlgo)
+	return ReturnKeep, nil
+}
+
+func (t *UserPrivacyTransform) minimazeQname(dm *dnsutils.DNSMessage) (int, error) {
+	if etpo, err := publicsuffix.EffectiveTLDPlusOne(dm.DNS.Qname); err == nil {
+		dm.DNS.Qname = etpo
+	}
+	return ReturnKeep, nil
 }

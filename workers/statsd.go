@@ -18,25 +18,10 @@ import (
 )
 
 type StatsPerStream struct {
-	TotalPackets       int
-	TotalSentBytes     int
-	TotalReceivedBytes int
-
-	Clients   map[string]int
-	Domains   map[string]int
-	Nxdomains map[string]int
-
-	RRtypes    map[string]int
-	Rcodes     map[string]int
-	Operations map[string]int
-	Transports map[string]int
-	IPproto    map[string]int
-
-	TopRcodes     *topmap.TopMap
-	TopOperations *topmap.TopMap
-	TopIPproto    *topmap.TopMap
-	TopTransport  *topmap.TopMap
-	TopRRtypes    *topmap.TopMap
+	TotalPackets, TotalSentBytes, TotalReceivedBytes               int
+	Clients, Domains, Nxdomains                                    map[string]int
+	RRtypes, Rcodes, Operations, Transports, IPproto               map[string]int
+	TopRcodes, TopOperations, TopIPproto, TopTransport, TopRRtypes *topmap.TopMap
 }
 
 type StreamStats struct {
@@ -69,25 +54,10 @@ func (w *StatsdClient) RecordDNSMessage(dm dnsutils.DNSMessage) {
 	// add stream
 	if _, exists := w.Stats.Streams[dm.DNSTap.Identity]; !exists {
 		w.Stats.Streams[dm.DNSTap.Identity] = &StatsPerStream{
-			Clients:   make(map[string]int),
-			Domains:   make(map[string]int),
-			Nxdomains: make(map[string]int),
-
-			RRtypes:    make(map[string]int),
-			Rcodes:     make(map[string]int),
-			Operations: make(map[string]int),
-			Transports: make(map[string]int),
-			IPproto:    make(map[string]int),
-
-			TopRcodes:     topmap.NewTopMap(50),
-			TopOperations: topmap.NewTopMap(50),
-			TopIPproto:    topmap.NewTopMap(50),
-			TopRRtypes:    topmap.NewTopMap(50),
-			TopTransport:  topmap.NewTopMap(50),
-
-			TotalPackets:       0,
-			TotalSentBytes:     0,
-			TotalReceivedBytes: 0,
+			Clients: make(map[string]int), Domains: make(map[string]int), Nxdomains: make(map[string]int),
+			RRtypes: make(map[string]int), Rcodes: make(map[string]int), Operations: make(map[string]int), Transports: make(map[string]int), IPproto: make(map[string]int),
+			TopRcodes: topmap.NewTopMap(50), TopOperations: topmap.NewTopMap(50), TopIPproto: topmap.NewTopMap(50), TopRRtypes: topmap.NewTopMap(50), TopTransport: topmap.NewTopMap(50),
+			TotalPackets: 0, TotalSentBytes: 0, TotalReceivedBytes: 0,
 		}
 	}
 
@@ -210,8 +180,11 @@ func (w *StatsdClient) StartCollect() {
 			}
 
 			// apply tranforms, init dns message with additionnals parts if necessary
-			subprocessors.InitDNSMessageFormat(&dm)
-			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+			transformResult, err := subprocessors.ProcessMessage(&dm)
+			if err != nil {
+				w.LogError(err.Error())
+			}
+			if transformResult == transformers.ReturnDrop {
 				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}

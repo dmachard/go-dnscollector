@@ -25,7 +25,9 @@ func TestGeoIP_Json(t *testing.T) {
 		t.Fatalf("geoip init failed: %v+", err)
 	}
 	defer geoip.Close()
-	geoip.InitDNSMessage(&dm)
+
+	geoip.GetTransforms()
+	geoip.geoipTransform(&dm)
 
 	// expected json
 	refJSON := `
@@ -64,36 +66,42 @@ func TestGeoIP_Json(t *testing.T) {
 func TestGeoIP_LookupCountry(t *testing.T) {
 	// enable geoip
 	config := pkgconfig.GetFakeConfigTransformers()
+	config.GeoIP.Enable = true
 	config.GeoIP.DBCountryFile = "../tests/testsdata/GeoLite2-Country.mmdb"
 
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// init the processor
 	geoip := NewDNSGeoIPTransform(config, logger.New(false), "test", 0, outChans)
-	if err := geoip.Open(); err != nil {
+	_, err := geoip.GetTransforms()
+	if err != nil {
 		t.Fatalf("geoip init failed: %v+", err)
 	}
 	defer geoip.Close()
 
-	// feature is enabled ?
-	if !geoip.IsEnabled() {
-		t.Fatalf("geoip should be enabled")
-	}
+	// create test message
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.NetworkInfo.QueryIP = "83.112.146.176"
 
-	// lookup
-	geoInfo, err := geoip.Lookup("92.184.1.1")
+	// apply subprocessors
+	returnCode, err := geoip.geoipTransform(&dm)
 	if err != nil {
-		t.Errorf("geoip loopkup failed: %v+", err)
+		t.Errorf("process transform err: %v", err)
 	}
 
-	if geoInfo.CountryISOCode != "FR" {
-		t.Errorf("country invalid want: XX got: %s", geoInfo.CountryISOCode)
+	if dm.Geo.CountryIsoCode != "FR" {
+		t.Errorf("country invalid want: FR got: %s", dm.Geo.CountryIsoCode)
+	}
+
+	if returnCode != ReturnKeep {
+		t.Errorf("Return code is %v and not RETURN_KEEP (%v)", returnCode, ReturnKeep)
 	}
 }
 
 func TestGeoIP_LookupAsn(t *testing.T) {
 	// enable geoip
 	config := pkgconfig.GetFakeConfigTransformers()
+	config.GeoIP.Enable = true
 	config.GeoIP.DBASNFile = "../tests/testsdata/GeoLite2-ASN.mmdb"
 
 	outChans := []chan dnsutils.DNSMessage{}
@@ -104,11 +112,6 @@ func TestGeoIP_LookupAsn(t *testing.T) {
 		t.Fatalf("geoip init failed: %v", err)
 	}
 	defer geoip.Close()
-
-	// feature is enabled ?
-	if !geoip.IsEnabled() {
-		t.Fatalf("geoip should be enabled")
-	}
 
 	// lookup
 	geoInfo, err := geoip.Lookup("83.112.146.176")

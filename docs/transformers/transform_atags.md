@@ -7,7 +7,7 @@ In such cases, you can include a tag for identification."
 
 Options:
 
-* `tag` (list)
+* `add-tags` (list)
   > A list of string
 
 Configuration example:
@@ -15,7 +15,7 @@ Configuration example:
 ```yaml
 transforms:
   atags:
-    tags: [ "TXT:google", "MX:apple" ]
+    add-tags: [ "TXT:google", "MX:apple" ]
 ```
 
 When the feature is enabled, the following json field are populated in your DNS message:

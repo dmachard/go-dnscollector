@@ -251,9 +251,6 @@ func (w *PdnsProcessor) StartCollect() {
 			dm := dnsutils.DNSMessage{}
 			dm.Init()
 
-			// init dns message with additionnals parts
-			transforms.InitDNSMessageFormat(&dm)
-
 			// init powerdns with default values
 			dm.PowerDNS = &dnsutils.PowerDNS{
 				Tags:                  []string{},
@@ -444,7 +441,11 @@ func (w *PdnsProcessor) StartCollect() {
 			}
 
 			// apply all enabled transformers
-			if transforms.ProcessMessage(&dm) == transformers.ReturnDrop {
+			transformResult, err := transforms.ProcessMessage(&dm)
+			if err != nil {
+				w.LogError(err.Error())
+			}
+			if transformResult == transformers.ReturnDrop {
 				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}

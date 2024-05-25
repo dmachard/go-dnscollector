@@ -245,7 +245,7 @@ multiplexer:
       listen-ip: 0.0.0.0
     transforms:
       atags:
-        tags: [ "TXT:google", "MX:apple" ]
+        add-tags: [ "TXT:google", "MX:apple" ]
 `,
 			wantErr: false,
 		},

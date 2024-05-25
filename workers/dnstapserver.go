@@ -44,7 +44,7 @@ func (w *DnstapServer) CheckConfig() {
 func (w *DnstapServer) HandleConn(conn net.Conn, connID uint64, forceClose chan bool, wg *sync.WaitGroup) {
 	// close connection on function exit
 	defer func() {
-		w.LogInfo("conn #%d - connection handler terminated", connID)
+		w.LogInfo("(conn #%d - connection handler terminated", connID)
 		netutils.Close(conn, w.GetConfig().Collectors.Dnstap.ResetConn)
 		wg.Done()
 	}()
@@ -52,7 +52,7 @@ func (w *DnstapServer) HandleConn(conn net.Conn, connID uint64, forceClose chan 
 	// get peer address
 	peer := conn.RemoteAddr().String()
 	peerName := netutils.GetPeerName(peer)
-	w.LogInfo("new connection #%d from %s (%s)", connID, peer, peerName)
+	w.LogInfo("conn #%d - new connection from %s (%s)", connID, peer, peerName)
 
 	// start dnstap processor and run it
 	dnstapProcessor := NewDNSTapProcessor(int(connID), peerName, w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.Dnstap.ChannelBufferSize)
@@ -286,7 +286,7 @@ type DNSTapProcessor struct {
 }
 
 func NewDNSTapProcessor(connID int, peerName string, config *pkgconfig.Config, logger *logger.Logger, name string, size int) DNSTapProcessor {
-	w := DNSTapProcessor{GenericWorker: NewGenericWorker(config, logger, name, "dnstap processor #"+strconv.Itoa(connID), size, pkgconfig.DefaultMonitor)}
+	w := DNSTapProcessor{GenericWorker: NewGenericWorker(config, logger, name, "(conn #"+strconv.Itoa(connID)+") dnstap processor", size, pkgconfig.DefaultMonitor)}
 	w.ConnID = connID
 	w.PeerName = peerName
 	w.dataChannel = make(chan []byte, size)
@@ -341,8 +341,6 @@ func (w *DNSTapProcessor) StartCollect() {
 			dm.DNSTap.PeerName = w.PeerName
 
 			// init dns message with additionnals parts
-			transforms.InitDNSMessageFormat(&dm)
-
 			identity := dt.GetIdentity()
 			if len(identity) > 0 {
 				dm.DNSTap.Identity = string(identity)
@@ -511,7 +509,11 @@ func (w *DNSTapProcessor) StartCollect() {
 			}
 
 			// apply all enabled transformers
-			if transforms.ProcessMessage(&dm) == transformers.ReturnDrop {
+			transformResult, err := transforms.ProcessMessage(&dm)
+			if err != nil {
+				w.LogError(err.Error())
+			}
+			if transformResult == transformers.ReturnDrop {
 				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}

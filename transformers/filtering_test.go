@@ -24,18 +24,22 @@ func TestFilteringQR(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-	filtering.LoadActiveFilters()
+
+	// get tranforms
+	subtransforms, _ := filtering.GetTransforms()
+	if len(subtransforms) != 2 {
+		t.Errorf("invalid number of subtransforms enabled")
+	}
 
 	dm := dnsutils.GetFakeDNSMessage()
-	if !filtering.CheckIfDrop(&dm) {
-		t.Errorf("dns query should be ignored")
+	if result, _ := filtering.dropQueryFilter(&dm); result != ReturnDrop {
+		t.Errorf("dns query should be dropped")
 	}
 
 	dm.DNS.Type = dnsutils.DNSReply
-	if !filtering.CheckIfDrop(&dm) {
-		t.Errorf("dns reply should be ignored")
+	if result, _ := filtering.dropReplyFilter(&dm); result != ReturnDrop {
+		t.Errorf("dns reply should be dropped")
 	}
-
 }
 
 func TestFilteringByRcodeNOERROR(t *testing.T) {
@@ -48,14 +52,17 @@ func TestFilteringByRcodeNOERROR(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-	filtering.LoadRcodes()
-	filtering.LoadActiveFilters()
 
-	dm := dnsutils.GetFakeDNSMessage()
-	if filtering.CheckIfDrop(&dm) == false {
-		t.Errorf("dns query should be dropped")
+	// get tranforms
+	subtransforms, _ := filtering.GetTransforms()
+	if len(subtransforms) != 1 {
+		t.Errorf("invalid number of subtransforms enabled")
 	}
 
+	dm := dnsutils.GetFakeDNSMessage()
+	if result, _ := filtering.dropRCodeFilter(&dm); result != ReturnDrop {
+		t.Errorf("dns query should be dropped")
+	}
 }
 
 func TestFilteringByRcodeEmpty(t *testing.T) {
@@ -68,12 +75,11 @@ func TestFilteringByRcodeEmpty(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-	filtering.LoadRcodes()
-	filtering.LoadActiveFilters()
 
-	dm := dnsutils.GetFakeDNSMessage()
-	if filtering.CheckIfDrop(&dm) == true {
-		t.Errorf("dns query should not be dropped!")
+	// get tranforms
+	subtransforms, _ := filtering.GetTransforms()
+	if len(subtransforms) != 0 {
+		t.Errorf("no subtransforms should be enabled")
 	}
 }
 
@@ -87,25 +93,28 @@ func TestFilteringByKeepQueryIp(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-	filtering.LoadQueryIPList()
-	filtering.LoadActiveFilters()
+
+	// get tranforms
+	subtransforms, _ := filtering.GetTransforms()
+	if len(subtransforms) != 1 {
+		t.Errorf("invalid number of subtransforms enabled")
+	}
 
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.NetworkInfo.QueryIP = "192.168.0.1"
-	if filtering.CheckIfDrop(&dm) == false {
+	if result, _ := filtering.keepQueryIPFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
 	dm.NetworkInfo.QueryIP = "192.168.1.10"
-	if filtering.CheckIfDrop(&dm) == true {
+	if result, _ := filtering.keepQueryIPFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
 	dm.NetworkInfo.QueryIP = "192.3.2.1" // kept by subnet
-	if filtering.CheckIfDrop(&dm) == true {
+	if result, _ := filtering.keepQueryIPFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
-
 }
 
 func TestFilteringByDropQueryIp(t *testing.T) {
@@ -118,22 +127,26 @@ func TestFilteringByDropQueryIp(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-	filtering.LoadQueryIPList()
-	filtering.LoadActiveFilters()
+
+	// get tranforms
+	subtransforms, _ := filtering.GetTransforms()
+	if len(subtransforms) != 1 {
+		t.Errorf("invalid number of subtransforms enabled")
+	}
 
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.NetworkInfo.QueryIP = "192.168.0.1"
-	if filtering.CheckIfDrop(&dm) == true {
+	if result, _ := filtering.dropQueryIPFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
 	dm.NetworkInfo.QueryIP = "192.168.1.15"
-	if filtering.CheckIfDrop(&dm) == false {
+	if result, _ := filtering.dropQueryIPFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
 	dm.NetworkInfo.QueryIP = "192.0.2.3" // dropped by subnet
-	if filtering.CheckIfDrop(&dm) == false {
+	if result, _ := filtering.dropQueryIPFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
@@ -149,8 +162,12 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-	filtering.LoadrDataIPList()
-	filtering.LoadActiveFilters()
+
+	// get tranforms
+	subtransforms, _ := filtering.GetTransforms()
+	if len(subtransforms) != 1 {
+		t.Errorf("invalid number of subtransforms enabled")
+	}
 
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.DNSRRs.Answers = []dnsutils.DNSAnswer{
@@ -159,7 +176,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "192.168.0.1",
 		},
 	}
-	if filtering.CheckIfDrop(&dm) == false {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
@@ -169,7 +186,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "192.168.1.10",
 		},
 	}
-	if filtering.CheckIfDrop(&dm) == true {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
@@ -179,7 +196,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "192.168.1.11", // included in subnet
 		},
 	}
-	if filtering.CheckIfDrop(&dm) == true {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
@@ -189,7 +206,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "192.0.2.3", // dropped by subnet
 		},
 	}
-	if filtering.CheckIfDrop(&dm) == false {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
@@ -199,7 +216,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "192.0.2.1",
 		},
 	}
-	if filtering.CheckIfDrop(&dm) == true {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
@@ -209,7 +226,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "2001:db8:85a3::8a2e:370:7334",
 		},
 	}
-	if filtering.CheckIfDrop(&dm) == true {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
@@ -219,7 +236,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "2041::7334",
 		},
 	}
-	if filtering.CheckIfDrop(&dm) == false {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
@@ -229,7 +246,7 @@ func TestFilteringByKeepRdataIp(t *testing.T) {
 			Rdata:     "2001:0dbd:85a3::0001",
 		},
 	}
-	if filtering.CheckIfDrop(&dm) == true {
+	if result, _ := filtering.keepRdataFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 }
@@ -244,17 +261,21 @@ func TestFilteringByFqdn(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-	filtering.LoadDomainsList()
-	filtering.LoadActiveFilters()
+
+	// get tranforms
+	subtransforms, _ := filtering.GetTransforms()
+	if len(subtransforms) != 1 {
+		t.Errorf("invalid number of subtransforms enabled")
+	}
 
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = "www.microsoft.com"
-	if filtering.CheckIfDrop(&dm) == true {
+	if result, _ := filtering.dropFqdnFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
 	dm.DNS.Qname = testURL1
-	if filtering.CheckIfDrop(&dm) == false {
+	if result, _ := filtering.dropFqdnFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 }
@@ -269,22 +290,26 @@ func TestFilteringByDomainRegex(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-	filtering.LoadDomainsList()
-	filtering.LoadActiveFilters()
+
+	// get tranforms
+	subtransforms, _ := filtering.GetTransforms()
+	if len(subtransforms) != 1 {
+		t.Errorf("invalid number of subtransforms enabled")
+	}
 
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = testURL1
-	if filtering.CheckIfDrop(&dm) == false {
+	if result, _ := filtering.dropDomainRegexFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
 	dm.DNS.Qname = testURL2
-	if filtering.CheckIfDrop(&dm) == false {
+	if result, _ := filtering.dropDomainRegexFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
 	}
 
 	dm.DNS.Qname = "github.fr"
-	if filtering.CheckIfDrop(&dm) == true {
+	if result, _ := filtering.dropDomainRegexFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 }
@@ -297,31 +322,35 @@ func TestFilteringByKeepDomain(t *testing.T) {
 
 	// file contains google.fr, test.github.com
 	config.Filtering.Enable = true
-	config.Filtering.KeepDomainFile = "../tests/testsdata/filtering_keep_domains.txt"
+	config.Filtering.KeepFqdnFile = "../tests/testsdata/filtering_keep_domains.txt"
 
 	// init subproccesor
 	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-	filtering.LoadDomainsList()
-	filtering.LoadActiveFilters()
+
+	// get tranforms
+	subtransforms, _ := filtering.GetTransforms()
+	if len(subtransforms) != 1 {
+		t.Errorf("invalid number of subtransforms enabled")
+	}
 
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = testURL1
-	if filtering.CheckIfDrop(&dm) == false {
+	if result, _ := filtering.keepFqdnFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped! Domain: %s", dm.DNS.Qname)
 	}
 
 	dm.DNS.Qname = "example.com"
-	if filtering.CheckIfDrop(&dm) == false {
+	if result, _ := filtering.keepFqdnFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped! Domain: %s", dm.DNS.Qname)
 	}
 
 	dm.DNS.Qname = testURL2
-	if filtering.CheckIfDrop(&dm) == true {
+	if result, _ := filtering.keepFqdnFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
 	dm.DNS.Qname = "google.fr"
-	if filtering.CheckIfDrop(&dm) == true {
+	if result, _ := filtering.keepFqdnFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 }
@@ -342,119 +371,34 @@ func TestFilteringByKeepDomainRegex(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-	filtering.LoadDomainsList()
-	filtering.LoadActiveFilters()
+
+	// get tranforms
+	subtransforms, _ := filtering.GetTransforms()
+	if len(subtransforms) != 1 {
+		t.Errorf("invalid number of subtransforms enabled")
+	}
 
 	dm := dnsutils.GetFakeDNSMessage()
 	dm.DNS.Qname = testURL1
-	if filtering.CheckIfDrop(&dm) == true {
+	if result, _ := filtering.keepDomainRegexFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
 	dm.DNS.Qname = "test.google.com.ru"
-	if filtering.CheckIfDrop(&dm) == false {
+	if result, _ := filtering.keepDomainRegexFilter(&dm); result != ReturnDrop {
 
 		// If this passes then these are not terminated.
 		t.Errorf("dns query should be dropped!")
 	}
 
 	dm.DNS.Qname = testURL2
-	if filtering.CheckIfDrop(&dm) == true {
+	if result, _ := filtering.keepDomainRegexFilter(&dm); result != ReturnKeep {
 		t.Errorf("dns query should not be dropped!")
 	}
 
 	dm.DNS.Qname = "test.github.com.malware.ru"
-	if filtering.CheckIfDrop(&dm) == false {
+	if result, _ := filtering.keepDomainRegexFilter(&dm); result != ReturnDrop {
 		t.Errorf("dns query should be dropped!")
-	}
-}
-
-func TestFilteringByDownsampleDisabled(t *testing.T) {
-	// config, down sample is disabled by default
-	config := pkgconfig.GetFakeConfigTransformers()
-	config.Filtering.Enable = true
-
-	outChans := []chan dnsutils.DNSMessage{}
-
-	// init subproccesor
-	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-	filtering.LoadActiveFilters()
-
-	// init DNS Message
-	dm := dnsutils.GetFakeDNSMessage()
-
-	// test for default behavior when downsample is set to 0
-	filtering = NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-
-	if filtering.CheckIfDrop(&dm) == true {
-		t.Errorf("dns query should not be dropped! downsampling rate is set to 0 and should not downsample.")
-	}
-	if filtering.CheckIfDrop(&dm) == true {
-		t.Errorf("dns query should not be dropped! downsampling rate is set to 0 and should not downsample.")
-	}
-}
-
-func TestFilteringByDownsample(t *testing.T) {
-	// config
-	config := pkgconfig.GetFakeConfigTransformers()
-	config.Filtering.Enable = true
-	config.Filtering.Downsample = 2
-
-	outChans := []chan dnsutils.DNSMessage{}
-
-	// init subproccesor
-	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-	filtering.LoadActiveFilters()
-
-	// init DNS Message
-	dm := dnsutils.GetFakeDNSMessage()
-
-	// filtering.downsampleCount
-	if filtering.CheckIfDrop(&dm) == false {
-		t.Errorf("dns query should be dropped! downsampled should exclude first hit.")
-	}
-
-	if filtering.CheckIfDrop(&dm) == true {
-		t.Errorf("dns query should not be dropped! downsampled one record and then should include the next if downsample rate is 2")
-	}
-
-	if filtering.CheckIfDrop(&dm) == false {
-		t.Errorf("dns query should be dropped! downsampled should exclude first hit.")
-	}
-
-	if filtering.CheckIfDrop(&dm) == true {
-		t.Errorf("dns query should not be dropped! downsampled one record and then should include the next if downsample rate is 2")
-	}
-}
-
-func TestFilteringByDownsampleUpdateJSONModel(t *testing.T) {
-	// config
-	config := pkgconfig.GetFakeConfigTransformers()
-	config.Filtering.Enable = true
-	config.Filtering.Downsample = 2
-
-	outChans := []chan dnsutils.DNSMessage{}
-
-	// init subproccesor
-	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-	filtering.LoadActiveFilters()
-
-	// init DNS Message
-	dm := dnsutils.GetFakeDNSMessage()
-	filtering.InitDNSMessage(&dm)
-
-	// filtering.downsampleCount
-	if filtering.CheckIfDrop(&dm) == false {
-		t.Errorf("dns query should be dropped! downsampled should exclude first hit.")
-	}
-
-	// test json model
-
-	jsonRef := dnsutils.DNSMessage{
-		Filtering: &dnsutils.TransformFiltering{SampleRate: 2},
-	}
-	if dm.Filtering.SampleRate != jsonRef.Filtering.SampleRate {
-		t.Errorf("DNS message invalid sample rate: Want=%d, Get=%d", jsonRef.Filtering.SampleRate, dm.Filtering.SampleRate)
 	}
 }
 
@@ -469,33 +413,9 @@ func TestFilteringMultipleFilters(t *testing.T) {
 
 	// init subproccesor
 	filtering := NewFilteringTransform(config, logger.New(false), "test", 0, outChans)
-	filtering.LoadQueryIPList()
-	filtering.LoadDomainsList()
-	filtering.LoadActiveFilters()
+	subtransforms, _ := filtering.GetTransforms()
 
-	dm := dnsutils.GetFakeDNSMessage()
-	dm.DNS.Qname = testURL1
-	if filtering.CheckIfDrop(&dm) == false {
-		t.Errorf("dns query should be dropped!")
-	}
-
-	dm.DNS.Qname = testURL2
-	if filtering.CheckIfDrop(&dm) == false {
-		t.Errorf("dns query should be dropped!")
-	}
-
-	dm.DNS.Qname = "github.fr"
-	if filtering.CheckIfDrop(&dm) == true {
-		t.Errorf("dns query should not be dropped!")
-	}
-
-	dm.NetworkInfo.QueryIP = "192.168.1.15"
-	if filtering.CheckIfDrop(&dm) == false {
-		t.Errorf("dns query should be dropped!")
-	}
-
-	dm.NetworkInfo.QueryIP = "192.0.2.3" // dropped by subnet
-	if filtering.CheckIfDrop(&dm) == false {
-		t.Errorf("dns query should be dropped!")
+	if len(subtransforms) != 2 {
+		t.Errorf("invalid number of subtransforms enabled")
 	}
 }

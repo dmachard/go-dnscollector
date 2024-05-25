@@ -57,8 +57,6 @@ func (w *Tail) StartCollect() {
 	dm.Init()
 
 	// init dns message with additionnals parts
-	subprocessors.InitDNSMessageFormat(&dm)
-
 	hostname, err := os.Hostname()
 	if err == nil {
 		dm.DNSTap.Identity = hostname
@@ -220,7 +218,11 @@ func (w *Tail) StartCollect() {
 			dm.DNS.Length = len(dm.DNS.Payload)
 
 			// apply all enabled transformers
-			if subprocessors.ProcessMessage(&dm) == transformers.ReturnDrop {
+			transformResult, err := subprocessors.ProcessMessage(&dm)
+			if err != nil {
+				w.LogError(err.Error())
+			}
+			if transformResult == transformers.ReturnDrop {
 				continue
 			}
 

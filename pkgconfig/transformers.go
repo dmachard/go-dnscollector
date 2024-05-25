@@ -18,7 +18,8 @@ type ConfigTransformers struct {
 		AnonymizeIPV4Bits string `yaml:"anonymize-v4bits" default:"0.0.0.0/16"`
 		AnonymizeIPV6Bits string `yaml:"anonymize-v6bits" default:"::/64"`
 		MinimazeQname     bool   `yaml:"minimaze-qname" default:"false"`
-		HashIP            bool   `yaml:"hash-ip" default:"false"`
+		HashQueryIP       bool   `yaml:"hash-query-ip" default:"false"`
+		HashReplyIP       bool   `yaml:"hash-reply-ip" default:"false"`
 		HashIPAlgo        string `yaml:"hash-ip-algo" default:"sha1"`
 	} `yaml:"user-privacy"`
 	Normalize struct {
@@ -80,8 +81,8 @@ type ConfigTransformers struct {
 		AddFeatures bool `yaml:"add-features" default:"false"`
 	} `yaml:"machine-learning"`
 	ATags struct {
-		Enable bool     `yaml:"enable" default:"false"`
-		Tags   []string `yaml:"tags,flow" default:"[]"`
+		Enable  bool     `yaml:"enable" default:"false"`
+		AddTags []string `yaml:"add-tags,flow" default:"[]"`
 	} `yaml:"atags"`
 	Relabeling struct {
 		Enable bool               `yaml:"enable" default:"false"`
