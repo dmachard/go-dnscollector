@@ -4,6 +4,9 @@ Collector to match specific DNS messages.
 
 Options:
 
+* `chan-buffer-size` (int)
+  > Specifies the maximum number of packets that can be buffered before dropping additional packets.
+
 * `matching` (map)
     * `include` (map)
     > Defines the list of fields (flat-json) which must be present in the DNS message (regex are supported).

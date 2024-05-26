@@ -11,7 +11,49 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func Test_DnsMessage_BufferLoggerIsFull(t *testing.T) {
+func TestDnsMessage_RoutingPolicy(t *testing.T) {
+	// simulate next workers
+	k := GetWorkerForTest(pkgconfig.DefaultBufferSize)
+	d := GetWorkerForTest(pkgconfig.DefaultBufferSize)
+
+	// config for the collector
+	config := pkgconfig.GetDefaultConfig()
+	config.Collectors.DNSMessage.Enable = true
+	config.Collectors.DNSMessage.Matching.Include = map[string]interface{}{
+		"dns.qname": "dns.collector",
+	}
+
+	// init the collector
+	c := NewDNSMessage(nil, config, logger.New(false), "test")
+	c.SetDefaultRoutes([]Worker{k})
+	c.SetDefaultDropped([]Worker{d})
+
+	// start to collect and send DNS messages on it
+	go c.StartCollect()
+
+	// this message should be kept by the collector
+	dm := dnsutils.GetFakeDNSMessage()
+	c.GetInputChannel() <- dm
+
+	// this message should dropped by the collector
+	dm.DNS.Qname = "dropped.collector"
+	c.GetInputChannel() <- dm
+
+	// the 1er message should be in th k worker
+	dmKept := <-k.GetInputChannel()
+	if dmKept.DNS.Qname != "dns.collector" {
+		t.Errorf("invalid dns message with default routing policy")
+	}
+
+	// the 2nd message should be in the d worker
+	dmDropped := <-d.GetInputChannel()
+	if dmDropped.DNS.Qname != "dropped.collector" {
+		t.Errorf("invalid dns message with dropped routing policy")
+	}
+
+}
+
+func TestDnsMessage_BufferLoggerIsFull(t *testing.T) {
 	// redirect stdout output to bytes buffer
 	logsChan := make(chan logger.LogEntry, 50)
 	lg := logger.New(true)
