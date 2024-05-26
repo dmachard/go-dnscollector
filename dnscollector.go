@@ -112,6 +112,7 @@ func main() {
 	// running mode,
 	// multiplexer ?
 	if pkginit.IsMuxEnabled(config) {
+		logger.Info("main - running in multiplexer mode")
 		logger.Warning("main - The multiplexer mode is deprecated. Please switch to the pipelines mode.")
 		pkginit.InitMultiplexer(mapLoggers, mapCollectors, config, logger)
 	}
