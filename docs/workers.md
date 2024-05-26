@@ -10,7 +10,7 @@ A worker can act as a collector or a logger.
 | [XDP Sniffer](collectors/collector_xdp.md)            | Live capture on network interface with XDP              |
 | [AF_PACKET Sniffer](collectors/collector_afpacket.md) | Live capture on network interface with AF_PACKET socket |
 | [File Ingestor](collectors/collector_fileingestor.md) | File ingestor like pcap                                 |
-| [DNS Message](collectors/collector_dnsmessage.md)     | Internal DNS data structure                             |
+| [DNS Message](collectors/collector_dnsmessage.md)     | Matching specific DNS message                           |
 | [Console](loggers/logger_stdout.md)                   | Print logs to stdout in text, json or binary formats.   |
 | [File](loggers/logger_file.md)                        | Save logs to file in plain text or binary formats       |
 | [DNStap](loggers/logger_dnstap.md)                    | Send logs as DNStap format to a remote collector        |
