@@ -13,8 +13,8 @@ import (
 
 func TestDnsMessage_RoutingPolicy(t *testing.T) {
 	// simulate next workers
-	k := GetWorkerForTest(pkgconfig.DefaultBufferSize)
-	d := GetWorkerForTest(pkgconfig.DefaultBufferSize)
+	kept := GetWorkerForTest(pkgconfig.DefaultBufferSize)
+	dropped := GetWorkerForTest(pkgconfig.DefaultBufferSize)
 
 	// config for the collector
 	config := pkgconfig.GetDefaultConfig()
@@ -25,8 +25,8 @@ func TestDnsMessage_RoutingPolicy(t *testing.T) {
 
 	// init the collector
 	c := NewDNSMessage(nil, config, logger.New(false), "test")
-	c.SetDefaultRoutes([]Worker{k})
-	c.SetDefaultDropped([]Worker{d})
+	c.SetDefaultRoutes([]Worker{kept})
+	c.SetDefaultDropped([]Worker{dropped})
 
 	// start to collect and send DNS messages on it
 	go c.StartCollect()
@@ -40,13 +40,13 @@ func TestDnsMessage_RoutingPolicy(t *testing.T) {
 	c.GetInputChannel() <- dm
 
 	// the 1er message should be in th k worker
-	dmKept := <-k.GetInputChannel()
+	dmKept := <-kept.GetInputChannel()
 	if dmKept.DNS.Qname != "dns.collector" {
 		t.Errorf("invalid dns message with default routing policy")
 	}
 
 	// the 2nd message should be in the d worker
-	dmDropped := <-d.GetInputChannel()
+	dmDropped := <-dropped.GetInputChannel()
 	if dmDropped.DNS.Qname != "dropped.collector" {
 		t.Errorf("invalid dns message with dropped routing policy")
 	}

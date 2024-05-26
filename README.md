@@ -1,7 +1,7 @@
 <p align="center">
 <img src="https://goreportcard.com/badge/github.com/dmachard/go-dns-collector" alt="Go Report"/>
 <img src="https://img.shields.io/badge/go%20version-min%201.21-green" alt="Go version"/>
-<img src="https://img.shields.io/badge/go%20tests-425-green" alt="Go tests"/>
+<img src="https://img.shields.io/badge/go%20tests-426-green" alt="Go tests"/>
 <img src="https://img.shields.io/badge/go%20bench-20-green" alt="Go bench"/>
 <img src="https://img.shields.io/badge/go%20lines-29697-green" alt="Go lines"/>
 </p>
@@ -37,7 +37,7 @@
   - *Listen for logging traffic with streaming network protocols*
     - [`DNStap`](docs/collectors/collector_dnstap.md#dns-tap) with `tls`|`tcp`|`unix` transports support and [`proxifier`](docs/collectors/collector_dnstap.md#dns-tap-proxifier)
     - [`PowerDNS`](docs/collectors/collector_powerdns.md) streams with full  support
-    - [`DNSMessage`](docs/collectors/collector_dnsmessage.md) for internal DNS data structure
+    - [`DNSMessage`](docs/collectors/collector_dnsmessage.md) to route DNS messages based on specific dns fields
     - [`TZSP`](docs/collectors/collector_tzsp.md) protocol support
   - *Live capture on a network interface*
     - [`AF_PACKET`](docs/collectors/collector_afpacket.md) socket with BPF filter
