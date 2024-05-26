@@ -11,7 +11,7 @@ pipelines:
       listen-ip: 0.0.0.0
       listen-port: 6001
     routing-policy:
-      default: [ tap ]
+      forward: [ tap ]
 
   - name: tap
     dnstapclient:

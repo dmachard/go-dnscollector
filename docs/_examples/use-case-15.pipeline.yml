@@ -14,7 +14,7 @@ pipelines:
       normalize:
         qname-lowercase: true
     routing-policy:
-      default: [ console ]
+      forward: [ console ]
 
   - name: console
     stdout:

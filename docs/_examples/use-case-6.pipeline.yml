@@ -15,7 +15,7 @@ pipelines:
         anonymize-ip: true
         minimaze-qname: true
     routing-policy:
-      default: [ console ]
+      forward: [ console ]
   
   - name: console
     stdout:

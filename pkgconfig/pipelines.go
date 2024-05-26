@@ -48,13 +48,13 @@ func (c *ConfigPipelines) IsValid(userCfg map[string]interface{}) error {
 }
 
 type PipelinesRouting struct {
-	Default []string `yaml:"default,flow"`
+	Forward []string `yaml:"forward,flow"`
 	Dropped []string `yaml:"dropped,flow"`
 }
 
 func (c *PipelinesRouting) IsValid(userCfg map[string]interface{}) error {
 	for k := range userCfg {
-		if k != "default" && k != "dropped" {
+		if k != "forward" && k != "dropped" {
 			return fmt.Errorf("invalid key '%s'", k)
 		}
 	}

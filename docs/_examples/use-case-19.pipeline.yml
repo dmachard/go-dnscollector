@@ -17,7 +17,7 @@ pipelines:
         measure-latency: true
         queries-timeout: 2
     routing-policy:
-      default: [ console ]
+      forward: [ console ]
 
   - name: console
     stdout:

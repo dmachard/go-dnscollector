@@ -12,7 +12,7 @@ pipelines:
         listen-ip: "0.0.0.0"
         listen-port: 10000
     routing-policy:
-      default: [ console ]
+      forward: [ console ]
 
   - name: console
     stdout:

@@ -14,7 +14,7 @@ pipelines:
       filtering:
         keep-domain-file: ./tests/testsdata/filtering_fqdn.txt
     routing-policy:
-      default: [ console ]
+      forward: [ console ]
 
   - name: console
     stdout:

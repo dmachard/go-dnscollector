@@ -104,7 +104,6 @@ func main() {
 	// init logger
 	InitLogger(logger, config)
 	logger.Info("main - version=%s revision=%s", version.Version, version.Revision)
-	logger.Info("main - starting dns-collector...")
 
 	// init active collectors and loggers
 	mapLoggers := make(map[string]workers.Worker)
@@ -113,13 +112,13 @@ func main() {
 	// running mode,
 	// multiplexer ?
 	if pkginit.IsMuxEnabled(config) {
-		logger.Info("main - multiplexer mode enabled")
+		logger.Warning("main - The multiplexer mode is deprecated. Please switch to the pipelines mode.")
 		pkginit.InitMultiplexer(mapLoggers, mapCollectors, config, logger)
 	}
 
 	// or pipeline ?
-	if len(config.Pipelines) > 0 {
-		logger.Info("main - pipelines mode enabled")
+	if pkginit.IsPipelinesEnabled(config) {
+		logger.Info("main - running in pipelines mode")
 		err := pkginit.InitPipelines(mapLoggers, mapCollectors, config, logger)
 		if err != nil {
 			logger.Error("main - %s", err.Error())
@@ -138,7 +137,7 @@ func main() {
 		for {
 			select {
 			case <-sigHUP:
-				logger.Info("main - SIGHUP received")
+				logger.Warning("main - SIGHUP received")
 
 				// read config
 				err := pkgconfig.ReloadConfig(configPath, config)
@@ -151,13 +150,12 @@ func main() {
 				if pkginit.IsMuxEnabled(config) {
 					pkginit.ReloadMultiplexer(mapLoggers, mapCollectors, config, logger)
 				}
+				if pkginit.IsPipelinesEnabled(config) {
+					pkginit.ReloadPipelines(mapLoggers, mapCollectors, config, logger)
+				}
 
 			case <-sigTerm:
-				logger.Info("main - exiting...")
-
-				// stop all workers
-				logger.Info("main - stopping...")
-
+				logger.Warning("main - exiting...")
 				for _, c := range mapCollectors {
 					c.Stop()
 				}
@@ -181,8 +179,6 @@ func main() {
 	}
 
 	// run all workers in background
-	logger.Info("main - running...")
-
 	for _, l := range mapLoggers {
 		go l.StartCollect()
 	}

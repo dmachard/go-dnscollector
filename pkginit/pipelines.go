@@ -10,6 +10,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+func IsPipelinesEnabled(config *pkgconfig.Config) bool {
+	return len(config.Pipelines) > 0
+}
+
 func GetStanzaConfig(config *pkgconfig.Config, item pkgconfig.ConfigPipelines) *pkgconfig.Config {
 
 	cfg := make(map[string]interface{})
@@ -92,15 +96,15 @@ func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]wo
 	// TODO raise error when no routes are defined
 
 	// default routing
-	for _, route := range stanza.RoutingPolicy.Default {
+	for _, route := range stanza.RoutingPolicy.Forward {
 		if _, ok := mapCollectors[route]; ok {
 			currentStanza.AddDefaultRoute(mapCollectors[route])
-			logger.Info("main - routing (policy=default) stanza=[%s] to stanza=[%s]", stanza.Name, route)
+			logger.Info("main - routing (policy=forward) stanza=[%s] to stanza=[%s]", stanza.Name, route)
 		} else if _, ok := mapLoggers[route]; ok {
 			currentStanza.AddDefaultRoute(mapLoggers[route])
-			logger.Info("main - routing (policy=default) stanza=[%s] to stanza=[%s]", stanza.Name, route)
+			logger.Info("main - routing (policy=forward) stanza=[%s] to stanza=[%s]", stanza.Name, route)
 		} else {
-			logger.Error("main - default routing error from stanza=%s to stanza=%s doest not exist", stanza.Name, route)
+			logger.Error("main - forward routing error from stanza=%s to stanza=%s doest not exist", stanza.Name, route)
 			break
 		}
 	}
@@ -214,9 +218,9 @@ func InitPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[strin
 
 	// check if all routes exists before continue
 	for _, stanza := range config.Pipelines {
-		for _, route := range stanza.RoutingPolicy.Default {
+		for _, route := range stanza.RoutingPolicy.Forward {
 			if err := IsRouteExist(route, config); err != nil {
-				return errors.Errorf("stanza=[%s] default route=[%s] doest not exist", stanza.Name, route)
+				return errors.Errorf("stanza=[%s] forward route=[%s] doest not exist", stanza.Name, route)
 			}
 		}
 		for _, route := range stanza.RoutingPolicy.Dropped {
@@ -243,4 +247,8 @@ func InitPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[strin
 	}
 
 	return nil
+}
+
+func ReloadPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[string]workers.Worker, config *pkgconfig.Config, logger *logger.Logger) {
+	logger.Warning("reload - not yet implemented")
 }

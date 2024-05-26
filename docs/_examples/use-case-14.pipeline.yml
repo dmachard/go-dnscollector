@@ -11,7 +11,7 @@ pipelines:
       listen-ip: 0.0.0.0
       listen-port: 6000
     routing-policy:
-      default: [ out-dnstap ]
+      forward: [ out-dnstap ]
 
   - name: out-dnstap
     logfile:
@@ -24,7 +24,7 @@ pipelines:
       watch-dir: /tmp
       watch-mode: dnstap
     routing-policy:
-      default: [ console ]
+      forward: [ console ]
 
   - name: console
     stdout:

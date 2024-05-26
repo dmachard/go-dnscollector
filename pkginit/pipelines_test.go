@@ -6,7 +6,17 @@ import (
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 )
 
-func TestPipeline_IsRouteExist(t *testing.T) {
+func TestPipelines_IsEnabled(t *testing.T) {
+	// Create a mock configuration for testing
+	config := &pkgconfig.Config{}
+	config.Pipelines = []pkgconfig.ConfigPipelines{{Name: "validroute"}}
+
+	if !IsPipelinesEnabled(config) {
+		t.Errorf("pipelines should be enabled!")
+	}
+}
+
+func TestPipelines_IsRouteExist(t *testing.T) {
 	// Create a mock configuration for testing
 	config := &pkgconfig.Config{}
 	config.Pipelines = []pkgconfig.ConfigPipelines{
@@ -28,7 +38,7 @@ func TestPipeline_IsRouteExist(t *testing.T) {
 	}
 }
 
-func TestPipeline_StanzaNameIsUniq(t *testing.T) {
+func TestPipelines_StanzaNameIsUniq(t *testing.T) {
 	// Create a mock configuration for testing
 	config := &pkgconfig.Config{}
 	config.Pipelines = []pkgconfig.ConfigPipelines{

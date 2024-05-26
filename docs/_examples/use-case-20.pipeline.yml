@@ -16,7 +16,7 @@ pipelines:
         qname-plus-one: false
         watch-interval: 5
     routing-policy:
-      default: [ console ]
+      forward: [ console ]
 
   - name: console
     stdout:

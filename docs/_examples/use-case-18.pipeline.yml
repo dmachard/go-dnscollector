@@ -16,7 +16,7 @@ pipelines:
         unanswered-queries: true
         queries-timeout: 2
     routing-policy:
-      default: [ console, prom ]
+      forward: [ console, prom ]
 
   - name: console
     stdout:

@@ -10,7 +10,7 @@ pipelines:
     dnstap:
       sock-path: /tmp/dnstap.sock
     routing-policy:
-      default: [ tap_tls ]
+      forward: [ tap_tls ]
   
   - name: tap_tls
     dnstapclient:

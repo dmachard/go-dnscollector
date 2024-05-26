@@ -20,7 +20,8 @@ pipelines:
   - name: <collector1_name>
     .....
     routing-policy:
-      default: [ <collector2_name> ]
+      forward: [ <collector2_name> ]
+      dropped: [ <collector3_name> ]
 
   - name: <collector2_name>
     .....

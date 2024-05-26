@@ -21,7 +21,7 @@ pipelines:
       normalize:
         qname-lowercase: true
     routing-policy:
-      default: [ txt-queries, prom ]
+      forward: [ txt-queries, prom ]
 
   - name: txt-queries
     dnsmessage:
@@ -33,7 +33,7 @@ pipelines:
       atags:
         tags: [ "TAG:TXT-QUERIES" ]
     routing-policy:
-      default: [ apple-txt, all-txt ]
+      forward: [ apple-txt, all-txt ]
 
   - name: all-txt
     dnsmessage:
@@ -41,7 +41,7 @@ pipelines:
         include:
           dnstap.operation: "CLIENT_RESPONSE"
     routing-policy:
-      default: [ outputfile-justtxt ]
+      forward: [ outputfile-justtxt ]
 
   - name: apple-txt
     dnsmessage:
@@ -53,7 +53,7 @@ pipelines:
       atags:
         tags: [ "TXT:apple" ]
     routing-policy:
-      default: [ outputfile-apple ]
+      forward: [ outputfile-apple ]
 
   - name: outputfile-justtxt
     logfile:

@@ -11,7 +11,7 @@ pipelines:
       listen-ip: 0.0.0.0
       listen-port: 6000
     routing-policy:
-      default: [ relay-out1, relay-out2 ]
+      forward: [ relay-out1, relay-out2 ]
 
   - name: relay-out1
     dnstapclient:
