@@ -14,7 +14,8 @@ Options:
     * `exclude` (map)
     > Defines the list of fields (flat-json) which must not be present in the DNS message (regex are supported).
 
-For each fields, the advanced settings can be  used:
+
+The matching functionality support any type of values. For each fields, the advanced settings can be  used:
 * `greater-than` (int) 
 > Enable to match an integer value greater than the provided value.
 
@@ -25,7 +26,25 @@ For each fields, the advanced settings can be  used:
 > This indicates that the `match-source`  is a list of strings or a list of regular expressions.
 > expected values: `regexp_list`, `string_list`
 
-Below a advanced example:
+
+To match specific answers only with a TTL greater than 300 and RDATA equal to a list of IPs.
+
+```yaml
+include:
+  dns.resource-records.an.*.ttl:
+    greater-than: 300
+  dns.resource-records.an.*.rdata:
+    - "^142\\.250\\.185\\.(196|132)$"
+    - "^143\\.251\\.185\\.(196|132)$"
+```
+Second example to match a tag at position 0
+
+```yaml
+include:
+  atags.tags.0: "TXT:apple"
+```
+
+Finally a complete full example:
 
 ```yaml
   - name: filter
@@ -47,4 +66,10 @@ Below a advanced example:
           dns.qname:
             - ".*\\.github\\.com$"
             - "^www\\.google\\.com$"
+    transforms:
+      atags:
+        tags: [ "TXT:apple", "TXT:google" ]
+    routing-policy:
+      dropped: [ outputfile ]
+      default: [ console ]
 ```
