@@ -250,5 +250,14 @@ func InitPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[strin
 }
 
 func ReloadPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[string]workers.Worker, config *pkgconfig.Config, logger *logger.Logger) {
-	logger.Warning("reload - not yet implemented")
+	for _, stanza := range config.Pipelines {
+		newCfg := GetStanzaConfig(config, stanza)
+		if _, ok := mapLoggers[stanza.Name]; ok {
+			mapLoggers[stanza.Name].ReloadConfig(newCfg)
+		} else if _, ok := mapCollectors[stanza.Name]; ok {
+			mapCollectors[stanza.Name].ReloadConfig(newCfg)
+		} else {
+			logger.Info("main - reload config stanza=%v doest not exist", stanza.Name)
+		}
+	}
 }
