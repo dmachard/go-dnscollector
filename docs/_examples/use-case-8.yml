@@ -1,39 +1,29 @@
-# Example 8: Multiple PowerDNS collectors
-#
-# As prerequisites, we assume you have 
-# - a PowerDNS DNS server which protobuf enabled
+# This configuration sets up DNS traffic monitoring through PowerDNS Protobuf on port 6000 and port 6001;
+# and save-it in specific log files as text format.
 
-# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true
 
-multiplexer:
-  # Listen on tcp/6000 and tcp/6001 for internal/internet DNS
-  # with protobuf PowerDNS messages: https://dnsdist.org/reference/protobuf.html
-  collectors:
-    - name: pdns_internal
-      powerdns:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
-    - name: pdns_internet
-      powerdns:
-        listen-ip: 0.0.0.0
-        listen-port: 6001
+pipelines:
+  - name: pdns_internal
+    powerdns:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routing-policy:
+      forward: [ file_internal ]
 
-  # Write DNS logs to a local files in TEXT format
-  loggers:
-    - name: file_internal
-      logfile:
-        file-path:  "/var/tap/dnscollector_internal.log"
-    - name: file_internet
-      logfile:
-        file-path:  "/var/tap/dnscollector_internet.log"
+  - name: pdns_internet
+    powerdns:
+      listen-ip: 0.0.0.0
+      listen-port: 6001
+    routing-policy:
+      forward: [ file_internet ]
 
-  # Routes the pdns_internal stream to internal file 
-  # and pdns_internet steram to internet file
-  routes:
-    - from: [ pdns_internal ]
-      to: [ file_internal ]
-    - from: [pdns_internet ]
-      to: [ file_internet ]
+  - name: file_internal
+    logfile:
+      file-path:  "/tmp/dnscollector_internal.log"
+
+  - name: file_internet
+    logfile:
+      file-path:  "/tmp/dnscollector_internet.log"

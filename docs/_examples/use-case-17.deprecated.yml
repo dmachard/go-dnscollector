@@ -1,0 +1,29 @@
+# Example 17: Capture TZSP packets containing DNS packets and process them as json
+#
+# As prerequisites, we assume you have 
+# - a Mikrotik brand device that routes DNS packets and can use the "tzsp" Action in the firewall
+# or firewall6 mangle table.
+
+
+# If turned on, debug messages are printed in the standard output
+global:
+  trace:
+    verbose: true
+
+multiplexer:
+  collectors:
+    - name: tzsp
+      tzsp:
+         enable: true
+         listen-ip: "0.0.0.0"
+         listen-port: 10000
+
+  # Redirect output to the console
+  loggers:
+    - name: console
+      stdout:
+        mode: json
+
+  routes:
+    - from: [ tzsp ]
+      to: [ console ]

@@ -1,26 +1,20 @@
-# Example 13: Save DNStap stream to file.
+# This configuration sets up DNS traffic monitoring through DNStap on port 6000;
+# and save to a file as DNStap 
 
-# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true
 
-multiplexer:
-  # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
-  collectors:
-    - name: tap
-      dnstap:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routing-policy:
+      forward: [ dnstap ]
 
-  # Save the dnstap stream to file
-  loggers:
-    - name: dnstap
-      logfile:
-        file-path:  /tmp/dnstap.fstrm
-        flush-interval: 10
-        mode: dnstap
-
-  routes:
-    - from: [ tap ]
-      to: [ dnstap ]
+  - name: dnstap
+    logfile:
+      file-path:  /tmp/dnstap.fstrm
+      flush-interval: 10
+      mode: dnstap
