@@ -2,25 +2,23 @@ global:
   trace:
     verbose: true
 
-multiplexer:
-  collectors:
-    - name: tap
-      dnstap:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routing-policy:
+      forward: [ console, api ]
+      dropped: []
 
-  loggers:
-    - name: console
-      stdout:
-        mode: text
-    - name: api
-      restapi:
-        listen-ip: 0.0.0.0
-        listen-port: 8080
-        top-n: 100
-        basic-auth-login: admin
-        basic-auth-pwd: changeme
+  - name: console
+    stdout:
+      mode: text
 
-  routes:
-    - from: [tap]
-      to: [console, api]
+  - name: api
+    restapi:
+      listen-ip: 0.0.0.0
+      listen-port: 8080
+      top-n: 100
+      basic-auth-login: admin
+      basic-auth-pwd: changeme

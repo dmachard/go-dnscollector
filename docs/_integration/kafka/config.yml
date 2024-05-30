@@ -3,34 +3,32 @@ global:
   trace:
     verbose: true
 
-multiplexer:
-  collectors:
-    - name: tap
-      dnstap:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
-        chan-buffer-size: 4096
-  loggers:
-    - name: kafka
-      kafkaproducer:
-        remote-address: 127.0.0.1
-        remote-port: 9092
-        connect-timeout: 5
-        retry-interval: 10
-        flush-interval: 30
-        tls-support: false
-        tls-insecure: false
-        sasl-support: false
-        sasl-mechanism: PLAIN
-        sasl-username: false
-        sasl-password: false
-        mode: flat-json
-        buffer-size: 100
-        topic: "dnscollector"
-        partition: 0
-        chan-buffer-size: 4096
-        compression: none
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+      chan-buffer-size: 4096
+    routing-policy:
+      forward: [ kafka ]
+      dropped: []
 
-  routes:
-    - from: [ tap ]
-      to: [ kafka ]
+  - name: kafka
+    kafkaproducer:
+      remote-address: 127.0.0.1
+      remote-port: 9092
+      connect-timeout: 5
+      retry-interval: 10
+      flush-interval: 30
+      tls-support: false
+      tls-insecure: false
+      sasl-support: false
+      sasl-mechanism: PLAIN
+      sasl-username: false
+      sasl-password: false
+      mode: flat-json
+      buffer-size: 100
+      topic: "dnscollector"
+      partition: 0
+      chan-buffer-size: 4096
+      compression: none

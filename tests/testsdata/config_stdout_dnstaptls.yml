@@ -2,21 +2,18 @@ global:
   trace:
     verbose: true
 
-multiplexer:
-  collectors:
-    - name: tap
-      dnstap:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
-        tls-support: true
-        cert-file: "./tests/testsdata/dnscollector.crt"
-        key-file: "./tests/testsdata/dnscollector.key"
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+      tls-support: true
+      cert-file: "./tests/testsdata/dnscollector.crt"
+      key-file: "./tests/testsdata/dnscollector.key"
+    routing-policy:
+      forward: [ console ]
+      dropped: []
 
-  loggers:
-    - name: console
-      stdout:
-        mode: text
-
-  routes:
-    - from: [tap]
-      to: [console]
+  - name: console
+    stdout:
+      mode: text

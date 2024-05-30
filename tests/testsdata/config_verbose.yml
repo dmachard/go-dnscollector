@@ -17,6 +17,3 @@ pipelines:
   - name: console
     stdout:
       mode: text
-    routing-policy:
-      forward: []
-      dropped: []

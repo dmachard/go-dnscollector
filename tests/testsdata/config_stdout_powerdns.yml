@@ -2,18 +2,15 @@ global:
   trace:
     verbose: true
 
-multiplexer:
-  collectors:
-    - name: pdns
-      powerdns:
-        listen-ip: 0.0.0.0
-        listen-port: 6001
+pipelines:
+  - name: pdns
+    powerdns:
+      listen-ip: 0.0.0.0
+      listen-port: 6001
+    routing-policy:
+      forward: [ console ]
+      dropped: []
 
-  loggers:
-    - name: console
-      stdout:
-        mode: text
-
-  routes:
-    - from: [pdns]
-      to: [console]
+  - name: console
+    stdout:
+      mode: text
