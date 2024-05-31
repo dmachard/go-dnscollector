@@ -18,6 +18,7 @@ type ConfigGlobal struct {
 		MaxBackups   int    `yaml:"max-backups" default:"10"`
 	} `yaml:"trace"`
 	ServerIdentity string `yaml:"server-identity" default:""`
+	PidFile        string `yaml:"pid-file" default:""`
 }
 
 func (c *ConfigGlobal) SetDefault() {

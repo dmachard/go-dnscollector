@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -43,6 +44,34 @@ func InitLogger(logger *logger.Logger, config *pkgconfig.Config) {
 
 	// enable the verbose mode ?
 	logger.SetVerbose(config.Global.Trace.Verbose)
+}
+
+func createPIDFile(pidFilePath string) (string, error) {
+	if _, err := os.Stat(pidFilePath); err == nil {
+		pidBytes, err := os.ReadFile(pidFilePath)
+		if err != nil {
+			return "", fmt.Errorf("failed to read PID file: %v", err)
+		}
+
+		pid, err := strconv.Atoi(string(pidBytes))
+		if err != nil {
+			return "", fmt.Errorf("invalid PID in PID file: %v", err)
+		}
+
+		if process, err := os.FindProcess(pid); err == nil {
+			if err := process.Signal(syscall.Signal(0)); err == nil {
+				return "", fmt.Errorf("process with PID %d is already running", pid)
+			}
+		}
+	}
+
+	pid := os.Getpid()
+	pidStr := strconv.Itoa(pid)
+	err := os.WriteFile(pidFilePath, []byte(pidStr), 0644)
+	if err != nil {
+		return "", fmt.Errorf("failed to write PID file: %v", err)
+	}
+	return pidStr, nil
 }
 
 func main() {
@@ -97,8 +126,19 @@ func main() {
 	// load config
 	config, err := pkgconfig.LoadConfig(configPath)
 	if err != nil {
-		fmt.Printf("config error: %v\n", err)
+		fmt.Printf("main - config error: %v\n", err)
 		os.Exit(1)
+	}
+
+	// If PID file is specified in the config, create it
+	if config.Global.PidFile != "" {
+		pid, err := createPIDFile(config.Global.PidFile)
+		if err != nil {
+			fmt.Printf("main - PID file error: %v\n", err)
+			os.Exit(1)
+		}
+		logger.Info("main - write pid=%s to file=%s", pid, config.Global.PidFile)
+		defer os.Remove(config.Global.PidFile)
 	}
 
 	// init logger
@@ -168,7 +208,6 @@ func main() {
 				// unblock main function
 				done <- true
 
-				os.Exit(0)
 			}
 		}
 	}()
