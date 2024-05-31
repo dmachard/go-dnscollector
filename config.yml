@@ -9,6 +9,7 @@ global:
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length-unit qname qtype latency"
   text-format-delimiter: " "
   text-format-boundary: "\""
+  pid-file: ""
 
 ################################################
 # Pipelining configuration
