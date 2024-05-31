@@ -161,7 +161,7 @@ func (w *DNSMessage) LoadFromFile(filePath string, srcKind string) (MatchSource,
 }
 
 func (w *DNSMessage) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	var err error

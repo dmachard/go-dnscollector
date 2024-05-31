@@ -182,7 +182,7 @@ func (w *DnstapServer) HandleConn(conn net.Conn, connID uint64, forceClose chan 
 }
 
 func (w *DnstapServer) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	var connWG sync.WaitGroup
@@ -298,7 +298,7 @@ func (w *DNSTapProcessor) GetDataChannel() chan []byte {
 }
 
 func (w *DNSTapProcessor) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	dt := &dnstap.Dnstap{}

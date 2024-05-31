@@ -16,7 +16,7 @@ func NewDevNull(config *pkgconfig.Config, console *logger.Logger, name string) *
 }
 
 func (w *DevNull) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// goroutine to process transformed dns messages
@@ -38,7 +38,7 @@ func (w *DevNull) StartCollect() {
 }
 
 func (w *DevNull) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	for {

@@ -53,7 +53,7 @@ func (w *ElasticSearchClient) ReadConfig() {
 }
 
 func (w *ElasticSearchClient) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -105,7 +105,7 @@ func (w *ElasticSearchClient) StartCollect() {
 }
 
 func (w *ElasticSearchClient) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	// create a new encoder that writes to the buffer

@@ -166,7 +166,7 @@ func (w *FluentdClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 }
 
 func (w *FluentdClient) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -222,7 +222,7 @@ func (w *FluentdClient) StartCollect() {
 }
 
 func (w *FluentdClient) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	// init buffer

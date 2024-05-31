@@ -122,7 +122,7 @@ func (w *PdnsServer) HandleConn(conn net.Conn, connID uint64, forceClose chan bo
 }
 
 func (w *PdnsServer) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	var connWG sync.WaitGroup
@@ -211,7 +211,7 @@ func (w *PdnsProcessor) GetDataChannel() chan []byte {
 }
 
 func (w *PdnsProcessor) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	pbdm := &powerdns_protobuf.PBDNSMessage{}

@@ -122,7 +122,7 @@ func (w *ScalyrClient) ReadConfig() {
 }
 
 func (w *ScalyrClient) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -175,7 +175,7 @@ func (w *ScalyrClient) StartCollect() {
 }
 
 func (w *ScalyrClient) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	sInfo := w.GetConfig().Loggers.ScalyrClient.SessionInfo

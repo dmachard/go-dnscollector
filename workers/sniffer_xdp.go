@@ -32,7 +32,7 @@ func NewXDPSniffer(next []Worker, config *pkgconfig.Config, logger *logger.Logge
 }
 
 func (w *XDPSniffer) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// init dns processor

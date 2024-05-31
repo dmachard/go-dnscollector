@@ -184,7 +184,7 @@ func (w *DnstapSender) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 }
 
 func (w *DnstapSender) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -240,7 +240,7 @@ func (w *DnstapSender) StartCollect() {
 }
 
 func (w *DnstapSender) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	// init buffer

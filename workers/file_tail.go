@@ -40,7 +40,7 @@ func (w *Tail) Follow() error {
 }
 
 func (w *Tail) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	err := w.Follow()

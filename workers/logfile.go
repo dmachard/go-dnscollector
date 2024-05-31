@@ -396,7 +396,7 @@ func (w *LogFile) WriteToDnstap(data []byte) {
 }
 
 func (w *LogFile) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -449,7 +449,7 @@ func (w *LogFile) StartCollect() {
 }
 
 func (w *LogFile) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	// prepare some timers

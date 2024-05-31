@@ -207,7 +207,7 @@ func (w *RedisPub) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 }
 
 func (w *RedisPub) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -264,7 +264,7 @@ func (w *RedisPub) StartCollect() {
 }
 
 func (w *RedisPub) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	// init buffer

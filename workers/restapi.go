@@ -637,7 +637,7 @@ func (w *RestAPI) ListenAndServe() {
 }
 
 func (w *RestAPI) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -697,7 +697,7 @@ func (w *RestAPI) StartCollect() {
 }
 
 func (w *RestAPI) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	for {

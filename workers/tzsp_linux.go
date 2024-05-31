@@ -73,7 +73,7 @@ func (w *TZSPSniffer) Listen() error {
 }
 
 func (w *TZSPSniffer) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// start server

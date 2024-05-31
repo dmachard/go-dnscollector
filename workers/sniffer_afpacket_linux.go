@@ -75,7 +75,7 @@ func (w *AfpacketSniffer) Listen() error {
 }
 
 func (w *AfpacketSniffer) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	if w.fd == 0 {
