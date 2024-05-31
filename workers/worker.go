@@ -167,7 +167,7 @@ func (w *GenericWorker) Monitor() {
 		w.doneMonitor <- true
 	}()
 
-	w.LogInfo("start to monitor")
+	w.LogInfo("starting monitoring")
 	watchInterval := 10 * time.Second
 	bufferFull := time.NewTimer(watchInterval)
 	for {
@@ -202,12 +202,12 @@ func (w *GenericWorker) WorkerIsBusy(name string) {
 }
 
 func (w *GenericWorker) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 }
 
 func (w *GenericWorker) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 }
 

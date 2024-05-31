@@ -196,7 +196,7 @@ func (w *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 }
 
 func (w *KafkaProducer) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -249,7 +249,7 @@ func (w *KafkaProducer) StartCollect() {
 }
 
 func (w *KafkaProducer) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	ctx, cancelKafka := context.WithCancel(context.Background())

@@ -2,17 +2,14 @@ global:
   trace:
     verbose: true
 
-multiplexer:
-  collectors:
-    - name: tap
-      dnstap:
-        sock-path: /tmp/dnstap.sock
+pipelines:
+  - name: tap
+    dnstap:
+      sock-path: /tmp/dnstap.sock
+    routing-policy:
+      forward: [ console ]
+      dropped: []
 
-  loggers:
-    - name: console
-      stdout:
-        mode: text
-
-  routes:
-    - from: [tap]
-      to: [console]
+  - name: console
+    stdout:
+      mode: text

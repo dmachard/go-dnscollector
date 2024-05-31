@@ -22,7 +22,7 @@ func NewFalcoClient(config *pkgconfig.Config, console *logger.Logger, name strin
 }
 
 func (w *FalcoClient) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -74,7 +74,7 @@ func (w *FalcoClient) StartCollect() {
 }
 
 func (w *FalcoClient) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	buffer := new(bytes.Buffer)

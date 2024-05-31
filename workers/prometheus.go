@@ -1110,7 +1110,7 @@ func (w *Prometheus) ListenAndServe() {
 }
 
 func (w *Prometheus) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -1169,7 +1169,7 @@ func (w *Prometheus) StartCollect() {
 }
 
 func (w *Prometheus) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	// init timer to compute qps

@@ -1,34 +1,21 @@
-# Example 10: Transform all domains to lowercase
-#
-# As prerequisites, we assume you have 
-# - a DNS server which supports DNSTap (unbound, bind, powerdns, etc) for more informations about dnstap, 
-#   read the following page: https://dmachard.github.io/posts/0001-dnstap-testing/
+# This configuration sets up DNS traffic monitoring through DNStap on port 6000;
+# and applies tranformation to reduce qname to lowercase
 
-# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true
 
-multiplexer:
-  # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
-  collectors:
-    - name: tap
-      dnstap:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routing-policy:
+      forward: [ console ]
 
-  # Print DNS messages on standard output with TEXT format
-  # with on tranformation to reduce qname to lowercase
-  # For example: Wwww.GooGlE.com will be equal to www.google.com
-  loggers:
-    - name: console
-      stdout:
-        mode: text
-      transforms:
-        normalize:
-          qname-lowercase: true
-
-  # Routes DNS messages from the tap collector to standard output
-  routes:
-    - from: [tap]
-      to: [console]
+  - name: console
+    stdout:
+      mode: text
+    transforms:
+      normalize:
+        qname-lowercase: true

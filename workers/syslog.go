@@ -159,7 +159,7 @@ func (w *Syslog) ConnectToRemote() {
 }
 
 func (w *Syslog) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -276,7 +276,7 @@ func (w *Syslog) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 }
 
 func (w *Syslog) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	// init buffer

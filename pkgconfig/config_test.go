@@ -92,7 +92,7 @@ pipelines:
       listen-ip: 0.0.0.0
       listen-port: 6000
     routing-policy: 
-      default: [ console ]
+      forward: [ console ]
 
   - name: console
     stdout:
@@ -150,7 +150,7 @@ pipelines:
         normalize:
           qname-lowercase: true
     routing-policy: 
-      default: [ console ]
+      forward: [ console ]
 `,
 			wantErr: true,
 		},

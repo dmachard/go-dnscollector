@@ -195,7 +195,7 @@ func (w *TCPClient) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 }
 
 func (w *TCPClient) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -251,7 +251,7 @@ func (w *TCPClient) StartCollect() {
 }
 
 func (w *TCPClient) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	// init buffer

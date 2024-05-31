@@ -40,7 +40,7 @@ func (w *Tail) Follow() error {
 }
 
 func (w *Tail) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	err := w.Follow()
@@ -48,8 +48,9 @@ func (w *Tail) StartCollect() {
 		w.LogFatal("collector tail - unable to follow file: ", err)
 	}
 
-	// prepare enabled transformers
+	// prepare next channels
 	defaultRoutes, defaultNames := GetRoutes(w.GetDefaultRoutes())
+	droppedRoutes, droppedNames := GetRoutes(w.GetDroppedRoutes())
 	subprocessors := transformers.NewTransforms(&w.GetConfig().IngoingTransformers, w.GetLogger(), w.GetName(), defaultRoutes, 0)
 
 	// init dns message
@@ -223,17 +224,12 @@ func (w *Tail) StartCollect() {
 				w.LogError(err.Error())
 			}
 			if transformResult == transformers.ReturnDrop {
+				w.SendTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
-			// dispatch dns message to connected loggers
-			for i := range defaultRoutes {
-				select {
-				case defaultRoutes[i] <- dm: // Successful send to logger channel
-				default:
-					w.WorkerIsBusy(defaultNames[i])
-				}
-			}
+			// send to next ?
+			w.SendTo(defaultRoutes, defaultNames, dm)
 		}
 	}
 }

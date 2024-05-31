@@ -1,12 +1,25 @@
 package pkginit
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/workers"
+	"github.com/dmachard/go-logger"
 )
 
-func TestPipeline_IsRouteExist(t *testing.T) {
+func TestPipelines_IsEnabled(t *testing.T) {
+	// Create a mock configuration for testing
+	config := &pkgconfig.Config{}
+	config.Pipelines = []pkgconfig.ConfigPipelines{{Name: "validroute"}}
+
+	if !IsPipelinesEnabled(config) {
+		t.Errorf("pipelines should be enabled!")
+	}
+}
+
+func TestPipelines_IsRouteExist(t *testing.T) {
 	// Create a mock configuration for testing
 	config := &pkgconfig.Config{}
 	config.Pipelines = []pkgconfig.ConfigPipelines{
@@ -28,7 +41,7 @@ func TestPipeline_IsRouteExist(t *testing.T) {
 	}
 }
 
-func TestPipeline_StanzaNameIsUniq(t *testing.T) {
+func TestPipelines_StanzaNameIsUniq(t *testing.T) {
 	// Create a mock configuration for testing
 	config := &pkgconfig.Config{}
 	config.Pipelines = []pkgconfig.ConfigPipelines{
@@ -50,4 +63,48 @@ func TestPipeline_StanzaNameIsUniq(t *testing.T) {
 	if err == nil {
 		t.Errorf("For the duplicate stanza name %s, an expected error was not returned. Received error: %v", duplicateStanzaName, err)
 	}
+}
+
+func TestPipelines_NoRoutesDefined(t *testing.T) {
+	// Create a mock configuration for testing
+	config := &pkgconfig.Config{}
+	config.Pipelines = []pkgconfig.ConfigPipelines{
+		{Name: "stanzaA", RoutingPolicy: pkgconfig.PipelinesRouting{Forward: []string{}, Dropped: []string{}}},
+		{Name: "stanzaB", RoutingPolicy: pkgconfig.PipelinesRouting{Forward: []string{}, Dropped: []string{}}},
+	}
+
+	mapLoggers := make(map[string]workers.Worker)
+	mapCollectors := make(map[string]workers.Worker)
+
+	err := InitPipelines(mapLoggers, mapCollectors, config, logger.New(false))
+	if err == nil {
+		t.Errorf("Want err, got nil")
+	} else if err.Error() != "no routes are defined" {
+		t.Errorf("Unexpected error: %s", err.Error())
+	}
+}
+
+func TestPipelines_RoutingLoop(t *testing.T) {
+	// Create a mock configuration for testing
+	config := &pkgconfig.Config{}
+	config.Pipelines = []pkgconfig.ConfigPipelines{
+		{
+			Name: "stanzaA",
+			Params: map[string]interface{}{
+				"dnstap": map[string]interface{}{"enable": true},
+			},
+			RoutingPolicy: pkgconfig.PipelinesRouting{Forward: []string{"stanzaA"}, Dropped: []string{}},
+		},
+	}
+
+	mapLoggers := make(map[string]workers.Worker)
+	mapCollectors := make(map[string]workers.Worker)
+
+	err := InitPipelines(mapLoggers, mapCollectors, config, logger.New(false))
+	if err == nil {
+		t.Errorf("Want err, got nil")
+	} else if !strings.Contains(err.Error(), "routing error loop") {
+		t.Errorf("Unexpected error: %s", err.Error())
+	}
+
 }

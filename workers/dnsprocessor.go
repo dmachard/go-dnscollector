@@ -20,7 +20,7 @@ func NewDNSProcessor(config *pkgconfig.Config, logger *logger.Logger, name strin
 }
 
 func (w *DNSProcessor) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels

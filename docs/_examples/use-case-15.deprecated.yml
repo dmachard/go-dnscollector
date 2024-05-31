@@ -1,0 +1,27 @@
+# Example 15: Watch for PCAP files as input and convert to JSON
+
+# If turned on, debug messages are printed in the standard output
+global:
+  trace:
+    verbose: true
+
+multiplexer:
+  # Watch in /tmp folder to find pcap files with pcap or pcap.gz extension
+  collectors:
+    - name: pcap
+      file-ingestor:
+        watch-dir: /home/pcap/
+        watch-mode: pcap
+      transforms:
+        normalize:
+          qname-lowercase: true
+
+  # Redirect output to the console
+  loggers:
+    - name: console
+      stdout:
+        mode: json
+
+  routes:
+    - from: [ pcap ]
+      to: [ console ]

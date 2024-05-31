@@ -1,0 +1,33 @@
+# Example 19: Suspicious traffic detector
+
+global:
+  trace:
+    verbose: true
+
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+      transforms:
+        normalize:
+          qname-lowercase: true
+        latency:
+          measure-latency: true
+          queries-timeout: 2
+
+  loggers:
+    - name: console
+      stdout:
+        mode: text
+        text-format: timestamp-rfc3339ns identity operation rcode qname qtype latency suspicious-score
+      transforms:
+        filtering:
+          log-queries : false
+        suspicious:
+          threshold-qname-len: 4
+
+  routes:
+    - from: [ tap ]
+      to: [ console ]

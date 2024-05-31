@@ -138,7 +138,7 @@ func (w *LokiClient) ReadConfig() {
 }
 
 func (w *LokiClient) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -191,7 +191,7 @@ func (w *LokiClient) StartCollect() {
 }
 
 func (w *LokiClient) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	// prepare buffer

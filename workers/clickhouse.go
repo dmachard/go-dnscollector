@@ -38,7 +38,7 @@ func NewClickhouseClient(config *pkgconfig.Config, console *logger.Logger, name 
 }
 
 func (w *ClickhouseClient) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -92,7 +92,7 @@ func (w *ClickhouseClient) StartCollect() {
 }
 
 func (w *ClickhouseClient) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	for {

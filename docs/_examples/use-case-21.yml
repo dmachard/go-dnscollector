@@ -1,20 +1,18 @@
+# This configuration sets up DNS traffic monitoring through DNStap on port 6000;
+# and log the console as PCAP format
+
 global:
   trace:
     verbose: true
-    filename: /tmp/dnscollector.log
 
-multiplexer:
-  collectors:
-    - name: tap
-      dnstap:
-        listen-ip: 0.0.0.0
-        listen-port: 6000
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routing-policy:
+      forward: [ console ]
 
-  loggers:
-    - name: console
-      stdout:
-        mode: pcap
-
-  routes:
-    - from: [ tap ]
-      to: [ console ]
+  - name: console
+    stdout:
+      mode: pcap

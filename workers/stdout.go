@@ -70,7 +70,7 @@ func (w *StdOut) SetPcapWriter(pcapWriter io.Writer) {
 }
 
 func (w *StdOut) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -123,7 +123,7 @@ func (w *StdOut) StartCollect() {
 }
 
 func (w *StdOut) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	// standard output buffer

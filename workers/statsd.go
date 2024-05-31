@@ -146,7 +146,7 @@ func (w *StatsdClient) RecordDNSMessage(dm dnsutils.DNSMessage) {
 }
 
 func (w *StatsdClient) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -199,7 +199,7 @@ func (w *StatsdClient) StartCollect() {
 }
 
 func (w *StatsdClient) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	// statd timer to push data

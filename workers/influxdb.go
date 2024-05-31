@@ -25,7 +25,7 @@ func NewInfluxDBClient(config *pkgconfig.Config, logger *logger.Logger, name str
 }
 
 func (w *InfluxDBClient) StartCollect() {
-	w.LogInfo("worker is starting collection")
+	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
 	// prepare next channels
@@ -78,7 +78,7 @@ func (w *InfluxDBClient) StartCollect() {
 }
 
 func (w *InfluxDBClient) StartLogging() {
-	w.LogInfo("worker is starting logging")
+	w.LogInfo("logging has started")
 	defer w.LoggingDone()
 
 	// prepare options for influxdb

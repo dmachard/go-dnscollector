@@ -1,24 +1,31 @@
-# Example 14: Watch for DNStap files as input.
+# This configuration sets up watch and read DNStap files;
+# and logging to the console in text format.
 
-# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true
 
-multiplexer:
-  # Watch in /tmp folder to find dnstap files with fstrm extension
-  collectors:
-    - name: dnstap
-      file-ingestor:
-        watch-dir: /tmp
-        watch-mode: dnstap
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routing-policy:
+      forward: [ out-dnstap ]
 
-  # Redirect output to the console
-  loggers:
-    - name: console
-      stdout:
-        mode: text
+  - name: out-dnstap
+    logfile:
+      file-path:  /tmp/dnstap.fstrm
+      flush-interval: 1
+      mode: dnstap
 
-  routes:
-    - from: [ dnstap ]
-      to: [ console ]
+  - name: file-dnstap
+    file-ingestor:
+      watch-dir: /tmp
+      watch-mode: dnstap
+    routing-policy:
+      forward: [ console ]
+
+  - name: console
+    stdout:
+      mode: text
