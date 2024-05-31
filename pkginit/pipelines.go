@@ -84,7 +84,7 @@ func IsRouteExist(target string, config *pkgconfig.Config) (ret error) {
 	return fmt.Errorf("route=%s doest not exist", target)
 }
 
-func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]workers.Worker, mapLoggers map[string]workers.Worker, logger *logger.Logger) {
+func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]workers.Worker, mapLoggers map[string]workers.Worker, logger *logger.Logger) error {
 	var currentStanza workers.Worker
 	if collector, ok := mapCollectors[stanza.Name]; ok {
 		currentStanza = collector
@@ -93,10 +93,11 @@ func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]wo
 		currentStanza = logger
 	}
 
-	// TODO raise error when no routes are defined
-
-	// default routing
+	// forward routing
 	for _, route := range stanza.RoutingPolicy.Forward {
+		if route == stanza.Name {
+			return fmt.Errorf("main - routing error loop with stanza=%s to stanza=%s", stanza.Name, route)
+		}
 		if _, ok := mapCollectors[route]; ok {
 			currentStanza.AddDefaultRoute(mapCollectors[route])
 			logger.Info("main - routing (policy=forward) stanza=[%s] to stanza=[%s]", stanza.Name, route)
@@ -104,8 +105,7 @@ func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]wo
 			currentStanza.AddDefaultRoute(mapLoggers[route])
 			logger.Info("main - routing (policy=forward) stanza=[%s] to stanza=[%s]", stanza.Name, route)
 		} else {
-			logger.Error("main - forward routing error from stanza=%s to stanza=%s doest not exist", stanza.Name, route)
-			break
+			return fmt.Errorf("main - forward routing error from stanza=%s to stanza=%s doest not exist", stanza.Name, route)
 		}
 	}
 
@@ -118,10 +118,10 @@ func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]wo
 			currentStanza.AddDroppedRoute(mapLoggers[route])
 			logger.Info("main - routing (policy=dropped) stanza=[%s] to stanza=[%s]", stanza.Name, route)
 		} else {
-			logger.Error("main - routing error with dropped messages from stanza=%s to stanza=%s doest not exist", stanza.Name, route)
-			break
+			return fmt.Errorf("main - routing error with dropped messages from stanza=%s to stanza=%s doest not exist", stanza.Name, route)
 		}
 	}
+	return nil
 }
 
 func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map[string]workers.Worker, mapLoggers map[string]workers.Worker, logger *logger.Logger) {
@@ -248,7 +248,9 @@ func InitPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[strin
 	// create routing
 	for _, stanza := range config.Pipelines {
 		if mapCollectors[stanza.Name] != nil || mapLoggers[stanza.Name] != nil {
-			CreateRouting(stanza, mapCollectors, mapLoggers, logger)
+			if err := CreateRouting(stanza, mapCollectors, mapLoggers, logger); err != nil {
+				return errors.Errorf(err.Error())
+			}
 		} else {
 			return errors.Errorf("routing - stanza=[%v] doest not exist", stanza.Name)
 		}
