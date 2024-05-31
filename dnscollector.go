@@ -50,12 +50,12 @@ func createPIDFile(pidFilePath string) (string, error) {
 	if _, err := os.Stat(pidFilePath); err == nil {
 		pidBytes, err := os.ReadFile(pidFilePath)
 		if err != nil {
-			return "", fmt.Errorf("failed to read PID file: %v", err)
+			return "", fmt.Errorf("failed to read PID file: %w", err)
 		}
 
 		pid, err := strconv.Atoi(string(pidBytes))
 		if err != nil {
-			return "", fmt.Errorf("invalid PID in PID file: %v", err)
+			return "", fmt.Errorf("invalid PID in PID file: %w", err)
 		}
 
 		if process, err := os.FindProcess(pid); err == nil {
@@ -69,9 +69,15 @@ func createPIDFile(pidFilePath string) (string, error) {
 	pidStr := strconv.Itoa(pid)
 	err := os.WriteFile(pidFilePath, []byte(pidStr), 0644)
 	if err != nil {
-		return "", fmt.Errorf("failed to write PID file: %v", err)
+		return "", fmt.Errorf("failed to write PID file: %w", err)
 	}
 	return pidStr, nil
+}
+
+func removePIDFile(config *pkgconfig.Config) {
+	if config.Global.PidFile != "" {
+		os.Remove(config.Global.PidFile)
+	}
 }
 
 func main() {
@@ -138,7 +144,6 @@ func main() {
 			os.Exit(1)
 		}
 		logger.Info("main - write pid=%s to file=%s", pid, config.Global.PidFile)
-		defer os.Remove(config.Global.PidFile)
 	}
 
 	// init logger
@@ -163,6 +168,7 @@ func main() {
 		err := pkginit.InitPipelines(mapLoggers, mapCollectors, config, logger)
 		if err != nil {
 			logger.Error("main - %s", err.Error())
+			removePIDFile(config)
 			os.Exit(1)
 		}
 	}
@@ -183,7 +189,9 @@ func main() {
 				// read config
 				err := pkgconfig.ReloadConfig(configPath, config)
 				if err != nil {
-					panic(fmt.Sprintf("main - reload config error:  %v", err))
+					logger.Error("main - reload config error:  %v", err)
+					removePIDFile(config)
+					os.Exit(1)
 				}
 
 				// reload logger and multiplexer
@@ -215,6 +223,7 @@ func main() {
 	if testFlag {
 		// We've parsed the config and are ready to start, so the config is good enough
 		logger.Info("main - config OK!")
+		removePIDFile(config)
 		os.Exit(0)
 	}
 
@@ -229,5 +238,6 @@ func main() {
 	// block main
 	<-done
 
+	removePIDFile(config)
 	logger.Info("main - stopped")
 }
