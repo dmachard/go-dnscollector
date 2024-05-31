@@ -210,10 +210,18 @@ func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map
 
 func InitPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[string]workers.Worker, config *pkgconfig.Config, logger *logger.Logger) error {
 	// check if the name of each stanza is uniq
+	routesDefined := false
 	for _, stanza := range config.Pipelines {
 		if err := StanzaNameIsUniq(stanza.Name, config); err != nil {
 			return errors.Errorf("stanza with name=[%s] is duplicated", stanza.Name)
 		}
+		if len(stanza.RoutingPolicy.Forward) > 0 || len(stanza.RoutingPolicy.Dropped) > 0 {
+			routesDefined = true
+		}
+	}
+
+	if !routesDefined {
+		return errors.Errorf("no routes are defined")
 	}
 
 	// check if all routes exists before continue
@@ -242,7 +250,7 @@ func InitPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[strin
 		if mapCollectors[stanza.Name] != nil || mapLoggers[stanza.Name] != nil {
 			CreateRouting(stanza, mapCollectors, mapLoggers, logger)
 		} else {
-			return errors.Errorf("stanza=[%v] doest not exist", stanza.Name)
+			return errors.Errorf("routing - stanza=[%v] doest not exist", stanza.Name)
 		}
 	}
 
