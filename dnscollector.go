@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
+	"net/http"
 	_ "net/http/pprof"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
@@ -15,6 +18,8 @@ import (
 	"github.com/dmachard/go-dnscollector/workers"
 	"github.com/dmachard/go-logger"
 	"github.com/natefinch/lumberjack"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 )
 
@@ -164,7 +169,7 @@ func main() {
 
 	// or pipeline ?
 	if pkginit.IsPipelinesEnabled(config) {
-		logger.Info("main - running in pipelines mode")
+		logger.Info("main - running in pipeline mode")
 		err := pkginit.InitPipelines(mapLoggers, mapCollectors, config, logger)
 		if err != nil {
 			logger.Error("main - %s", err.Error())
@@ -179,6 +184,39 @@ func main() {
 
 	signal.Notify(sigTerm, os.Interrupt, syscall.SIGTERM)
 	signal.Notify(sigHUP, syscall.SIGHUP)
+
+	promServer := &http.Server{
+		Addr:              config.Global.Telemetry.WebListen,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	// goroutine for telemetry
+	if config.Global.Telemetry.Enabled {
+		go func() {
+			prometheus.MustRegister(version.NewCollector("go_dnscollector"))
+
+			http.Handle(config.Global.Telemetry.WebPath, promhttp.Handler())
+			http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
+				_, err := w.Write([]byte(`<html>
+			<head><title>DNScollector Exporter</title></head>
+			<body>
+			<h1>DNScollector Exporter</h1>
+			<p><a href='` + config.Global.Telemetry.WebPath + `'>Metrics</a></p>
+			</body>
+			</html>`))
+				if err != nil {
+					logger.Error("main - telemetry error on returning home page - %s", err.Error())
+				}
+			})
+
+			logger.Info("main - telemetry is listening on address: %s", config.Global.Telemetry.WebListen)
+			if err := promServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				logger.Error("main - telemetry error starting http server - %s", err.Error())
+				removePIDFile(config)
+				os.Exit(1)
+			}
+		}()
+	}
 
 	go func() {
 		for {
@@ -205,6 +243,18 @@ func main() {
 
 			case <-sigTerm:
 				logger.Warning("main - exiting...")
+
+				// gracefully shutdown the HTTP server
+				if config.Global.Telemetry.Enabled {
+					logger.Info("main - telemetry is stopping")
+
+					if err := promServer.Shutdown(context.Background()); err != nil {
+						logger.Error("main - telemetry error shutting down http server - %s", err.Error())
+					}
+
+				}
+
+				// and stop all workers
 				for _, c := range mapCollectors {
 					c.Stop()
 				}

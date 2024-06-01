@@ -19,6 +19,11 @@ type ConfigGlobal struct {
 	} `yaml:"trace"`
 	ServerIdentity string `yaml:"server-identity" default:""`
 	PidFile        string `yaml:"pid-file" default:""`
+	Telemetry      struct {
+		Enabled   bool   `yaml:"enabled" default:"true"`
+		WebPath   string `yaml:"web-path" default:"/metrics"`
+		WebListen string `yaml:"web-listen" default:":9165"`
+	} `yaml:"telemetry"`
 }
 
 func (c *ConfigGlobal) SetDefault() {

@@ -10,6 +10,10 @@ global:
   text-format-delimiter: " "
   text-format-boundary: "\""
   pid-file: ""
+  telemetry:
+    enabled: true
+    web-path: "/metrics"
+    web-listen: ":9165"
 
 ################################################
 # Pipelining configuration
