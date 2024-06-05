@@ -8,25 +8,47 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-func Test_FileIngestor_Pcap(t *testing.T) {
-	g := GetWorkerForTest(pkgconfig.DefaultBufferSize)
-	config := pkgconfig.GetDefaultConfig()
+func Test_FileIngestor(t *testing.T) {
+	tests := []struct {
+		name      string
+		watchMode string
+		watchDir  string
+	}{
+		{
+			name:      "Pcap",
+			watchMode: "pcap",
+			watchDir:  "./../tests/testsdata/pcap/",
+		},
+		{
+			name:      "Dnstap",
+			watchMode: "dnstap",
+			watchDir:  "./../tests/testsdata/dnstap/",
+		},
+	}
 
-	// watch tests data folder
-	config.Collectors.FileIngestor.WatchDir = "./../tests/testsdata/pcap/"
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := GetWorkerForTest(pkgconfig.DefaultBufferSize)
+			config := pkgconfig.GetDefaultConfig()
 
-	// init collector
-	c := NewFileIngestor([]Worker{g}, config, logger.New(false), "test")
-	go c.StartCollect()
+			// watch tests data folder
+			config.Collectors.FileIngestor.WatchMode = tt.watchMode
+			config.Collectors.FileIngestor.WatchDir = tt.watchDir
 
-	// waiting message in channel
-	for {
-		// read dns message from channel
-		msg := <-g.GetInputChannel()
+			// init collector
+			c := NewFileIngestor([]Worker{g}, config, logger.New(false), "test")
+			go c.StartCollect()
 
-		// check qname
-		if msg.DNSTap.Operation == dnsutils.DNSTapClientQuery {
-			break
-		}
+			// waiting message in channel
+			for {
+				// read dns message from channel
+				msg := <-g.GetInputChannel()
+
+				// check qname
+				if msg.DNSTap.Operation == dnsutils.DNSTapClientQuery {
+					break
+				}
+			}
+		})
 	}
 }
