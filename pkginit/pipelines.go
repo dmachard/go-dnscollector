@@ -124,7 +124,7 @@ func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]wo
 	return nil
 }
 
-func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map[string]workers.Worker, mapLoggers map[string]workers.Worker, logger *logger.Logger) {
+func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map[string]workers.Worker, mapLoggers map[string]workers.Worker, logger *logger.Logger, telemetry *TelemetryCollector) {
 	// register the logger if enabled
 	if config.Loggers.RestAPI.Enable {
 		mapLoggers[stanzaName] = workers.NewRestAPI(config, logger, stanzaName)
@@ -208,7 +208,7 @@ func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map
 	}
 }
 
-func InitPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[string]workers.Worker, config *pkgconfig.Config, logger *logger.Logger) error {
+func InitPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[string]workers.Worker, config *pkgconfig.Config, logger *logger.Logger, telemetry *TelemetryCollector) error {
 	// check if the name of each stanza is uniq
 	routesDefined := false
 	for _, stanza := range config.Pipelines {
@@ -241,7 +241,7 @@ func InitPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[strin
 	// read each stanza and init
 	for _, stanza := range config.Pipelines {
 		stanzaConfig := GetStanzaConfig(config, stanza)
-		CreateStanza(stanza.Name, stanzaConfig, mapCollectors, mapLoggers, logger)
+		CreateStanza(stanza.Name, stanzaConfig, mapCollectors, mapLoggers, logger, telemetry)
 
 	}
 

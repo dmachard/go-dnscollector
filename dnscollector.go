@@ -155,44 +155,18 @@ func main() {
 	InitLogger(logger, config)
 	logger.Info("main - version=%s revision=%s", version.Version, version.Revision)
 
-	// init active collectors and loggers
-	mapLoggers := make(map[string]workers.Worker)
-	mapCollectors := make(map[string]workers.Worker)
-
-	// running mode,
-	// multiplexer ?
-	if pkginit.IsMuxEnabled(config) {
-		logger.Info("main - running in multiplexer mode")
-		logger.Warning("main - The multiplexer mode is deprecated. Please switch to the pipelines mode.")
-		pkginit.InitMultiplexer(mapLoggers, mapCollectors, config, logger)
-	}
-
-	// or pipeline ?
-	if pkginit.IsPipelinesEnabled(config) {
-		logger.Info("main - running in pipeline mode")
-		err := pkginit.InitPipelines(mapLoggers, mapCollectors, config, logger)
-		if err != nil {
-			logger.Error("main - %s", err.Error())
-			removePIDFile(config)
-			os.Exit(1)
-		}
-	}
-
-	// Handle Ctrl-C with SIG TERM and SIGHUP
-	sigTerm := make(chan os.Signal, 1)
-	sigHUP := make(chan os.Signal, 1)
-
-	signal.Notify(sigTerm, os.Interrupt, syscall.SIGTERM)
-	signal.Notify(sigHUP, syscall.SIGHUP)
-
+	// telemetry
 	promServer := &http.Server{
 		Addr:              config.Global.Telemetry.WebListen,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
+	telemetry := pkginit.NewTelemetryCollector()
 
-	// goroutine for telemetry
 	if config.Global.Telemetry.Enabled {
 		go func() {
+			go telemetry.WaitForStats()
+
+			prometheus.MustRegister(telemetry)
 			prometheus.MustRegister(version.NewCollector("go_dnscollector"))
 
 			http.Handle(config.Global.Telemetry.WebPath, promhttp.Handler())
@@ -217,6 +191,36 @@ func main() {
 			}
 		}()
 	}
+
+	// init active collectors and loggers
+	mapLoggers := make(map[string]workers.Worker)
+	mapCollectors := make(map[string]workers.Worker)
+
+	// running mode,
+	// multiplexer ?
+	if pkginit.IsMuxEnabled(config) {
+		logger.Info("main - running in multiplexer mode")
+		logger.Warning("main - The multiplexer mode is deprecated. Please switch to the pipelines mode.")
+		pkginit.InitMultiplexer(mapLoggers, mapCollectors, config, logger)
+	}
+
+	// or pipeline ?
+	if pkginit.IsPipelinesEnabled(config) {
+		logger.Info("main - running in pipeline mode")
+		err := pkginit.InitPipelines(mapLoggers, mapCollectors, config, logger, telemetry)
+		if err != nil {
+			logger.Error("main - %s", err.Error())
+			removePIDFile(config)
+			os.Exit(1)
+		}
+	}
+
+	// Handle Ctrl-C with SIG TERM and SIGHUP
+	sigTerm := make(chan os.Signal, 1)
+	sigHUP := make(chan os.Signal, 1)
+
+	signal.Notify(sigTerm, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(sigHUP, syscall.SIGHUP)
 
 	go func() {
 		for {
@@ -247,6 +251,7 @@ func main() {
 				// gracefully shutdown the HTTP server
 				if config.Global.Telemetry.Enabled {
 					logger.Info("main - telemetry is stopping")
+					telemetry.Stop()
 
 					if err := promServer.Shutdown(context.Background()); err != nil {
 						logger.Error("main - telemetry error shutting down http server - %s", err.Error())

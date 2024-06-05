@@ -76,7 +76,8 @@ func TestPipelines_NoRoutesDefined(t *testing.T) {
 	mapLoggers := make(map[string]workers.Worker)
 	mapCollectors := make(map[string]workers.Worker)
 
-	err := InitPipelines(mapLoggers, mapCollectors, config, logger.New(false))
+	telemetry := NewTelemetryCollector()
+	err := InitPipelines(mapLoggers, mapCollectors, config, logger.New(false), telemetry)
 	if err == nil {
 		t.Errorf("Want err, got nil")
 	} else if err.Error() != "no routes are defined" {
@@ -100,7 +101,8 @@ func TestPipelines_RoutingLoop(t *testing.T) {
 	mapLoggers := make(map[string]workers.Worker)
 	mapCollectors := make(map[string]workers.Worker)
 
-	err := InitPipelines(mapLoggers, mapCollectors, config, logger.New(false))
+	telemetry := NewTelemetryCollector()
+	err := InitPipelines(mapLoggers, mapCollectors, config, logger.New(false), telemetry)
 	if err == nil {
 		t.Errorf("Want err, got nil")
 	} else if !strings.Contains(err.Error(), "routing error loop") {
