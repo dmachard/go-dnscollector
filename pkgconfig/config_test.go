@@ -2,6 +2,7 @@ package pkgconfig
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -45,6 +46,38 @@ func createTempConfigFile(content string) (string, error) {
 	}
 
 	return tempFile.Name(), nil
+}
+
+func TestConfig_CheckConfig_InvalidKey_Logger(t *testing.T) {
+	content := `
+pipelines:
+- name: filednstap
+  logfile:
+    invalid: null
+`
+
+	tempFile, err := createTempConfigFile(content)
+	if err != nil {
+		t.Fatalf("Error creating temporary file: %v", err)
+	}
+	defer os.Remove(tempFile)
+	configFile, err := os.Open(tempFile)
+	if err != nil {
+		t.Fatalf("Read temporary file: %v", err)
+	}
+	defer configFile.Close()
+
+	err = CheckConfig(configFile)
+	if err == nil {
+		t.Errorf("CheckConfig() is nil, want error")
+		return
+	}
+
+	if !strings.Contains(err.Error(), "unknown key") {
+		t.Errorf("invalid error: %s", err)
+		return
+	}
+
 }
 
 func TestConfig_CheckConfig(t *testing.T) {

@@ -14,8 +14,7 @@ global:
 ################################################
 # Pipelining configuration
 #   more details: https://github.com/dmachard/go-dnscollector/blob/main/docs/running_mode.md#pipelining
-#   collectors: https://github.com/dmachard/go-dnscollector/blob/main/docs/collectors.md
-#   loggers: https://github.com/dmachard/go-dnscollector/blob/main/docs/loggers.md
+#   workers: https://github.com/dmachard/go-dnscollector/blob/main/docs/workers.md
 #   transformers: https://github.com/dmachard/go-dnscollector/blob/main/docs/transformers.md
 ################################################
 pipelines:
@@ -37,8 +36,7 @@ pipelines:
 ################################################
 # DEPRECATED - multiplexer configuration
 #   more details: https://github.com/dmachard/go-dnscollector/blob/main/docs/running_mode.md#multiplexer
-#   collectors: https://github.com/dmachard/go-dnscollector/blob/main/docs/collectors.md
-#   loggers: https://github.com/dmachard/go-dnscollector/blob/main/docs/loggers.md
+#   workers: https://github.com/dmachard/go-dnscollector/blob/main/docs/workers.md
 #   transformers: https://github.com/dmachard/go-dnscollector/blob/main/docs/transformers.md
 ################################################
 # multiplexer:
