@@ -35,13 +35,26 @@ func (c *ConfigPipelines) IsValid(userCfg map[string]interface{}) error {
 		delete(userCfg, "routing-policy")
 	}
 
-	a := ConfigCollectors{}
-	errA := a.IsValid(userCfg)
-	b := ConfigLoggers{}
-	errB := b.IsValid(userCfg)
+	wc := ConfigCollectors{}
+	wl := ConfigLoggers{}
 
-	if errA != nil && errB != nil {
-		return errors.Errorf("invalid stranza - %s", errA)
+	for workerName := range userCfg {
+		collectorExist := wc.IsExists(workerName)
+		loggerExist := wl.IsExists(workerName)
+		if !collectorExist && !loggerExist {
+			return errors.Errorf("invalid worker type - %s", workerName)
+		}
+
+		if collectorExist {
+			if err := wc.IsValid(userCfg); err != nil {
+				return errors.Errorf("%s", err)
+			}
+		}
+		if loggerExist {
+			if err := wl.IsValid(userCfg); err != nil {
+				return errors.Errorf("%s", err)
+			}
+		}
 	}
 
 	return nil

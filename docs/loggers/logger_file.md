@@ -35,7 +35,7 @@ Options:
 * `compress-interval` (integer)
   > checking every X seconds if new log files must be compressed
 
-* `compress-command` (string)
+* `compress-postcommand` (string)
   > run external script after file compress step
 
 * `mode` (string)
@@ -64,7 +64,7 @@ logfile:
   flush-interval: 10
   compress: false
   compress-interval: 5
-  compress-command: null
+  compress-postcommand: null
   mode: text
   text-format: ""
   postrotate-command: null

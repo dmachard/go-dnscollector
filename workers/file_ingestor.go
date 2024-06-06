@@ -318,7 +318,7 @@ func (w *FileIngestor) StartCollect() {
 	dnstapProcessor := NewDNSTapProcessor(0, "", w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
 	dnstapProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
 	dnstapProcessor.SetDefaultDropped(w.GetDroppedRoutes())
-	go dnsProcessor.StartCollect()
+	go dnstapProcessor.StartCollect()
 
 	w.dnstapProcessor = dnstapProcessor
 	w.dnsProcessor = dnsProcessor
