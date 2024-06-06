@@ -35,8 +35,6 @@ func (c *ConfigPipelines) IsValid(userCfg map[string]interface{}) error {
 		delete(userCfg, "routing-policy")
 	}
 
-	//if !config.Loggers.IsExists(k) && !config.Collectors.IsExists(k) {
-
 	wc := ConfigCollectors{}
 	wl := ConfigLoggers{}
 
