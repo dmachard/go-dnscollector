@@ -1,9 +1,9 @@
 <p align="center">
 <img src="https://goreportcard.com/badge/github.com/dmachard/go-dns-collector" alt="Go Report"/>
 <img src="https://img.shields.io/badge/go%20version-min%201.21-green" alt="Go version"/>
-<img src="https://img.shields.io/badge/go%20tests-436-green" alt="Go tests"/>
+<img src="https://img.shields.io/badge/go%20tests-437-green" alt="Go tests"/>
 <img src="https://img.shields.io/badge/go%20bench-20-green" alt="Go bench"/>
-<img src="https://img.shields.io/badge/go%20lines-29834-green" alt="Go lines"/>
+<img src="https://img.shields.io/badge/go%20lines-29859-green" alt="Go lines"/>
 </p>
 
 <p align="center">
