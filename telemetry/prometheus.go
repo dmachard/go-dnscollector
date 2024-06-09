@@ -56,6 +56,9 @@ func NewPrometheusCollector(config *pkgconfig.Config) *PrometheusCollector {
 		"worker_egress_total": prometheus.NewDesc(
 			fmt.Sprintf("%s_worker_egress_traffic_total", t.promPrefix),
 			"Egress traffic associated to each worker", []string{"worker"}, nil),
+		"worker_discarded_total": prometheus.NewDesc(
+			fmt.Sprintf("%s_worker_discarded_traffic_total", t.promPrefix),
+			"Discarded traffic associated to each worker", []string{"worker"}, nil),
 		"policy_forwarded_total": prometheus.NewDesc(
 			fmt.Sprintf("%s_policy_forwarded_total", t.promPrefix),
 			"Total number of forwarded policy", []string{"worker"}, nil),
@@ -79,6 +82,7 @@ func (t *PrometheusCollector) UpdateStats() {
 				updatedWs.TotalDroppedPolicy += ws.TotalDroppedPolicy
 				updatedWs.TotalIngress += ws.TotalIngress
 				updatedWs.TotalEgress += ws.TotalEgress
+				updatedWs.TotalDiscarded += ws.TotalDiscarded
 				t.data[ws.Name] = updatedWs
 			}
 			t.Unlock()
@@ -94,6 +98,12 @@ func (t *PrometheusCollector) Collect(ch chan<- prometheus.Metric) {
 
 	// Collect the forwarded and dropped metrics for each worker
 	for _, ws := range t.data {
+		ch <- prometheus.MustNewConstMetric(
+			t.metrics["worker_discarded_total"],
+			prometheus.CounterValue,
+			float64(ws.TotalDiscarded),
+			ws.Name,
+		)
 		ch <- prometheus.MustNewConstMetric(
 			t.metrics["worker_ingress_total"],
 			prometheus.CounterValue,

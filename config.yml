@@ -32,18 +32,11 @@ pipelines:
     transforms:
       normalize:
         qname-lowercase: true
-      filtering:
-        log-queries: true
-        log-replies: false
     routing-policy:
-      forward: [ console1 ]
-      dropped: [ console2 ]
+      forward: [ console ]
+      dropped: [ ]
 
-  - name: console1
-    stdout:
-      mode: text
-
-  - name: console2
+  - name: console
     stdout:
       mode: text
 

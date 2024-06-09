@@ -35,9 +35,9 @@ type GenericWorker struct {
 	droppedWorkerCount                                                   map[string]int
 	dnsMessageIn, dnsMessageOut                                          chan dnsutils.DNSMessage
 
-	metrics                                                 *telemetry.PrometheusCollector
-	countIngress, countEgress, countForwarded, countDropped chan int
-	totalIngress, totalEgress, totalForwarded, totalDropped int
+	metrics                                                                 *telemetry.PrometheusCollector
+	countIngress, countEgress, countForwarded, countDropped, countDiscarded chan int
+	totalIngress, totalEgress, totalForwarded, totalDropped, totalDiscarded int
 }
 
 func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name string, descr string, bufferSize int, monitor bool) *GenericWorker {
@@ -190,8 +190,12 @@ func (w *GenericWorker) Monitor() {
 	timerMonitor := time.NewTimer(time.Duration(w.config.Global.Worker.InternalMonitor) * time.Second)
 	for {
 		select {
+		case <-w.countDiscarded:
+			w.totalDiscarded++
+
 		case <-w.countIngress:
 			w.totalIngress++
+
 		case <-w.countEgress:
 			w.totalEgress++
 
@@ -230,11 +234,13 @@ func (w *GenericWorker) Monitor() {
 						TotalEgress:          w.totalEgress,
 						TotalForwardedPolicy: w.totalForwarded,
 						TotalDroppedPolicy:   w.totalDropped,
+						TotalDiscarded:       w.totalDiscarded,
 					}
 					w.totalIngress = 0
 					w.totalEgress = 0
 					w.totalForwarded = 0
 					w.totalDropped = 0
+					w.totalDiscarded = 0
 				}
 			}
 
@@ -277,6 +283,9 @@ func (w *GenericWorker) SendDroppedTo(routes []chan dnsutils.DNSMessage, routesN
 				w.countDropped <- 1
 			}
 		default:
+			if w.config.Global.Telemetry.Enabled {
+				w.countDiscarded <- 1
+			}
 			w.WorkerIsBusy(routesName[i])
 		}
 	}
@@ -290,6 +299,9 @@ func (w *GenericWorker) SendForwardedTo(routes []chan dnsutils.DNSMessage, route
 				w.countForwarded <- 1
 			}
 		default:
+			if w.config.Global.Telemetry.Enabled {
+				w.countDiscarded <- 1
+			}
 			w.WorkerIsBusy(routesName[i])
 		}
 	}
