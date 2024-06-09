@@ -184,7 +184,7 @@ func main() {
 				}
 			})
 
-			logger.Info("main - telemetry is listening on address: %s", config.Global.Telemetry.WebListen)
+			logger.Info("main - telemetry enabled on local address: %s", config.Global.Telemetry.WebListen)
 			if err := promServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				logger.Error("main - telemetry error starting http server - %s", err.Error())
 				removePIDFile(config)

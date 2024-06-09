@@ -20,7 +20,7 @@ USER dnscollector
 COPY --from=builder /build/go-dnscollector /bin/go-dnscollector
 COPY --from=builder /build/docker-config.yml ./etc/dnscollector/config.yml
 
-EXPOSE 6000/tcp 8080/tcp
+EXPOSE 6000/tcp 8080/tcp 9165/tcp
 
 ENTRYPOINT ["/bin/go-dnscollector"]
 
