@@ -60,6 +60,7 @@ func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name stri
 		dnsMessageOut:      make(chan dnsutils.DNSMessage, bufferSize),
 		countIngress:       make(chan int),
 		countEgress:        make(chan int),
+		countDiscarded:     make(chan int),
 		countForwarded:     make(chan int),
 		countDropped:       make(chan int),
 	}
