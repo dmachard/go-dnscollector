@@ -15,6 +15,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkginit"
+	"github.com/dmachard/go-dnscollector/telemetry"
 	"github.com/dmachard/go-dnscollector/workers"
 	"github.com/dmachard/go-logger"
 	"github.com/natefinch/lumberjack"
@@ -160,14 +161,14 @@ func main() {
 		Addr:              config.Global.Telemetry.WebListen,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-	telemetry := pkginit.NewTelemetryCollector()
+	metrics := telemetry.NewPrometheusCollector(config)
 
 	if config.Global.Telemetry.Enabled {
 		go func() {
-			go telemetry.WaitForStats()
+			go metrics.UpdateStats()
 
-			prometheus.MustRegister(telemetry)
-			prometheus.MustRegister(version.NewCollector("go_dnscollector"))
+			prometheus.MustRegister(metrics)
+			prometheus.MustRegister(version.NewCollector(config.Global.Telemetry.PromPrefix))
 
 			http.Handle(config.Global.Telemetry.WebPath, promhttp.Handler())
 			http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
@@ -207,7 +208,7 @@ func main() {
 	// or pipeline ?
 	if pkginit.IsPipelinesEnabled(config) {
 		logger.Info("main - running in pipeline mode")
-		err := pkginit.InitPipelines(mapLoggers, mapCollectors, config, logger, telemetry)
+		err := pkginit.InitPipelines(mapLoggers, mapCollectors, config, logger, metrics)
 		if err != nil {
 			logger.Error("main - %s", err.Error())
 			removePIDFile(config)
@@ -251,7 +252,7 @@ func main() {
 				// gracefully shutdown the HTTP server
 				if config.Global.Telemetry.Enabled {
 					logger.Info("main - telemetry is stopping")
-					telemetry.Stop()
+					metrics.Stop()
 
 					if err := promServer.Shutdown(context.Background()); err != nil {
 						logger.Error("main - telemetry error shutting down http server - %s", err.Error())

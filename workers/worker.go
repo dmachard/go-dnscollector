@@ -5,16 +5,20 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/telemetry"
 	"github.com/dmachard/go-logger"
 )
 
 type Worker interface {
+	SetMetrics(metrics *telemetry.PrometheusCollector)
 	AddDefaultRoute(wrk Worker)
 	AddDroppedRoute(wrk Worker)
 	SetLoggers(loggers []Worker)
 	GetName() string
 	Stop()
 	StartCollect()
+	CountIngressTraffic()
+	CountEgressTraffic()
 	GetInputChannel() chan dnsutils.DNSMessage
 	ReadConfig()
 	ReloadConfig(config *pkgconfig.Config)
@@ -30,6 +34,10 @@ type GenericWorker struct {
 	droppedWorker                                                        chan string
 	droppedWorkerCount                                                   map[string]int
 	dnsMessageIn, dnsMessageOut                                          chan dnsutils.DNSMessage
+
+	metrics                                                 *telemetry.PrometheusCollector
+	countIngress, countEgress, countForwarded, countDropped chan int
+	totalIngress, totalEgress, totalForwarded, totalDropped int
 }
 
 func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name string, descr string, bufferSize int, monitor bool) *GenericWorker {
@@ -50,11 +58,19 @@ func NewGenericWorker(config *pkgconfig.Config, logger *logger.Logger, name stri
 		droppedWorkerCount: map[string]int{},
 		dnsMessageIn:       make(chan dnsutils.DNSMessage, bufferSize),
 		dnsMessageOut:      make(chan dnsutils.DNSMessage, bufferSize),
+		countIngress:       make(chan int),
+		countEgress:        make(chan int),
+		countForwarded:     make(chan int),
+		countDropped:       make(chan int),
 	}
 	if monitor {
 		go w.Monitor()
 	}
 	return w
+}
+
+func (w *GenericWorker) SetMetrics(metrics *telemetry.PrometheusCollector) {
+	w.metrics = metrics
 }
 
 func (w *GenericWorker) GetName() string { return w.name }
@@ -163,15 +179,28 @@ func (w *GenericWorker) Stop() {
 
 func (w *GenericWorker) Monitor() {
 	defer func() {
+		if r := recover(); r != nil {
+			w.LogError("monitor - recovered panic: %v", r)
+		}
 		w.LogInfo("monitor terminated")
 		w.doneMonitor <- true
 	}()
 
-	w.LogInfo("starting monitoring")
-	watchInterval := 10 * time.Second
-	bufferFull := time.NewTimer(watchInterval)
+	w.LogInfo("starting monitoring - refresh every %ds", w.config.Global.Worker.InternalMonitor)
+	timerMonitor := time.NewTimer(time.Duration(w.config.Global.Worker.InternalMonitor) * time.Second)
 	for {
 		select {
+		case <-w.countIngress:
+			w.totalIngress++
+		case <-w.countEgress:
+			w.totalEgress++
+
+		case <-w.countForwarded:
+			w.totalForwarded++
+
+		case <-w.countDropped:
+			w.totalDropped++
+
 		case loggerName := <-w.droppedWorker:
 			if _, ok := w.droppedWorkerCount[loggerName]; !ok {
 				w.droppedWorkerCount[loggerName] = 1
@@ -181,10 +210,10 @@ func (w *GenericWorker) Monitor() {
 
 		case <-w.stopMonitor:
 			close(w.droppedWorker)
-			bufferFull.Stop()
+			timerMonitor.Stop()
 			return
 
-		case <-bufferFull.C:
+		case <-timerMonitor.C:
 			for v, k := range w.droppedWorkerCount {
 				if k > 0 {
 					w.LogError("worker[%s] buffer is full, %d dnsmessage(s) dropped", v, k)
@@ -192,7 +221,24 @@ func (w *GenericWorker) Monitor() {
 				}
 			}
 
-			bufferFull.Reset(watchInterval)
+			// // send to telemetry?
+			if w.config.Global.Telemetry.Enabled && w.metrics != nil {
+				if w.totalIngress > 0 || w.totalForwarded > 0 || w.totalDropped > 0 {
+					w.metrics.Record <- telemetry.WorkerStats{
+						Name:                 w.GetName(),
+						TotalIngress:         w.totalIngress,
+						TotalEgress:          w.totalEgress,
+						TotalForwardedPolicy: w.totalForwarded,
+						TotalDroppedPolicy:   w.totalDropped,
+					}
+					w.totalIngress = 0
+					w.totalEgress = 0
+					w.totalForwarded = 0
+					w.totalDropped = 0
+				}
+			}
+
+			timerMonitor.Reset(time.Duration(w.config.Global.Worker.InternalMonitor) * time.Second)
 		}
 	}
 }
@@ -209,6 +255,44 @@ func (w *GenericWorker) StartCollect() {
 func (w *GenericWorker) StartLogging() {
 	w.LogInfo("logging has started")
 	defer w.LoggingDone()
+}
+
+func (w *GenericWorker) CountIngressTraffic() {
+	if w.config.Global.Telemetry.Enabled {
+		w.countIngress <- 1
+	}
+}
+
+func (w *GenericWorker) CountEgressTraffic() {
+	if w.config.Global.Telemetry.Enabled {
+		w.countEgress <- 1
+	}
+}
+
+func (w *GenericWorker) SendDroppedTo(routes []chan dnsutils.DNSMessage, routesName []string, dm dnsutils.DNSMessage) {
+	for i := range routes {
+		select {
+		case routes[i] <- dm:
+			if w.config.Global.Telemetry.Enabled {
+				w.countDropped <- 1
+			}
+		default:
+			w.WorkerIsBusy(routesName[i])
+		}
+	}
+}
+
+func (w *GenericWorker) SendForwardedTo(routes []chan dnsutils.DNSMessage, routesName []string, dm dnsutils.DNSMessage) {
+	for i := range routes {
+		select {
+		case routes[i] <- dm:
+			if w.config.Global.Telemetry.Enabled {
+				w.countForwarded <- 1
+			}
+		default:
+			w.WorkerIsBusy(routesName[i])
+		}
+	}
 }
 
 func (w *GenericWorker) SendTo(routes []chan dnsutils.DNSMessage, routesName []string, dm dnsutils.DNSMessage) {

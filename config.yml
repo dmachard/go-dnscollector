@@ -10,10 +10,13 @@ global:
   text-format-delimiter: " "
   text-format-boundary: "\""
   pid-file: ""
+  worker:
+    interval-monitor: 10
   telemetry:
     enabled: true
     web-path: "/metrics"
     web-listen: ":9165"
+    prometheus-prefix: "dnscollector_exporter"
 
 ################################################
 # Pipelining configuration
@@ -29,11 +32,18 @@ pipelines:
     transforms:
       normalize:
         qname-lowercase: true
+      filtering:
+        log-queries: true
+        log-replies: false
     routing-policy:
-      forward: [ console ]
-      dropped: []
+      forward: [ console1 ]
+      dropped: [ console2 ]
 
-  - name: console
+  - name: console1
+    stdout:
+      mode: text
+
+  - name: console2
     stdout:
       mode: text
 

@@ -103,21 +103,25 @@ func (w *StdOut) StartCollect() {
 				return
 			}
 
+			// count global messages
+			w.CountIngressTraffic()
+
 			// apply tranforms, init dns message with additionnals parts if necessary
 			transformResult, err := subprocessors.ProcessMessage(&dm)
 			if err != nil {
 				w.LogError(err.Error())
 			}
 			if transformResult == transformers.ReturnDrop {
-				w.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendDroppedTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
 			// send to output channel
+			w.CountEgressTraffic()
 			w.GetOutputChannel() <- dm
 
 			// send to next ?
-			w.SendTo(defaultRoutes, defaultNames, dm)
+			w.SendForwardedTo(defaultRoutes, defaultNames, dm)
 		}
 	}
 }

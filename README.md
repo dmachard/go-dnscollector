@@ -115,6 +115,13 @@ The [`_integration`](./docs/_integration) folder contains DNS-collector `configu
 - [Elasticsearch](./docs/_integration/elasticsearch/README.md)
 - [Kafka](./docs/_integration/kafka/README.md)
 
+## Telemetry
+
+Des métriques sont disponibles pour mesurer les performances de vos pipelines. 
+Elles permettent de mesurer le nombre de packet entrant/sortant traités par worker, 
+le nombre de packet matchant les policies (forwarded, dropped)
+et enfin de suite le nombre de packet "discarded".
+
 ## Performance
 
 Tuning may be necessary to deal with a large traffic loads.

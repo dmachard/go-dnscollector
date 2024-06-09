@@ -226,7 +226,7 @@ func (w *DnstapSender) StartCollect() {
 				w.LogError(err.Error())
 			}
 			if transformResult == transformers.ReturnDrop {
-				w.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendDroppedTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
