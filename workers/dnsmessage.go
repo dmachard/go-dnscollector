@@ -190,6 +190,8 @@ func (w *DNSMessage) StartCollect() {
 				w.LogInfo("channel closed, exit")
 				return
 			}
+			// count global messages
+			w.CountIngressTraffic()
 
 			// matching enabled, filtering DNS messages ?
 			matched := true

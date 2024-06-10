@@ -46,6 +46,8 @@ func (w *DNSProcessor) StartCollect() {
 				w.LogInfo("channel closed, exit")
 				return
 			}
+			// count global messages
+			w.CountIngressTraffic()
 
 			// compute timestamp
 			ts := time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec))

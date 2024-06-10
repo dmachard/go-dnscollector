@@ -117,10 +117,14 @@ The [`_integration`](./docs/_integration) folder contains DNS-collector `configu
 
 ## Telemetry
 
-Des métriques sont disponibles pour mesurer les performances de vos pipelines. 
-Elles permettent de mesurer le nombre de packet entrant/sortant traités par worker, 
-le nombre de packet matchant les policies (forwarded, dropped)
-et enfin de suite le nombre de packet "discarded".
+Performance metrics are available to evaluate the efficiency of your pipelines. These metrics allow you to track:
+- The number of incoming and outgoing packets processed by each worker
+- The number of packets matching the policies applied (forwarded, dropped)
+- The number of "discarded" packets
+- Memory consumption
+- CPU consumption
+
+A [build-in](./docs/dashboards/grafana_exporter.json) dashboard is available for monitoring these metrics.
 
 ## Performance
 

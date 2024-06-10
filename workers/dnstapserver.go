@@ -329,6 +329,8 @@ func (w *DNSTapProcessor) StartCollect() {
 				w.LogInfo("channel closed, exit")
 				return
 			}
+			// count global messages
+			w.CountIngressTraffic()
 
 			err := proto.Unmarshal(data, dt)
 			if err != nil {

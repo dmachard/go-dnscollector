@@ -28,3 +28,4 @@ A worker can act as a collector or a logger.
 | [Kafka Producer](loggers/logger_kafka.md)             | Logger    | Kafka DNS producer                                      |
 | [Falco](loggers/logger_falco.md)                      | Logger    | Falco plugin logger                                     |
 | [ClickHouse](loggers/logger_clickhouse.md)            | Logger    | ClickHouse logger                                       |
+| [DevNull](loggers/logger_devnull.md)                  | Logger    | For testing purpose                                     |

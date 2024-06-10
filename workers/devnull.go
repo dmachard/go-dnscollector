@@ -33,25 +33,29 @@ func (w *DevNull) StartCollect() {
 				w.LogInfo("run: input channel closed!")
 				return
 			}
-		}
-	}
-}
 
-func (w *DevNull) StartLogging() {
-	w.LogInfo("logging has started")
-	defer w.LoggingDone()
-
-	for {
-		select {
-		case <-w.OnLoggerStopped():
-			return
-
-		case _, opened := <-w.GetOutputChannel():
-			if !opened {
-				w.LogInfo("process: output channel closed!")
-				return
-			}
+			// count global messages
+			w.CountIngressTraffic()
 
 		}
 	}
 }
+
+// func (w *DevNull) StartLogging() {
+// 	w.LogInfo("logging has started")
+// 	defer w.LoggingDone()
+
+// 	for {
+// 		select {
+// 		case <-w.OnLoggerStopped():
+// 			return
+
+// 		case _, opened := <-w.GetOutputChannel():
+// 			if !opened {
+// 				w.LogInfo("process: output channel closed!")
+// 				return
+// 			}
+
+// 		}
+// 	}
+// }

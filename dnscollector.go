@@ -8,9 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
 
-	"net/http"
 	_ "net/http/pprof"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
@@ -19,8 +17,6 @@ import (
 	"github.com/dmachard/go-dnscollector/workers"
 	"github.com/dmachard/go-logger"
 	"github.com/natefinch/lumberjack"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 )
 
@@ -156,42 +152,11 @@ func main() {
 	InitLogger(logger, config)
 	logger.Info("main - version=%s revision=%s", version.Version, version.Revision)
 
-	// telemetry
-	promServer := &http.Server{
-		Addr:              config.Global.Telemetry.WebListen,
-		ReadHeaderTimeout: 5 * time.Second,
-	}
-	metrics := telemetry.NewPrometheusCollector(config)
-
+	// // telemetry
 	if config.Global.Telemetry.Enabled {
-		go func() {
-			go metrics.UpdateStats()
-
-			prometheus.MustRegister(metrics)
-			prometheus.MustRegister(version.NewCollector(config.Global.Telemetry.PromPrefix))
-
-			http.Handle(config.Global.Telemetry.WebPath, promhttp.Handler())
-			http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
-				_, err := w.Write([]byte(`<html>
-			<head><title>DNScollector Exporter</title></head>
-			<body>
-			<h1>DNScollector Exporter</h1>
-			<p><a href='` + config.Global.Telemetry.WebPath + `'>Metrics</a></p>
-			</body>
-			</html>`))
-				if err != nil {
-					logger.Error("main - telemetry error on returning home page - %s", err.Error())
-				}
-			})
-
-			logger.Info("main - telemetry enabled on local address: %s", config.Global.Telemetry.WebListen)
-			if err := promServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				logger.Error("main - telemetry error starting http server - %s", err.Error())
-				removePIDFile(config)
-				os.Exit(1)
-			}
-		}()
+		logger.Info("main - telemetry enabled on local address: %s", config.Global.Telemetry.WebListen)
 	}
+	promServer, metrics, errTelemetry := telemetry.InitTelemetryServer(config, logger)
 
 	// init active collectors and loggers
 	mapLoggers := make(map[string]workers.Worker)
@@ -226,6 +191,11 @@ func main() {
 	go func() {
 		for {
 			select {
+			case err := <-errTelemetry:
+				logger.Error("main - unable to start telemetry: %v", err)
+				removePIDFile(config)
+				os.Exit(1)
+
 			case <-sigHUP:
 				logger.Warning("main - SIGHUP received")
 

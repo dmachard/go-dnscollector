@@ -2,11 +2,16 @@ package telemetry
 
 import (
 	"fmt"
+	"net/http"
 	"regexp"
 	"sync"
+	"time"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-logger"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/version"
 )
 
 /*
@@ -139,4 +144,53 @@ func (t *PrometheusCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (t *PrometheusCollector) Stop() {
 	close(t.stop) // Signal the stop channel to stop the goroutine
+}
+
+func InitTelemetryServer(config *pkgconfig.Config, logger *logger.Logger) (*http.Server, *PrometheusCollector, chan error) {
+	// channel for error
+	errChan := make(chan error)
+
+	// HTTP server
+	promServer := &http.Server{
+		Addr:              config.Global.Telemetry.WebListen,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	// Prometheus collectors
+	metrics := NewPrometheusCollector(config)
+
+	if config.Global.Telemetry.Enabled {
+		go func() {
+			// start metrics
+			go metrics.UpdateStats()
+
+			// register metrics
+			prometheus.MustRegister(metrics)
+			prometheus.MustRegister(version.NewCollector(config.Global.Telemetry.PromPrefix))
+
+			// handle /metrics
+			http.Handle(config.Global.Telemetry.WebPath, promhttp.Handler())
+
+			// handle http error
+			http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
+				_, err := w.Write([]byte(`<html>
+                    <head><title>DNScollector Exporter</title></head>
+                    <body>
+                    <h1>DNScollector Exporter</h1>
+                    <p><a href='` + config.Global.Telemetry.WebPath + `'>Metrics</a></p>
+                    </body>
+                    </html>`))
+				if err != nil {
+					errChan <- err
+				}
+			})
+
+			// start http server
+			if err := promServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				errChan <- err
+			}
+		}()
+	}
+
+	return promServer, metrics, errChan
 }

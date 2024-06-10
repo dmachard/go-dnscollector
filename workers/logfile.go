@@ -428,6 +428,8 @@ func (w *LogFile) StartCollect() {
 				w.LogInfo("input channel closed!")
 				return
 			}
+			// count global messages
+			w.CountIngressTraffic()
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			transformResult, err := subprocessors.ProcessMessage(&dm)

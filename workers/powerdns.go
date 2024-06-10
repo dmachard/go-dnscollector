@@ -240,6 +240,8 @@ func (w *PdnsProcessor) StartCollect() {
 				w.LogInfo("channel closed, exit")
 				return
 			}
+			// count global messages
+			w.CountIngressTraffic()
 
 			err := proto.Unmarshal(data, pbdm)
 			if err != nil {

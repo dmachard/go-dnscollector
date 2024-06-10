@@ -195,6 +195,10 @@ func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map
 		mapLoggers[stanzaName] = workers.NewClickhouseClient(config, logger, stanzaName)
 		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
+	if config.Loggers.DevNull.Enable {
+		mapLoggers[stanzaName] = workers.NewDevNull(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
+	}
 
 	// register the collector if enabled
 	if config.Collectors.DNSMessage.Enable {
