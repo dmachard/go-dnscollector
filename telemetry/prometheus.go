@@ -1,8 +1,11 @@
 package telemetry
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net/http"
+	"os"
 	"regexp"
 	"sync"
 	"time"
@@ -150,14 +153,14 @@ func InitTelemetryServer(config *pkgconfig.Config, logger *logger.Logger) (*http
 	// channel for error
 	errChan := make(chan error)
 
+	// Prometheus collectors
+	metrics := NewPrometheusCollector(config)
+
 	// HTTP server
 	promServer := &http.Server{
 		Addr:              config.Global.Telemetry.WebListen,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-
-	// Prometheus collectors
-	metrics := NewPrometheusCollector(config)
 
 	if config.Global.Telemetry.Enabled {
 		go func() {
@@ -185,12 +188,65 @@ func InitTelemetryServer(config *pkgconfig.Config, logger *logger.Logger) (*http
 				}
 			})
 
-			// start http server
-			if err := promServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				errChan <- err
+			if config.Global.Telemetry.TLSSupport {
+				// Load server certificate and key
+				cert, err := tls.LoadX509KeyPair(config.Global.Telemetry.TLSCertFile, config.Global.Telemetry.TLSKeyFile)
+				if err != nil {
+					errChan <- fmt.Errorf("failed to load server certificate and key: %v", err)
+					return
+				}
+
+				// Load client CA certificate
+				clientCACert, err := os.ReadFile(config.Global.Telemetry.ClientCAFile)
+				if err != nil {
+					errChan <- fmt.Errorf("failed to load client CA certificate: %v", err)
+					return
+				}
+				clientCAs := x509.NewCertPool()
+				clientCAs.AppendCertsFromPEM(clientCACert)
+
+				// Configure TLS
+				tlsConfig := &tls.Config{
+					Certificates: []tls.Certificate{cert},
+					ClientCAs:    clientCAs,
+					ClientAuth:   tls.RequireAndVerifyClientCert,
+				}
+
+				// Update the promServer with TLS configuration and handler
+				promServer.TLSConfig = tlsConfig
+			}
+
+			if config.Global.Telemetry.BasicAuthEnable {
+				promServer.Handler = basicAuthMiddleware(http.DefaultServeMux, config.Global.Telemetry.BasicAuthLogin, config.Global.Telemetry.BasicAuthPwd)
+			} else {
+				promServer.Handler = http.DefaultServeMux
+			}
+
+			// start https server
+			if config.Global.Telemetry.TLSSupport {
+				if err := promServer.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+					errChan <- err
+				}
+			} else {
+				if err := promServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+					errChan <- err
+				}
 			}
 		}()
 	}
 
 	return promServer, metrics, errChan
+}
+
+// BasicAuth middleware
+func basicAuthMiddleware(next http.Handler, username, password string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		u, p, ok := r.BasicAuth()
+		if !ok || u != username || p != password {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }

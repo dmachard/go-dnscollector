@@ -233,10 +233,11 @@ func (w *DnstapSender) StartCollect() {
 			}
 
 			// send to output channel
+			w.CountEgressTraffic()
 			w.GetOutputChannel() <- dm
 
 			// send to next ?
-			w.SendTo(defaultRoutes, defaultNames, dm)
+			w.SendForwardedTo(defaultRoutes, defaultNames, dm)
 		}
 	}
 }

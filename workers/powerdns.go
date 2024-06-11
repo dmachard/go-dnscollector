@@ -442,18 +442,21 @@ func (w *PdnsProcessor) StartCollect() {
 				}
 			}
 
+			// count output packets
+			w.CountEgressTraffic()
+
 			// apply all enabled transformers
 			transformResult, err := transforms.ProcessMessage(&dm)
 			if err != nil {
 				w.LogError(err.Error())
 			}
 			if transformResult == transformers.ReturnDrop {
-				w.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendDroppedTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
 			// dispatch dns messages to connected loggers
-			w.SendTo(defaultRoutes, defaultNames, dm)
+			w.SendForwardedTo(defaultRoutes, defaultNames, dm)
 		}
 	}
 }

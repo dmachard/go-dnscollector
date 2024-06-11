@@ -222,6 +222,9 @@ func (w *DNSMessage) StartCollect() {
 				}
 			}
 
+			// count output packets
+			w.CountEgressTraffic()
+
 			// apply tranforms on matched packets only
 			// init dns message with additionnals parts if necessary
 			if matched {
@@ -230,19 +233,19 @@ func (w *DNSMessage) StartCollect() {
 					w.LogError(err.Error())
 				}
 				if transformResult == transformers.ReturnDrop {
-					w.SendTo(droppedRoutes, droppedNames, dm)
+					w.SendDroppedTo(droppedRoutes, droppedNames, dm)
 					continue
 				}
 			}
 
 			// drop packet ?
 			if !matched {
-				w.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendDroppedTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
 			// send to next
-			w.SendTo(defaultRoutes, defaultNames, dm)
+			w.SendForwardedTo(defaultRoutes, defaultNames, dm)
 		}
 	}
 }
