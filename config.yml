@@ -47,14 +47,6 @@ pipelines:
     stdout:
       mode: text
 
-  # - name: devnull
-  #   devnull:
-  #     mode: text
-
-  # - name: logfile
-  #   logfile:
-  #     file-path: /tmp/test.log
-
 ################################################
 # DEPRECATED - multiplexer configuration
 #   more details: https://github.com/dmachard/go-dnscollector/blob/main/docs/running_mode.md#multiplexer
