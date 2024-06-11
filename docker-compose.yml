@@ -12,4 +12,5 @@ services:
     ports:
       - "6000:6000/tcp"
       - "8080:8080/tcp"
+      - "9165:9165/tcp"
     restart: always

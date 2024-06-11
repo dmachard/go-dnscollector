@@ -141,8 +141,17 @@ global:
 Enable and configure telemetry
 
 ```yaml
-telemetry:
-  enabled: true
-  web-path: "/metrics"
-  web-listen: ":9165"
+global:
+  telemetry:
+    enabled: true
+    web-path: "/metrics"
+    web-listen: ":9165"
+    prometheus-prefix: "dnscollector_exporter"
+    tls-support: false
+    tls-cert-file: ""
+    tls-key-file: ""
+    client-ca-file: ""
+    basic-auth-enable: false
+    basic-auth-login: admin
+    basic-auth-pwd: changeme
 ```

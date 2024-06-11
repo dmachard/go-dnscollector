@@ -192,14 +192,14 @@ func InitTelemetryServer(config *pkgconfig.Config, logger *logger.Logger) (*http
 				// Load server certificate and key
 				cert, err := tls.LoadX509KeyPair(config.Global.Telemetry.TLSCertFile, config.Global.Telemetry.TLSKeyFile)
 				if err != nil {
-					errChan <- fmt.Errorf("failed to load server certificate and key: %v", err)
+					errChan <- fmt.Errorf("failed to load server certificate and key: %w", err)
 					return
 				}
 
 				// Load client CA certificate
 				clientCACert, err := os.ReadFile(config.Global.Telemetry.ClientCAFile)
 				if err != nil {
-					errChan <- fmt.Errorf("failed to load client CA certificate: %v", err)
+					errChan <- fmt.Errorf("failed to load client CA certificate: %w", err)
 					return
 				}
 				clientCAs := x509.NewCertPool()
