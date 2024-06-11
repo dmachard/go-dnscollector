@@ -74,6 +74,7 @@ tests: check-go
 	@go test ./pkgconfig/ -race -cover -v
 	@go test ./pkginit/ -race -cover -v
 	@go test ./netutils/ -race -cover -v
+	@go test ./telemetry/ -race -cover -v
 	@go test -timeout 90s ./transformers/ -race -cover -v
 	@go test -timeout 180s ./workers/ -race -cover -v
 
