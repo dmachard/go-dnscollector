@@ -31,7 +31,7 @@ pipelines:
           dns.qtype: "TXT"
     transforms:
       atags:
-        tags: [ "TAG:TXT-QUERIES" ]
+        add-tags: [ "TAG:TXT-QUERIES" ]
     routing-policy:
       forward: [ apple-txt, all-txt ]
 
@@ -51,7 +51,7 @@ pipelines:
           dns.qname: "^*.apple.com$"
     transforms:
       atags:
-        tags: [ "TXT:apple" ]
+        add-tags: [ "TXT:apple" ]
     routing-policy:
       forward: [ outputfile-apple ]
 
