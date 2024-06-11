@@ -218,18 +218,21 @@ func (w *Tail) StartCollect() {
 			dm.DNS.Payload, _ = dnspkt.Pack()
 			dm.DNS.Length = len(dm.DNS.Payload)
 
+			// count output packets
+			w.CountEgressTraffic()
+
 			// apply all enabled transformers
 			transformResult, err := subprocessors.ProcessMessage(&dm)
 			if err != nil {
 				w.LogError(err.Error())
 			}
 			if transformResult == transformers.ReturnDrop {
-				w.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendDroppedTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
 			// send to next ?
-			w.SendTo(defaultRoutes, defaultNames, dm)
+			w.SendForwardedTo(defaultRoutes, defaultNames, dm)
 		}
 	}
 }

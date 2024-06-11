@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/telemetry"
 	"github.com/dmachard/go-dnscollector/workers"
 	"github.com/dmachard/go-logger"
 )
@@ -76,7 +77,8 @@ func TestPipelines_NoRoutesDefined(t *testing.T) {
 	mapLoggers := make(map[string]workers.Worker)
 	mapCollectors := make(map[string]workers.Worker)
 
-	err := InitPipelines(mapLoggers, mapCollectors, config, logger.New(false))
+	metrics := telemetry.NewPrometheusCollector(config)
+	err := InitPipelines(mapLoggers, mapCollectors, config, logger.New(false), metrics)
 	if err == nil {
 		t.Errorf("Want err, got nil")
 	} else if err.Error() != "no routes are defined" {
@@ -100,7 +102,8 @@ func TestPipelines_RoutingLoop(t *testing.T) {
 	mapLoggers := make(map[string]workers.Worker)
 	mapCollectors := make(map[string]workers.Worker)
 
-	err := InitPipelines(mapLoggers, mapCollectors, config, logger.New(false))
+	metrics := telemetry.NewPrometheusCollector(config)
+	err := InitPipelines(mapLoggers, mapCollectors, config, logger.New(false), metrics)
 	if err == nil {
 		t.Errorf("Want err, got nil")
 	} else if !strings.Contains(err.Error(), "routing error loop") {

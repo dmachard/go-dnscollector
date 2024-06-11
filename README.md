@@ -1,9 +1,9 @@
 <p align="center">
 <img src="https://goreportcard.com/badge/github.com/dmachard/go-dns-collector" alt="Go Report"/>
 <img src="https://img.shields.io/badge/go%20version-min%201.21-green" alt="Go version"/>
-<img src="https://img.shields.io/badge/go%20tests-437-green" alt="Go tests"/>
+<img src="https://img.shields.io/badge/go%20tests-439-green" alt="Go tests"/>
 <img src="https://img.shields.io/badge/go%20bench-20-green" alt="Go bench"/>
-<img src="https://img.shields.io/badge/go%20lines-29859-green" alt="Go lines"/>
+<img src="https://img.shields.io/badge/go%20lines-30720-green" alt="Go lines"/>
 </p>
 
 <p align="center">
@@ -114,6 +114,17 @@ The [`_integration`](./docs/_integration) folder contains DNS-collector `configu
 - [Fluentd](./docs/_integration/fluentd/README.md)
 - [Elasticsearch](./docs/_integration/elasticsearch/README.md)
 - [Kafka](./docs/_integration/kafka/README.md)
+
+## Telemetry
+
+Performance metrics are available to evaluate the efficiency of your pipelines. These metrics allow you to track:
+- The number of incoming and outgoing packets processed by each worker
+- The number of packets matching the policies applied (forwarded, dropped)
+- The number of "discarded" packets
+- Memory consumption
+- CPU consumption
+
+A [build-in](./docs/dashboards/grafana_exporter.json) dashboard is available for monitoring these metrics.
 
 ## Performance
 

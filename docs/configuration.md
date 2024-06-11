@@ -13,6 +13,7 @@ You can find the global settings below
   - [Custom text format](#custom-text-format)
   - [Server identity](#server-identity)
   - [Pid file](#pid-file)
+  - [Telemetry](#telemetry)
 
 ### Trace
 
@@ -127,9 +128,30 @@ Output example:
 
 ### Pid file
 
-Set path to create pid file.
+Set path to create DNS-collector PID.
+By default, this settings is empty.
 
 ```yaml
 global:
   pid-file: "/path/to/your/pidfile.pid"
+```
+
+### Telemetry
+
+Enable and configure telemetry
+
+```yaml
+global:
+  telemetry:
+    enabled: true
+    web-path: "/metrics"
+    web-listen: ":9165"
+    prometheus-prefix: "dnscollector_exporter"
+    tls-support: false
+    tls-cert-file: ""
+    tls-key-file: ""
+    client-ca-file: ""
+    basic-auth-enable: false
+    basic-auth-login: admin
+    basic-auth-pwd: changeme
 ```

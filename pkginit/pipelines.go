@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/telemetry"
 	"github.com/dmachard/go-dnscollector/workers"
 	"github.com/dmachard/go-logger"
 	"github.com/pkg/errors"
@@ -124,91 +125,121 @@ func CreateRouting(stanza pkgconfig.ConfigPipelines, mapCollectors map[string]wo
 	return nil
 }
 
-func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map[string]workers.Worker, mapLoggers map[string]workers.Worker, logger *logger.Logger) {
+func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map[string]workers.Worker, mapLoggers map[string]workers.Worker, logger *logger.Logger, metrics *telemetry.PrometheusCollector) {
 	// register the logger if enabled
 	if config.Loggers.RestAPI.Enable {
 		mapLoggers[stanzaName] = workers.NewRestAPI(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.Prometheus.Enable {
 		mapLoggers[stanzaName] = workers.NewPrometheus(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.Stdout.Enable {
 		mapLoggers[stanzaName] = workers.NewStdOut(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.LogFile.Enable {
 		mapLoggers[stanzaName] = workers.NewLogFile(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.DNSTap.Enable {
 		mapLoggers[stanzaName] = workers.NewDnstapSender(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.TCPClient.Enable {
 		mapLoggers[stanzaName] = workers.NewTCPClient(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.Syslog.Enable {
 		mapLoggers[stanzaName] = workers.NewSyslog(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.Fluentd.Enable {
 		mapLoggers[stanzaName] = workers.NewFluentdClient(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.InfluxDB.Enable {
 		mapLoggers[stanzaName] = workers.NewInfluxDBClient(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.LokiClient.Enable {
 		mapLoggers[stanzaName] = workers.NewLokiClient(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.Statsd.Enable {
 		mapLoggers[stanzaName] = workers.NewStatsdClient(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.ElasticSearchClient.Enable {
 		mapLoggers[stanzaName] = workers.NewElasticSearchClient(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.ScalyrClient.Enable {
 		mapLoggers[stanzaName] = workers.NewScalyrClient(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.RedisPub.Enable {
 		mapLoggers[stanzaName] = workers.NewRedisPub(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.KafkaProducer.Enable {
 		mapLoggers[stanzaName] = workers.NewKafkaProducer(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.FalcoClient.Enable {
 		mapLoggers[stanzaName] = workers.NewFalcoClient(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 	if config.Loggers.ClickhouseClient.Enable {
 		mapLoggers[stanzaName] = workers.NewClickhouseClient(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
+	}
+	if config.Loggers.DevNull.Enable {
+		mapLoggers[stanzaName] = workers.NewDevNull(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
 
 	// register the collector if enabled
 	if config.Collectors.DNSMessage.Enable {
 		mapCollectors[stanzaName] = workers.NewDNSMessage(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName].SetMetrics(metrics)
 	}
 	if config.Collectors.Dnstap.Enable {
 		mapCollectors[stanzaName] = workers.NewDnstapServer(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName].SetMetrics(metrics)
 	}
 	if config.Collectors.DnstapProxifier.Enable {
 		mapCollectors[stanzaName] = workers.NewDnstapProxifier(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName].SetMetrics(metrics)
 	}
 	if config.Collectors.AfpacketLiveCapture.Enable {
 		mapCollectors[stanzaName] = workers.NewAfpacketSniffer(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName].SetMetrics(metrics)
 	}
 	if config.Collectors.XdpLiveCapture.Enable {
 		mapCollectors[stanzaName] = workers.NewXDPSniffer(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName].SetMetrics(metrics)
 	}
 	if config.Collectors.Tail.Enable {
 		mapCollectors[stanzaName] = workers.NewTail(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName].SetMetrics(metrics)
 	}
 	if config.Collectors.PowerDNS.Enable {
 		mapCollectors[stanzaName] = workers.NewPdnsServer(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName].SetMetrics(metrics)
 	}
 	if config.Collectors.FileIngestor.Enable {
 		mapCollectors[stanzaName] = workers.NewFileIngestor(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName].SetMetrics(metrics)
 	}
 	if config.Collectors.Tzsp.Enable {
 		mapCollectors[stanzaName] = workers.NewTZSP(nil, config, logger, stanzaName)
+		mapCollectors[stanzaName].SetMetrics(metrics)
 	}
 }
 
-func InitPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[string]workers.Worker, config *pkgconfig.Config, logger *logger.Logger) error {
+func InitPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[string]workers.Worker, config *pkgconfig.Config, logger *logger.Logger, telemetry *telemetry.PrometheusCollector) error {
 	// check if the name of each stanza is uniq
 	routesDefined := false
 	for _, stanza := range config.Pipelines {
@@ -241,7 +272,7 @@ func InitPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[strin
 	// read each stanza and init
 	for _, stanza := range config.Pipelines {
 		stanzaConfig := GetStanzaConfig(config, stanza)
-		CreateStanza(stanza.Name, stanzaConfig, mapCollectors, mapLoggers, logger)
+		CreateStanza(stanza.Name, stanzaConfig, mapCollectors, mapLoggers, logger, telemetry)
 
 	}
 

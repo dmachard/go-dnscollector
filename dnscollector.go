@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnscollector/pkginit"
+	"github.com/dmachard/go-dnscollector/telemetry"
 	"github.com/dmachard/go-dnscollector/workers"
 	"github.com/dmachard/go-logger"
 	"github.com/natefinch/lumberjack"
@@ -150,6 +152,12 @@ func main() {
 	InitLogger(logger, config)
 	logger.Info("main - version=%s revision=%s", version.Version, version.Revision)
 
+	// // telemetry
+	if config.Global.Telemetry.Enabled {
+		logger.Info("main - telemetry enabled on local address: %s", config.Global.Telemetry.WebListen)
+	}
+	promServer, metrics, errTelemetry := telemetry.InitTelemetryServer(config, logger)
+
 	// init active collectors and loggers
 	mapLoggers := make(map[string]workers.Worker)
 	mapCollectors := make(map[string]workers.Worker)
@@ -164,8 +172,8 @@ func main() {
 
 	// or pipeline ?
 	if pkginit.IsPipelinesEnabled(config) {
-		logger.Info("main - running in pipelines mode")
-		err := pkginit.InitPipelines(mapLoggers, mapCollectors, config, logger)
+		logger.Info("main - running in pipeline mode")
+		err := pkginit.InitPipelines(mapLoggers, mapCollectors, config, logger, metrics)
 		if err != nil {
 			logger.Error("main - %s", err.Error())
 			removePIDFile(config)
@@ -183,6 +191,11 @@ func main() {
 	go func() {
 		for {
 			select {
+			case err := <-errTelemetry:
+				logger.Error("main - unable to start telemetry: %v", err)
+				removePIDFile(config)
+				os.Exit(1)
+
 			case <-sigHUP:
 				logger.Warning("main - SIGHUP received")
 
@@ -205,6 +218,19 @@ func main() {
 
 			case <-sigTerm:
 				logger.Warning("main - exiting...")
+
+				// gracefully shutdown the HTTP server
+				if config.Global.Telemetry.Enabled {
+					logger.Info("main - telemetry is stopping")
+					metrics.Stop()
+
+					if err := promServer.Shutdown(context.Background()); err != nil {
+						logger.Error("main - telemetry error shutting down http server - %s", err.Error())
+					}
+
+				}
+
+				// and stop all workers
 				for _, c := range mapCollectors {
 					c.Stop()
 				}

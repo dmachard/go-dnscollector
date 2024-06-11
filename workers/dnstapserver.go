@@ -56,6 +56,7 @@ func (w *DnstapServer) HandleConn(conn net.Conn, connID uint64, forceClose chan 
 
 	// start dnstap processor and run it
 	dnstapProcessor := NewDNSTapProcessor(int(connID), peerName, w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.Dnstap.ChannelBufferSize)
+	dnstapProcessor.SetMetrics(w.metrics)
 	dnstapProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
 	dnstapProcessor.SetDefaultDropped(w.GetDroppedRoutes())
 	go dnstapProcessor.StartCollect()
@@ -328,11 +329,16 @@ func (w *DNSTapProcessor) StartCollect() {
 				w.LogInfo("channel closed, exit")
 				return
 			}
+			// count global messages
+			w.CountIngressTraffic()
 
 			err := proto.Unmarshal(data, dt)
 			if err != nil {
 				continue
 			}
+
+			// count global messages
+			w.CountIngressTraffic()
 
 			// init dns message
 			dm := dnsutils.DNSMessage{}
@@ -508,13 +514,16 @@ func (w *DNSTapProcessor) StartCollect() {
 				}
 			}
 
+			// count output packets
+			w.CountEgressTraffic()
+
 			// apply all enabled transformers
 			transformResult, err := transforms.ProcessMessage(&dm)
 			if err != nil {
 				w.LogError(err.Error())
 			}
 			if transformResult == transformers.ReturnDrop {
-				w.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendDroppedTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
@@ -522,7 +531,7 @@ func (w *DNSTapProcessor) StartCollect() {
 			dm.DNSTap.LatencySec = fmt.Sprintf("%.6f", dm.DNSTap.Latency)
 
 			// dispatch dns message to connected routes
-			w.SendTo(defaultRoutes, defaultNames, dm)
+			w.SendForwardedTo(defaultRoutes, defaultNames, dm)
 		}
 	}
 }

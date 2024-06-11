@@ -10,6 +10,20 @@ global:
   text-format-delimiter: " "
   text-format-boundary: "\""
   pid-file: ""
+  worker:
+    interval-monitor: 10
+  telemetry:
+    enabled: true
+    web-path: "/metrics"
+    web-listen: ":9165"
+    prometheus-prefix: "dnscollector_exporter"
+    tls-support: false
+    tls-cert-file: ""
+    tls-key-file: ""
+    client-ca-file: ""
+    basic-auth-enable: false
+    basic-auth-login: admin
+    basic-auth-pwd: changeme
 
 ################################################
 # Pipelining configuration
@@ -27,7 +41,7 @@ pipelines:
         qname-lowercase: true
     routing-policy:
       forward: [ console ]
-      dropped: []
+      dropped: [ ]
 
   - name: console
     stdout:

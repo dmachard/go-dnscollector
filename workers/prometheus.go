@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/telemetry"
 	"github.com/dmachard/go-dnscollector/transformers"
 	"github.com/dmachard/go-logger"
 	"github.com/dmachard/go-netutils"
@@ -27,8 +27,6 @@ import (
 	// _ "net/http/pprof"
 )
 
-var metricNameRegex = regexp.MustCompile(`_*[^0-9A-Za-z_]+_*`)
-
 /*
 This is the list of available label values selectors.
 Configuration may specify a list of lables to use for metrics.
@@ -38,15 +36,6 @@ var catalogueSelectors map[string]func(*dnsutils.DNSMessage) string = map[string
 	"stream_id":     GetStreamID,
 	"resolver":      GetResolverIP,
 	"stream_global": GetStreamGlobal,
-}
-
-/*
-OpenMetrics and the Prometheus exposition format require the metric name
-to consist only of alphanumericals and "_", ":" and they must not start
-with digits.
-*/
-func SanitizeMetricName(metricName string) string {
-	return metricNameRegex.ReplaceAllString(metricName, "_")
 }
 
 /*
@@ -740,7 +729,7 @@ func NewPrometheus(config *pkgconfig.Config, logger *logger.Logger, name string)
 
 func (w *Prometheus) InitProm() {
 
-	promPrefix := SanitizeMetricName(w.GetConfig().Loggers.Prometheus.PromPrefix)
+	promPrefix := telemetry.SanitizeMetricName(w.GetConfig().Loggers.Prometheus.PromPrefix)
 
 	// register metric about current version information.
 	w.promRegistry.MustRegister(version.NewCollector(promPrefix))
@@ -1148,6 +1137,8 @@ func (w *Prometheus) StartCollect() {
 				w.LogInfo("input channel closed!")
 				return
 			}
+			// count global messages
+			w.CountIngressTraffic()
 
 			// apply tranforms, init dns message with additionnals parts if necessary
 			transformResult, err := subprocessors.ProcessMessage(&dm)
@@ -1155,15 +1146,16 @@ func (w *Prometheus) StartCollect() {
 				w.LogError(err.Error())
 			}
 			if transformResult == transformers.ReturnDrop {
-				w.SendTo(droppedRoutes, droppedNames, dm)
+				w.SendDroppedTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
 
 			// send to output channel
+			w.CountEgressTraffic()
 			w.GetOutputChannel() <- dm
 
 			// send to next ?
-			w.SendTo(defaultRoutes, defaultNames, dm)
+			w.SendForwardedTo(defaultRoutes, defaultNames, dm)
 		}
 	}
 }
