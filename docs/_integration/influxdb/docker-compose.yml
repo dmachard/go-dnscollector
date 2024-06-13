@@ -1,0 +1,14 @@
+
+services:
+  influxdb:
+    image: influxdb:2.7.6
+    user: 1000:1000
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=db0
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=badpassword
+    volumes:
+      - ./data:/var/lib/influxdb
+    restart: unless-stopped
