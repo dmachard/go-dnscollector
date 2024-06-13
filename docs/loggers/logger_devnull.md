@@ -13,3 +13,11 @@ Default values:
 devnull:
   chan-buffer-size: 0
 ```
+
+Example
+
+```yaml
+pipelines:
+  - name: hole
+    devnull: {}
+```

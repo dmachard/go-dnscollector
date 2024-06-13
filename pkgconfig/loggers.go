@@ -9,9 +9,8 @@ import (
 
 type ConfigLoggers struct {
 	DevNull struct {
-		Enable            bool   `yaml:"enable" default:"false"`
-		Mode              string `yaml:"mode" default:"text"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
+		Enable            bool `yaml:"enable" default:"false"`
+		ChannelBufferSize int  `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"devnull"`
 	Stdout struct {
 		Enable            bool   `yaml:"enable" default:"false"`

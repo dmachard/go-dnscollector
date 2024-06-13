@@ -23,14 +23,11 @@ func (w *DevNull) StartCollect() {
 	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
-	// goroutine to process transformed dns messages
-	go w.StartLogging()
-
 	// loop to process incoming messages
 	for {
 		select {
 		case <-w.OnStop():
-			w.StopLogger()
+			return
 
 		case _, opened := <-w.GetInputChannel():
 			if !opened {
