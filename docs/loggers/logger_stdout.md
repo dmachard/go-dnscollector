@@ -15,7 +15,8 @@ Options:
   > output text format, please refer to the default text format to see all available [directives](../configuration.md#custom-text-format), use this parameter if you want a specific format
 
 * `chan-buffer-size` (integer)
-  > channel buffer size used on incoming dns message, number of messages before to drop it.
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
 
 Default values:
 
@@ -23,7 +24,7 @@ Default values:
 stdout:
   mode: text
   text-format: ""
-  chan-buffer-size: 65535
+  chan-buffer-size: 0
 ```
 
 Example:

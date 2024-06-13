@@ -13,7 +13,11 @@ type AfpacketSniffer struct {
 }
 
 func NewAfpacketSniffer(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	w := &AfpacketSniffer{GenericWorker: NewGenericWorker(config, logger, name, "AFPACKET sniffer", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Collectors.AfpacketLiveCapture.ChannelBufferSize > 0 {
+		bufSize = config.Collectors.AfpacketLiveCapture.ChannelBufferSize
+	}
+	w := &AfpacketSniffer{GenericWorker: NewGenericWorker(config, logger, name, "AFPACKET sniffer", bufSize, pkgconfig.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	w.ReadConfig()
 	return w

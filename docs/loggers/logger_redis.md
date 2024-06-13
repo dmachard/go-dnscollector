@@ -44,7 +44,8 @@ Options:
   > Specifies the path to the key file corresponding to the certificate file. This is a required parameter if TLS support is enabled.
 
 * `chan-buffer-size` (int)
-  > Specifies the maximum number of packets that can be buffered before dropping additional packets.
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
 
 * `mode` (string)
   > output format: `text`, `json`, or `flat-json`
@@ -77,5 +78,5 @@ redispub:
   text-format: ""
   buffer-size: 100
   redis-channel: dns-collector
-  chan-buffer-size: 65535
+  chan-buffer-size: 0
 ```

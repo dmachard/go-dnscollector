@@ -30,7 +30,11 @@ type TZSPSniffer struct {
 }
 
 func NewTZSP(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *TZSPSniffer {
-	s := &TZSPSniffer{GenericWorker: NewGenericWorker(config, logger, name, "tzsp", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Collectors.Tzsp.ChannelBufferSize > 0 {
+		bufSize = config.Collectors.Tzsp.ChannelBufferSize
+	}
+	s := &TZSPSniffer{GenericWorker: NewGenericWorker(config, logger, name, "tzsp", bufSize, pkgconfig.DefaultMonitor)}
 	s.SetDefaultRoutes(next)
 	return s
 }

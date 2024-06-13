@@ -22,6 +22,10 @@ Options:
 * `pattern-reply` (string)
   > Specifies the regular expression pattern used to match replies.
 
+* `chan-buffer-size` (int)
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
+
 Defaults:
 
 ```yaml
@@ -35,4 +39,5 @@ Defaults:
     pattern-reply: "^(?P<timestamp>[^ ]*) (?P<identity>[^ ]*) (?P<qr>.*_RESPONSE) (?P<rcode>[^ ]*)
       (?P<queryip>[^ ]*) (?P<queryport>[^ ]*) (?P<family>[^ ]*) (?P<protocol>[^ ]*) (?P<length>[^ ]*)b
       (?P<domain>[^ ]*) (?P<qtype>[^ ]*) (?P<latency>[^ ]*)$"
+    chan-buffer-size: 0
 ```

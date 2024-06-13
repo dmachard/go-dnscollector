@@ -57,7 +57,11 @@ type LogFile struct {
 }
 
 func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *LogFile {
-	w := &LogFile{GenericWorker: NewGenericWorker(config, logger, name, "file", config.Loggers.LogFile.ChannelBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Loggers.LogFile.ChannelBufferSize > 0 {
+		bufSize = config.Loggers.LogFile.ChannelBufferSize
+	}
+	w := &LogFile{GenericWorker: NewGenericWorker(config, logger, name, "file", bufSize, pkgconfig.DefaultMonitor)}
 	w.ReadConfig()
 	if err := w.OpenFile(); err != nil {
 		w.LogFatal(pkgconfig.PrefixLogWorker+"["+name+"] file - unable to open output file:", err)

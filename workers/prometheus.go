@@ -686,7 +686,11 @@ func CreateSystemCatalogue(w *Prometheus) ([]string, *PromCounterCatalogueContai
 }
 
 func NewPrometheus(config *pkgconfig.Config, logger *logger.Logger, name string) *Prometheus {
-	w := &Prometheus{GenericWorker: NewGenericWorker(config, logger, name, "prometheus", config.Loggers.Prometheus.ChannelBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Loggers.Prometheus.ChannelBufferSize > 0 {
+		bufSize = config.Loggers.Prometheus.ChannelBufferSize
+	}
+	w := &Prometheus{GenericWorker: NewGenericWorker(config, logger, name, "prometheus", bufSize, pkgconfig.DefaultMonitor)}
 	w.doneAPI = make(chan bool)
 	w.promRegistry = prometheus.NewPedanticRegistry()
 

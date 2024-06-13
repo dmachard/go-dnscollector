@@ -27,7 +27,11 @@ type Syslog struct {
 }
 
 func NewSyslog(config *pkgconfig.Config, console *logger.Logger, name string) *Syslog {
-	w := &Syslog{GenericWorker: NewGenericWorker(config, console, name, "syslog", config.Loggers.Syslog.ChannelBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Loggers.Syslog.ChannelBufferSize > 0 {
+		bufSize = config.Loggers.Syslog.ChannelBufferSize
+	}
+	w := &Syslog{GenericWorker: NewGenericWorker(config, console, name, "syslog", bufSize, pkgconfig.DefaultMonitor)}
 	w.transportReady = make(chan bool)
 	w.transportReconnect = make(chan bool)
 	w.ReadConfig()

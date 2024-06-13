@@ -28,7 +28,11 @@ type PdnsServer struct {
 }
 
 func NewPdnsServer(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *PdnsServer {
-	w := &PdnsServer{GenericWorker: NewGenericWorker(config, logger, name, "powerdns", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Collectors.PowerDNS.ChannelBufferSize > 0 {
+		bufSize = config.Collectors.PowerDNS.ChannelBufferSize
+	}
+	w := &PdnsServer{GenericWorker: NewGenericWorker(config, logger, name, "powerdns", bufSize, pkgconfig.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	w.CheckConfig()
 	return w
@@ -54,7 +58,11 @@ func (w *PdnsServer) HandleConn(conn net.Conn, connID uint64, forceClose chan bo
 	w.LogInfo("new connection #%d from %s (%s)", connID, peer, peerName)
 
 	// start protobuf subprocessor
-	pdnsProcessor := NewPdnsProcessor(int(connID), peerName, w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.PowerDNS.ChannelBufferSize)
+	bufSize := w.GetConfig().Global.Worker.ChannelBufferSize
+	if w.GetConfig().Collectors.PowerDNS.ChannelBufferSize > 0 {
+		bufSize = w.GetConfig().Collectors.PowerDNS.ChannelBufferSize
+	}
+	pdnsProcessor := NewPdnsProcessor(int(connID), peerName, w.GetConfig(), w.GetLogger(), w.GetName(), bufSize)
 	pdnsProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
 	pdnsProcessor.SetDefaultDropped(w.GetDroppedRoutes())
 	go pdnsProcessor.StartCollect()

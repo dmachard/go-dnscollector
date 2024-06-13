@@ -308,16 +308,6 @@ func (w *GenericWorker) SendForwardedTo(routes []chan dnsutils.DNSMessage, route
 	}
 }
 
-// func (w *GenericWorker) SendTo(routes []chan dnsutils.DNSMessage, routesName []string, dm dnsutils.DNSMessage) {
-// 	for i := range routes {
-// 		select {
-// 		case routes[i] <- dm:
-// 		default:
-// 			w.WorkerIsBusy(routesName[i])
-// 		}
-// 	}
-// }
-
 func GetRoutes(routes []Worker) ([]chan dnsutils.DNSMessage, []string) {
 	channels := []chan dnsutils.DNSMessage{}
 	names := []string{}

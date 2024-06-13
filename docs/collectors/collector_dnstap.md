@@ -36,8 +36,9 @@ Options:
   > Set whether to send a TCP Reset to force the cleanup of the connection on the remote side when the server exits.
 
 * `chan-buffer-size` (int)
-  > Specifies the maximum number of packets that can be buffered before dropping additional packets.
-  
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
+
 * `disable-dnsparser"` (bool)
   > Disable the minimalist DNS parser. Some JSON keys should not be available, such as `dns.id`, `dns.flags`, ...
 
@@ -63,7 +64,7 @@ Defaults:
     key-file: ""
     sock-rcvbuf: 0
     reset-conn: true
-    chan-buffer-size: 65535
+    chan-buffer-size: 0
     disable-dnsparser: true
     extended-support: false
     compression: none

@@ -26,8 +26,8 @@ Options:
   > Specifies the compression algorithm to use.
 
 * `chan-buffer-size` (integer)
-  > Channel buffer size used on incoming dns message, number of messages before to drop it.
-  > Adjust the size of the channel buffer. If you encounter the error message buffer is full, xxx packet(s) dropped, consider increasing this parameter to prevent message drops.
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
 
 * `flush-interval` (integer)
   > Interval in seconds before to flush the buffer.
@@ -40,7 +40,7 @@ Defaults:
   elasticsearch:
     server: "http://127.0.0.1:9200/"
     index:  "dnscollector"
-    chan-buffer-size: 4096
+    chan-buffer-size: 0
     bulk-size: 1048576 # 1MB
     flush-interval: 10 # in seconds
     compression: none

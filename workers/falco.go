@@ -16,7 +16,11 @@ type FalcoClient struct {
 }
 
 func NewFalcoClient(config *pkgconfig.Config, console *logger.Logger, name string) *FalcoClient {
-	w := &FalcoClient{GenericWorker: NewGenericWorker(config, console, name, "falco", config.Loggers.FalcoClient.ChannelBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Loggers.FalcoClient.ChannelBufferSize > 0 {
+		bufSize = config.Loggers.FalcoClient.ChannelBufferSize
+	}
+	w := &FalcoClient{GenericWorker: NewGenericWorker(config, console, name, "falco", bufSize, pkgconfig.DefaultMonitor)}
 	w.ReadConfig()
 	return w
 }

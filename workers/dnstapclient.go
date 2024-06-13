@@ -26,7 +26,11 @@ type DnstapSender struct {
 }
 
 func NewDnstapSender(config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapSender {
-	w := &DnstapSender{GenericWorker: NewGenericWorker(config, logger, name, "dnstap", config.Loggers.DNSTap.ChannelBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Loggers.DNSTap.ChannelBufferSize > 0 {
+		bufSize = config.Loggers.DNSTap.ChannelBufferSize
+	}
+	w := &DnstapSender{GenericWorker: NewGenericWorker(config, logger, name, "dnstap", bufSize, pkgconfig.DefaultMonitor)}
 	w.transportReady = make(chan bool)
 	w.transportReconnect = make(chan bool)
 	w.ReadConfig()

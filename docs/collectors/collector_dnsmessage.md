@@ -5,7 +5,8 @@ Collector to match specific DNS messages.
 Options:
 
 * `chan-buffer-size` (int)
-  > Specifies the maximum number of packets that can be buffered before dropping additional packets.
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
 
 * `matching` (map)
     * `include` (map)

@@ -42,7 +42,8 @@ Options:
   > default number of items on top
 
 * `chan-buffer-size` (integer)
-  > channel buffer size used on incoming dns message, number of messages before to drop it
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
 
 * `histogram-metrics-enabled` (boolean)
   > compute histogram for qnames length, latencies, queries and replies size repartition
@@ -96,7 +97,7 @@ prometheus:
   key-file: ""
   prometheus-prefix: "dnscollector"
   top-n: 10
-  chan-buffer-size: 65535
+  chan-buffer-size: 0
   histogram-metrics-enabled: false
   requesters-metrics-enabled: true
   domains-metrics-enabled: true
