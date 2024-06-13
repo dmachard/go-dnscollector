@@ -29,7 +29,11 @@ type KafkaProducer struct {
 }
 
 func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name string) *KafkaProducer {
-	w := &KafkaProducer{GenericWorker: NewGenericWorker(config, logger, name, "kafka", config.Loggers.KafkaProducer.ChannelBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Loggers.KafkaProducer.ChannelBufferSize > 0 {
+		bufSize = config.Loggers.KafkaProducer.ChannelBufferSize
+	}
+	w := &KafkaProducer{GenericWorker: NewGenericWorker(config, logger, name, "kafka", bufSize, pkgconfig.DefaultMonitor)}
 	w.kafkaReady = make(chan bool)
 	w.kafkaReconnect = make(chan bool)
 	w.ReadConfig()

@@ -42,8 +42,12 @@ type FileIngestor struct {
 }
 
 func NewFileIngestor(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *FileIngestor {
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Collectors.FileIngestor.ChannelBufferSize > 0 {
+		bufSize = config.Collectors.FileIngestor.ChannelBufferSize
+	}
 	w := &FileIngestor{
-		GenericWorker: NewGenericWorker(config, logger, name, "fileingestor", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor),
+		GenericWorker: NewGenericWorker(config, logger, name, "fileingestor", bufSize, pkgconfig.DefaultMonitor),
 		watcherTimers: make(map[string]*time.Timer)}
 	w.SetDefaultRoutes(next)
 	w.CheckConfig()
@@ -309,13 +313,18 @@ func (w *FileIngestor) StartCollect() {
 	w.LogInfo("starting data collection")
 	defer w.CollectDone()
 
-	dnsProcessor := NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
+	bufSize := w.GetConfig().Global.Worker.ChannelBufferSize
+	if w.GetConfig().Collectors.FileIngestor.ChannelBufferSize > 0 {
+		bufSize = w.GetConfig().Collectors.FileIngestor.ChannelBufferSize
+	}
+
+	dnsProcessor := NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), bufSize)
 	dnsProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
 	dnsProcessor.SetDefaultDropped(w.GetDroppedRoutes())
 	go dnsProcessor.StartCollect()
 
 	// start dnstap subprocessor
-	dnstapProcessor := NewDNSTapProcessor(0, "", w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.FileIngestor.ChannelBufferSize)
+	dnstapProcessor := NewDNSTapProcessor(0, "", w.GetConfig(), w.GetLogger(), w.GetName(), bufSize)
 	dnstapProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
 	dnstapProcessor.SetDefaultDropped(w.GetDroppedRoutes())
 	go dnstapProcessor.StartCollect()

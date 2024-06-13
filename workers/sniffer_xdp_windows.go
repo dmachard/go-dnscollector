@@ -13,7 +13,11 @@ type XDPSniffer struct {
 }
 
 func NewXDPSniffer(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *XDPSniffer {
-	w := &XDPSniffer{GenericWorker: NewGenericWorker(config, logger, name, "xdp sniffer", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Collectors.XdpLiveCapture.ChannelBufferSize > 0 {
+		bufSize = config.Collectors.XdpLiveCapture.ChannelBufferSize
+	}
+	w := &XDPSniffer{GenericWorker: NewGenericWorker(config, logger, name, "xdp sniffer", bufSize, pkgconfig.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	w.ReadConfig()
 	return w

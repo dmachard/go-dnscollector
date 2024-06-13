@@ -12,6 +12,7 @@ global:
   pid-file: ""
   worker:
     interval-monitor: 10
+    buffer-size: 4096
   telemetry:
     enabled: true
     web-path: "/metrics"

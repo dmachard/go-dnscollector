@@ -10,7 +10,11 @@ type DevNull struct {
 }
 
 func NewDevNull(config *pkgconfig.Config, console *logger.Logger, name string) *DevNull {
-	s := &DevNull{GenericWorker: NewGenericWorker(config, console, name, "devnull", config.Loggers.DevNull.ChannelBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Loggers.DevNull.ChannelBufferSize > 0 {
+		bufSize = config.Loggers.DevNull.ChannelBufferSize
+	}
+	s := &DevNull{GenericWorker: NewGenericWorker(config, console, name, "devnull", bufSize, pkgconfig.DefaultMonitor)}
 	s.ReadConfig()
 	return s
 }
@@ -40,22 +44,3 @@ func (w *DevNull) StartCollect() {
 		}
 	}
 }
-
-// func (w *DevNull) StartLogging() {
-// 	w.LogInfo("logging has started")
-// 	defer w.LoggingDone()
-
-// 	for {
-// 		select {
-// 		case <-w.OnLoggerStopped():
-// 			return
-
-// 		case _, opened := <-w.GetOutputChannel():
-// 			if !opened {
-// 				w.LogInfo("process: output channel closed!")
-// 				return
-// 			}
-
-// 		}
-// 	}
-// }

@@ -29,7 +29,11 @@ type DnstapServer struct {
 }
 
 func NewDnstapServer(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapServer {
-	w := &DnstapServer{GenericWorker: NewGenericWorker(config, logger, name, "dnstap", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Collectors.Dnstap.ChannelBufferSize > 0 {
+		bufSize = config.Collectors.Dnstap.ChannelBufferSize
+	}
+	w := &DnstapServer{GenericWorker: NewGenericWorker(config, logger, name, "dnstap", bufSize, pkgconfig.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	w.CheckConfig()
 	return w
@@ -55,7 +59,11 @@ func (w *DnstapServer) HandleConn(conn net.Conn, connID uint64, forceClose chan 
 	w.LogInfo("conn #%d - new connection from %s (%s)", connID, peer, peerName)
 
 	// start dnstap processor and run it
-	dnstapProcessor := NewDNSTapProcessor(int(connID), peerName, w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.Dnstap.ChannelBufferSize)
+	bufSize := w.GetConfig().Global.Worker.ChannelBufferSize
+	if w.GetConfig().Collectors.Dnstap.ChannelBufferSize > 0 {
+		bufSize = w.GetConfig().Collectors.Dnstap.ChannelBufferSize
+	}
+	dnstapProcessor := NewDNSTapProcessor(int(connID), peerName, w.GetConfig(), w.GetLogger(), w.GetName(), bufSize)
 	dnstapProcessor.SetMetrics(w.metrics)
 	dnstapProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
 	dnstapProcessor.SetDefaultDropped(w.GetDroppedRoutes())

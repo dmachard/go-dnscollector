@@ -26,7 +26,11 @@ type AfpacketSniffer struct {
 }
 
 func NewAfpacketSniffer(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *AfpacketSniffer {
-	w := &AfpacketSniffer{GenericWorker: NewGenericWorker(config, logger, name, "afpacket sniffer", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Collectors.AfpacketLiveCapture.ChannelBufferSize > 0 {
+		bufSize = config.Collectors.AfpacketLiveCapture.ChannelBufferSize
+	}
+	w := &AfpacketSniffer{GenericWorker: NewGenericWorker(config, logger, name, "afpacket sniffer", bufSize, pkgconfig.DefaultMonitor)}
 	w.SetDefaultRoutes(next)
 	return w
 }
@@ -85,7 +89,11 @@ func (w *AfpacketSniffer) StartCollect() {
 		}
 	}
 
-	dnsProcessor := NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), w.GetConfig().Collectors.AfpacketLiveCapture.ChannelBufferSize)
+	bufSize := w.GetConfig().Global.Worker.ChannelBufferSize
+	if w.GetConfig().Collectors.AfpacketLiveCapture.ChannelBufferSize > 0 {
+		bufSize = w.GetConfig().Collectors.AfpacketLiveCapture.ChannelBufferSize
+	}
+	dnsProcessor := NewDNSProcessor(w.GetConfig(), w.GetLogger(), w.GetName(), bufSize)
 	dnsProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
 	dnsProcessor.SetDefaultDropped(w.GetDroppedRoutes())
 	go dnsProcessor.StartCollect()

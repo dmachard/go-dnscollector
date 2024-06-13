@@ -11,13 +11,13 @@ type ConfigLoggers struct {
 	DevNull struct {
 		Enable            bool   `yaml:"enable" default:"false"`
 		Mode              string `yaml:"mode" default:"text"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"devnull"`
 	Stdout struct {
 		Enable            bool   `yaml:"enable" default:"false"`
 		Mode              string `yaml:"mode" default:"text"`
 		TextFormat        string `yaml:"text-format" default:""`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"stdout"`
 	Prometheus struct {
 		Enable                    bool     `yaml:"enable" default:"false"`
@@ -34,7 +34,7 @@ type ConfigLoggers struct {
 		BasicAuthLogin            string   `yaml:"basic-auth-login" default:"admin"`
 		BasicAuthPwd              string   `yaml:"basic-auth-pwd" default:"changeme"`
 		BasicAuthEnabled          bool     `yaml:"basic-auth-enable" default:"true"`
-		ChannelBufferSize         int      `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize         int      `yaml:"chan-buffer-size" default:"0"`
 		RequestersMetricsEnabled  bool     `yaml:"requesters-metrics-enabled" default:"true"`
 		DomainsMetricsEnabled     bool     `yaml:"domains-metrics-enabled" default:"true"`
 		NoErrorMetricsEnabled     bool     `yaml:"noerror-metrics-enabled" default:"true"`
@@ -66,7 +66,7 @@ type ConfigLoggers struct {
 		CertFile          string `yaml:"cert-file" default:""`
 		KeyFile           string `yaml:"key-file" default:""`
 		TopN              int    `yaml:"top-n" default:"100"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"restapi"`
 	LogFile struct {
 		Enable              bool   `yaml:"enable" default:"false"`
@@ -81,7 +81,7 @@ type ConfigLoggers struct {
 		PostRotateCommand   string `yaml:"postrotate-command" default:""`
 		PostRotateDelete    bool   `yaml:"postrotate-delete-success" default:"false"`
 		TextFormat          string `yaml:"text-format" default:""`
-		ChannelBufferSize   int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize   int    `yaml:"chan-buffer-size" default:"0"`
 		ExtendedSupport     bool   `yaml:"extended-support" default:"false"`
 	} `yaml:"logfile"`
 	DNSTap struct {
@@ -102,7 +102,7 @@ type ConfigLoggers struct {
 		ServerID          string `yaml:"server-id" default:""`
 		OverwriteIdentity bool   `yaml:"overwrite-identity" default:"false"`
 		BufferSize        int    `yaml:"buffer-size" default:"100"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 		ExtendedSupport   bool   `yaml:"extended-support" default:"false"`
 		Compression       string `yaml:"compression" default:"none"`
 	} `yaml:"dnstapclient"`
@@ -125,7 +125,7 @@ type ConfigLoggers struct {
 		BufferSize        int    `yaml:"buffer-size" default:"100"`
 		FlushInterval     int    `yaml:"flush-interval" default:"30"`
 		ConnectTimeout    int    `yaml:"connect-timeout" default:"5"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"tcpclient"`
 	Syslog struct {
 		Enable            bool   `yaml:"enable" default:"false"`
@@ -145,7 +145,7 @@ type ConfigLoggers struct {
 		Framer            string `yaml:"framer" default:""`
 		Hostname          string `yaml:"hostname" default:""`
 		AppName           string `yaml:"app-name" default:"DNScollector"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 		Tag               string `yaml:"tag" default:""`
 		ReplaceNullChar   string `yaml:"replace-null-char" default:"�"`
 		FlushInterval     int    `yaml:"flush-interval" default:"30"`
@@ -182,7 +182,7 @@ type ConfigLoggers struct {
 		KeyFile           string `yaml:"key-file" default:""`
 		Bucket            string `yaml:"bucket" default:""`
 		Organization      string `yaml:"organization" default:""`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"influxdb"`
 	LokiClient struct {
 		Enable            bool              `yaml:"enable" default:"false"`
@@ -204,7 +204,7 @@ type ConfigLoggers struct {
 		BasicAuthPwdFile  string            `yaml:"basic-auth-pwd-file" default:""`
 		TenantID          string            `yaml:"tenant-id" default:""`
 		RelabelConfigs    []*relabel.Config `yaml:"relabel-configs" default:"[]"`
-		ChannelBufferSize int               `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int               `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"lokiclient"`
 	Statsd struct {
 		Enable            bool   `yaml:"enable" default:"false"`
@@ -220,13 +220,13 @@ type ConfigLoggers struct {
 		TLSMinVersion     string `yaml:"tls-min-version" default:"1.2"`
 		CAFile            string `yaml:"ca-file" default:""`
 		KeyFile           string `yaml:"key-file" default:""`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"statsd"`
 	ElasticSearchClient struct {
 		Enable            bool   `yaml:"enable" default:"false"`
 		Index             string `yaml:"index" default:"dnscollector"`
 		Server            string `yaml:"server" default:"http://127.0.0.1:9200/"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 		BulkSize          int    `yaml:"bulk-size" default:"5242880"`
 		BulkChannelSize   int    `yaml:"bulk-channel-size" default:"10"`
 		FlushInterval     int    `yaml:"flush-interval" default:"10"`
@@ -248,7 +248,7 @@ type ConfigLoggers struct {
 		CAFile            string                 `yaml:"ca-file" default:""`
 		CertFile          string                 `yaml:"cert-file" default:""`
 		KeyFile           string                 `yaml:"key-file" default:""`
-		ChannelBufferSize int                    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int                    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"scalyrclient"`
 	RedisPub struct {
 		Enable            bool   `yaml:"enable" default:"false"`
@@ -270,7 +270,7 @@ type ConfigLoggers struct {
 		FlushInterval     int    `yaml:"flush-interval" default:"30"`
 		ConnectTimeout    int    `yaml:"connect-timeout" default:"5"`
 		RedisChannel      string `yaml:"redis-channel" default:"dns_collector"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"redispub"`
 	KafkaProducer struct {
 		Enable            bool   `yaml:"enable" default:"false"`
@@ -294,21 +294,22 @@ type ConfigLoggers struct {
 		ConnectTimeout    int    `yaml:"connect-timeout" default:"5"`
 		Topic             string `yaml:"topic" default:"dnscollector"`
 		Partition         int    `yaml:"partition" default:"0"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 		Compression       string `yaml:"compression" default:"none"`
 	} `yaml:"kafkaproducer"`
 	FalcoClient struct {
 		Enable            bool   `yaml:"enable" default:"false"`
 		URL               string `yaml:"url" default:"http://127.0.0.1:9200"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"falco"`
 	ClickhouseClient struct {
-		Enable   bool   `yaml:"enable" default:"false"`
-		URL      string `yaml:"url" default:"http://localhost:8123"`
-		User     string `yaml:"user" default:"default"`
-		Password string `yaml:"password" default:"password"`
-		Database string `yaml:"database" default:"dnscollector"`
-		Table    string `yaml:"table" default:"records"`
+		Enable            bool   `yaml:"enable" default:"false"`
+		URL               string `yaml:"url" default:"http://localhost:8123"`
+		User              string `yaml:"user" default:"default"`
+		Password          string `yaml:"password" default:"password"`
+		Database          string `yaml:"database" default:"dnscollector"`
+		Table             string `yaml:"table" default:"records"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"clickhouse"`
 }
 

@@ -33,7 +33,11 @@ type DNSMessage struct {
 }
 
 func NewDNSMessage(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DNSMessage {
-	s := &DNSMessage{GenericWorker: NewGenericWorker(config, logger, name, "dnsmessage", config.Collectors.DNSMessage.ChannelBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Collectors.DNSMessage.ChannelBufferSize > 0 {
+		bufSize = config.Collectors.DNSMessage.ChannelBufferSize
+	}
+	s := &DNSMessage{GenericWorker: NewGenericWorker(config, logger, name, "dnsmessage", bufSize, pkgconfig.DefaultMonitor)}
 	s.SetDefaultRoutes(next)
 	s.ReadConfig()
 	return s

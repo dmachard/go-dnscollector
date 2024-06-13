@@ -9,18 +9,19 @@ import (
 type ConfigCollectors struct {
 	DNSMessage struct {
 		Enable            bool `yaml:"enable" default:"false"`
-		ChannelBufferSize int  `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int  `yaml:"chan-buffer-size" default:"0"`
 		Matching          struct {
 			Include map[string]interface{} `yaml:"include"`
 			Exclude map[string]interface{} `yaml:"exclude"`
 		} `yaml:"matching"`
 	} `yaml:"dnsmessage"`
 	Tail struct {
-		Enable       bool   `yaml:"enable" default:"false"`
-		TimeLayout   string `yaml:"time-layout" default:""`
-		PatternQuery string `yaml:"pattern-query" default:""`
-		PatternReply string `yaml:"pattern-reply" default:""`
-		FilePath     string `yaml:"file-path" default:""`
+		Enable            bool   `yaml:"enable" default:"false"`
+		TimeLayout        string `yaml:"time-layout" default:""`
+		PatternQuery      string `yaml:"pattern-query" default:""`
+		PatternReply      string `yaml:"pattern-reply" default:""`
+		FilePath          string `yaml:"file-path" default:""`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"tail"`
 	Dnstap struct {
 		Enable            bool   `yaml:"enable" default:"false"`
@@ -33,33 +34,34 @@ type ConfigCollectors struct {
 		KeyFile           string `yaml:"key-file" default:""`
 		RcvBufSize        int    `yaml:"sock-rcvbuf" default:"0"`
 		ResetConn         bool   `yaml:"reset-conn" default:"true"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 		DisableDNSParser  bool   `yaml:"disable-dnsparser" default:"false"`
 		ExtendedSupport   bool   `yaml:"extended-support" default:"false"`
 		Compression       string `yaml:"compression" default:"none"`
 	} `yaml:"dnstap"`
 	DnstapProxifier struct {
-		Enable        bool   `yaml:"enable" default:"false"`
-		ListenIP      string `yaml:"listen-ip" default:"0.0.0.0"`
-		ListenPort    int    `yaml:"listen-port" default:"6000"`
-		SockPath      string `yaml:"sock-path" default:""`
-		TLSSupport    bool   `yaml:"tls-support" default:"false"`
-		TLSMinVersion string `yaml:"tls-min-version" default:"1.2"`
-		CertFile      string `yaml:"cert-file" default:""`
-		KeyFile       string `yaml:"key-file" default:""`
+		Enable            bool   `yaml:"enable" default:"false"`
+		ListenIP          string `yaml:"listen-ip" default:"0.0.0.0"`
+		ListenPort        int    `yaml:"listen-port" default:"6000"`
+		SockPath          string `yaml:"sock-path" default:""`
+		TLSSupport        bool   `yaml:"tls-support" default:"false"`
+		TLSMinVersion     string `yaml:"tls-min-version" default:"1.2"`
+		CertFile          string `yaml:"cert-file" default:""`
+		KeyFile           string `yaml:"key-file" default:""`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"dnstap-relay"`
 	AfpacketLiveCapture struct {
 		Enable            bool   `yaml:"enable" default:"false"`
 		Port              int    `yaml:"port" default:"53"`
 		Device            string `yaml:"device" default:""`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 		FragmentSupport   bool   `yaml:"enable-defrag-ip" default:"true"`
 	} `yaml:"afpacket-sniffer"`
 	XdpLiveCapture struct {
 		Enable            bool   `yaml:"enable" default:"false"`
 		Port              int    `yaml:"port" default:"53"`
 		Device            string `yaml:"device" default:""`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"xdp-sniffer"`
 	PowerDNS struct {
 		Enable            bool   `yaml:"enable" default:"false"`
@@ -72,7 +74,7 @@ type ConfigCollectors struct {
 		AddDNSPayload     bool   `yaml:"add-dns-payload" default:"false"`
 		RcvBufSize        int    `yaml:"sock-rcvbuf" default:"0"`
 		ResetConn         bool   `yaml:"reset-conn" default:"true"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"powerdns"`
 	FileIngestor struct {
 		Enable            bool   `yaml:"enable" default:"false"`
@@ -80,13 +82,13 @@ type ConfigCollectors struct {
 		WatchMode         string `yaml:"watch-mode" default:"pcap"`
 		PcapDNSPort       int    `yaml:"pcap-dns-port" default:"53"`
 		DeleteAfter       bool   `yaml:"delete-after" default:"false"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"file-ingestor"`
 	Tzsp struct {
 		Enable            bool   `yaml:"enable" default:"false"`
 		ListenIP          string `yaml:"listen-ip" default:"0.0.0.0"`
 		ListenPort        int    `yaml:"listen-port" default:"10000"`
-		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"65535"`
+		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"tzsp"`
 }
 

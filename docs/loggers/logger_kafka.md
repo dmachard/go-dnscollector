@@ -69,7 +69,8 @@ Options:
   > Specifies the Kafka partition to which messages will be sent.
 
 * `chan-buffer-size` (int)
-  > Specifies the maximum number of packets that can be buffered before dropping additional packets.
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
 
 * `compression` (string)
   > Specifies the compression algorithm to use for Kafka messages.
@@ -95,6 +96,6 @@ kafkaproducer:
   buffer-size: 100
   topic: "dnscollector"
   partition: 0
-  chan-buffer-size: 4096
+  chan-buffer-size: 0
   compression: none
 ```

@@ -25,7 +25,8 @@ Options:
   > Enable IP defrag support
 
 * `chan-buffer-size` (int)
-  > Specifies the maximum number of packets that can be buffered before dropping additional packets.
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
 
 Defaults:
 
@@ -35,5 +36,5 @@ Defaults:
     port: 53
     device: wlp2s0
     enable-defrag-ip: true
-    chan-buffer-size: 65535
+    chan-buffer-size: 0
 ```

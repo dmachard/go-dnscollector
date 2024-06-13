@@ -45,7 +45,8 @@ Options:
   > This is a required parameter if TLS support is enabled.
 
 * `chan-buffer-size` (int)
-  > Specifies the maximum number of packets that can be buffered before dropping additional packets.
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
 
 Defaults:
 
@@ -64,5 +65,5 @@ fluentd:
   ca-file: ""
   cert-file: ""
   key-file: ""
-  chan-buffer-size: 4096
+  chan-buffer-size: 0
 ```

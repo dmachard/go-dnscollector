@@ -20,7 +20,11 @@ type DnstapProxifier struct {
 }
 
 func NewDnstapProxifier(next []Worker, config *pkgconfig.Config, logger *logger.Logger, name string) *DnstapProxifier {
-	s := &DnstapProxifier{GenericWorker: NewGenericWorker(config, logger, name, "dnstaprelay", pkgconfig.DefaultBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Collectors.DnstapProxifier.ChannelBufferSize > 0 {
+		bufSize = config.Collectors.DnstapProxifier.ChannelBufferSize
+	}
+	s := &DnstapProxifier{GenericWorker: NewGenericWorker(config, logger, name, "dnstaprelay", bufSize, pkgconfig.DefaultMonitor)}
 	s.SetDefaultRoutes(next)
 	s.CheckConfig()
 	return s

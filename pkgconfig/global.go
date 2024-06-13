@@ -20,7 +20,8 @@ type ConfigGlobal struct {
 	ServerIdentity string `yaml:"server-identity" default:""`
 	PidFile        string `yaml:"pid-file" default:""`
 	Worker         struct {
-		InternalMonitor int `yaml:"interval-monitor" default:"10"`
+		InternalMonitor   int `yaml:"interval-monitor" default:"10"`
+		ChannelBufferSize int `yaml:"buffer-size" default:"4096"`
 	} `yaml:"worker"`
 	Telemetry struct {
 		Enabled         bool   `yaml:"enabled" default:"true"`

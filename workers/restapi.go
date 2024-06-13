@@ -65,7 +65,11 @@ type RestAPI struct {
 }
 
 func NewRestAPI(config *pkgconfig.Config, logger *logger.Logger, name string) *RestAPI {
-	w := &RestAPI{GenericWorker: NewGenericWorker(config, logger, name, "restapi", config.Loggers.RestAPI.ChannelBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Loggers.RestAPI.ChannelBufferSize > 0 {
+		bufSize = config.Loggers.RestAPI.ChannelBufferSize
+	}
+	w := &RestAPI{GenericWorker: NewGenericWorker(config, logger, name, "restapi", bufSize, pkgconfig.DefaultMonitor)}
 	w.HitsStream = HitsStream{
 		Streams: make(map[string]SearchBy),
 	}

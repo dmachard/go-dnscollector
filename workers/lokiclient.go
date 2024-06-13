@@ -82,7 +82,11 @@ type LokiClient struct {
 }
 
 func NewLokiClient(config *pkgconfig.Config, logger *logger.Logger, name string) *LokiClient {
-	w := &LokiClient{GenericWorker: NewGenericWorker(config, logger, name, "loki", config.Loggers.LokiClient.ChannelBufferSize, pkgconfig.DefaultMonitor)}
+	bufSize := config.Global.Worker.ChannelBufferSize
+	if config.Loggers.LokiClient.ChannelBufferSize > 0 {
+		bufSize = config.Loggers.LokiClient.ChannelBufferSize
+	}
+	w := &LokiClient{GenericWorker: NewGenericWorker(config, logger, name, "loki", bufSize, pkgconfig.DefaultMonitor)}
 	w.streams = make(map[string]*LokiStream)
 	w.ReadConfig()
 	return w

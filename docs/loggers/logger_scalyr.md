@@ -45,7 +45,8 @@ Options:
   > Specifies the path to the key file corresponding to the certificate file. This is a required parameter if TLS support is enabled.
 
 * `chan-buffer-size` (int)
-  > Specifies the maximum number of packets that can be buffered before dropping additional packets.
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
 
 * `session-info` (map)
   > Any "session" or server information for Scalyr. e.g. 'region', 'serverHost'. If 'serverHost' is not included, it is set using the hostname.
@@ -75,5 +76,5 @@ scalyrclient:
   ca-file: ""
   cert-file: ""
   key-file: ""
-  chan-buffer-size: 65535
+  chan-buffer-size: 0
 ```
