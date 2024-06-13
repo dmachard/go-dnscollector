@@ -101,10 +101,10 @@ prometheus:
   histogram-metrics-enabled: false
   requesters-metrics-enabled: true
   domains-metrics-enabled: true
-  noerror-domains-metrics-enabled: true
-  servfail-domains-metrics-enabled: true
-  nonexistent-domains-metrics-enabled: true
-  timeout-domains-metrics-enabled: true
+  noerror-metrics-enabled: true
+  servfail-metrics-enabled: true
+  nonexistent-metrics-enabled: true
+  timeout-metrics-enabled: true
   prometheus-labels: ["stream_id"]
   requesters-cache-size: 250000
   requesters-cache-ttl: 3600

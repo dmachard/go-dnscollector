@@ -1,4 +1,4 @@
-version: '3.8'
+
 services:
   kafka-ui:
     image: provectuslabs/kafka-ui:v0.7.1
