@@ -41,15 +41,12 @@ pipelines:
       normalize:
         qname-lowercase: true
     routing-policy:
-      forward: [ hole ]
+      forward: [ console ]
       dropped: [ ]
 
   - name: console
     stdout:
       mode: text
-
-  - name: hole
-    devnull: {}
 
 ################################################
 # DEPRECATED - multiplexer configuration
