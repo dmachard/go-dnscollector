@@ -116,6 +116,7 @@ The [`_integration`](./docs/_integration) folder contains DNS-collector `configu
 - [Kafka](./docs/_integration/kafka/README.md)
 - [InfluxDB](./docs/_integration/influxdb/README.md)
 - [Prometheus](./docs/_integration/prometheus/README.md)
+- [Loki](./docs/_integration/loki/README.md)
 
 ## Telemetry
 
