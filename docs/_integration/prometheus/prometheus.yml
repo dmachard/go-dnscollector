@@ -1,0 +1,13 @@
+global:
+  scrape_interval:     15s
+
+scrape_configs:
+  - job_name: 'dnscollector_exporter'
+    static_configs:
+      - targets: ['192.168.1.16:9165']
+    scrape_interval: 5s
+
+  - job_name: 'dnscollector_traffic'     
+    static_configs:
+      - targets: ['192.168.1.16:8081']
+    scrape_interval: 5s

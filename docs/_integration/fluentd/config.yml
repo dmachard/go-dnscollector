@@ -8,7 +8,6 @@ pipelines:
     dnstap:
       listen-ip: 0.0.0.0
       listen-port: 6000
-      chan-buffer-size: 4096
     routing-policy:
       forward: [ fluentd ]
       dropped: []
@@ -28,4 +27,3 @@ pipelines:
       cert-file: ""
       key-file: ""
       buffer-size: 100
-      chan-buffer-size: 4096
