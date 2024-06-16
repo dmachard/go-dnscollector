@@ -1,6 +1,7 @@
 package workers
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -197,11 +198,12 @@ func TestPrometheus_EPS_Counters(t *testing.T) {
 
 func TestPrometheus_BuildInfo(t *testing.T) {
 	config := pkgconfig.GetDefaultConfig()
-	// config.Loggers.Prometheus.HistogramMetricsEnabled = true
+
 	g := NewPrometheus(config, logger.New(false), "test")
 
 	mf := getMetrics(g, t)
 
+	fmt.Println(mf)
 	if !ensureMetricValue(t, mf, "dnscollector_build_info", map[string]string{}, 1) {
 		t.Errorf("Cannot validate build info!")
 	}

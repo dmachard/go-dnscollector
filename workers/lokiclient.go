@@ -21,18 +21,8 @@ import (
 	"github.com/grafana/dskit/backoff"
 	"github.com/klauspost/compress/snappy"
 
-	/*
-		install loki with tags
-
-		go get github.com/grafana/loki@318652035059fdaa40405f263fc9e37b4d38b157
-		https://github.com/grafana/loki/releases/tag/v2.9.6
-
-		go get github.com/grafana/loki/pkg/push@318652035059fdaa40405f263fc9e37b4d38b157
-
-		go get github.com/prometheus/prometheus@v0.43.1-0.20230419161410-69155c6ba1e9
-		go mod tidy
-	*/
-	"github.com/grafana/loki/pkg/logproto"
+	// go get github.com/grafana/loki/v3/pkg/logproto
+	"github.com/grafana/loki/v3/pkg/logproto"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/model/relabel"
 )

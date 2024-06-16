@@ -21,5 +21,5 @@
     go run . -config docs/_integration/loki/config.yml
     ```
 
-- Connect to the web interface of grafana through http://127.0.0.1:3000
-  Go to the menu `Explorer`, your DNS logs will be here.
+- Connect to the web interface of grafana through http://127.0.0.1:3000 and `admin` login and `badpassword`
+  Go to the menu `Explorer` and add the `{job="dnscollector"}` filter, your DNS logs will be here.
