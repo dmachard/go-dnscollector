@@ -854,8 +854,8 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 				return nil, err
 			}
 		case RawTextDirective.MatchString(directive):
-			directive = strings.Replace(directive, "{", "", -1)
-			directive = strings.Replace(directive, "}", "", -1)
+			directive = strings.ReplaceAll(directive, "{", "")
+			directive = strings.ReplaceAll(directive, "}", "")
 			s.WriteString(directive)
 
 		// handle invalid directive
