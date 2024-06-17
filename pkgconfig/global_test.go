@@ -12,4 +12,8 @@ func TestConfigGlobalSetDefault(t *testing.T) {
 	if config.Trace.Verbose != false {
 		t.Errorf("verbose mode should be disabled")
 	}
+
+	if config.PidFile != "" {
+		t.Errorf("pidfile should be empty")
+	}
 }

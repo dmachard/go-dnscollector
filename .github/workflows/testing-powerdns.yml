@@ -26,8 +26,8 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.21' ]
-        dnsdist: [ '17', '18', '19' ]
+        go-version: [ '1.22' ]
+        dnsdist: [ '18', '19' ]
 
     steps:
     - uses: actions/checkout@v4
@@ -35,13 +35,18 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v5
-
+      with:
+        python-version: 3.12
+        
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: Deploy dnsdist docker image
       run: |
-        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/testsdata/powerdns/dnsdist_protobuf.conf:/etc/dnsdist/conf.d/dnsdist.conf:z -v /tmp/:/tmp/ powerdns/dnsdist-${{ matrix.dnsdist }}
+        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/testsdata/powerdns/dnsdist_protobuf.conf:/etc/dnsdist/conf.d/dnsdist.conf:z -v /tmp/:/tmp/ powerdns/dnsdist-${{ matrix.dnsdist }}
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Test dns query
@@ -54,8 +59,8 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.21' ]
-        recursor: [ '47', '48', '49' ]
+        go-version: [ '1.22' ]
+        recursor: [ '48', '49' ]
 
     steps:
     - uses: actions/checkout@v4
@@ -63,13 +68,18 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v5
+      with:
+        python-version: 3.12
 
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: Deploy recursor docker image
       run: |
-        sudo docker run -d --network="host" --name=recursor --volume=$PWD/testsdata/powerdns/pdns_recursor.lua:/etc/powerdns/recursor.lua:z --volume=$PWD/testsdata/powerdns/pdns_recursor.conf:/etc/powerdns/recursor.conf:z powerdns/pdns-recursor-${{ matrix.recursor }}
+        sudo docker run -d --network="host" --name=recursor --volume=$PWD/tests/testsdata/powerdns/pdns_recursor.lua:/etc/powerdns/recursor.lua:z --volume=$PWD/tests/testsdata/powerdns/pdns_recursor.conf:/etc/powerdns/recursor.conf:z powerdns/pdns-recursor-${{ matrix.recursor }}
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Test send query

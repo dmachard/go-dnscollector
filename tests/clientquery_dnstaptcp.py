@@ -60,7 +60,7 @@ class ProcessProtocol(asyncio.SubprocessProtocol):
     def pipe_data_received(self, fd, data):
         print(data.decode(), end="")
 
-        if b"is listening on" in data:
+        if b"listening on" in data:
             self.is_listening.set_result(True)
         
         if b"CLIENT_QUERY NOERROR" in data:
@@ -83,7 +83,7 @@ class TestDnstap(unittest.TestCase):
             # run collector
             is_listening = asyncio.Future()
             is_clientquery = asyncio.Future()
-            args = ( "./go-dnscollector", "-config", "./testsdata/config_stdout_dnstaptcp.yml",)
+            args = ( "./go-dnscollector", "-config", "./tests/testsdata/config_stdout_dnstaptcp.yml",)
             transport_collector, protocol_collector =  await self.loop.subprocess_exec(lambda: ProcessProtocol(is_listening, is_clientquery),
                                                                                        *args, stdout=asyncio.subprocess.PIPE)
 

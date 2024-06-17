@@ -100,47 +100,35 @@ func (mp *HashQueries) Delete(key uint64) {
 	delete(mp.kv, key)
 }
 
-// latency processor
-type LatencyProcessor struct {
-	config      *pkgconfig.ConfigTransformers
-	logger      *logger.Logger
-	name        string
-	instance    int
+// latency transformer
+type LatencyTransform struct {
+	GenericTransformer
 	hashQueries HashQueries
 	mapQueries  MapQueries
-	outChannels []chan dnsutils.DNSMessage
-	logInfo     func(msg string, v ...interface{})
-	logError    func(msg string, v ...interface{})
 }
 
-func NewLatencySubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
-) *LatencyProcessor {
-	s := LatencyProcessor{
-		config:      config,
-		logger:      logger,
-		name:        name,
-		instance:    instance,
-		outChannels: outChannels,
-		logInfo:     logInfo,
-		logError:    logError,
+func NewLatencyTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, nextWorkers []chan dnsutils.DNSMessage) *LatencyTransform {
+	t := &LatencyTransform{GenericTransformer: NewTransformer(config, logger, "latency", name, instance, nextWorkers)}
+	t.hashQueries = NewHashQueries(time.Duration(config.Latency.QueriesTimeout) * time.Second)
+	t.mapQueries = NewMapQueries(time.Duration(config.Latency.QueriesTimeout)*time.Second, nextWorkers)
+	return t
+}
+
+func (t *LatencyTransform) GetTransforms() ([]Subtransform, error) {
+	t.hashQueries.SetTTL(time.Duration(t.config.Latency.QueriesTimeout) * time.Second)
+	t.mapQueries.SetTTL(time.Duration(t.config.Latency.QueriesTimeout) * time.Second)
+
+	subtransforms := []Subtransform{}
+	if t.config.Latency.MeasureLatency {
+		subtransforms = append(subtransforms, Subtransform{name: "latency:add", processFunc: t.measureLatency})
 	}
-
-	s.hashQueries = NewHashQueries(time.Duration(config.Latency.QueriesTimeout) * time.Second)
-	s.mapQueries = NewMapQueries(time.Duration(config.Latency.QueriesTimeout)*time.Second, outChannels)
-
-	return &s
+	if t.config.Latency.UnansweredQueries {
+		subtransforms = append(subtransforms, Subtransform{name: "latency:timeout", processFunc: t.detectEvictedTimeout})
+	}
+	return subtransforms, nil
 }
 
-func (s *LatencyProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
-	s.config = config
-
-	s.hashQueries.SetTTL(time.Duration(config.Latency.QueriesTimeout) * time.Second)
-	s.mapQueries.SetTTL(time.Duration(config.Latency.QueriesTimeout) * time.Second)
-}
-
-func (s *LatencyProcessor) MeasureLatency(dm *dnsutils.DNSMessage) {
+func (t *LatencyTransform) measureLatency(dm *dnsutils.DNSMessage) (int, error) {
 	queryport, _ := strconv.Atoi(dm.NetworkInfo.QueryPort)
 	if len(dm.NetworkInfo.QueryIP) > 0 && queryport > 0 && !dm.DNS.MalformedPacket {
 		// compute the hash of the query
@@ -150,20 +138,21 @@ func (s *LatencyProcessor) MeasureLatency(dm *dnsutils.DNSMessage) {
 		hashfnv.Write([]byte(strings.Join(hashData, "+")))
 
 		if dm.DNS.Type == dnsutils.DNSQuery || dm.DNS.Type == dnsutils.DNSQueryQuiet {
-			s.hashQueries.Set(hashfnv.Sum64(), dm.DNSTap.Timestamp)
+			t.hashQueries.Set(hashfnv.Sum64(), dm.DNSTap.Timestamp)
 		} else {
 			key := hashfnv.Sum64()
-			value, ok := s.hashQueries.Get(key)
+			value, ok := t.hashQueries.Get(key)
 			if ok {
-				s.hashQueries.Delete(key)
+				t.hashQueries.Delete(key)
 				latency := float64(dm.DNSTap.Timestamp-value) / float64(1000000000)
 				dm.DNSTap.Latency = latency
 			}
 		}
 	}
+	return ReturnKeep, nil
 }
 
-func (s *LatencyProcessor) DetectEvictedTimeout(dm *dnsutils.DNSMessage) {
+func (t *LatencyTransform) detectEvictedTimeout(dm *dnsutils.DNSMessage) (int, error) {
 
 	queryport, _ := strconv.Atoi(dm.NetworkInfo.QueryPort)
 	if len(dm.NetworkInfo.QueryIP) > 0 && queryport > 0 && !dm.DNS.MalformedPacket {
@@ -175,9 +164,10 @@ func (s *LatencyProcessor) DetectEvictedTimeout(dm *dnsutils.DNSMessage) {
 		key := hashfnv.Sum64()
 
 		if dm.DNS.Type == dnsutils.DNSQuery || dm.DNS.Type == dnsutils.DNSQueryQuiet {
-			s.mapQueries.Set(key, *dm)
-		} else if s.mapQueries.Exists(key) {
-			s.mapQueries.Delete(key)
+			t.mapQueries.Set(key, *dm)
+		} else if t.mapQueries.Exists(key) {
+			t.mapQueries.Delete(key)
 		}
 	}
+	return ReturnKeep, nil
 }

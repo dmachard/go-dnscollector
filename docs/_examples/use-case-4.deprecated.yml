@@ -1,0 +1,32 @@
+# Example 4: Follow DNS traffic with Loki and Grafana
+#
+# As prerequisites, we assume you have 
+# - a DNS server which supports DNSTap (unbound, bind, powerdns, etc) for more informations about dnstap, 
+#   read the following page: https://dmachard.github.io/posts/0001-dnstap-testing/
+# - a Loki infrastructure: https://grafana.com/docs/loki/latest/
+
+# If turned on, debug messages are printed in the standard output
+global:
+  trace:
+    verbose: true
+
+multiplexer:
+  # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+
+  # Sends DNS messages to loki instance in text format
+  loggers:
+    - name: loki
+      lokiclient:
+        server-url: "http://loki:3100/loki/api/v1/push"
+        job-name: "dnscollector"
+        text-format: "localtime identity qr queryip family protocol qname qtype rcode"
+
+  # Routes DNS messages from the tap collector to loki with some transformations
+  routes:
+    - from: [tap]
+      to: [loki]

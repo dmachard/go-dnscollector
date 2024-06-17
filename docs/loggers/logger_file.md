@@ -16,18 +16,44 @@ For config examples, take a look to the following links:
 
 Options:
 
-* `file-path`: (string) output logfile name
-* `max-size`: (integer) maximum size in megabytes of the file before rotation, A minimum of max-size*max-files megabytes of space disk must be available
-* `max-files`: (integer) maximum number of files to retain. Set to zero if you want to disable this feature
-* `flush-interval`: (integer) flush buffer to log file every X seconds
-* `compress`: (boolean) compress log file
-* `compress-interval`: (integer) checking every X seconds if new log files must be compressed
-* `compress-command`: (string) run external script after file compress step
-* `mode`: (string)  output format: text, json, flat-json, pcap or dnstap
-* `text-format`: (string) output text format, please refer to the default text format to see all available directives, use this parameter if you want a specific format
-* `postrotate-command`: (string) run external script after file rotation
-* `postrotate-delete-success`: (boolean) delete file on script success
-* `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
+* `file-path` (string)
+  > output logfile name
+
+* `max-size`: (integer)
+  > maximum size in megabytes of the file before rotation, 
+  > A minimum of max-size*max-files megabytes of space disk must be available.
+
+* `max-files` (integer)
+  > maximum number of files to retain. Set to zero if you want to disable this feature
+
+* `flush-interval` (integer)
+  > flush buffer to log file every X seconds
+
+* `compress` (boolean)
+  > compress log file
+
+* `compress-interval` (integer)
+  > checking every X seconds if new log files must be compressed
+
+* `compress-postcommand` (string)
+  > run external script after file compress step
+
+* `mode` (string)
+  > output format: text, json, flat-json, pcap or dnstap
+
+* `text-format` (string)
+  > output text format, please refer to the default text format to see all
+  > available directives, use this parameter if you want a specific format.
+
+* `postrotate-command` (string)
+  > run external script after file rotation
+
+* `postrotate-delete-success` (boolean)
+  > delete file on script success
+
+* `chan-buffer-size` (integer)
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
 
 Default values:
 
@@ -39,12 +65,12 @@ logfile:
   flush-interval: 10
   compress: false
   compress-interval: 5
-  compress-command: null
+  compress-postcommand: null
   mode: text
   text-format: ""
   postrotate-command: null
   postrotate-delete-success: false
-  chan-buffer-size: 65535
+  chan-buffer-size: 0
 ```
 
 The `postrotate-command` can be used to execute a script after each file rotation.
@@ -53,7 +79,7 @@ If the compression is enabled then the postrotate command will be executed after
 
 Basic example to use the postrotate command:
 
-```ini
+```yaml
 logfile:
   postrotate-command: "/home/dnscollector/postrotate.sh"
 ```

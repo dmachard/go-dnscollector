@@ -31,18 +31,39 @@ Gauges:
 
 Options:
 
-* `transport`: (string) network transport to use: `udp` | `tcp` | `tcp+tls`
-* `remote-address`: (string) remote address
-* `remote-port`: (integer) remote tcp port
-* `connect-timeout`: (integer) connect timeout in second
-* `prefix`: (string) statsd prefix name
-* `tls-support` **DEPRECATED, replaced with tcp+tls flag on transport**: (boolean) enable tls
-* `tls-insecure`: (boolean) insecure skip verify
-* `tls-min-version`: (string) min tls version
-* `ca-file`: (string) provide CA file to verify the server certificate
-* `cert-file`: (string) provide client certificate file for mTLS
-* `key-file`: (string) provide client private key file for mTLS
-* `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
+* `transport` (string)
+  > network transport to use: `udp` | `tcp` | `tcp+tls`
+
+* `remote-address` (string)
+  > remote address
+
+* `remote-port` (integer)
+  > remote tcp port
+
+* `connect-timeout` (integer)
+  > connect timeout in second
+
+* `prefix` (string)
+  > statsd prefix name
+
+* `tls-insecure` (boolean)
+  > If set to true, skip verification of server certificate.
+
+* `tls-min-version` (string)
+  > Specifies the minimum TLS version that the server will support.
+
+* `ca-file` (string)
+  > Specifies the path to the CA (Certificate Authority) file used to verify the server's certificate.
+
+* `cert-file` (string)
+  > Specifies the path to the certificate file to be used. This is a required parameter if TLS support is enabled.
+
+* `key-file` (string)
+  > Specifies the path to the key file corresponding to the certificate file. This is a required parameter if TLS support is enabled.
+
+* `chan-buffer-size` (int)
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
 
 Default values:
 
@@ -57,5 +78,5 @@ statsd:
   ca-file: ""
   cert-file: ""
   key-file: ""
-  chan-buffer-size: 65535
+  chan-buffer-size: 0
 ```

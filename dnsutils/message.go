@@ -16,12 +16,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/netlib"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnstap-protobuf"
+	"github.com/dmachard/go-netutils"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/miekg/dns"
-	"github.com/nqd/flat"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -38,9 +38,15 @@ var (
 	ReducerDirectives         = regexp.MustCompile(`^reducer-*`)
 	MachineLearningDirectives = regexp.MustCompile(`^ml-*`)
 	FilteringDirectives       = regexp.MustCompile(`^filtering-*`)
-	// RawTextDirective       = regexp.MustCompile(`^ *\{.*\}`)
-	RawTextDirective       = regexp.MustCompile(`^ *\{.*`)
+	RawTextDirective          = regexp.MustCompile(`^ *\{.*`)
+	ATagsDirectives           = regexp.MustCompile(`^atags*`)
 )
+
+func GetFakeDNS() ([]byte, error) {
+	dnsmsg := new(dns.Msg)
+	dnsmsg.SetQuestion("dns.collector.", dns.TypeA)
+	return dnsmsg.Pack()
+}
 
 func GetIPPort(dm *DNSMessage) (string, int, string, int) {
 	srcIP, srcPort := "0.0.0.0", 53
@@ -68,178 +74,194 @@ func GetIPPort(dm *DNSMessage) (string, int, string, int) {
 }
 
 type DNSAnswer struct {
-	Name      string `json:"name" msgpack:"name"`
-	Rdatatype string `json:"rdatatype" msgpack:"rdatatype"`
-	Class     int    `json:"-" msgpack:"-"`
-	TTL       int    `json:"ttl" msgpack:"ttl"`
-	Rdata     string `json:"rdata" msgpack:"rdata"`
+	Name      string `json:"name"`
+	Rdatatype string `json:"rdatatype"`
+	Class     string `json:"class"`
+	TTL       int    `json:"ttl"`
+	Rdata     string `json:"rdata"`
 }
 
 type DNSFlags struct {
-	QR bool `json:"qr" msgpack:"qr"`
-	TC bool `json:"tc" msgpack:"tc"`
-	AA bool `json:"aa" msgpack:"aa"`
-	RA bool `json:"ra" msgpack:"ra"`
-	AD bool `json:"ad" msgpack:"ad"`
-	RD bool `json:"rd" msgpack:"rd"`
-	CD bool `json:"cd" msgpack:"cd"`
+	QR bool `json:"qr"`
+	TC bool `json:"tc"`
+	AA bool `json:"aa"`
+	RA bool `json:"ra"`
+	AD bool `json:"ad"`
+	RD bool `json:"rd"`
+	CD bool `json:"cd"`
 }
 
 type DNSNetInfo struct {
-	Family         string `json:"family" msgpack:"family"`
-	Protocol       string `json:"protocol" msgpack:"protocol"`
-	QueryIP        string `json:"query-ip" msgpack:"query-ip"`
-	QueryPort      string `json:"query-port" msgpack:"query-port"`
-	ResponseIP     string `json:"response-ip" msgpack:"response-ip"`
-	ResponsePort   string `json:"response-port" msgpack:"response-port"`
-	IPDefragmented bool   `json:"ip-defragmented" msgpack:"ip-defragmented"`
-	TCPReassembled bool   `json:"tcp-reassembled" msgpack:"tcp-reassembled"`
+	Family         string `json:"family"`
+	Protocol       string `json:"protocol"`
+	QueryIP        string `json:"query-ip"`
+	QueryPort      string `json:"query-port"`
+	ResponseIP     string `json:"response-ip"`
+	ResponsePort   string `json:"response-port"`
+	IPDefragmented bool   `json:"ip-defragmented"`
+	TCPReassembled bool   `json:"tcp-reassembled"`
 }
 
 type DNSRRs struct {
-	Answers     []DNSAnswer `json:"an" msgpack:"an"`
-	Nameservers []DNSAnswer `json:"ns" msgpack:"ns"`
-	Records     []DNSAnswer `json:"ar" msgpack:"ar"`
+	Answers     []DNSAnswer `json:"an"`
+	Nameservers []DNSAnswer `json:"ns"`
+	Records     []DNSAnswer `json:"ar"`
 }
 
 type DNS struct {
-	Type    string `json:"-" msgpack:"-"`
-	Payload []byte `json:"-" msgpack:"-"`
-	Length  int    `json:"length" msgpack:"-"`
-	ID      int    `json:"id" msgpack:"id"`
-	Opcode  int    `json:"opcode" msgpack:"opcode"`
-	Rcode   string `json:"rcode" msgpack:"rcode"`
-	Qname   string `json:"qname" msgpack:"qname"`
+	Type    string `json:"-"`
+	Payload []byte `json:"-"`
+	Length  int    `json:"length"`
+	ID      int    `json:"id"`
+	Opcode  int    `json:"opcode"`
+	Rcode   string `json:"rcode"`
+	Qname   string `json:"qname"`
+	Qclass  string `json:"qclass"`
 
-	Qtype           string   `json:"qtype" msgpack:"qtype"`
-	Flags           DNSFlags `json:"flags" msgpack:"flags"`
-	DNSRRs          DNSRRs   `json:"resource-records" msgpack:"resource-records"`
-	MalformedPacket bool     `json:"malformed-packet" msgpack:"malformed-packet"`
+	Qtype           string   `json:"qtype"`
+	Flags           DNSFlags `json:"flags"`
+	DNSRRs          DNSRRs   `json:"resource-records"`
+	MalformedPacket bool     `json:"malformed-packet"`
 }
 
 type DNSOption struct {
-	Code int    `json:"code" msgpack:"code"`
-	Name string `json:"name" msgpack:"name"`
-	Data string `json:"data" msgpack:"data"`
+	Code int    `json:"code"`
+	Name string `json:"name"`
+	Data string `json:"data"`
 }
 
 type DNSExtended struct {
-	UDPSize       int         `json:"udp-size" msgpack:"udp-size"`
-	ExtendedRcode int         `json:"rcode" msgpack:"rcode"`
-	Version       int         `json:"version" msgpack:"version"`
-	Do            int         `json:"dnssec-ok" msgpack:"dnssec-ok"`
-	Z             int         `json:"-" msgpack:"-"`
-	Options       []DNSOption `json:"options" msgpack:"options"`
+	UDPSize       int         `json:"udp-size"`
+	ExtendedRcode int         `json:"rcode"`
+	Version       int         `json:"version"`
+	Do            int         `json:"dnssec-ok"`
+	Z             int         `json:"-"`
+	Options       []DNSOption `json:"options"`
 }
 
 type DNSTap struct {
-	Operation        string  `json:"operation" msgpack:"operation"`
-	Identity         string  `json:"identity" msgpack:"identity"`
-	Version          string  `json:"version" msgpack:"version"`
-	TimestampRFC3339 string  `json:"timestamp-rfc3339ns" msgpack:"timestamp-rfc3339ns"`
-	Timestamp        int64   `json:"-" msgpack:"-"`
-	TimeSec          int     `json:"-" msgpack:"-"`
-	TimeNsec         int     `json:"-" msgpack:"-"`
-	Latency          float64 `json:"-" msgpack:"-"`
-	LatencySec       string  `json:"latency" msgpack:"latency"`
-	Payload          []byte  `json:"-" msgpack:"-"`
-	Extra            string  `json:"extra" msgpack:"extra"`
-	PolicyRule       string  `json:"policy-rule" msgpack:"policy-rule"`
-	PolicyType       string  `json:"policy-type" msgpack:"policy-type"`
-	PolicyMatch      string  `json:"policy-match" msgpack:"policy-match"`
-	PolicyAction     string  `json:"policy-action" msgpack:"policy-action"`
-	PolicyValue      string  `json:"policy-value" msgpack:"policy-value"`
+	Operation        string  `json:"operation"`
+	Identity         string  `json:"identity"`
+	Version          string  `json:"version"`
+	TimestampRFC3339 string  `json:"timestamp-rfc3339ns"`
+	Timestamp        int64   `json:"-"`
+	TimeSec          int     `json:"-"`
+	TimeNsec         int     `json:"-"`
+	Latency          float64 `json:"-"`
+	LatencySec       string  `json:"latency"`
+	Payload          []byte  `json:"-"`
+	Extra            string  `json:"extra"`
+	PolicyRule       string  `json:"policy-rule"`
+	PolicyType       string  `json:"policy-type"`
+	PolicyMatch      string  `json:"policy-match"`
+	PolicyAction     string  `json:"policy-action"`
+	PolicyValue      string  `json:"policy-value"`
+	PeerName         string  `json:"peer-name"`
+	QueryZone        string  `json:"query-zone"`
 }
 
 type PowerDNS struct {
-	Tags                  []string          `json:"tags" msgpack:"tags"`
-	OriginalRequestSubnet string            `json:"original-request-subnet" msgpack:"original-request-subnet"`
-	AppliedPolicy         string            `json:"applied-policy" msgpack:"applied-policy"`
-	AppliedPolicyHit      string            `json:"applied-policy-hit" msgpack:"applied-policy-hit"`
-	AppliedPolicyKind     string            `json:"applied-policy-kind" msgpack:"applied-policy-kind"`
-	AppliedPolicyTrigger  string            `json:"applied-policy-trigger" msgpack:"applied-policy-trigger"`
-	AppliedPolicyType     string            `json:"applied-policy-type" msgpack:"applied-policy-type"`
-	Metadata              map[string]string `json:"metadata" msgpack:"metadata"`
+	Tags                  []string          `json:"tags"`
+	OriginalRequestSubnet string            `json:"original-request-subnet"`
+	AppliedPolicy         string            `json:"applied-policy"`
+	AppliedPolicyHit      string            `json:"applied-policy-hit"`
+	AppliedPolicyKind     string            `json:"applied-policy-kind"`
+	AppliedPolicyTrigger  string            `json:"applied-policy-trigger"`
+	AppliedPolicyType     string            `json:"applied-policy-type"`
+	Metadata              map[string]string `json:"metadata"`
+	HTTPVersion           string            `json:"http-version"`
 }
 
 type TransformDNSGeo struct {
-	City                   string `json:"city" msgpack:"city"`
-	Continent              string `json:"continent" msgpack:"continent"`
-	CountryIsoCode         string `json:"country-isocode" msgpack:"country-isocode"`
-	AutonomousSystemNumber string `json:"as-number" msgpack:"as-number"`
-	AutonomousSystemOrg    string `json:"as-owner" msgpack:"as-owner"`
+	City                   string `json:"city"`
+	Continent              string `json:"continent"`
+	CountryIsoCode         string `json:"country-isocode"`
+	AutonomousSystemNumber string `json:"as-number"`
+	AutonomousSystemOrg    string `json:"as-owner"`
 }
 
 type TransformSuspicious struct {
-	Score                 float64 `json:"score" msgpack:"score"`
-	MalformedPacket       bool    `json:"malformed-pkt" msgpack:"malformed-pkt"`
-	LargePacket           bool    `json:"large-pkt" msgpack:"large-pkt"`
-	LongDomain            bool    `json:"long-domain" msgpack:"long-domain"`
-	SlowDomain            bool    `json:"slow-domain" msgpack:"slow-domain"`
-	UnallowedChars        bool    `json:"unallowed-chars" msgpack:"unallowed-chars"`
-	UncommonQtypes        bool    `json:"uncommon-qtypes" msgpack:"uncommon-qtypes"`
-	ExcessiveNumberLabels bool    `json:"excessive-number-labels" msgpack:"excessive-number-labels"`
-	Domain                string  `json:"domain,omitempty" msgpack:"-"`
+	Score                 float64 `json:"score"`
+	MalformedPacket       bool    `json:"malformed-pkt"`
+	LargePacket           bool    `json:"large-pkt"`
+	LongDomain            bool    `json:"long-domain"`
+	SlowDomain            bool    `json:"slow-domain"`
+	UnallowedChars        bool    `json:"unallowed-chars"`
+	UncommonQtypes        bool    `json:"uncommon-qtypes"`
+	ExcessiveNumberLabels bool    `json:"excessive-number-labels"`
+	Domain                string  `json:"domain,omitempty"`
 }
 
 type TransformPublicSuffix struct {
-	QnamePublicSuffix        string `json:"tld" msgpack:"qname-public-suffix"`
-	QnameEffectiveTLDPlusOne string `json:"etld+1" msgpack:"qname-effective-tld-plus-one"`
+	QnamePublicSuffix        string `json:"tld"`
+	QnameEffectiveTLDPlusOne string `json:"etld+1"`
+	ManagedByICANN           bool   `json:"managed-icann"`
 }
 
 type TransformExtracted struct {
-	Base64Payload []byte `json:"dns_payload" msgpack:"dns_payload"`
+	Base64Payload []byte `json:"dns_payload"`
 }
 
 type TransformReducer struct {
-	Occurrences      int `json:"occurrences" msgpack:"occurrences"`
-	CumulativeLength int `json:"cumulative-length" msgpack:"cumulative-length"`
+	Occurrences      int `json:"occurrences"`
+	CumulativeLength int `json:"cumulative-length"`
 }
 
 type TransformFiltering struct {
-	SampleRate int `json:"sample-rate" msgpack:"sample-rate"`
+	SampleRate int `json:"sample-rate"`
 }
 
 type TransformML struct {
-	Entropy               float64 `json:"entropy" msgpack:"entropy"`   // Entropy of query name
-	Length                int     `json:"length" msgpack:"length"`     // Length of domain
-	Labels                int     `json:"labels" msgpack:"labels"`     // Number of labels in the query name  separated by dots
-	Digits                int     `json:"digits" msgpack:"digits"`     // Count of numerical characters
-	Lowers                int     `json:"lowers" msgpack:"lowers"`     // Count of lowercase characters
-	Uppers                int     `json:"uppers" msgpack:"uppers"`     // Count of uppercase characters
-	Specials              int     `json:"specials" msgpack:"specials"` // Number of special characters; special characters such as dash, underscore, equal sign,...
-	Others                int     `json:"others" msgpack:"others"`
-	RatioDigits           float64 `json:"ratio-digits" msgpack:"ratio-digits"`
-	RatioLetters          float64 `json:"ratio-letters" msgpack:"ratio-letters"`
-	RatioSpecials         float64 `json:"ratio-specials" msgpack:"ratio-specials"`
-	RatioOthers           float64 `json:"ratio-others" msgpack:"ratio-others"`
-	ConsecutiveChars      int     `json:"consecutive-chars" msgpack:"consecutive-chars"`
-	ConsecutiveVowels     int     `json:"consecutive-vowels" msgpack:"consecutive-vowels"`
-	ConsecutiveDigits     int     `json:"consecutive-digits" msgpack:"consecutive-digits"`
-	ConsecutiveConsonants int     `json:"consecutive-consonants" msgpack:"consecutive-consonants"`
-	Size                  int     `json:"size" msgpack:"size"`
-	Occurrences           int     `json:"occurrences" msgpack:"occurrences"`
-	UncommonQtypes        int     `json:"uncommon-qtypes" msgpack:"uncommon-qtypes"`
+	Entropy               float64 `json:"entropy"`  // Entropy of query name
+	Length                int     `json:"length"`   // Length of domain
+	Labels                int     `json:"labels"`   // Number of labels in the query name  separated by dots
+	Digits                int     `json:"digits"`   // Count of numerical characters
+	Lowers                int     `json:"lowers"`   // Count of lowercase characters
+	Uppers                int     `json:"uppers"`   // Count of uppercase characters
+	Specials              int     `json:"specials"` // Number of special characters; special characters such as dash, underscore, equal sign,...
+	Others                int     `json:"others"`
+	RatioDigits           float64 `json:"ratio-digits"`
+	RatioLetters          float64 `json:"ratio-letters"`
+	RatioSpecials         float64 `json:"ratio-specials"`
+	RatioOthers           float64 `json:"ratio-others"`
+	ConsecutiveChars      int     `json:"consecutive-chars"`
+	ConsecutiveVowels     int     `json:"consecutive-vowels"`
+	ConsecutiveDigits     int     `json:"consecutive-digits"`
+	ConsecutiveConsonants int     `json:"consecutive-consonants"`
+	Size                  int     `json:"size"`
+	Occurrences           int     `json:"occurrences"`
+	UncommonQtypes        int     `json:"uncommon-qtypes"`
 }
 
 type TransformATags struct {
-	Tags []string `json:"tags" msgpack:"tags"`
+	Tags []string `json:"tags"`
+}
+
+type RelabelingRule struct {
+	Regex       *regexp.Regexp
+	Replacement string
+	Action      string
+}
+
+type TransformRelabeling struct {
+	Rules []RelabelingRule
 }
 
 type DNSMessage struct {
-	NetworkInfo     DNSNetInfo             `json:"network" msgpack:"network"`
-	DNS             DNS                    `json:"dns" msgpack:"dns"`
-	EDNS            DNSExtended            `json:"edns" msgpack:"edns"`
-	DNSTap          DNSTap                 `json:"dnstap" msgpack:"dnstap"`
-	Geo             *TransformDNSGeo       `json:"geoip,omitempty" msgpack:"geo"`
-	PowerDNS        *PowerDNS              `json:"powerdns,omitempty" msgpack:"powerdns"`
-	Suspicious      *TransformSuspicious   `json:"suspicious,omitempty" msgpack:"suspicious"`
-	PublicSuffix    *TransformPublicSuffix `json:"publicsuffix,omitempty" msgpack:"publicsuffix"`
-	Extracted       *TransformExtracted    `json:"extracted,omitempty" msgpack:"extracted"`
-	Reducer         *TransformReducer      `json:"reducer,omitempty" msgpack:"reducer"`
-	MachineLearning *TransformML           `json:"ml,omitempty" msgpack:"ml"`
-	Filtering       *TransformFiltering    `json:"filtering,omitempty" msgpack:"filtering"`
-	ATags           *TransformATags        `json:"atags,omitempty" msgpack:"atags"`
+	NetworkInfo     DNSNetInfo             `json:"network"`
+	DNS             DNS                    `json:"dns"`
+	EDNS            DNSExtended            `json:"edns"`
+	DNSTap          DNSTap                 `json:"dnstap"`
+	Geo             *TransformDNSGeo       `json:"geoip,omitempty"`
+	PowerDNS        *PowerDNS              `json:"powerdns,omitempty"`
+	Suspicious      *TransformSuspicious   `json:"suspicious,omitempty"`
+	PublicSuffix    *TransformPublicSuffix `json:"publicsuffix,omitempty"`
+	Extracted       *TransformExtracted    `json:"extracted,omitempty"`
+	Reducer         *TransformReducer      `json:"reducer,omitempty"`
+	MachineLearning *TransformML           `json:"ml,omitempty"`
+	Filtering       *TransformFiltering    `json:"filtering,omitempty"`
+	ATags           *TransformATags        `json:"atags,omitempty"`
+	Relabeling      *TransformRelabeling   `json:"-"`
 }
 
 func (dm *DNSMessage) Init() {
@@ -266,6 +288,8 @@ func (dm *DNSMessage) Init() {
 		PolicyMatch:      "-",
 		PolicyAction:     "-",
 		PolicyValue:      "-",
+		PeerName:         "-",
+		QueryZone:        "-",
 	}
 
 	dm.DNS = DNS{
@@ -275,6 +299,7 @@ func (dm *DNSMessage) Init() {
 		Rcode:           "-",
 		Qtype:           "-",
 		Qname:           "-",
+		Qclass:          "-",
 		DNSRRs:          DNSRRs{Answers: []DNSAnswer{}, Nameservers: []DNSAnswer{}, Records: []DNSAnswer{}},
 	}
 
@@ -298,13 +323,14 @@ func (dm *DNSMessage) InitTransforms() {
 	dm.Suspicious = &TransformSuspicious{}
 	dm.PowerDNS = &PowerDNS{}
 	dm.Geo = &TransformDNSGeo{}
+	dm.Relabeling = &TransformRelabeling{}
 }
 
-func (dm *DNSMessage) handleGeoIPDirectives(directives []string, s *strings.Builder) error {
+func (dm *DNSMessage) handleGeoIPDirectives(directive string, s *strings.Builder) error {
 	if dm.Geo == nil {
 		s.WriteString("-")
 	} else {
-		switch directive := directives[0]; {
+		switch {
 		case directive == "geoip-continent":
 			s.WriteString(dm.Geo.Continent)
 		case directive == "geoip-country":
@@ -322,10 +348,17 @@ func (dm *DNSMessage) handleGeoIPDirectives(directives []string, s *strings.Buil
 	return nil
 }
 
-func (dm *DNSMessage) handlePdnsDirectives(directives []string, s *strings.Builder) error {
+func (dm *DNSMessage) handlePdnsDirectives(directive string, s *strings.Builder) error {
 	if dm.PowerDNS == nil {
 		s.WriteString("-")
 	} else {
+		var directives []string
+		if i := strings.IndexByte(directive, ':'); i == -1 {
+			directives = append(directives, directive)
+		} else {
+			directives = []string{directive[:i], directive[i+1:]}
+		}
+
 		switch directive := directives[0]; {
 		case directive == "powerdns-tags":
 			if dm.PowerDNS.Tags == nil {
@@ -409,6 +442,12 @@ func (dm *DNSMessage) handlePdnsDirectives(directives []string, s *strings.Build
 					s.WriteString("-")
 				}
 			}
+		case directive == "powerdns-http-version":
+			if len(dm.PowerDNS.HTTPVersion) > 0 {
+				s.WriteString(dm.PowerDNS.HTTPVersion)
+			} else {
+				s.WriteString("-")
+			}
 		default:
 			return errors.New(ErrorUnexpectedDirective + directive)
 		}
@@ -416,11 +455,54 @@ func (dm *DNSMessage) handlePdnsDirectives(directives []string, s *strings.Build
 	return nil
 }
 
-func (dm *DNSMessage) handleSuspiciousDirectives(directives []string, s *strings.Builder) error {
+func (dm *DNSMessage) handleATagsDirectives(directive string, s *strings.Builder) error {
+	if dm.ATags == nil {
+		s.WriteString("-")
+	} else {
+		var directives []string
+		if i := strings.IndexByte(directive, ':'); i == -1 {
+			directives = append(directives, directive)
+		} else {
+			directives = []string{directive[:i], directive[i+1:]}
+		}
+
+		switch directive := directives[0]; {
+		case directive == "atags":
+			if len(dm.ATags.Tags) > 0 {
+				if len(directives) == 2 {
+					tagIndex, err := strconv.Atoi(directives[1])
+					if err != nil {
+						log.Fatalf("unsupport tag index provided (integer expected): %s", directives[1])
+					}
+					if tagIndex >= len(dm.ATags.Tags) {
+						s.WriteString("-")
+					} else {
+						s.WriteString(dm.ATags.Tags[tagIndex])
+					}
+				} else {
+					for i, tag := range dm.ATags.Tags {
+						s.WriteString(tag)
+						// add separator
+						if i+1 < len(dm.ATags.Tags) {
+							s.WriteString(",")
+						}
+					}
+				}
+			} else {
+				s.WriteString("-")
+			}
+		default:
+			return errors.New(ErrorUnexpectedDirective + directive)
+		}
+	}
+	return nil
+}
+
+func (dm *DNSMessage) handleSuspiciousDirectives(directive string, s *strings.Builder) error {
 	if dm.Suspicious == nil {
 		s.WriteString("-")
 	} else {
-		switch directive := directives[0]; {
+		switch {
 		case directive == "suspicious-score":
 			s.WriteString(strconv.Itoa(int(dm.Suspicious.Score)))
 		default:
@@ -430,15 +512,21 @@ func (dm *DNSMessage) handleSuspiciousDirectives(directives []string, s *strings
 	return nil
 }
 
-func (dm *DNSMessage) handlePublicSuffixDirectives(directives []string, s *strings.Builder) error {
+func (dm *DNSMessage) handlePublicSuffixDirectives(directive string, s *strings.Builder) error {
 	if dm.PublicSuffix == nil {
 		s.WriteString("-")
 	} else {
-		switch directive := directives[0]; {
+		switch {
 		case directive == "publixsuffix-tld":
 			s.WriteString(dm.PublicSuffix.QnamePublicSuffix)
 		case directive == "publixsuffix-etld+1":
 			s.WriteString(dm.PublicSuffix.QnameEffectiveTLDPlusOne)
+		case directive == "publixsuffix-managed-icann":
+			if dm.PublicSuffix.ManagedByICANN {
+				s.WriteString("managed")
+			} else {
+				s.WriteString("private")
+			}
 		default:
 			return errors.New(ErrorUnexpectedDirective + directive)
 		}
@@ -446,12 +534,12 @@ func (dm *DNSMessage) handlePublicSuffixDirectives(directives []string, s *strin
 	return nil
 }
 
-func (dm *DNSMessage) handleExtractedDirectives(directives []string, s *strings.Builder) error {
+func (dm *DNSMessage) handleExtractedDirectives(directive string, s *strings.Builder) error {
 	if dm.Extracted == nil {
 		s.WriteString("-")
 		return nil
 	}
-	switch directive := directives[0]; {
+	switch {
 	case directive == "extracted-dns-payload":
 		if len(dm.DNS.Payload) > 0 {
 			dst := make([]byte, base64.StdEncoding.EncodedLen(len(dm.DNS.Payload)))
@@ -466,11 +554,11 @@ func (dm *DNSMessage) handleExtractedDirectives(directives []string, s *strings.
 	return nil
 }
 
-func (dm *DNSMessage) handleFilteringDirectives(directives []string, s *strings.Builder) error {
+func (dm *DNSMessage) handleFilteringDirectives(directive string, s *strings.Builder) error {
 	if dm.Filtering == nil {
 		s.WriteString("-")
 	} else {
-		switch directive := directives[0]; {
+		switch {
 		case directive == "filtering-sample-rate":
 			s.WriteString(strconv.Itoa(dm.Filtering.SampleRate))
 		default:
@@ -480,11 +568,11 @@ func (dm *DNSMessage) handleFilteringDirectives(directives []string, s *strings.
 	return nil
 }
 
-func (dm *DNSMessage) handleReducerDirectives(directives []string, s *strings.Builder) error {
+func (dm *DNSMessage) handleReducerDirectives(directive string, s *strings.Builder) error {
 	if dm.Reducer == nil {
 		s.WriteString("-")
 	} else {
-		switch directive := directives[0]; {
+		switch {
 		case directive == "reducer-occurrences":
 			s.WriteString(strconv.Itoa(dm.Reducer.Occurrences))
 		case directive == "reducer-cumulative-length":
@@ -496,11 +584,11 @@ func (dm *DNSMessage) handleReducerDirectives(directives []string, s *strings.Bu
 	return nil
 }
 
-func (dm *DNSMessage) handleMachineLearningDirectives(directives []string, s *strings.Builder) error {
+func (dm *DNSMessage) handleMachineLearningDirectives(directive string, s *strings.Builder) error {
 	if dm.MachineLearning == nil {
 		s.WriteString("-")
 	} else {
-		switch directive := directives[0]; {
+		switch {
 		case directive == "ml-entropy":
 			s.WriteString(strconv.FormatFloat(dm.MachineLearning.Entropy, 'f', -1, 64))
 		case directive == "ml-length":
@@ -561,41 +649,12 @@ func (dm *DNSMessage) String(format []string, fieldDelimiter string, fieldBounda
 func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBoundary string) ([]byte, error) {
 	var s strings.Builder
 
-	for i, word := range format {
-		directives := strings.SplitN(word, ":", 2)
-		if RawTextDirective.MatchString(word) {
-			directives[0]=word
-		}
-		// fmt.Printf("ToTextLine: directive >%v<\n",directives[0])
-		switch directive := directives[0]; {
-		// default directives
-		case directive == "ttl":
-			if len(dm.DNS.DNSRRs.Answers) > 0 {
-				s.WriteString(strconv.Itoa(dm.DNS.DNSRRs.Answers[0].TTL))
-			} else {
-				s.WriteByte('-')
-			}
-		case directive == "answer":
-			if len(dm.DNS.DNSRRs.Answers) > 0 {
-				s.WriteString(dm.DNS.DNSRRs.Answers[0].Rdata)
-			} else {
-				s.WriteByte('-')
-			}
-		case directive == "edns-csubnet":
-			if len(dm.EDNS.Options) > 0 {
-				for _, opt := range dm.EDNS.Options {
-					if opt.Name == "CSUBNET" {
-						s.WriteString(opt.Data)
-						break
-					}
-				}
-			} else {
-				s.WriteByte('-')
-			}
-		case directive == "answercount":
-			s.WriteString(strconv.Itoa(len(dm.DNS.DNSRRs.Answers)))
-		case directive == "id":
-			s.WriteString(strconv.Itoa(dm.DNS.ID))
+	answers := dm.DNS.DNSRRs.Answers
+	qname := dm.DNS.Qname
+	flags := dm.DNS.Flags
+
+	for i, directive := range format {
+		switch {
 		case directive == "timestamp-rfc3339ns", directive == "timestamp":
 			s.WriteString(dm.DNSTap.TimestampRFC3339)
 		case directive == "timestamp-unixms":
@@ -607,8 +666,28 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 		case directive == "localtime":
 			ts := time.Unix(int64(dm.DNSTap.TimeSec), int64(dm.DNSTap.TimeNsec))
 			s.WriteString(ts.Format("2006-01-02 15:04:05.999999999"))
+		case directive == "qname":
+			if len(qname) == 0 {
+				s.WriteString(".")
+			} else {
+				if len(fieldDelimiter) > 0 {
+					if strings.Contains(qname, fieldDelimiter) {
+						qnameEscaped := qname
+						if strings.Contains(qname, fieldBoundary) {
+							qnameEscaped = strings.ReplaceAll(qnameEscaped, fieldBoundary, "\\"+fieldBoundary)
+						}
+						s.WriteString(fmt.Sprintf(fieldBoundary+"%s"+fieldBoundary, qnameEscaped))
+					} else {
+						s.WriteString(qname)
+					}
+				} else {
+					s.WriteString(dm.DNS.Qname)
+				}
+			}
 		case directive == "identity":
 			s.WriteString(dm.DNSTap.Identity)
+		case directive == "peer-name":
+			s.WriteString(dm.DNSTap.PeerName)
 		case directive == "version":
 			s.WriteString(dm.DNSTap.Version)
 		case directive == "extra":
@@ -623,10 +702,14 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			s.WriteString(dm.DNSTap.PolicyMatch)
 		case directive == "policy-value":
 			s.WriteString(dm.DNSTap.PolicyValue)
+		case directive == "query-zone":
+			s.WriteString(dm.DNSTap.QueryZone)
 		case directive == "operation":
 			s.WriteString(dm.DNSTap.Operation)
 		case directive == "rcode":
 			s.WriteString(dm.DNS.Rcode)
+		case directive == "id":
+			s.WriteString(strconv.Itoa(dm.DNS.ID))
 		case directive == "queryip":
 			s.WriteString(dm.NetworkInfo.QueryIP)
 		case directive == "queryport":
@@ -643,26 +726,10 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			s.WriteString(strconv.Itoa(dm.DNS.Length) + "b")
 		case directive == "length":
 			s.WriteString(strconv.Itoa(dm.DNS.Length))
-		case directive == "qname":
-			if len(dm.DNS.Qname) == 0 {
-				s.WriteString(".")
-			} else {
-				if len(fieldDelimiter) > 0 {
-					if strings.Contains(dm.DNS.Qname, fieldDelimiter) {
-						qname := dm.DNS.Qname
-						if strings.Contains(qname, fieldBoundary) {
-							qname = strings.ReplaceAll(qname, fieldBoundary, "\\"+fieldBoundary)
-						}
-						s.WriteString(fmt.Sprintf(fieldBoundary+"%s"+fieldBoundary, qname))
-					} else {
-						s.WriteString(dm.DNS.Qname)
-					}
-				} else {
-					s.WriteString(dm.DNS.Qname)
-				}
-			}
 		case directive == "qtype":
 			s.WriteString(dm.DNS.Qtype)
+		case directive == "qclass":
+			s.WriteString(dm.DNS.Qclass)
 		case directive == "latency":
 			s.WriteString(dm.DNSTap.LatencySec)
 		case directive == "malformed":
@@ -688,80 +755,112 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 				s.WriteByte('-')
 			}
 		case directive == "tc":
-			if dm.DNS.Flags.TC {
+			if flags.TC {
 				s.WriteString("TC")
 			} else {
 				s.WriteByte('-')
 			}
 		case directive == "aa":
-			if dm.DNS.Flags.AA {
+			if flags.AA {
 				s.WriteString("AA")
 			} else {
 				s.WriteByte('-')
 			}
 		case directive == "ra":
-			if dm.DNS.Flags.RA {
+			if flags.RA {
 				s.WriteString("RA")
 			} else {
 				s.WriteByte('-')
 			}
 		case directive == "ad":
-			if dm.DNS.Flags.AD {
+			if flags.AD {
 				s.WriteString("AD")
 			} else {
 				s.WriteByte('-')
 			}
+		case directive == "ttl":
+			if len(answers) > 0 {
+				s.WriteString(strconv.Itoa(answers[0].TTL))
+			} else {
+				s.WriteByte('-')
+			}
+		case directive == "answer":
+			if len(answers) > 0 {
+				s.WriteString(answers[0].Rdata)
+			} else {
+				s.WriteByte('-')
+			}
+		case directive == "answercount":
+			s.WriteString(strconv.Itoa(len(answers)))
+
+		case directive == "edns-csubnet":
+			if len(dm.EDNS.Options) > 0 {
+				for _, opt := range dm.EDNS.Options {
+					if opt.Name == "CSUBNET" {
+						s.WriteString(opt.Data)
+						break
+					}
+				}
+			} else {
+				s.WriteByte('-')
+			}
+
 		// more directives from collectors
 		case PdnsDirectives.MatchString(directive):
-			err := dm.handlePdnsDirectives(directives, &s)
+			err := dm.handlePdnsDirectives(directive, &s)
 			if err != nil {
 				return nil, err
 			}
 
 		// more directives from transformers
 		case ReducerDirectives.MatchString(directive):
-			err := dm.handleReducerDirectives(directives, &s)
+			err := dm.handleReducerDirectives(directive, &s)
 			if err != nil {
 				return nil, err
 			}
 		case GeoIPDirectives.MatchString(directive):
-			err := dm.handleGeoIPDirectives(directives, &s)
+			err := dm.handleGeoIPDirectives(directive, &s)
 			if err != nil {
 				return nil, err
 			}
 		case SuspiciousDirectives.MatchString(directive):
-			err := dm.handleSuspiciousDirectives(directives, &s)
+			err := dm.handleSuspiciousDirectives(directive, &s)
 			if err != nil {
 				return nil, err
 			}
 		case PublicSuffixDirectives.MatchString(directive):
-			err := dm.handlePublicSuffixDirectives(directives, &s)
+			err := dm.handlePublicSuffixDirectives(directive, &s)
 			if err != nil {
 				return nil, err
 			}
 		case ExtractedDirectives.MatchString(directive):
-			err := dm.handleExtractedDirectives(directives, &s)
+			err := dm.handleExtractedDirectives(directive, &s)
 			if err != nil {
 				return nil, err
 			}
 		case MachineLearningDirectives.MatchString(directive):
-			err := dm.handleMachineLearningDirectives(directives, &s)
+			err := dm.handleMachineLearningDirectives(directive, &s)
 			if err != nil {
 				return nil, err
 			}
 		case FilteringDirectives.MatchString(directive):
-			err := dm.handleFilteringDirectives(directives, &s)
+			err := dm.handleFilteringDirectives(directive, &s)
+			if err != nil {
+				return nil, err
+			}
+		case ATagsDirectives.MatchString(directive):
+			err := dm.handleATagsDirectives(directive, &s)
 			if err != nil {
 				return nil, err
 			}
 		case RawTextDirective.MatchString(directive):
-			// fmt.Printf("directive (%v) is RawTextDirective\n", directive)
-			// error unsupport directive for text format
 			directive = strings.Replace(directive, "{", "", -1)
 			directive = strings.Replace(directive, "}", "", -1)
 			s.WriteString(directive)
+
+		// handle invalid directive
 		default:
-			return nil, errors.New(ErrorUnexpectedDirective + word)
+			return nil, errors.New(ErrorUnexpectedDirective + directive)
 		}
 
 		if i < len(format)-1 {
@@ -770,7 +869,6 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			}
 		}
 	}
-
 	return []byte(s.String()), nil
 }
 
@@ -804,7 +902,7 @@ func (dm *DNSMessage) ToDNSTap(extended bool) ([]byte, error) {
 	mt := dnstap.Message_Type(dnstap.Message_Type_value[dm.DNSTap.Operation])
 
 	var sf dnstap.SocketFamily
-	if ipNet, valid := netlib.IPToInet[dm.NetworkInfo.Family]; valid {
+	if ipNet, valid := netutils.IPToInet[dm.NetworkInfo.Family]; valid {
 		sf = dnstap.SocketFamily(dnstap.SocketFamily_value[ipNet])
 	}
 	sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.NetworkInfo.Protocol])
@@ -816,7 +914,7 @@ func (dm *DNSMessage) ToDNSTap(extended bool) ([]byte, error) {
 	if dm.NetworkInfo.ResponsePort != "-" {
 		if port, err := strconv.Atoi(dm.NetworkInfo.ResponsePort); err != nil {
 			return nil, err
-		} else if port < 0 || port > math.MaxUint32 {
+		} else if port < 0 || port > 65535 {
 			return nil, errors.New("invalid response port value")
 		} else {
 			rport = uint32(port)
@@ -826,7 +924,7 @@ func (dm *DNSMessage) ToDNSTap(extended bool) ([]byte, error) {
 	if dm.NetworkInfo.QueryPort != "-" {
 		if port, err := strconv.Atoi(dm.NetworkInfo.QueryPort); err != nil {
 			return nil, err
-		} else if port < 0 || port > math.MaxUint32 {
+		} else if port < 0 || port > 65535 {
 			return nil, errors.New("invalid query port value")
 		} else {
 			qport = uint32(port)
@@ -839,7 +937,7 @@ func (dm *DNSMessage) ToDNSTap(extended bool) ([]byte, error) {
 	msg.SocketProtocol = &sp
 
 	reqIP := net.ParseIP(dm.NetworkInfo.QueryIP)
-	if dm.NetworkInfo.Family == netlib.ProtoIPv4 {
+	if dm.NetworkInfo.Family == netutils.ProtoIPv4 {
 		msg.QueryAddress = reqIP.To4()
 	} else {
 		msg.QueryAddress = reqIP.To16()
@@ -847,7 +945,7 @@ func (dm *DNSMessage) ToDNSTap(extended bool) ([]byte, error) {
 	msg.QueryPort = &qport
 
 	rspIP := net.ParseIP(dm.NetworkInfo.ResponseIP)
-	if dm.NetworkInfo.Family == netlib.ProtoIPv4 {
+	if dm.NetworkInfo.Family == netutils.ProtoIPv4 {
 		msg.ResponseAddress = rspIP.To4()
 	} else {
 		msg.ResponseAddress = rspIP.To16()
@@ -955,11 +1053,11 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 
 	// set source and destination IP
 	switch dm.NetworkInfo.Family {
-	case netlib.ProtoIPv4:
+	case netutils.ProtoIPv4:
 		eth.EthernetType = layers.EthernetTypeIPv4
 		ip4.SrcIP = net.ParseIP(srcIP)
 		ip4.DstIP = net.ParseIP(dstIP)
-	case netlib.ProtoIPv6:
+	case netutils.ProtoIPv6:
 		eth.EthernetType = layers.EthernetTypeIPv6
 		ip6.SrcIP = net.ParseIP(srcIP)
 		ip6.DstIP = net.ParseIP(dstIP)
@@ -971,24 +1069,24 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 	switch dm.NetworkInfo.Protocol {
 
 	// DNS over UDP
-	case netlib.ProtoUDP:
+	case netutils.ProtoUDP:
 		udp.SrcPort = layers.UDPPort(srcPort)
 		udp.DstPort = layers.UDPPort(dstPort)
 
 		// update iplayer
 		switch dm.NetworkInfo.Family {
-		case netlib.ProtoIPv4:
+		case netutils.ProtoIPv4:
 			ip4.Protocol = layers.IPProtocolUDP
 			udp.SetNetworkLayerForChecksum(ip4)
 			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip4)
-		case netlib.ProtoIPv6:
+		case netutils.ProtoIPv6:
 			ip6.NextHeader = layers.IPProtocolUDP
 			udp.SetNetworkLayerForChecksum(ip6)
 			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip6)
 		}
 
 	// DNS over TCP
-	case netlib.ProtoTCP:
+	case netutils.ProtoTCP:
 		tcp.SrcPort = layers.TCPPort(srcPort)
 		tcp.DstPort = layers.TCPPort(dstPort)
 		tcp.PSH = true
@@ -1000,11 +1098,11 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 
 		// update iplayer
 		switch dm.NetworkInfo.Family {
-		case netlib.ProtoIPv4:
+		case netutils.ProtoIPv4:
 			ip4.Protocol = layers.IPProtocolTCP
 			tcp.SetNetworkLayerForChecksum(ip4)
 			pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.DNS.Payload...)), tcp, ip4)
-		case netlib.ProtoIPv6:
+		case netutils.ProtoIPv6:
 			ip6.NextHeader = layers.IPProtocolTCP
 			tcp.SetNetworkLayerForChecksum(ip6)
 			pkt = append(pkt, gopacket.Payload(append(dnsLengthField, dm.DNS.Payload...)), tcp, ip6)
@@ -1018,11 +1116,11 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 
 		// update iplayer
 		switch dm.NetworkInfo.Family {
-		case netlib.ProtoIPv4:
+		case netutils.ProtoIPv4:
 			ip4.Protocol = layers.IPProtocolUDP
 			udp.SetNetworkLayerForChecksum(ip4)
 			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip4)
-		case netlib.ProtoIPv6:
+		case netutils.ProtoIPv6:
 			ip6.NextHeader = layers.IPProtocolUDP
 			udp.SetNetworkLayerForChecksum(ip6)
 			pkt = append(pkt, gopacket.Payload(dm.DNS.Payload), udp, ip6)
@@ -1037,15 +1135,235 @@ func (dm *DNSMessage) ToPacketLayer() ([]gopacket.SerializableLayer, error) {
 	return pkt, nil
 }
 
-func (dm *DNSMessage) Flatten() (ret map[string]interface{}, err error) {
-	// TODO perhaps panic when flattening fails, as it should always work.
-	var tmp []byte
-	if tmp, err = json.Marshal(dm); err != nil {
-		return
+func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
+	dnsFields := map[string]interface{}{
+		"dns.flags.aa":               dm.DNS.Flags.AA,
+		"dns.flags.ad":               dm.DNS.Flags.AD,
+		"dns.flags.qr":               dm.DNS.Flags.QR,
+		"dns.flags.ra":               dm.DNS.Flags.RA,
+		"dns.flags.tc":               dm.DNS.Flags.TC,
+		"dns.flags.rd":               dm.DNS.Flags.RD,
+		"dns.flags.cd":               dm.DNS.Flags.CD,
+		"dns.length":                 dm.DNS.Length,
+		"dns.malformed-packet":       dm.DNS.MalformedPacket,
+		"dns.id":                     dm.DNS.ID,
+		"dns.opcode":                 dm.DNS.Opcode,
+		"dns.qname":                  dm.DNS.Qname,
+		"dns.qtype":                  dm.DNS.Qtype,
+		"dns.qclass":                 dm.DNS.Qclass,
+		"dns.rcode":                  dm.DNS.Rcode,
+		"dnstap.identity":            dm.DNSTap.Identity,
+		"dnstap.latency":             dm.DNSTap.LatencySec,
+		"dnstap.operation":           dm.DNSTap.Operation,
+		"dnstap.timestamp-rfc3339ns": dm.DNSTap.TimestampRFC3339,
+		"dnstap.version":             dm.DNSTap.Version,
+		"dnstap.extra":               dm.DNSTap.Extra,
+		"dnstap.policy-rule":         dm.DNSTap.PolicyRule,
+		"dnstap.policy-type":         dm.DNSTap.PolicyType,
+		"dnstap.policy-action":       dm.DNSTap.PolicyAction,
+		"dnstap.policy-match":        dm.DNSTap.PolicyMatch,
+		"dnstap.policy-value":        dm.DNSTap.PolicyValue,
+		"dnstap.peer-name":           dm.DNSTap.PeerName,
+		"dnstap.query-zone":          dm.DNSTap.QueryZone,
+		"edns.dnssec-ok":             dm.EDNS.Do,
+		"edns.rcode":                 dm.EDNS.ExtendedRcode,
+		"edns.udp-size":              dm.EDNS.UDPSize,
+		"edns.version":               dm.EDNS.Version,
+		"network.family":             dm.NetworkInfo.Family,
+		"network.ip-defragmented":    dm.NetworkInfo.IPDefragmented,
+		"network.protocol":           dm.NetworkInfo.Protocol,
+		"network.query-ip":           dm.NetworkInfo.QueryIP,
+		"network.query-port":         dm.NetworkInfo.QueryPort,
+		"network.response-ip":        dm.NetworkInfo.ResponseIP,
+		"network.response-port":      dm.NetworkInfo.ResponsePort,
+		"network.tcp-reassembled":    dm.NetworkInfo.TCPReassembled,
 	}
-	json.Unmarshal(tmp, &ret)
-	ret, err = flat.Flatten(ret, nil)
-	return
+
+	// Add empty slices
+	if len(dm.DNS.DNSRRs.Answers) == 0 {
+		dnsFields["dns.resource-records.an"] = "-"
+	}
+	if len(dm.DNS.DNSRRs.Records) == 0 {
+		dnsFields["dns.resource-records.ar"] = "-"
+	}
+	if len(dm.DNS.DNSRRs.Nameservers) == 0 {
+		dnsFields["dns.resource-records.ns"] = "-"
+	}
+	if len(dm.EDNS.Options) == 0 {
+		dnsFields["edns.options"] = "-"
+	}
+
+	// Add DNSAnswer fields: "dns.resource-records.an.0.name": "google.nl"
+	// nolint: goconst
+	for i, an := range dm.DNS.DNSRRs.Answers {
+		prefixAn := "dns.resource-records.an." + strconv.Itoa(i)
+		dnsFields[prefixAn+".name"] = an.Name
+		dnsFields[prefixAn+".rdata"] = an.Rdata
+		dnsFields[prefixAn+".rdatatype"] = an.Rdatatype
+		dnsFields[prefixAn+".ttl"] = an.TTL
+		dnsFields[prefixAn+".class"] = an.Class
+	}
+	for i, ns := range dm.DNS.DNSRRs.Nameservers {
+		prefixNs := "dns.resource-records.ns." + strconv.Itoa(i)
+		dnsFields[prefixNs+".name"] = ns.Name
+		dnsFields[prefixNs+".rdata"] = ns.Rdata
+		dnsFields[prefixNs+".rdatatype"] = ns.Rdatatype
+		dnsFields[prefixNs+".ttl"] = ns.TTL
+		dnsFields[prefixNs+".class"] = ns.Class
+	}
+	for i, ar := range dm.DNS.DNSRRs.Records {
+		prefixAr := "dns.resource-records.ar." + strconv.Itoa(i)
+		dnsFields[prefixAr+".name"] = ar.Name
+		dnsFields[prefixAr+".rdata"] = ar.Rdata
+		dnsFields[prefixAr+".rdatatype"] = ar.Rdatatype
+		dnsFields[prefixAr+".ttl"] = ar.TTL
+		dnsFields[prefixAr+".class"] = ar.Class
+	}
+
+	// Add EDNSoptions fields: "edns.options.0.code": 10,
+	for i, opt := range dm.EDNS.Options {
+		prefixOpt := "edns.options." + strconv.Itoa(i)
+		dnsFields[prefixOpt+".code"] = opt.Code
+		dnsFields[prefixOpt+".data"] = opt.Data
+		dnsFields[prefixOpt+".name"] = opt.Name
+	}
+
+	// Add TransformDNSGeo fields
+	if dm.Geo != nil {
+		dnsFields["geoip.city"] = dm.Geo.City
+		dnsFields["geoip.continent"] = dm.Geo.Continent
+		dnsFields["geoip.country-isocode"] = dm.Geo.CountryIsoCode
+		dnsFields["geoip.as-number"] = dm.Geo.AutonomousSystemNumber
+		dnsFields["geoip.as-owner"] = dm.Geo.AutonomousSystemOrg
+	}
+
+	// Add TransformSuspicious fields
+	if dm.Suspicious != nil {
+		dnsFields["suspicious.score"] = dm.Suspicious.Score
+		dnsFields["suspicious.malformed-pkt"] = dm.Suspicious.MalformedPacket
+		dnsFields["suspicious.large-pkt"] = dm.Suspicious.LargePacket
+		dnsFields["suspicious.long-domain"] = dm.Suspicious.LongDomain
+		dnsFields["suspicious.slow-domain"] = dm.Suspicious.SlowDomain
+		dnsFields["suspicious.unallowed-chars"] = dm.Suspicious.UnallowedChars
+		dnsFields["suspicious.uncommon-qtypes"] = dm.Suspicious.UncommonQtypes
+		dnsFields["suspicious.excessive-number-labels"] = dm.Suspicious.ExcessiveNumberLabels
+		dnsFields["suspicious.domain"] = dm.Suspicious.Domain
+	}
+
+	// Add TransformPublicSuffix fields
+	if dm.PublicSuffix != nil {
+		dnsFields["publicsuffix.tld"] = dm.PublicSuffix.QnamePublicSuffix
+		dnsFields["publicsuffix.etld+1"] = dm.PublicSuffix.QnameEffectiveTLDPlusOne
+		dnsFields["publicsuffix.managed-icann"] = dm.PublicSuffix.ManagedByICANN
+	}
+
+	// Add TransformExtracted fields
+	if dm.Extracted != nil {
+		dnsFields["extracted.dns_payload"] = dm.Extracted.Base64Payload
+	}
+
+	// Add TransformReducer fields
+	if dm.Reducer != nil {
+		dnsFields["reducer.occurrences"] = dm.Reducer.Occurrences
+		dnsFields["reducer.cumulative-length"] = dm.Reducer.CumulativeLength
+	}
+
+	// Add TransformFiltering fields
+	if dm.Filtering != nil {
+		dnsFields["filtering.sample-rate"] = dm.Filtering.SampleRate
+	}
+
+	// Add TransformML fields
+	if dm.MachineLearning != nil {
+		dnsFields["ml.entropy"] = dm.MachineLearning.Entropy
+		dnsFields["ml.length"] = dm.MachineLearning.Length
+		dnsFields["ml.labels"] = dm.MachineLearning.Labels
+		dnsFields["ml.digits"] = dm.MachineLearning.Digits
+		dnsFields["ml.lowers"] = dm.MachineLearning.Lowers
+		dnsFields["ml.uppers"] = dm.MachineLearning.Uppers
+		dnsFields["ml.specials"] = dm.MachineLearning.Specials
+		dnsFields["ml.others"] = dm.MachineLearning.Others
+		dnsFields["ml.ratio-digits"] = dm.MachineLearning.RatioDigits
+		dnsFields["ml.ratio-letters"] = dm.MachineLearning.RatioLetters
+		dnsFields["ml.ratio-specials"] = dm.MachineLearning.RatioSpecials
+		dnsFields["ml.ratio-others"] = dm.MachineLearning.RatioOthers
+		dnsFields["ml.consecutive-chars"] = dm.MachineLearning.ConsecutiveChars
+		dnsFields["ml.consecutive-vowels"] = dm.MachineLearning.ConsecutiveVowels
+		dnsFields["ml.consecutive-digits"] = dm.MachineLearning.ConsecutiveDigits
+		dnsFields["ml.consecutive-consonants"] = dm.MachineLearning.ConsecutiveConsonants
+		dnsFields["ml.size"] = dm.MachineLearning.Size
+		dnsFields["ml.occurrences"] = dm.MachineLearning.Occurrences
+		dnsFields["ml.uncommon-qtypes"] = dm.MachineLearning.UncommonQtypes
+	}
+
+	// Add TransformATags fields
+	if dm.ATags != nil {
+		if len(dm.ATags.Tags) == 0 {
+			dnsFields["atags.tags"] = "-"
+		}
+		for i, tag := range dm.ATags.Tags {
+			dnsFields["atags.tags."+strconv.Itoa(i)] = tag
+		}
+	}
+
+	// Add PowerDNS collectors fields
+	if dm.PowerDNS != nil {
+		if len(dm.PowerDNS.Tags) == 0 {
+			dnsFields["powerdns.tags"] = "-"
+		}
+		for i, tag := range dm.PowerDNS.Tags {
+			dnsFields["powerdns.tags."+strconv.Itoa(i)] = tag
+		}
+		dnsFields["powerdns.original-request-subnet"] = dm.PowerDNS.OriginalRequestSubnet
+		dnsFields["powerdns.applied-policy"] = dm.PowerDNS.AppliedPolicy
+		dnsFields["powerdns.applied-policy-hit"] = dm.PowerDNS.AppliedPolicyHit
+		dnsFields["powerdns.applied-policy-kind"] = dm.PowerDNS.AppliedPolicyKind
+		dnsFields["powerdns.applied-policy-trigger"] = dm.PowerDNS.AppliedPolicyTrigger
+		dnsFields["powerdns.applied-policy-type"] = dm.PowerDNS.AppliedPolicyType
+		for mk, mv := range dm.PowerDNS.Metadata {
+			dnsFields["powerdns.metadata."+mk] = mv
+		}
+		dnsFields["powerdns.http-version"] = dm.PowerDNS.HTTPVersion
+	}
+
+	// relabeling ?
+	if dm.Relabeling != nil {
+		err := dm.ApplyRelabeling(dnsFields)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return dnsFields, nil
+}
+
+func (dm *DNSMessage) ApplyRelabeling(dnsFields map[string]interface{}) error {
+
+	for _, label := range dm.Relabeling.Rules {
+		regex := label.Regex
+		for key := range dnsFields {
+			if regex.MatchString(key) {
+				if label.Action == "rename" {
+					replacement := label.Replacement
+					if value, exists := dnsFields[replacement]; exists {
+						switch v := value.(type) {
+						case []string:
+							dnsFields[replacement] = append(v, convertToString(dnsFields[key]))
+						default:
+							dnsFields[replacement] = []string{convertToString(v), convertToString(dnsFields[key])}
+						}
+					} else {
+						dnsFields[replacement] = convertToString(dnsFields[key])
+					}
+				}
+
+				// delete on all case
+				delete(dnsFields, key)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
@@ -1113,7 +1431,7 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
 
 // map can be provided by user in the config
 // dns.qname:
-// match-source: "file://./testsdata/filtering_keep_domains_regex.txt"
+// match-source: "file://./tests/testsdata/filtering_keep_domains_regex.txt"
 // source-kind: "regexp_list"
 func matchUserMap(realValue, expectedValue reflect.Value) (bool, error) {
 	for _, opKey := range expectedValue.MapKeys() {
@@ -1523,7 +1841,7 @@ func GetFakeDNSMessage() DNSMessage {
 	dm.DNSTap.Identity = "collector"
 	dm.DNSTap.Operation = "CLIENT_QUERY"
 	dm.DNS.Type = DNSQuery
-	dm.DNS.Qname = "dns.collector"
+	dm.DNS.Qname = pkgconfig.ProgQname
 	dm.NetworkInfo.QueryIP = "1.2.3.4"
 	dm.NetworkInfo.QueryPort = "1234"
 	dm.NetworkInfo.ResponseIP = "4.3.2.1"
@@ -1540,8 +1858,8 @@ func GetFakeDNSMessageWithPayload() DNSMessage {
 	dnsquestion, _ := dnsmsg.Pack()
 
 	dm := GetFakeDNSMessage()
-	dm.NetworkInfo.Family = netlib.ProtoIPv4
-	dm.NetworkInfo.Protocol = netlib.ProtoUDP
+	dm.NetworkInfo.Family = netutils.ProtoIPv4
+	dm.NetworkInfo.Protocol = netutils.ProtoUDP
 	dm.DNS.Payload = dnsquestion
 	dm.DNS.Length = len(dnsquestion)
 	return dm
@@ -1560,4 +1878,19 @@ func GetReferenceDNSMessage() DNSMessage {
 	dm.Init()
 	dm.InitTransforms()
 	return dm
+}
+
+func convertToString(value interface{}) string {
+	switch v := value.(type) {
+	case int:
+		return strconv.Itoa(v)
+	case bool:
+		return strconv.FormatBool(v)
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64)
+	case string:
+		return v
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }

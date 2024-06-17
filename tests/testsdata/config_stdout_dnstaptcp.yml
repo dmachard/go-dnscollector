@@ -1,0 +1,16 @@
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routing-policy:
+      forward: [ console ]
+      dropped: []
+
+  - name: console
+    stdout:
+      mode: text

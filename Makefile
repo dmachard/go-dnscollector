@@ -2,12 +2,13 @@ BINARY_NAME := go-dnscollector
 
 GO_VERSION := $(shell go env GOVERSION | sed -n 's/go\([0-9]\+\.[0-9]\+\).*/\1/p')
 
-GO_LOGGER := 0.4.0
-GO_POWERDNS_PROTOBUF := 1.1.0
-GO_DNSTAP_PROTOBUF := 1.0.0
-GO_FRAMESTREAM := 0.7.0
-GO_CLIENTSYSLOG := 0.3.0
+GO_LOGGER := 1.0.0
+GO_POWERDNS_PROTOBUF := 1.1.1
+GO_DNSTAP_PROTOBUF := 1.0.1
+GO_FRAMESTREAM := 0.10.0
+GO_CLIENTSYSLOG := 0.4.0
 GO_TOPMAP := 1.0.0
+GO_NETUTILS := 0.4.0
 
 BUILD_TIME := $(shell LANG=en_US date +"%F_%T_%z")
 COMMIT := $(shell git rev-parse --short HEAD)
@@ -40,13 +41,14 @@ goversion: check-go
 	@echo "Go version: $(GO_VERSION)"
 
 # Installs project dependencies.
-dep: check-go
+dep: goversion
 	@go get github.com/dmachard/go-logger@v$(GO_LOGGER)
 	@go get github.com/dmachard/go-powerdns-protobuf@v$(GO_POWERDNS_PROTOBUF)
 	@go get github.com/dmachard/go-dnstap-protobuf@v$(GO_DNSTAP_PROTOBUF)
 	@go get github.com/dmachard/go-framestream@v$(GO_FRAMESTREAM)
 	@go get github.com/dmachard/go-clientsyslog@v$(GO_CLIENTSYSLOG)
 	@go get github.com/dmachard/go-topmap@v$(GO_TOPMAP)
+	@go get github.com/dmachard/go-netutils@v$(GO_NETUTILS)
 	@go mod edit -go=$(GO_VERSION)
 	@go mod tidy
 
@@ -70,13 +72,11 @@ lint:
 tests: check-go
 	@go test -race -cover -v
 	@go test ./pkgconfig/ -race -cover -v
-	@go test ./pkglinker/ -race -cover -v
-	@go test ./netlib/ -race -cover -v
-	@go test -timeout 90s ./dnsutils/ -race -cover -v
+	@go test ./pkginit/ -race -cover -v
+	@go test ./netutils/ -race -cover -v
+	@go test ./telemetry/ -race -cover -v
 	@go test -timeout 90s ./transformers/ -race -cover -v
-	@go test -timeout 90s ./collectors/ -race -cover -v
-	@go test -timeout 90s ./loggers/ -race -cover -v
-	@go test -timeout 90s ./processors/ -race -cover -v
+	@go test -timeout 180s ./workers/ -race -cover -v
 
 # Cleans the project using go clean.
 clean: check-go

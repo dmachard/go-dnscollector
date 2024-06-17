@@ -15,7 +15,6 @@ func TestReducer_Json(t *testing.T) {
 	// enable feature
 	config := pkgconfig.GetFakeConfigTransformers()
 
-	log := logger.New(false)
 	outChans := []chan dnsutils.DNSMessage{}
 
 	// get fake
@@ -24,14 +23,14 @@ func TestReducer_Json(t *testing.T) {
 
 	// init subproccesor
 
-	reducer := NewReducerSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
-	reducer.InitDNSMessage(&dm)
+	reducer := NewReducerTransform(config, logger.New(false), "test", 0, outChans)
+	reducer.repetitiveTrafficDetector(&dm)
 
 	// expected json
 	refJSON := `
 			{
 				"reducer": {
-				  "occurrences": 0,
+				  "occurrences": 1,
 				  "cumulative-length": 0
 				}
 			}
@@ -64,14 +63,16 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 	config.Reducer.RepetitiveTrafficDetector = true
 	config.Reducer.WatchInterval = 1
 
-	log := logger.New(false)
 	outChan := make(chan dnsutils.DNSMessage, 1)
 	outChans := []chan dnsutils.DNSMessage{}
 	outChans = append(outChans, outChan)
 
 	// init subproccesor
-	reducer := NewReducerSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
-	reducer.LoadActiveReducers()
+	reducer := NewReducerTransform(config, logger.New(false), "test", 0, outChans)
+	subtransforms, _ := reducer.GetTransforms()
+	if len(subtransforms) != 1 {
+		t.Errorf("invalid number of subtransforms enabled")
+	}
 
 	// malformed DNS message
 	testcases := []struct {
@@ -147,12 +148,16 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 		},
 	}
 
+	time.Sleep(1 * time.Second)
+
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 
 			for _, dmIn := range tc.dnsMessagesIn {
-				reducer.InitDNSMessage(&dmIn)
-				ret := reducer.ProcessDNSMessage(&dmIn)
+				ret, err := reducer.repetitiveTrafficDetector(&dmIn)
+				if err != nil {
+					t.Errorf("transform error - %v", err)
+				}
 				if ret != ReturnDrop {
 					t.Errorf("DNS message should be dropped")
 				}
@@ -178,14 +183,16 @@ func TestReducer_QnamePlusOne(t *testing.T) {
 	config.Reducer.QnamePlusOne = true
 	config.Reducer.WatchInterval = 1
 
-	log := logger.New(false)
 	outChan := make(chan dnsutils.DNSMessage, 1)
 	outChans := []chan dnsutils.DNSMessage{}
 	outChans = append(outChans, outChan)
 
 	// init subproccesor
-	reducer := NewReducerSubprocessor(config, logger.New(false), "test", 0, outChans, log.Info, log.Error)
-	reducer.LoadActiveReducers()
+	reducer := NewReducerTransform(config, logger.New(false), "test", 0, outChans)
+	subtransforms, _ := reducer.GetTransforms()
+	if len(subtransforms) != 1 {
+		t.Errorf("invalid number of subtransforms enabled")
+	}
 
 	testcases := []struct {
 		name           string
@@ -219,8 +226,10 @@ func TestReducer_QnamePlusOne(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			for _, dmIn := range tc.dnsMessagesIn {
-				reducer.InitDNSMessage(&dmIn)
-				ret := reducer.ProcessDNSMessage(&dmIn)
+				ret, err := reducer.repetitiveTrafficDetector(&dmIn)
+				if err != nil {
+					t.Errorf("transform error - %v", err)
+				}
 				if ret != ReturnDrop {
 					t.Errorf("DNS message should be dropped")
 				}

@@ -1,0 +1,12 @@
+
+services:
+  fluentd:
+    container_name: fluentd
+    image: fluent/fluentd:v1.16-debian-2
+    user: 1000:1000
+    volumes:
+      - ./data:/fluentd/log
+    ports:
+      - "24224:24224/tcp"
+      - "24224:24224/udp"
+    restart: unless-stopped

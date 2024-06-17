@@ -1,31 +1,48 @@
 package pkgconfig
 
+import (
+	"reflect"
+
+	"github.com/creasty/defaults"
+)
+
 type ConfigGlobal struct {
-	TextFormat          string `yaml:"text-format"`
-	TextFormatDelimiter string `yaml:"text-format-delimiter"`
-	TextFormatSplitter string `yaml:"text-format-splitter"`
-	TextFormatBoundary  string `yaml:"text-format-boundary"`
+	TextFormat          string `yaml:"text-format" default:"timestamp identity operation rcode queryip queryport family protocol length-unit qname qtype latency"`
+	TextFormatDelimiter string `yaml:"text-format-delimiter" default:" "`
+	TextFormatSplitter  string `yaml:"text-format-splitter" default:" "`
+	TextFormatBoundary  string `yaml:"text-format-boundary" default:"\""`
 	Trace               struct {
-		Verbose      bool   `yaml:"verbose"`
-		LogMalformed bool   `yaml:"log-malformed"`
-		Filename     string `yaml:"filename"`
-		MaxSize      int    `yaml:"max-size"`
-		MaxBackups   int    `yaml:"max-backups"`
+		Verbose      bool   `yaml:"verbose" default:"false"`
+		LogMalformed bool   `yaml:"log-malformed" default:"false"`
+		Filename     string `yaml:"filename" default:""`
+		MaxSize      int    `yaml:"max-size" default:"10"`
+		MaxBackups   int    `yaml:"max-backups" default:"10"`
 	} `yaml:"trace"`
-	ServerIdentity string `yaml:"server-identity"`
+	ServerIdentity string `yaml:"server-identity" default:""`
+	PidFile        string `yaml:"pid-file" default:""`
+	Worker         struct {
+		InternalMonitor   int `yaml:"interval-monitor" default:"10"`
+		ChannelBufferSize int `yaml:"buffer-size" default:"4096"`
+	} `yaml:"worker"`
+	Telemetry struct {
+		Enabled         bool   `yaml:"enabled" default:"true"`
+		WebPath         string `yaml:"web-path" default:"/metrics"`
+		WebListen       string `yaml:"web-listen" default:":9165"`
+		PromPrefix      string `yaml:"prometheus-prefix" default:"dnscollector_exporter"`
+		TLSSupport      bool   `yaml:"tls-support" default:"false"`
+		TLSCertFile     string `yaml:"tls-cert-file" default:""`
+		TLSKeyFile      string `yaml:"tls-key-file" default:""`
+		ClientCAFile    string `yaml:"client-ca-file" default:""`
+		BasicAuthEnable bool   `yaml:"basic-auth-enable" default:"false"`
+		BasicAuthLogin  string `yaml:"basic-auth-login" default:"admin"`
+		BasicAuthPwd    string `yaml:"basic-auth-pwd" default:"changeme"`
+	} `yaml:"telemetry"`
 }
 
 func (c *ConfigGlobal) SetDefault() {
-	// global config
-	c.TextFormat = "timestamp identity operation rcode queryip queryport family protocol length-unit qname qtype latency"
-	c.TextFormatDelimiter = " "
-	c.TextFormatSplitter = " "
-	c.TextFormatBoundary = "\""
+	defaults.Set(c)
+}
 
-	c.Trace.Verbose = false
-	c.Trace.LogMalformed = false
-	c.Trace.Filename = ""
-	c.Trace.MaxSize = 10
-	c.Trace.MaxBackups = 10
-	c.ServerIdentity = ""
+func (c *ConfigGlobal) Check(userCfg map[string]interface{}) error {
+	return CheckConfigWithTags(reflect.ValueOf(*c), userCfg)
 }

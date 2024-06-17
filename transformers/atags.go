@@ -6,52 +6,28 @@ import (
 	"github.com/dmachard/go-logger"
 )
 
-type ATagsProcessor struct {
-	config      *pkgconfig.ConfigTransformers
-	logger      *logger.Logger
-	name        string
-	instance    int
-	outChannels []chan dnsutils.DNSMessage
-	logInfo     func(msg string, v ...interface{})
-	logError    func(msg string, v ...interface{})
+type ATagsTransform struct {
+	GenericTransformer
 }
 
-func NewATagsSubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{})) ATagsProcessor {
-	s := ATagsProcessor{
-		config:      config,
-		logger:      logger,
-		name:        name,
-		instance:    instance,
-		outChannels: outChannels,
-		logInfo:     logInfo,
-		logError:    logError,
+func NewATagsTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, nextWorkers []chan dnsutils.DNSMessage) *ATagsTransform {
+	t := &ATagsTransform{GenericTransformer: NewTransformer(config, logger, "atags", name, instance, nextWorkers)}
+	return t
+}
+
+func (t *ATagsTransform) GetTransforms() ([]Subtransform, error) {
+	subtransforms := []Subtransform{}
+	if len(t.config.ATags.AddTags) > 0 {
+		subtransforms = append(subtransforms, Subtransform{name: "atags:add", processFunc: t.addTags})
 	}
-
-	return s
+	return subtransforms, nil
 }
 
-func (p *ATagsProcessor) ReloadConfig(config *pkgconfig.ConfigTransformers) {
-	p.config = config
-}
-
-func (p *ATagsProcessor) InitDNSMessage(dm *dnsutils.DNSMessage) {
+func (t *ATagsTransform) addTags(dm *dnsutils.DNSMessage) (int, error) {
 	if dm.ATags == nil {
-		dm.ATags = &dnsutils.TransformATags{
-			Tags: []string{},
-		}
-
+		dm.ATags = &dnsutils.TransformATags{Tags: []string{}}
 	}
-}
 
-func (p *ATagsProcessor) IsEnabled() bool {
-	return p.config.ATags.Enable
-}
-
-func (p *ATagsProcessor) AddTags(dm *dnsutils.DNSMessage) int {
-	if p.config.ATags.Enable {
-		dm.ATags.Tags = append(dm.ATags.Tags, p.config.ATags.Tags...)
-	}
-	return ReturnSuccess
+	dm.ATags.Tags = append(dm.ATags.Tags, t.config.ATags.AddTags...)
+	return ReturnKeep, nil
 }

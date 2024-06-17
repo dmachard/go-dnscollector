@@ -1,0 +1,22 @@
+
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routing-policy:
+      forward: [ elastic]
+      dropped: []
+
+  - name: elastic
+    elasticsearch:
+      server: "http://192.168.1.220:9200/"
+      index:  "dnscollector"
+      bulk-size: 5242880
+      flush-interval: 10
+      compression: gzip
+      bulk-channel-size: 10

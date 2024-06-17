@@ -2,31 +2,53 @@
 # Logger: Fluentd Client
 
 Fluentd client to remote server or unix socket.
-
-* to remote fluentd collector or unix socket
-* [msgpask](https://msgpack.org/)
-* tls support
+Based on [IBM/fluent-forward-go](https://github.com/IBM/fluent-forward-go) library
 
 Options:
 
-* `transport`: (string) network transport to use: `tcp`|`unix`|`tcp+tls`
-* `remote-address`: (string) remote address
-* `remote-port`: (integer) remote tcp port
-* `sock-path` **DEPRECATED, replaced by remote-address**: (string) unix socket path
-* `connect-timeout`: (integer) connect timeout in second
-* `retry-interval`: (integer) interval in second between retry reconnect
-* `flush-interval`: (integer) interval in second before to flush the buffer
-* `tag`: (string) tag name
-* `tls-support` **DEPRECATED, replaced with tcp+tls flag on transport**: (boolean) enable tls
-* `tls-insecure`: (boolean) insecure skip verify
-* `tls-min-version`: (string) min tls version, default to 1.2
-* `ca-file`: (string) provide CA file to verify the server certificate
-* `cert-file`: (string) provide client certificate file for mTLS
-* `key-file`: (string) provide client private key file for mTLS
-* `buffer-size`: (integer) how many DNS messages will be buffered before being sent
-* `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
+* `transport` (string)
+  > network transport to use: `tcp`|`unix`|`tcp+tls`.
+  > Specifies the transport ot use.
 
-Default values:
+* `remote-address` (string)
+  > Specifies the remote address to connect to.
+
+* `remote-port` (integer)
+  > Specifies the remote TCP port to connect to.
+
+* `connect-timeout` (integer)
+  > Specifies the maximum time to wait for a connection attempt to complete.
+
+* `retry-interval` (integer)
+  > Specifies the interval between attempts to reconnect in case of connection failure.
+
+* `flush-interval` (integer)
+  > Specifies the interval between buffer flushes.
+
+* `tag` (string) tag name.
+  > Specifies the tag to use.
+
+* `tls-insecure` (boolean)
+  > If set to true, skip verification of server certificate.
+
+* `tls-min-version` (string)
+  > Specifies the minimum TLS version that the server will support.
+
+* `ca-file` (string)
+  > Specifies the path to the CA (Certificate Authority) file used to verify the server's certificate.
+
+* `cert-file` (string)
+  > Specifies the path to the certificate file to be used. This is a required parameter if TLS support is enabled.
+
+* `key-file` (string)
+  > Specifies the path to the key file corresponding to the certificate file.
+  > This is a required parameter if TLS support is enabled.
+
+* `chan-buffer-size` (int)
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
+
+Defaults:
 
 ```yaml
 fluentd:
@@ -36,12 +58,12 @@ fluentd:
   connect-timeout: 5
   retry-interval: 10
   flush-interval: 30
-  tag: "dns.collector"
+  tag: dns.collector
   tls-insecure: false
-  tls-min-version: 1.2
+  tls-min-version: "1.2"
+  tls-min-version: ""
   ca-file: ""
   cert-file: ""
   key-file: ""
-  buffer-size: 100
-  chan-buffer-size: 65535
+  chan-buffer-size: 0
 ```

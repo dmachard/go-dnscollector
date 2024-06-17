@@ -1,0 +1,21 @@
+
+services:
+  loki:
+    image: grafana/loki:3.0.0
+    user: "1000:1000"
+    ports:
+      - "3100:3100"
+    command: 
+     - '--config.file=/etc/loki/config.yaml'
+    volumes:
+      - ./data:/tmp/loki
+      - ./loki-config.yaml:/etc/loki/config.yaml
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    user: "1000:1000"
+    ports:
+      - "3000:3000/tcp"
+    volumes:
+      - ./datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - ./grafana.ini:/etc/grafana/grafana.ini

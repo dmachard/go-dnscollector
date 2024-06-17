@@ -1,0 +1,29 @@
+# Example 20: Detected repetitive traffic and log once
+#
+
+# If turned on, debug messages are printed in the standard output
+global:
+  trace:
+    verbose: true
+
+multiplexer:
+  collectors:
+    - name: tap
+      dnstap:
+        listen-ip: 0.0.0.0
+        listen-port: 6000
+      transforms:
+        reducer:
+          repetitive-traffic-detector: true
+          qname-plus-one: false
+          watch-interval: 5
+
+  loggers:
+    - name: console
+      stdout:
+        mode: text
+        text-format: "timestamp-rfc3339ns identity operation rcode queryip qname qtype reducer-occurrences reducer-cumulative-length"
+
+  routes:
+    - from: [ tap ]
+      to: [ console ]

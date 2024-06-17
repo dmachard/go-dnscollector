@@ -1,0 +1,16 @@
+
+services:
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    user: "1000:1000"
+    ports:
+      - "9090:9090/tcp"
+    volumes:
+      - ./data:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=365d'
+      - '--web.enable-lifecycle'

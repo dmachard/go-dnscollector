@@ -1,7 +1,6 @@
 package transformers
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -11,102 +10,53 @@ import (
 )
 
 type SuspiciousTransform struct {
-	config                *pkgconfig.ConfigTransformers
-	logger                *logger.Logger
-	name                  string
-	CommonQtypes          map[string]bool
+	GenericTransformer
+	commonQtypes          map[string]bool
 	whitelistDomainsRegex map[string]*regexp.Regexp
-	instance              int
-	outChannels           []chan dnsutils.DNSMessage
-	logInfo               func(msg string, v ...interface{})
-	logError              func(msg string, v ...interface{})
 }
 
-func NewSuspiciousSubprocessor(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string,
-	instance int, outChannels []chan dnsutils.DNSMessage,
-	logInfo func(msg string, v ...interface{}), logError func(msg string, v ...interface{}),
-) SuspiciousTransform {
-	d := SuspiciousTransform{
-		config:                config,
-		logger:                logger,
-		name:                  name,
-		CommonQtypes:          make(map[string]bool),
-		whitelistDomainsRegex: make(map[string]*regexp.Regexp),
-		instance:              instance,
-		outChannels:           outChannels,
-		logInfo:               logInfo,
-		logError:              logError,
-	}
-
-	d.ReadConfig()
-
-	return d
+func NewSuspiciousTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, nextWorkers []chan dnsutils.DNSMessage) *SuspiciousTransform {
+	t := &SuspiciousTransform{GenericTransformer: NewTransformer(config, logger, "suspicious", name, instance, nextWorkers)}
+	t.commonQtypes = make(map[string]bool)
+	t.whitelistDomainsRegex = make(map[string]*regexp.Regexp)
+	return t
 }
 
-func (p *SuspiciousTransform) ReadConfig() {
+func (t *SuspiciousTransform) GetTransforms() ([]Subtransform, error) {
+	subtransforms := []Subtransform{}
+
 	// cleanup maps
-	for key := range p.CommonQtypes {
-		delete(p.CommonQtypes, key)
+	for key := range t.commonQtypes {
+		delete(t.commonQtypes, key)
 	}
-	for key := range p.whitelistDomainsRegex {
-		delete(p.whitelistDomainsRegex, key)
+	for key := range t.whitelistDomainsRegex {
+		delete(t.whitelistDomainsRegex, key)
 	}
 
 	// load maps
-	for _, v := range p.config.Suspicious.CommonQtypes {
-		p.CommonQtypes[v] = true
+	for _, v := range t.config.Suspicious.CommonQtypes {
+		t.commonQtypes[v] = true
 	}
-	for _, v := range p.config.Suspicious.WhitelistDomains {
-		p.whitelistDomainsRegex[v] = regexp.MustCompile(v)
+	for _, v := range t.config.Suspicious.WhitelistDomains {
+		t.whitelistDomainsRegex[v] = regexp.MustCompile(v)
 	}
-}
 
-func (p *SuspiciousTransform) ReloadConfig(config *pkgconfig.ConfigTransformers) {
-	p.config = config
-
-	p.ReadConfig()
-}
-
-func (p *SuspiciousTransform) IsEnabled() bool {
-	return p.config.Suspicious.Enable
-}
-
-func (p *SuspiciousTransform) LogInfo(msg string, v ...interface{}) {
-	log := fmt.Sprintf("suspicious#%d - ", p.instance)
-	p.logInfo(log+msg, v...)
-}
-
-func (p *SuspiciousTransform) LogError(msg string, v ...interface{}) {
-	log := fmt.Sprintf("suspicious#%d - ", p.instance)
-	p.logError(log+msg, v...)
-}
-
-func (p *SuspiciousTransform) InitDNSMessage(dm *dnsutils.DNSMessage) {
-	if dm.Suspicious == nil {
-		dm.Suspicious = &dnsutils.TransformSuspicious{
-			Score:                 0.0,
-			MalformedPacket:       false,
-			LargePacket:           false,
-			LongDomain:            false,
-			SlowDomain:            false,
-			UnallowedChars:        false,
-			UncommonQtypes:        false,
-			ExcessiveNumberLabels: false,
-		}
+	if t.config.Suspicious.Enable {
+		subtransforms = append(subtransforms, Subtransform{name: "suspicious:check", processFunc: t.checkIfSuspicious})
 	}
+	return subtransforms, nil
 }
 
-func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DNSMessage) {
+func (t *SuspiciousTransform) checkIfSuspicious(dm *dnsutils.DNSMessage) (int, error) {
 
 	if dm.Suspicious == nil {
-		p.LogError("transformer is not properly initialized")
-		return
+		dm.Suspicious = &dnsutils.TransformSuspicious{}
 	}
 
 	// ignore some domains ?
-	for _, d := range p.whitelistDomainsRegex {
+	for _, d := range t.whitelistDomainsRegex {
 		if d.MatchString(dm.DNS.Qname) {
-			return
+			return ReturnKeep, nil
 		}
 	}
 
@@ -117,41 +67,43 @@ func (p *SuspiciousTransform) CheckIfSuspicious(dm *dnsutils.DNSMessage) {
 	}
 
 	// long domain name ?
-	if len(dm.DNS.Qname) > p.config.Suspicious.ThresholdQnameLen {
+	if len(dm.DNS.Qname) > t.config.Suspicious.ThresholdQnameLen {
 		dm.Suspicious.Score += 1.0
 		dm.Suspicious.LongDomain = true
 	}
 
 	// large packet size ?
-	if dm.DNS.Length > p.config.Suspicious.ThresholdPacketLen {
+	if dm.DNS.Length > t.config.Suspicious.ThresholdPacketLen {
 		dm.Suspicious.Score += 1.0
 		dm.Suspicious.LargePacket = true
 	}
 
 	// slow domain name resolution ?
-	if dm.DNSTap.Latency > p.config.Suspicious.ThresholdSlow {
+	if dm.DNSTap.Latency > t.config.Suspicious.ThresholdSlow {
 		dm.Suspicious.Score += 1.0
 		dm.Suspicious.SlowDomain = true
 	}
 
 	// uncommon qtype?
-	if _, found := p.CommonQtypes[dm.DNS.Qtype]; !found {
+	if _, found := t.commonQtypes[dm.DNS.Qtype]; !found {
 		dm.Suspicious.Score += 1.0
 		dm.Suspicious.UncommonQtypes = true
 	}
 
 	// count the number of labels in qname
-	if strings.Count(dm.DNS.Qname, ".") > p.config.Suspicious.ThresholdMaxLabels {
+	if strings.Count(dm.DNS.Qname, ".") > t.config.Suspicious.ThresholdMaxLabels {
 		dm.Suspicious.Score += 1.0
 		dm.Suspicious.ExcessiveNumberLabels = true
 	}
 
 	// search for unallowed characters
-	for _, v := range p.config.Suspicious.UnallowedChars {
+	for _, v := range t.config.Suspicious.UnallowedChars {
 		if strings.Contains(dm.DNS.Qname, v) {
 			dm.Suspicious.Score += 1.0
 			dm.Suspicious.UnallowedChars = true
 			break
 		}
 	}
+
+	return ReturnKeep, nil
 }

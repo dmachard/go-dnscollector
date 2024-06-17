@@ -14,13 +14,30 @@ For config examples, take a look to the following links:
 
 Options:
 
-- `watch-dir` (str) directory to watch for pcap files ingest. Defaults to `/tmp`.
+* `watch-dir` (str)
   > Specifies the directory where pcap files are monitored for ingestion.
-- `watch-mode` (str) watch the directory pcap or dnstap file. Defaults to `pcap`.
-  >  `*.pcap` extension or dnstap stream with `*.fstrm` extension are expected.
-- `pcap-dns-port` (int) dns source or destination port. Defaults port to `53`.
-  > Expects a port number use for DNS communication.
-- `delete-after:` (boolean) delete pcap file after ingest. Default to `false`.
+
+* `watch-mode` (str)
+  >  Watch the directory pcap or dnstap file. `*.pcap` extension or dnstap stream with `*.fstrm` extension are expected.
+
+* `pcap-dns-port` (int)
+  > Expects a source or destination port number use for DNS communication.
+
+* `delete-after:` (boolean)
   > Determines whether the pcap file should be deleted after ingestion.
-- `chan-buffer-size` (int) incoming channel size, number of packet before to drop it. Default to `65535`.
-  > Specifies the maximum number of packets that can be buffered before dropping additional packets.
+
+* `chan-buffer-size` (int)
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
+
+Defaults:
+
+```yaml
+- name: ingest
+  file-ingestor:
+    watch-dir: /tmp
+    watch-mode: pcap
+    pcap-dns-port: 53
+    delete-after: false
+    chan-buffer-size: 0
+```

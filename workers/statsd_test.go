@@ -1,0 +1,45 @@
+package workers
+
+import (
+	"net"
+	"testing"
+
+	"github.com/dmachard/go-dnscollector/dnsutils"
+	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-logger"
+	"github.com/dmachard/go-netutils"
+)
+
+func TestStatsdRun(t *testing.T) {
+	// init logger
+	config := pkgconfig.GetDefaultConfig()
+	config.Loggers.Statsd.FlushInterval = 1
+
+	g := NewStatsdClient(config, logger.New(false), "test")
+
+	// fake msgpack receiver
+	fakeRcvr, err := net.ListenPacket(netutils.SocketUDP, "127.0.0.1:8125")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer fakeRcvr.Close()
+
+	// start the logger
+	go g.StartCollect()
+
+	// send fake dns message to logger
+	dm := dnsutils.GetFakeDNSMessage()
+	g.GetInputChannel() <- dm
+
+	// read data on fake server side
+	buf := make([]byte, 4096)
+	n, _, err := fakeRcvr.ReadFrom(buf)
+	if err != nil {
+		t.Errorf("error to read data: %s", err)
+	}
+
+	if n == 0 {
+		t.Errorf("no data received")
+	}
+
+}

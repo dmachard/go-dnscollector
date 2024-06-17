@@ -1,16 +1,20 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 
-	"github.com/dmachard/go-dnscollector/dnsutils"
+	_ "net/http/pprof"
+
 	"github.com/dmachard/go-dnscollector/pkgconfig"
-	"github.com/dmachard/go-dnscollector/pkglinker"
-	"github.com/dmachard/go-dnscollector/pkgutils"
+	"github.com/dmachard/go-dnscollector/pkginit"
+	"github.com/dmachard/go-dnscollector/telemetry"
+	"github.com/dmachard/go-dnscollector/workers"
 	"github.com/dmachard/go-logger"
 	"github.com/natefinch/lumberjack"
 	"github.com/prometheus/common/version"
@@ -44,12 +48,51 @@ func InitLogger(logger *logger.Logger, config *pkgconfig.Config) {
 	logger.SetVerbose(config.Global.Trace.Verbose)
 }
 
+func createPIDFile(pidFilePath string) (string, error) {
+	if _, err := os.Stat(pidFilePath); err == nil {
+		pidBytes, err := os.ReadFile(pidFilePath)
+		if err != nil {
+			return "", fmt.Errorf("failed to read PID file: %w", err)
+		}
+
+		pid, err := strconv.Atoi(string(pidBytes))
+		if err != nil {
+			return "", fmt.Errorf("invalid PID in PID file: %w", err)
+		}
+
+		if process, err := os.FindProcess(pid); err == nil {
+			if err := process.Signal(syscall.Signal(0)); err == nil {
+				return "", fmt.Errorf("process with PID %d is already running", pid)
+			}
+		}
+	}
+
+	pid := os.Getpid()
+	pidStr := strconv.Itoa(pid)
+	err := os.WriteFile(pidFilePath, []byte(pidStr), 0644)
+	if err != nil {
+		return "", fmt.Errorf("failed to write PID file: %w", err)
+	}
+	return pidStr, nil
+}
+
+func removePIDFile(config *pkgconfig.Config) {
+	if config.Global.PidFile != "" {
+		os.Remove(config.Global.PidFile)
+	}
+}
+
 func main() {
 	args := os.Args[1:] // Ignore the first argument (the program name)
 
 	verFlag := false
 	configPath := "./config.yml"
 	testFlag := false
+
+	// Server for pprof
+	// go func() {
+	// 	fmt.Println(http.ListenAndServe("localhost:9999", nil))
+	// }()
 
 	// no more use embedded golang flags...
 	// external lib like tcpassembly can set some uneeded flags too...
@@ -88,36 +131,52 @@ func main() {
 	// create logger
 	logger := logger.New(true)
 
-	// get DNSMessage flat model
-	dmRef := dnsutils.GetReferenceDNSMessage()
-	config, err := pkgutils.LoadConfig(configPath, dmRef)
+	// load config
+	config, err := pkgconfig.LoadConfig(configPath)
 	if err != nil {
-		fmt.Printf("config error: %v\n", err)
+		fmt.Printf("main - config error: %v\n", err)
 		os.Exit(1)
+	}
+
+	// If PID file is specified in the config, create it
+	if config.Global.PidFile != "" {
+		pid, err := createPIDFile(config.Global.PidFile)
+		if err != nil {
+			fmt.Printf("main - PID file error: %v\n", err)
+			os.Exit(1)
+		}
+		logger.Info("main - write pid=%s to file=%s", pid, config.Global.PidFile)
 	}
 
 	// init logger
 	InitLogger(logger, config)
 	logger.Info("main - version=%s revision=%s", version.Version, version.Revision)
-	logger.Info("main - starting dns-collector...")
+
+	// // telemetry
+	if config.Global.Telemetry.Enabled {
+		logger.Info("main - telemetry enabled on local address: %s", config.Global.Telemetry.WebListen)
+	}
+	promServer, metrics, errTelemetry := telemetry.InitTelemetryServer(config, logger)
 
 	// init active collectors and loggers
-	mapLoggers := make(map[string]pkgutils.Worker)
-	mapCollectors := make(map[string]pkgutils.Worker)
+	mapLoggers := make(map[string]workers.Worker)
+	mapCollectors := make(map[string]workers.Worker)
 
 	// running mode,
 	// multiplexer ?
-	if pkglinker.IsMuxEnabled(config) {
-		logger.Info("main - multiplexer mode enabled")
-		pkglinker.InitMultiplexer(mapLoggers, mapCollectors, config, logger)
+	if pkginit.IsMuxEnabled(config) {
+		logger.Info("main - running in multiplexer mode")
+		logger.Warning("main - The multiplexer mode is deprecated. Please switch to the pipelines mode.")
+		pkginit.InitMultiplexer(mapLoggers, mapCollectors, config, logger)
 	}
 
 	// or pipeline ?
-	if len(config.Pipelines) > 0 {
-		logger.Info("main - pipelines mode enabled")
-		err := pkglinker.InitPipelines(mapLoggers, mapCollectors, config, logger)
+	if pkginit.IsPipelinesEnabled(config) {
+		logger.Info("main - running in pipeline mode")
+		err := pkginit.InitPipelines(mapLoggers, mapCollectors, config, logger, metrics)
 		if err != nil {
 			logger.Error("main - %s", err.Error())
+			removePIDFile(config)
 			os.Exit(1)
 		}
 	}
@@ -132,27 +191,46 @@ func main() {
 	go func() {
 		for {
 			select {
+			case err := <-errTelemetry:
+				logger.Error("main - unable to start telemetry: %v", err)
+				removePIDFile(config)
+				os.Exit(1)
+
 			case <-sigHUP:
-				logger.Info("main - SIGHUP received")
+				logger.Warning("main - SIGHUP received")
 
 				// read config
-				err := pkgutils.ReloadConfig(configPath, config, dmRef)
+				err := pkgconfig.ReloadConfig(configPath, config)
 				if err != nil {
-					panic(fmt.Sprintf("main - reload config error:  %v", err))
+					logger.Error("main - reload config error:  %v", err)
+					removePIDFile(config)
+					os.Exit(1)
 				}
 
 				// reload logger and multiplexer
 				InitLogger(logger, config)
-				if pkglinker.IsMuxEnabled(config) {
-					pkglinker.ReloadMultiplexer(mapLoggers, mapCollectors, config, logger)
+				if pkginit.IsMuxEnabled(config) {
+					pkginit.ReloadMultiplexer(mapLoggers, mapCollectors, config, logger)
+				}
+				if pkginit.IsPipelinesEnabled(config) {
+					pkginit.ReloadPipelines(mapLoggers, mapCollectors, config, logger)
 				}
 
 			case <-sigTerm:
-				logger.Info("main - exiting...")
+				logger.Warning("main - exiting...")
 
-				// stop all workers
-				logger.Info("main - stopping...")
+				// gracefully shutdown the HTTP server
+				if config.Global.Telemetry.Enabled {
+					logger.Info("main - telemetry is stopping")
+					metrics.Stop()
 
+					if err := promServer.Shutdown(context.Background()); err != nil {
+						logger.Error("main - telemetry error shutting down http server - %s", err.Error())
+					}
+
+				}
+
+				// and stop all workers
 				for _, c := range mapCollectors {
 					c.Stop()
 				}
@@ -164,7 +242,6 @@ func main() {
 				// unblock main function
 				done <- true
 
-				os.Exit(0)
 			}
 		}
 	}()
@@ -172,21 +249,21 @@ func main() {
 	if testFlag {
 		// We've parsed the config and are ready to start, so the config is good enough
 		logger.Info("main - config OK!")
+		removePIDFile(config)
 		os.Exit(0)
 	}
 
 	// run all workers in background
-	logger.Info("main - running...")
-
 	for _, l := range mapLoggers {
-		go l.Run()
+		go l.StartCollect()
 	}
 	for _, c := range mapCollectors {
-		go c.Run()
+		go c.StartCollect()
 	}
 
 	// block main
 	<-done
 
+	removePIDFile(config)
 	logger.Info("main - stopped")
 }

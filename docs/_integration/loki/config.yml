@@ -1,0 +1,35 @@
+
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    routing-policy:
+      forward: [ loki ]
+      dropped: []
+
+  - name: loki
+    lokiclient:
+      server-url: "http://localhost:3100/loki/api/v1/push"
+      job-name: "dnscollector"
+      mode: "text"
+      flush-interval: 5
+      batch-size: 1048576
+      retry-interval: 10
+      text-format: ""
+      proxy-url: ""
+      tls-insecure: false
+      tls-min-version: 1.2
+      ca-file: ""
+      cert-file: ""
+      key-file: ""
+      basic-auth-login: ""
+      basic-auth-pwd: ""
+      basic-auth-pwd-file: ""
+      tenant-id: ""
+      relabel-configs: []
+      chan-buffer-size: 0

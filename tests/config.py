@@ -16,7 +16,7 @@ class ProcessProtocol(asyncio.SubprocessProtocol):
     def pipe_data_received(self, fd, data):
         print(data.decode(), end="")
 
-        if b"main - starting" in data:
+        if b"main - running" in data:
             self.is_configvalid.set_result(True)
             self.kill()
         
@@ -38,7 +38,7 @@ class TestConfig(unittest.TestCase):
         async def run():
             # run collector
             is_configvalid= asyncio.Future()
-            args = ( "./go-dnscollector", "-config", "./testsdata/config_verbose.yml",)
+            args = ( "./go-dnscollector", "-config", "./tests/testsdata/config_verbose.yml",)
             transport_collector, protocol_collector =  await self.loop.subprocess_exec(lambda: ProcessProtocol(is_configvalid, None),
                                                                                         *args, stdout=asyncio.subprocess.PIPE)
 
@@ -60,7 +60,7 @@ class TestConfig(unittest.TestCase):
         async def run():
             # run collector
             is_configinvalid= asyncio.Future()
-            args = ( "./go-dnscollector", "-config", "./testsdata/config_invalid.yml",)
+            args = ( "./go-dnscollector", "-config", "./tests/testsdata/config_invalid.yml",)
             transport_collector, protocol_collector =  await self.loop.subprocess_exec(lambda: ProcessProtocol(None, is_configinvalid),
                                                                                         *args, stdout=asyncio.subprocess.PIPE)
 

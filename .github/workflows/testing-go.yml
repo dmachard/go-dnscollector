@@ -22,21 +22,14 @@ jobs:
     strategy:
       matrix:
         os-version: ['ubuntu-22.04' ] #, 'macos-latest'
-        go-version: [ '1.20', '1.21' ]
+        go-version: [ '1.21', '1.22' ]
         package:
           - '.'
           - 'pkgconfig'
-          - 'pkglinker'
-          - 'pkgutils'
+          - 'pkginit'
           - 'dnsutils'
-          - 'collectors'
-          - 'loggers'
+          - 'workers'
           - 'transformers'
-          - 'netlib'
-          - 'processors'
-        # exclude:
-        #   - os-version: macos-latest
-        #     go-version: '1.20'
     
     runs-on: ${{ matrix.os-version }}
 
@@ -50,28 +43,28 @@ jobs:
       run: |
         go version
         sudo go version
-
+    
     - name: Set up Go for root
       if: runner.os != 'macOS'
       run: |
         which go
         sudo which go
         sudo ln -sf `which go` `sudo which go` || true
-    
+        
     - name: Show Go version
       run: |
         go version
         sudo go version
         
     - name: Test ${{ matrix.package }}
-      run: sudo go test -timeout 120s ./${{ matrix.package }}/ -race -cover -v
+      run: sudo go test -timeout 240s ./${{ matrix.package }}/ -race -cover -v
       
   int:
     runs-on: ubuntu-22.04
 
     strategy:
       matrix:
-        go-version: ['1.20', '1.21']
+        go-version: [ '1.21', '1.22' ]
         package: ['config', 'clientquery_dnstaptcp', 'clientquery_dnstapunix' ]
 
     steps:
@@ -84,7 +77,10 @@ jobs:
         python-version: '3.12'
  
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }}
+        go mod tidy 
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 
     - name: Test ${{ matrix.package }}
       run: |
@@ -97,7 +93,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: ['1.21']
+        go-version: [ '1.21', '1.22' ]
         
     steps:
     - uses: actions/checkout@v4
@@ -106,10 +102,13 @@ jobs:
         go-version: ${{ matrix.go-version }}
  
     - name: build binary
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      run: |
+        go mod edit -go=${{ matrix.go-version }} 
+        go mod tidy
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: run collector
-      run: ./go-dnscollector -config ./testsdata/config_prom.yml &
+      run: ./go-dnscollector -config ./tests/testsdata/config_prom.yml &
 
     - name: download dnstap generator
       run: |
@@ -117,7 +116,7 @@ jobs:
         tar xf go-dnstap-generator_${{ env.GENTAP }}_linux_amd64.tar.gz
         ./go-dnstap-generator -i 127.0.0.1 -p 6000 -n 1
       env:
-        GENTAP: "0.5.0"
+        GENTAP: "0.7.0"
 
     - name: check prometheus format metrics
       run: |
@@ -126,7 +125,7 @@ jobs:
         cd prometheus-$PROM_VERSION.linux-amd64/
         curl -u admin:changeme http://127.0.0.1:8081/metrics | ./promtool check metrics
       env:
-        PROM_VERSION: "2.47.0"
+        PROM_VERSION: "2.51.1"
 
   count:
     runs-on: ubuntu-latest
@@ -138,11 +137,11 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: "1.21"
+        go-version: "1.22"
 
     - id: count_tests
       run: |
-        data=$(sudo go test -v ./collectors ./processors ./dnsutils ./netlib ./loggers ./transformers ./pkgconfig ./pkglinker ./pkgutils ././ 2>&1 | grep -c RUN)
+        data=$(sudo go test -timeout 360s  -v ./workers ./dnsutils ./transformers ./pkgconfig ./pkginit ./telemetry ././ 2>&1 | grep -c RUN)
         echo "Count of Tests: $data"
         echo "data=$data" >> $GITHUB_OUTPUT
 

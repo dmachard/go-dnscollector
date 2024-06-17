@@ -1,34 +1,42 @@
 # DNS-collector - Running mode
 
+The DNScollector can be configured with multiple loggers and collectors at the same time
+
 - [Pipelining](#pipelining)
-- [Multiplexer](#multiplexer)
+- [Multiplexer (DEPRECATED)](#multiplexer)
 
 ## Pipelining
 
-> NOTE: EXPERIMENTAL, NOT YET SUITABLE FOR PRODUCTION
+The `pipelining` mode offers several enhancements compared to the old multiplexer mode. 
+It provides the same functionalities with added flexibility:
 
-The `pipelining` mode offers several enhancements:
+- Simplified syntax
+- Conditional statement-based log routing: dropped packet can be send to another stanza
+- Ability to add metadata in DNS messages.
 
-- a simplified syntax,
-- conditional statement-based log routing,
-- flexibility to add metadata.
-
-With this mode you can create pipeline with supported [collectors](./collectors.md) and [loggers](./loggers.md).
+With this mode, you can create pipelines and connect [collectors](./collectors.md) and [loggers](./loggers.md) using the new `routing-policy` definition.
 
 ```yaml
 pipelines:
-  - name: <collector1_name>
-    .....
+  - name: <stanza1>
+    ...(collector or logger config)..
     routing-policy:
-      default: [ <collector2_name> ]
+      forward: [ <logger1> ]
+      dropped: [ <logger2> ]
 
-  - name: <collector2_name>
-    .....
+  - name: <stanza2>
+    ...(collector or logger config)..
 ```
 
-## Multiplexer
+The routing policy support 2 modes:
+- `forward`: [ list of next stanza ]
+- `dropped`: [ list of next stanza ]
 
-The dns collector can be configured with multiple loggers and collectors at the same time.
+
+## Multiplexer (DEPRECATED)
+
+> NOTE: THIS MODE IS DEPRECATED
+
 
 You must defined the list of
 

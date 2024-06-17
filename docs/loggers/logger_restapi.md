@@ -8,17 +8,39 @@ See the [swagger](https://generator.swagger.io/?url=https://raw.githubuserconten
 
 Options:
 
-- `listen-ip`: (string) listening IP
-- `listen-port`: (integer) listening port
-- `basic-auth-enable`: (boolean) enable or disable basic authentication
-- `basic-auth-login`: (string) default login for basic auth
-- `basic-auth-pwd`: (string) default password for basic auth
-- `tls-support`: (boolean) tls support
-- `tls-min-version`: (string) min tls version, default to 1.2
-- `cert-file`: (string) certificate server file
-- `key-file`: (string) private key server file
-- `top-n`: (string) default number of items on top
-- `chan-buffer-size`: (integer) channel buffer size used on incoming dns message, number of messages before to drop it.
+* `listen-ip` (string)
+  > listening IP
+
+* `listen-port` (integer)
+  > listening port
+
+* `basic-auth-enable` (boolean)
+  > enable or disable basic authentication
+
+* `basic-auth-login` (string)
+  > default login for basic auth
+
+* `basic-auth-pwd` (string)
+  > default password for basic auth
+
+* `tls-support` (boolean)
+  > tls support
+
+* `tls-min-version` (string)
+  > min tls version, default to 1.2
+
+* `cert-file` (string)
+  > certificate server file
+
+* `key-file` (string)
+  > private key server file
+
+* `top-n` (string)
+  > default number of items on top
+
+* `chan-buffer-size` (integer)
+  > Specifies the maximum number of packets that can be buffered before discard additional packets.
+  > Set to zero to use the default global value.
 
 Default values:
 
@@ -31,8 +53,8 @@ restapi:
   basic-auth-pwd: changeme
   tls-support: true
   tls-min-version: 1.2
-  cert-file: "./testsdata/server.crt"
-  key-file: "./testsdata/server.key"
+  cert-file: "./tests/testsdata/server.crt"
+  key-file: "./tests/testsdata/server.key"
   top-n: 100
-  chan-buffer-size: 65535
+  chan-buffer-size: 0
 ```

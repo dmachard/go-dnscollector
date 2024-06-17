@@ -1,0 +1,15 @@
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tap
+    dnstap:
+      sock-path: /tmp/dnstap.sock
+    routing-policy:
+      forward: [ console ]
+      dropped: []
+
+  - name: console
+    stdout:
+      mode: text
