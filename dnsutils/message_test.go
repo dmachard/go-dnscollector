@@ -825,6 +825,14 @@ func TestDnsMessage_TextFormat_ToString(t *testing.T) {
 			expected:  "-;-;-;-;-;-;-;-;0b;dnscollector.fr;-;-",
 		},
 		{
+			name:      "empty_delimiter",
+			delimiter: "",
+			boundary:  config.Global.TextFormatBoundary,
+			format:    config.Global.TextFormat,
+			qname:     "dnscollector.fr",
+			expected:  "--------0bdnscollector.fr--",
+		},
+		{
 			name:      "qname_quote",
 			delimiter: config.Global.TextFormatDelimiter,
 			boundary:  config.Global.TextFormatBoundary,
@@ -847,6 +855,14 @@ func TestDnsMessage_TextFormat_ToString(t *testing.T) {
 			format:    config.Global.TextFormat,
 			qname:     "dnscoll tor.fr",
 			expected:  "- - - - - - - - 0b !dnscoll tor.fr! - -",
+		},
+		{
+			name:      "custom_text",
+			delimiter: config.Global.TextFormatDelimiter,
+			boundary:  config.Global.TextFormatBoundary,
+			format:    "qname {IN} qtype",
+			qname:     "dnscollector.fr",
+			expected:  "dnscollector.fr IN -",
 		},
 	}
 

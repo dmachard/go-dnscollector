@@ -38,7 +38,7 @@ var (
 	ReducerDirectives         = regexp.MustCompile(`^reducer-*`)
 	MachineLearningDirectives = regexp.MustCompile(`^ml-*`)
 	FilteringDirectives       = regexp.MustCompile(`^filtering-*`)
-	RawTextDirective          = regexp.MustCompile(`^ *\{.*`)
+	RawTextDirective          = regexp.MustCompile(`^ *\{.*\}`)
 	ATagsDirectives           = regexp.MustCompile(`^atags*`)
 )
 
@@ -681,7 +681,7 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 						s.WriteString(qname)
 					}
 				} else {
-					s.WriteString(dm.DNS.Qname)
+					s.WriteString(qname)
 				}
 			}
 		case directive == "identity":
