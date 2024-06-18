@@ -28,7 +28,7 @@ require (
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb-client-go v1.4.0
 	github.com/klauspost/compress v1.17.8
-	github.com/miekg/dns v1.1.59
+	github.com/miekg/dns v1.1.61
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/oschwald/maxminddb-golang v1.13.0
 	github.com/prometheus/client_golang v1.19.1
@@ -183,9 +183,9 @@ require (
 	github.com/prometheus/common v0.54.0
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/prometheus/prometheus v0.51.0
-	golang.org/x/mod v0.17.0 // indirect
+	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
-	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
+	golang.org/x/tools v0.22.0 // indirect
 	google.golang.org/grpc v1.62.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0
