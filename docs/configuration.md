@@ -121,11 +121,19 @@ Default directives:
 global:
   text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length-unit qname qtype latency ttl"
   text-format-delimiter: " "
+  text-format-splitter: " "
   text-format-boundary: "\""
+
 ```
 
-If you require a format like CSV, the delimiter can be configured with the `text-format-delimiter` option.
+If you require a output format like CSV, the delimiter can be configured with the `text-format-delimiter` option.
 The default separator is [space].
+
+text-format can contain raw text enclosed by curly braces, eg
+
+```yaml
+	text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport qname qtype {DNSTAP}"
+```
 
 Output example:
 
@@ -134,6 +142,7 @@ Output example:
 2023-04-08T18:27:29.268575Z unbound FORWARDER_QUERY NOERROR 0.0.0.0 20817 IPv4 UDP 38b google.fr A 0.000000
 2023-04-08T18:27:29.278929Z unbound FORWARDER_RESPONSE NOERROR 0.0.0.0 20817 IPv4 UDP 54b google.fr A 0.000000
 2023-04-08T18:27:29.279039Z unbound CLIENT_RESPONSE NOERROR 127.0.0.1 39028 IPv4 UDP 54b google.fr A 0.000000
+
 ```
 
 ## Pid file

@@ -38,6 +38,7 @@ var (
 	ReducerDirectives         = regexp.MustCompile(`^reducer-*`)
 	MachineLearningDirectives = regexp.MustCompile(`^ml-*`)
 	FilteringDirectives       = regexp.MustCompile(`^filtering-*`)
+	RawTextDirective          = regexp.MustCompile(`^ *\{.*\}`)
 	ATagsDirectives           = regexp.MustCompile(`^atags*`)
 )
 
@@ -669,12 +670,16 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			if len(qname) == 0 {
 				s.WriteString(".")
 			} else {
-				if strings.Contains(qname, fieldDelimiter) {
-					qnameEscaped := qname
-					if strings.Contains(qname, fieldBoundary) {
-						qnameEscaped = strings.ReplaceAll(qnameEscaped, fieldBoundary, "\\"+fieldBoundary)
+				if len(fieldDelimiter) > 0 {
+					if strings.Contains(qname, fieldDelimiter) {
+						qnameEscaped := qname
+						if strings.Contains(qname, fieldBoundary) {
+							qnameEscaped = strings.ReplaceAll(qnameEscaped, fieldBoundary, "\\"+fieldBoundary)
+						}
+						s.WriteString(fmt.Sprintf(fieldBoundary+"%s"+fieldBoundary, qnameEscaped))
+					} else {
+						s.WriteString(qname)
 					}
-					s.WriteString(fmt.Sprintf(fieldBoundary+"%s"+fieldBoundary, qnameEscaped))
 				} else {
 					s.WriteString(qname)
 				}
@@ -703,7 +708,6 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			s.WriteString(dm.DNSTap.Operation)
 		case directive == "rcode":
 			s.WriteString(dm.DNS.Rcode)
-
 		case directive == "id":
 			s.WriteString(strconv.Itoa(dm.DNS.ID))
 		case directive == "queryip":
@@ -849,6 +853,10 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			if err != nil {
 				return nil, err
 			}
+		case RawTextDirective.MatchString(directive):
+			directive = strings.ReplaceAll(directive, "{", "")
+			directive = strings.ReplaceAll(directive, "}", "")
+			s.WriteString(directive)
 
 		// handle invalid directive
 		default:
@@ -856,7 +864,9 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 		}
 
 		if i < len(format)-1 {
-			s.WriteString(fieldDelimiter)
+			if len(fieldDelimiter) > 0 {
+				s.WriteString(fieldDelimiter)
+			}
 		}
 	}
 	return []byte(s.String()), nil

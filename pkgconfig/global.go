@@ -9,6 +9,7 @@ import (
 type ConfigGlobal struct {
 	TextFormat          string `yaml:"text-format" default:"timestamp identity operation rcode queryip queryport family protocol length-unit qname qtype latency"`
 	TextFormatDelimiter string `yaml:"text-format-delimiter" default:" "`
+	TextFormatSplitter  string `yaml:"text-format-splitter" default:" "`
 	TextFormatBoundary  string `yaml:"text-format-boundary" default:"\""`
 	Trace               struct {
 		Verbose      bool   `yaml:"verbose" default:"false"`
