@@ -6,10 +6,11 @@ global:
   trace:
     verbose: true
   server-identity: "dns-collector"
+  pid-file: ""
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length-unit qname qtype latency"
   text-format-delimiter: " "
   text-format-boundary: "\""
-  pid-file: ""
+  text-jinja: ""
   worker:
     interval-monitor: 10
     buffer-size: 4096
@@ -46,7 +47,7 @@ pipelines:
 
   - name: console
     stdout:
-      mode: text
+      mode: jinja
 
 ################################################
 # DEPRECATED - multiplexer configuration

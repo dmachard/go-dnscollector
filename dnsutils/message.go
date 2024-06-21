@@ -19,6 +19,7 @@ import (
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-netutils"
+	"github.com/flosch/pongo2/v6"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/miekg/dns"
@@ -117,6 +118,8 @@ type DNS struct {
 	Rcode   string `json:"rcode"`
 	Qname   string `json:"qname"`
 	Qclass  string `json:"qclass"`
+
+	QuestionsCount int `json:"questions-count"`
 
 	Qtype           string   `json:"qtype"`
 	Flags           DNSFlags `json:"flags"`
@@ -870,6 +873,22 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 		}
 	}
 	return []byte(s.String()), nil
+}
+
+func (dm *DNSMessage) ToTextTemplate(template string) (string, error) {
+	context := pongo2.Context{"dm": dm}
+
+	// Parse and execute the template
+	tmpl, err := pongo2.FromString(template)
+	if err != nil {
+		return "", err
+	}
+
+	result, err := tmpl.Execute(context)
+	if err != nil {
+		return "", err
+	}
+	return result, nil
 }
 
 func (dm *DNSMessage) ToJSON() string {

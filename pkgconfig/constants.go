@@ -18,6 +18,7 @@ const (
 	BadVeryLongDomain = "ultramegaverytoolonglabel.dnscollector" + badLongLabel + badLongLabel +
 		badLongLabel + badLongLabel + badLongLabel + ".dev."
 
+	ModeJinja    = "jinja"
 	ModeText     = "text"
 	ModeJSON     = "json"
 	ModeFlatJSON = "flat-json"

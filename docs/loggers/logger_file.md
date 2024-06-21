@@ -3,7 +3,7 @@
 Enable this logger if you want to log your DNS traffic to a file in plain text mode or binary mode.
 
 * with rotation file support
-* supported format: `text`, `json` and `flat json`, `pcap` or `dnstap`
+* supported format: `text`, `jinja`, `json` and `flat json`, `pcap` or `dnstap`
 * gzip compression
 * execute external command after each rotation
 * custom text format
@@ -39,7 +39,7 @@ Options:
   > run external script after file compress step
 
 * `mode` (string)
-  > output format: text, json, flat-json, pcap or dnstap
+  > output format: text, jinja, json, flat-json, pcap or dnstap
 
 * `text-format` (string)
   > output text format, please refer to the default text format to see all

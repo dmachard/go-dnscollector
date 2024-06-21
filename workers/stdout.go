@@ -20,6 +20,7 @@ import (
 func IsStdoutValidMode(mode string) bool {
 	switch mode {
 	case
+		pkgconfig.ModeJinja,
 		pkgconfig.ModeText,
 		pkgconfig.ModeJSON,
 		pkgconfig.ModeFlatJSON,
@@ -185,6 +186,14 @@ func (w *StdOut) StartLogging() {
 
 			case pkgconfig.ModeText:
 				w.writerText.Print(dm.String(w.textFormat, w.GetConfig().Global.TextFormatDelimiter, w.GetConfig().Global.TextFormatBoundary))
+
+			case pkgconfig.ModeJinja:
+				textLine, err := dm.ToTextTemplate(w.GetConfig().Global.TextJinja)
+				if err != nil {
+					w.LogError("process: unable to update template: %s", err)
+					continue
+				}
+				w.writerText.Print(textLine)
 
 			case pkgconfig.ModeJSON:
 				json.NewEncoder(buffer).Encode(dm)
