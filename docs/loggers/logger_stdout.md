@@ -3,13 +3,13 @@
 Print to your standard output, all DNS logs received
 
 * in text or json format
-* custom text format
+* custom text format (with jinja templating support)
 * binary mode (pcap)
 
 Options:
 
 * `mode` (string)
-  > output format: `text`, `json`, `flat-json` or `pcap`
+  > output format: `text`, `jinja`, `json`, `flat-json` or `pcap`
 
 * `text-format` (string)
   > output text format, please refer to the default text format to see all available [directives](../configuration.md#custom-text-format), use this parameter if you want a specific format

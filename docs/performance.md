@@ -18,13 +18,15 @@ goos: linux
 goarch: amd64
 pkg: github.com/dmachard/go-dnscollector/dnsutils
 cpu: Intel(R) Core(TM) i5-7200U CPU @ 2.50GHz 
-BenchmarkDnsMessage_ToTextFormat-4               2555529             450.2 ns/op              80 B/op          4 allocs/op
-BenchmarkDnsMessage_ToPacketLayer-4              1138892             952.0 ns/op            1144 B/op         12 allocs/op
-BenchmarkDnsMessage_ToDNSTap-4                   1036468              1136 ns/op             592 B/op         18 allocs/op
-BenchmarkDnsMessage_ToExtendedDNSTap-4            612438              1970 ns/op            1056 B/op         25 allocs/op
-BenchmarkDnsMessage_ToJSON-4                      188379              6724 ns/op            3632 B/op          3 allocs/op
-BenchmarkDnsMessage_ToFlatten-4                   121525             10151 ns/op            8215 B/op         29 allocs/op
-BenchmarkDnsMessage_ToFlatJSON-4                   20704             58365 ns/op           22104 B/op        220 allocs/op
+BenchmarkDnsMessage_ToTextFormat-4               2262946               518.8 ns/op            80 B/op          4 allocs/op
+BenchmarkDnsMessage_ToPacketLayer-4              1241736               926.9 ns/op          1144 B/op         12 allocs/op
+BenchmarkDnsMessage_ToDNSTap-4                    894579              1464 ns/op             592 B/op         18 allocs/op
+BenchmarkDnsMessage_ToExtendedDNSTap-4            608203              2342 ns/op            1056 B/op         25 allocs/op
+BenchmarkDnsMessage_ToJSON-4                      130080              7749 ns/op            3632 B/op          3 allocs/op
+BenchmarkDnsMessage_ToFlatten-4                   117115              9227 ns/op            8369 B/op         29 allocs/op
+BenchmarkDnsMessage_ToFlatJSON-4                   21238             54535 ns/op           20106 B/op        219 allocs/op
+BenchmarkDnsMessage_ToFlatten_Relabelling-4        35614             32544 ns/op            8454 B/op         30 allocs/op
+BenchmarkDnsMessage_ToJinjaFormat-4                 9840            120301 ns/op           50093 B/op        959 allocs/op
 ```
 
 ## Memory usage

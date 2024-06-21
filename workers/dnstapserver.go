@@ -512,6 +512,9 @@ func (w *DNSTapProcessor) StartCollect() {
 					}
 				}
 
+				// get number of questions
+				dm.DNS.QuestionsCount = dnsHeader.Qdcount
+
 				if err = dnsutils.DecodePayload(&dm, &dnsHeader, w.GetConfig()); err != nil {
 					dm.DNS.MalformedPacket = true
 					w.LogInfo("dns payload parser stopped: %s", err)

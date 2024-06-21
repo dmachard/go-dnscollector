@@ -123,13 +123,11 @@ global:
   text-format-delimiter: " "
   text-format-splitter: " "
   text-format-boundary: "\""
-
+  text-jinja: ""
 ```
 
 If you require a output format like CSV, the delimiter can be configured with the `text-format-delimiter` option.
-The default separator is [space].
-
-text-format can contain raw text enclosed by curly braces, eg
+The default separator is [space]. text-format can contain raw text enclosed by curly braces, eg
 
 ```yaml
 	text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport qname qtype {DNSTAP}"
@@ -143,6 +141,25 @@ Output example:
 2023-04-08T18:27:29.278929Z unbound FORWARDER_RESPONSE NOERROR 0.0.0.0 20817 IPv4 UDP 54b google.fr A 0.000000
 2023-04-08T18:27:29.279039Z unbound CLIENT_RESPONSE NOERROR 127.0.0.1 39028 IPv4 UDP 54b google.fr A 0.000000
 
+```
+
+If you want a more flexible format, you can use the `text-jinja` setting
+Example to enable output similiar to dig style:
+
+```
+text-jinja: |+
+    ;; Got {% if dm.DNS.Type == "QUERY" %}query{% else %}answer{% endif %} from {{ dm.NetworkInfo.QueryIP }}#{{ dm.NetworkInfo.QueryPort }}:
+    ;; ->>HEADER<<- opcode: {{ dm.DNS.Opcode }}, status: {{ dm.DNS.Rcode }}, id: {{ dm.DNS.ID }}
+    ;; flags: {{ dm.DNS.Flags.QR | yesno:"qr ," }}{{ dm.DNS.Flags.RD | yesno:"rd ," }}{{ dm.DNS.Flags.RA | yesno:"ra ," }}; QUERY: {{ dm.DNS.QuestionsCount }}, ANSWER: {{ dm.DNS.DNSRRs.Answers | length }}, AUTHORITY: {{ dm.DNS.DNSRRs.Nameservers | length }}, ADDITIONAL: {{ dm.DNS.DNSRRs.Records | length }}
+    
+    ;; QUESTION SECTION:
+    ;{{ dm.DNS.Qname }}		{{ dm.DNS.Qclass }}	{{ dm.DNS.Qtype }}
+
+    ;; ANSWER SECTION: {% for rr in dm.DNS.DNSRRs.Answers %}
+    {{ rr.Name }}		{{ rr.TTL }} {{ rr.Class }} {{ rr.Rdatatype }} {{ rr.Rdata }}{% endfor %}
+
+    ;; WHEN: {{ dm.DNSTap.Timestamp }}
+    ;; MSG SIZE  rcvd: {{ dm.DNS.Length }}
 ```
 
 ## Pid file

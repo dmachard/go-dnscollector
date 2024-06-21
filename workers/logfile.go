@@ -34,6 +34,7 @@ const (
 func IsValid(mode string) bool {
 	switch mode {
 	case
+		pkgconfig.ModeJinja,
 		pkgconfig.ModeText,
 		pkgconfig.ModeJSON,
 		pkgconfig.ModeFlatJSON,
@@ -506,11 +507,21 @@ func (w *LogFile) StartLogging() {
 				delimiter.WriteString("\n")
 				w.WriteToPlain(delimiter.Bytes())
 
+			// with custom text mode
+			case pkgconfig.ModeJinja:
+				textLine, err := dm.ToTextTemplate(w.GetConfig().Global.TextJinja)
+				if err != nil {
+					w.LogError("jinja template: %s", err)
+					continue
+				}
+				w.WriteToPlain([]byte(textLine))
+
 			// with json mode
 			case pkgconfig.ModeFlatJSON:
 				flat, err := dm.Flatten()
 				if err != nil {
 					w.LogError("flattening DNS message failed: %e", err)
+					continue
 				}
 				json.NewEncoder(buffer).Encode(flat)
 				w.WriteToPlain(buffer.Bytes())
