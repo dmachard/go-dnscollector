@@ -104,8 +104,8 @@ github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f h1:lO4WD4F/r
 github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f/go.mod h1:cuUVRXasLTGF7a8hSLbxyZXjz+1KgoB3wDUb6vlszIc=
 github.com/dmachard/go-clientsyslog v0.4.0 h1:1eL/XIzfRCB9g2kVsY4bHAQE7uPVPv472qtXvzU6u6Y=
 github.com/dmachard/go-clientsyslog v0.4.0/go.mod h1:llRfIIzxlTNsEQbVF6GKUzxORDWTiSvld3ElJcUtyCo=
-github.com/dmachard/go-dnstap-protobuf v1.0.1 h1:Fu5/SWpRzUPqLPmERw/6CoqcDlYSk5FGC7JzmIKz/F4=
-github.com/dmachard/go-dnstap-protobuf v1.0.1/go.mod h1:eU6ktwd2+GWAhorMaRSk3O9hMb8pI41uOKDSB08elOk=
+github.com/dmachard/go-dnstap-protobuf v1.0.2 h1:LW7+Pwm3tje/1tMV3IRq09OFOr4vN0BQTuKWayznwdQ=
+github.com/dmachard/go-dnstap-protobuf v1.0.2/go.mod h1:s4X0YYkv6/Tc9RGmz6hF5dxG3yhE/DtMFC4NLmu8ZoY=
 github.com/dmachard/go-framestream v0.10.0 h1:NzDOkpJOdrgV/c0XKCsVxijILbdTxsUcUlSwp4y34mw=
 github.com/dmachard/go-framestream v0.10.0/go.mod h1:CiSK1RmU/7hVsM/NhsroqpBxDH3meawKIXR8x8O+LP4=
 github.com/dmachard/go-logger v1.0.0 h1:M0z3RDh932uUgvAOSCfLgKbQbrw+3T0SrM4kaM2uhzY=

@@ -10,7 +10,7 @@ require (
 	github.com/cilium/ebpf v0.15.0
 	github.com/creasty/defaults v1.7.0
 	github.com/dmachard/go-clientsyslog v0.4.0
-	github.com/dmachard/go-dnstap-protobuf v1.0.1
+	github.com/dmachard/go-dnstap-protobuf v1.0.2
 	github.com/dmachard/go-framestream v0.10.0
 	github.com/dmachard/go-logger v1.0.0
 	github.com/dmachard/go-netutils v0.4.0
