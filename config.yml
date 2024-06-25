@@ -41,13 +41,14 @@ pipelines:
     transforms:
       normalize:
         qname-lowercase: true
+        qname-replace-nonprintable: true
     routing-policy:
       forward: [ console ]
       dropped: [ ]
 
   - name: console
     stdout:
-      mode: jinja
+      mode: text
 
 ################################################
 # DEPRECATED - multiplexer configuration

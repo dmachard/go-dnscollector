@@ -1,7 +1,9 @@
 package transformers
 
 import (
+	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
@@ -56,20 +58,22 @@ func NewNormalizeTransform(config *pkgconfig.ConfigTransformers, logger *logger.
 
 func (t *NormalizeTransform) GetTransforms() ([]Subtransform, error) {
 	subprocessors := []Subtransform{}
-	if t.config.Normalize.RRLowerCase {
+	if t.config.Normalize.Enable && t.config.Normalize.ReplaceNonPrintable {
+		subprocessors = append(subprocessors, Subtransform{name: "normalize:qname-replace-nonprintable", processFunc: t.ReplaceNonprintable})
+	}
+	if t.config.Normalize.Enable && t.config.Normalize.RRLowerCase {
 		subprocessors = append(subprocessors, Subtransform{name: "normalize:rr-lowercase", processFunc: t.RRLowercase})
 	}
-	if t.config.Normalize.QnameLowerCase {
+	if t.config.Normalize.Enable && t.config.Normalize.QnameLowerCase {
 		subprocessors = append(subprocessors, Subtransform{name: "normalize:qname-lowercase", processFunc: t.QnameLowercase})
 	}
-	if t.config.Normalize.QuietText {
+	if t.config.Normalize.Enable && t.config.Normalize.QuietText {
 		subprocessors = append(subprocessors, Subtransform{name: "normalize:quiet", processFunc: t.QuietText})
 	}
-
-	if t.config.Normalize.AddTld {
+	if t.config.Normalize.Enable && t.config.Normalize.AddTld {
 		subprocessors = append(subprocessors, Subtransform{name: "normalize:add-etld", processFunc: t.GetEffectiveTld})
 	}
-	if t.config.Normalize.AddTldPlusOne {
+	if t.config.Normalize.Enable && t.config.Normalize.AddTldPlusOne {
 		subprocessors = append(subprocessors, Subtransform{name: "normalize:add-etld+1", processFunc: t.GetEffectiveTldPlusOne})
 	}
 	return subprocessors, nil
@@ -84,6 +88,26 @@ func (t *NormalizeTransform) RRLowercase(dm *dnsutils.DNSMessage) (int, error) {
 	processRecords(dm.DNS.DNSRRs.Answers)
 	processRecords(dm.DNS.DNSRRs.Nameservers)
 	processRecords(dm.DNS.DNSRRs.Records)
+	return ReturnKeep, nil
+}
+
+func (t *NormalizeTransform) ReplaceNonprintable(dm *dnsutils.DNSMessage) (int, error) {
+
+	var builder strings.Builder
+	qname := dm.DNS.Qname
+	for _, r := range qname {
+		if unicode.IsPrint(r) {
+			if unicode.IsSpace(r) {
+				builder.WriteString(fmt.Sprintf("\\%03d", r))
+			} else {
+				builder.WriteRune(r)
+			}
+		} else {
+			builder.WriteString(fmt.Sprintf("\\%03d", r))
+		}
+	}
+	dm.DNS.Qname = builder.String()
+
 	return ReturnKeep, nil
 }
 

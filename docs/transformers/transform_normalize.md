@@ -15,6 +15,10 @@ Options:
 *`rr-lowercase` (boolean)
   > enable or disable lowercase for all resources records
 
+*`qname-replace-nonprintable` (boolean)
+  > replace non printable characters with decimal value
+  > the domain `"invalid\tinvalid . com"` will be `invalid\009invalid\032.\032com`
+
 *`add-tld` (boolean)
   > add top level domain
 
@@ -27,7 +31,8 @@ Options:
 ```yaml
 transforms:
   normalize:
-    qname-lowercase: true
+    qname-lowercase: false
+    qname-replace-nonprintable: false
     rr-lowercase: false
     add-tld: false
     add-tld-plus-one: false
