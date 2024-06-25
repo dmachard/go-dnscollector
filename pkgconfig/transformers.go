@@ -23,12 +23,13 @@ type ConfigTransformers struct {
 		HashIPAlgo        string `yaml:"hash-ip-algo" default:"sha1"`
 	} `yaml:"user-privacy"`
 	Normalize struct {
-		Enable         bool `yaml:"enable" default:"false"`
-		QnameLowerCase bool `yaml:"qname-lowercase" default:"false"`
-		RRLowerCase    bool `yaml:"rr-lowercase" default:"false"`
-		QuietText      bool `yaml:"quiet-text" default:"false"`
-		AddTld         bool `yaml:"add-tld" default:"false"`
-		AddTldPlusOne  bool `yaml:"add-tld-plus-one" default:"false"`
+		Enable              bool `yaml:"enable" default:"false"`
+		QnameLowerCase      bool `yaml:"qname-lowercase" default:"false"`
+		RRLowerCase         bool `yaml:"rr-lowercase" default:"false"`
+		QuietText           bool `yaml:"quiet-text" default:"false"`
+		AddTld              bool `yaml:"add-tld" default:"false"`
+		AddTldPlusOne       bool `yaml:"add-tld-plus-one" default:"false"`
+		ReplaceNonPrintable bool `yaml:"qname-replace-nonprintable" default:"false"`
 	} `yaml:"normalize"`
 	Latency struct {
 		Enable            bool `yaml:"enable" default:"false"`
