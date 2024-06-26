@@ -49,26 +49,3 @@ pipelines:
   - name: console
     stdout:
       mode: text
-
-################################################
-# DEPRECATED - multiplexer configuration
-#   more details: https://github.com/dmachard/go-dnscollector/blob/main/docs/running_mode.md#multiplexer
-#   workers: https://github.com/dmachard/go-dnscollector/blob/main/docs/workers.md
-#   transformers: https://github.com/dmachard/go-dnscollector/blob/main/docs/transformers.md
-################################################
-# multiplexer:
-#   collectors:
-#     - name: tap
-#       dnstap:
-#         listen-ip: 0.0.0.0
-#         listen-port: 6000
-#       transforms:
-#         normalize:
-#           qname-lowercase: true
-#   loggers:
-#     - name: console
-#       stdout:
-#         mode: text
-#   routes:
-#     - from: [ tap ]
-#       to: [ console ]

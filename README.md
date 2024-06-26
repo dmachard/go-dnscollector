@@ -24,8 +24,6 @@
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
 
-*NOTE: The code before version 1.x is considered beta quality and is subject to breaking changes.*
-
 ## Features
 
 - **[Pipelining](./docs/running_mode.md)**
