@@ -815,7 +815,7 @@ func TestDnsMessage_TextFormat_ToString(t *testing.T) {
 			boundary:  config.Global.TextFormatBoundary,
 			format:    config.Global.TextFormat,
 			qname:     "dnscollector.fr",
-			expected:  "- - - - - - - - 0b dnscollector.fr - -",
+			expected:  "- collector CLIENT_QUERY NOERROR 1.2.3.4 1234 - - 0b dnscollector.fr A -",
 		},
 		{
 			name:      "custom_delimiter",
@@ -823,7 +823,7 @@ func TestDnsMessage_TextFormat_ToString(t *testing.T) {
 			boundary:  config.Global.TextFormatBoundary,
 			format:    config.Global.TextFormat,
 			qname:     "dnscollector.fr",
-			expected:  "-;-;-;-;-;-;-;-;0b;dnscollector.fr;-;-",
+			expected:  "-;collector;CLIENT_QUERY;NOERROR;1.2.3.4;1234;-;-;0b;dnscollector.fr;A;-",
 		},
 		{
 			name:      "empty_delimiter",
@@ -831,7 +831,7 @@ func TestDnsMessage_TextFormat_ToString(t *testing.T) {
 			boundary:  config.Global.TextFormatBoundary,
 			format:    config.Global.TextFormat,
 			qname:     "dnscollector.fr",
-			expected:  "--------0bdnscollector.fr--",
+			expected:  "-collectorCLIENT_QUERYNOERROR1.2.3.41234--0bdnscollector.frA-",
 		},
 		{
 			name:      "qname_quote",
@@ -839,7 +839,7 @@ func TestDnsMessage_TextFormat_ToString(t *testing.T) {
 			boundary:  config.Global.TextFormatBoundary,
 			format:    config.Global.TextFormat,
 			qname:     "dns collector.fr",
-			expected:  "- - - - - - - - 0b \"dns collector.fr\" - -",
+			expected:  "- collector CLIENT_QUERY NOERROR 1.2.3.4 1234 - - 0b \"dns collector.fr\" A -",
 		},
 		{
 			name:      "default_boundary",
@@ -847,7 +847,7 @@ func TestDnsMessage_TextFormat_ToString(t *testing.T) {
 			boundary:  config.Global.TextFormatBoundary,
 			format:    config.Global.TextFormat,
 			qname:     "dns\"coll tor\".fr",
-			expected:  "- - - - - - - - 0b \"dns\\\"coll tor\\\".fr\" - -",
+			expected:  "- collector CLIENT_QUERY NOERROR 1.2.3.4 1234 - - 0b \"dns\\\"coll tor\\\".fr\" A -",
 		},
 		{
 			name:      "custom_boundary",
@@ -855,7 +855,7 @@ func TestDnsMessage_TextFormat_ToString(t *testing.T) {
 			boundary:  "!",
 			format:    config.Global.TextFormat,
 			qname:     "dnscoll tor.fr",
-			expected:  "- - - - - - - - 0b !dnscoll tor.fr! - -",
+			expected:  "- collector CLIENT_QUERY NOERROR 1.2.3.4 1234 - - 0b !dnscoll tor.fr! A -",
 		},
 		{
 			name:      "custom_text",
@@ -863,14 +863,21 @@ func TestDnsMessage_TextFormat_ToString(t *testing.T) {
 			boundary:  config.Global.TextFormatBoundary,
 			format:    "qname {IN} qtype",
 			qname:     "dnscollector.fr",
-			expected:  "dnscollector.fr IN -",
+			expected:  "dnscollector.fr IN A",
+		},
+		{
+			name:      "quote_dnstap_version",
+			delimiter: config.Global.TextFormatDelimiter,
+			boundary:  config.Global.TextFormatBoundary,
+			format:    "identity version qname",
+			qname:     "dnscollector.fr",
+			expected:  "collector \"dnscollector 1.0.0\" dnscollector.fr",
 		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			dm := DNSMessage{}
-			dm.Init()
+			dm := GetFakeDNSMessage()
 
 			dm.DNS.Qname = tc.qname
 

@@ -90,6 +90,10 @@ type ConfigTransformers struct {
 		Rename []RelabelingConfig `yaml:"rename,flow"`
 		Remove []RelabelingConfig `yaml:"remove,flow"`
 	} `yaml:"relabeling"`
+	Rewrite struct {
+		Enable      bool                   `yaml:"enable" default:"false"`
+		Identifiers map[string]interface{} `yaml:"identifiers,flow"`
+	} `yaml:"rewrite"`
 }
 
 func (c *ConfigTransformers) SetDefault() {

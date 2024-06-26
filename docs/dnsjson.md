@@ -29,6 +29,7 @@ Example:
     "qtype": "A",
     "id": 23455,
     "qclass": "IN",
+    "questions-count": 0,
     "flags": {
       "qr": true,
       "tc": false,
@@ -116,6 +117,7 @@ Here's a flat JSON output formatted using `jq`:
   "dns.qtype": "A",
   "dns.rcode": "NOERROR",
   "dns.qclass": "IN",
+  "dns.questions-count": 0,
   "dns.resource-records.an.0.name": "google.nl",
   "dns.resource-records.an.0.rdata": "142.251.39.99",
   "dns.resource-records.an.0.rdatatype": "A",

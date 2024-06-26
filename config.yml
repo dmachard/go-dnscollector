@@ -7,7 +7,7 @@ global:
     verbose: true
   server-identity: "dns-collector"
   pid-file: ""
-  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length-unit qname qtype latency"
+  text-format: "timestamp-rfc3339ns identity version operation rcode queryip queryport family protocol length-unit qname qtype latency"
   text-format-delimiter: " "
   text-format-boundary: "\""
   text-jinja: ""
@@ -42,6 +42,9 @@ pipelines:
       normalize:
         qname-lowercase: true
         qname-replace-nonprintable: true
+      rewrite:
+        identifiers:
+          dnstap.identity: "foo"
     routing-policy:
       forward: [ console ]
       dropped: [ ]

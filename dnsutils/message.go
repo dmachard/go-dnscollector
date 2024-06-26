@@ -673,26 +673,14 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			if len(qname) == 0 {
 				s.WriteString(".")
 			} else {
-				if len(fieldDelimiter) > 0 {
-					if strings.Contains(qname, fieldDelimiter) {
-						qnameEscaped := qname
-						if strings.Contains(qname, fieldBoundary) {
-							qnameEscaped = strings.ReplaceAll(qnameEscaped, fieldBoundary, "\\"+fieldBoundary)
-						}
-						s.WriteString(fmt.Sprintf(fieldBoundary+"%s"+fieldBoundary, qnameEscaped))
-					} else {
-						s.WriteString(qname)
-					}
-				} else {
-					s.WriteString(qname)
-				}
+				escapeStringAndWrite(&s, qname, fieldDelimiter, fieldBoundary)
 			}
 		case directive == "identity":
 			s.WriteString(dm.DNSTap.Identity)
 		case directive == "peer-name":
 			s.WriteString(dm.DNSTap.PeerName)
 		case directive == "version":
-			s.WriteString(dm.DNSTap.Version)
+			escapeStringAndWrite(&s, dm.DNSTap.Version, fieldDelimiter, fieldBoundary)
 		case directive == "extra":
 			s.WriteString(dm.DNSTap.Extra)
 		case directive == "policy-rule":
@@ -1171,6 +1159,7 @@ func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
 		"dns.qtype":                  dm.DNS.Qtype,
 		"dns.qclass":                 dm.DNS.Qclass,
 		"dns.rcode":                  dm.DNS.Rcode,
+		"dns.questions-count":        dm.DNS.QuestionsCount,
 		"dnstap.identity":            dm.DNSTap.Identity,
 		"dnstap.latency":             dm.DNSTap.LatencySec,
 		"dnstap.operation":           dm.DNSTap.Operation,
@@ -1858,6 +1847,7 @@ func GetFakeDNSMessage() DNSMessage {
 	dm := DNSMessage{}
 	dm.Init()
 	dm.DNSTap.Identity = "collector"
+	dm.DNSTap.Version = "dnscollector 1.0.0"
 	dm.DNSTap.Operation = "CLIENT_QUERY"
 	dm.DNS.Type = DNSQuery
 	dm.DNS.Qname = pkgconfig.ProgQname
@@ -1911,5 +1901,21 @@ func convertToString(value interface{}) string {
 		return v
 	default:
 		return fmt.Sprintf("%v", v)
+	}
+}
+
+func escapeStringAndWrite(s *strings.Builder, fieldString, fieldDelimiter, fieldBoundary string) {
+	if len(fieldDelimiter) > 0 {
+		if strings.Contains(fieldString, fieldDelimiter) {
+			fieldEscaped := fieldString
+			if strings.Contains(fieldString, fieldBoundary) {
+				fieldEscaped = strings.ReplaceAll(fieldEscaped, fieldBoundary, "\\"+fieldBoundary)
+			}
+			s.WriteString(fmt.Sprintf(fieldBoundary+"%s"+fieldBoundary, fieldEscaped))
+		} else {
+			s.WriteString(fieldString)
+		}
+	} else {
+		s.WriteString(fieldString)
 	}
 }
