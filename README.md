@@ -70,8 +70,8 @@
 
 - **[Transformers](./docs/transformers.md)**
 
-  - Custom [Relabeling](docs/transformers/transform_relabeling.md) for JSON structure
-  - Add additionnal [Tags](docs/transformers/transform_atags.md)
+  - [Rewrite](docs/transformers/transform_rewrite.md) DNS messages or custom [Relabeling](docs/transformers/transform_relabeling.md) for JSON output
+  - Add additionnal [Tags](docs/transformers/transform_atags.md) in DNS messages
   - Traffic [Filtering](docs/transformers/transform_trafficfiltering.md) and [Reducer](docs/transformers/transform_trafficreducer.md)
   - Latency [Computing](docs/transformers/transform_latency.md)
   - Apply [User Privacy](docs/transformers/transform_userprivacy.md)

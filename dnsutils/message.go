@@ -673,14 +673,26 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			if len(qname) == 0 {
 				s.WriteString(".")
 			} else {
-				escapeStringAndWrite(&s, qname, fieldDelimiter, fieldBoundary)
+				quoteStringAndWrite(&s, qname, fieldDelimiter, fieldBoundary)
 			}
 		case directive == "identity":
-			s.WriteString(dm.DNSTap.Identity)
+			if len(qname) == 0 {
+				s.WriteString(".")
+			} else {
+				quoteStringAndWrite(&s, dm.DNSTap.Identity, fieldDelimiter, fieldBoundary)
+			}
 		case directive == "peer-name":
-			s.WriteString(dm.DNSTap.PeerName)
+			if len(qname) == 0 {
+				s.WriteString(".")
+			} else {
+				quoteStringAndWrite(&s, dm.DNSTap.PeerName, fieldDelimiter, fieldBoundary)
+			}
 		case directive == "version":
-			escapeStringAndWrite(&s, dm.DNSTap.Version, fieldDelimiter, fieldBoundary)
+			if len(qname) == 0 {
+				s.WriteString(".")
+			} else {
+				quoteStringAndWrite(&s, dm.DNSTap.Version, fieldDelimiter, fieldBoundary)
+			}
 		case directive == "extra":
 			s.WriteString(dm.DNSTap.Extra)
 		case directive == "policy-rule":
@@ -1849,6 +1861,7 @@ func GetFakeDNSMessage() DNSMessage {
 	dm.DNSTap.Identity = "collector"
 	dm.DNSTap.Version = "dnscollector 1.0.0"
 	dm.DNSTap.Operation = "CLIENT_QUERY"
+	dm.DNSTap.PeerName = "localhost (127.0.0.1)"
 	dm.DNS.Type = DNSQuery
 	dm.DNS.Qname = pkgconfig.ProgQname
 	dm.NetworkInfo.QueryIP = "1.2.3.4"
@@ -1904,7 +1917,7 @@ func convertToString(value interface{}) string {
 	}
 }
 
-func escapeStringAndWrite(s *strings.Builder, fieldString, fieldDelimiter, fieldBoundary string) {
+func quoteStringAndWrite(s *strings.Builder, fieldString, fieldDelimiter, fieldBoundary string) {
 	if len(fieldDelimiter) > 0 {
 		if strings.Contains(fieldString, fieldDelimiter) {
 			fieldEscaped := fieldString
