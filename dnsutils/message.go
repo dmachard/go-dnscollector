@@ -676,19 +676,19 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 				quoteStringAndWrite(&s, qname, fieldDelimiter, fieldBoundary)
 			}
 		case directive == "identity":
-			if len(qname) == 0 {
+			if len(dm.DNSTap.Identity) == 0 {
 				s.WriteString(".")
 			} else {
 				quoteStringAndWrite(&s, dm.DNSTap.Identity, fieldDelimiter, fieldBoundary)
 			}
 		case directive == "peer-name":
-			if len(qname) == 0 {
+			if len(dm.DNSTap.PeerName) == 0 {
 				s.WriteString(".")
 			} else {
 				quoteStringAndWrite(&s, dm.DNSTap.PeerName, fieldDelimiter, fieldBoundary)
 			}
 		case directive == "version":
-			if len(qname) == 0 {
+			if len(dm.DNSTap.Version) == 0 {
 				s.WriteString(".")
 			} else {
 				quoteStringAndWrite(&s, dm.DNSTap.Version, fieldDelimiter, fieldBoundary)
