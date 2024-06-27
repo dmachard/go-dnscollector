@@ -7,7 +7,7 @@ global:
     verbose: true
   server-identity: "dns-collector"
   pid-file: ""
-  text-format: "timestamp-rfc3339ns identity version operation rcode queryip queryport family protocol length-unit qname qtype latency"
+  text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length-unit qname qtype latency"
   text-format-delimiter: " "
   text-format-boundary: "\""
   text-jinja: ""
@@ -44,6 +44,7 @@ pipelines:
         qname-replace-nonprintable: true
       rewrite:
         identifiers:
+          dnstap.version: ""
           dnstap.identity: "foo"
     routing-policy:
       forward: [ console ]
@@ -52,6 +53,7 @@ pipelines:
   - name: console
     stdout:
       mode: text
+      text-format: "timestamp-rfc3339ns identity version operation rcode queryip queryport family protocol length-unit qname qtype latency"
 
 ################################################
 # DEPRECATED - multiplexer configuration
