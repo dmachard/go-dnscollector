@@ -469,6 +469,7 @@ func TestDnsMessage_JsonFlatten_Reference(t *testing.T) {
 					"dns.qtype": "-",
 					"dns.rcode": "-",
 					"dns.qclass": "-",
+					"dns.questions-count": 0,
 					"dns.resource-records.an.0.name": "google.nl",
 					"dns.resource-records.an.0.rdata": "142.251.39.99",
 					"dns.resource-records.an.0.rdatatype": "A",
