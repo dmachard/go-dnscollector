@@ -1,9 +1,9 @@
 <p align="center">
 <img src="https://goreportcard.com/badge/github.com/dmachard/go-dns-collector" alt="Go Report"/>
 <img src="https://img.shields.io/badge/go%20version-min%201.21-green" alt="Go version"/>
-<img src="https://img.shields.io/badge/go%20tests-439-green" alt="Go tests"/>
+<img src="https://img.shields.io/badge/go%20tests-447-green" alt="Go tests"/>
 <img src="https://img.shields.io/badge/go%20bench-21-green" alt="Go bench"/>
-<img src="https://img.shields.io/badge/go%20lines-30949-green" alt="Go lines"/>
+<img src="https://img.shields.io/badge/go%20lines-31309-green" alt="Go lines"/>
 </p>
 
 <p align="center">
@@ -68,8 +68,8 @@
 
 - **[Transformers](./docs/transformers.md)**
 
-  - Custom [Relabeling](docs/transformers/transform_relabeling.md) for JSON structure
-  - Add additionnal [Tags](docs/transformers/transform_atags.md)
+  - [Rewrite](docs/transformers/transform_rewrite.md) DNS messages or custom [Relabeling](docs/transformers/transform_relabeling.md) for JSON output
+  - Add additionnal [Tags](docs/transformers/transform_atags.md) in DNS messages
   - Traffic [Filtering](docs/transformers/transform_trafficfiltering.md) and [Reducer](docs/transformers/transform_trafficreducer.md)
   - Latency [Computing](docs/transformers/transform_latency.md)
   - Apply [User Privacy](docs/transformers/transform_userprivacy.md)
