@@ -45,7 +45,7 @@ func (t *RewriteTransform) UpdateValues(dm *dnsutils.DNSMessage) (int, error) {
 			if realValue.Kind() == newValue.Kind() {
 				realValue.Set(newValue)
 			} else {
-				return 0, errors.New("type mismatch: unable to set the value for " + nestedKeys)
+				return 0, errors.New("unable to set value (" + newValue.Type().String() + ") for " + nestedKeys + "(" + realValue.Type().String() + ")")
 			}
 		}
 	}
