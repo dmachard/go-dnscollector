@@ -42,11 +42,19 @@ func (t *RewriteTransform) UpdateValues(dm *dnsutils.DNSMessage) (int, error) {
 			return 0, errors.New("field cannot be set: " + nestedKeys)
 		default:
 			newValue := reflect.ValueOf(value)
-			if realValue.Kind() == newValue.Kind() {
-				realValue.Set(newValue)
-			} else {
-				return 0, errors.New("unable to set value (" + newValue.Type().String() + ") for " + nestedKeys + "(" + realValue.Type().String() + ")")
+
+			switch realValue.Kind() {
+			case reflect.Int, reflect.String:
+				if realValue.Kind() == newValue.Kind() {
+					realValue.Set(newValue)
+				} else {
+					return 0, errors.New("unable to set value (" + newValue.Type().String() + ") for " + nestedKeys + "(" + realValue.Type().String() + ")")
+				}
+			default:
+				// Ignore unsupported types
+				continue
 			}
+
 		}
 	}
 
@@ -79,7 +87,6 @@ func getFieldByTag(value reflect.Value, nestedKeys string) (reflect.Value, bool)
 					if fieldValue, found := getFieldByTag(value.Field(i), listKeys[j+1]); found {
 						return fieldValue, true
 					}
-				// int, string
 				default:
 					return value.Field(i), true
 				}
