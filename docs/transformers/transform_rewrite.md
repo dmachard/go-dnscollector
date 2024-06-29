@@ -13,13 +13,9 @@ Options:
 Config example to remove the DNStap version and update the identity name.
 
 ```yaml
-- name: tap
-dnstap:
-    listen-ip: 0.0.0.0
-    listen-port: 6000
 transforms:
-    rewrite:
+  rewrite:
     identifiers:
-        dnstap.version: ""
-        dnstap.identity: "foo"
+      dnstap.version: ""
+      dnstap.identity: "foo"
 ```
