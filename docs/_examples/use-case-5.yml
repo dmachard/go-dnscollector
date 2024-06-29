@@ -1,17 +1,26 @@
 # This configuration sets up DNS traffic monitoring through DNStap unix socket;
 # and logging to a remote DNSTap server with TLS enabled.
+#
+# As prerequisites, we assume you have 
+# - a DNS server which supports DNSTap (unbound, bind, powerdns, etc) for more informations about dnstap, 
+#   read the following page: https://dmachard.github.io/posts/0001-dnstap-testing/
+# - a remote DNSTap collector with TLS support
 
+# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true
 
 pipelines:
+  # Read DNSTap stream from a UNIX socket
   - name: tap_unix
     dnstap:
       sock-path: /tmp/dnstap.sock
+    # Routes DNS messages from the Unix socket to TLS tap destination
     routing-policy:
       forward: [ tap_tls ]
   
+  # Sends to another DNSTap collector with TLS
   - name: tap_tls
     dnstapclient:
       remote-address: 127.0.0.1

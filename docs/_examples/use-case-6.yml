@@ -1,11 +1,19 @@
 # This configuration sets up DNS traffic monitoring through DNStap on port 6000;
 # applies transformations, and logs the processed data to the console in text format.
+#
+# As prerequisites, we assume you have 
+# - a DNS server which supports DNSTap (unbound, bind, powerdns, etc) for more informations about dnstap, 
+#   read the following page: https://dmachard.github.io/posts/0001-dnstap-testing/
 
+# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true
 
 pipelines:
+  # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
+  # and apply some transformations to apply user privacy by reducing user IP 
+  # and the requested domain: doc/configuration.md#user-privacy
   - name: tap
     dnstap:
       listen-ip: 0.0.0.0
@@ -14,9 +22,11 @@ pipelines:
       user-privacy:
         anonymize-ip: true
         minimaze-qname: true
+    # Routes DNS messages from the tap collector to standard output
     routing-policy:
       forward: [ console ]
   
+  # Print DNS messages on standard output with TEXT format
   - name: console
     stdout:
      mode: text

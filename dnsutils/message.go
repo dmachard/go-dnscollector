@@ -150,17 +150,17 @@ type DNSTap struct {
 	Timestamp        int64   `json:"-"`
 	TimeSec          int     `json:"-"`
 	TimeNsec         int     `json:"-"`
-	Latency          float64 `json:"-"`
-	LatencySec       string  `json:"latency"`
-	Payload          []byte  `json:"-"`
-	Extra            string  `json:"extra"`
-	PolicyRule       string  `json:"policy-rule"`
-	PolicyType       string  `json:"policy-type"`
-	PolicyMatch      string  `json:"policy-match"`
-	PolicyAction     string  `json:"policy-action"`
-	PolicyValue      string  `json:"policy-value"`
-	PeerName         string  `json:"peer-name"`
-	QueryZone        string  `json:"query-zone"`
+	Latency          float64 `json:"latency"`
+	//LatencySec       string  `json:"latency"`
+	Payload      []byte `json:"-"`
+	Extra        string `json:"extra"`
+	PolicyRule   string `json:"policy-rule"`
+	PolicyType   string `json:"policy-type"`
+	PolicyMatch  string `json:"policy-match"`
+	PolicyAction string `json:"policy-action"`
+	PolicyValue  string `json:"policy-value"`
+	PeerName     string `json:"peer-name"`
+	QueryZone    string `json:"query-zone"`
 }
 
 type PowerDNS struct {
@@ -284,15 +284,15 @@ func (dm *DNSMessage) Init() {
 		Identity:         "-",
 		Version:          "-",
 		TimestampRFC3339: "-",
-		LatencySec:       "-",
-		Extra:            "-",
-		PolicyRule:       "-",
-		PolicyType:       "-",
-		PolicyMatch:      "-",
-		PolicyAction:     "-",
-		PolicyValue:      "-",
-		PeerName:         "-",
-		QueryZone:        "-",
+		//	LatencySec:       "-",
+		Extra:        "-",
+		PolicyRule:   "-",
+		PolicyType:   "-",
+		PolicyMatch:  "-",
+		PolicyAction: "-",
+		PolicyValue:  "-",
+		PeerName:     "-",
+		QueryZone:    "-",
 	}
 
 	dm.DNS = DNS{
@@ -734,7 +734,7 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 		case directive == "qclass":
 			s.WriteString(dm.DNS.Qclass)
 		case directive == "latency":
-			s.WriteString(dm.DNSTap.LatencySec)
+			s.WriteString(fmt.Sprintf("%.9f", dm.DNSTap.Latency))
 		case directive == "malformed":
 			if dm.DNS.MalformedPacket {
 				s.WriteString("PKTERR")
@@ -1173,7 +1173,7 @@ func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
 		"dns.rcode":                  dm.DNS.Rcode,
 		"dns.questions-count":        dm.DNS.QuestionsCount,
 		"dnstap.identity":            dm.DNSTap.Identity,
-		"dnstap.latency":             dm.DNSTap.LatencySec,
+		"dnstap.latency":             dm.DNSTap.Latency,
 		"dnstap.operation":           dm.DNSTap.Operation,
 		"dnstap.timestamp-rfc3339ns": dm.DNSTap.TimestampRFC3339,
 		"dnstap.version":             dm.DNSTap.Version,
@@ -1406,8 +1406,6 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
 		}
 
 		expectedValue := reflect.ValueOf(value)
-		// fmt.Println(nestedKeys, realValue, realValue.Kind(), expectedValue.Kind())
-
 		switch expectedValue.Kind() {
 		// integer
 		case reflect.Int:
@@ -1461,7 +1459,15 @@ func matchUserMap(realValue, expectedValue reflect.Value) (bool, error) {
 		switch opName {
 		// Integer great than ?
 		case MatchingOpGreaterThan:
+			isFloat, isInt := false, false
+			if _, ok := opValue.Interface().(float64); ok {
+				isFloat = true
+			}
 			if _, ok := opValue.Interface().(int); !ok {
+				isInt = true
+			}
+
+			if !isFloat && !isInt {
 				return false, fmt.Errorf("integer is expected for greater-than operator")
 			}
 
@@ -1483,12 +1489,18 @@ func matchUserMap(realValue, expectedValue reflect.Value) (bool, error) {
 				return false, nil
 			}
 
-			if realValue.Kind() != reflect.Int {
-				return false, nil
+			if realValue.Kind() == reflect.Float64 {
+				if realValue.Interface().(float64) > opValue.Interface().(float64) {
+					return true, nil
+				}
 			}
-			if realValue.Interface().(int) > opValue.Interface().(int) {
-				return true, nil
+
+			if realValue.Kind() == reflect.Int {
+				if realValue.Interface().(int) > opValue.Interface().(int) {
+					return true, nil
+				}
 			}
+
 			return false, nil
 
 		// Integer lower than ?

@@ -1,0 +1,60 @@
+# How to only log slow responses and errors only?
+
+# If turned on, debug messages are printed in the standard output
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
+  - name: dnsdist_in
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    transforms:
+      normalize:
+        qname-lowercase: true
+        qname-replace-nonprintable: true
+      latency:
+        measure-latency: true
+    routing-policy:
+      forward: [ console ] #filter-slow, filter-errors ]
+      dropped: [ ]
+
+  - name: console
+    stdout:
+      mode: flat-json
+
+  # keep only slow responses
+  - name: filter-slow
+    dnsmessage:
+      matching:
+        include:
+          dnstap.operation: "CLIENT_RESPONSE"
+          dnstap.latency:
+            greater-than: 0.01
+    routing-policy:
+      forward: [ outputfile-slowresponses ]
+
+  # keep only DNS errors responses (discard NOERROR and NXDOMAINS)
+  - name: filter-errors
+    dnsmessage:
+      matching:
+        include:
+          dnstap.operation: "CLIENT_RESPONSE"
+        exclude:
+          dns.rcode:
+            - NOERROR
+            - NXDOMAIN
+    routing-policy:
+      forward: [ outputfile-dnserrors ]
+
+  - name: outputfile-slowresponses
+    logfile:
+      file-path:  "/tmp/dnstap-slow.log"
+      mode: text
+
+  - name: outputfile-dnserrors
+    logfile:
+      file-path:  "/tmp/dnstap-errors.log"
+      mode: text

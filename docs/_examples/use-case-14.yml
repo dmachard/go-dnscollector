@@ -1,11 +1,13 @@
 # This configuration sets up watch and read DNStap files;
 # and logging to the console in text format.
 
+# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true
 
 pipelines:
+  # Watch in /tmp folder to find dnstap files with fstrm extension
   - name: tap
     dnstap:
       listen-ip: 0.0.0.0
@@ -26,6 +28,7 @@ pipelines:
     routing-policy:
       forward: [ console ]
 
+  # Redirect output to the console
   - name: console
     stdout:
       mode: text

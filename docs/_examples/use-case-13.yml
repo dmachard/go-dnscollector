@@ -1,11 +1,13 @@
 # This configuration sets up DNS traffic monitoring through DNStap on port 6000;
 # and save to a file as DNStap 
 
+# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true
 
 pipelines:
+  # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
   - name: tap
     dnstap:
       listen-ip: 0.0.0.0
@@ -13,6 +15,7 @@ pipelines:
     routing-policy:
       forward: [ dnstap ]
 
+  # Save the dnstap stream to file
   - name: dnstap
     logfile:
       file-path:  /tmp/dnstap.fstrm

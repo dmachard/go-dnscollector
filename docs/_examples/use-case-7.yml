@@ -1,15 +1,23 @@
 # This configuration sets up DNS traffic monitoring through DNStap on port 6000 and port 6001;
 # and logs in text file.
+#
+# As prerequisites, we assume you have 
+# - a DNS server which supports DNSTap (unbound, bind, powerdns, etc) for more informations about dnstap, 
+#   read the following page: https://dmachard.github.io/posts/0001-dnstap-testing/
 
+# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true
 
 pipelines:
+  # Listen on tcp/6000 and tcp/6001 for incoming DNSTap protobuf messages 
+  # from several servers
   - name: tap1
     dnstap:
       listen-ip: 0.0.0.0
       listen-port: 6000
+    # Routes DNS messages from the tap 1 and 2 to the same file destination
     routing-policy:
       forward: [ file ]
 
@@ -20,6 +28,7 @@ pipelines:
     routing-policy:
       forward: [ file ]
 
+  # Write DNS logs to a local file in TEXT format
   - name: file
     logfile:
       file-path:  "/tmp/dnstap.log"

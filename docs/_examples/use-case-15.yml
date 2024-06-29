@@ -1,11 +1,13 @@
 # This configuration sets up watch and read PCAP files;
 # and logging to the console in JSON format.
 
+# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true
 
 pipelines:
+  # Watch in /tmp folder to find pcap files with pcap or pcap.gz extension
   - name: pcap
     file-ingestor:
       watch-dir: /tmp/
@@ -16,6 +18,7 @@ pipelines:
     routing-policy:
       forward: [ console ]
 
+  # Redirect output to the console
   - name: console
     stdout:
       mode: json

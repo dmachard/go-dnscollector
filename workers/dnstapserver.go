@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"strconv"
@@ -539,7 +538,8 @@ func (w *DNSTapProcessor) StartCollect() {
 			}
 
 			// convert latency to human
-			dm.DNSTap.LatencySec = fmt.Sprintf("%.6f", dm.DNSTap.Latency)
+			//dm.DNSTap.LatencySec = fmt.Sprintf("%.6f", dm.DNSTap.Latency)
+			//fmt.Println(dm.DNSTap.LatencySec, dm.DNSTap.Latency)
 
 			// dispatch dns message to connected routes
 			w.SendForwardedTo(defaultRoutes, defaultNames, dm)

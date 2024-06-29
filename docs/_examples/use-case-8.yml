@@ -1,15 +1,23 @@
 # This configuration sets up DNS traffic monitoring through PowerDNS Protobuf on port 6000 and port 6001;
 # and save-it in specific log files as text format.
+#
+# As prerequisites, we assume you have 
+# - a PowerDNS DNS server which protobuf enabled
 
+# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true
 
 pipelines:
+  # Listen on tcp/6000 and tcp/6001 for internal/internet DNS
+  # with protobuf PowerDNS messages: https://dnsdist.org/reference/protobuf.html
   - name: pdns_internal
     powerdns:
       listen-ip: 0.0.0.0
       listen-port: 6000
+    # Routes the pdns_internal stream to internal file 
+    # and pdns_internet steram to internet file
     routing-policy:
       forward: [ file_internal ]
 
@@ -20,6 +28,7 @@ pipelines:
     routing-policy:
       forward: [ file_internet ]
 
+   # Write DNS logs to a local files in TEXT format
   - name: file_internal
     logfile:
       file-path:  "/tmp/dnscollector_internal.log"

@@ -3,7 +3,6 @@ package workers
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"strconv"
@@ -301,7 +300,7 @@ func (w *PdnsProcessor) StartCollect() {
 
 				// convert latency to human
 				dm.DNSTap.Latency = tsReply - tsQuery
-				dm.DNSTap.LatencySec = fmt.Sprintf("%.6f", dm.DNSTap.Latency)
+				//dm.DNSTap.LatencySec = fmt.Sprintf("%.6f", dm.DNSTap.Latency)
 				dm.DNS.Rcode = dnsutils.RcodeToString(int(pbdm.Response.GetRcode()))
 			}
 
