@@ -18,12 +18,12 @@ pipelines:
       latency:
         measure-latency: true
     routing-policy:
-      forward: [ console ] #filter-slow, filter-errors ]
+      forward: [ console, filter-slow, filter-errors ]
       dropped: [ ]
 
   - name: console
     stdout:
-      mode: flat-json
+      mode: text
 
   # keep only slow responses
   - name: filter-slow
@@ -32,7 +32,7 @@ pipelines:
         include:
           dnstap.operation: "CLIENT_RESPONSE"
           dnstap.latency:
-            greater-than: 0.01
+            greater-than: 0.02
     routing-policy:
       forward: [ outputfile-slowresponses ]
 
