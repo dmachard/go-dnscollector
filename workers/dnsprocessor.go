@@ -101,9 +101,6 @@ func (w *DNSProcessor) StartCollect() {
 				continue
 			}
 
-			// convert latency to human
-			//dm.DNSTap.LatencySec = fmt.Sprintf("%.6f", dm.DNSTap.Latency)
-
 			// dispatch dns message to all generators
 			w.SendForwardedTo(defaultRoutes, defaultNames, dm)
 		}

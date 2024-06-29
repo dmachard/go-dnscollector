@@ -151,16 +151,15 @@ type DNSTap struct {
 	TimeSec          int     `json:"-"`
 	TimeNsec         int     `json:"-"`
 	Latency          float64 `json:"latency"`
-	//LatencySec       string  `json:"latency"`
-	Payload      []byte `json:"-"`
-	Extra        string `json:"extra"`
-	PolicyRule   string `json:"policy-rule"`
-	PolicyType   string `json:"policy-type"`
-	PolicyMatch  string `json:"policy-match"`
-	PolicyAction string `json:"policy-action"`
-	PolicyValue  string `json:"policy-value"`
-	PeerName     string `json:"peer-name"`
-	QueryZone    string `json:"query-zone"`
+	Payload          []byte  `json:"-"`
+	Extra            string  `json:"extra"`
+	PolicyRule       string  `json:"policy-rule"`
+	PolicyType       string  `json:"policy-type"`
+	PolicyMatch      string  `json:"policy-match"`
+	PolicyAction     string  `json:"policy-action"`
+	PolicyValue      string  `json:"policy-value"`
+	PeerName         string  `json:"peer-name"`
+	QueryZone        string  `json:"query-zone"`
 }
 
 type PowerDNS struct {
