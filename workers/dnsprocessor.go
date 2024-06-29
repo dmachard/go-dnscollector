@@ -1,7 +1,6 @@
 package workers
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -101,9 +100,6 @@ func (w *DNSProcessor) StartCollect() {
 				w.SendDroppedTo(droppedRoutes, droppedNames, dm)
 				continue
 			}
-
-			// convert latency to human
-			dm.DNSTap.LatencySec = fmt.Sprintf("%.6f", dm.DNSTap.Latency)
 
 			// dispatch dns message to all generators
 			w.SendForwardedTo(defaultRoutes, defaultNames, dm)

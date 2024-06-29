@@ -1,18 +1,27 @@
 # This configuration sets up DNS traffic monitoring through DNStap on port 6000
 # and logging to the console in JSON format.
+#
+# As prerequisites, we assume you have a DNS server which supports DNSTap (unbound, bind, powerdns, etc)
+# For more informations about dnstap, read the following page: https://dmachard.github.io/posts/0001-dnstap-testing/
+#
 
+# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true
 
 pipelines:
+  # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
   - name: tap
     dnstap:
       listen-ip: 0.0.0.0
       listen-port: 6000
+    # Routes DNS messages from the tap collector to standard output
     routing-policy:
       forward: [ console ]
 
+  # Print DNS messages on standard output with JSON format
+  # more detail about the format: doc/dnsjson.md
   - name: console
     stdout:
       mode: json

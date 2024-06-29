@@ -1,6 +1,7 @@
 # This configuration sets up DNS traffic monitoring through DNStap on port 6000;
 # applies tranformations on dnstap collector and the console logger
 
+# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true

@@ -1,18 +1,27 @@
 # This configuration sets up DNS traffic monitoring through DNStap on port 6000
 # and logging to a remote Loki server.
+#
+# As prerequisites, we assume you have 
+# - a DNS server which supports DNSTap (unbound, bind, powerdns, etc) for more informations about dnstap, 
+#   read the following page: https://dmachard.github.io/posts/0001-dnstap-testing/
+# - a Loki infrastructure: https://grafana.com/docs/loki/latest/
 
+# If turned on, debug messages are printed in the standard output
 global:
   trace:
     verbose: true
 
 pipelines:
+  # Listen on tcp/6000 for incoming DNSTap protobuf messages from dns servers
   - name: tap
     dnstap:
       listen-ip: 0.0.0.0
       listen-port: 6000
+    # Routes DNS messages from the tap collector to loki with some transformations
     routing-policy:
       forward: [ loki ]
 
+  # Sends DNS messages to loki instance in text format
   - name: loki
     lokiclient:
       server-url: "http://loki:3100/loki/api/v1/push"
