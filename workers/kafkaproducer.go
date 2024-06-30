@@ -22,10 +22,10 @@ import (
 type KafkaProducer struct {
 	*GenericWorker
 	textFormat                 []string
-	kafkaConn                  *kafka.Conn
 	kafkaReady, kafkaReconnect chan bool
 	kafkaConnected             bool
 	compressCodec              compress.Codec
+	kafkaConns                 map[int]*kafka.Conn // Map to store connections by partition
 }
 
 func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name string) *KafkaProducer {
@@ -33,9 +33,12 @@ func NewKafkaProducer(config *pkgconfig.Config, logger *logger.Logger, name stri
 	if config.Loggers.KafkaProducer.ChannelBufferSize > 0 {
 		bufSize = config.Loggers.KafkaProducer.ChannelBufferSize
 	}
-	w := &KafkaProducer{GenericWorker: NewGenericWorker(config, logger, name, "kafka", bufSize, pkgconfig.DefaultMonitor)}
-	w.kafkaReady = make(chan bool)
-	w.kafkaReconnect = make(chan bool)
+	w := &KafkaProducer{
+		GenericWorker:  NewGenericWorker(config, logger, name, "kafka", bufSize, pkgconfig.DefaultMonitor),
+		kafkaReady:     make(chan bool),
+		kafkaReconnect: make(chan bool),
+		kafkaConns:     make(map[int]*kafka.Conn),
+	}
 	w.ReadConfig()
 	return w
 }
@@ -66,26 +69,33 @@ func (w *KafkaProducer) ReadConfig() {
 }
 
 func (w *KafkaProducer) Disconnect() {
-	if w.kafkaConn != nil {
-		w.LogInfo("closing  connection")
-		w.kafkaConn.Close()
+	// Close all Kafka connections
+	for _, conn := range w.kafkaConns {
+		if conn != nil {
+			w.LogInfo("closing connection per partition")
+			conn.Close()
+		}
 	}
+	w.kafkaConns = make(map[int]*kafka.Conn) // Clear the map
 }
 
 func (w *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Timer) {
 	for {
 		readyTimer.Reset(time.Duration(10) * time.Second)
 
-		if w.kafkaConn != nil {
-			w.kafkaConn.Close()
-			w.kafkaConn = nil
+		if len(w.kafkaConns) > 0 {
+			w.Disconnect()
 		}
 
 		topic := w.GetConfig().Loggers.KafkaProducer.Topic
 		partition := w.GetConfig().Loggers.KafkaProducer.Partition
 		address := w.GetConfig().Loggers.KafkaProducer.RemoteAddress + ":" + strconv.Itoa(w.GetConfig().Loggers.KafkaProducer.RemotePort)
 
-		w.LogInfo("connecting to kafka=%s partition=%d topic=%s", address, partition, topic)
+		if partition == nil {
+			w.LogInfo("connecting to kafka=%s partition=all topic=%s", address, topic)
+		} else {
+			w.LogInfo("connecting to kafka=%s partition=%d topic=%s", address, *partition, topic)
+		}
 
 		dialer := &kafka.Dialer{
 			Timeout:   time.Duration(w.GetConfig().Loggers.KafkaProducer.ConnectTimeout) * time.Second,
@@ -133,16 +143,36 @@ func (w *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Tim
 
 		}
 
-		// connect
-		conn, err := dialer.DialLeader(ctx, "tcp", address, topic, partition)
-		if err != nil {
-			w.LogError("%s", err)
-			w.LogInfo("retry to connect in %d seconds", w.GetConfig().Loggers.KafkaProducer.RetryInterval)
-			time.Sleep(time.Duration(w.GetConfig().Loggers.KafkaProducer.RetryInterval) * time.Second)
-			continue
-		}
+		var conn *kafka.Conn
+		var err error
 
-		w.kafkaConn = conn
+		if partition == nil {
+			// Lookup partitions and create connections for each
+			partitions, err := dialer.LookupPartitions(ctx, "tcp", address, topic)
+			if err != nil {
+				w.LogError("failed to lookup partitions:", err)
+				time.Sleep(time.Duration(w.GetConfig().Loggers.KafkaProducer.RetryInterval) * time.Second)
+				continue
+			}
+			for _, p := range partitions {
+				conn, err = dialer.DialLeader(ctx, "tcp", address, p.Topic, p.ID)
+				if err != nil {
+					w.LogError("failed to dial leader for partition %d: %s", p.ID, err)
+					continue
+				}
+				w.kafkaConns[p.ID] = conn
+			}
+		} else {
+			// DialLeader directly for a specific partition
+			conn, err = dialer.DialLeader(ctx, "tcp", address, topic, *partition)
+			if err != nil {
+				w.LogError("failed to dial leader for partition %d and topic %s: %s", partition, topic, err)
+				w.LogInfo("retry to connect in %d seconds", w.GetConfig().Loggers.KafkaProducer.RetryInterval)
+				time.Sleep(time.Duration(w.GetConfig().Loggers.KafkaProducer.RetryInterval) * time.Second)
+				continue
+			}
+			w.kafkaConns[*partition] = conn
+		}
 
 		// block until is ready
 		w.kafkaReady <- true
@@ -154,6 +184,7 @@ func (w *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 	msgs := []kafka.Message{}
 	buffer := new(bytes.Buffer)
 	strDm := ""
+	partition := w.GetConfig().Loggers.KafkaProducer.Partition
 
 	for _, dm := range *buf {
 		switch w.GetConfig().Loggers.KafkaProducer.Mode {
@@ -181,12 +212,34 @@ func (w *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 
 	}
 
-	// add support for msg compression
+	// add support for msg compression and round robin
 	var err error
-	if w.GetConfig().Loggers.KafkaProducer.Compression == pkgconfig.CompressNone {
-		_, err = w.kafkaConn.WriteMessages(msgs...)
+	if partition == nil {
+		index := 0
+		numPartitions := len(w.kafkaConns)
+		for _, msg := range msgs {
+			conn := w.kafkaConns[index]
+			if w.GetConfig().Loggers.KafkaProducer.Compression == pkgconfig.CompressNone {
+				_, err = conn.WriteMessages(msg)
+			} else {
+				_, err = conn.WriteCompressedMessages(w.compressCodec, msg)
+			}
+			if err != nil {
+				w.LogError("unable to write message", err.Error())
+				w.kafkaConnected = false
+				<-w.kafkaReconnect
+			}
+
+			// Move to the next partition in round-robin fashion
+			index = (index + 1) % numPartitions
+		}
 	} else {
-		_, err = w.kafkaConn.WriteCompressedMessages(w.compressCodec, msgs...)
+		conn := w.kafkaConns[*partition]
+		if w.GetConfig().Loggers.KafkaProducer.Compression == pkgconfig.CompressNone {
+			_, err = conn.WriteMessages(msgs...)
+		} else {
+			_, err = conn.WriteCompressedMessages(w.compressCodec, msgs...)
+		}
 	}
 
 	if err != nil {

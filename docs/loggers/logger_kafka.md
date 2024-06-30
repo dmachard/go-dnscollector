@@ -67,6 +67,7 @@ Options:
 
 * `partition` (integer)
   > Specifies the Kafka partition to which messages will be sent.
+  > If partition parameter is null, then use `round-robin` partitioner for kafka (default behavior)
 
 * `chan-buffer-size` (int)
   > Specifies the maximum number of packets that can be buffered before discard additional packets.
@@ -95,7 +96,7 @@ kafkaproducer:
   text-format: ""
   buffer-size: 100
   topic: "dnscollector"
-  partition: 0
+  partition: null
   chan-buffer-size: 0
   compression: none
 ```
