@@ -151,6 +151,7 @@ func (w *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Tim
 			partitions, err := dialer.LookupPartitions(ctx, "tcp", address, topic)
 			if err != nil {
 				w.LogError("failed to lookup partitions:", err)
+				w.LogInfo("retry to connect in %d seconds", w.GetConfig().Loggers.KafkaProducer.RetryInterval)
 				time.Sleep(time.Duration(w.GetConfig().Loggers.KafkaProducer.RetryInterval) * time.Second)
 				continue
 			}
@@ -158,6 +159,8 @@ func (w *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Tim
 				conn, err = dialer.DialLeader(ctx, "tcp", address, p.Topic, p.ID)
 				if err != nil {
 					w.LogError("failed to dial leader for partition %d: %s", p.ID, err)
+					w.LogInfo("retry to connect in %d seconds", w.GetConfig().Loggers.KafkaProducer.RetryInterval)
+					time.Sleep(time.Duration(w.GetConfig().Loggers.KafkaProducer.RetryInterval) * time.Second)
 					continue
 				}
 				w.kafkaConns[p.ID] = conn
@@ -166,7 +169,7 @@ func (w *KafkaProducer) ConnectToKafka(ctx context.Context, readyTimer *time.Tim
 			// DialLeader directly for a specific partition
 			conn, err = dialer.DialLeader(ctx, "tcp", address, topic, *partition)
 			if err != nil {
-				w.LogError("failed to dial leader for partition %d and topic %s: %s", partition, topic, err)
+				w.LogError("failed to dial leader for partition %d and topic %s: %s", *partition, topic, err)
 				w.LogInfo("retry to connect in %d seconds", w.GetConfig().Loggers.KafkaProducer.RetryInterval)
 				time.Sleep(time.Duration(w.GetConfig().Loggers.KafkaProducer.RetryInterval) * time.Second)
 				continue
@@ -228,6 +231,7 @@ func (w *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 				w.LogError("unable to write message", err.Error())
 				w.kafkaConnected = false
 				<-w.kafkaReconnect
+				break
 			}
 
 			// Move to the next partition in round-robin fashion
@@ -240,12 +244,11 @@ func (w *KafkaProducer) FlushBuffer(buf *[]dnsutils.DNSMessage) {
 		} else {
 			_, err = conn.WriteCompressedMessages(w.compressCodec, msgs...)
 		}
-	}
-
-	if err != nil {
-		w.LogError("unable to write message", err.Error())
-		w.kafkaConnected = false
-		<-w.kafkaReconnect
+		if err != nil {
+			w.LogError("unable to write message", err.Error())
+			w.kafkaConnected = false
+			<-w.kafkaReconnect
+		}
 	}
 
 	// reset buffer

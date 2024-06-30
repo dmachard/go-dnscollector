@@ -60,7 +60,7 @@ Options:
   > output text format, please refer to the default text format to see all available [directives](../configuration.md#custom-text-format), use this parameter if you want a specific format
 
 * `buffer-size` (integer)
-  > Specifies the size of the buffer for DNS messages before they are sent to Kafka.
+  > Specifies the size of the bulk for DNS messages before they are sent to Kafka.
 
 * `topic` (integer)
   > Specifies the Kafka topic to which messages will be forwarded.
