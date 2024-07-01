@@ -34,33 +34,7 @@
 
   You can also applied  [transformations](./docs/transformers.md) on it like ([traffic filtering](./docs/transformers.md#dns-filtering), [user privacy](./docs/transformers.md#user-privacy), ...).
 
-  ```yaml
-  pipelines:
-  - name: tap
-    dnstap:
-      listen-ip: 0.0.0.0
-      listen-port: 6000
-    transforms:
-      normalize:
-        qname-lowercase: true
-        qname-replace-nonprintable: true
-    routing-policy:
-      forward: [ filter-slow ]
-      
-  - name: filter-slow
-    dnsmessage:
-      matching:
-        include:
-          dnstap.operation: "CLIENT_RESPONSE"
-          dnstap.latency:
-            greater-than: 0.2
-    routing-policy:
-      forward: [ console ]
-
-  - name: console
-    stdout:
-      mode: text
-  ```
+  [![config](./docs/_images/config.png)](./docs/configuration.md)
 
 - **[Collectors & Loggers](./docs/workers.md)**
 
