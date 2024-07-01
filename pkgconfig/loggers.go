@@ -292,7 +292,7 @@ type ConfigLoggers struct {
 		FlushInterval     int    `yaml:"flush-interval" default:"10"`
 		ConnectTimeout    int    `yaml:"connect-timeout" default:"5"`
 		Topic             string `yaml:"topic" default:"dnscollector"`
-		Partition         int    `yaml:"partition" default:"0"`
+		Partition         *int   `yaml:"partition" default:"nil"`
 		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 		Compression       string `yaml:"compression" default:"none"`
 	} `yaml:"kafkaproducer"`

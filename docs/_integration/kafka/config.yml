@@ -15,7 +15,7 @@ pipelines:
 
   - name: kafka
     kafkaproducer:
-      remote-address: 127.0.0.1
+      remote-address: 192.168.1.16
       remote-port: 9092
       connect-timeout: 5
       retry-interval: 10
@@ -29,6 +29,6 @@ pipelines:
       mode: flat-json
       buffer-size: 100
       topic: "dnscollector"
-      partition: 0
+      partition: null
       chan-buffer-size: 4096
       compression: none
