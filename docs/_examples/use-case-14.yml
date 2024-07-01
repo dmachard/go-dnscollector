@@ -23,7 +23,7 @@ pipelines:
 
   - name: file-dnstap
     file-ingestor:
-      watch-dir: /tmp
+      watch-dir: ./tests/testsdata/dnstap/
       watch-mode: dnstap
     routing-policy:
       forward: [ console ]

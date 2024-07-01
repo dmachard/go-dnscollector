@@ -10,7 +10,7 @@ pipelines:
   # Watch in /tmp folder to find pcap files with pcap or pcap.gz extension
   - name: pcap
     file-ingestor:
-      watch-dir: /tmp/
+      watch-dir: ./tests/testsdata/pcap
       watch-mode: pcap
     transforms:
       normalize:
