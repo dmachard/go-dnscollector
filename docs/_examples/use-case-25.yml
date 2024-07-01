@@ -18,8 +18,8 @@ pipelines:
       latency:
         measure-latency: true
     routing-policy:
-      forward: [ filter-slow, filter-errors ]
-      dropped: [ ]
+      forward: [filter-slow, filter-errors]
+      dropped: []
 
   # keep only slow responses
   - name: filter-slow
@@ -30,7 +30,7 @@ pipelines:
           dnstap.latency:
             greater-than: 0.2
     routing-policy:
-      forward: [ outputfile-slowresponses ]
+      forward: [outputfile-slowresponses]
 
   # keep only DNS errors responses (discard NOERROR and NXDOMAINS)
   - name: filter-errors
@@ -43,14 +43,14 @@ pipelines:
             - NOERROR
             - NXDOMAIN
     routing-policy:
-      forward: [ outputfile-dnserrors ]
+      forward: [outputfile-dnserrors]
 
   - name: outputfile-slowresponses
     logfile:
-      file-path:  "/tmp/dnstap-slow.log"
+      file-path: "/tmp/dnstap-slow.log"
       mode: flat-json
 
   - name: outputfile-dnserrors
     logfile:
-      file-path:  "/tmp/dnstap-errors.log"
+      file-path: "/tmp/dnstap-errors.log"
       mode: text
