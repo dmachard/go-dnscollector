@@ -36,7 +36,7 @@ require (
 	github.com/rs/tzsp v0.0.0-20161230003637-8ce729c826b9
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.9.0
-	github.com/tinylib/msgp v1.1.9
+	github.com/tinylib/msgp v1.2.0
 	golang.org/x/net v0.26.0
 	golang.org/x/sys v0.21.0
 	google.golang.org/protobuf v1.34.2
@@ -120,7 +120,7 @@ require (
 	github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e // indirect
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/philhofer/fwd v1.1.2 // indirect
+	github.com/philhofer/fwd v1.1.3-0.20240612014219-fbbf4953d986 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/exporter-toolkit v0.11.0 // indirect
