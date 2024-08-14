@@ -24,7 +24,7 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
 	github.com/grafana/dskit v0.0.0-20240528015923-27d7d41066d3
-	github.com/grafana/loki/v3 v3.1.0
+	github.com/grafana/loki/v3 v3.1.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb-client-go v1.4.0
