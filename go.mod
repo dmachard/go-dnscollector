@@ -8,7 +8,7 @@ require (
 	github.com/IBM/fluent-forward-go v0.2.2
 	github.com/IBM/sarama v1.43.3
 	github.com/cilium/ebpf v0.16.0
-	github.com/creasty/defaults v1.7.0
+	github.com/creasty/defaults v1.8.0
 	github.com/dmachard/go-clientsyslog v0.4.0
 	github.com/dmachard/go-dnstap-protobuf v1.0.2
 	github.com/dmachard/go-framestream v0.10.0
