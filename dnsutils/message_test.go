@@ -1732,6 +1732,17 @@ func TestDNSMessage_Matching(t *testing.T) {
 			wantError: false,
 			wantMatch: true,
 		},
+		{
+			name: "Test greater than operator matching",
+			dm:   &DNSMessage{DNS: DNS{Opcode: 5}},
+			matching: map[string]interface{}{
+				"dns.opcode": map[string]interface{}{
+					"greater-than": 3,
+				},
+			},
+			wantError: false,
+			wantMatch: true,
+		},
 	}
 
 	for _, tt := range tests {

@@ -1408,31 +1408,51 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
 		switch expectedValue.Kind() {
 		// integer
 		case reflect.Int:
-			if match, _ := matchUserInteger(realValue, expectedValue); !match {
+			match, err := matchUserInteger(realValue, expectedValue)
+			if err != nil {
+				return err, false
+			}
+			if !match {
 				return nil, false
 			}
 
 		// string
 		case reflect.String:
-			if match, _ := matchUserPattern(realValue, expectedValue); !match {
+			match, err := matchUserPattern(realValue, expectedValue)
+			if err != nil {
+				return err, false
+			}
+			if !match {
 				return nil, false
 			}
 
 		// bool
 		case reflect.Bool:
-			if match, _ := matchUserBoolean(realValue, expectedValue); !match {
+			match, err := matchUserBoolean(realValue, expectedValue)
+			if err != nil {
+				return err, false
+			}
+			if !match {
 				return nil, false
 			}
 
 		// map
 		case reflect.Map:
-			if match, _ := matchUserMap(realValue, expectedValue); !match {
+			match, err := matchUserMap(realValue, expectedValue)
+			if err != nil {
+				return err, false
+			}
+			if !match {
 				return nil, false
 			}
 
 		// list/slice
 		case reflect.Slice:
-			if match, _ := matchUserSlice(realValue, expectedValue); !match {
+			match, err := matchUserSlice(realValue, expectedValue)
+			if err != nil {
+				return err, false
+			}
+			if !match {
 				return nil, false
 			}
 
@@ -1462,7 +1482,7 @@ func matchUserMap(realValue, expectedValue reflect.Value) (bool, error) {
 			if _, ok := opValue.Interface().(float64); ok {
 				isFloat = true
 			}
-			if _, ok := opValue.Interface().(int); !ok {
+			if _, ok := opValue.Interface().(int); ok {
 				isInt = true
 			}
 
