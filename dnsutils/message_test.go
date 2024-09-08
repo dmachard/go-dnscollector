@@ -1652,3 +1652,35 @@ func BenchmarkDnsMessage_ToJinjaFormat(b *testing.B) {
 		}
 	}
 }
+
+// Matching
+func TestDNSMessage_Matching(t *testing.T) {
+	tests := []struct {
+		name      string
+		dm        *DNSMessage
+		matching  map[string]interface{}
+		wantError bool
+		wantMatch bool
+	}{
+		{
+			name:      "Test integer matching",
+			dm:        &DNSMessage{DNS: DNS{Opcode: 1}},
+			matching:  map[string]interface{}{"dns.opcode": 1},
+			wantError: false,
+			wantMatch: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err, isMatch := tt.dm.Matching(tt.matching)
+			if (err != nil) != tt.wantError {
+				t.Errorf("DNSMessage.Matching() error = %v, wantError %v", err, tt.wantError)
+				return
+			}
+			if isMatch != tt.wantMatch {
+				t.Errorf("DNSMessage.Matching() = %v, want %v", isMatch, tt.wantMatch)
+			}
+		})
+	}
+}
