@@ -1,0 +1,14 @@
+recursor:
+  include_dir: /etc/powerdns/recursor.d
+
+incoming:
+  allow_from: [0.0.0.0/0]
+  listen:
+  - 0.0.0.0:5553
+
+logging:
+  protobuf_servers:
+    - servers: [127.0.0.1:6001]
+      logQueries: true
+      logResponses: true
+      exportTypes: [A, AAAA, CNAME, MX, NS, PTR, SPF, SRV, TXT]
