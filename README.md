@@ -122,7 +122,17 @@ The [`_integration`](./docs/_integration) folder contains DNS-collector `configu
 - [Prometheus](./docs/_integration/prometheus/README.md)
 - [Loki](./docs/_integration/loki/README.md)
 
-## Telemetry
+## DNS Telemetry
+
+`DNS-collector` provides telemetry capabilities with the Prometheus logger, 
+you can easily monitor key performance indicators and detect anomalies in real-time.
+
+![dashboard](docs/_images/dashboard_prometheus.png)
+
+## Performance
+
+Tuning may be necessary to deal with a large traffic loads.
+Please refer to the [performance tuning](./docs/performance.md) guide if needed.
 
 Performance metrics are available to evaluate the efficiency of your pipelines. These metrics allow you to track:
 - The number of incoming and outgoing packets processed by each worker
@@ -134,11 +144,6 @@ Performance metrics are available to evaluate the efficiency of your pipelines. 
 A [build-in](./docs/dashboards/grafana_exporter.json) dashboard is available for monitoring these metrics.
 
 ![dashboard](docs/_images/dashboard_global.png)
-
-## Performance
-
-Tuning may be necessary to deal with a large traffic loads.
-Please refer to the [performance tuning](./docs/performance.md) guide if needed.
 
 ## Contributing
 
