@@ -1733,7 +1733,7 @@ func TestDNSMessage_Matching(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name: "Test greater than operator matching",
+			name: "Test integer greater than operator matching",
 			dm:   &DNSMessage{DNS: DNS{Opcode: 5}},
 			matching: map[string]interface{}{
 				"dns.opcode": map[string]interface{}{
@@ -1742,6 +1742,68 @@ func TestDNSMessage_Matching(t *testing.T) {
 			},
 			wantError: false,
 			wantMatch: true,
+		},
+		{
+			name: "Test integer with invalid greater than operator",
+			dm:   &DNSMessage{DNS: DNS{Opcode: 1}},
+			matching: map[string]interface{}{
+				"dns.opcode": map[string]interface{}{
+					"greater-than": "0",
+				},
+			},
+			wantError: true,
+			wantMatch: false,
+		},
+		{
+			name: "Test float greater than operator matching",
+			dm:   &DNSMessage{DNSTap: DNSTap{Latency: 0.5}},
+			matching: map[string]interface{}{
+				"dnstap.latency": map[string]interface{}{
+					"greater-than": 0.3,
+				},
+			},
+			wantError: false,
+			wantMatch: true,
+		},
+		{
+			name: "Test lower than operator matching",
+			dm:   &DNSMessage{DNS: DNS{Opcode: 9}},
+			matching: map[string]interface{}{
+				"dns.opcode": map[string]interface{}{
+					"lower-than": 10,
+				},
+			},
+			wantError: false,
+			wantMatch: true,
+		},
+		{
+			name: "Test lower than operator no match",
+			dm:   &DNSMessage{DNS: DNS{Opcode: 1}},
+			matching: map[string]interface{}{
+				"dns.opcode": map[string]interface{}{
+					"lower-than": 1,
+				},
+			},
+			wantError: false,
+			wantMatch: false,
+		},
+		{
+			name: "Test match with list of string",
+			dm:   &DNSMessage{DNS: DNS{Qname: "www.example.com"}},
+			matching: map[string]interface{}{
+				"dns.qname": []interface{}{"www.test.com", "www.example.com"},
+			},
+			wantError: false,
+			wantMatch: true,
+		},
+		{
+			name: "Test no match with list of string",
+			dm:   &DNSMessage{DNS: DNS{Qname: "www.notexample.com"}},
+			matching: map[string]interface{}{
+				"dns.qname": []interface{}{"www.test.com", "www.example.com"},
+			},
+			wantError: false,
+			wantMatch: false,
 		},
 	}
 

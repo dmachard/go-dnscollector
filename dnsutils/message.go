@@ -1487,7 +1487,7 @@ func matchUserMap(realValue, expectedValue reflect.Value) (bool, error) {
 			}
 
 			if !isFloat && !isInt {
-				return false, fmt.Errorf("integer is expected for greater-than operator")
+				return false, fmt.Errorf("integer or float is expected for greater-than operator")
 			}
 
 			// If realValue is a slice
@@ -1508,13 +1508,13 @@ func matchUserMap(realValue, expectedValue reflect.Value) (bool, error) {
 				return false, nil
 			}
 
-			if realValue.Kind() == reflect.Float64 {
+			if isFloat && realValue.Kind() == reflect.Float64 {
 				if realValue.Interface().(float64) > opValue.Interface().(float64) {
 					return true, nil
 				}
 			}
 
-			if realValue.Kind() == reflect.Int {
+			if isInt && realValue.Kind() == reflect.Int {
 				if realValue.Interface().(int) > opValue.Interface().(int) {
 					return true, nil
 				}
