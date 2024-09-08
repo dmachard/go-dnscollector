@@ -1669,6 +1669,69 @@ func TestDNSMessage_Matching(t *testing.T) {
 			wantError: false,
 			wantMatch: true,
 		},
+		{
+			name:      "Test no match with incorrect integer",
+			dm:        &DNSMessage{DNS: DNS{Opcode: 2}},
+			matching:  map[string]interface{}{"dns.opcode": 1},
+			wantError: false,
+			wantMatch: false,
+		},
+		{
+			name:      "Test string matching",
+			dm:        &DNSMessage{DNS: DNS{Qname: "www.example.com"}},
+			matching:  map[string]interface{}{"dns.qname": "www.example.com"},
+			wantError: false,
+			wantMatch: true,
+		},
+		{
+			name:      "Test no match with incorrect string",
+			dm:        &DNSMessage{DNS: DNS{Qname: "www.notexample.com"}},
+			matching:  map[string]interface{}{"dns.qname": "www.example.com"},
+			wantError: false,
+			wantMatch: false,
+		},
+		{
+			name:      "Test boolean matching",
+			dm:        &DNSMessage{DNS: DNS{Flags: DNSFlags{QR: true}}},
+			matching:  map[string]interface{}{"dns.flags.qr": true},
+			wantError: false,
+			wantMatch: true,
+		},
+		{
+			name:      "Test no match with incorrect boolean",
+			dm:        &DNSMessage{DNS: DNS{Flags: DNSFlags{QR: false}}},
+			matching:  map[string]interface{}{"dns.flags.qr": true},
+			wantError: false,
+			wantMatch: false,
+		},
+		{
+			name: "Test regex with match",
+			dm:   &DNSMessage{DNS: DNS{Qname: "www.github.com"}},
+			matching: map[string]interface{}{
+				"dns.qname": "^.*\\.github\\.com$",
+			},
+			wantError: false,
+			wantMatch: true,
+		},
+		{
+			name: "Test regex with no match",
+			dm:   &DNSMessage{DNS: DNS{Qname: "www.google.com"}},
+			matching: map[string]interface{}{
+				"dns.qname": "^.*\\.github\\.com$",
+			},
+			wantError: false,
+			wantMatch: false,
+		},
+		{
+			name: "Test matching with multiple conditions",
+			dm:   &DNSMessage{DNS: DNS{Opcode: 1, Qname: "www.example.com", Flags: DNSFlags{QR: true}}},
+			matching: map[string]interface{}{
+				"dns.flags.qr": true,
+				"dns.opcode":   1,
+			},
+			wantError: false,
+			wantMatch: true,
+		},
 	}
 
 	for _, tt := range tests {
