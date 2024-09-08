@@ -1,4 +1,4 @@
-FROM golang:1.22.4-alpine3.19 as builder
+FROM golang:1.22.6-alpine3.19 as builder
 
 ARG VERSION
 
@@ -8,7 +8,7 @@ RUN apk add git \
     && CGO_ENABLED=0 go build -ldflags="-s -w -X 'github.com/prometheus/common/version.Version=$VERSION'"
 
 
-FROM alpine:3.20.1
+FROM alpine:3.20.2
 
 RUN apk add --no-cache tzdata \
     && mkdir -p /etc/dnscollector/ /var/dnscollector/ \
