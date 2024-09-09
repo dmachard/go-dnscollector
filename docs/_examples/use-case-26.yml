@@ -1,0 +1,25 @@
+global:
+  trace:
+    verbose: true
+    
+pipelines:
+  - name: tap_unix
+    dnstap:
+      sock-path: /var/run/named/dnstap.sock
+    routing-policy:
+      forward: [ filter-messages ]
+      
+  - name: filter-messages
+    dnsmessage:
+      matching:
+        include:
+          dnstap.operation: "CLIENT_RESPONSE"
+          dns.qtype: "A"
+          dns.rcode: "NOERROR"
+          dns.resource-records.an.0.rdata: "0.0.0.0"
+    routing-policy:
+      forward: [console]
+
+  - name: console
+    stdout:
+      mode: flat-json
