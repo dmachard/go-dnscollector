@@ -300,6 +300,28 @@ func TestDNSMessage_Matching_Arrays(t *testing.T) {
 			wantError: false,
 			wantMatch: false,
 		},
+		{
+			name: "Test IP address match with regex",
+			dm:   &DNSMessage{DNS: DNS{DNSRRs: DNSRRs{Answers: []DNSAnswer{{Rdata: "1.2.3.4"}}}}},
+			matching: map[string]interface{}{
+				"dns.resource-records.an.0.rdata": []interface{}{
+					"^1\\.2\\.3\\.(4|5)$",
+				},
+			},
+			wantError: false,
+			wantMatch: true,
+		},
+		{
+			name: "Test IP address no match with regex",
+			dm:   &DNSMessage{DNS: DNS{DNSRRs: DNSRRs{Answers: []DNSAnswer{{Rdata: "1.2.3.4"}}}}},
+			matching: map[string]interface{}{
+				"dns.resource-records.an.0.rdata": []interface{}{
+					"^5\\.4\\.3\\.(4|5)$",
+				},
+			},
+			wantError: false,
+			wantMatch: false,
+		},
 	}
 
 	for _, tt := range tests {
