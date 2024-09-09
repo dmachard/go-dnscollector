@@ -137,6 +137,17 @@ func TestDNSMessage_Matching(t *testing.T) {
 			wantMatch: false,
 		},
 		{
+			name: "Test  no match invalid lower than operator",
+			dm:   &DNSMessage{DNS: DNS{Opcode: 1}},
+			matching: map[string]interface{}{
+				"dns.opcode": map[string]interface{}{
+					"lower-than": "1",
+				},
+			},
+			wantError: true,
+			wantMatch: false,
+		},
+		{
 			name: "Test match with list of string",
 			dm:   &DNSMessage{DNS: DNS{Qname: "www.example.com"}},
 			matching: map[string]interface{}{
@@ -150,6 +161,24 @@ func TestDNSMessage_Matching(t *testing.T) {
 			dm:   &DNSMessage{DNS: DNS{Qname: "www.notexample.com"}},
 			matching: map[string]interface{}{
 				"dns.qname": []interface{}{"www.test.com", "www.example.com"},
+			},
+			wantError: false,
+			wantMatch: false,
+		},
+		{
+			name: "Test non-existent key",
+			dm:   &DNSMessage{DNS: DNS{Opcode: 1}},
+			matching: map[string]interface{}{
+				"dns.nonexistent": 1,
+			},
+			wantError: false,
+			wantMatch: false,
+		},
+		{
+			name: "Test nested non-existent key",
+			dm:   &DNSMessage{DNS: DNS{Opcode: 1}},
+			matching: map[string]interface{}{
+				"dns.flags.nonexistent": true,
 			},
 			wantError: false,
 			wantMatch: false,
@@ -209,6 +238,66 @@ func TestDNSMessage_Matching_Arrays(t *testing.T) {
 				},
 			},
 			wantError: true,
+			wantMatch: false,
+		},
+		{
+			name: "Test array match with index",
+			dm:   &DNSMessage{DNS: DNS{DNSRRs: DNSRRs{Answers: []DNSAnswer{{TTL: 300}}}}},
+			matching: map[string]interface{}{
+				"dns.resource-records.an.0.ttl": 300,
+			},
+			wantError: false,
+			wantMatch: true,
+		},
+		{
+			name: "Test array match with invalid index",
+			dm:   &DNSMessage{DNS: DNS{DNSRRs: DNSRRs{Answers: []DNSAnswer{{TTL: 300}}}}},
+			matching: map[string]interface{}{
+				"dns.resource-records.an.1.ttl": 300,
+			},
+			wantError: false,
+			wantMatch: false,
+		},
+		{
+			name: "Test array match with index and multiple conditions",
+			dm: &DNSMessage{
+				DNSTap: DNSTap{Operation: "CLIENT_RESPONSE"},
+				DNS:    DNS{Rcode: "NOERROR", Qtype: "A", DNSRRs: DNSRRs{Answers: []DNSAnswer{{Rdata: "0.0.0.0"}}}},
+			},
+			matching: map[string]interface{}{
+				"dnstap.operation":                "CLIENT_RESPONSE",
+				"dns.qtype":                       "A",
+				"dns.rcode":                       "NOERROR",
+				"dns.resource-records.an.0.rdata": "0.0.0.0",
+			},
+			wantError: false,
+			wantMatch: true,
+		},
+		{
+			name: "Test array match with index and missing key",
+			dm:   &DNSMessage{DNS: DNS{DNSRRs: DNSRRs{Answers: []DNSAnswer{{TTL: 300}}}}},
+			matching: map[string]interface{}{
+				"dns.resource-records.an.0.missing-key": 300,
+			},
+			wantError: false,
+			wantMatch: false,
+		},
+		{
+			name: "Test array match with bad index",
+			dm:   &DNSMessage{DNS: DNS{DNSRRs: DNSRRs{Answers: []DNSAnswer{{TTL: 300}}}}},
+			matching: map[string]interface{}{
+				"dns.resource-records.an.badindex.ttl": 300,
+			},
+			wantError: false,
+			wantMatch: false,
+		},
+		{
+			name: "Test array no match with index and invalid data type",
+			dm:   &DNSMessage{DNS: DNS{DNSRRs: DNSRRs{Answers: []DNSAnswer{{TTL: 300}}}}},
+			matching: map[string]interface{}{
+				"dns.resource-records.an.0.ttl": "not-a-number",
+			},
+			wantError: false,
 			wantMatch: false,
 		},
 	}

@@ -1525,8 +1525,16 @@ func matchUserMap(realValue, expectedValue reflect.Value) (bool, error) {
 
 		// Integer lower than ?
 		case MatchingOpLowerThan:
-			if _, ok := opValue.Interface().(int); !ok {
-				return false, fmt.Errorf("integer is expected for lower-than operator")
+			isFloat, isInt := false, false
+			if _, ok := opValue.Interface().(float64); ok {
+				isFloat = true
+			}
+			if _, ok := opValue.Interface().(int); ok {
+				isInt = true
+			}
+
+			if !isFloat && !isInt {
+				return false, fmt.Errorf("integer or float is expected for lower-than operator, not %s", reflect.TypeOf(opValue.Interface()))
 			}
 
 			// If realValue is a slice
@@ -1547,12 +1555,18 @@ func matchUserMap(realValue, expectedValue reflect.Value) (bool, error) {
 				return false, nil
 			}
 
-			if realValue.Kind() != reflect.Int {
-				return false, nil
+			if isFloat && realValue.Kind() == reflect.Float64 {
+				if realValue.Interface().(float64) < opValue.Interface().(float64) {
+					return true, nil
+				}
 			}
-			if realValue.Interface().(int) < opValue.Interface().(int) {
-				return true, nil
+
+			if isInt && realValue.Kind() == reflect.Int {
+				if realValue.Interface().(int) < opValue.Interface().(int) {
+					return true, nil
+				}
 			}
+
 			return false, nil
 
 		// Ignore these operators
@@ -1793,65 +1807,66 @@ func matchUserPattern(realValue, expectedValue reflect.Value) (bool, error) {
 
 func getFieldByJSONTag(value reflect.Value, nestedKeys string) (reflect.Value, bool) {
 	listKeys := strings.SplitN(nestedKeys, ".", 2)
+	jsonKey := listKeys[0]
+	var remainingKeys string
+	if len(listKeys) > 1 {
+		remainingKeys = listKeys[1]
+	}
 
-	for j, jsonKey := range listKeys {
-		// Iterate over the fields of the structure
-		for i := 0; i < value.NumField(); i++ {
-			field := value.Type().Field(i)
+	for i := 0; i < value.NumField(); i++ {
+		field := value.Type().Field(i)
 
-			// Get JSON tag
-			tag := field.Tag.Get("json")
-			tagClean := strings.TrimSuffix(tag, ",omitempty")
+		// Get JSON tag
+		tag := field.Tag.Get("json")
+		tagClean := strings.TrimSuffix(tag, ",omitempty")
 
-			// Check if the JSON tag matches
-			if tagClean == jsonKey {
-				// ptr
-				switch field.Type.Kind() {
-				// integer
-				case reflect.Ptr:
-					if fieldValue, found := getFieldByJSONTag(value.Field(i).Elem(), listKeys[j+1]); found {
-						return fieldValue, true
-					}
+		// Check if the JSON tag matches
+		if tagClean == jsonKey {
+			fieldValue := value.Field(i)
 
-				// struct
-				case reflect.Struct:
-					if fieldValue, found := getFieldByJSONTag(value.Field(i), listKeys[j+1]); found {
-						return fieldValue, true
-					}
-
-				// slice if a list
-				case reflect.Slice:
-					if fieldValue, leftKey, found := getSliceElement(value.Field(i), listKeys[j+1]); found {
-						switch field.Type.Kind() {
-						case reflect.Struct:
-							if fieldValue, found := getFieldByJSONTag(fieldValue, leftKey); found {
-								return fieldValue, true
-							}
-						case reflect.Slice:
-							var result []interface{}
-							for i := 0; i < fieldValue.Len(); i++ {
-
-								if fieldValue.Index(i).Kind() == reflect.String || fieldValue.Index(i).Kind() == reflect.Int {
-									result = append(result, fieldValue.Index(i).Interface())
-								} else {
-									if sliceValue, found := getFieldByJSONTag(fieldValue.Index(i), leftKey); found {
-										result = append(result, sliceValue.Interface())
-									}
-								}
-							}
-							// If the list is not empty, return the list
-							if len(result) > 0 {
-								return reflect.ValueOf(result), true
-							}
-						default:
-							return value.Field(i), true
-						}
-					}
-
-				// int, string
-				default:
-					return value.Field(i), true
+			// Handle pointers safely
+			if fieldValue.Kind() == reflect.Ptr {
+				if fieldValue.IsNil() {
+					return reflect.Value{}, false
 				}
+				fieldValue = fieldValue.Elem()
+			}
+
+			if remainingKeys == "" {
+				// Base case: return the field value if no more keys are left
+				return fieldValue, true
+			}
+
+			// Recurse into structs or handle slices
+			switch fieldValue.Kind() {
+			case reflect.Struct:
+				return getFieldByJSONTag(fieldValue, remainingKeys)
+			case reflect.Slice:
+				if sliceElem, leftKey, found := getSliceElement(fieldValue, remainingKeys); found {
+					// Handle the slice element based on its kind
+					switch sliceElem.Kind() {
+					case reflect.Struct:
+						return getFieldByJSONTag(sliceElem, leftKey)
+					case reflect.Slice, reflect.Array:
+						var result []interface{}
+						for i := 0; i < sliceElem.Len(); i++ {
+							if subElem := sliceElem.Index(i); subElem.Kind() == reflect.Struct {
+								if nestedValue, found := getFieldByJSONTag(subElem, leftKey); found {
+									result = append(result, nestedValue.Interface())
+								}
+							} else {
+								result = append(result, subElem.Interface())
+							}
+						}
+						if len(result) > 0 {
+							return reflect.ValueOf(result), true
+						}
+					default:
+						return sliceElem, true
+					}
+				}
+			default:
+				return fieldValue, true
 			}
 		}
 	}
@@ -1873,18 +1888,12 @@ func getSliceElement(sliceValue reflect.Value, nestedKeys string) (reflect.Value
 
 	// Convert the slice index from string to int
 	index, err := strconv.Atoi(sliceIndex)
-	if err != nil {
-		// Handle the error (e.g., invalid index format)
+	if err != nil || index < 0 || index >= sliceValue.Len() {
+		// Handle the error (e.g., invalid index format or out of range)
 		return reflect.Value{}, leftKeys, false
 	}
 
-	for i := 0; i < sliceValue.Len(); i++ {
-		if index == i {
-			return sliceValue.Index(i), leftKeys, true
-		}
-	}
-	// If no match is found, return an empty reflect.Value
-	return reflect.Value{}, leftKeys, false
+	return sliceValue.Index(index), leftKeys, true
 }
 
 func GetFakeDNSMessage() DNSMessage {
