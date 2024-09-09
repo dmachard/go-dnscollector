@@ -27,3 +27,7 @@ const (
 
 	ErrorUnexpectedDirective = "unexpected text format directive: "
 )
+
+const (
+	TestQName = "dnstapcollector.test."
+)

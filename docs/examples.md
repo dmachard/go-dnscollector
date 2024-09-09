@@ -3,9 +3,10 @@
 
 You will find below some examples of configurations to manage your DNS logs.
 
-- Pipelines running mode
+- **Pipelines running mode with DNS Message filters**
   - [x] [Advanced example with DNSmessage collector](./_examples/use-case-24.yml)
   - [x] [How can I log only slow responses and errors?"](./_examples/use-case-25.yml)
+  - [x] [Filter DNStap messages where the response ip address is 0.0.0.0](./_examples/use-case-26.yml)
 
 - Capture DNS traffic from incoming DNSTap streams
   - [x] [Read from UNIX DNSTap socket and forward it to TLS stream](./_examples/use-case-5.yml)
