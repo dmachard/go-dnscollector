@@ -16,13 +16,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-netutils"
 	"github.com/flosch/pongo2/v6"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
-	"github.com/miekg/dns"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -42,37 +40,6 @@ var (
 	RawTextDirective          = regexp.MustCompile(`^ *\{.*\}`)
 	ATagsDirectives           = regexp.MustCompile(`^atags*`)
 )
-
-func GetFakeDNS() ([]byte, error) {
-	dnsmsg := new(dns.Msg)
-	dnsmsg.SetQuestion("dns.collector.", dns.TypeA)
-	return dnsmsg.Pack()
-}
-
-func GetIPPort(dm *DNSMessage) (string, int, string, int) {
-	srcIP, srcPort := "0.0.0.0", 53
-	dstIP, dstPort := "0.0.0.0", 53
-	if dm.NetworkInfo.Family == "INET6" {
-		srcIP, dstIP = "::", "::"
-	}
-
-	if dm.NetworkInfo.QueryIP != "-" {
-		srcIP = dm.NetworkInfo.QueryIP
-		srcPort, _ = strconv.Atoi(dm.NetworkInfo.QueryPort)
-	}
-	if dm.NetworkInfo.ResponseIP != "-" {
-		dstIP = dm.NetworkInfo.ResponseIP
-		dstPort, _ = strconv.Atoi(dm.NetworkInfo.ResponsePort)
-	}
-
-	// reverse destination and source
-	if dm.DNS.Type == DNSReply {
-		srcIPTmp, srcPortTmp := srcIP, srcPort
-		srcIP, srcPort = dstIP, dstPort
-		dstIP, dstPort = srcIPTmp, srcPortTmp
-	}
-	return srcIP, srcPort, dstIP, dstPort
-}
 
 type DNSAnswer struct {
 	Name      string `json:"name"`
@@ -672,25 +639,25 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			if len(qname) == 0 {
 				s.WriteString(".")
 			} else {
-				quoteStringAndWrite(&s, qname, fieldDelimiter, fieldBoundary)
+				QuoteStringAndWrite(&s, qname, fieldDelimiter, fieldBoundary)
 			}
 		case directive == "identity":
 			if len(dm.DNSTap.Identity) == 0 {
 				s.WriteString("-")
 			} else {
-				quoteStringAndWrite(&s, dm.DNSTap.Identity, fieldDelimiter, fieldBoundary)
+				QuoteStringAndWrite(&s, dm.DNSTap.Identity, fieldDelimiter, fieldBoundary)
 			}
 		case directive == "peer-name":
 			if len(dm.DNSTap.PeerName) == 0 {
 				s.WriteString("-")
 			} else {
-				quoteStringAndWrite(&s, dm.DNSTap.PeerName, fieldDelimiter, fieldBoundary)
+				QuoteStringAndWrite(&s, dm.DNSTap.PeerName, fieldDelimiter, fieldBoundary)
 			}
 		case directive == "version":
 			if len(dm.DNSTap.Version) == 0 {
 				s.WriteString("-")
 			} else {
-				quoteStringAndWrite(&s, dm.DNSTap.Version, fieldDelimiter, fieldBoundary)
+				QuoteStringAndWrite(&s, dm.DNSTap.Version, fieldDelimiter, fieldBoundary)
 			}
 		case directive == "extra":
 			s.WriteString(dm.DNSTap.Extra)
@@ -1367,12 +1334,12 @@ func (dm *DNSMessage) ApplyRelabeling(dnsFields map[string]interface{}) error {
 					if value, exists := dnsFields[replacement]; exists {
 						switch v := value.(type) {
 						case []string:
-							dnsFields[replacement] = append(v, convertToString(dnsFields[key]))
+							dnsFields[replacement] = append(v, ConvertToString(dnsFields[key]))
 						default:
-							dnsFields[replacement] = []string{convertToString(v), convertToString(dnsFields[key])}
+							dnsFields[replacement] = []string{ConvertToString(v), ConvertToString(dnsFields[key])}
 						}
 					} else {
-						dnsFields[replacement] = convertToString(dnsFields[key])
+						dnsFields[replacement] = ConvertToString(dnsFields[key])
 					}
 				}
 
@@ -1894,82 +1861,4 @@ func getSliceElement(sliceValue reflect.Value, nestedKeys string) (reflect.Value
 	}
 
 	return sliceValue.Index(index), leftKeys, true
-}
-
-func GetFakeDNSMessage() DNSMessage {
-	dm := DNSMessage{}
-	dm.Init()
-	dm.DNSTap.Identity = "collector"
-	dm.DNSTap.Version = "dnscollector 1.0.0"
-	dm.DNSTap.Operation = "CLIENT_QUERY"
-	dm.DNSTap.PeerName = "localhost (127.0.0.1)"
-	dm.DNS.Type = DNSQuery
-	dm.DNS.Qname = pkgconfig.ProgQname
-	dm.NetworkInfo.QueryIP = "1.2.3.4"
-	dm.NetworkInfo.QueryPort = "1234"
-	dm.NetworkInfo.ResponseIP = "4.3.2.1"
-	dm.NetworkInfo.ResponsePort = "4321"
-	dm.DNS.Rcode = "NOERROR"
-	dm.DNS.Qtype = "A"
-	return dm
-}
-
-func GetFakeDNSMessageWithPayload() DNSMessage {
-	// fake dns query payload
-	dnsmsg := new(dns.Msg)
-	dnsmsg.SetQuestion("dnscollector.dev.", dns.TypeAAAA)
-	dnsquestion, _ := dnsmsg.Pack()
-
-	dm := GetFakeDNSMessage()
-	dm.NetworkInfo.Family = netutils.ProtoIPv4
-	dm.NetworkInfo.Protocol = netutils.ProtoUDP
-	dm.DNS.Payload = dnsquestion
-	dm.DNS.Length = len(dnsquestion)
-	return dm
-}
-
-func GetFlatDNSMessage() (ret map[string]interface{}, err error) {
-	dm := DNSMessage{}
-	dm.Init()
-	dm.InitTransforms()
-	ret, err = dm.Flatten()
-	return
-}
-
-func GetReferenceDNSMessage() DNSMessage {
-	dm := DNSMessage{}
-	dm.Init()
-	dm.InitTransforms()
-	return dm
-}
-
-func convertToString(value interface{}) string {
-	switch v := value.(type) {
-	case int:
-		return strconv.Itoa(v)
-	case bool:
-		return strconv.FormatBool(v)
-	case float64:
-		return strconv.FormatFloat(v, 'f', -1, 64)
-	case string:
-		return v
-	default:
-		return fmt.Sprintf("%v", v)
-	}
-}
-
-func quoteStringAndWrite(s *strings.Builder, fieldString, fieldDelimiter, fieldBoundary string) {
-	if len(fieldDelimiter) > 0 {
-		if strings.Contains(fieldString, fieldDelimiter) {
-			fieldEscaped := fieldString
-			if strings.Contains(fieldString, fieldBoundary) {
-				fieldEscaped = strings.ReplaceAll(fieldEscaped, fieldBoundary, "\\"+fieldBoundary)
-			}
-			s.WriteString(fmt.Sprintf(fieldBoundary+"%s"+fieldBoundary, fieldEscaped))
-		} else {
-			s.WriteString(fieldString)
-		}
-	} else {
-		s.WriteString(fieldString)
-	}
 }
