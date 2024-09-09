@@ -1478,6 +1478,7 @@ func matchUserMap(realValue, expectedValue reflect.Value) (bool, error) {
 		switch opName {
 		// Integer great than ?
 		case MatchingOpGreaterThan:
+
 			isFloat, isInt := false, false
 			if _, ok := opValue.Interface().(float64); ok {
 				isFloat = true
@@ -1487,7 +1488,7 @@ func matchUserMap(realValue, expectedValue reflect.Value) (bool, error) {
 			}
 
 			if !isFloat && !isInt {
-				return false, fmt.Errorf("integer or float is expected for greater-than operator")
+				return false, fmt.Errorf("integer or float is expected for greater-than operator, not %s", reflect.TypeOf(opValue.Interface()))
 			}
 
 			// If realValue is a slice

@@ -3,7 +3,7 @@
 
 You will find below some examples of configurations to manage your DNS logs.
 
-- Pipelines running mode
+- **Pipelines running mode with DNS Message filters**
   - [x] [Advanced example with DNSmessage collector](./_examples/use-case-24.yml)
   - [x] [How can I log only slow responses and errors?"](./_examples/use-case-25.yml)
 
