@@ -104,31 +104,28 @@ func ConvertToString(value interface{}) string {
 }
 
 func QuoteStringAndWrite(s *strings.Builder, fieldString, fieldDelimiter, fieldBoundary string) {
-	// If the field string is empty and boundaries are specified, write empty boundaries (e.g., "")
+	// Handle the case where the field string is empty and boundaries are specified
 	if fieldString == "" && len(fieldBoundary) > 0 {
 		s.WriteString(fmt.Sprintf("%s%s%s", fieldBoundary, fieldString, fieldBoundary))
 		return
 	}
 
-	// Check if a field delimiter is present and the fieldString contains this delimiter.
-	if len(fieldDelimiter) > 0 && strings.Contains(fieldString, fieldDelimiter) {
+	switch {
+	case len(fieldDelimiter) > 0 && strings.Contains(fieldString, fieldDelimiter):
+		// Case where the field string contains the delimiter
 		fieldEscaped := fieldString
-
-		// If the field string contains the boundary character (e.g., quotes), escape it.
 		if len(fieldBoundary) > 0 && strings.Contains(fieldEscaped, fieldBoundary) {
 			fieldEscaped = strings.ReplaceAll(fieldEscaped, fieldBoundary, "\\"+fieldBoundary)
 		}
-
-		// Surround the escaped field string with the boundary character.
 		s.WriteString(fmt.Sprintf("%s%s%s", fieldBoundary, fieldEscaped, fieldBoundary))
 
-	} else if len(fieldBoundary) > 0 && strings.Contains(fieldString, fieldBoundary) {
-		// If the field string contains only the boundary character, escape it and surround it.
+	case len(fieldBoundary) > 0 && strings.Contains(fieldString, fieldBoundary):
+		// Case where the field string contains the boundary character
 		fieldEscaped := strings.ReplaceAll(fieldString, fieldBoundary, "\\"+fieldBoundary)
 		s.WriteString(fmt.Sprintf("%s%s%s", fieldBoundary, fieldEscaped, fieldBoundary))
 
-	} else {
-		// If no conditions are met, write the field string as is.
+	default:
+		// Default case: simply write the field string as is
 		s.WriteString(fieldString)
 	}
 }
