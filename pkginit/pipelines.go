@@ -280,7 +280,7 @@ func InitPipelines(mapLoggers map[string]workers.Worker, mapCollectors map[strin
 	for _, stanza := range config.Pipelines {
 		if mapCollectors[stanza.Name] != nil || mapLoggers[stanza.Name] != nil {
 			if err := CreateRouting(stanza, mapCollectors, mapLoggers, logger); err != nil {
-				return errors.Errorf(err.Error())
+				return errors.Wrap(err, "routing")
 			}
 		} else {
 			return errors.Errorf("routing - stanza=[%v] doest not exist", stanza.Name)
