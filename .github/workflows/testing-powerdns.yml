@@ -26,7 +26,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.22' ]
+        go-version: [ '1.23' ]
         dnsdist: [ '18', '19' ]
 
     steps:
@@ -59,7 +59,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.22' ]
+        go-version: [ '1.23' ]
         recursor: [ '49', '50' ]
 
     steps:
@@ -92,7 +92,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.22' ]
+        go-version: [ '1.23' ]
         recursor: [ '51' ]
 
     steps:

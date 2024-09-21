@@ -24,7 +24,7 @@ jobs:
     
     strategy:
       matrix:
-        go-version: ['1.21', '1.22']
+        go-version: ['1.21', '1.22', '1.23']
 
     steps:
       - uses: actions/checkout@v4
@@ -46,7 +46,7 @@ jobs:
     
     strategy:
       matrix:
-        go-version: ['1.21', '1.22']
+        go-version: ['1.21', '1.22', '1.23']
 
     steps:
     - uses: actions/checkout@v4
@@ -65,7 +65,7 @@ jobs:
     
     strategy:
       matrix:
-        go-version: ['1.21', '1.22']
+        go-version: ['1.21', '1.22', '1.23']
         
     steps:
     - uses: actions/checkout@v4
@@ -85,7 +85,7 @@ jobs:
     
     strategy:
       matrix:
-        go-version: ['1.21', '1.22']
+        go-version: ['1.21', '1.22', '1.23']
         
     steps:
     - uses: actions/checkout@v4
@@ -104,7 +104,7 @@ jobs:
     
     strategy:
       matrix:
-        go-version: ['1.21', '1.22']
+        go-version: ['1.21', '1.22', '1.23']
 
     steps:
     - uses: actions/checkout@v4
