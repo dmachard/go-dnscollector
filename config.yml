@@ -5,6 +5,10 @@
 global:
   trace:
     verbose: true
+    log-malformed: true
+    filename: ""
+    max-size: 10
+    max-backups: 10
   server-identity: "dns-collector"
   pid-file: ""
   text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length-unit qname qtype latency"
