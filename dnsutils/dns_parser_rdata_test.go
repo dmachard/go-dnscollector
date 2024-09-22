@@ -418,8 +418,8 @@ func TestDecodeRdataTXT_Empty(t *testing.T) {
 		t.Errorf("unexpected error while decoding question: %v", err)
 	}
 	_, _, erra := DecodeAnswer(1, offsetRR, payload)
-	if !errors.Is(erra, ErrDecodeDNSAnswerRdataTooShort) {
-		t.Errorf("bad error returned: %v", erra)
+	if erra != nil {
+		t.Error("expected no error on decode", erra)
 	}
 
 }
