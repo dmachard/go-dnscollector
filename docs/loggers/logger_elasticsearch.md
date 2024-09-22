@@ -46,3 +46,9 @@ Defaults:
     compression: none
     bulk-channel-size: 10
 ```
+
+> Could you explain the difference between `bulk-size` and `bulk-channel-size`?
+
+`bulk-size` refers to the size of the batch of DNS messages sent to your Elasticsearch instance.
+Since sending these batches can take time, `bulk-channel-size` defines the number of batches
+the DNS collector can hold in memory before dropping them.

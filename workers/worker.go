@@ -137,6 +137,10 @@ func (w *GenericWorker) LogInfo(msg string, v ...interface{}) {
 	w.logger.Info(pkgconfig.PrefixLogWorker+"["+w.name+"] "+w.descr+" - "+msg, v...)
 }
 
+func (w *GenericWorker) LogWarning(msg string, v ...interface{}) {
+	w.logger.Warning(pkgconfig.PrefixLogWorker+"["+w.name+"] "+w.descr+" - "+msg, v...)
+}
+
 func (w *GenericWorker) LogError(msg string, v ...interface{}) {
 	w.logger.Error(pkgconfig.PrefixLogWorker+"["+w.name+"] "+w.descr+" - "+msg, v...)
 }

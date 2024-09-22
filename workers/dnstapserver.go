@@ -505,7 +505,7 @@ func (w *DNSTapProcessor) StartCollect() {
 				if err != nil {
 					dm.DNS.MalformedPacket = true
 					if w.GetConfig().Global.Trace.LogMalformed {
-						w.LogInfo("dns header parser stopped: %s", err)
+						w.LogWarning("dns header parser stopped: %s", err)
 						w.LogError("%v", dm)
 						w.LogError("dump invalid dns headr: %v", dm.DNS.Payload)
 					}
@@ -517,7 +517,7 @@ func (w *DNSTapProcessor) StartCollect() {
 				if err = dnsutils.DecodePayload(&dm, &dnsHeader, w.GetConfig()); err != nil {
 					dm.DNS.MalformedPacket = true
 					if w.GetConfig().Global.Trace.LogMalformed {
-						w.LogInfo("dns payload parser stopped: %s", err)
+						w.LogWarning("dns payload parser stopped: %s", err)
 						w.LogError("%v", dm)
 						w.LogError("dump invalid dns payload: %v", dm.DNS.Payload)
 					}
