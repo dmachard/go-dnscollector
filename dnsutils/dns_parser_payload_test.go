@@ -998,3 +998,47 @@ func TestDecodePayload_Truncated(t *testing.T) {
 	}
 
 }
+
+// Dynamic query (UPDATE)
+func TestDecodePayload_UpdateQuery(t *testing.T) {
+	payload := []byte{
+		// transaction id
+		0x75, 0xa1,
+		// Update Query
+		0x28, 0x00,
+		// 1 zone, O prerequisites, 1 update, 0 additionnal
+		0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+		// zone section
+		// --> zone name
+		0x00,
+		// --> zone type SOA
+		0x00, 0x06,
+		// --> zone class
+		0x00, 0x01,
+		// update content
+		// --> name
+		0x14, 0x32, 0x31, 0x30, 0x32, 0x33, 0x31, 0x32, 0x52, 0x4d, 0x53, 0x31, 0x30, 0x4c, 0x32,
+		0x30, 0x30, 0x30, 0x34, 0x35, 0x32, 0x00,
+		// --> type: A
+		0x00, 0x01,
+		// --> class ANY
+		0x00, 0xff,
+		// --> ttl
+		0x00, 0x00, 0x00, 0x00,
+		// --> data length
+		0x00, 0x00,
+	}
+
+	dm := DNSMessage{}
+	dm.DNS.Payload = payload
+	dm.DNS.Length = len(payload)
+
+	header, err := DecodeDNS(payload)
+	if err != nil {
+		t.Errorf("unexpected error when decoding header: %v", err)
+	}
+
+	if err = DecodePayload(&dm, &header, pkgconfig.GetDefaultConfig()); err != nil {
+		t.Error("expected no error on decode", err)
+	}
+}

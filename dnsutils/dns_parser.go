@@ -353,6 +353,7 @@ PTR can be used on NAME for compression
 func DecodeAnswer(ancount int, startOffset int, payload []byte) ([]DNSAnswer, int, error) {
 	offset := startOffset
 	answers := []DNSAnswer{}
+	var rdataString string
 
 	for i := 0; i < ancount; i++ {
 		// Decode NAME
@@ -386,11 +387,18 @@ func DecodeAnswer(ancount int, startOffset int, payload []byte) ([]DNSAnswer, in
 			offset = offsetNext + 10 + int(rdlength)
 			continue
 		}
+
 		// parse rdata
 		rdatatype := RdatatypeToString(int(t))
-		parsed, err := ParseRdata(rdatatype, rdata, payload[:offsetNext+10+int(rdlength)], offsetNext+10)
-		if err != nil {
-			return answers, offset, err
+
+		// no rdata to decode ?
+		if int(rdlength) == 0 && len(rdata) == 0 {
+			rdataString = ""
+		} else {
+			rdataString, err = ParseRdata(rdatatype, rdata, payload[:offsetNext+10+int(rdlength)], offsetNext+10)
+			if err != nil {
+				return answers, offset, err
+			}
 		}
 
 		// finnally append answer to the list
@@ -399,7 +407,7 @@ func DecodeAnswer(ancount int, startOffset int, payload []byte) ([]DNSAnswer, in
 			Rdatatype: rdatatype,
 			Class:     ClassToString(int(class)),
 			TTL:       int(ttl),
-			Rdata:     parsed,
+			Rdata:     rdataString,
 		}
 		answers = append(answers, a)
 

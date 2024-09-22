@@ -506,8 +506,8 @@ func (w *DNSTapProcessor) StartCollect() {
 					dm.DNS.MalformedPacket = true
 					if w.GetConfig().Global.Trace.LogMalformed {
 						w.LogWarning("dns header parser stopped: %s", err)
-						w.LogError("%v", dm)
-						w.LogError("dump invalid dns headr: %v", dm.DNS.Payload)
+						w.LogWarning("dump dns packet: %v", dm)
+						w.LogWarning("dump dns payload: %v", dm.DNS.Payload)
 					}
 				}
 
@@ -518,8 +518,8 @@ func (w *DNSTapProcessor) StartCollect() {
 					dm.DNS.MalformedPacket = true
 					if w.GetConfig().Global.Trace.LogMalformed {
 						w.LogWarning("dns payload parser stopped: %s", err)
-						w.LogError("%v", dm)
-						w.LogError("dump invalid dns payload: %v", dm.DNS.Payload)
+						w.LogWarning("dump dns packet: %v", dm)
+						w.LogWarning("dump dns payload: %v", dm.DNS.Payload)
 					}
 				}
 			}

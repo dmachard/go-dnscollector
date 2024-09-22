@@ -5,7 +5,7 @@
 global:
   trace:
     verbose: true
-    log-malformed: false
+    log-malformed: true
     filename: ""
     max-size: 10
     max-backups: 10
