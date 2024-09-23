@@ -68,7 +68,7 @@
     - [`Scalyr`](docs/loggers/logger_scalyr.md)
     - [`Redis`](docs/loggers/logger_redis.md) publisher
     - [`Kafka`](docs/loggers/logger_kafka.md) producer
-    - [`ClickHouse`](docs/loggers/logger_clickhouse.md) client *(not yet production ready)*
+    - [`ClickHouse`](docs/loggers/logger_clickhouse.md) client
   - *Send to security tools*
     - [`Falco`](docs/loggers/logger_falco.md)
 

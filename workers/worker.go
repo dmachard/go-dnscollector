@@ -225,7 +225,7 @@ func (w *GenericWorker) Monitor() {
 		case <-timerMonitor.C:
 			for v, k := range w.droppedWorkerCount {
 				if k > 0 {
-					w.LogError("worker[%s] buffer is full, %d dnsmessage(s) dropped", v, k)
+					w.LogWarning("worker[%s] buffer is full, %d dnsmessage(s) dropped", v, k)
 					w.droppedWorkerCount[v] = 0
 				}
 			}
