@@ -167,7 +167,7 @@ func (w *ElasticSearchClient) StartLogging() {
 				select {
 				case dataBuffer <- bufCopy:
 				default:
-					w.LogError("Send buffer is full, bulk dropped")
+					w.LogWarning("Send buffer is full, bulk dropped")
 				}
 			}
 
@@ -183,7 +183,7 @@ func (w *ElasticSearchClient) StartLogging() {
 				select {
 				case dataBuffer <- bufCopy:
 				default:
-					w.LogError("automatic flush, send buffer is full, bulk dropped")
+					w.LogWarning("automatic flush, send buffer is full, bulk dropped")
 				}
 			}
 
