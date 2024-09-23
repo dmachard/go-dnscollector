@@ -1,8 +1,8 @@
 # Performance tuning
 
 All loggers and collectors are based on buffered channels.
-The size of these buffers can be configured with `chan-buffer-size`.
-If you encounter the following error message in your logs, it indicates that you need to increase the chan-buffer-size:
+The size of these buffers can be configured with `buffer-size` in global section.
+If you encounter the following warning message in your logs, it indicates that you need to increase the buffer size:
 
 ```bash
 logger[elastic] buffer is full, 7855 packet(s) dropped

@@ -58,7 +58,7 @@ global:
 
 The `interval-monitor` in second(s) is used to count every XX second the number of in/out packets.
 
-The `buffer-size` settings enable to adjust the size of the buffer before discard additional packets. If you encounter the error message buffer is full, xxx packet(s) dropped, consider increasing this parameter to prevent message drops.
+The `buffer-size` settings enable to adjust the size of the buffer before discard additional packets. If you encounter the warning message buffer is full, xxx packet(s) dropped, consider increasing this parameter to prevent message drops.
   
 ```yaml
 global:
