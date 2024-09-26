@@ -8,7 +8,7 @@ For more details, see the feature request [here](https://github.com/dmachard/go-
 Options:
 
 * `identifiers` (map)
-  > Expect a key/value where the key is the name of the field to rewrite (Please refer  to the [`flat-json`](../dnsjson.md#flat-json-format-recommended) output to see all identifiers keys ) and the value is the new one.
+  > Expect a key/value where the key is the name of the field to rewrite (Please refer  to the [`flat-json`](../dnsjson.md#flat-json-format-recommended) output to see all identifier keys ) and the value is the new one.
 
 Config example to remove the DNStap version and update the identity name.
 
