@@ -254,7 +254,7 @@ func Test_DnstapProcessor_DecodeCounters(t *testing.T) {
 	consumer.AddDroppedRoute(fl)
 
 	// get dns packet
-	responsePacket, _ := dnsutils.GetDnsResponsePacket()
+	responsePacket, _ := dnsutils.GetDNSResponsePacket()
 
 	// prepare dnstap
 	dt := &dnstap.Dnstap{}
@@ -274,16 +274,16 @@ func Test_DnstapProcessor_DecodeCounters(t *testing.T) {
 	// read dns message from dnstap consumer
 	dm := <-fl.GetInputChannel()
 	if dm.DNS.QdCount != 1 {
-		t.Errorf("invalid number of questions in dns message: %d", dm.DNS.QdCount)
+		t.Errorf("invalid number of questions in dns message: got %d expect 1", dm.DNS.QdCount)
 	}
 	if dm.DNS.NsCount != 1 {
-		t.Errorf("invalid number of nscount in dns message: %d", dm.DNS.NsCount)
+		t.Errorf("invalid number of nscount in dns message: got %d expect 1", dm.DNS.NsCount)
 	}
 	if dm.DNS.AnCount != 1 {
-		t.Errorf("invalid number of ancount in dns message: %d", dm.DNS.AnCount)
+		t.Errorf("invalid number of ancount in dns message: got %d expect 1", dm.DNS.AnCount)
 	}
 	if dm.DNS.ArCount != 1 {
-		t.Errorf("invalid number of arcount in dns message: %d", dm.DNS.ArCount)
+		t.Errorf("invalid number of arcount in dns message: got %d expect 1", dm.DNS.ArCount)
 	}
 }
 

@@ -16,7 +16,7 @@ func GetFakeDNS() ([]byte, error) {
 	return dnsmsg.Pack()
 }
 
-func GetDnsResponsePacket() ([]byte, error) {
+func GetDNSResponsePacket() ([]byte, error) {
 	dnsmsg := new(dns.Msg)
 	dnsmsg.SetQuestion("dns.collector.", dns.TypeA)
 
