@@ -224,6 +224,16 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 			dm:       DNSMessage{DNSTap: DNSTap{QueryZone: "queryzone.test"}},
 			expected: "queryzone.test",
 		},
+		{
+			format:   "qdcount",
+			dm:       DNSMessage{DNS: DNS{QdCount: 1}},
+			expected: "1",
+		},
+		{
+			format:   "ancount nscount arcount",
+			dm:       DNSMessage{DNS: DNS{AnCount: 1, ArCount: 2, NsCount: 3}},
+			expected: "1 3 2",
+		},
 	}
 
 	for _, tc := range testcases {

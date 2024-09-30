@@ -35,6 +35,46 @@ func Test_DnsProcessor(t *testing.T) {
 	}
 }
 
+func Test_DnsProcessor_DecodeCounters(t *testing.T) {
+	logger := logger.New(true)
+	var o bytes.Buffer
+	logger.SetOutput(&o)
+
+	// init and run the dns processor
+	fl := GetWorkerForTest(pkgconfig.DefaultBufferSize)
+
+	consumer := NewDNSProcessor(pkgconfig.GetDefaultConfig(), logger, "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
+	go consumer.StartCollect()
+
+	// get dns packet
+	responsePacket, _ := dnsutils.GetDNSResponsePacket()
+
+	// prepare dns message
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNS.Payload = responsePacket
+	dm.DNS.Length = len(responsePacket)
+
+	// send dm to consumer
+	consumer.GetInputChannel() <- dm
+
+	// read dns message from dnstap consumer
+	dmOut := <-fl.GetInputChannel()
+	if dmOut.DNS.QdCount != 1 {
+		t.Errorf("invalid number of questions in dns message: got %d expect 1", dmOut.DNS.QdCount)
+	}
+	if dmOut.DNS.NsCount != 1 {
+		t.Errorf("invalid number of nscount in dns message: got %d expect 1", dmOut.DNS.NsCount)
+	}
+	if dmOut.DNS.AnCount != 1 {
+		t.Errorf("invalid number of ancount in dns message: got %d expect 1", dmOut.DNS.AnCount)
+	}
+	if dmOut.DNS.ArCount != 1 {
+		t.Errorf("invalid number of arcount in dns message: got %d expect 1", dmOut.DNS.ArCount)
+	}
+}
+
 func Test_DnsProcessor_BufferLoggerIsFull(t *testing.T) {
 	// redirect stdout output to bytes buffer
 	logsChan := make(chan logger.LogEntry, 10)

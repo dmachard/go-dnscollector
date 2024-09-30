@@ -199,7 +199,7 @@ func Test_DnstapCollector_CloseFrameStream(t *testing.T) {
 	c.Stop()
 }
 
-func Test_DnstapProcessor(t *testing.T) {
+func Test_DnstapProcessor_toDNSMessage(t *testing.T) {
 	logger := logger.New(true)
 	var o bytes.Buffer
 	logger.SetOutput(&o)
@@ -237,6 +237,53 @@ func Test_DnstapProcessor(t *testing.T) {
 	dm := <-fl.GetInputChannel()
 	if dm.DNS.Qname != pkgconfig.ExpectedQname {
 		t.Errorf("invalid qname in dns message: %s", dm.DNS.Qname)
+	}
+}
+
+func Test_DnstapProcessor_DecodeCounters(t *testing.T) {
+	logger := logger.New(true)
+	var o bytes.Buffer
+	logger.SetOutput(&o)
+
+	// run the consumer with a fake logger
+	fl := GetWorkerForTest(pkgconfig.DefaultBufferSize)
+
+	// init the dnstap consumer
+	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetDefaultConfig(), logger, "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
+
+	// get dns packet
+	responsePacket, _ := dnsutils.GetDNSResponsePacket()
+
+	// prepare dnstap
+	dt := &dnstap.Dnstap{}
+	dt.Type = dnstap.Dnstap_Type.Enum(1)
+
+	dt.Message = &dnstap.Message{}
+	dt.Message.Type = dnstap.Message_Type.Enum(6) // CLIENT_RESPONSE
+	dt.Message.ResponseMessage = responsePacket
+	data, _ := proto.Marshal(dt)
+
+	// start the consumer
+	go consumer.StartCollect()
+
+	// add packet to consumer
+	consumer.GetDataChannel() <- data
+
+	// read dns message from dnstap consumer
+	dm := <-fl.GetInputChannel()
+	if dm.DNS.QdCount != 1 {
+		t.Errorf("invalid number of questions in dns message: got %d expect 1", dm.DNS.QdCount)
+	}
+	if dm.DNS.NsCount != 1 {
+		t.Errorf("invalid number of nscount in dns message: got %d expect 1", dm.DNS.NsCount)
+	}
+	if dm.DNS.AnCount != 1 {
+		t.Errorf("invalid number of ancount in dns message: got %d expect 1", dm.DNS.AnCount)
+	}
+	if dm.DNS.ArCount != 1 {
+		t.Errorf("invalid number of arcount in dns message: got %d expect 1", dm.DNS.ArCount)
 	}
 }
 

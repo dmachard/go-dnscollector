@@ -15,7 +15,7 @@ func TestDnsMessage_ToJinjaFormat(t *testing.T) {
 	template := `
 ;; Got {% if dm.DNS.Type == "QUERY" %}query{% else %}answer{% endif %} from {{ dm.NetworkInfo.QueryIP }}#{{ dm.NetworkInfo.QueryPort }}:
 ;; ->>HEADER<<- opcode: {{ dm.DNS.Opcode }}, status: {{ dm.DNS.Rcode }}, id: {{ dm.DNS.ID }}
-;; flags: {{ dm.DNS.Flags.QR | yesno:"qr ," }}{{ dm.DNS.Flags.RD | yesno:"rd ," }}{{ dm.DNS.Flags.RA | yesno:"ra ," }}; QUERY: {{ dm.DNS.QuestionsCount }}, ANSWER: {{ dm.DNS.DNSRRs.Answers | length }}, AUTHORITY: {{ dm.DNS.DNSRRs.Nameservers | length }}, ADDITIONAL: {{ dm.DNS.DNSRRs.Records | length }}
+;; flags: {{ dm.DNS.Flags.QR | yesno:"qr ," }}{{ dm.DNS.Flags.RD | yesno:"rd ," }}{{ dm.DNS.Flags.RA | yesno:"ra ," }}; QUERY: {{ dm.DNS.QdCount }}, ANSWER: {{ dm.DNS.DNSRRs.AnCount }}, AUTHORITY: {{ dm.DNS.DNSRRs.NsCount }}, ADDITIONAL: {{ dm.DNS.DNSRRs.ArCount }}
 
 ;; QUESTION SECTION:
 ;{{ dm.DNS.Qname }}		{{ dm.DNS.Qclass }}	{{ dm.DNS.Qtype }}
@@ -44,7 +44,7 @@ func BenchmarkDnsMessage_ToJinjaFormat(b *testing.B) {
 	template := `
 ;; Got {% if dm.DNS.Type == "QUERY" %}query{% else %}answer{% endif %} from {{ dm.NetworkInfo.QueryIP }}#{{ dm.NetworkInfo.QueryPort }}:
 ;; ->>HEADER<<- opcode: {{ dm.DNS.Opcode }}, status: {{ dm.DNS.Rcode }}, id: {{ dm.DNS.ID }}
-;; flags: {{ dm.DNS.Flags.QR | yesno:"qr ," }}{{ dm.DNS.Flags.RD | yesno:"rd ," }}{{ dm.DNS.Flags.RA | yesno:"ra ," }}; QUERY: {{ dm.DNS.QuestionsCount }}, ANSWER: {{ dm.DNS.DNSRRs.Answers | length }}, AUTHORITY: {{ dm.DNS.DNSRRs.Nameservers | length }}, ADDITIONAL: {{ dm.DNS.DNSRRs.Records | length }}
+;; flags: {{ dm.DNS.Flags.QR | yesno:"qr ," }}{{ dm.DNS.Flags.RD | yesno:"rd ," }}{{ dm.DNS.Flags.RA | yesno:"ra ," }}; QUERY: {{ dm.DNS.QdCount }}, ANSWER: {{ dm.DNS.DNSRRs.AnCount }}, AUTHORITY: {{ dm.DNS.DNSRRs.NsCount }}, ADDITIONAL: {{ dm.DNS.ArCount }}
 
 ;; QUESTION SECTION:
 ;{{ dm.DNS.Qname }}		{{ dm.DNS.Qclass }}	{{ dm.DNS.Qtype }}

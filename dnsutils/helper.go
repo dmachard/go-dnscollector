@@ -16,6 +16,36 @@ func GetFakeDNS() ([]byte, error) {
 	return dnsmsg.Pack()
 }
 
+func GetDNSResponsePacket() ([]byte, error) {
+	dnsmsg := new(dns.Msg)
+	dnsmsg.SetQuestion("dns.collector.", dns.TypeA)
+
+	// Build a fake response for the question
+	rr, err := dns.NewRR("dns.collector. 3600 IN A 192.168.1.1")
+	if err != nil {
+		return nil, err
+	}
+
+	// Add the resource record (the answer) to the message
+	dnsmsg.Answer = append(dnsmsg.Answer, rr)
+
+	// Build an authoritative NS record (Authoritative section)
+	nsRR, err := dns.NewRR("collector. 3600 IN NS ns1.collector.")
+	if err != nil {
+		return nil, err
+	}
+	dnsmsg.Ns = append(dnsmsg.Ns, nsRR)
+
+	// Build an additional A record for the authoritative NS (Additional section)
+	additionalRR, err := dns.NewRR("ns1.collector. 3600 IN A 192.168.2.1")
+	if err != nil {
+		return nil, err
+	}
+	dnsmsg.Extra = append(dnsmsg.Extra, additionalRR)
+
+	return dnsmsg.Pack()
+}
+
 func GetFakeDNSMessage() DNSMessage {
 	dm := DNSMessage{}
 	dm.Init()

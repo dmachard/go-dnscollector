@@ -60,8 +60,11 @@ func (w *DNSProcessor) StartCollect() {
 				w.LogError("dns parser malformed packet: %s - %v+", err, dm)
 			}
 
-			// get number of questions
-			dm.DNS.QuestionsCount = dnsHeader.Qdcount
+			// get number of questions and answers
+			dm.DNS.QdCount = dnsHeader.Qdcount
+			dm.DNS.AnCount = dnsHeader.Ancount
+			dm.DNS.ArCount = dnsHeader.Arcount
+			dm.DNS.NsCount = dnsHeader.Nscount
 
 			// dns reply ?
 			if dnsHeader.Qr == 1 {
