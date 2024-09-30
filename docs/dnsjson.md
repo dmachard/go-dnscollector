@@ -39,6 +39,9 @@ Example:
       "rd": true,
       "cd": true
     },
+    "ancount": 1,
+    "nscount": 0,
+    "arcount": 0,
     "resource-records": {
       "an": [
         {
@@ -118,6 +121,9 @@ Here's a flat JSON output formatted using `jq`:
   "dns.rcode": "NOERROR",
   "dns.qclass": "IN",
   "dns.questions-count": 0,
+  "dns.ancount": 1,
+  "dns.arcount": 0,
+  "dns.nscount": 0,
   "dns.resource-records.an.0.name": "google.nl",
   "dns.resource-records.an.0.rdata": "142.251.39.99",
   "dns.resource-records.an.0.rdatatype": "A",

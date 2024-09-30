@@ -87,6 +87,9 @@ type DNS struct {
 	Qclass  string `json:"qclass"`
 
 	QuestionsCount int `json:"questions-count"`
+	AnCount        int `json:"ancount"`
+	NsCount        int `json:"nscount"`
+	ArCount        int `json:"arcount"`
 
 	Qtype           string   `json:"qtype"`
 	Flags           DNSFlags `json:"flags"`
@@ -611,7 +614,7 @@ func (dm *DNSMessage) String(format []string, fieldDelimiter string, fieldBounda
 func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBoundary string) ([]byte, error) {
 	var s strings.Builder
 
-	answers := dm.DNS.DNSRRs.Answers
+	an := dm.DNS.DNSRRs.Answers
 	qname := dm.DNS.Qname
 	flags := dm.DNS.Flags
 
@@ -741,19 +744,26 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 				s.WriteByte('-')
 			}
 		case directive == "ttl":
-			if len(answers) > 0 {
-				s.WriteString(strconv.Itoa(answers[0].TTL))
+			if len(an) > 0 {
+				s.WriteString(strconv.Itoa(an[0].TTL))
 			} else {
 				s.WriteByte('-')
 			}
 		case directive == "answer":
-			if len(answers) > 0 {
-				s.WriteString(answers[0].Rdata)
+			if len(an) > 0 {
+				s.WriteString(an[0].Rdata)
 			} else {
 				s.WriteByte('-')
 			}
-		case directive == "answercount":
-			s.WriteString(strconv.Itoa(len(answers)))
+
+		case directive == "questionscount":
+			s.WriteString(strconv.Itoa(dm.DNS.QuestionsCount))
+		case directive == "answercount" || directive == "ancount":
+			s.WriteString(strconv.Itoa(dm.DNS.AnCount))
+		case directive == "nscount":
+			s.WriteString(strconv.Itoa(dm.DNS.NsCount))
+		case directive == "arcount":
+			s.WriteString(strconv.Itoa(dm.DNS.ArCount))
 
 		case directive == "edns-csubnet":
 			if len(dm.EDNS.Options) > 0 {
@@ -1131,6 +1141,9 @@ func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
 		"dns.qclass":                 dm.DNS.Qclass,
 		"dns.rcode":                  dm.DNS.Rcode,
 		"dns.questions-count":        dm.DNS.QuestionsCount,
+		"dns.ancount":                dm.DNS.AnCount,
+		"dns.arcount":                dm.DNS.ArCount,
+		"dns.nscount":                dm.DNS.NsCount,
 		"dnstap.identity":            dm.DNSTap.Identity,
 		"dnstap.latency":             dm.DNSTap.Latency,
 		"dnstap.operation":           dm.DNSTap.Operation,

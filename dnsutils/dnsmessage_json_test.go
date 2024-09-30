@@ -32,6 +32,9 @@ func TestDnsMessage_Json_Reference(t *testing.T) {
 				  "qtype": "-",
 				  "qclass": "-",
 				  "questions-count": 0,
+				  "ancount": 0,
+				  "nscount": 0,
+				  "arcount": 0,
 				  "flags": {
 					"qr": false,
 					"tc": false,
