@@ -29,7 +29,10 @@ Example:
     "qtype": "A",
     "id": 23455,
     "qclass": "IN",
-    "questions-count": 0,
+    "qdcount": 1,
+    "ancount": 1,
+    "nscount": 0,
+    "arcount": 0,
     "flags": {
       "qr": true,
       "tc": false,
@@ -39,9 +42,6 @@ Example:
       "rd": true,
       "cd": true
     },
-    "ancount": 1,
-    "nscount": 0,
-    "arcount": 0,
     "resource-records": {
       "an": [
         {
@@ -120,7 +120,7 @@ Here's a flat JSON output formatted using `jq`:
   "dns.qtype": "A",
   "dns.rcode": "NOERROR",
   "dns.qclass": "IN",
-  "dns.questions-count": 0,
+  "dns.qdcount": 0,
   "dns.ancount": 1,
   "dns.arcount": 0,
   "dns.nscount": 0,

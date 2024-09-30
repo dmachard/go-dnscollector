@@ -10,6 +10,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
+	"github.com/dmachard/go-netutils"
 )
 
 func Test_DnsProcessor(t *testing.T) {
@@ -32,6 +33,48 @@ func Test_DnsProcessor(t *testing.T) {
 	dmOut := <-fl.GetInputChannel()
 	if dmOut.DNS.Qname != pkgconfig.ExpectedQname {
 		t.Errorf("invalid qname in dns message: %s", dm.DNS.Qname)
+	}
+}
+
+func Test_DnsProcessor_DecodeCounters(t *testing.T) {
+	logger := logger.New(true)
+	var o bytes.Buffer
+	logger.SetOutput(&o)
+
+	// init and run the dns processor
+	fl := GetWorkerForTest(pkgconfig.DefaultBufferSize)
+
+	consumer := NewDNSProcessor(pkgconfig.GetDefaultConfig(), logger, "test", 512)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
+	go consumer.StartCollect()
+
+	// get dns packet
+	responsePacket, _ := dnsutils.GetDnsResponsePacket()
+
+	// prepare dns message
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.NetworkInfo.Family = netutils.ProtoIPv4
+	dm.NetworkInfo.Protocol = netutils.ProtoUDP
+	dm.DNS.Payload = responsePacket
+	dm.DNS.Length = len(responsePacket)
+
+	// send dm to consumer
+	consumer.GetInputChannel() <- dm
+
+	// read dns message from dnstap consumer
+	dmOut := <-fl.GetInputChannel()
+	if dmOut.DNS.QdCount != 1 {
+		t.Errorf("invalid number of questions in dns message: %d", dmOut.DNS.QdCount)
+	}
+	if dmOut.DNS.NsCount != 1 {
+		t.Errorf("invalid number of nscount in dns message: %d", dmOut.DNS.NsCount)
+	}
+	if dmOut.DNS.AnCount != 1 {
+		t.Errorf("invalid number of ancount in dns message: %d", dmOut.DNS.AnCount)
+	}
+	if dmOut.DNS.ArCount != 1 {
+		t.Errorf("invalid number of arcount in dns message: %d", dmOut.DNS.ArCount)
 	}
 }
 

@@ -512,7 +512,10 @@ func (w *DNSTapProcessor) StartCollect() {
 				}
 
 				// get number of questions
-				dm.DNS.QuestionsCount = dnsHeader.Qdcount
+				dm.DNS.QdCount = dnsHeader.Qdcount
+				dm.DNS.AnCount = dnsHeader.Ancount
+				dm.DNS.ArCount = dnsHeader.Arcount
+				dm.DNS.NsCount = dnsHeader.Nscount
 
 				if err = dnsutils.DecodePayload(&dm, &dnsHeader, w.GetConfig()); err != nil {
 					dm.DNS.MalformedPacket = true

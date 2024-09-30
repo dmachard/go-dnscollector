@@ -225,8 +225,8 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 			expected: "queryzone.test",
 		},
 		{
-			format:   "questionscount",
-			dm:       DNSMessage{DNS: DNS{QuestionsCount: 1}},
+			format:   "qdcount",
+			dm:       DNSMessage{DNS: DNS{QdCount: 1}},
 			expected: "1",
 		},
 		{

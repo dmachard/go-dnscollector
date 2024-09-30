@@ -86,10 +86,10 @@ type DNS struct {
 	Qname   string `json:"qname"`
 	Qclass  string `json:"qclass"`
 
-	QuestionsCount int `json:"questions-count"`
-	AnCount        int `json:"ancount"`
-	NsCount        int `json:"nscount"`
-	ArCount        int `json:"arcount"`
+	QdCount int `json:"qdcount"`
+	AnCount int `json:"ancount"`
+	NsCount int `json:"nscount"`
+	ArCount int `json:"arcount"`
 
 	Qtype           string   `json:"qtype"`
 	Flags           DNSFlags `json:"flags"`
@@ -756,8 +756,8 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 				s.WriteByte('-')
 			}
 
-		case directive == "questionscount":
-			s.WriteString(strconv.Itoa(dm.DNS.QuestionsCount))
+		case directive == "questionscount" || directive == "qdcount":
+			s.WriteString(strconv.Itoa(dm.DNS.QdCount))
 		case directive == "answercount" || directive == "ancount":
 			s.WriteString(strconv.Itoa(dm.DNS.AnCount))
 		case directive == "nscount":
@@ -1140,7 +1140,7 @@ func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
 		"dns.qtype":                  dm.DNS.Qtype,
 		"dns.qclass":                 dm.DNS.Qclass,
 		"dns.rcode":                  dm.DNS.Rcode,
-		"dns.questions-count":        dm.DNS.QuestionsCount,
+		"dns.qdcount":                dm.DNS.QdCount,
 		"dns.ancount":                dm.DNS.AnCount,
 		"dns.arcount":                dm.DNS.ArCount,
 		"dns.nscount":                dm.DNS.NsCount,
