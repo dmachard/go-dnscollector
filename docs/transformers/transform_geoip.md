@@ -17,12 +17,16 @@ Options:
 * `mmdb-asn-file` (string)
   > path file to your mmdb asn database
 
+* `lookup-ecs` (bool)
+  > lookup for about the original client IP (or part of it) if provided
+
 ```yaml
 transforms:
   geoip:
     mmdb-country-file: "/GeoIP/GeoLite2-Country.mmdb"
     mmdb-city-file: ""
     mmdb-asn-file: ""
+    lookup-ecs: false
 ```
 
 When the feature is enabled, the following json field are populated in your DNS message:

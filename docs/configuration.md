@@ -104,7 +104,10 @@ Default directives:
 - `qclass`: dns query class
 - `qname`: dns query name
 - `latency`: computed latency between queries and replies
-- `answercount`: the number of answer
+- `qdcount`: the number of question
+- `ancount`: the number of answer
+- `arcount`: the number of additionnal answer
+- `nscount`: the number of nameserver
 - `ttl`: answer ttl, only the first one
 - `answer`: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
 - `malformed`: malformed dns packet, integer value 1/0
