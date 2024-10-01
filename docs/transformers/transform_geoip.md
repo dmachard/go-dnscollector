@@ -18,7 +18,7 @@ Options:
   > path file to your mmdb asn database
 
 * `lookup-ecs` (bool)
-  > lookup for about the original client if provided
+  > lookup for about the original client IP (or part of it) if provided
 
 ```yaml
 transforms:
