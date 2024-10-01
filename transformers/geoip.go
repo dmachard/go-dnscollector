@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
@@ -138,7 +139,17 @@ func (t *GeoIPTransform) geoipTransform(dm *dnsutils.DNSMessage) (int, error) {
 		dm.Geo = &dnsutils.TransformDNSGeo{CountryIsoCode: "-", City: "-", Continent: "-", AutonomousSystemNumber: "-", AutonomousSystemOrg: "-"}
 	}
 
-	geoInfo, err := t.Lookup(dm.NetworkInfo.QueryIP)
+	clientIP := dm.NetworkInfo.QueryIP
+
+	// lookup ecs ip instead of the query ip?
+	if t.config.GeoIP.LookupECS && len(dm.EDNS.Options) > 0 {
+		ecsIP := lookupECSIP(dm)
+		if ecsIP != "" {
+			clientIP = ecsIP
+		}
+	}
+
+	geoInfo, err := t.Lookup(clientIP)
 	if err != nil {
 		return ReturnKeep, err
 	}
@@ -150,4 +161,17 @@ func (t *GeoIPTransform) geoipTransform(dm *dnsutils.DNSMessage) (int, error) {
 	dm.Geo.AutonomousSystemOrg = geoInfo.ASO
 
 	return ReturnKeep, nil
+}
+
+// lookupECSIP extracts the ECS IP from the EDNS options if available and valid.
+func lookupECSIP(dm *dnsutils.DNSMessage) string {
+	for _, opt := range dm.EDNS.Options {
+		if opt.Code == 8 {
+			ecsIP := strings.Split(opt.Data, "/")[0]
+			if net.ParseIP(ecsIP) != nil {
+				return ecsIP
+			}
+		}
+	}
+	return ""
 }

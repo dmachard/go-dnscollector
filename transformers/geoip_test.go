@@ -8,6 +8,7 @@ import (
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
 	"github.com/dmachard/go-logger"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGeoIP_Json(t *testing.T) {
@@ -122,4 +123,37 @@ func TestGeoIP_LookupAsn(t *testing.T) {
 	if geoInfo.ASO != "Orange" {
 		t.Errorf("asn organisation invalid want: XX got: %s", geoInfo.ASO)
 	}
+}
+
+func TestGeoIP_Lookup_ECS(t *testing.T) {
+	// enable geoip
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.GeoIP.Enable = true
+	config.GeoIP.DBCountryFile = "../tests/testsdata/GeoLite2-Country.mmdb"
+	config.GeoIP.LookupECS = true
+
+	outChans := []chan dnsutils.DNSMessage{}
+
+	// init the processor
+	geoip := NewDNSGeoIPTransform(config, logger.New(false), "test", 0, outChans)
+	_, err := geoip.GetTransforms()
+	if err != nil {
+		t.Fatalf("geoip init failed: %v+", err)
+	}
+	defer geoip.Close()
+
+	// Create a test DNS message with EDNS ECS data
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.NetworkInfo.QueryIP = "1.1.1.1"                                                                            // AU
+	dm.EDNS.Options = append(dm.EDNS.Options, dnsutils.DNSOption{Code: 8, Name: "CSUBNET", Data: "1.58.30.6/32"}) // CN
+
+	// Apply the transform
+	returnCode, err := geoip.geoipTransform(&dm)
+	require.NoError(t, err, "process transform failed")
+
+	// Validate the country code
+	require.Equal(t, "CN", dm.Geo.CountryIsoCode, "country code mismatch")
+
+	// Ensure the return code is ReturnKeep
+	require.Equal(t, ReturnKeep, returnCode, "unexpected return code")
 }

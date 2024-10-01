@@ -59,6 +59,7 @@ type ConfigTransformers struct {
 	} `yaml:"filtering"`
 	GeoIP struct {
 		Enable        bool   `yaml:"enable" default:"false"`
+		LookupECS     bool   `yaml:"lookup-ecs" default:"false"`
 		DBCountryFile string `yaml:"mmdb-country-file" default:""`
 		DBCityFile    string `yaml:"mmdb-city-file" default:""`
 		DBASNFile     string `yaml:"mmdb-asn-file" default:""`
