@@ -1,0 +1,20 @@
+global:
+  trace:
+    verbose: true
+    
+pipelines:
+  - name: sniffer
+    afpacket-sniffer:
+      port: 53
+      device: wlp2s0
+      enable-defrag-ip: true
+      chan-buffer-size: 0
+    transforms:
+      filtering:
+        keep-queryip-file: ./tests/testsdata/filtering_queryip_gre.txt
+    routing-policy:
+      forward: [ console ]
+  
+  - name: console
+    stdout:
+      mode: text

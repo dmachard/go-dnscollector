@@ -38,17 +38,29 @@ global:
 #   transformers: https://github.com/dmachard/go-dnscollector/blob/main/docs/transformers.md
 ################################################
 pipelines:
-  - name: tap
-    dnstap:
-      listen-ip: 0.0.0.0
-      listen-port: 6000
-    transforms:
-      normalize:
-        qname-lowercase: true
-        qname-replace-nonprintable: true
+  - name: sniffer
+    afpacket-sniffer:
+      port: 53
+      device: wlp2s0
+      enable-defrag-ip: true
+      chan-buffer-size: 0
+    # transforms:
+    #   filtering:
+    #     keep-queryip-file: ./tests/testsdata/filtering_queryip_gre.txt
     routing-policy:
       forward: [ console ]
-      dropped: [ ]
+
+  # - name: tap
+  #   dnstap:
+  #     listen-ip: 0.0.0.0
+  #     listen-port: 6000
+  #   transforms:
+  #     normalize:
+  #       qname-lowercase: true
+  #       qname-replace-nonprintable: true
+  #   routing-policy:
+  #     forward: [ console ]
+  #     dropped: [ ]
 
   - name: console
     stdout:

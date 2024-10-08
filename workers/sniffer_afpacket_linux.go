@@ -66,7 +66,11 @@ func (w *AfpacketSniffer) Listen() error {
 		return err
 	}
 
-	filter := netutils.GetBpfFilterPort(w.GetConfig().Collectors.AfpacketLiveCapture.Port)
+	// prepare bpf filter and apply it
+	filter, err := netutils.GetBpfFilterPort(w.GetConfig().Collectors.AfpacketLiveCapture.Port)
+	if err != nil {
+		return err
+	}
 	err = netutils.ApplyBpfFilter(filter, fd)
 	if err != nil {
 		return err
@@ -105,7 +109,6 @@ func (w *AfpacketSniffer) StartCollect() {
 	fragIP6Chan := make(chan gopacket.Packet)
 
 	netDecoder := &netutils.NetDecoder{}
-
 	// defrag ipv4
 	go netutils.IPDefragger(fragIP4Chan, udpChan, tcpChan, w.GetConfig().Collectors.AfpacketLiveCapture.Port)
 	// defrag ipv6
@@ -193,36 +196,121 @@ func (w *AfpacketSniffer) StartCollect() {
 				packet.Metadata().Length = len(packet.Data())
 				packet.Metadata().Timestamp = timestamp
 
-				// some security checks
+				// some security checks, ignore the packet...
 				if packet.NetworkLayer() == nil {
 					continue
 				}
-				if packet.TransportLayer() == nil {
-					continue
-				}
 
-				// ipv4 fragmented packet ?
+				// handle ipv4
 				if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
-					if !w.GetConfig().Collectors.AfpacketLiveCapture.FragmentSupport {
-						continue
-					}
 					ip4 := packet.NetworkLayer().(*layers.IPv4)
+
+					// gre ?
+					if ip4.Protocol == layers.IPProtocolGRE {
+						// Decapsulate GRE and re-process the inner packet
+						greLayer := packet.Layer(layers.LayerTypeGRE)
+						if greLayer != nil {
+							gre := greLayer.(*layers.GRE)
+
+							// check ip encapsuled packet protocol, ignore ipv6 encapsuled in ipv4
+							innerIP4 := &layers.IPv4{}
+							if err := innerIP4.DecodeFromBytes(gre.Payload, gopacket.NilDecodeFeedback); err != nil {
+								continue
+							}
+
+							//Create new packet with GRE
+							ethernetHeader := packet.Data()[:14]
+							newPacket := append([]byte{}, ethernetHeader...) // Start with the Ethernet header
+							newPacket = append(newPacket, gre.Payload...)
+							innerPacket := gopacket.NewPacket(newPacket, netDecoder, gopacket.NoCopy)
+
+							// handle fragment inside the encapsulated packet
+							if innerIP4.Flags&layers.IPv4MoreFragments == 1 || innerIP4.FragOffset > 0 {
+								if w.GetConfig().Collectors.AfpacketLiveCapture.FragmentSupport {
+									fragIP4Chan <- innerPacket
+								}
+								continue
+							}
+
+							// Handle TCP/UDP inside the encapsulated packet
+							if innerPacket.TransportLayer() == nil {
+								continue
+							}
+
+							if innerPacket.TransportLayer().LayerType() == layers.LayerTypeUDP {
+								udpChan <- innerPacket
+							}
+							if innerPacket.TransportLayer().LayerType() == layers.LayerTypeTCP {
+								tcpChan <- innerPacket
+							}
+							continue
+						}
+					}
+
+					// fragment ?
 					if ip4.Flags&layers.IPv4MoreFragments == 1 || ip4.FragOffset > 0 {
-						fragIP4Chan <- packet
+						if w.GetConfig().Collectors.AfpacketLiveCapture.FragmentSupport {
+							fragIP4Chan <- packet
+						}
 						continue
 					}
 				}
 
-				// ipv6 fragmented packet ?
+				// handle ipv6
 				if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv6 {
-					if !w.GetConfig().Collectors.AfpacketLiveCapture.FragmentSupport {
-						continue
+					ipv6 := packet.NetworkLayer().(*layers.IPv6)
+
+					// gre ?
+					if ipv6.NextHeader == layers.IPProtocolGRE {
+						// Decapsulate GRE and re-process the inner packet
+						greLayer := packet.Layer(layers.LayerTypeGRE)
+						if greLayer != nil {
+							gre := greLayer.(*layers.GRE)
+
+							// Attempt to decode the inner IPv6 packet, ignore IPv4 inside IPv6
+							innerIP6 := &layers.IPv6{}
+							if err := innerIP6.DecodeFromBytes(gre.Payload, gopacket.NilDecodeFeedback); err != nil {
+								continue
+							}
+
+							//Create new packet with GRE
+							ethernetHeader := packet.Data()[:14]
+							newPacket := append([]byte{}, ethernetHeader...) // Start with the Ethernet header
+							newPacket = append(newPacket, gre.Payload...)
+							innerPacket := gopacket.NewPacket(newPacket, netDecoder, gopacket.NoCopy)
+
+							// Handle fragmentation inside the encapsulated IPv6 packet
+							// Check if it has fragmentation header
+							if innerPacket.Layer(layers.LayerTypeIPv6Fragment) != nil {
+								if w.GetConfig().Collectors.AfpacketLiveCapture.FragmentSupport {
+									fragIP6Chan <- innerPacket
+								}
+								continue
+							}
+
+							// Handle TCP/UDP inside the encapsulated packet
+							if innerPacket.TransportLayer().LayerType() == layers.LayerTypeUDP {
+								udpChan <- innerPacket
+							}
+							if innerPacket.TransportLayer().LayerType() == layers.LayerTypeTCP {
+								tcpChan <- innerPacket
+							}
+							continue
+						}
 					}
+
 					v6frag := packet.Layer(layers.LayerTypeIPv6Fragment)
 					if v6frag != nil {
-						fragIP6Chan <- packet
+						if w.GetConfig().Collectors.AfpacketLiveCapture.FragmentSupport {
+							fragIP6Chan <- packet
+						}
 						continue
 					}
+				}
+
+				// transport is empty, ignore the packet...
+				if packet.TransportLayer() == nil {
+					continue
 				}
 
 				// tcp or udp packets ?
