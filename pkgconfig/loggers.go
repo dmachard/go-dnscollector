@@ -72,7 +72,8 @@ type ConfigLoggers struct {
 		FilePath            string `yaml:"file-path" default:""`
 		MaxSize             int    `yaml:"max-size" default:"100"`
 		MaxFiles            int    `yaml:"max-files" default:"10"`
-		FlushInterval       int    `yaml:"flush-interval" default:"10"`
+		MaxBatchSize        int    `yaml:"max-batch-size" default:"65536"`
+		FlushInterval       int    `yaml:"flush-interval" default:"1"`
 		Compress            bool   `yaml:"compress" default:"false"`
 		CompressInterval    int    `yaml:"compress-interval" default:"60"`
 		CompressPostCommand string `yaml:"compress-postcommand" default:""`

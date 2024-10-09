@@ -158,8 +158,7 @@ func (w *LogFile) OpenFile() error {
 
 	switch w.GetConfig().Loggers.LogFile.Mode {
 	case pkgconfig.ModeText, pkgconfig.ModeJSON, pkgconfig.ModeFlatJSON:
-		bufferSize := 4096
-		w.writerPlain = bufio.NewWriterSize(fd, bufferSize)
+		w.writerPlain = bufio.NewWriterSize(fd, w.config.Loggers.LogFile.MaxBatchSize)
 
 	case pkgconfig.ModePCAP:
 		w.writerPcap = pcapgo.NewWriter(fd)
@@ -469,12 +468,22 @@ func (w *LogFile) StartLogging() {
 	var data []byte
 	var err error
 
+	// Max size of a batch before forcing a write
+	batch := new(bytes.Buffer)
+	maxBatchSize := w.config.Loggers.LogFile.MaxBatchSize
+	batchSize := 0 // Current batch size
+
 	for {
 		select {
 		case <-w.OnLoggerStopped():
 			// stop timer
 			flushTimer.Stop()
 			w.commpressTimer.Stop()
+
+			// Force write remaining batch data
+			if batchSize > 0 {
+				w.WriteToPlain(batch.Bytes())
+			}
 
 			// flush writer
 			w.FlushWriters()
@@ -494,18 +503,15 @@ func (w *LogFile) StartLogging() {
 				return
 			}
 
-			// write to file
+			// Process the message based on the configured mode
+			var message []byte
 			switch w.GetConfig().Loggers.LogFile.Mode {
 
 			// with basic text mode
 			case pkgconfig.ModeText:
-				w.WriteToPlain(dm.Bytes(w.textFormat,
-					w.GetConfig().Global.TextFormatDelimiter,
-					w.GetConfig().Global.TextFormatBoundary))
-
-				var delimiter bytes.Buffer
-				delimiter.WriteString("\n")
-				w.WriteToPlain(delimiter.Bytes())
+				message = dm.Bytes(w.textFormat, w.GetConfig().Global.TextFormatDelimiter, w.GetConfig().Global.TextFormatBoundary)
+				batch.Write(message)
+				batch.WriteString("\n")
 
 			// with custom text mode
 			case pkgconfig.ModeJinja:
@@ -514,7 +520,7 @@ func (w *LogFile) StartLogging() {
 					w.LogError("jinja template: %s", err)
 					continue
 				}
-				w.WriteToPlain([]byte(textLine))
+				batch.Write([]byte(textLine))
 
 			// with json mode
 			case pkgconfig.ModeFlatJSON:
@@ -530,7 +536,7 @@ func (w *LogFile) StartLogging() {
 			// with json mode
 			case pkgconfig.ModeJSON:
 				json.NewEncoder(buffer).Encode(dm)
-				w.WriteToPlain(buffer.Bytes())
+				batch.Write(buffer.Bytes())
 				buffer.Reset()
 
 			// with dnstap mode
@@ -554,7 +560,24 @@ func (w *LogFile) StartLogging() {
 				w.WriteToPcap(dm, pkt)
 			}
 
+			// Update the batch size
+			batchSize += batch.Len()
+
+			// If the batch exceeds the max size, force a write
+			if batchSize >= maxBatchSize {
+				w.WriteToPlain(batch.Bytes())
+				batch.Reset() // Reset batch after write
+				batchSize = 0
+			}
+
 		case <-flushTimer.C:
+			// Flush the current batch, then flush the writers
+			if batchSize > 0 {
+				w.WriteToPlain(batch.Bytes())
+				batch.Reset()
+				batchSize = 0
+			}
+
 			// flush writer
 			w.FlushWriters()
 

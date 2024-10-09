@@ -26,6 +26,9 @@ Options:
 * `max-files` (integer)
   > maximum number of files to retain. Set to zero if you want to disable this feature
 
+* `max-batch-size` (integer)
+  > accumulate data before writing it to the file
+
 * `flush-interval` (integer)
   > flush buffer to log file every X seconds
 
@@ -62,7 +65,8 @@ logfile:
   file-path: null
   max-size: 100
   max-files: 10
-  flush-interval: 10
+  max-batch-size: 65536
+  flush-interval: 1
   compress: false
   compress-interval: 5
   compress-postcommand: null
