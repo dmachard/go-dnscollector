@@ -22,10 +22,10 @@ type ConfigGlobal struct {
 	PidFile        string `yaml:"pid-file" default:""`
 	Worker         struct {
 		InternalMonitor   int `yaml:"interval-monitor" default:"10"`
-		ChannelBufferSize int `yaml:"buffer-size" default:"4096"`
+		ChannelBufferSize int `yaml:"buffer-size" default:"8192"`
 	} `yaml:"worker"`
 	Telemetry struct {
-		Enabled         bool   `yaml:"enabled" default:"true"`
+		Enabled         bool   `yaml:"enabled" default:"false"`
 		WebPath         string `yaml:"web-path" default:"/metrics"`
 		WebListen       string `yaml:"web-listen" default:":9165"`
 		PromPrefix      string `yaml:"prometheus-prefix" default:"dnscollector_exporter"`
