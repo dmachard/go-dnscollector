@@ -11,6 +11,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/telemetry"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -240,7 +241,7 @@ func Test_DnstapProcessor_toDNSMessage(t *testing.T) {
 	}
 }
 
-func Test_DnstapProcessor_DecodeCounters(t *testing.T) {
+func Test_DnstapProcessor_DecodeDNSCounters(t *testing.T) {
 	logger := logger.New(true)
 	var o bytes.Buffer
 	logger.SetOutput(&o)
@@ -620,5 +621,56 @@ func Test_DnstapProcessor_BufferLoggerIsFull(t *testing.T) {
 	dm2 := <-fl.GetInputChannel()
 	if dm2.DNS.Qname != pkgconfig.ExpectedQname {
 		t.Errorf("invalid qname in second dns message: %s", dm2.DNS.Qname)
+	}
+}
+
+// test for telemetry counter
+func Test_DnstapProcessor_TelemetryCounters(t *testing.T) {
+	logger := logger.New(true)
+	var o bytes.Buffer
+	logger.SetOutput(&o)
+
+	// run the consumer with a fake logger
+	fl := GetWorkerForTest(pkgconfig.DefaultBufferSize)
+
+	cfg := pkgconfig.GetDefaultConfig()
+	cfg.Global.Telemetry.Enabled = true
+	cfg.Global.Worker.InternalMonitor = 1
+
+	config := pkgconfig.Config{}
+	metrics := telemetry.NewPrometheusCollector(&config)
+
+	// init the dnstap consumer
+	consumer := NewDNSTapProcessor(0, "peertest", cfg, logger, "test", 512)
+	consumer.SetMetrics(metrics)
+	consumer.AddDefaultRoute(fl)
+	consumer.AddDroppedRoute(fl)
+
+	// get dns packet
+	queryPkt, _ := dnsutils.GetFakeDNS()
+
+	// prepare dnstap
+	dt := &dnstap.Dnstap{}
+	dt.Type = dnstap.Dnstap_Type.Enum(1)
+
+	dt.Message = &dnstap.Message{}
+	dt.Message.Type = dnstap.Message_Type.Enum(5) // CLIENT_QUERY
+	dt.Message.ResponseMessage = queryPkt
+	data, _ := proto.Marshal(dt)
+
+	// start the consumer
+	go consumer.StartCollect()
+
+	// add packet to consumer and read output
+	consumer.GetDataChannel() <- data
+
+	<-fl.GetInputChannel()
+	r := <-metrics.Record
+
+	if r.TotalIngress != 1 {
+		t.Errorf("invalid total ingress oucnter: got %d expect 1", r.TotalIngress)
+	}
+	if r.TotalEgress != 1 {
+		t.Errorf("invalid total egress counter: got %d expect 1", r.TotalEgress)
 	}
 }

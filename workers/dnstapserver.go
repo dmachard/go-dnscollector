@@ -344,9 +344,6 @@ func (w *DNSTapProcessor) StartCollect() {
 				continue
 			}
 
-			// count global messages
-			w.CountIngressTraffic()
-
 			// init dns message
 			dm := dnsutils.DNSMessage{}
 			dm.Init()
