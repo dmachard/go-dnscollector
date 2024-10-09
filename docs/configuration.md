@@ -64,7 +64,7 @@ The `buffer-size` settings enable to adjust the size of the buffer before discar
 global:
   worker:
     interval-monitor: 10
-    buffer-size: 4096
+    buffer-size: 8192
 ```
 
 ## Custom text format
@@ -182,7 +182,7 @@ Enable and configure telemetry
 ```yaml
 global:
   telemetry:
-    enabled: true
+    enabled: false
     web-path: "/metrics"
     web-listen: ":9165"
     prometheus-prefix: "dnscollector_exporter"
