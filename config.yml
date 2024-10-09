@@ -17,7 +17,7 @@ global:
   text-jinja: ""
   worker:
     interval-monitor: 10
-    buffer-size: 4096
+    buffer-size: 8192
   telemetry:
     enabled: false
     web-path: "/metrics"
