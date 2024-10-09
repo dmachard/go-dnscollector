@@ -11,6 +11,7 @@ import (
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
 	"github.com/dmachard/go-dnscollector/pkgconfig"
+	"github.com/dmachard/go-dnscollector/telemetry"
 	"github.com/dmachard/go-dnstap-protobuf"
 	"github.com/dmachard/go-framestream"
 	"github.com/dmachard/go-logger"
@@ -632,8 +633,16 @@ func Test_DnstapProcessor_TelemetryCounters(t *testing.T) {
 	// run the consumer with a fake logger
 	fl := GetWorkerForTest(pkgconfig.DefaultBufferSize)
 
+	cfg := pkgconfig.GetDefaultConfig()
+	cfg.Global.Telemetry.Enabled = true
+	cfg.Global.Worker.InternalMonitor = 1
+
+	config := pkgconfig.Config{}
+	metrics := telemetry.NewPrometheusCollector(&config)
+
 	// init the dnstap consumer
-	consumer := NewDNSTapProcessor(0, "peertest", pkgconfig.GetDefaultConfig(), logger, "test", 512)
+	consumer := NewDNSTapProcessor(0, "peertest", cfg, logger, "test", 512)
+	consumer.SetMetrics(metrics)
 	consumer.AddDefaultRoute(fl)
 	consumer.AddDroppedRoute(fl)
 
@@ -654,12 +663,14 @@ func Test_DnstapProcessor_TelemetryCounters(t *testing.T) {
 
 	// add packet to consumer and read output
 	consumer.GetDataChannel() <- data
-	<-fl.GetInputChannel()
 
-	if consumer.totalIngress != 1 {
-		t.Errorf("invalid total ingress oucnter: got %d expect 1", consumer.totalIngress)
+	<-fl.GetInputChannel()
+	r := <-metrics.Record
+
+	if r.TotalIngress != 1 {
+		t.Errorf("invalid total ingress oucnter: got %d expect 1", r.TotalIngress)
 	}
-	if consumer.totalEgress != 1 {
-		t.Errorf("invalid total egress counter: got %d expect 1", consumer.totalEgress)
+	if r.TotalEgress != 1 {
+		t.Errorf("invalid total egress counter: got %d expect 1", r.TotalEgress)
 	}
 }

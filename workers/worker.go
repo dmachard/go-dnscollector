@@ -232,7 +232,7 @@ func (w *GenericWorker) Monitor() {
 
 			// // send to telemetry?
 			if w.config.Global.Telemetry.Enabled && w.metrics != nil {
-				if w.totalIngress > 0 || w.totalForwarded > 0 || w.totalDropped > 0 {
+				if w.totalIngress > 0 || w.totalEgress > 0 || w.totalForwarded > 0 || w.totalDropped > 0 {
 					w.metrics.Record <- telemetry.WorkerStats{
 						Name:                 w.GetName(),
 						TotalIngress:         w.totalIngress,
