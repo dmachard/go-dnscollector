@@ -209,6 +209,8 @@ func DecodePayload(dm *DNSMessage, header *DNSHeader, config *pkgconfig.Config) 
 		dm.DNS.Qtype = RdatatypeToString(dnsRRtype)
 		dm.DNS.Qclass = ClassToString(dnsQclass)
 		payloadOffset = offsetrr
+	} else {
+		payloadOffset = DNSLen
 	}
 
 	// decode DNS answers
@@ -242,8 +244,9 @@ func DecodePayload(dm *DNSMessage, header *DNSHeader, config *pkgconfig.Config) 
 			return &decodingError{part: "authority records", err: err}
 		}
 	}
+
+	// decode additional answers
 	if header.Arcount > 0 {
-		// decode additional answers
 		answers, _, err := DecodeAnswer(header.Arcount, payloadOffset, dm.DNS.Payload)
 		if err == nil { // nolint
 			dm.DNS.DNSRRs.Records = answers
