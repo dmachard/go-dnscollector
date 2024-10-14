@@ -11,7 +11,7 @@ require (
 	github.com/dmachard/go-dnstap-protobuf v1.1.0
 	github.com/dmachard/go-framestream v1.0.0
 	github.com/dmachard/go-logger v1.1.0
-	github.com/dmachard/go-netutils v1.0.0
+	github.com/dmachard/go-netutils v1.0.1
 	github.com/dmachard/go-powerdns-protobuf v1.2.0
 	github.com/dmachard/go-topmap v1.0.1
 	github.com/farsightsec/golang-framestream v0.3.0
