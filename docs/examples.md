@@ -29,6 +29,7 @@ You will find below some examples of configurations to manage your DNS logs.
   - [x] [Add geographical metadata with GeoIP](./_examplesuse-case-11.yml)
   - [x] [Count the number of evicted queries](./_examples/use-case-18.yml)
   - [x] [Detect repetitive traffic and log it only once](./_examples/use-case-20.yml)
+  - [x] [Keep incoming traffic with specific ip prefix](./_examples/use-case-27.yml)
 
 - Capture DNS traffic from FRSTRM/dnstap files
   - [x] [Save incoming DNStap streams to file (frstrm)](./_examples/use-case-13.yml)
