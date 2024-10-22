@@ -173,13 +173,14 @@ func (w *GenericWorker) LoggingDone() {
 }
 
 func (w *GenericWorker) Stop() {
-	w.LogInfo("stopping monitor...")
-	w.stopMonitor <- true
-	<-w.doneMonitor
 
 	w.LogInfo("stopping collect...")
 	w.stopRun <- true
 	<-w.doneRun
+	w.LogInfo("stopping monitor...")
+	w.stopMonitor <- true
+	<-w.doneMonitor
+
 }
 
 func (w *GenericWorker) Monitor() {

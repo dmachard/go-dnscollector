@@ -219,6 +219,15 @@ func main() {
 			case <-sigTerm:
 				logger.Warning("main - exiting...")
 
+				// and stop all workers
+				for _, c := range mapCollectors {
+					c.Stop()
+				}
+
+				for _, l := range mapLoggers {
+					l.Stop()
+				}
+
 				// gracefully shutdown the HTTP server
 				if config.Global.Telemetry.Enabled {
 					logger.Info("main - telemetry is stopping")
@@ -228,15 +237,7 @@ func main() {
 						logger.Error("main - telemetry error shutting down http server - %s", err.Error())
 					}
 
-				}
-
-				// and stop all workers
-				for _, c := range mapCollectors {
-					c.Stop()
-				}
-
-				for _, l := range mapLoggers {
-					l.Stop()
+					logger.Info("main - telemetry stopped")
 				}
 
 				// unblock main function
