@@ -66,7 +66,10 @@ func (w *AfpacketSniffer) Listen() error {
 		return err
 	}
 
-	filter := netutils.GetBpfFilterPort(w.GetConfig().Collectors.AfpacketLiveCapture.Port)
+	filter, err := netutils.GetBpfFilterPort(w.GetConfig().Collectors.AfpacketLiveCapture.Port)
+	if err != nil {
+		return err
+	}
 	err = netutils.ApplyBpfFilter(filter, fd)
 	if err != nil {
 		return err
