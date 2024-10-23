@@ -48,6 +48,7 @@ type EpsCounters struct {
 
 	TotalRcodes, TotalQtypes                       map[string]float64
 	TotalIPVersion, TotalIPProtocol                map[string]float64
+	TotalOperations                                map[string]float64
 	TotalDNSMessages                               float64
 	TotalQueries, TotalReplies                     int
 	TotalBytes, TotalBytesSent, TotalBytesReceived int
@@ -166,6 +167,7 @@ type Prometheus struct {
 	counterQtypes, counterRcodes                             *prometheus.Desc
 	counterIPProtocol, counterIPVersion                      *prometheus.Desc
 	counterDNSMessages, counterDNSQueries, counterDNSReplies *prometheus.Desc
+	counterOperations                                        *prometheus.Desc
 
 	counterFlagsTC, counterFlagsAA                                         *prometheus.Desc
 	counterFlagsRA, counterFlagsAD                                         *prometheus.Desc
@@ -196,6 +198,7 @@ func newPrometheusCounterSet(w *Prometheus, labels prometheus.Labels) *Prometheu
 		epsCounters: EpsCounters{
 			TotalRcodes: make(map[string]float64), TotalQtypes: make(map[string]float64),
 			TotalIPVersion: make(map[string]float64), TotalIPProtocol: make(map[string]float64),
+			TotalOperations: make(map[string]float64),
 		},
 
 		topRequesters:   topmap.NewTopMap(w.GetConfig().Loggers.Prometheus.TopN),
@@ -248,6 +251,7 @@ func (w *PrometheusCountersSet) Describe(ch chan<- *prometheus.Desc) {
 
 	ch <- w.prom.counterQtypes
 	ch <- w.prom.counterRcodes
+	ch <- w.prom.counterOperations
 	ch <- w.prom.counterIPProtocol
 	ch <- w.prom.counterIPVersion
 	ch <- w.prom.counterDNSMessages
@@ -372,6 +376,12 @@ func (w *PrometheusCountersSet) Record(dm dnsutils.DNSMessage) {
 		w.epsCounters.TotalRcodes[dm.DNS.Rcode] = 1
 	} else {
 		w.epsCounters.TotalRcodes[dm.DNS.Rcode]++
+	}
+
+	if _, exists := w.epsCounters.TotalOperations[dm.DNSTap.Operation]; !exists {
+		w.epsCounters.TotalOperations[dm.DNSTap.Operation] = 1
+	} else {
+		w.epsCounters.TotalOperations[dm.DNSTap.Operation]++
 	}
 
 	if dm.DNS.Type == dnsutils.DNSQuery {
@@ -514,6 +524,13 @@ func (w *PrometheusCountersSet) Collect(ch chan<- prometheus.Metric) {
 	// Update Return Codes counter
 	for k, v := range w.epsCounters.TotalRcodes {
 		ch <- prometheus.MustNewConstMetric(w.prom.counterRcodes, prometheus.CounterValue,
+			v, k,
+		)
+	}
+
+	// Update DNSTap Operations counter
+	for k, v := range w.epsCounters.TotalOperations {
+		ch <- prometheus.MustNewConstMetric(w.prom.counterOperations, prometheus.CounterValue,
 			v, k,
 		)
 	}
@@ -878,6 +895,12 @@ func (w *Prometheus) InitProm() {
 		fmt.Sprintf("%s_rcodes_total", promPrefix),
 		"Counter of replies per return codes",
 		[]string{"return_code"}, nil,
+	)
+
+	w.counterOperations = prometheus.NewDesc(
+		fmt.Sprintf("%s_operations_total", promPrefix),
+		"Counter of dns messages per operations",
+		[]string{"operation"}, nil,
 	)
 
 	w.counterIPProtocol = prometheus.NewDesc(
