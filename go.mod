@@ -1,19 +1,21 @@
 module github.com/dmachard/go-dnscollector
 
-go 1.23
+go 1.21.8
+
+toolchain go1.23.0
 
 require (
 	github.com/IBM/fluent-forward-go v0.2.2
 	github.com/IBM/sarama v1.43.3
 	github.com/cilium/ebpf v0.16.0
 	github.com/creasty/defaults v1.8.0
-	github.com/dmachard/go-clientsyslog v1.0.0
-	github.com/dmachard/go-dnstap-protobuf v1.1.0
-	github.com/dmachard/go-framestream v1.0.0
-	github.com/dmachard/go-logger v1.1.0
-	github.com/dmachard/go-netutils v1.0.0
-	github.com/dmachard/go-powerdns-protobuf v1.2.0
-	github.com/dmachard/go-topmap v1.0.1
+	github.com/dmachard/go-clientsyslog v1.0.1
+	github.com/dmachard/go-dnstap-protobuf v1.2.0
+	github.com/dmachard/go-framestream v1.0.1
+	github.com/dmachard/go-logger v1.1.1
+	github.com/dmachard/go-netutils v1.1.0
+	github.com/dmachard/go-powerdns-protobuf v1.3.0
+	github.com/dmachard/go-topmap v1.0.2
 	github.com/farsightsec/golang-framestream v0.3.0
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/fsnotify/fsnotify v1.7.0
