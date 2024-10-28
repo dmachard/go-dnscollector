@@ -6,6 +6,7 @@
   - [Server identity](#server-identity)
   - [Pid file](#pid-file)
   - [Telemetry](#telemetry)
+- [Configuration reloading](#configuration-reloading)
 
 ## Configuration checks
 
