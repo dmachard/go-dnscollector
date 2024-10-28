@@ -55,6 +55,7 @@ type LogFile struct {
 	fileSize                               int64
 	fileDir, fileName, fileExt, filePrefix string
 	textFormat                             []string
+	jinjaFormat                            string
 	compressQueue                          chan string
 	commandQueue                           chan string
 }
@@ -97,6 +98,12 @@ func (w *LogFile) ReadConfig() {
 		w.textFormat = strings.Fields(w.GetConfig().Loggers.LogFile.TextFormat)
 	} else {
 		w.textFormat = strings.Fields(w.GetConfig().Global.TextFormat)
+	}
+
+	if len(w.GetConfig().Loggers.Stdout.JinjaFormat) > 0 {
+		w.jinjaFormat = w.GetConfig().Loggers.LogFile.JinjaFormat
+	} else {
+		w.jinjaFormat = w.GetConfig().Global.TextJinja
 	}
 
 	w.LogInfo("running in mode: %s", w.GetConfig().Loggers.LogFile.Mode)
@@ -593,7 +600,7 @@ func (w *LogFile) StartLogging() {
 
 			// with custom text mode
 			case pkgconfig.ModeJinja:
-				textLine, err := dm.ToTextTemplate(w.GetConfig().Global.TextJinja)
+				textLine, err := dm.ToTextTemplate(w.jinjaFormat)
 				if err != nil {
 					w.LogError("jinja template: %s", err)
 					continue

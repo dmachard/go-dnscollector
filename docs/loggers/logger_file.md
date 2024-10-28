@@ -1,10 +1,16 @@
 # Logger: File
 
+- [Configuration Options](#overview)
+- [Log Compression](#log-compression)
+- [Postrotate command](#postrotate-command)
+- [To PCAP](#save-to-pcap-files)
+- [To DNStap](#save-to-dnstap-files)
+
 ## Overview
 
 The File Logger allows you to log DNS traffic to a file in various formats, with support for rotation, compression, custom formatting, and the ability to execute scripts after file rotation.
 
-## Key Features
+**Key Features**
 - **File Rotation**: Automatically rotates log files based on size.
 - **Supported Formats**: Supports multiple output formats - `text`, `jinja`, `json` and `flat json`, `pcap` or `dnstap`
 - **Compression**: Optional gzip compression for rotated log files.
@@ -39,6 +45,9 @@ The File Logger allows you to log DNS traffic to a file in various formats, with
   > output text format, please refer to the default text format to see all
   > available directives, use this parameter if you want a specific format.
 
+* `jinja-format` (string)
+  > jinja template, please refer [Jinja encoding](../dns2jinja.md) to see all available directives 
+
 * `postrotate-command` (string)
   > Specifies a command or script to run after each file rotation.
 
@@ -61,6 +70,7 @@ logfile:
   compress: false
   mode: text
   text-format: ""
+  jinja-format: ""
   postrotate-command: null
   postrotate-delete-success: false
   chan-buffer-size: 0
@@ -124,6 +134,8 @@ mv $1 $BACKUP_FOLDER/$3
 
 ## Save to PCAP files
 
+You can configure the collector to save traffic in PCAP format. Only available with `logger file`.
+
 In PCAP mode, DNS traffic is logged in binary form, capturing details over various protocols. The following mappings are used:
 
 | Origin protocol        | Translated to                  |
@@ -133,3 +145,7 @@ In PCAP mode, DNS traffic is logged in binary form, capturing details over vario
 | DoH/443                | DNS UDP/443 (no cipher)        |
 | DoT/853                | DNS UDP/853 (no cipher)        |
 | DoQ                    | Currently unsupported          |
+
+## Save to DNStap files
+
+You can configure the collector to save traffic in DNStap format. Only available with `logger file`.

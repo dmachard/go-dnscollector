@@ -14,6 +14,9 @@ Options:
 * `text-format` (string)
   > output text format, please refer to the default text format to see all available [directives](../configuration.md#custom-text-format), use this parameter if you want a specific format
 
+* `jinja-format` (string)
+  > jinja template, please refer [Jinja encoding](../dns2jinja.md) to see all available directives 
+  
 * `chan-buffer-size` (integer)
   > Specifies the maximum number of packets that can be buffered before discard additional packets.
   > Set to zero to use the default global value.
@@ -24,6 +27,7 @@ Default values:
 stdout:
   mode: text
   text-format: ""
+  jinja-format: ""
   chan-buffer-size: 0
 ```
 

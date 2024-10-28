@@ -1,74 +1,41 @@
 # DNS-collector - Running mode
 
-The DNScollector can be configured with multiple loggers and collectors at the same time
-
-- [Pipelining](#pipelining)
-- [Multiplexer (DEPRECATED)](#multiplexer)
+The DNScollector can be configured to operate with multiple loggers and collectors simultaneously, 
+allowing for versatile logging and data collection strategies.
 
 ## Pipelining
 
 The `pipelining` mode offers several enhancements compared to the old multiplexer mode. 
 It provides the same functionalities with added flexibility:
 
-- Simplified syntax
-- Conditional statement-based log routing: dropped packet can be send to another stanza
-- Ability to add metadata in DNS messages.
+- **Simplified Syntax**: Easier to read and maintain configuration files.
+- **Conditional Log Routing**: Dropped packets can be directed to alternative processing stanzas.
+- **Metadata Enrichment**: Ability to attach metadata to DNS messages for enhanced logging and analysis.
 
 With this mode, you can create pipelines and connect [collectors](./collectors.md) and [loggers](./loggers.md) using the new `routing-policy` definition.
+
+
+## Routing Policy Modes
+
+The routing policy supports two modes:
+- forward: A list of stanzas where packets that are successfully processed will be sent.
+- dropped: A list of stanzas where packets that are dropped or failed will be redirected.
+
+This flexible routing mechanism allows you to implement tailored logging strategies based on specific conditions and processing outcomes.
+
+## Example Configuration
 
 ```yaml
 pipelines:
   - name: <stanza1>
+    # Configuration for collector or logger
     ...(collector or logger config)..
     routing-policy:
-      forward: [ <logger1> ]
-      dropped: [ <logger2> ]
+      forward: [ <logger1> ]  # Specify loggers for forwarded packets
+      dropped: [ <logger2> ]  # Specify loggers for dropped packets
 
   - name: <stanza2>
+    # Configuration for another collector or logger
     ...(collector or logger config)..
 ```
 
-The routing policy support 2 modes:
-- `forward`: [ list of next stanza ]
-- `dropped`: [ list of next stanza ]
-
-
-## Multiplexer (DEPRECATED)
-
-> NOTE: THIS MODE IS DEPRECATED
-
-
-You must defined the list of
-
-- `collectors`: list of running inputs
-- `loggers`: list of running outputs
-- `routes`: routing definition
-
-List of supported [collectors](./collectors.md)
-
-```yaml
-multiplexer:
-  collectors: 
-    - name: <collector_name>
-      .....
-```
-
-List of supported [loggers](./loggers.md)
-
-```yaml
-multiplexer:
-  loggers: 
-    - name: <logger_name>
-      ...
-```
-
-Defines the routing to use between all of them according to the name.
-You can connect one collector to multiple loggers and you can also
-connect multiple collectors to the same logger.
-
-```yaml
-multiplexer:
-  routes: ...
-    - from: [ list of collectors by name ]
-      to: [ list of loggers by name ]
-```
