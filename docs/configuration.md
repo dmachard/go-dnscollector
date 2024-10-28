@@ -2,12 +2,11 @@
 
 The configuration of DNS-collector is done through one yaml file named [`config.yml`](https://github.com/dmachard/go-dnscollector/blob/main/config.yml). When the DNS-collector starts, it will look for the config.yml from the current working directory.
 
-A typically configuration in [multiplexer](./running_mode.md) mode would have one or more collector to receive DNS traffic, and severals loggers to process the incoming traffics. You can take a look to the list of config [`examples`](examples.md).
+A typically [configuration in pipeline](./running_mode.md) mode would have one or more collector to receive DNS traffic, and severals loggers to process the incoming traffics.  You can take a look to the list of config [`full examples`](examples.md).
 
 You can find the global settings below
 
 - [Trace](#trace)
-- [Custom text format](#custom-text-format)
 - [Server identity](#server-identity)
 - [Pid file](#pid-file)
 - [Telemetry](#telemetry)
@@ -65,104 +64,6 @@ global:
   worker:
     interval-monitor: 10
     buffer-size: 8192
-```
-
-## Custom text format
-
-The text format can be customized with the following directives.
-
-Default directives:
-
-- `timestamp-rfc3339ns`: timestamp rfc3339 format, with nano support
-- `timestamp-unixms`: unix timestamp with ms support
-- `timestamp-unixus`: unix timestamp with us support
-- `timestamp-unixns`: unix timestamp with nano support
-- `localtime`: local time
-- `identity`: dnstap identity
-- `peer-name`: hostname or ip address of the dnstap sender
-- `version`: dnstap version
-- `extra`: dnstap extra as string
-- `operation`: dnstap operation
-- `policy-rule`: dnstap policy rule
-- `policy-type`: dnstap policy type
-- `policy-action`: dnstap policy action
-- `policy-match`: dnstap policy match
-- `policy-value`: dnstap policy value
-- `query-zone`: dnstap query zone
-- `opcode`: dns opcode (integer)
-- `rcode`: dns return code
-- `queryip`: dns query ip
-- `queryport`: dns query port
-- `responseip`: dns response ip
-- `responseport`: dns response port
-- `id`: dns id
-- `family`: ip protocol version INET or INET6
-- `protocol`: protocol UDP, TCP
-- `length`: the length of the query or reply in bytes
-- `length-unit`: the length of the query or reply in bytes with unit (`b`)
-- `qtype`: dns query type
-- `qclass`: dns query class
-- `qname`: dns query name
-- `latency`: computed latency between queries and replies
-- `qdcount`: the number of question
-- `ancount`: the number of answer
-- `arcount`: the number of additionnal answer
-- `nscount`: the number of nameserver
-- `ttl`: answer ttl, only the first one
-- `answer`: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
-- `malformed`: malformed dns packet, integer value 1/0
-- `qr`: query or reply flag, string value Q/R
-- `tc`: flag truncated response
-- `aa`: flag authoritative answer
-- `ra`: flag recursion available
-- `ad`: flag authenticated data
-- `df`: flag when ip defragmented occured
-- `tr`: flag when tcp reassembled occured
-- `edns-csubnet`: display client subnet info
-
-```yaml
-global:
-  text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length-unit qname qtype latency ttl"
-  text-format-delimiter: " "
-  text-format-splitter: " "
-  text-format-boundary: "\""
-  text-jinja: ""
-```
-
-If you require a output format like CSV, the delimiter can be configured with the `text-format-delimiter` option.
-The default separator is [space]. text-format can contain raw text enclosed by curly braces, eg
-
-```yaml
-	text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport qname qtype {DNSTAP}"
-```
-
-Output example:
-
-```bash
-2023-04-08T18:27:29.268465Z unbound CLIENT_QUERY NOERROR 127.0.0.1 39028 IPv4 UDP 50b google.fr A 0.000000
-2023-04-08T18:27:29.268575Z unbound FORWARDER_QUERY NOERROR 0.0.0.0 20817 IPv4 UDP 38b google.fr A 0.000000
-2023-04-08T18:27:29.278929Z unbound FORWARDER_RESPONSE NOERROR 0.0.0.0 20817 IPv4 UDP 54b google.fr A 0.000000
-2023-04-08T18:27:29.279039Z unbound CLIENT_RESPONSE NOERROR 127.0.0.1 39028 IPv4 UDP 54b google.fr A 0.000000
-
-```
-
-If you want a more flexible format, you can use the `text-jinja` setting
-Example to enable output similiar to dig style:
-
-```
-text-jinja: |+
-    ;; Got {% if dm.DNS.Type == "QUERY" %}query{% else %}answer{% endif %} from {{ dm.NetworkInfo.QueryIP }}#{{ dm.NetworkInfo.QueryPort }}:
-    ;; ->>HEADER<<- opcode: {{ dm.DNS.Opcode }}, status: {{ dm.DNS.Rcode }}, id: {{ dm.DNS.ID }}
-    ;; flags: {{ dm.DNS.Flags.QR | yesno:"qr ," }}{{ dm.DNS.Flags.RD | yesno:"rd ," }}{{ dm.DNS.Flags.RA | yesno:"ra ," }}; QUERY: {{ dm.DNS.QdCount }}, ANSWER: {{ dm.DNS.AnCount }}, AUTHORITY: {{ dm.DNS.NsCount }}, ADDITIONAL: {{ dm.DNS.ArCount }}
-    
-    ;; QUESTION SECTION:
-    ;{{ dm.DNS.Qname }}		{{ dm.DNS.Qclass }}	{{ dm.DNS.Qtype }}
-
-    ;; ANSWER SECTION: {% for rr in dm.DNS.DNSRRs.Answers %}
-    {{ rr.Name }}		{{ rr.TTL }} {{ rr.Class }} {{ rr.Rdatatype }} {{ rr.Rdata }}{% endfor %}
-
-    ;; WHEN: {{ dm.DNSTap.Timestamp }}
-    ;; MSG SIZE  rcvd: {{ dm.DNS.Length }}
 ```
 
 ## Pid file

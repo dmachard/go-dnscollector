@@ -32,9 +32,10 @@ func IsStdoutValidMode(mode string) bool {
 
 type StdOut struct {
 	*GenericWorker
-	textFormat []string
-	writerText *log.Logger
-	writerPcap *pcapgo.Writer
+	textFormat  []string
+	jinjaFormat string
+	writerText  *log.Logger
+	writerPcap  *pcapgo.Writer
 }
 
 func NewStdOut(config *pkgconfig.Config, console *logger.Logger, name string) *StdOut {
@@ -57,6 +58,12 @@ func (w *StdOut) ReadConfig() {
 		w.textFormat = strings.Fields(w.GetConfig().Loggers.Stdout.TextFormat)
 	} else {
 		w.textFormat = strings.Fields(w.GetConfig().Global.TextFormat)
+	}
+
+	if len(w.GetConfig().Loggers.Stdout.JinjaFormat) > 0 {
+		w.jinjaFormat = w.GetConfig().Loggers.Stdout.JinjaFormat
+	} else {
+		w.jinjaFormat = w.GetConfig().Global.TextJinja
 	}
 }
 
@@ -188,7 +195,7 @@ func (w *StdOut) StartLogging() {
 				w.writerText.Print(dm.String(w.textFormat, w.GetConfig().Global.TextFormatDelimiter, w.GetConfig().Global.TextFormatBoundary))
 
 			case pkgconfig.ModeJinja:
-				textLine, err := dm.ToTextTemplate(w.GetConfig().Global.TextJinja)
+				textLine, err := dm.ToTextTemplate(w.jinjaFormat)
 				if err != nil {
 					w.LogError("process: unable to update template: %s", err)
 					continue

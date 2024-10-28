@@ -39,6 +39,9 @@ The File Logger allows you to log DNS traffic to a file in various formats, with
   > output text format, please refer to the default text format to see all
   > available directives, use this parameter if you want a specific format.
 
+* `jinja-format` (string)
+  > jinja template, please refer [Jinja encoding](../dns2jinja.md) to see all available directives 
+
 * `postrotate-command` (string)
   > Specifies a command or script to run after each file rotation.
 
@@ -61,6 +64,7 @@ logfile:
   compress: false
   mode: text
   text-format: ""
+  jinja-format: ""
   postrotate-command: null
   postrotate-delete-success: false
   chan-buffer-size: 0
@@ -121,15 +125,3 @@ mv $1 $BACKUP_FOLDER/$3
 ```
 
 > Note: If compression is enabled, the postrotate-command will run only after compression completes.
-
-## Save to PCAP files
-
-In PCAP mode, DNS traffic is logged in binary form, capturing details over various protocols. The following mappings are used:
-
-| Origin protocol        | Translated to                  |
-| -----------------------|--------------------------------|
-| DNS/53 over UDP        | DNS UDP/53                     |
-| DNS/53 over TCP        | DNS TCP/53                     |
-| DoH/443                | DNS UDP/443 (no cipher)        |
-| DoT/853                | DNS UDP/853 (no cipher)        |
-| DoQ                    | Currently unsupported          |

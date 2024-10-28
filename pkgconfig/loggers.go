@@ -16,6 +16,7 @@ type ConfigLoggers struct {
 		Enable            bool   `yaml:"enable" default:"false"`
 		Mode              string `yaml:"mode" default:"text"`
 		TextFormat        string `yaml:"text-format" default:""`
+		JinjaFormat       string `yaml:"jinja-format" default:""`
 		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 	} `yaml:"stdout"`
 	Prometheus struct {
@@ -79,6 +80,7 @@ type ConfigLoggers struct {
 		PostRotateCommand string `yaml:"postrotate-command" default:""`
 		PostRotateDelete  bool   `yaml:"postrotate-delete-success" default:"false"`
 		TextFormat        string `yaml:"text-format" default:""`
+		JinjaFormat       string `yaml:"jinja-format" default:""`
 		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 		ExtendedSupport   bool   `yaml:"extended-support" default:"false"`
 	} `yaml:"logfile"`

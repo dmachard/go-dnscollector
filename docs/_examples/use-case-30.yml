@@ -1,0 +1,22 @@
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tap
+    dnstap:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+    transforms:
+      normalize:
+        qname-lowercase: true
+        qname-replace-nonprintable: true
+    routing-policy:
+      forward: [ console ]
+      dropped: [ ]
+
+  - name: console
+    stdout:
+      mode: text
+      text-format: "timestamp-rfc3339ns identity version operation rcode queryip qname qtype ancount"
+      text-format-delimiter: ";"

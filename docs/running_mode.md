@@ -3,7 +3,6 @@
 The DNScollector can be configured with multiple loggers and collectors at the same time
 
 - [Pipelining](#pipelining)
-- [Multiplexer (DEPRECATED)](#multiplexer)
 
 ## Pipelining
 
@@ -31,44 +30,3 @@ pipelines:
 The routing policy support 2 modes:
 - `forward`: [ list of next stanza ]
 - `dropped`: [ list of next stanza ]
-
-
-## Multiplexer (DEPRECATED)
-
-> NOTE: THIS MODE IS DEPRECATED
-
-
-You must defined the list of
-
-- `collectors`: list of running inputs
-- `loggers`: list of running outputs
-- `routes`: routing definition
-
-List of supported [collectors](./collectors.md)
-
-```yaml
-multiplexer:
-  collectors: 
-    - name: <collector_name>
-      .....
-```
-
-List of supported [loggers](./loggers.md)
-
-```yaml
-multiplexer:
-  loggers: 
-    - name: <logger_name>
-      ...
-```
-
-Defines the routing to use between all of them according to the name.
-You can connect one collector to multiple loggers and you can also
-connect multiple collectors to the same logger.
-
-```yaml
-multiplexer:
-  routes: ...
-    - from: [ list of collectors by name ]
-      to: [ list of loggers by name ]
-```

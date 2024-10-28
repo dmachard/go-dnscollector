@@ -19,8 +19,9 @@
 > Additionally, DNS-collector also support
 >
 > - [Extended](https://github.com/dmachard/go-dns-collector/blob/main/docs/extended_dnstap.md) DNStap with TLS encryption, compression, and more metadata capabilities
-> - DNS protocol conversions (to [plain text](https://github.com/dmachard/go-dns-collector/blob/main/docs/configuration.md#custom-text-format), [JSON](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsjson.md), and more... )
+> - DNS protocol conversions to [plain text, JSON, jinja and more](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsconversions.md)
 > - DNS parser with [Extension Mechanisms for DNS (EDNS)](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsparser.md) support
+> - Live capture on a network interface
 > - IPv4/v6 defragmentation and TCP reassembly
 > - Nanoseconds in timestamps
 
