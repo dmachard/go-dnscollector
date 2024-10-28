@@ -2,20 +2,28 @@
 
 ## Overview
 
-The DNScollector can convert the DNS traffic captured from DNStap stream or network streamdn and transform it to 
-several outputs format
-- text format inline
-- JSON advanced structure
-- Flat JSON (key/value)
-- Jinja templating
-- PCAP
-- DNStap
+DNS-Collector can convert captured DNS traffic from DNStap streams or network streams into several output formats:
 
-## Text format inline
+- [DNSMessage](#dns-message)
+- [Generic outputs](#generic-outputs)
+  - [Text Format Inline](#text-format-inline)
+  - [JSON Advanced Structure](#)
+  - [Flat JSON (Key/Value)](#flat-json-format)
+  - [Jinja templating](#jinja-inline)
 
-The text format can be customized with the following directives.
+## DNS Message
 
-Default directives:
+All DNStap messages or captured from network are transformed first to 
+the [DNSMessage](https://pkg.go.dev/github.com/dmachard/go-dnscollector/dnsutils#DNSMessage) structure
+than after this object can be transformed to text, json, etc.. or specific output format (kafka, redis, etc...)
+
+## Generic outputs
+
+### Text format inline
+
+The text format can be customized using the following directives.
+
+**Default directives:**
 
 - `timestamp-rfc3339ns`: timestamp rfc3339 format, with nano support
 - `timestamp-unixms`: unix timestamp with ms support
@@ -64,15 +72,16 @@ Default directives:
 - `tr`: flag when tcp reassembled occured
 - `edns-csubnet`: display client subnet info
 
-The default text format can be send in the global config or invidually on each loggers, it's your choice
-Here the default format.
+The default text format can be set in the global configuration or individually for each logger. Here’s the default format:
+
+**Example Configuration**
 
 ```yaml
 global:
   text-format: "timestamp-rfc3339ns identity qr operation rcode queryip queryport family protocol length-unit qname qtype latency ttl"
 ```
 
-Output example:
+**Output example**
 
 ```bash
 2023-04-08T18:27:29.268465Z unbound CLIENT_QUERY NOERROR 127.0.0.1 39028 IPv4 UDP 50b google.fr A 0.000000
@@ -92,29 +101,29 @@ global:
 ```
 
 
-## Jinja inline
+### Jinja inline
 
+For a more flexible format, you can use the `text-jinja` setting.
+The DNS to Jinja encoding is very powerful but slow, so use it only under specific conditions. Jinja templates are available with:
+  - Console logger
+  - Log file console
 
-If you want a more flexible format, you can use the `text-jinja` setting
-Example to enable output similiar to dig style:
+**Default directives**
 
-```
-text-jinja: |+
-    ;; Got {% if dm.DNS.Type == "QUERY" %}query{% else %}answer{% endif %} from {{ dm.NetworkInfo.QueryIP }}#{{ dm.NetworkInfo.QueryPort }}:
-    ;; ->>HEADER<<- opcode: {{ dm.DNS.Opcode }}, status: {{ dm.DNS.Rcode }}, id: {{ dm.DNS.ID }}
-    ;; flags: {{ dm.DNS.Flags.QR | yesno:"qr ," }}{{ dm.DNS.Flags.RD | yesno:"rd ," }}{{ dm.DNS.Flags.RA | yesno:"ra ," }}; QUERY: {{ dm.DNS.QdCount }}, ANSWER: {{ dm.DNS.AnCount }}, AUTHORITY: {{ dm.DNS.NsCount }}, ADDITIONAL: {{ dm.DNS.ArCount }}
-    
-    ;; QUESTION SECTION:
-    ;{{ dm.DNS.Qname }}		{{ dm.DNS.Qclass }}	{{ dm.DNS.Qtype }}
+All directives are in https://pkg.go.dev/github.com/dmachard/go-dnscollector/dnsutils#DNSMessage
 
-    ;; ANSWER SECTION: {% for rr in dm.DNS.DNSRRs.Answers %}
-    {{ rr.Name }}		{{ rr.TTL }} {{ rr.Class }} {{ rr.Rdatatype }} {{ rr.Rdata }}{% endfor %}
+To use the jinja, add the folowwing code in your text format 
 
-    ;; WHEN: {{ dm.DNSTap.Timestamp }}
-    ;; MSG SIZE  rcvd: {{ dm.DNS.Length }}
+```jinja
+{{ dm.DNS.Opcode }}
 ```
 
-## JSON encoding
+**Full configuration examples**
+
+* [`Dig style output`](../_examples/use-case-27.yml)
+
+
+### JSON encoding
 
 
 The `DNS-collector` enables the transformation of DNS queries or replies into `JSON` format.
@@ -127,7 +136,7 @@ The default JSON payload parts:
 - `dns`: DNS fields.
 - `edns`: Extended DNS options.
 
-Example:
+**Example JSON Output**
 
 ```json
 {
@@ -210,7 +219,26 @@ Example:
 }
 ```
 
-## Flat JSON format (recommended)
+
+**Extended JSON format**
+
+This JSON message can be extended by collector(s):
+
+- [PowerDNS collector](collectors/collector_powerdns.md)
+
+This JSON message can be also extended by transformer(s):
+
+- [Atags](transformers/transformer_atags.md)
+- [GeoIP](transformers/transformer_geoip.md)
+- [Suspicious traffic detector](transformers/transform_suspiciousdetector.md)
+- [Public suffix](transformers/transform_normalize.md)
+- [Traffic reducer](transformers/transform_trafficreducer.md)
+- [Traffic filtering](transformers/transformer_trafficfiltering.md)
+*
+
+### Flat JSON format
+
+Flat JSON is a simple key-value pair structure that supports customization of the keys in the format.
 
 At times, a single level key-value output in JSON is easier to ingest than multi-level JSON structures.
 Utilizing `flat-json` delivers every output field as its own key/value pair but requires more processing
@@ -278,34 +306,3 @@ Here's a flat JSON output formatted using `jq`:
   "network.tcp-reassembled": false,
 }
 ```
-
-### Extended JSON format
-
-This JSON message can be extended by collector(s):
-
-- [PowerDNS collector](collectors/collector_powerdns.md)
-
-This JSON message can be also extended by transformer(s):
-
-- [Atags](transformers/transformer_atags.md)
-- [GeoIP](transformers/transformer_geoip.md)
-- [Suspicious traffic detector](transformers/transform_suspiciousdetector.md)
-- [Public suffix](transformers/transform_normalize.md)
-- [Traffic reducer](transformers/transform_trafficreducer.md)
-- [Traffic filtering](transformers/transformer_trafficfiltering.md)
-
-## Save to PCAP files
-
-In PCAP mode, DNS traffic is logged in binary form, capturing details over various protocols. The following mappings are used:
-
-| Origin protocol        | Translated to                  |
-| -----------------------|--------------------------------|
-| DNS/53 over UDP        | DNS UDP/53                     |
-| DNS/53 over TCP        | DNS TCP/53                     |
-| DoH/443                | DNS UDP/443 (no cipher)        |
-| DoT/853                | DNS UDP/853 (no cipher)        |
-| DoQ                    | Currently unsupported          |
-
-## Save to DNStap files
-
-todo
