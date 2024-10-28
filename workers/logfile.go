@@ -56,6 +56,7 @@ type LogFile struct {
 	fileDir, fileName, fileExt, filePrefix string
 	textFormat                             []string
 	compressQueue                          chan string
+	commandQueue                           chan string
 }
 
 func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *LogFile {
@@ -66,6 +67,7 @@ func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *L
 	w := &LogFile{
 		GenericWorker: NewGenericWorker(config, logger, name, "file", bufSize, pkgconfig.DefaultMonitor),
 		compressQueue: make(chan string, 1),
+		commandQueue:  make(chan string, 1),
 	}
 	w.ReadConfig()
 	if err := w.OpenCurrentFile(); err != nil {
@@ -75,6 +77,9 @@ func NewLogFile(config *pkgconfig.Config, logger *logger.Logger, name string) *L
 	// start compressor
 	go w.startCompressor()
 	w.initializeCompressionQueue()
+
+	// start post command processor
+	go w.startCommandProcessor()
 
 	return w
 }
@@ -201,9 +206,13 @@ func (w *LogFile) compressFile(filename string) {
 	// prepare dest filename
 	baseName := filepath.Base(filename)
 	baseName = strings.TrimPrefix(baseName, "tocompress-")
+	if len(w.config.Loggers.LogFile.PostRotateCommand) > 0 {
+		baseName = "toprocess-" + baseName
+	}
 	tmpFile := filename + compressSuffix
 	dstFile := filepath.Join(filepath.Dir(filename), baseName+compressSuffix)
 
+	// open the file
 	fd, err := os.Open(filename)
 	if err != nil {
 		w.LogError("compress - failed to open file: %s", err)
@@ -259,28 +268,33 @@ func (w *LogFile) compressFile(filename string) {
 		os.Remove(tmpFile)
 		return
 	}
+
+	// run post command on compressed file ?
+	if len(w.config.Loggers.LogFile.PostRotateCommand) > 0 {
+		go func() {
+			w.commandQueue <- dstFile
+		}()
+	}
+
 	w.LogInfo("compression terminated - %s", dstFile)
 }
 
-func (w *LogFile) PostRotateCommand(filename string) {
+func (w *LogFile) postRotateCommand(fullPath string) {
 	if len(w.GetConfig().Loggers.LogFile.PostRotateCommand) > 0 {
-		w.LogInfo("execute postrotate command: %s", filename)
-		_, err := exec.Command(w.GetConfig().Loggers.LogFile.PostRotateCommand, filename).Output()
+		w.LogInfo("execute postrotate command: %s", fullPath)
+		dir := filepath.Dir(fullPath)
+		filename := filepath.Base(fullPath)
+		baseName := strings.TrimPrefix(filename, "toprocess-")
+		_, err := exec.Command(w.GetConfig().Loggers.LogFile.PostRotateCommand, fullPath, dir, baseName).Output()
 		if err != nil {
-			w.LogError("postrotate command error: %s", err)
-		} else if w.GetConfig().Loggers.LogFile.PostRotateDelete {
-			os.Remove(filename)
+			w.LogError("postrotate command error - %s - %s", filename, err)
+		} else {
+			w.LogInfo("postrotate command terminated - %s", filename)
 		}
-	}
-}
 
-func (w *LogFile) CompressPostRotateCommand(filename string) {
-	if len(w.GetConfig().Loggers.LogFile.CompressPostCommand) > 0 {
-
-		w.LogInfo("execute compress postrotate command: %s", filename)
-		_, err := exec.Command(w.GetConfig().Loggers.LogFile.CompressPostCommand, filename).Output()
-		if err != nil {
-			w.LogError("compress - postcommand error: %s", err)
+		if w.GetConfig().Loggers.LogFile.PostRotateDelete {
+			w.LogInfo("postrotate command delete original file - %s", filename)
+			os.Remove(filename)
 		}
 	}
 }
@@ -310,6 +324,10 @@ func (w *LogFile) RotateFile() error {
 	newFilename := fmt.Sprintf("%s-%d%s", w.filePrefix, time.Now().UnixNano(), w.fileExt)
 	if w.config.Loggers.LogFile.Compress {
 		newFilename = fmt.Sprintf("tocompress-%s", newFilename)
+	} else {
+		if len(w.config.Loggers.LogFile.PostRotateCommand) > 0 {
+			newFilename = fmt.Sprintf("toprocess-%s", newFilename)
+		}
 	}
 	bfpath := filepath.Join(w.fileDir, newFilename)
 	err := os.Rename(w.GetConfig().Loggers.LogFile.FilePath, bfpath)
@@ -320,10 +338,12 @@ func (w *LogFile) RotateFile() error {
 	// post rotate command?
 	if w.config.Loggers.LogFile.Compress {
 		go func() {
-			w.compressQueue <- bfpath // Envoi asynchrone dans le canal pour compression
+			w.compressQueue <- bfpath
 		}()
 	} else {
-		w.PostRotateCommand(bfpath)
+		go func() {
+			w.commandQueue <- bfpath
+		}()
 	}
 
 	// keep only max files
@@ -449,6 +469,12 @@ func (w *LogFile) startCompressor() {
 	}
 }
 
+func (w *LogFile) startCommandProcessor() {
+	for filename := range w.commandQueue {
+		w.postRotateCommand(filename)
+	}
+}
+
 func (w *LogFile) StartCollect() {
 	w.LogInfo("starting data collection")
 	defer w.CollectDone()
@@ -527,7 +553,9 @@ func (w *LogFile) StartLogging() {
 	for {
 		select {
 		case <-w.OnLoggerStopped():
+			// close channels
 			close(w.compressQueue)
+			close(w.commandQueue)
 
 			// stop timer
 			flushTimer.Stop()
