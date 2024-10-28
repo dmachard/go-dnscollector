@@ -1,23 +1,23 @@
 # Logger: File
 
-Enable this logger if you want to log your DNS traffic to a file in plain text mode or binary mode.
+## Overview
 
-* with rotation file support
-* supported format: `text`, `jinja`, `json` and `flat json`, `pcap` or `dnstap`
-* gzip compression
-* execute external command after each rotation
-* custom text format
+The File Logger allows you to log DNS traffic to a file in various formats, with support for rotation, compression, custom formatting, and the ability to execute scripts after file rotation.
 
-For config examples, take a look to the following links:
+## Key Features
+- **File Rotation**: Automatically rotates log files based on size.
+- **Supported Formats**: Supports multiple output formats - `text`, `jinja`, `json` and `flat json`, `pcap` or `dnstap`
+- **Compression**: Optional gzip compression for rotated log files.
+- **Post-Rotate Command**: Run external scripts after each file rotation.
+- **Custom Text Formatting**: Configure custom output text formats.
 
-* [`text`](../_examples/use-case-7.yml)
-* [`dnstap`](../_examples/use-case-13.yml)
-* [`pcap`](../_examples/use-case-1.yml)
-
-Options:
+## Configuration Options
 
 * `file-path` (string)
   > output logfile name
+
+* `mode` (string)
+  > output format: `text`, `jinja`, `json` and `flat json`, `pcap` or `dnstap`
 
 * `max-size`: (integer)
   > maximum size in megabytes of the file before rotation, 
@@ -27,32 +27,29 @@ Options:
   > maximum number of files to retain. Set to zero if you want to disable this feature
 
 * `max-batch-size` (integer)
-  > accumulate data before writing it to the file
+  > Buffers data up to the specified size (in bytes) before writing to the file.
 
 * `flush-interval` (integer)
   > flush buffer to log file every X seconds
 
 * `compress` (boolean)
-  > compress log file
-
-* `mode` (string)
-  > output format: text, jinja, json, flat-json, pcap or dnstap
+  > Enables gzip compression for rotated log files.
 
 * `text-format` (string)
   > output text format, please refer to the default text format to see all
   > available directives, use this parameter if you want a specific format.
 
 * `postrotate-command` (string)
-  > run external script after file rotation
+  > Specifies a command or script to run after each file rotation.
 
 * `postrotate-delete-success` (boolean)
-  > delete file on script success
+  > Deletes the rotated file if the post-rotate script completes successfully.s
 
 * `chan-buffer-size` (integer)
   > Specifies the maximum number of packets that can be buffered before discard additional packets.
   > Set to zero to use the default global value.
 
-Default values:
+**Default configuration**:
 
 ```yaml
 logfile:
@@ -69,7 +66,14 @@ logfile:
   chan-buffer-size: 0
 ```
 
-### Log Compression
+## Full configuration examples
+
+* [`Text format`](../_examples/use-case-7.yml)
+* [`Dnstap format`](../_examples/use-case-13.yml)
+* [`PCAP format`](../_examples/use-case-1.yml)
+
+
+## Log Compression
 
 When enabled, gzip log compression runs asynchronously for each completed log file. 
 During the rotation process, files are initially renamed with a `tocompress-` prefix, e.g., `tocompress-dnstap-1730099215373568947.log`, 
@@ -85,7 +89,7 @@ logfile:
   compress: true
 ```
 
-### Postrotate command
+## Postrotate command
 
 The `postrotate-command` option allows you to specify a **script** to execute after each file rotation. During the post-rotate process, files are temporarily renamed with a `toprocess-` prefix, for example, `toprocess-dnstap-1730099215373568947.log`. The script receives three arguments:
 - The full path to the log file
@@ -118,9 +122,9 @@ mv $1 $BACKUP_FOLDER/$3
 
 > Note: If compression is enabled, the postrotate-command will run only after compression completes.
 
-### Save to PCAP files
+## Save to PCAP files
 
-For the `PCAP` mode, currently the DNS protocol over UDP is used to log the traffic, the following translations are done.
+In PCAP mode, DNS traffic is logged in binary form, capturing details over various protocols. The following mappings are used:
 
 | Origin protocol        | Translated to                  |
 | -----------------------|--------------------------------|
@@ -128,4 +132,4 @@ For the `PCAP` mode, currently the DNS protocol over UDP is used to log the traf
 | DNS/53 over TCP        | DNS TCP/53                     |
 | DoH/443                | DNS UDP/443 (no cipher)        |
 | DoT/853                | DNS UDP/853 (no cipher)        |
-| DoQ                    | Not yet supported              |
+| DoQ                    | Currently unsupported          |

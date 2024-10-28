@@ -324,10 +324,8 @@ func (w *LogFile) RotateFile() error {
 	newFilename := fmt.Sprintf("%s-%d%s", w.filePrefix, time.Now().UnixNano(), w.fileExt)
 	if w.config.Loggers.LogFile.Compress {
 		newFilename = fmt.Sprintf("tocompress-%s", newFilename)
-	} else {
-		if len(w.config.Loggers.LogFile.PostRotateCommand) > 0 {
-			newFilename = fmt.Sprintf("toprocess-%s", newFilename)
-		}
+	} else if len(w.config.Loggers.LogFile.PostRotateCommand) > 0 {
+		newFilename = fmt.Sprintf("toprocess-%s", newFilename)
 	}
 	bfpath := filepath.Join(w.fileDir, newFilename)
 	err := os.Rename(w.GetConfig().Loggers.LogFile.FilePath, bfpath)
