@@ -92,9 +92,9 @@ logfile:
 ## Postrotate command
 
 The `postrotate-command` option allows you to specify a **script** to execute after each file rotation. During the post-rotate process, files are temporarily renamed with a `toprocess-` prefix, for example, `toprocess-dnstap-1730099215373568947.log`. The script receives three arguments:
-- The full path to the log file
-- The directory path containing the log file
-- The filename without the toprocess- prefix
+- Arg. 1: The full path to the log file
+- Arg. 2: The directory path containing the log file
+- Arg. 3: The filename without the toprocess- prefix
 
 **Example Configuration**
 
