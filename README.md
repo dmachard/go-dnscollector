@@ -99,22 +99,17 @@ If you prefer run it from docker, follow this [guide](./docs/docker.md).
 
 ## Configuration
 
-The configuration of DNS-collector is done through a file named [`config.yml`](config.yml). When the DNS-collector starts, it will look for the config.yml from the current working directory.
+The configuration of DNS-collector is done through a file named [`config.yml`](config.yml). 
+When the DNS-collector starts, it will look for the config.yml from the current working directory.
+A typical [configuration in pipeline](./running_mode.md) mode includes one or more collectors to receive DNS traffic and several loggers to process the incoming data. 
 
-See the full [configuration guide](./docs/configuration.md) for more details.
+To get started quickly, you can use this default [`config.yml`](config.yml).
+For advanced settings, see the [advanced configuration guide](./docs/advanced_config.md).
 
-Run the DNS-collector in dry mode to verify the configuration.
+You can also see  the [`_examples`](./docs/_examples) folder from documentation witch contains a number of [various configurations](./docs/examples.md) to get you started with the DNS-collector in different ways.
 
-```bash
-./go-dnscollector -config config.yml -test-config
-INFO: 2023/12/24 14:43:29.043730 main - config OK!
-```
-
-## Usage examples
-
-The [`_examples`](./docs/_examples) folder from documentation contains a number of [various configurations](./docs/examples.md) to get you started with the DNS-collector in different ways.
-
-The [`_integration`](./docs/_integration) folder contains DNS-collector `configuration` files and `docker compose` examples for popular tools:
+Additionally, the [`_integration`](./docs/_integration) folder contains preconfigured files and `docker compose` examples
+for integrating DNS-collector with popular tools:
 
 - [Fluentd](./docs/_integration/fluentd/README.md)
 - [Elasticsearch](./docs/_integration/elasticsearch/README.md)
