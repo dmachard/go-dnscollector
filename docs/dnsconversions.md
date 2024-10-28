@@ -2,24 +2,14 @@
 
 ## Overview
 
-DNS-Collector can convert captured DNS traffic from DNStap streams or network streams into several output formats:
+All DNStap messages or network-captured data are first transformed into the [DNSMessage](https://pkg.go.dev/github.com/dmachard/go-dnscollector/dnsutils#DNSMessage) structure. Once in this structure, the object can be further converted to text, JSON, or any specific output format (e.g., Kafka, Redis).
 
-- [DNSMessage](#dns-message)
-- [Generic outputs](#generic-outputs)
-  - [Text Format Inline](#text-format-inline)
-  - [JSON Advanced Structure](#)
-  - [Flat JSON (Key/Value)](#flat-json-format)
-  - [Jinja templating](#jinja-inline)
+- [Text Format Inline](#text-format-inline)
+- [JSON Advanced Structure](#)
+- [Flat JSON (Key/Value)](#flat-json-format)
+- [Jinja templating](#jinja-inline)
 
-## DNS Message
-
-All DNStap messages or captured from network are transformed first to 
-the [DNSMessage](https://pkg.go.dev/github.com/dmachard/go-dnscollector/dnsutils#DNSMessage) structure
-than after this object can be transformed to text, json, etc.. or specific output format (kafka, redis, etc...)
-
-## Generic outputs
-
-### Text format inline
+## Text format inline
 
 The text format can be customized using the following directives.
 
@@ -101,7 +91,7 @@ global:
 ```
 
 
-### Jinja inline
+## Jinja inline
 
 For a more flexible format, you can use the `text-jinja` setting.
 The DNS to Jinja encoding is very powerful but slow, so use it only under specific conditions. Jinja templates are available with:
@@ -123,7 +113,7 @@ To use the jinja, add the folowwing code in your text format
 * [`Dig style output`](../_examples/use-case-27.yml)
 
 
-### JSON encoding
+## JSON encoding
 
 
 The `DNS-collector` enables the transformation of DNS queries or replies into `JSON` format.
@@ -236,7 +226,7 @@ This JSON message can be also extended by transformer(s):
 - [Traffic filtering](transformers/transformer_trafficfiltering.md)
 *
 
-### Flat JSON format
+## Flat JSON format
 
 Flat JSON is a simple key-value pair structure that supports customization of the keys in the format.
 
