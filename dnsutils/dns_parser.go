@@ -28,7 +28,7 @@ var (
 		39: "DNAME", 41: "OPT", 42: "APL", 43: "DS",
 		44: "SSHFP", 45: "IPSECKEY", 46: "RRSIG", 47: "NSEC",
 		48: "DNSKEY", 49: "DHCID", 50: "NSEC3", 51: "NSEC3PARAM",
-		52: "TSLA", 53: "SMIMEA", 55: "HIP", 56: "NINFO",
+		52: "TLSA", 53: "SMIMEA", 55: "HIP", 56: "NINFO",
 		59: "CDS", 60: "CDNSKEY", 61: "OPENPGPKEY", 62: "CSYNC",
 		64: "SVCB", 65: "HTTPS", 99: "SPF", 103: "UNSPEC",
 		108: "EUI48", 109: "EUI64", 249: "TKEY", 250: "TSIG",
