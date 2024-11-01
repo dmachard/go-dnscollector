@@ -107,13 +107,9 @@ To use the jinja, add for example the folowwing code in your text format
 
 ```jinja
 global:
-  text-jinja: OPCODE = {{ dm.DNS.Opcode }}
+  text-jinja: "OPCODE = {{ dm.DNS.Opcode }} QUERYIP = {{ dm.NetworkInfo.QueryIP }}"
 ```
-
-**Full configuration examples**
-
-* [`Dig style output`](./_examples/use-case-27.yml)
-
+> A full example to get [`Dig style output`](./_examples/use-case-27.yml)
 
 ## JSON encoding
 
