@@ -8,6 +8,87 @@ import (
 	"strings"
 )
 
+func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
+	if len(matching) == 0 {
+		return nil, false
+	}
+
+	dmValue := reflect.ValueOf(dm)
+
+	if dmValue.Kind() == reflect.Ptr {
+		dmValue = dmValue.Elem()
+	}
+
+	var isMatch = true
+
+	for nestedKeys, value := range matching {
+		realValue, found := getFieldByJSONTag(dmValue, nestedKeys)
+		if !found {
+			return nil, false
+		}
+
+		expectedValue := reflect.ValueOf(value)
+		switch expectedValue.Kind() {
+		// integer
+		case reflect.Int:
+			match, err := matchUserInteger(realValue, expectedValue)
+			if err != nil {
+				return err, false
+			}
+			if !match {
+				return nil, false
+			}
+
+		// string
+		case reflect.String:
+			match, err := matchUserPattern(realValue, expectedValue)
+			if err != nil {
+				return err, false
+			}
+			if !match {
+				return nil, false
+			}
+
+		// bool
+		case reflect.Bool:
+			match, err := matchUserBoolean(realValue, expectedValue)
+			if err != nil {
+				return err, false
+			}
+			if !match {
+				return nil, false
+			}
+
+		// map
+		case reflect.Map:
+			match, err := matchUserMap(realValue, expectedValue)
+			if err != nil {
+				return err, false
+			}
+			if !match {
+				return nil, false
+			}
+
+		// list/slice
+		case reflect.Slice:
+			match, err := matchUserSlice(realValue, expectedValue)
+			if err != nil {
+				return err, false
+			}
+			if !match {
+				return nil, false
+			}
+
+		// other user types
+		default:
+			return fmt.Errorf("unsupported type value: %s", expectedValue.Kind()), false
+		}
+
+	}
+
+	return nil, isMatch
+}
+
 // matchUserMap matches a map based on user-provided conditions.
 // dns.qname:
 // match-source: "file://./tests/testsdata/filtering_keep_domains_regex.txt"

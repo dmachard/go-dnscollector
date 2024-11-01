@@ -7,7 +7,7 @@ All DNStap messages or network-captured data are first transformed into the [DNS
 - [Text Format Inline](#text-format-inline)
 - [JSON Advanced Structure](#)
 - [Flat JSON (Key/Value)](#flat-json-format)
-- [Jinja templating](#jinja-inline)
+- [Jinja templating](#jinja-templating)
 
 ## Text format inline
 
@@ -91,7 +91,7 @@ global:
 ```
 
 
-## Jinja inline
+## Jinja templating
 
 For a more flexible format, you can use the `text-jinja` setting.
 The DNS to Jinja encoding is very powerful but slow, so use it only under specific conditions. Jinja templates are available with:
@@ -101,17 +101,15 @@ The DNS to Jinja encoding is very powerful but slow, so use it only under specif
 **Default directives**
 
 All directives are in https://pkg.go.dev/github.com/dmachard/go-dnscollector/dnsutils#DNSMessage
+The template can be defined in the [global settings](advanced_config.md#default-text-format) or on loggers.
 
-To use the jinja, add the folowwing code in your text format 
+To use the jinja, add for example the folowwing code in your text format 
 
 ```jinja
-{{ dm.DNS.Opcode }}
+global:
+  text-jinja: "OPCODE = {{ dm.DNS.Opcode }} QUERYIP = {{ dm.NetworkInfo.QueryIP }}"
 ```
-
-**Full configuration examples**
-
-* [`Dig style output`](../_examples/use-case-27.yml)
-
+> A full example to get [`Dig style output`](./_examples/use-case-27.yml)
 
 ## JSON encoding
 

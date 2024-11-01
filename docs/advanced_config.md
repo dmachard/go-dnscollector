@@ -6,6 +6,7 @@
   - [Server identity](#server-identity)
   - [Pid file](#pid-file)
   - [Telemetry](#telemetry)
+  - [Default text format](#default-text-format)
 - [Configuration reloading](#configuration-reloading)
 
 ## Configuration checks
@@ -113,6 +114,17 @@ global:
     basic-auth-pwd: changeme
 ```
 
+
+### Default text format
+
+These settings can be used to set the text format for all loggers.
+
+```yaml
+text-format: "timestamp-rfc3339ns identity operation rcode queryip queryport family protocol length-unit qname qtype latency"
+text-format-delimiter: " "
+text-format-boundary: "\""
+text-jinja: ""
+```
 
 ## Configuration reloading
 
