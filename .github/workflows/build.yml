@@ -28,9 +28,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      # https://github.com/actions/setup-go/pull/460
+      - name: Configure env for toolchain ignore
+        shell: bash
+        run: echo "GOTOOLCHAIN=local" >> "$GITHUB_ENV"
+        
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: "${{ matrix.go-version }}"
   
       - name: build binary from makefile
         run: make build
@@ -41,98 +47,53 @@ jobs:
       - name: dep+build from makefile
         run: make
         
-  go-ubuntu:
-    runs-on: ubuntu-latest
-    
+  go-build-all:
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         go-version: ['1.21', '1.22', '1.23']
+        goos: [linux, freebsd, darwin, windows]
+        exclude:
+          - { os: macos-latest, goos: linux }
+          - { os: macos-latest, goos: freebsd }
+          - { os: macos-latest, goos: windows }
+          - { os: ubuntu-latest, goos: darwin }
+          - { os: ubuntu-latest, goos: windows }
+          - { os: windows-latest, goos: linux }
+          - { os: windows-latest, goos: freebsd }
+          - { os: windows-latest, goos: darwin }
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
-      with:
-        go-version: ${{ matrix.go-version }}
+      - uses: actions/checkout@v4
 
-    - name: build binary
-      run: |
-        go mod edit -go=${{ matrix.go-version }}
-        go mod tidy 
-        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      - name: Configure environment to avoid toolchain installs 
+        shell: bash
+        run: echo "GOTOOLCHAIN=local" >> "$GITHUB_ENV"
 
-  go-freebsd:
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "${{ matrix.go-version }}"
+
+      - name: Build binary
+        run: |
+          go mod edit -go=${{ matrix.go-version }}
+          go mod tidy
+          if [[ "${{ matrix.os }}" == 'windows-latest' ]]; then
+            set CGO_ENABLED=0
+            go build -ldflags="-s -w" -o go-dnscollector.exe .
+          else
+            CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+
+  docker-build-all:
     runs-on: ubuntu-latest
-    
     strategy:
       matrix:
-        go-version: ['1.21', '1.22', '1.23']
-        
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
-      with:
-        go-version: ${{ matrix.go-version }}
-
-    - name: build binary
-      run: |
-        go mod edit -go=${{ matrix.go-version }}
-        go mod tidy 
-        CGO_ENABLED=0 GOOS=freebsd GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
-
-  # for macos and window, limit the build to the latest version
-  go-macos:
-    runs-on: macos-latest
-    
-    strategy:
-      matrix:
-        go-version: ['1.21', '1.22', '1.23']
-        
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
-      with:
-        go-version: ${{ matrix.go-version }}
-
-    - name: build binary
-      run: |
-        go mod edit -go=${{ matrix.go-version }}
-        go mod tidy 
-        CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
-
-  go-win:
-    runs-on: windows-latest
-    
-    strategy:
-      matrix:
-        go-version: ['1.21', '1.22', '1.23']
+        platform: [linux/amd64, linux/386]
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
-      with:
-        go-version: ${{ matrix.go-version }}
+      - uses: actions/checkout@v4
 
-    - name: build binary
-      run: |
-        set CGO_ENABLED=0
-        go mod edit -go=${{ matrix.go-version }}
-        go mod tidy
-        go build -ldflags="-s -w" -o go-dnscollector.exe .
-      
-  docker:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Build the Docker image
-      run: |
-        docker build --build-arg VERSION=dev . --file Dockerfile -t go-dnscollector
-
-  docker32b:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Build the Docker image
-      run: |
-        docker build --build-arg VERSION=dev . --platform linux/386 --file Dockerfile -t go-dnscollector
+      - name: Build the Docker image
+        run: |
+          docker build --build-arg VERSION=dev . --platform ${{ matrix.platform }} --file Dockerfile -t go-dnscollector:${{ matrix.platform }}
