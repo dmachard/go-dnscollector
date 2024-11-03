@@ -82,6 +82,7 @@ jobs:
             go build -ldflags="-s -w" -o go-dnscollector.exe .
           else
             CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+          fi
 
   docker-build-all:
     runs-on: ubuntu-latest
