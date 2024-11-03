@@ -1,4 +1,4 @@
-name: tests powerdns
+name: Tests PowerDNS
 
 on:
   push:
@@ -19,68 +19,42 @@ permissions:
 
 jobs:
 
-  dnsdist:
+  build-and-test:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         go-version: [ '1.23' ]
-        dnsdist: [ '18', '19' ]
+        component: 
+          - { name: 'dnsdist', version: '18' }
+          - { name: 'dnsdist', version: '19' }
+          - { name: 'recursor', version: '51' }
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - uses: actions/setup-go@v5
-      with:
-        go-version: "${{ matrix.go-version }}"
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "${{ matrix.go-version }}"
 
-    - uses: actions/setup-python@v5
-      with:
-        python-version: 3.13
-        
-    - name: build binary
-      run: |
-        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
 
-    - name: Deploy dnsdist docker image
-      run: |
-        sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/testsdata/powerdns/dnsdist_protobuf.conf:/etc/dnsdist/conf.d/dnsdist.conf:z -v /tmp/:/tmp/ powerdns/dnsdist-${{ matrix.dnsdist }}
-        until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
+      - name: Build binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
-    - name: Test dns query
-      run: |
-        sudo python3 -m pip install dnspython
-        sudo -E python3 -m unittest tests.dnsquery_powerdns -v
+      - name: Deploy Docker image
+        run: |
+          if [[ "${{ matrix.component.name }}" == "dnsdist" ]]; then
+            sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/testsdata/powerdns/dnsdist_protobuf.conf:/etc/dnsdist/conf.d/dnsdist.conf:z -v /tmp/:/tmp/ powerdns/dnsdist-${{ matrix.component.version }}
+          elif [[ "${{ matrix.component.name }}" == "recursor" ]]; then
+            sudo docker run -d --network="host" --name=recursor --volume=$PWD/tests/testsdata/powerdns/pdns_recursor.yml:/etc/powerdns/recursor.yml:z powerdns/pdns-recursor-${{ matrix.component.version }}
+          fi
+          until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
-  recursor:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        go-version: [ '1.23' ]
-        recursor: [ '51' ]
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - uses: actions/setup-go@v5
-      with:
-        go-version: "${{ matrix.go-version }}"
-
-    - uses: actions/setup-python@v5
-      with:
-        python-version: 3.13
-
-    - name: build binary
-      run: |
-        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
-
-    - name: Deploy recursor 5.x docker image
-      run: |
-        sudo docker run -d --network="host" --name=recursor --volume=$PWD/tests/testsdata/powerdns/pdns_recursor.yml:/etc/powerdns/recursor.yml:z powerdns/pdns-recursor-${{ matrix.recursor }}
-        until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
-
-    - name: Test send query
-      run: |
-        sudo python3 -m pip install dnspython
-        sudo -E python3 -m unittest tests.dnsquery_powerdns -v
+      - name: Test DNS query
+        run: |
+          sudo python3 -m pip install dnspython
+          sudo -E python3 -m unittest tests.dnsquery_powerdns -v
