@@ -44,20 +44,14 @@ jobs:
   unbound:
     needs: build
     runs-on: ubuntu-latest
-    env:
-      COLLECTOR_USER: runneradmin
-
     strategy:
       matrix:
-        #go-version: [ '1.23' ]
         unbound: [ '1.19.3', '1.20.0' ]
         mode: [ 'tcp' ]
 
     steps:
     - uses: actions/checkout@v4
-    # - uses: actions/setup-go@v5
-    #   with:
-    #     go-version: ${{ matrix.go-version }}
+
     - uses: actions/setup-python@v5
       with:
         python-version: "${{ env.PYTHON_VERSION }}"
@@ -66,16 +60,9 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: go-dnscollector
-    - name: Display structure of downloaded files
-      run: ls -R
+
     - name: Make Binary Executable
       run: chmod +x go-dnscollector
-    - name: Display structure of downloaded files
-      run: ls -R
-      
-    # - name: build binary
-    #   run: |
-    #     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: Deploy docker image
       run: |
@@ -91,26 +78,28 @@ jobs:
         python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
 
   coredns:
+    needs: build
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        go-version: [ '1.23' ]
         coredns: [ '1.10.1', '1.11.1' ]
         mode: [ 'tcp' ]
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
-      with:
-        go-version: ${{ matrix.go-version }}
+
     - uses: actions/setup-python@v5
       with:
         python-version: "${{ env.PYTHON_VERSION }}"
 
-    - name: build binary
-      run: |
-        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+    - name: Download Binary Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: go-dnscollector
+
+    - name: Make Binary Executable
+      run: chmod +x go-dnscollector
 
     - name: Deploy coredns docker image
       run: |
@@ -119,31 +108,35 @@ jobs:
 
     - name: Test ${{ matrix.mode }}
       run: |
-        sudo python3 -m pip install dnstap_pb fstrm dnspython
-        sudo python3 -m pip install --upgrade protobuf
-        sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
+        python3 -m venv venv
+        source venv/bin/activate
+        python3 -m pip install dnstap_pb fstrm dnspython
+        python3 -m pip install --upgrade protobuf
+        python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
 
   coredns_tls:
+    needs: build
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        go-version: [ '1.23' ]
         coredns: [ '1.11.1' ]
         mode: [ 'tls' ]
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
-      with:
-        go-version: ${{ matrix.go-version }}
+
     - uses: actions/setup-python@v5
       with:
         python-version: "${{ env.PYTHON_VERSION }}"
 
-    - name: build binary
-      run: |
-        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+    - name: Download Binary Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: go-dnscollector
+  
+    - name: Make Binary Executable
+      run: chmod +x go-dnscollector
 
     - name: Generate certificate
       run: |
@@ -162,36 +155,38 @@ jobs:
 
     - name: Test ${{ matrix.mode }}
       run: |
-        sudo python3 -m pip install dnstap_pb fstrm dnspython
-        sudo python3 -m pip install --upgrade protobuf
-        sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
+        python3 -m venv venv
+        source venv/bin/activate
+        python3 -m pip install dnstap_pb fstrm dnspython
+        python3 -m pip install --upgrade protobuf
+        python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
 
   dnsdist:
+    needs: build
     runs-on: ubuntu-latest
     env:
       COLLECTOR_USER: pdns
 
     strategy:
       matrix:
-        go-version: [ '1.23' ]
         dnsdist: [ '17', '18', '19' ]
-
         mode: [ 'dnstaptcp', 'dnstapunix' ]
 
     steps:
     - uses: actions/checkout@v4
 
-    - uses: actions/setup-go@v5
-      with:
-        go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v5
       with:
         python-version: "${{ env.PYTHON_VERSION }}"
 
-    - name: build binary
-      run: |
-        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+    - name: Download Binary Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: go-dnscollector
 
+    - name: Make Binary Executable
+      run: chmod +x go-dnscollector
+      
     - name: add pdns user
       run: |
         sudo addgroup --system --gid 953 pdns
@@ -204,30 +199,34 @@ jobs:
 
     - name: Test ${{ matrix.mode }}
       run: |
-        sudo python3 -m pip install dnstap_pb fstrm dnspython
-        sudo python3 -m pip install --upgrade protobuf
+        python3 -m venv venv
+        source venv/bin/activate
+        python3 -m pip install dnstap_pb fstrm dnspython
+        python3 -m pip install --upgrade protobuf
         sudo -E python3 -m unittest tests.dnsquery_${{ matrix.mode }} -v
 
   dnsdist_doq:
+    needs: build
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        go-version: [ '1.23' ]
         dnsdist: [ '19' ]
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
-      with:
-        go-version: ${{ matrix.go-version }}
+
     - uses: actions/setup-python@v5
       with:
         python-version: "${{ env.PYTHON_VERSION }}"
 
-    - name: build binary
-      run: |
-        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+    - name: Download Binary Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: go-dnscollector
+
+    - name: Make Binary Executable
+      run: chmod +x go-dnscollector
 
     - name: download q
       run: |
@@ -250,4 +249,6 @@ jobs:
 
     - name: Tests
       run: |
-        sudo python3 -m unittest tests.dnsquery_dnstapdoq -v
+        python3 -m venv venv
+        source venv/bin/activate
+        python3 -m unittest tests.dnsquery_dnstapdoq -v
