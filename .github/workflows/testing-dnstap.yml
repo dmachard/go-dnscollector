@@ -21,6 +21,7 @@ env:
   Q_VERSION: "0.19.2"
   PYTHON_VERSION: "3.13"
   GO_VERSION: "1.23"
+  COLLECTOR_USER: "pdns"
 
 jobs:
   build:
@@ -200,12 +201,10 @@ jobs:
 
     - name: Test ${{ matrix.mode }}
       run: |
-        sudo python3 -m venv venv
+        python3 -m venv venv
         source venv/bin/activate
-        sudo python3 -m pip install dnstap_pb fstrm dnspython
-        sudo -u pdns -E pwd
-        sudo -u pdns -E ls -la
-        sudo -u pdns -E python3 -m unittest tests.dnsquery_${{ matrix.mode }} -v
+        python3 -m pip install dnstap_pb fstrm dnspython
+        python3 -m unittest tests.dnsquery_${{ matrix.mode }} -v
 
   dnsdist_doq:
     needs: build
