@@ -200,9 +200,9 @@ jobs:
 
     - name: Test ${{ matrix.mode }}
       run: |
-        python3 -m venv venv
-        source venv/bin/activate
-        python3 -m pip install dnstap_pb fstrm dnspython
+        sudo python3 -m venv venv
+        sudo source venv/bin/activate
+        sudo python3 -m pip install dnstap_pb fstrm dnspython
         sudo -u pdns -E pwd
         sudo -u pdns -E ls -la
         sudo -u pdns -E python3 -m unittest tests.dnsquery_${{ matrix.mode }} -v

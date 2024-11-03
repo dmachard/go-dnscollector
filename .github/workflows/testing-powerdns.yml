@@ -40,7 +40,7 @@ jobs:
           name: go-dnscollector
           path: go-dnscollector
 
-  test:
+  test_protobuf:
     needs: build
     runs-on: ubuntu-latest
 
