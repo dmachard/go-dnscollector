@@ -77,8 +77,6 @@ jobs:
 
       - name: Build binary
         run: |
-          go mod edit -go=${{ matrix.go-version }}
-          go mod tidy
           if [[ "${{ matrix.os }}" == 'windows-latest' ]]; then
             set CGO_ENABLED=0
             go build -ldflags="-s -w" -o go-dnscollector.exe .
