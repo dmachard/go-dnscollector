@@ -17,6 +17,10 @@ on:
 permissions:
   contents: read
 
+env:
+  PYTHON_VERSION: "3.13"
+  GO_VERSION: "1.23"
+
 jobs:
 
   build-and-test:
@@ -39,7 +43,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.13
+          python-version: "${{ env.PYTHON_VERSION }}"
 
       - name: Build binary
         run: |

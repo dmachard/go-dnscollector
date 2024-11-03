@@ -196,7 +196,7 @@ jobs:
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
     - name: Display Structure of Downloaded Files
-      run: ls --alrt /tmp
+      run: ls -alrt /tmp
 
     - name: Test ${{ matrix.mode }}
       run: |
