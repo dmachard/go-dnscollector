@@ -96,4 +96,6 @@ jobs:
 
       - name: Build the Docker image
         run: |
-          docker build --build-arg VERSION=dev . --platform ${{ matrix.platform }} --file Dockerfile -t go-dnscollector:${{ matrix.platform }}
+          PLATFORM=${{ matrix.platform }}  
+          TAG=$(echo "$PLATFORM" | tr '/' '-')
+          docker build --build-arg VERSION=dev . --platform $PLATFORM --file Dockerfile -t go-dnscollector:$TAG
