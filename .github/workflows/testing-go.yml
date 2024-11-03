@@ -21,7 +21,7 @@ jobs:
   dev:
     strategy:
       matrix:
-        os-version: ['ubuntu-22.04' ] #, 'macos-latest'
+        os-version: ['ubuntu-22.04' ]
         go-version: [ '1.21', '1.22', '1.23' ]
         package:
           - '.'
@@ -35,6 +35,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
@@ -78,8 +79,6 @@ jobs:
  
     - name: build binary
       run: |
-        go mod edit -go=${{ matrix.go-version }}
-        go mod tidy 
         CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 
     - name: Test ${{ matrix.package }}
@@ -97,14 +96,13 @@ jobs:
         
     steps:
     - uses: actions/checkout@v4
+
     - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
  
     - name: build binary
       run: |
-        go mod edit -go=${{ matrix.go-version }} 
-        go mod tidy
         CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: run collector

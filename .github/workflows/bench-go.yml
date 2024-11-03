@@ -28,8 +28,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # https://github.com/actions/setup-go/pull/460
-    - name: Configure env for toolchain ignore
+    - name: Configure environment to avoid toolchain installs 
       shell: bash
       run: echo "GOTOOLCHAIN=local" >> "$GITHUB_ENV"
 
