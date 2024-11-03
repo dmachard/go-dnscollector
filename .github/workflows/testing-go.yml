@@ -17,11 +17,15 @@ on:
 permissions:
   contents: read
 
+env:
+  PROM_VERSION: "2.55.0"
+  GENTAP: "0.8.0"
+
 jobs:
   dev:
     strategy:
       matrix:
-        os-version: ['ubuntu-22.04' ]
+        os-version: [ 'ubuntu-latest' ]
         go-version: [ '1.21', '1.22', '1.23' ]
         package:
           - '.'
@@ -31,10 +35,14 @@ jobs:
           - 'workers'
           - 'transformers'
     
-    runs-on: ${{ matrix.os-version }}
+    runs-on: "${{ matrix.os-version }}"
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Configure environment to avoid toolchain installs 
+      shell: bash
+      run: echo "GOTOOLCHAIN=local" >> "$GITHUB_ENV"
 
     - uses: actions/setup-go@v5
       with:
@@ -61,7 +69,7 @@ jobs:
       run: sudo go test -timeout 240s ./${{ matrix.package }}/ -race -cover -v
       
   int:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
@@ -70,12 +78,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Configure environment to avoid toolchain installs 
+      shell: bash
+      run: echo "GOTOOLCHAIN=local" >> "$GITHUB_ENV"
+
     - uses: actions/setup-go@v5
       with:
-        go-version: ${{ matrix.go-version }}
+        go-version: "${{ matrix.go-version }}"
+
     - uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
  
     - name: build binary
       run: |
@@ -88,7 +102,7 @@ jobs:
         sudo python3 -m unittest tests.${{ matrix.package }} -v
 
   metrics:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
@@ -97,9 +111,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Configure environment to avoid toolchain installs 
+      shell: bash
+      run: echo "GOTOOLCHAIN=local" >> "$GITHUB_ENV"
+      
     - uses: actions/setup-go@v5
       with:
-        go-version: ${{ matrix.go-version }}
+        go-version: "${{ matrix.go-version }}"
  
     - name: build binary
       run: |
@@ -113,8 +131,6 @@ jobs:
         wget -nv https://github.com/dmachard/go-dnstap-generator/releases/download/v${{ env.GENTAP }}/go-dnstap-generator_${{ env.GENTAP }}_linux_amd64.tar.gz
         tar xf go-dnstap-generator_${{ env.GENTAP }}_linux_amd64.tar.gz
         ./go-dnstap-generator -i 127.0.0.1 -p 6000 -n 1
-      env:
-        GENTAP: "0.7.0"
 
     - name: check prometheus format metrics
       run: |
@@ -122,8 +138,6 @@ jobs:
         tar xf prometheus-$PROM_VERSION.linux-amd64.tar.gz
         cd prometheus-$PROM_VERSION.linux-amd64/
         curl -u admin:changeme http://127.0.0.1:8081/metrics | ./promtool check metrics
-      env:
-        PROM_VERSION: "2.51.1"
 
   count:
     runs-on: ubuntu-latest
