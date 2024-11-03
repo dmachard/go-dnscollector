@@ -78,9 +78,11 @@ jobs:
 
     - name: Test ${{ matrix.mode }}
       run: |
-        sudo python3 -m pip install dnstap_pb fstrm dnspython
-        sudo python3 -m pip install --upgrade protobuf
-        sudo python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
+        python3 -m venv venv
+        source venv/bin/activate
+        python3 -m pip install dnstap_pb fstrm dnspython
+        python3 -m pip install --upgrade protobuf
+        python3 -m unittest tests.dnsquery_dnstap${{ matrix.mode }} -v
 
   coredns:
     runs-on: ubuntu-latest
