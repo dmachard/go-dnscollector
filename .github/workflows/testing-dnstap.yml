@@ -201,7 +201,7 @@ jobs:
     - name: Test ${{ matrix.mode }}
       run: |
         sudo python3 -m venv venv
-        sudo source venv/bin/activate
+        source venv/bin/activate
         sudo python3 -m pip install dnstap_pb fstrm dnspython
         sudo -u pdns -E pwd
         sudo -u pdns -E ls -la
