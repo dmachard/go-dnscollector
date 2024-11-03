@@ -66,7 +66,13 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: go-dnscollector
-
+    - name: Display structure of downloaded files
+      run: ls -R
+    - name: Make Binary Executable
+      run: chmod +x go-dnscollector
+    - name: Display structure of downloaded files
+      run: ls -R
+      
     # - name: build binary
     #   run: |
     #     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
