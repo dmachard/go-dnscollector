@@ -3,7 +3,7 @@
 <img src="https://img.shields.io/badge/go%20version-min%201.21-green" alt="Go version"/>
 <img src="https://img.shields.io/badge/go%20tests-508-green" alt="Go tests"/>
 <img src="https://img.shields.io/badge/go%20bench-21-green" alt="Go bench"/>
-<img src="https://img.shields.io/badge/go%20lines-31679-green" alt="Go lines"/>
+<img src="https://img.shields.io/badge/go%20lines-31977-green" alt="Go lines"/>
 </p>
 
 <p align="center">
@@ -19,7 +19,7 @@
 > Additionally, DNS-collector also support
 >
 > - [Extended](https://github.com/dmachard/go-dns-collector/blob/main/docs/extended_dnstap.md) DNStap with TLS encryption, compression, and more metadata capabilities
-> - DNS protocol conversions to [plain text, JSON, jinja and more](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsconversions.md)
+> - DNS protocol conversions to [Plain text, Key/Value JSON, Jinja and more](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsconversions.md)
 > - DNS parser with [Extension Mechanisms for DNS (EDNS)](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsparser.md) support
 > - Live capture on a network interface
 > - IPv4/v6 defragmentation and TCP reassembly
