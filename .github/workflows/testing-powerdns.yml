@@ -28,7 +28,6 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.23' ]
         component: 
           - { name: 'dnsdist', version: '18' }
           - { name: 'dnsdist', version: '19' }
@@ -39,7 +38,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "${{ matrix.go-version }}"
+          go-version: "${{ env.GO_VERSION }}"
 
       - uses: actions/setup-python@v5
         with:

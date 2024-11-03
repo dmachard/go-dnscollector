@@ -203,7 +203,7 @@ jobs:
         python3 -m venv venv
         source venv/bin/activate
         python3 -m pip install dnstap_pb fstrm dnspython
-        python3 -m unittest tests.dnsquery_${{ matrix.mode }} -v
+        sudo -u pdns -E venv/bin/python3 -m unittest tests.dnsquery_${{ matrix.mode }} -v
 
   dnsdist_doq:
     needs: build
