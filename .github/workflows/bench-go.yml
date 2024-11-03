@@ -27,6 +27,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    # https://github.com/actions/setup-go/pull/460
+    - name: Configure env for toolchain ignore
+      shell: bash
+      run: echo "GOTOOLCHAIN=local" >> "$GITHUB_ENV"
+
     - uses: actions/setup-go@v5
       with:
         go-version: "${{ matrix.go-version }}"
