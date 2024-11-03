@@ -40,20 +40,11 @@ jobs:
     - name: Show Go version
       run: |
         go version
-        sudo go version
 
-    - name: Set up Go for root
-      if: runner.os != 'macOS'
-      run: |
-        which go
-        sudo which go
-        sudo ln -sf `which go` `sudo which go` || true
-    
     - name: Show Go version
       run: |
         go version
-        sudo go version
-        
+
     - name: Bench dnsutils
       run: |
         cd dnsutils/
