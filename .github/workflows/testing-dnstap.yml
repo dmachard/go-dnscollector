@@ -205,7 +205,7 @@ jobs:
         python3 -m pip install dnstap_pb fstrm dnspython
         sudo -u pdns -E pwd
         sudo -u pdns -E ls -la
-        sudo -u pdns -E venv/bin/python3 -m unittest tests.dnsquery_${{ matrix.mode }} -v
+        sudo -u pdns -E python3 -m unittest tests.dnsquery_${{ matrix.mode }} -v
 
   dnsdist_doq:
     needs: build

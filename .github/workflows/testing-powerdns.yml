@@ -22,8 +22,26 @@ env:
   GO_VERSION: "1.23"
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "${{ env.GO_VERSION }}"
 
-  build-and-test:
+      - name: Build Binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+
+      - name: Upload Binary Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-dnscollector
+          path: go-dnscollector
+
+  test:
+    needs: build
     runs-on: ubuntu-latest
 
     strategy:
@@ -36,17 +54,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "${{ env.GO_VERSION }}"
-
       - uses: actions/setup-python@v5
         with:
           python-version: "${{ env.PYTHON_VERSION }}"
 
-      - name: Build binary
-        run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+      - name: Download Binary Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: go-dnscollector
+
+      - name: Make Binary Executable
+        run: chmod +x go-dnscollector
 
       - name: Deploy Docker image
         run: |
@@ -59,5 +77,7 @@ jobs:
 
       - name: Test DNS query
         run: |
-          sudo python3 -m pip install dnspython
-          sudo -E python3 -m unittest tests.dnsquery_powerdns -v
+          python3 -m venv venv
+          source venv/bin/activate
+          python3 -m pip install dnspython
+          python3 -m unittest tests.dnsquery_powerdns -v
