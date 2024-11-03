@@ -17,31 +17,59 @@ on:
 permissions:
   contents: read
 
+env:
+  Q_VERSION: "0.19.2"
+  PYTHON_VERSION: "3.13"
+  GO_VERSION: "1.23"
+
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "${{ env.GO_VERSION }}"
+
+      - name: Build Binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+
+      - name: Upload Binary Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-dnscollector
+          path: go-dnscollector
+
   unbound:
+    needs: build
     runs-on: ubuntu-latest
     env:
       COLLECTOR_USER: runneradmin
 
     strategy:
       matrix:
-        go-version: [ '1.23' ]
+        #go-version: [ '1.23' ]
         unbound: [ '1.19.3', '1.20.0' ]
-
         mode: [ 'tcp' ]
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
-      with:
-        go-version: ${{ matrix.go-version }}
+    # - uses: actions/setup-go@v5
+    #   with:
+    #     go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v5
       with:
-        python-version: 3.13
+        python-version: "${{ env.PYTHON_VERSION }}"
 
-    - name: build binary
-      run: |
-        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+    - name: Download Binary Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: go-dnscollector
+
+    # - name: build binary
+    #   run: |
+    #     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
 
     - name: Deploy docker image
       run: |
@@ -70,7 +98,7 @@ jobs:
         go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v5
       with:
-        python-version: 3.12
+        python-version: "${{ env.PYTHON_VERSION }}"
 
     - name: build binary
       run: |
@@ -103,7 +131,7 @@ jobs:
         go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v5
       with:
-        python-version: 3.12
+        python-version: "${{ env.PYTHON_VERSION }}"
 
     - name: build binary
       run: |
@@ -144,12 +172,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v5
       with:
-        python-version: 3.12
+        python-version: "${{ env.PYTHON_VERSION }}"
 
     - name: build binary
       run: |
@@ -186,7 +215,7 @@ jobs:
         go-version: ${{ matrix.go-version }}
     - uses: actions/setup-python@v5
       with:
-        python-version: 3.12
+        python-version: "${{ env.PYTHON_VERSION }}"
 
     - name: build binary
       run: |
@@ -194,8 +223,8 @@ jobs:
 
     - name: download q
       run: |
-        wget https://github.com/natesales/q/releases/download/v0.19.2/q_0.19.2_linux_amd64.tar.gz
-        tar xvf q_0.19.2_linux_amd64.tar.gz
+        wget https://github.com/natesales/q/releases/download/v0.19.2/q_${{ env.Q_VERSION }}_linux_amd64.tar.gz
+        tar xvf q_${{ env.Q_VERSION }}_linux_amd64.tar.gz
 
     - name: Generate certificate
       run: |

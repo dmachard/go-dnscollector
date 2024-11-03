@@ -1,4 +1,4 @@
-name: tests go
+name: Go Tests
 
 on:
   push:
@@ -20,6 +20,9 @@ permissions:
 env:
   PROM_VERSION: "2.55.0"
   GENTAP: "0.8.0"
+  PYTHON_VERSION: '3.13'
+  GO_VERSION: '1.23'
+  CHECKOUT_VERSION: "v4"
 
 jobs:
   dev:
@@ -89,7 +92,7 @@ jobs:
 
     - uses: actions/setup-python@v5
       with:
-        python-version: '3.13'
+        python-version: "${{ env.PYTHON_VERSION }}"
  
     - name: build binary
       run: |
@@ -106,7 +109,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [ '1.21', '1.22', '1.23']
+        go-version: [ '1.21', '1.22', '1.23' ]
         
     steps:
     - uses: actions/checkout@v4
@@ -146,10 +149,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Configure environment to avoid toolchain installs 
+      shell: bash
+      run: echo "GOTOOLCHAIN=local" >> "$GITHUB_ENV"
+
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: "1.23"
+        go-version: ${{ env.GO_VERSION }}
 
     - id: count_tests
       run: |
