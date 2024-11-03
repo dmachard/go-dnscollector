@@ -1,7 +1,5 @@
 import unittest
 import asyncio
-import requests
-import re
 
 class CollectorProc(asyncio.SubprocessProtocol):
     def __init__(self, is_ready, is_clientresponse):
