@@ -1,4 +1,4 @@
-name: bench go
+name: Go Benchmark
 
 on:
   push:
