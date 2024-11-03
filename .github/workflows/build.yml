@@ -1,4 +1,4 @@
-name: go build
+name: Go Cross-Platform Build
 
 on:
   push:
@@ -18,8 +18,7 @@ permissions:
   contents: read
 
 jobs:
-
-  makefile:
+  makefile-build:
     runs-on: ubuntu-latest
     
     strategy:
@@ -29,8 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # https://github.com/actions/setup-go/pull/460
-      - name: Configure env for toolchain ignore
+      - name: Configure environment to avoid toolchain installs
         shell: bash
         run: echo "GOTOOLCHAIN=local" >> "$GITHUB_ENV"
         
@@ -47,7 +45,7 @@ jobs:
       - name: dep+build from makefile
         run: make
         
-  go-build-all:
+  go-build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -78,13 +76,16 @@ jobs:
       - name: Build binary
         run: |
           if [[ "${{ matrix.os }}" == 'windows-latest' ]]; then
+            echo "Building for Windows"
             set CGO_ENABLED=0
             go build -ldflags="-s -w" -o go-dnscollector.exe .
           else
+            echo "Building for ${matrix.os}"
             CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
           fi
+        shell: bash
 
-  docker-build-all:
+  docker-build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
