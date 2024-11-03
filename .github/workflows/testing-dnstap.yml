@@ -195,12 +195,14 @@ jobs:
         sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/testsdata/powerdns/dnsdist_${{ matrix.mode }}.conf:/etc/dnsdist/conf.d/dnsdist.conf:z -v /tmp/:/tmp/ powerdns/dnsdist-${{ matrix.dnsdist }}
         until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
+    - name: Display Structure of Downloaded Files
+      run: ls --alrt /tmp
+
     - name: Test ${{ matrix.mode }}
       run: |
         python3 -m venv venv
         source venv/bin/activate
         python3 -m pip install dnstap_pb fstrm dnspython
-        python3 -m pip install --upgrade protobuf pip
         python3 -m unittest tests.dnsquery_${{ matrix.mode }} -v
 
   dnsdist_doq:
