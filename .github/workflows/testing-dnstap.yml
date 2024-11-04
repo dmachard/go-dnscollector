@@ -48,12 +48,18 @@ jobs:
     strategy:
       matrix:
         config:
-          - { service: "unbound", version: ["1.19.3", "1.20.0"], mode: "tcp" }
-          - { service: "coredns", version: ["1.10.1", "1.11.1"], mode: "tcp" }
-          - { service: "coredns_tls", version: ["1.11.1"], mode: "tls" }
-          - { service: "dnsdist", version: ["17", "18", "19"], mode: "tcp" }
-          - { service: "dnsdist", version: ["17", "18", "19"], mode: "unix" }
-          - { service: "dnsdist_doq", version: ["19"], mode: "doq" }
+          - { service: "unbound", version: "1.19.3", mode: "tcp" }
+          - { service: "unbound", version: "1.20.0", mode: "tcp" }
+          - { service: "coredns", version: "1.10.1", mode: "tcp" }
+          - { service: "coredns", version: "1.11.1", mode: "tcp" }
+          - { service: "coredns_tls", version: "1.11.1", mode: "tls" }
+          - { service: "dnsdist", version: "17", mode: "tcp" }
+          - { service: "dnsdist", version: "18", mode: "tcp" }
+          - { service: "dnsdist", version: "19", mode: "tcp" }
+          - { service: "dnsdist", version: "17", mode: "unix" }
+          - { service: "dnsdist", version: "18", mode: "unix" }
+          - { service: "dnsdist", version: "19", mode: "unix" }
+          - { service: "dnsdist", version: "19", mode: "doq" }
 
     steps:
       - uses: actions/checkout@v4
