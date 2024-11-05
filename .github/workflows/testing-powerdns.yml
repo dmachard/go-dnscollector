@@ -68,11 +68,14 @@ jobs:
 
       - name: Deploy Docker image
         run: |
-          if [[ "${{ matrix.component.name }}" == "dnsdist" ]]; then
-            sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/testsdata/powerdns/dnsdist_protobuf.conf:/etc/dnsdist/conf.d/dnsdist.conf:z -v /tmp/:/tmp/ powerdns/dnsdist-${{ matrix.component.version }}
-          elif [[ "${{ matrix.component.name }}" == "recursor" ]]; then
-            sudo docker run -d --network="host" --name=recursor --volume=$PWD/tests/testsdata/powerdns/pdns_recursor.yml:/etc/powerdns/recursor.yml:z powerdns/pdns-recursor-${{ matrix.component.version }}
-          fi
+          case ${{ matrix.component.name }} in
+            "dnsdist")
+              sudo docker run -d --network="host" --name=dnsdist --volume=$PWD/tests/testsdata/powerdns/dnsdist_protobuf.conf:/etc/dnsdist/conf.d/dnsdist.conf:z -v /tmp/:/tmp/ powerdns/dnsdist-${{ matrix.component.version }}
+              ;;
+            "recursor")
+              sudo docker run -d --network="host" --name=recursor --volume=$PWD/tests/testsdata/powerdns/pdns_recursor.yml:/etc/powerdns/recursor.yml:z powerdns/pdns-recursor-${{ matrix.component.version }}
+              ;;
+          esac
           until (dig -p 5553 www.github.com @127.0.0.1 | grep NOERROR); do sleep 5.0; done
 
       - name: Test DNS query
