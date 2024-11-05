@@ -22,13 +22,30 @@ env:
   GENTAP: "0.8.0"
   PYTHON_VERSION: '3.13'
   GO_VERSION: '1.23'
-  CHECKOUT_VERSION: "v4"
 
 jobs:
-  dev:
+  build_bin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "${{ env.GO_VERSION }}"
+
+      - name: Build Binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+
+      - name: Upload Binary Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-dnscollector
+          path: go-dnscollector
+
+  testunit:
     strategy:
       matrix:
-        os-version: [ 'ubuntu-latest' ]
+        os-version: [ 'ubuntu-22.04', 'ubuntu-24.04' ]
         go-version: [ '1.21', '1.22', '1.23' ]
         package:
           - '.'
@@ -54,77 +71,47 @@ jobs:
     - name: Show Go version
       run: |
         go version
-        sudo go version
-    
-    - name: Set up Go for root
-      if: runner.os != 'macOS'
-      run: |
-        which go
-        sudo which go
-        sudo ln -sf `which go` `sudo which go` || true
-        
-    - name: Show Go version
-      run: |
-        go version
-        sudo go version
-        
-    - name: Test ${{ matrix.package }}
-      run: sudo go test -timeout 240s ./${{ matrix.package }}/ -race -cover -v
-      
-  int:
-    runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        go-version: [ '1.21', '1.22', '1.23' ]
-        package: ['config', 'clientquery_dnstaptcp', 'clientquery_dnstapunix' ]
+    - name: Test ${{ matrix.package }}
+      run: go test -timeout 240s -exec sudo ./${{ matrix.package }}/ -race -cover -v
+      
+  config:
+    needs: build_bin
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Configure environment to avoid toolchain installs 
-      shell: bash
-      run: echo "GOTOOLCHAIN=local" >> "$GITHUB_ENV"
-
-    - uses: actions/setup-go@v5
+  
+    - name: Download Binary Artifact
+      uses: actions/download-artifact@v4
       with:
-        go-version: "${{ matrix.go-version }}"
+        name: go-dnscollector
+
+    - name: Make Binary Executable
+      run: chmod +x go-dnscollector
 
     - uses: actions/setup-python@v5
       with:
         python-version: "${{ env.PYTHON_VERSION }}"
- 
-    - name: build binary
-      run: |
-        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-dnscollector *.go
 
-    - name: Test ${{ matrix.package }}
+    - name: Test config
       run: |
-        sudo python3 -m pip install dnstap_pb fstrm dnspython
-        sudo python3 -m pip install --upgrade protobuf
-        sudo python3 -m unittest tests.${{ matrix.package }} -v
+        python3 -m unittest tests.config -v
 
   metrics:
+    needs: build_bin
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        go-version: [ '1.21', '1.22', '1.23' ]
-        
     steps:
     - uses: actions/checkout@v4
 
-    - name: Configure environment to avoid toolchain installs 
-      shell: bash
-      run: echo "GOTOOLCHAIN=local" >> "$GITHUB_ENV"
-      
-    - uses: actions/setup-go@v5
+    - name: Download Binary Artifact
+      uses: actions/download-artifact@v4
       with:
-        go-version: "${{ matrix.go-version }}"
- 
-    - name: build binary
-      run: |
-        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o go-dnscollector *.go
+        name: go-dnscollector
+
+    - name: Make Binary Executable
+      run: chmod +x go-dnscollector
 
     - name: run collector
       run: ./go-dnscollector -config ./tests/testsdata/config_prom.yml &
