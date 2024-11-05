@@ -1,7 +1,5 @@
 import unittest
 import asyncio
-import requests
-import re
 
 class CollectorProc(asyncio.SubprocessProtocol):
     def __init__(self, is_ready, is_clientresponse):
@@ -56,7 +54,7 @@ class TestDnstap(unittest.TestCase):
         self.loop = asyncio.get_event_loop()
 
     def test_stdout_recv(self):
-        """test to receive dnstap DOQ response in stdou"""
+        """test to receive dnstap DOQ response in stdout"""
         async def run():
             # run collector
             is_ready = asyncio.Future()

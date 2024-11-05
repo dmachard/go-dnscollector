@@ -1,4 +1,4 @@
-name: bench go
+name: Go Benchmark
 
 on:
   push:
@@ -21,33 +21,25 @@ jobs:
   dev:
     strategy:
       matrix:
-        os-version: ['ubuntu-22.04' ]
+        os-version: [ 'ubuntu-latest' ]
         go-version: [ '1.21', '1.22', '1.23' ]
     runs-on: ${{ matrix.os-version }}
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Configure environment to avoid toolchain installs 
+      shell: bash
+      run: echo "GOTOOLCHAIN=local" >> "$GITHUB_ENV"
+
     - uses: actions/setup-go@v5
       with:
-        go-version: ${{ matrix.go-version }}
+        go-version: "${{ matrix.go-version }}"
 
     - name: Show Go version
       run: |
         go version
-        sudo go version
 
-    - name: Set up Go for root
-      if: runner.os != 'macOS'
-      run: |
-        which go
-        sudo which go
-        sudo ln -sf `which go` `sudo which go` || true
-    
-    - name: Show Go version
-      run: |
-        go version
-        sudo go version
-        
     - name: Bench dnsutils
       run: |
         cd dnsutils/

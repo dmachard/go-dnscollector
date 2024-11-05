@@ -40,7 +40,7 @@ func TestTelemetry_PrometheusCollectorUpdateStats(t *testing.T) {
 	collector.Record <- ws
 
 	// Verify that the stats were updated
-	storedWS, ok := collector.data["worker1"]
+	storedWS, ok := collector.GetWorkerStats("worker1")
 	assert.True(t, ok, "Worker stats should be present in the collector")
 	assert.Equal(t, ws.TotalIngress, storedWS.TotalIngress)
 	assert.Equal(t, ws.TotalEgress, storedWS.TotalEgress)

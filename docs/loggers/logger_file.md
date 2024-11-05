@@ -46,7 +46,7 @@ The File Logger allows you to log DNS traffic to a file in various formats, with
   > available directives, use this parameter if you want a specific format.
 
 * `jinja-format` (string)
-  > jinja template, please refer [Jinja encoding](../dns2jinja.md) to see all available directives 
+  > jinja template, please refer [Jinja templating](../dnsconversions.md#jinja-templating) to see all available directives 
 
 * `postrotate-command` (string)
   > Specifies a command or script to run after each file rotation.

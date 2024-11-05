@@ -100,6 +100,14 @@ func (t *PrometheusCollector) UpdateStats() {
 		}
 	}
 }
+
+func (t *PrometheusCollector) GetWorkerStats(workerName string) (WorkerStats, bool) {
+	t.Lock()
+	defer t.Unlock()
+	ws, ok := t.data[workerName]
+	return ws, ok
+}
+
 func (t *PrometheusCollector) Collect(ch chan<- prometheus.Metric) {
 	t.Lock()
 	defer t.Unlock()

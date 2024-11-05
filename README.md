@@ -1,17 +1,17 @@
 <p align="center">
-<img src="https://goreportcard.com/badge/github.com/dmachard/go-dns-collector" alt="Go Report"/>
-<img src="https://img.shields.io/badge/go%20version-min%201.21-green" alt="Go version"/>
-<img src="https://img.shields.io/badge/go%20tests-508-green" alt="Go tests"/>
-<img src="https://img.shields.io/badge/go%20bench-21-green" alt="Go bench"/>
-<img src="https://img.shields.io/badge/go%20lines-31679-green" alt="Go lines"/>
+  <img src="https://goreportcard.com/badge/github.com/dmachard/go-dns-collector" alt="Go Report"/>
+  <img src="https://img.shields.io/badge/go%20version-min%201.21-green" alt="Go version"/>
+  <img src="https://img.shields.io/badge/go%20tests-508-green" alt="Go tests"/>
+  <img src="https://img.shields.io/badge/go%20bench-21-green" alt="Go bench"/>
+  <img src="https://img.shields.io/badge/go%20lines-31977-green" alt="Go lines"/>
 </p>
 
 <p align="center">
-<img src="docs/dns-collector_logo.png" alt="DNS-collector"/>
+  <img src="https://img.shields.io/github/v/release/dmachard/go-dnscollector?logo=github&sort=semver" alt="release"/>
 </p>
 
 <p align="center">
-<img src="https://img.shields.io/github/v/release/dmachard/go-dnscollector?logo=github&sort=semver" alt="release"/>
+  <img src="docs/dns-collector_logo.png" alt="DNS-collector"/>
 </p>
 
 `DNS-collector` acts as a passive high speed **ingestor** with **pipelining** support for your DNS logs, written in **Golang**. It allows enhancing your DNS logs by adding metadata, extracting usage patterns, and facilitating security analysis.
@@ -19,7 +19,7 @@
 > Additionally, DNS-collector also support
 >
 > - [Extended](https://github.com/dmachard/go-dns-collector/blob/main/docs/extended_dnstap.md) DNStap with TLS encryption, compression, and more metadata capabilities
-> - DNS protocol conversions to [plain text, JSON, jinja and more](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsconversions.md)
+> - DNS protocol conversions to [Plain text, Key/Value JSON, Jinja and more](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsconversions.md)
 > - DNS parser with [Extension Mechanisms for DNS (EDNS)](https://github.com/dmachard/go-dns-collector/blob/main/docs/dnsparser.md) support
 > - Live capture on a network interface
 > - IPv4/v6 defragmentation and TCP reassembly
@@ -103,10 +103,9 @@ The configuration of DNS-collector is done through a file named [`config.yml`](c
 When the DNS-collector starts, it will look for the config.yml from the current working directory.
 A typical [configuration in pipeline](./running_mode.md) mode includes one or more collectors to receive DNS traffic and several loggers to process the incoming data. 
 
-To get started quickly, you can use this default [`config.yml`](config.yml).
-For advanced settings, see the [advanced configuration guide](./docs/advanced_config.md).
+To get started quickly, you can use this default [`config.yml`](config.yml). You can also see  the `_examples` folder from documentation witch contains a number of [various configurations](./docs/examples.md) to get you started with the DNS-collector in different ways.
 
-You can also see  the [`_examples`](./docs/_examples) folder from documentation witch contains a number of [various configurations](./docs/examples.md) to get you started with the DNS-collector in different ways.
+For advanced settings, see the [advanced configuration guide](./docs/advanced_config.md).
 
 Additionally, the [`_integration`](./docs/_integration) folder contains preconfigured files and `docker compose` examples
 for integrating DNS-collector with popular tools:

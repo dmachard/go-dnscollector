@@ -1,4 +1,4 @@
-name: go releaser
+name: Go Releaser
 on:
   push:
     tags:
@@ -6,6 +6,9 @@ on:
 
 permissions:
   contents: read
+
+env:
+  GO_VERSION: "1.23"
 
 jobs:
   goreleaser:
@@ -19,7 +22,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version: "${{ env.GO_VERSION }}"
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
