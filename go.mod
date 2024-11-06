@@ -18,7 +18,7 @@ require (
 	github.com/dmachard/go-topmap v1.0.2
 	github.com/farsightsec/golang-framestream v0.3.0
 	github.com/flosch/pongo2 v0.0.0-20200913210552-0d938eb266f3
-	github.com/fsnotify/fsnotify v1.7.0
+	github.com/fsnotify/fsnotify v1.8.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/snappy v0.0.4
 	github.com/google/gopacket v1.1.19
