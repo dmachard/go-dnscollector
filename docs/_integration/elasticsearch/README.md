@@ -11,14 +11,15 @@
     sudo docker compose up -d
     ```
 
+- Update the destination URL in the config.yml and run DNScollector from source and generate some DNS logs from your DNS server with DNStap protocol.
+
+    ```bash
+    go run . -config docs/_integration/elasticsearch/config.yml
+    ```
+
 - Go to kibana web interface through `http://127.0.0.1:5601`
 
 - Click on `Explore on my own` and `Discover`
 
 - Finally create index pattern `dnscollector` and choose `dnstap.timestamp-rfc33939ns`
 
-- Finally, run DNScollector from source and generate some DNS logs from your DNS server with DNStap protocol.
-
-    ```bash
-    go run . -config docs/_integration/elasticsearch/config.yml
-    ```

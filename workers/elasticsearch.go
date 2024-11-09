@@ -226,7 +226,6 @@ func (w *ElasticSearchClient) sendCompressedBulk(bulk []byte) error {
 	// Write the uncompressed data to the gzip writer
 	_, err := gzipWriter.Write(bulk)
 	if err != nil {
-		fmt.Println("gzip", err)
 		return err
 	}
 
