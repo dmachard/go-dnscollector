@@ -231,6 +231,9 @@ type ConfigLoggers struct {
 		BulkChannelSize   int    `yaml:"bulk-channel-size" default:"10"`
 		FlushInterval     int    `yaml:"flush-interval" default:"10"`
 		Compression       string `yaml:"compression" default:"none"`
+		BasicAuthEnabled  bool   `yaml:"basic-auth-enable" default:"false"`
+		BasicAuthLogin    string `yaml:"basic-auth-login" default:""`
+		BasicAuthPwd      string `yaml:"basic-auth-pwd" default:""`
 	} `yaml:"elasticsearch"`
 	ScalyrClient struct {
 		Enable            bool                   `yaml:"enable" default:"false"`

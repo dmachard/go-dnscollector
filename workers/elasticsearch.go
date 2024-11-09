@@ -199,7 +199,10 @@ func (w *ElasticSearchClient) sendBulk(bulk []byte) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-ndjson")
+	if w.GetConfig().Loggers.ElasticSearchClient.BasicAuthEnabled {
+		req.SetBasicAuth(w.GetConfig().Loggers.ElasticSearchClient.BasicAuthLogin, w.GetConfig().Loggers.ElasticSearchClient.BasicAuthPwd)
+	}
 
 	// Send the request using the HTTP client
 	resp, err := w.httpClient.Do(req)
@@ -238,8 +241,11 @@ func (w *ElasticSearchClient) sendCompressedBulk(bulk []byte) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-ndjson")
 	req.Header.Set("Content-Encoding", "gzip") // Set Content-Encoding header to gzip
+	if w.GetConfig().Loggers.ElasticSearchClient.BasicAuthEnabled {
+		req.SetBasicAuth(w.GetConfig().Loggers.ElasticSearchClient.BasicAuthLogin, w.GetConfig().Loggers.ElasticSearchClient.BasicAuthPwd)
+	}
 
 	// Send the request using the HTTP client
 	resp, err := w.httpClient.Do(req)
