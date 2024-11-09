@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -186,4 +187,35 @@ func Test_ElasticSearchClient_FlushInterval_Exceeded(t *testing.T) {
 		})
 		assert.Equal(t, tc.inputSize, totalDm)
 	}
+}
+
+func TestElasticSearchClient_sendBulk_WithBasicAuth(t *testing.T) {
+	// Create a test HTTP server to simulate Elasticsearch
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Verify that the Authorization header is present
+		username, password, ok := r.BasicAuth()
+		assert.True(t, ok, "Basic Auth header is missing in the request")
+		assert.Equal(t, "testuser", username, "Incorrect username")
+		assert.Equal(t, "testpass", password, "Incorrect password")
+
+		if username != "testuser" || password != "testpass" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	// Initialize the configuration using GetDefaultConfig() for consistency
+	config := pkgconfig.GetDefaultConfig()
+	config.Loggers.ElasticSearchClient.Server = server.URL
+	config.Loggers.ElasticSearchClient.BasicAuthEnabled = true
+	config.Loggers.ElasticSearchClient.BasicAuthLogin = "testuser"
+	config.Loggers.ElasticSearchClient.BasicAuthPwd = "testpass"
+
+	client := NewElasticSearchClient(config, logger.New(false), "test-client")
+
+	// Send a request with a test payload
+	err := client.sendBulk([]byte("test payload"))
+	assert.NoError(t, err, "Unexpected error when sending request with Basic Auth")
 }

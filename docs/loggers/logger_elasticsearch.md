@@ -33,6 +33,15 @@ Options:
   > Interval in seconds before to flush the buffer.
   > Set the maximum time interval before the buffer is flushed. If the bulk batches reach this interval before reaching the maximum size, they will be sent to Elasticsearch.
 
+* `basic-auth-enable` (bool)
+  > Enable basic authentication (login+password) to ElasticSearch
+
+* `basic-auth-login` (string)
+  > The login username
+
+* `basic-auth-pwd` (string)
+  > The password
+
 Defaults:
 
 ```yaml
@@ -45,6 +54,9 @@ Defaults:
     flush-interval: 10 # in seconds
     compression: none
     bulk-channel-size: 10
+    basic-auth-enable: false
+    basic-auth-login: ""
+    basic-auth-pwd: ""
 ```
 
 > Could you explain the difference between `bulk-size` and `bulk-channel-size`?
