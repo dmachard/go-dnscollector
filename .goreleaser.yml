@@ -7,6 +7,9 @@ builds:
 - env:
     - CGO_ENABLED=0
 
+  flags:
+    - -trimpath
+
   ldflags:
     - -s -w
     - -X github.com/prometheus/common/version.Version={{.Version}}
