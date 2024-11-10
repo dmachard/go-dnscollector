@@ -48,7 +48,8 @@ jobs:
     strategy:
       matrix:
         config:
-          - { service: "unbound", version: "1.20.0", mode: "tcp" }
+          - { service: "unbound", version: "1.22.0", mode: "tcp" }
+          - { service: "unbound", version: "1.21.0", mode: "tcp" }
           - { service: "coredns", version: "1.11.1", mode: "tcp" }
           - { service: "coredns", version: "1.11.1", mode: "tls" }
           - { service: "dnsdist", version: "19", mode: "tcp" }
