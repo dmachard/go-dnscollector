@@ -8,6 +8,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/v/release/dmachard/go-dnscollector?logo=github&sort=semver" alt="release"/>
+  <img src="https://img.shields.io/docker/pulls/dmachard/go-dnscollector.svg" alt="docker"/>
 </p>
 
 <p align="center">
