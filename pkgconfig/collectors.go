@@ -56,6 +56,7 @@ type ConfigCollectors struct {
 		Device            string `yaml:"device" default:""`
 		ChannelBufferSize int    `yaml:"chan-buffer-size" default:"0"`
 		FragmentSupport   bool   `yaml:"enable-defrag-ip" default:"true"`
+		GreSupport        bool   `yaml:"enable-gre" default:"false"`
 	} `yaml:"afpacket-sniffer"`
 	XdpLiveCapture struct {
 		Enable            bool   `yaml:"enable" default:"false"`

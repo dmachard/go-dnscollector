@@ -46,7 +46,7 @@
     - [`DNSMessage`](docs/collectors/collector_dnsmessage.md) to route DNS messages based on specific dns fields
     - [`TZSP`](docs/collectors/collector_tzsp.md) protocol support
   - *Live capture on a network interface*
-    - [`AF_PACKET`](docs/collectors/collector_afpacket.md) socket with BPF filter
+    - [`AF_PACKET`](docs/collectors/collector_afpacket.md) socket with BPF filter and GRE tunnel support
     - [`eBPF XDP`](docs/collectors/collector_xdp.md) ingress traffic
   - *Read text or binary files as input*
     - Read and tail on [`Plain text`](docs/collectors/collector_tail.md) files

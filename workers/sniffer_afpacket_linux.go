@@ -18,6 +18,7 @@ import (
 	"github.com/dmachard/go-netutils"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"golang.org/x/net/bpf"
 )
 
 type AfpacketSniffer struct {
@@ -66,7 +67,12 @@ func (w *AfpacketSniffer) Listen() error {
 		return err
 	}
 
-	filter, err := netutils.GetBpfFilterPort(w.GetConfig().Collectors.AfpacketLiveCapture.Port)
+	var filter []bpf.Instruction
+	if w.GetConfig().Collectors.AfpacketLiveCapture.GreSupport {
+		filter, err = netutils.GetBpfGreDnsFilterPort(w.GetConfig().Collectors.AfpacketLiveCapture.Port)
+	} else {
+		filter, err = netutils.GetBpfDnsFilterPort(w.GetConfig().Collectors.AfpacketLiveCapture.Port)
+	}
 	if err != nil {
 		return err
 	}
