@@ -1,11 +1,11 @@
 # Collector: Live Capture with AF_PACKET
 
-Raw DNS packets sniffer. Setting `CAP_NET_RAW` capabilities on executables allows you to run these
-program without having to run-it with the root user:
+Raw DNS packets sniffer. Setting `CAP_NET_RAW` capabilities on executables allows you to run these program without having to run-it with the root user:
 
 * IPv4, IPv6 support (fragmented packet ignored)
 * UDP and TCP transport (with tcp reassembly if needed)
 * BFP filtering
+* GRE tunnel support
 
 Capabilities:
 
@@ -21,6 +21,9 @@ Options:
 * `device` (str)
   > Interface name to sniff. If value is empty, bind on all interfaces.
 
+* `enable-gre` (bool)
+  > Enable GRE decoding protocol support
+
 * `enable-fragment-support` (bool)
   > Enable IP defrag support
 
@@ -35,6 +38,7 @@ Defaults:
   afpacket-sniffer:
     port: 53
     device: wlp2s0
+    enable-gre: false
     enable-defrag-ip: true
     chan-buffer-size: 0
 ```

@@ -8,7 +8,7 @@ GO_DNSTAP_PROTOBUF := 1.2.0
 GO_FRAMESTREAM := 1.0.1
 GO_CLIENTSYSLOG := 1.0.1
 GO_TOPMAP := 1.0.2
-GO_NETUTILS := 1.1.0
+GO_NETUTILS := 1.3.0
 
 BUILD_TIME := $(shell LANG=en_US date +"%F_%T_%z")
 COMMIT := $(shell git rev-parse --short HEAD)

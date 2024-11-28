@@ -109,8 +109,8 @@ github.com/dmachard/go-framestream v1.0.1 h1:/v93w0No5g+CTdwhlbiLbopvnKUdc9kDscK
 github.com/dmachard/go-framestream v1.0.1/go.mod h1:p0gyuQSA4IfiyyhSy2grFc1oR8Tk5ewNvTMcQHzcnGs=
 github.com/dmachard/go-logger v1.1.1 h1:H4mQAAyhZ6u1E8kFezz7o6PsDqhsdFbO5pZGnoNuRYI=
 github.com/dmachard/go-logger v1.1.1/go.mod h1:vg6cMQBmx+SgH45XsqEyqScXp9eJhS6yuvvJZOgBbvU=
-github.com/dmachard/go-netutils v1.1.0 h1:UXHrJgxwgv0NgOHZ5fVZlJZdpVrFT+usDwDwmiuzJJg=
-github.com/dmachard/go-netutils v1.1.0/go.mod h1:yKWf6Zgw6MQrXaxRzgsF0lSYJiQUgsvfEGmLqGd1yeM=
+github.com/dmachard/go-netutils v1.3.0 h1:KA6NRYvJ0wqqFWvWFsO7+I1I+GHFX4MJD00GIPOS0Bs=
+github.com/dmachard/go-netutils v1.3.0/go.mod h1:q7HROzGkcEONODNNAtxOtrUxVY/MACLAVzsvmyYAAMo=
 github.com/dmachard/go-powerdns-protobuf v1.3.0 h1:NlCNXNUukZjklzpvihRLMY40fDmLtYOsAkg48ozYOA0=
 github.com/dmachard/go-powerdns-protobuf v1.3.0/go.mod h1:KAQfdV6BE2gI19aRv3HNBQzzGGCnNFwgCWMg1o6TpH8=
 github.com/dmachard/go-topmap v1.0.2 h1:ph4qBu2qoiA6l5hrYjkyYFTFGHO/8/NE49IHME2u068=
@@ -532,8 +532,9 @@ github.com/stretchr/testify v1.7.2/go.mod h1:R6va5+xMeoiuVRoj+gSkQ7d3FALtqAAGI1F
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
-github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
+github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOfJA=
+github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/tinylib/msgp v1.2.4 h1:yLFeUGostXXSGW5vxfT5dXG/qzkn4schv2I7at5+hVU=
 github.com/tinylib/msgp v1.2.4/go.mod h1:ykjzy2wzgrlvpDCRc4LA8UXy6D8bzMSuAF3WD57Gok0=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
