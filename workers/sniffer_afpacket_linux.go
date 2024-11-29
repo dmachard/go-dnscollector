@@ -68,10 +68,14 @@ func (w *AfpacketSniffer) Listen() error {
 	}
 
 	var filter []bpf.Instruction
+	isEthernet := true
+	if w.GetConfig().Collectors.AfpacketLiveCapture.RawIPSupport {
+		isEthernet = false
+	}
+	filter, err = netutils.GetBpfDnsFilterPort(w.GetConfig().Collectors.AfpacketLiveCapture.Port, isEthernet)
+
 	if w.GetConfig().Collectors.AfpacketLiveCapture.GreSupport {
 		filter, err = netutils.GetBpfGreDnsFilterPort(w.GetConfig().Collectors.AfpacketLiveCapture.Port)
-	} else {
-		filter, err = netutils.GetBpfDnsFilterPort(w.GetConfig().Collectors.AfpacketLiveCapture.Port)
 	}
 	if err != nil {
 		return err
@@ -113,7 +117,12 @@ func (w *AfpacketSniffer) StartCollect() {
 	fragIP4Chan := make(chan gopacket.Packet)
 	fragIP6Chan := make(chan gopacket.Packet)
 
-	netDecoder := &netutils.NetDecoder{}
+	var netDecoder netutils.PacketDecoder
+	if w.GetConfig().Collectors.AfpacketLiveCapture.RawIPSupport {
+		netDecoder = &netutils.RawIPDecoder{}
+	} else {
+		netDecoder = &netutils.NetDecoder{}
+	}
 
 	// defrag ipv4
 	go netutils.IPDefragger(fragIP4Chan, udpChan, tcpChan, w.GetConfig().Collectors.AfpacketLiveCapture.Port)
