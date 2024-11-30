@@ -43,7 +43,6 @@ func TestDecodePayload_QueryHappy(t *testing.T) {
 
 	if dm.DNS.ID != 0x9e84 ||
 		dm.DNS.Opcode != 0 ||
-		dm.DNS.Rcode != RcodeToString(0) ||
 		dm.DNS.Flags.QR ||
 		dm.DNS.Flags.TC ||
 		dm.DNS.Flags.AA ||
@@ -72,7 +71,6 @@ func TestDecodePayload_QueryHappy(t *testing.T) {
 		len(dm.DNS.DNSRRs.Records) != 0 {
 		t.Errorf("Unexpected sections parsed")
 	}
-
 }
 func TestDecodePayload_QueryInvalid(t *testing.T) {
 	payload := []byte{
@@ -996,7 +994,6 @@ func TestDecodePayload_Truncated(t *testing.T) {
 	if dm.DNS.MalformedPacket != true {
 		t.Errorf("expected packet to be malformed")
 	}
-
 }
 
 // Dynamic query (UPDATE)
@@ -1084,5 +1081,39 @@ func TestDecodePayload_MDNSResponseWithNoQuestion(t *testing.T) {
 
 	if err = DecodePayload(&dm, &header, pkgconfig.GetDefaultConfig()); err != nil {
 		t.Error("expected no error on decode", err)
+	}
+}
+
+// Rcode should not be set on query
+func TestDecodePayload_Query_NoRcode(t *testing.T) {
+	payload := []byte{
+		// transaction ID
+		0xb1, 0x17,
+		// flags
+		0x01, 0x00,
+		// questions
+		0x00, 0x01,
+		// answer
+		0x00, 0x00,
+		// authority
+		0x00, 0x00,
+		// additional
+		0x00, 0x00,
+		// queries
+		0x00, 0x00, 0x06, 0x00, 0x01,
+	}
+
+	dm := DNSMessage{}
+	dm.Init()
+	dm.DNS.Payload = payload
+	dm.DNS.Length = len(payload)
+
+	// decode header and paylo
+	header, _ := DecodeDNS(payload)
+	DecodePayload(&dm, &header, pkgconfig.GetDefaultConfig())
+
+	// check the rcode
+	if dm.DNS.Rcode != "-" {
+		t.Errorf("invalid rcode: %s", dm.DNS.Rcode)
 	}
 }
