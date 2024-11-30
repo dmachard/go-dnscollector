@@ -372,10 +372,12 @@ func (w *PrometheusCountersSet) Record(dm dnsutils.DNSMessage) {
 		w.epsCounters.TotalQtypes[dm.DNS.Qtype]++
 	}
 
-	if _, exists := w.epsCounters.TotalRcodes[dm.DNS.Rcode]; !exists {
-		w.epsCounters.TotalRcodes[dm.DNS.Rcode] = 1
-	} else {
-		w.epsCounters.TotalRcodes[dm.DNS.Rcode]++
+	if dm.DNS.Rcode != "-" {
+		if _, exists := w.epsCounters.TotalRcodes[dm.DNS.Rcode]; !exists {
+			w.epsCounters.TotalRcodes[dm.DNS.Rcode] = 1
+		} else {
+			w.epsCounters.TotalRcodes[dm.DNS.Rcode]++
+		}
 	}
 
 	if _, exists := w.epsCounters.TotalOperations[dm.DNSTap.Operation]; !exists {
