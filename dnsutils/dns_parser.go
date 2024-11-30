@@ -163,7 +163,10 @@ func DecodePayload(dm *DNSMessage, header *DNSHeader, config *pkgconfig.Config) 
 	}
 
 	dm.DNS.ID = header.ID
-	dm.DNS.Rcode = RcodeToString(header.Rcode)
+	// set rcode only with response
+	if header.Qr == 1 {
+		dm.DNS.Rcode = RcodeToString(header.Rcode)
+	}
 	dm.DNS.Opcode = header.Opcode
 
 	// update dnstap operation if the opcode is equal to 5 (dns update)
