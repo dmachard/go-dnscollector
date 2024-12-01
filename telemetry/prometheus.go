@@ -44,6 +44,7 @@ type PrometheusCollector struct {
 	Record     chan WorkerStats
 	data       map[string]WorkerStats // To store the worker stats
 	stop       chan struct{}          // Channel to signal stopping
+	stopOnce   sync.Once
 	promPrefix string
 }
 
@@ -154,7 +155,10 @@ func (t *PrometheusCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (t *PrometheusCollector) Stop() {
-	close(t.stop) // Signal the stop channel to stop the goroutine
+	// only close one even if called several time
+	t.stopOnce.Do(func() {
+		close(t.stop) // Signal the stop channel to stop the goroutine
+	})
 }
 
 func InitTelemetryServer(config *pkgconfig.Config, logger *logger.Logger) (*http.Server, *PrometheusCollector, chan error) {
