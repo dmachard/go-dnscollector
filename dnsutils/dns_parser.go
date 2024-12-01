@@ -14,34 +14,113 @@ const DNSLen = 12
 const UNKNOWN = "UNKNOWN"
 
 var (
-	Class      = map[int]string{1: "IN", 3: "CH", 4: "HS", 254: "NONE", 255: "ANY"}
-	Rdatatypes = map[int]string{
-		0: "NONE", 1: "A", 2: "NS", 3: "MD",
-		4: "MF", 5: "CNAME", 6: "SOA", 7: "MB",
-		8: "MG", 9: "MR", 10: "NULL", 11: "WKS",
-		12: "PTR", 13: "HINFO", 14: "MINFO", 15: "MX",
-		16: "TXT", 17: "RP", 18: "AFSDB", 19: "X25",
-		20: "ISDN", 21: "RT", 22: "NSAP", 23: "NSAP_PTR",
-		24: "SIG", 25: "KEY", 26: "PX", 27: "GPOS",
-		28: "AAAA", 29: "LOC", 30: "NXT", 33: "SRV",
-		35: "NAPTR", 36: "KX", 37: "CERT", 38: "A6",
-		39: "DNAME", 41: "OPT", 42: "APL", 43: "DS",
-		44: "SSHFP", 45: "IPSECKEY", 46: "RRSIG", 47: "NSEC",
-		48: "DNSKEY", 49: "DHCID", 50: "NSEC3", 51: "NSEC3PARAM",
-		52: "TLSA", 53: "SMIMEA", 55: "HIP", 56: "NINFO",
-		59: "CDS", 60: "CDNSKEY", 61: "OPENPGPKEY", 62: "CSYNC",
-		64: "SVCB", 65: "HTTPS", 99: "SPF", 103: "UNSPEC",
-		108: "EUI48", 109: "EUI64", 249: "TKEY", 250: "TSIG",
-		251: "IXFR", 252: "AXFR", 253: "MAILB", 254: "MAILA",
-		255: "ANY", 256: "URI", 257: "CAA", 258: "AVC",
-		259: "AMTRELAY", 32768: "TA", 32769: "DLV",
+	Class = map[int]string{
+		1:   "IN",   // Internet
+		2:   "CS",   // CSNET (deprecated)
+		3:   "CH",   // CHAOS
+		4:   "HS",   // Hesiod
+		254: "NONE", // Used in dynamic update messages
+		255: "ANY",  // Wildcard match
 	}
+	Rdatatypes = map[int]string{
+		0:     "NONE",       // No resource record
+		1:     "A",          // Address record (IPv4)
+		2:     "NS",         // Authoritative name server
+		3:     "MD",         // Mail destination (obsolete)
+		4:     "MF",         // Mail forwarder (obsolete)
+		5:     "CNAME",      // Canonical name for an alias
+		6:     "SOA",        // Start of authority
+		7:     "MB",         // Mailbox domain name (experimental)
+		8:     "MG",         // Mail group member (experimental)
+		9:     "MR",         // Mail rename domain name (experimental)
+		10:    "NULL",       // Null record (experimental)
+		11:    "WKS",        // Well-known service description (obsolete)
+		12:    "PTR",        // Pointer record
+		13:    "HINFO",      // Host information
+		14:    "MINFO",      // Mailbox or mail list information
+		15:    "MX",         // Mail exchange
+		16:    "TXT",        // Text record
+		17:    "RP",         // Responsible person
+		18:    "AFSDB",      // AFS database location
+		19:    "X25",        // X.25 address
+		20:    "ISDN",       // ISDN address
+		21:    "RT",         // Route through
+		22:    "NSAP",       // Network service access point
+		23:    "NSAP_PTR",   // Reverse NSAP lookup (deprecated)
+		24:    "SIG",        // Signature (obsolete, replaced by RRSIG)
+		25:    "KEY",        // Key record (obsolete, replaced by DNSKEY)
+		26:    "PX",         // Pointer to X.400 mapping
+		27:    "GPOS",       // Geographical position (deprecated)
+		28:    "AAAA",       // IPv6 address
+		29:    "LOC",        // Location information
+		30:    "NXT",        // Next record (obsolete, replaced by NSEC)
+		33:    "SRV",        // Service locator
+		35:    "NAPTR",      // Naming authority pointer
+		36:    "KX",         // Key exchange
+		37:    "CERT",       // Certificate record
+		38:    "A6",         // IPv6 address (deprecated, replaced by AAAA)
+		39:    "DNAME",      // Delegation name
+		41:    "OPT",        // Option for EDNS
+		42:    "APL",        // Address prefix list
+		43:    "DS",         // Delegation signer
+		44:    "SSHFP",      // SSH fingerprint
+		45:    "IPSECKEY",   // IPsec key
+		46:    "RRSIG",      // Resource record signature
+		47:    "NSEC",       // Next secure record
+		48:    "DNSKEY",     // DNS key
+		49:    "DHCID",      // DHCP identifier
+		50:    "NSEC3",      // Next secure record version 3
+		51:    "NSEC3PARAM", // NSEC3 parameters
+		52:    "TLSA",       // TLS authentication
+		53:    "SMIMEA",     // S/MIME certificate association
+		55:    "HIP",        // Host identity protocol
+		56:    "NINFO",      // Zone information (unofficial)
+		59:    "CDS",        // Child DS
+		60:    "CDNSKEY",    // Child DNSKEY
+		61:    "OPENPGPKEY", // OpenPGP key
+		62:    "CSYNC",      // Child-to-parent synchronization
+		64:    "SVCB",       // Service binding
+		65:    "HTTPS",      // HTTPS binding
+		99:    "SPF",        // Sender policy framework (deprecated, use TXT)
+		103:   "UNSPEC",     // Unspecified (experimental)
+		108:   "EUI48",      // Ethernet 48-bit MAC
+		109:   "EUI64",      // Ethernet 64-bit MAC
+		249:   "TKEY",       // Transaction key
+		250:   "TSIG",       // Transaction signature
+		251:   "IXFR",       // Incremental zone transfer
+		252:   "AXFR",       // Full zone transfer
+		253:   "MAILB",      // Mailbox-related record (experimental)
+		254:   "MAILA",      // Mail agent-related record (experimental)
+		255:   "ANY",        // Wildcard match
+		256:   "URI",        // Uniform resource identifier
+		257:   "CAA",        // Certification authority authorization
+		258:   "AVC",        // Application visibility and control
+		259:   "AMTRELAY",   // Automatic multicast tunneling relay
+		32768: "TA",         // Trust anchor
+		32769: "DLV",        // DNSSEC lookaside validation
+	}
+
 	Rcodes = map[int]string{
-		0: "NOERROR", 1: "FORMERR", 2: "SERVFAIL", 3: "NXDOMAIN", 4: "NOTIMP",
-		5: "REFUSED", 6: "YXDOMAIN", 7: "YXRRSET", 8: "NXRRSET", 9: "NOTAUTH",
-		10: "NOTZONE", 11: "DSOTYPENI", 16: "BADSIG", 17: "BADKEY",
-		18: "BADTIME", 19: "BADMODE", 20: "BADNAME", 21: "BADALG",
-		22: "BADTRUNC", 23: "BADCOOKIE",
+		0:  "NOERROR",   // No error condition
+		1:  "FORMERR",   // Format error: query was not understood
+		2:  "SERVFAIL",  // Server failure: unable to process the query
+		3:  "NXDOMAIN",  // Non-existent domain: domain name does not exist
+		4:  "NOTIMP",    // Not implemented: query type not supported
+		5:  "REFUSED",   // Query refused by policy
+		6:  "YXDOMAIN",  // Name exists when it should not (YX: exists)
+		7:  "YXRRSET",   // RRset exists when it should not
+		8:  "NXRRSET",   // RRset does not exist
+		9:  "NOTAUTH",   // Not authorized for the zone
+		10: "NOTZONE",   // Name not in the zone
+		11: "DSOTYPENI", // DS query for unsupported type (DNS Stateful Operations)
+		16: "BADSIG",    // Bad signature (TSIG or SIG0)
+		17: "BADKEY",    // Bad key (TSIG or SIG0)
+		18: "BADTIME",   // Bad timestamp (TSIG)
+		19: "BADMODE",   // Bad TKEY mode
+		20: "BADNAME",   // Bad TKEY name
+		21: "BADALG",    // Bad algorithm
+		22: "BADTRUNC",  // Bad truncation of TSIG
+		23: "BADCOOKIE", // Bad server cookie
 	}
 )
 
@@ -163,18 +242,20 @@ func DecodePayload(dm *DNSMessage, header *DNSHeader, config *pkgconfig.Config) 
 	}
 
 	dm.DNS.ID = header.ID
-	// set rcode only with response
+	dm.DNS.Opcode = header.Opcode
+
+	// Set the RCODE value only if the message is a response (QR flag is set to 1).
 	if header.Qr == 1 {
 		dm.DNS.Rcode = RcodeToString(header.Rcode)
 	}
-	dm.DNS.Opcode = header.Opcode
 
-	// update dnstap operation if the opcode is equal to 5 (dns update)
-	if dm.DNS.Opcode == 5 && header.Qr == 1 {
+	// Handle DNS update (Opcode 5): set operation as UPDATE_QUERY
+	// or UPDATE_RESPONSE based on the QR flag.
+	if dm.DNS.Opcode == 5 {
 		dm.DNSTap.Operation = "UPDATE_QUERY"
-	}
-	if dm.DNS.Opcode == 5 && header.Qr == 0 {
-		dm.DNSTap.Operation = "UPDATE_RESPONSE"
+		if header.Qr == 1 {
+			dm.DNSTap.Operation = "UPDATE_RESPONSE"
+		}
 	}
 
 	if header.Qr == 1 {
