@@ -71,6 +71,6 @@ Finally a complete full example:
       atags:
         tags: [ "TXT:apple", "TXT:google" ]
     routing-policy:
-      dropped: [ outputfile ]
+      forward: [ outputfile ]
       default: [ console ]
 ```
