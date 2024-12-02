@@ -84,6 +84,7 @@ func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, 
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewLatencyTransform(config, logger, name, instance, nextWorkers)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewDNSGeoIPTransform(config, logger, name, instance, nextWorkers)})
 	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewRewriteTransform(config, logger, name, instance, nextWorkers)})
+	d.availableTransforms = append(d.availableTransforms, TransformEntry{NewNewDomainTrackerTransform(config, logger, name, instance, nextWorkers)})
 
 	d.Prepare()
 	return d
