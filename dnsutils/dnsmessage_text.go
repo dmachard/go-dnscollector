@@ -463,7 +463,7 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 				s.WriteByte('-')
 			}
 		case directive == "rd":
-			if flags.AD {
+			if flags.RD {
 				s.WriteString("RD")
 			} else {
 				s.WriteByte('-')
