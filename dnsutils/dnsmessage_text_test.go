@@ -193,6 +193,16 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 			expected: "TC AA RA AD",
 		},
 		{
+			format:   "rd",
+			dm:       DNSMessage{DNS: DNS{Flags: DNSFlags{RD: true}}},
+			expected: "RD",
+		},
+		{
+			format:   "tc aa ra ad rd",
+			dm:       DNSMessage{DNS: DNS{Flags: DNSFlags{TC: false, AA: false, RA: false, AD: false, RD: false}}},
+			expected: "- - - - -",
+		},
+		{
 			format:   "df tr",
 			dm:       DNSMessage{NetworkInfo: DNSNetInfo{IPDefragmented: true, TCPReassembled: true}},
 			expected: "DF TR",

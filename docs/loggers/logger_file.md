@@ -43,7 +43,7 @@ The File Logger allows you to log DNS traffic to a file in various formats, with
 
 * `text-format` (string)
   > output text format, please refer to the default text format to see all
-  > available directives, use this parameter if you want a specific format.
+  > available [text directives](../dnsconversions.md#text-format-inline), use this parameter if you want a specific format.
 
 * `jinja-format` (string)
   > jinja template, please refer [Jinja templating](../dnsconversions.md#jinja-templating) to see all available directives 
