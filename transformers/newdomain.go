@@ -1,7 +1,11 @@
 package transformers
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/dmachard/go-dnscollector/dnsutils"
@@ -57,23 +61,14 @@ func (ndt *NewDomainTracker) IsNewDomain(domain string) bool {
 // NewDomainTransform is the Transformer for DNS messages
 type NewDomainTrackerTransform struct {
 	GenericTransformer
-	domainTracker *NewDomainTracker
+	domainTracker    *NewDomainTracker
+	listDomainsRegex map[string]*regexp.Regexp
 }
 
 // NewNewDomainTransform creates a new instance of the transformer
 func NewNewDomainTrackerTransform(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, instance int, nextWorkers []chan dnsutils.DNSMessage) *NewDomainTrackerTransform {
 	t := &NewDomainTrackerTransform{GenericTransformer: NewTransformer(config, logger, "new-domain-tracker", name, instance, nextWorkers)}
-
-	// Initialize the domain tracker
-	ttl := time.Duration(config.NewDomainTracker.TTL) * time.Second
-	maxSize := config.NewDomainTracker.CacheSize
-	tracker, err := NewNewDomainTracker(ttl, maxSize, t.LogInfo, t.LogError)
-	if err != nil {
-		t.LogError("failed to initialize NewDomainTracker: %v", err)
-		return nil
-	}
-
-	t.domainTracker = tracker
+	t.listDomainsRegex = make(map[string]*regexp.Regexp)
 	return t
 }
 
@@ -88,9 +83,46 @@ func (t *NewDomainTrackerTransform) ReloadConfig(config *pkgconfig.ConfigTransfo
 func (t *NewDomainTrackerTransform) GetTransforms() ([]Subtransform, error) {
 	subtransforms := []Subtransform{}
 	if t.config.NewDomainTracker.Enable {
+		// init whitelist
+		if err := t.LoadWhiteDomainsList(); err != nil {
+			return nil, err
+		}
+
+		// Initialize the domain tracker
+		ttl := time.Duration(t.config.NewDomainTracker.TTL) * time.Second
+		maxSize := t.config.NewDomainTracker.CacheSize
+		tracker, err := NewNewDomainTracker(ttl, maxSize, t.LogInfo, t.LogError)
+		if err != nil {
+			return nil, err
+		}
+		t.domainTracker = tracker
+
 		subtransforms = append(subtransforms, Subtransform{name: "new-domain-tracker:detect", processFunc: t.trackNewDomain})
 	}
 	return subtransforms, nil
+}
+
+func (t *NewDomainTrackerTransform) LoadWhiteDomainsList() error {
+	// before to start, reset all maps
+	for key := range t.listDomainsRegex {
+		delete(t.listDomainsRegex, key)
+	}
+
+	if len(t.config.NewDomainTracker.WhiteDomainsFile) > 0 {
+		file, err := os.Open(t.config.NewDomainTracker.WhiteDomainsFile)
+		if err != nil {
+			return fmt.Errorf("unable to open regex list file: %w", err)
+		} else {
+
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				domain := strings.ToLower(scanner.Text())
+				t.listDomainsRegex[domain] = regexp.MustCompile(domain)
+			}
+			t.LogInfo("loaded with %d domains in the whitelist", len(t.listDomainsRegex))
+		}
+	}
+	return nil
 }
 
 // Process processes DNS messages and detects newly observed domains

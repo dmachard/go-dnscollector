@@ -96,9 +96,10 @@ type ConfigTransformers struct {
 		Identifiers map[string]interface{} `yaml:"identifiers,flow"`
 	} `yaml:"rewrite"`
 	NewDomainTracker struct {
-		Enable    bool `yaml:"enable" default:"false"`
-		TTL       int  `yaml:"ttl" default:"3600"`
-		CacheSize int  `yaml:"cache-size" default:"100000"`
+		Enable           bool   `yaml:"enable" default:"false"`
+		TTL              int    `yaml:"ttl" default:"3600"`
+		CacheSize        int    `yaml:"cache-size" default:"100000"`
+		WhiteDomainsFile string `yaml:"white-domains-file" default:""`
 	} `yaml:"new-domain-tracker"`
 }
 
