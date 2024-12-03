@@ -188,9 +188,14 @@ func TestDnsMessage_TextFormat_DefaultDirectives(t *testing.T) {
 			expected: "PKTERR",
 		},
 		{
-			format:   "tc aa ra ad",
-			dm:       DNSMessage{DNS: DNS{Flags: DNSFlags{TC: true, AA: true, RA: true, AD: true}}},
-			expected: "TC AA RA AD",
+			format:   "tc aa ra ad rd",
+			dm:       DNSMessage{DNS: DNS{Flags: DNSFlags{TC: true, AA: true, RA: true, AD: true, RD: true}}},
+			expected: "TC AA RA AD RD",
+		},
+		{
+			format:   "tc aa ra ad rd",
+			dm:       DNSMessage{DNS: DNS{Flags: DNSFlags{TC: false, AA: false, RA: false, AD: false, RD: false}}},
+			expected: "- - - - -",
 		},
 		{
 			format:   "df tr",

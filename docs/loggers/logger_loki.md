@@ -23,7 +23,7 @@ Options:
   > interval in second between before to retry to send batch
 
 * `text-format` (string)
-  > output text format, please refer to the default text format to see all available [directives](../configuration.md#custom-text-format), use this parameter if you want a specific format
+  > output text format, please refer to the default text format to see all available [text directives](../dnsconversions.md#text-format-inline), use this parameter if you want a specific format
 
 * `proxy-url` (string)
   > Proxy URL

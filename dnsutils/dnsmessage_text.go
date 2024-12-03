@@ -462,6 +462,12 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 			} else {
 				s.WriteByte('-')
 			}
+		case directive == "rd":
+			if flags.AD {
+				s.WriteString("RD")
+			} else {
+				s.WriteByte('-')
+			}
 		case directive == "ttl":
 			if len(an) > 0 {
 				s.WriteString(strconv.Itoa(an[0].TTL))
