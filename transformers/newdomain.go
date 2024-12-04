@@ -16,14 +16,15 @@ import (
 
 // NewDomainTracker transformer to detect newly observed domains
 type NewDomainTracker struct {
-	ttl      time.Duration // Time window to consider a domain as "new"
-	cache    *lru.Cache    // LRU Cache to store observed domains
-	logInfo  func(msg string, v ...interface{})
-	logError func(msg string, v ...interface{})
+	ttl       time.Duration             // Time window to consider a domain as "new"
+	cache     *lru.Cache                // LRU Cache to store observed domains
+	whitelist map[string]*regexp.Regexp // Whitelisted domains
+	logInfo   func(msg string, v ...interface{})
+	logError  func(msg string, v ...interface{})
 }
 
 // NewNewDomainTracker initializes the NewDomainTracker transformer
-func NewNewDomainTracker(ttl time.Duration, maxSize int, logInfo, logError func(msg string, v ...interface{})) (*NewDomainTracker, error) {
+func NewNewDomainTracker(ttl time.Duration, maxSize int, whitelist map[string]*regexp.Regexp, logInfo, logError func(msg string, v ...interface{})) (*NewDomainTracker, error) {
 	cache, err := lru.New(maxSize)
 	if err != nil {
 		return nil, err
@@ -34,20 +35,38 @@ func NewNewDomainTracker(ttl time.Duration, maxSize int, logInfo, logError func(
 	}
 
 	return &NewDomainTracker{
-		ttl:      ttl,
-		cache:    cache,
-		logInfo:  logInfo,
-		logError: logError,
+		ttl:       ttl,
+		cache:     cache,
+		whitelist: whitelist,
+		logInfo:   logInfo,
+		logError:  logError,
 	}, nil
+}
+
+// isWhitelisted checks if a domain or its subdomain is in the whitelist
+func (ndt *NewDomainTracker) isWhitelisted(domain string) bool {
+	for _, d := range ndt.whitelist {
+		if d.MatchString(domain) {
+			return true
+		}
+	}
+	return false
 }
 
 // IsNewDomain checks if the domain is newly observed
 func (ndt *NewDomainTracker) IsNewDomain(domain string) bool {
+	// Check if the domain is whitelisted
+	if ndt.isWhitelisted(domain) {
+		return false
+	}
+
 	now := time.Now()
 
 	// Check if the domain exists in the cache
 	if lastSeen, exists := ndt.cache.Get(domain); exists {
+		fmt.Println("exists")
 		if now.Sub(lastSeen.(time.Time)) < ndt.ttl {
+			fmt.Println(now.Sub(lastSeen.(time.Time)), ndt.ttl)
 			// Domain was recently seen, not new
 			return false
 		}
@@ -91,7 +110,7 @@ func (t *NewDomainTrackerTransform) GetTransforms() ([]Subtransform, error) {
 		// Initialize the domain tracker
 		ttl := time.Duration(t.config.NewDomainTracker.TTL) * time.Second
 		maxSize := t.config.NewDomainTracker.CacheSize
-		tracker, err := NewNewDomainTracker(ttl, maxSize, t.LogInfo, t.LogError)
+		tracker, err := NewNewDomainTracker(ttl, maxSize, t.listDomainsRegex, t.LogInfo, t.LogError)
 		if err != nil {
 			return nil, err
 		}

@@ -108,7 +108,7 @@ func (p *Transforms) Prepare() error {
 	for _, transform := range p.availableTransforms {
 		subtransforms, err := transform.GetTransforms()
 		if err != nil {
-			p.LogError("error on init subtransforms:", err)
+			p.LogError("error on init subtransforms: %v", err)
 			continue
 		}
 		for _, subtransform := range subtransforms {

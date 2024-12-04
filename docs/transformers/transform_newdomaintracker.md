@@ -25,11 +25,16 @@ The **New Domain Tracker** transformer identifies domains that are newly observe
 * `cache-size` (integer)
   > Maximum number of domains to track
 
+* `white-domains-file` (string)
+  > path file to domain white list, domains list can be a partial domain name with regexp expression
+
+
 ```yaml
 transforms:
   new-domain-tracker:
     ttl: 3600 
     cache-size: 100000
+    white-domains-file: ""
 ```
 
 ## Cache
@@ -37,6 +42,25 @@ transforms:
 The New Domain Tracker uses an **LRU Cache** to manage memory consumption efficiently. You can configure the maximum number of domains stored in the cache using the max_size parameter. Once the cache reaches its maximum size, the least recently used entries will be removed to make room for new ones.
 The LRU Cache ensures finite memory usage but may cause some domains to be forgotten if the cache size is too small.
 
+
+## Whitelist
+
+Example of configuration to load a whitelist of domains to ignore.
+
+```yaml
+transforms:
+  new-domain-tracker:
+    ttl: 3600 
+    cache-size: 100000
+    white-domains-file: /tmp/whitelist_domain.txt
+```
+
+Example of content for the file `/tmp/whitelist_domain.txt`
+
+```
+(mail|wwww).google.com
+github.com
+```
 
 ## Persistence
 
