@@ -52,13 +52,14 @@ The text format can be customized using the following directives.
 - `ttl`: answer ttl, only the first one
 - `answer`: rdata answer, only the first one, prefer to use the JSON format if you wamt all answers
 - `malformed`: malformed dns packet, integer value 1/0
-- `qr`: query or reply flag, string value Q/R
-- `tc`: flag truncated response
-- `aa`: flag authoritative answer
-- `ra`: flag recursion available
-- `ad`: flag authenticated data
-- `df`: flag when ip defragmented occured
-- `tr`: flag when tcp reassembled occured
+- `qr`: Query or reply flag, indicating the type of message. Possible values: `Q` (query) or `R` (reply).
+- `tc`: Truncated response flag, indicates whether the response was truncated. Value is `TC` for enabled, `-` for disabled.
+- `aa`: Authoritative answer flag, indicates if the answer comes from an authoritative source. Value is `AA` for enabled, `-` for disabled.
+- `ra`: Recursion available flag, indicates if recursion is supported by the server. Value is `RA` for enabled, `-` for disabled.
+- `rd`: Recursion desired flag, indicates if recursion was requested. Value is `RD` for enabled, `-` for disabled.
+- `ad`: Authenticated data flag, indicates that the response has been verified. Value is `AD` for enabled, `-` for disabled.
+- `df`: Defragmentation flag, indicates that IP defragmentation occurred. Value is `DF` for enabled, `-` for disabled.
+- `tr`: TCP reassembly flag, indicates that TCP reassembly occurred. Value is `TR` for enabled, `-` for disabled.
 - `edns-csubnet`: display client subnet info
 
 The default text format can be set in the global configuration or individually for each logger. Here’s the default format:
