@@ -21,6 +21,12 @@ func TestNewDomainTracker(t *testing.T) {
 	// init subproccesor
 	tracker := NewNewDomainTrackerTransform(config, logger.New(false), "test", 0, outChans)
 
+	// init transforms
+	_, err := tracker.GetTransforms()
+	if err != nil {
+		t.Error("fail to init transform", err)
+	}
+
 	// first send
 	dm := dnsutils.GetFakeDNSMessage()
 	if result, _ := tracker.trackNewDomain(&dm); result != ReturnKeep {
