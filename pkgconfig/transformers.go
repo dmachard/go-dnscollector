@@ -100,6 +100,7 @@ type ConfigTransformers struct {
 		TTL              int    `yaml:"ttl" default:"3600"`
 		CacheSize        int    `yaml:"cache-size" default:"100000"`
 		WhiteDomainsFile string `yaml:"white-domains-file" default:""`
+		PersistenceFile  string `yaml:"persistence-file" default:""`
 	} `yaml:"new-domain-tracker"`
 }
 

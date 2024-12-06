@@ -6,7 +6,6 @@ The **New Domain Tracker** transformer identifies domains that are newly observe
 
 - **Configurable Time Window**: Define how long a domain is considered new.
 - **LRU-based Memory Management**: Ensures efficient memory usage with a finite cache size.
-
 - **Persistence**: Optionally save the domain cache to disk for continuity after restarts.
 - **Whitelist Support**: Exclude specific domains or patterns from detection.
 
@@ -35,6 +34,7 @@ transforms:
     ttl: 3600 
     cache-size: 100000
     white-domains-file: ""
+    persistence-file: ""
 ```
 
 ## Cache
@@ -50,8 +50,6 @@ Example of configuration to load a whitelist of domains to ignore.
 ```yaml
 transforms:
   new-domain-tracker:
-    ttl: 3600 
-    cache-size: 100000
     white-domains-file: /tmp/whitelist_domain.txt
 ```
 
@@ -64,5 +62,11 @@ github.com
 
 ## Persistence
 
-To ensure continuity across application restarts, you can enable the persistence feature by specifying a file path (persistence). The transformer will save the domain cache to this file and reload it on startup.
+To ensure continuity across application restarts, you can enable the persistence feature by specifying a file path (persistence). 
+The transformer will save the domain cache to this file and reload it on startup.
 
+```yaml
+transforms:
+  new-domain-tracker:
+    persistence-file: /tmp/nod-state.json
+```

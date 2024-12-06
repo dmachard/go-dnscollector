@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	ReturnKeep = 1
-	ReturnDrop = 2
+	ReturnError = 0
+	ReturnKeep  = 1
+	ReturnDrop  = 2
 )
 
 type Subtransform struct {
@@ -63,8 +64,9 @@ type Transforms struct {
 	name     string
 	instance int
 
-	availableTransforms []TransformEntry
-	activeTransforms    []func(dm *dnsutils.DNSMessage) (int, error)
+	availableTransforms     []TransformEntry
+	activeTransforms        []TransformEntry
+	activeProcessTransforms []func(dm *dnsutils.DNSMessage) (int, error)
 }
 
 func NewTransforms(config *pkgconfig.ConfigTransformers, logger *logger.Logger, name string, nextWorkers []chan dnsutils.DNSMessage, instance int) Transforms {
@@ -102,6 +104,7 @@ func (p *Transforms) ReloadConfig(config *pkgconfig.ConfigTransformers) {
 
 func (p *Transforms) Prepare() error {
 	// clean the slice
+	p.activeProcessTransforms = p.activeProcessTransforms[:0]
 	p.activeTransforms = p.activeTransforms[:0]
 	tranformsList := []string{}
 
@@ -111,8 +114,12 @@ func (p *Transforms) Prepare() error {
 			p.LogError("error on init subtransforms: %v", err)
 			continue
 		}
+		if len(subtransforms) > 0 {
+			p.activeTransforms = append(p.activeTransforms, transform)
+		}
 		for _, subtransform := range subtransforms {
-			p.activeTransforms = append(p.activeTransforms, subtransform.processFunc)
+			p.activeProcessTransforms = append(p.activeProcessTransforms, subtransform.processFunc)
+
 			tranformsList = append(tranformsList, subtransform.name)
 		}
 	}
@@ -124,7 +131,7 @@ func (p *Transforms) Prepare() error {
 }
 
 func (p *Transforms) Reset() {
-	for _, transform := range p.availableTransforms {
+	for _, transform := range p.activeTransforms {
 		transform.Reset()
 	}
 }
@@ -139,7 +146,7 @@ func (p *Transforms) LogError(msg string, v ...interface{}) {
 }
 
 func (p *Transforms) ProcessMessage(dm *dnsutils.DNSMessage) (int, error) {
-	for _, transform := range p.activeTransforms {
+	for _, transform := range p.activeProcessTransforms {
 		if result, err := transform(dm); err != nil {
 			return ReturnKeep, fmt.Errorf("error on transform processing: %v", err.Error())
 		} else if result == ReturnDrop {

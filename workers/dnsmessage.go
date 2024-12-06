@@ -182,6 +182,7 @@ func (w *DNSMessage) StartCollect() {
 	for {
 		select {
 		case <-w.OnStop():
+			subprocessors.Reset()
 			return
 
 		// save the new config
