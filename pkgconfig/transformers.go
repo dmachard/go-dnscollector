@@ -95,6 +95,13 @@ type ConfigTransformers struct {
 		Enable      bool                   `yaml:"enable" default:"false"`
 		Identifiers map[string]interface{} `yaml:"identifiers,flow"`
 	} `yaml:"rewrite"`
+	NewDomainTracker struct {
+		Enable           bool   `yaml:"enable" default:"false"`
+		TTL              int    `yaml:"ttl" default:"3600"`
+		CacheSize        int    `yaml:"cache-size" default:"100000"`
+		WhiteDomainsFile string `yaml:"white-domains-file" default:""`
+		PersistenceFile  string `yaml:"persistence-file" default:""`
+	} `yaml:"new-domain-tracker"`
 }
 
 func (c *ConfigTransformers) SetDefault() {
