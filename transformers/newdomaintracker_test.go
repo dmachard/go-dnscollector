@@ -75,39 +75,41 @@ func TestNewDomainTracker_Whitelist(t *testing.T) {
 	}
 }
 
-// func TestNewDomainTracker_LRUCacheFull(t *testing.T) {
-// 	// config
-// 	config := pkgconfig.GetFakeConfigTransformers()
-// 	config.NewDomainTracker.Enable = true
-// 	config.NewDomainTracker.TTL = 2
-// 	config.NewDomainTracker.CacheSize = 1
+func TestNewDomainTracker_LRUCacheFull(t *testing.T) {
+	// config
+	config := pkgconfig.GetFakeConfigTransformers()
+	config.NewDomainTracker.Enable = true
+	config.NewDomainTracker.TTL = 2
+	config.NewDomainTracker.CacheSize = 1
 
-// 	outChans := []chan dnsutils.DNSMessage{}
+	outChans := []chan dnsutils.DNSMessage{}
 
-// 	// init subproccesor
-// 	tracker := NewNewDomainTrackerTransform(config, logger.New(false), "test", 0, outChans)
+	// init subproccesor
+	tracker := NewNewDomainTrackerTransform(config, logger.New(false), "test", 0, outChans)
 
-// 	// init transforms
-// 	_, err := tracker.GetTransforms()
-// 	if err != nil {
-// 		t.Error("fail to init transform", err)
-// 	}
+	// init transforms
+	_, err := tracker.GetTransforms()
+	if err != nil {
+		t.Error("fail to init transform", err)
+	}
 
-// 	// first send
-// 	dm := dnsutils.GetFakeDNSMessage()
-// 	if result, _ := tracker.trackNewDomain(&dm); result != ReturnKeep {
-// 		t.Errorf("This domain should be new!")
-// 	}
+	// Send the first domain
+	dm := dnsutils.GetFakeDNSMessage()
+	if result, _ := tracker.trackNewDomain(&dm); result != ReturnKeep {
+		t.Errorf("This domain should be new!")
+	}
 
-// 	if result, _ := tracker.trackNewDomain(&dm); result != ReturnError {
-// 		t.Errorf("LRU Full")
-// 	}
+	// Send the same domain again (should return an error because cache is full)
+	result, _ := tracker.trackNewDomain(&dm)
+	if result != ReturnError {
+		t.Errorf("Cache full check failed, expected ReturnError")
+	}
 
-// 	// wait ttl for expiration
-// 	time.Sleep(3 * time.Second)
+	// Wait for TTL expiration
+	time.Sleep(4 * time.Second)
 
-// 	// recheck
-// 	if result, _ := tracker.trackNewDomain(&dm); result != ReturnKeep {
-// 		t.Errorf("recheck, this domain should be new!!")
-// 	}
-// }
+	// Retry the domain after TTL expiration (should be considered new again)
+	if result, _ := tracker.trackNewDomain(&dm); result != ReturnKeep {
+		t.Errorf("recheck, this domain should be new!!")
+	}
+}
