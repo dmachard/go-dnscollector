@@ -25,7 +25,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/dskit v0.0.0-20240905221822-931a021fb06b
 	github.com/grafana/loki/v3 v3.2.1
-	github.com/hashicorp/golang-lru v0.6.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/influxdb-client-go v1.4.0
@@ -39,7 +38,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tinylib/msgp v1.2.4
 	golang.org/x/net v0.31.0
-	golang.org/x/sys v0.27.0
+	golang.org/x/sys v0.28.0
 	google.golang.org/protobuf v1.35.2
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -93,6 +92,7 @@ require (
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.6 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
+	github.com/hashicorp/golang-lru v0.6.0 // indirect
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
 	github.com/huandu/xstrings v1.3.3 // indirect
