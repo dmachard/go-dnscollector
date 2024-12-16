@@ -148,7 +148,14 @@ func (t *ReducerTransform) repetitiveTrafficDetector(dm *dnsutils.DNSMessage) (i
 	dmValue := reflect.ValueOf(dm).Elem() // Get the struct value of the DNSMessage
 	for _, field := range t.config.Reducer.UniqueFields {
 		if value, found := dnsutils.GetFieldByJSONTag(dmValue, field); found {
-			t.strBuilder.WriteString(fmt.Sprintf("%v", value.Interface())) // Append field value
+			// Check if the field's kind is either int or string
+			switch value.Kind() {
+			case reflect.Int, reflect.String:
+				t.strBuilder.WriteString(fmt.Sprintf("%v", value.Interface())) // Append field value
+			default:
+				// Skip unsupported types
+				continue
+			}
 		}
 	}
 

@@ -24,7 +24,8 @@ Options:
   > Interval in seconds to aggregate and process the traffic.
 
 * `unique-fields` (array of strings)  
-  > Define custom fields for uniqueness matching. This allows greater flexibility in detecting repetitive traffic.
+  > Define custom fields for uniqueness matching (limited to string and integer values). 
+  > This allows greater flexibility in detecting repetitive traffic.
   > Complete list of [fields](../dnsconversions.md#json-encoding) available.
 
 Default values:
@@ -39,6 +40,7 @@ transforms:
     - dnstap.identity
     - dnstap.operation
     - network.query-ip
+    - network.response-ip
     - dns.qname
     - dns.qtype
 ```
