@@ -22,7 +22,7 @@ func (dm *DNSMessage) Matching(matching map[string]interface{}) (error, bool) {
 	var isMatch = true
 
 	for nestedKeys, value := range matching {
-		realValue, found := getFieldByJSONTag(dmValue, nestedKeys)
+		realValue, found := GetFieldByJSONTag(dmValue, nestedKeys)
 		if !found {
 			return nil, false
 		}
@@ -429,7 +429,7 @@ func matchUserPattern(realValue, expectedValue reflect.Value) (bool, error) {
 }
 
 // getFieldByJSONTag retrieves a field value from a struct based on JSON tags.
-func getFieldByJSONTag(value reflect.Value, nestedKeys string) (reflect.Value, bool) {
+func GetFieldByJSONTag(value reflect.Value, nestedKeys string) (reflect.Value, bool) {
 	listKeys := strings.SplitN(nestedKeys, ".", 2)
 	jsonKey := listKeys[0]
 	var remainingKeys string
@@ -464,18 +464,18 @@ func getFieldByJSONTag(value reflect.Value, nestedKeys string) (reflect.Value, b
 			// Recurse into structs or handle slices
 			switch fieldValue.Kind() {
 			case reflect.Struct:
-				return getFieldByJSONTag(fieldValue, remainingKeys)
+				return GetFieldByJSONTag(fieldValue, remainingKeys)
 			case reflect.Slice:
 				if sliceElem, leftKey, found := getSliceElement(fieldValue, remainingKeys); found {
 					// Handle the slice element based on its kind
 					switch sliceElem.Kind() {
 					case reflect.Struct:
-						return getFieldByJSONTag(sliceElem, leftKey)
+						return GetFieldByJSONTag(sliceElem, leftKey)
 					case reflect.Slice, reflect.Array:
 						var result []interface{}
 						for i := 0; i < sliceElem.Len(); i++ {
 							if subElem := sliceElem.Index(i); subElem.Kind() == reflect.Struct {
-								if nestedValue, found := getFieldByJSONTag(subElem, leftKey); found {
+								if nestedValue, found := GetFieldByJSONTag(subElem, leftKey); found {
 									result = append(result, nestedValue.Interface())
 								}
 							} else {

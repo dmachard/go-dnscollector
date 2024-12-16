@@ -2,6 +2,8 @@ package transformers
 
 import (
 	"container/list"
+	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -133,9 +135,8 @@ func (t *ReducerTransform) repetitiveTrafficDetector(dm *dnsutils.DNSMessage) (i
 	}
 
 	t.strBuilder.Reset()
-	t.strBuilder.WriteString(dm.DNSTap.Identity)
-	t.strBuilder.WriteString(dm.DNSTap.Operation)
-	t.strBuilder.WriteString(dm.NetworkInfo.QueryIP)
+
+	// update qname ?
 	if t.config.Reducer.QnamePlusOne {
 		qname := strings.ToLower(dm.DNS.Qname)
 		qname = strings.TrimSuffix(qname, ".")
@@ -143,8 +144,14 @@ func (t *ReducerTransform) repetitiveTrafficDetector(dm *dnsutils.DNSMessage) (i
 			dm.DNS.Qname = etld
 		}
 	}
-	t.strBuilder.WriteString(dm.DNS.Qname)
-	t.strBuilder.WriteString(dm.DNS.Qtype)
+
+	dmValue := reflect.ValueOf(dm).Elem() // Get the struct value of the DNSMessage
+	for _, field := range t.config.Reducer.UniqueFields {
+		if value, found := dnsutils.GetFieldByJSONTag(dmValue, field); found {
+			t.strBuilder.WriteString(fmt.Sprintf("%v", value.Interface())) // Append field value
+		}
+	}
+
 	dmTag := t.strBuilder.String()
 
 	dmCopy := *dm
