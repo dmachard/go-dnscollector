@@ -9,7 +9,7 @@ The following criteria can be configured for detecting repetitions (default one)
 - Server identity
 - Operation
 - Qname or Qname+1
-- Query IP
+- Query IP and Response IP
 - Qtype
 
 Options:
