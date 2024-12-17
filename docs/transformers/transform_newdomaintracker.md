@@ -27,6 +27,8 @@ The **New Domain Tracker** transformer identifies domains that are newly observe
 * `white-domains-file` (string)
   > path file to domain white list, domains list can be a partial domain name with regexp expression
 
+* `persistence-file` (string)
+  > enable the persistence feature by specifying a file path
 
 ```yaml
 transforms:

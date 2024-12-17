@@ -2,26 +2,31 @@
 # Transformer: Traffic Reducer
 
 Use this transformer to detect repetitive traffic.
-A query or reply is repeated when the following criterias are the same.
+A query or reply is considered repeated  when the specified criteria match.
 
-The following criterias are used:
+The following criteria can be configured for detecting repetitions (default one):
 
-- server identity
-- operation
-- qname or qname+1
-- query ip
-- qtype
+- Server identity
+- Operation
+- Qname or Qname+1
+- Query IP and Response IP
+- Qtype
 
 Options:
 
 * `repetitive-traffic-detector` (boolean)
-  > detect repetitive traffic
+  > Detect repetitive traffic
 
 * `qname-plus-one` (boolean)
-  > use qname+1 instead of the complete one
+  > Use qname+1 instead of the full Qname for matching.
 
 * `watch-interval` (integer)
-  > watch interval in seconds
+  > Interval in seconds to aggregate and process the traffic.
+
+* `unique-fields` (array of strings)  
+  > Define custom fields for uniqueness matching (limited to string and integer values). 
+  > This allows greater flexibility in detecting repetitive traffic.
+  > Complete list of [fields](../dnsconversions.md#json-encoding) available.
 
 Default values:
 
@@ -30,13 +35,20 @@ transforms:
   reducer:
     repetitive-traffic-detector: true
     qname-plus-one: false
-    watch-interval: 5
+    watch-interval: 2
+    unique-fields:
+    - dnstap.identity
+    - dnstap.operation
+    - network.query-ip
+    - network.response-ip
+    - dns.qname
+    - dns.qtype
 ```
 
-Specific text directive(s) available for the text format:
+Specific directives available for the text output format:
 
 * `reducer-occurrences`: display the number of detected duplication
-* `cumulative-length`: sum of the length of each occurrences
+* `cumulative-length`: sums the lengths of all occurrences.
 
 When the feature is enabled, the following json field are populated in your DNS message:
 

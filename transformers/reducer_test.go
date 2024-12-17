@@ -81,7 +81,7 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 		dnsMessagesIn  []dnsutils.DNSMessage
 	}{
 		{
-			name: "norepeat",
+			name: "no_reduce",
 			dnsMessagesIn: []dnsutils.DNSMessage{
 				{
 					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY"},
@@ -104,17 +104,17 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 			},
 		},
 		{
-			name: "reduce",
+			name: "reduce_default_unique_fields",
 			dnsMessagesIn: []dnsutils.DNSMessage{
 				{
-					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY"},
+					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY", Identity: "test"},
 					DNS:         dnsutils.DNS{Qname: "hello.world", Qtype: "A"},
-					NetworkInfo: dnsutils.DNSNetInfo{QueryIP: "127.0.0.1"},
+					NetworkInfo: dnsutils.DNSNetInfo{QueryIP: "127.0.0.1", ResponseIP: "8.8.8.8"},
 				},
 				{
-					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY"},
+					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY", Identity: "test"},
 					DNS:         dnsutils.DNS{Qname: "hello.world", Qtype: "A"},
-					NetworkInfo: dnsutils.DNSNetInfo{QueryIP: "127.0.0.1"},
+					NetworkInfo: dnsutils.DNSNetInfo{QueryIP: "127.0.0.1", ResponseIP: "8.8.8.8"},
 				},
 			},
 			dnsMessagesOut: []dnsutils.DNSMessage{
@@ -124,7 +124,30 @@ func TestReducer_RepetitiveTrafficDetector(t *testing.T) {
 			},
 		},
 		{
-			name: "norepeat_qtype",
+			name: "no_reduce_responseip_different",
+			dnsMessagesIn: []dnsutils.DNSMessage{
+				{
+					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY"},
+					DNS:         dnsutils.DNS{Qname: "hello.world", Qtype: "A"},
+					NetworkInfo: dnsutils.DNSNetInfo{QueryIP: "127.0.0.1", ResponseIP: "1.1.1.1"},
+				},
+				{
+					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY"},
+					DNS:         dnsutils.DNS{Qname: "hello.world", Qtype: "A"},
+					NetworkInfo: dnsutils.DNSNetInfo{QueryIP: "127.0.0.1", ResponseIP: "8.8.8.8"},
+				},
+			},
+			dnsMessagesOut: []dnsutils.DNSMessage{
+				{
+					Reducer: &dnsutils.TransformReducer{Occurrences: 1},
+				},
+				{
+					Reducer: &dnsutils.TransformReducer{Occurrences: 1},
+				},
+			},
+		},
+		{
+			name: "no_reduce_qtype_different",
 			dnsMessagesIn: []dnsutils.DNSMessage{
 				{
 					DNSTap:      dnsutils.DNSTap{Operation: "CLIENT_QUERY"},
