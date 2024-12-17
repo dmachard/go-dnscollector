@@ -41,7 +41,7 @@ type ConfigTransformers struct {
 		Enable                    bool     `yaml:"enable" default:"false"`
 		RepetitiveTrafficDetector bool     `yaml:"repetitive-traffic-detector" default:"false"`
 		QnamePlusOne              bool     `yaml:"qname-plus-one" default:"false"`
-		WatchInterval             int      `yaml:"watch-interval" default:"5"`
+		WatchInterval             int      `yaml:"watch-interval" default:"2"`
 		UniqueFields              []string `yaml:"unique-fields" default:"[\"dnstap.identity\", \"dnstap.operation\", \"network.query-ip\", \"network.response-ip\",  \"dns.qname\", \"dns.qtype\"]"`
 	} `yaml:"reducer"`
 	Filtering struct {

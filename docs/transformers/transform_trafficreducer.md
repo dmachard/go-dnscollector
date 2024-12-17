@@ -35,7 +35,7 @@ transforms:
   reducer:
     repetitive-traffic-detector: true
     qname-plus-one: false
-    watch-interval: 5
+    watch-interval: 2
     unique-fields:
     - dnstap.identity
     - dnstap.operation
