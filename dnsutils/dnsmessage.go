@@ -122,8 +122,8 @@ type PowerDNS struct {
 	AppliedPolicyType     string            `json:"applied-policy-type"`
 	Metadata              map[string]string `json:"metadata"`
 	HTTPVersion           string            `json:"http-version"`
-	MessageId             string            `json:"message-id"`
-	InitialRequestorId    string            `json:"initial-requestor-id"`
+	MessageID             string            `json:"message-id"`
+	InitialRequestorID    string            `json:"initial-requestor-id"`
 }
 
 type TransformDNSGeo struct {

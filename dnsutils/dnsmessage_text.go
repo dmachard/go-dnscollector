@@ -103,14 +103,14 @@ func (dm *DNSMessage) handlePdnsDirectives(directive string, s *strings.Builder)
 				s.WriteString("-")
 			}
 		case directive == "powerdns-message-id":
-			if len(dm.PowerDNS.MessageId) > 0 {
-				s.WriteString(dm.PowerDNS.MessageId)
+			if len(dm.PowerDNS.MessageID) > 0 {
+				s.WriteString(dm.PowerDNS.MessageID)
 			} else {
 				s.WriteString("-")
 			}
 		case directive == "powerdns-initial-requestor-id":
-			if len(dm.PowerDNS.InitialRequestorId) > 0 {
-				s.WriteString(dm.PowerDNS.InitialRequestorId)
+			if len(dm.PowerDNS.InitialRequestorID) > 0 {
+				s.WriteString(dm.PowerDNS.InitialRequestorID)
 			} else {
 				s.WriteString("-")
 			}

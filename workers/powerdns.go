@@ -359,8 +359,8 @@ func (w *PdnsProcessor) StartCollect() {
 			}
 
 			// get id
-			pdns.MessageId = hex.EncodeToString(pbdm.MessageId)
-			pdns.InitialRequestorId = hex.EncodeToString(pbdm.InitialRequestId)
+			pdns.MessageID = hex.EncodeToString(pbdm.MessageId)
+			pdns.InitialRequestorID = hex.EncodeToString(pbdm.InitialRequestId)
 
 			// finally set pdns to dns message
 			dm.PowerDNS = &pdns

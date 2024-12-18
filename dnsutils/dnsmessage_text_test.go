@@ -473,13 +473,13 @@ func TestDnsMessage_TextFormat_Directives_Pdns(t *testing.T) {
 		{
 			name:     "message_id",
 			format:   "powerdns-message-id",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{MessageId: "27c3e94ad6284eec9a50cfc5bd7384d6"}},
+			dm:       DNSMessage{PowerDNS: &PowerDNS{MessageID: "27c3e94ad6284eec9a50cfc5bd7384d6"}},
 			expected: "27c3e94ad6284eec9a50cfc5bd7384d6",
 		},
 		{
 			name:     "initial_requestor_id",
 			format:   "powerdns-initial-requester-id",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{InitialRequestorId: "5e006236c8a74f7eafc6af126e6d0689"}},
+			dm:       DNSMessage{PowerDNS: &PowerDNS{InitialRequestorID: "5e006236c8a74f7eafc6af126e6d0689"}},
 			expected: "5e006236c8a74f7eafc6af126e6d0689",
 		},
 	}
