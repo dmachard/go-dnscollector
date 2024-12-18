@@ -122,6 +122,39 @@ addCacheHitResponseAction(AllRule(), RemoteLogResponseAction(rl, nil, true, {ser
 
 Example to enable logging in your **pdns-recursor**
 
+Since version > 5
+
+```yaml
+recursor:
+  include_dir: /etc/powerdns/recursor.d
+
+incoming:
+  listen:
+  - 0.0.0.0:53
+  - '[::]:53'
+  allow_from:
+  - 0.0.0.0/0
+  - ::/0
+
+logging:
+  protobuf_servers:
+  - servers: [192.168.1.16:6000]
+    logQueries: true
+    logResponses: true
+
+  outgoing_protobuf_servers:
+  - servers: [192.168.1.16:6000]
+    logQueries: true
+    logResponses: true
+
+  dnstap_framestream_servers:
+    - servers: [192.168.1.16:6000]
+      logQueries: true
+      logResponses: true
+```
+
+Old configuration style
+
 */etc/pdns-recursor/recursor.conf*
 
 ```lua
