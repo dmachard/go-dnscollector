@@ -478,7 +478,7 @@ func TestDnsMessage_TextFormat_Directives_Pdns(t *testing.T) {
 		},
 		{
 			name:     "initial_requestor_id",
-			format:   "powerdns-initial-requester-id",
+			format:   "powerdns-initial-requestor-id",
 			dm:       DNSMessage{PowerDNS: &PowerDNS{InitialRequestorID: "5e006236c8a74f7eafc6af126e6d0689"}},
 			expected: "5e006236c8a74f7eafc6af126e6d0689",
 		},
