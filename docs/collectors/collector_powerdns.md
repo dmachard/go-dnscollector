@@ -69,6 +69,8 @@ If you logs your DNS traffic in basic text format, you can use the specific dire
 * `powerdns-applied-policy-type`: get applied policy type
 * `powerdns-metadata[:KEY]`: get  all metadata separated by comma or specific one if a valid [KEY](https://dnsdist.org/rules-actions.html#RemoteLogAction) is provided
 * `powerdns-http-version`: http version used with DoH queries
+* `powerdns-message-id`: message id
+* `powerdns-initial-requestor-id`: initial requestor id
 
 Configuration example:
 
@@ -96,7 +98,9 @@ If you logs your DNS traffic in JSON output, the following part will be added in
         "agent":"Go-http-client/1.1",
         "selected_pool":"pool_internet"
     },
-    "http-version": "HTTP3"
+    "http-version": "HTTP3",
+    "message-id": "27c3e94ad6284eec9a50cfc5bd7384d6",
+    "initial-requestor-id": "5e006236c8a74f7eafc6af126e6d0689"
   }
 ```
 

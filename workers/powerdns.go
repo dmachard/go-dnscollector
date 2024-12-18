@@ -2,6 +2,7 @@ package workers
 
 import (
 	"bufio"
+	"encoding/hex"
 	"errors"
 	"io"
 	"net"
@@ -356,6 +357,10 @@ func (w *PdnsProcessor) StartCollect() {
 			if pbdm.GetSocketProtocol().String() == "DOH" {
 				pdns.HTTPVersion = pbdm.GetHttpVersion().String()
 			}
+
+			// get id
+			pdns.MessageId = hex.EncodeToString(pbdm.MessageId)
+			pdns.InitialRequestorId = hex.EncodeToString(pbdm.InitialRequestId)
 
 			// finally set pdns to dns message
 			dm.PowerDNS = &pdns
