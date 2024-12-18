@@ -111,6 +111,8 @@ func TestDnsMessage_Json_Collectors_Reference(t *testing.T) {
 				Tags:                  []string{"tag1"},
 				Metadata:              map[string]string{"stream_id": "collector"},
 				HTTPVersion:           "http3",
+				MessageID:             "27c3e94ad6284eec9a50cfc5bd7384d6",
+				InitialRequestorID:    "5e006236c8a74f7eafc6af126e6d0689",
 			}},
 
 			jsonRef: `{
@@ -125,7 +127,9 @@ func TestDnsMessage_Json_Collectors_Reference(t *testing.T) {
 							"metadata": {
 								"stream_id": "collector"
 							},
-							"http-version": "http3"
+							"http-version": "http3",
+							"message-id": "27c3e94ad6284eec9a50cfc5bd7384d6",
+							"initial-requestor-id": "5e006236c8a74f7eafc6af126e6d0689"
 						}
 					}`,
 		},
