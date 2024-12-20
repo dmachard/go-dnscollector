@@ -363,7 +363,7 @@ func (w *PdnsProcessor) StartCollect() {
 			pdns.InitialRequestorID = hex.EncodeToString(pbdm.InitialRequestId)
 			pdns.RequestorID = pbdm.GetRequestorId()
 			pdns.DeviceName = pbdm.GetDeviceName()
-			pdns.DeviceId = hex.EncodeToString(pbdm.DeviceId)
+			pdns.DeviceID = hex.EncodeToString(pbdm.DeviceId)
 
 			// finally set pdns to dns message
 			dm.PowerDNS = &pdns
