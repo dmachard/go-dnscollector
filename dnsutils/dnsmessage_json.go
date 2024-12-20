@@ -215,6 +215,11 @@ func (dm *DNSMessage) Flatten() (map[string]interface{}, error) {
 			dnsFields["powerdns.metadata."+mk] = mv
 		}
 		dnsFields["powerdns.http-version"] = dm.PowerDNS.HTTPVersion
+		dnsFields["powerdns.message-id"] = dm.PowerDNS.MessageID
+		dnsFields["powerdns.requestor-id"] = dm.PowerDNS.RequestorID
+		dnsFields["powerdns.device-id"] = dm.PowerDNS.DeviceId
+		dnsFields["powerdns.device-name"] = dm.PowerDNS.DeviceName
+		dnsFields["powerdns.initial-requestor-id"] = dm.PowerDNS.InitialRequestorID
 	}
 
 	// relabeling ?

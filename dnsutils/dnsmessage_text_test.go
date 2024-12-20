@@ -482,6 +482,18 @@ func TestDnsMessage_TextFormat_Directives_Pdns(t *testing.T) {
 			dm:       DNSMessage{PowerDNS: &PowerDNS{InitialRequestorID: "5e006236c8a74f7eafc6af126e6d0689"}},
 			expected: "5e006236c8a74f7eafc6af126e6d0689",
 		},
+		{
+			name:     "requestor_id",
+			format:   "powerdns-requestor-id",
+			dm:       DNSMessage{PowerDNS: &PowerDNS{RequestorID: "5e006236c8a74f7eafc6af126e6d0689"}},
+			expected: "5e006236c8a74f7eafc6af126e6d0689",
+		},
+		{
+			name:     "device_id_name",
+			format:   "powerdns-device-id powerdns-device-name",
+			dm:       DNSMessage{PowerDNS: &PowerDNS{DeviceId: "5e006236c8a74f7eafc6af126e6d0689", DeviceName: "test"}},
+			expected: "5e006236c8a74f7eafc6af126e6d0689 test",
+		},
 	}
 
 	for _, tc := range testcases {

@@ -71,6 +71,9 @@ If you logs your DNS traffic in basic text format, you can use the specific dire
 * `powerdns-http-version`: http version used with DoH queries
 * `powerdns-message-id`: message id
 * `powerdns-initial-requestor-id`: initial requestor id
+* `powerdns-requestor-id`: requestor id
+* `powerdns-device-id`: device id
+* `powerdns-device-name`: device name
 
 Configuration example:
 
@@ -100,7 +103,10 @@ If you logs your DNS traffic in JSON output, the following part will be added in
     },
     "http-version": "HTTP3",
     "message-id": "27c3e94ad6284eec9a50cfc5bd7384d6",
-    "initial-requestor-id": "5e006236c8a74f7eafc6af126e6d0689"
+    "initial-requestor-id": "5e006236c8a74f7eafc6af126e6d0689",
+    "requestor-id": "f7c3e94ad6284eec9a50cfc5bd7384d6",
+		"device-id": "ffffffffffffffffeaaeaeae",
+		"device-name": "foobar"
   }
 ```
 
