@@ -124,6 +124,9 @@ type PowerDNS struct {
 	HTTPVersion           string            `json:"http-version"`
 	MessageID             string            `json:"message-id"`
 	InitialRequestorID    string            `json:"initial-requestor-id"`
+	RequestorID           string            `json:"requestor-id"`
+	DeviceName            string            `json:"device-name"`
+	DeviceID              string            `json:"device-id"`
 }
 
 type TransformDNSGeo struct {

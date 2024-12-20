@@ -102,6 +102,24 @@ func (dm *DNSMessage) handlePdnsDirectives(directive string, s *strings.Builder)
 			} else {
 				s.WriteString("-")
 			}
+		case directive == "powerdns-requestor-id":
+			if len(dm.PowerDNS.RequestorID) > 0 {
+				s.WriteString(dm.PowerDNS.RequestorID)
+			} else {
+				s.WriteString("-")
+			}
+		case directive == "powerdns-device-id":
+			if len(dm.PowerDNS.DeviceID) > 0 {
+				s.WriteString(dm.PowerDNS.DeviceID)
+			} else {
+				s.WriteString("-")
+			}
+		case directive == "powerdns-device-name":
+			if len(dm.PowerDNS.DeviceName) > 0 {
+				s.WriteString(dm.PowerDNS.DeviceName)
+			} else {
+				s.WriteString("-")
+			}
 		case directive == "powerdns-message-id":
 			if len(dm.PowerDNS.MessageID) > 0 {
 				s.WriteString(dm.PowerDNS.MessageID)

@@ -358,9 +358,12 @@ func (w *PdnsProcessor) StartCollect() {
 				pdns.HTTPVersion = pbdm.GetHttpVersion().String()
 			}
 
-			// get id
+			// get some string
 			pdns.MessageID = hex.EncodeToString(pbdm.MessageId)
 			pdns.InitialRequestorID = hex.EncodeToString(pbdm.InitialRequestId)
+			pdns.RequestorID = pbdm.GetRequestorId()
+			pdns.DeviceName = pbdm.GetDeviceName()
+			pdns.DeviceID = hex.EncodeToString(pbdm.DeviceId)
 
 			// finally set pdns to dns message
 			dm.PowerDNS = &pdns
