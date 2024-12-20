@@ -109,8 +109,8 @@ func (dm *DNSMessage) handlePdnsDirectives(directive string, s *strings.Builder)
 				s.WriteString("-")
 			}
 		case directive == "powerdns-device-id":
-			if len(dm.PowerDNS.DeviceId) > 0 {
-				s.WriteString(dm.PowerDNS.DeviceId)
+			if len(dm.PowerDNS.DeviceID) > 0 {
+				s.WriteString(dm.PowerDNS.DeviceID)
 			} else {
 				s.WriteString("-")
 			}

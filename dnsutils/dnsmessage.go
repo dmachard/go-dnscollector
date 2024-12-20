@@ -126,7 +126,7 @@ type PowerDNS struct {
 	InitialRequestorID    string            `json:"initial-requestor-id"`
 	RequestorID           string            `json:"requestor-id"`
 	DeviceName            string            `json:"device-name"`
-	DeviceId              string            `json:"device-id"`
+	DeviceID              string            `json:"device-id"`
 }
 
 type TransformDNSGeo struct {

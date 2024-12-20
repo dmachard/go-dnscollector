@@ -114,7 +114,7 @@ func TestDnsMessage_Json_Collectors_Reference(t *testing.T) {
 				MessageID:             "27c3e94ad6284eec9a50cfc5bd7384d6",
 				InitialRequestorID:    "5e006236c8a74f7eafc6af126e6d0689",
 				RequestorID:           "f7c3e94ad6284eec9a50cfc5bd7384d6",
-				DeviceId:              "ffffffffffffffffeaaeaeae",
+				DeviceID:              "ffffffffffffffffeaaeaeae",
 				DeviceName:            "foobar",
 			}},
 

@@ -491,7 +491,7 @@ func TestDnsMessage_TextFormat_Directives_Pdns(t *testing.T) {
 		{
 			name:     "device_id_name",
 			format:   "powerdns-device-id powerdns-device-name",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{DeviceId: "5e006236c8a74f7eafc6af126e6d0689", DeviceName: "test"}},
+			dm:       DNSMessage{PowerDNS: &PowerDNS{DeviceID: "5e006236c8a74f7eafc6af126e6d0689", DeviceName: "test"}},
 			expected: "5e006236c8a74f7eafc6af126e6d0689 test",
 		},
 	}
