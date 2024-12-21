@@ -103,6 +103,11 @@ type ConfigTransformers struct {
 		WhiteDomainsFile string `yaml:"white-domains-file" default:""`
 		PersistenceFile  string `yaml:"persistence-file" default:""`
 	} `yaml:"new-domain-tracker"`
+	Reordering struct {
+		Enable        bool `yaml:"enable" default:"false"`
+		FlushInterval int  `yaml:"flush-interval" default:"30"`
+		MaxBufferSize int  `yaml:"max-buffer-size" default:"100"`
+	} `yaml:"reordering"`
 }
 
 func (c *ConfigTransformers) SetDefault() {
