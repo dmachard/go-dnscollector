@@ -1,9 +1,9 @@
 <p align="center">
   <img src="https://goreportcard.com/badge/github.com/dmachard/go-dns-collector" alt="Go Report"/>
   <img src="https://img.shields.io/badge/go%20version-min%201.21-green" alt="Go version"/>
-  <img src="https://img.shields.io/badge/go%20tests-518-green" alt="Go tests"/>
+  <img src="https://img.shields.io/badge/go%20tests-521-green" alt="Go tests"/>
   <img src="https://img.shields.io/badge/go%20bench-21-green" alt="Go bench"/>
-  <img src="https://img.shields.io/badge/go%20lines-32573-green" alt="Go lines"/>
+  <img src="https://img.shields.io/badge/go%20lines-32844-green" alt="Go lines"/>
 </p>
 
 <p align="center">
@@ -86,6 +86,7 @@
   - Add [Geographical](docs/transformers/transform_geoip.md) metadata
   - Various data [Extractor](docs/transformers/transform_dataextractor.md)
   - Suspicious traffic [Detector](docs/transformers/transform_suspiciousdetector.md) and [Prediction](docs/transformers/transform_trafficprediction.md)
+  - [Reordering](docs/transformers/transform_reordering.md) DNS messages based on timestamps
 
 ## Get Started
 
