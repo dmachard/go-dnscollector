@@ -63,6 +63,7 @@ func (w *PdnsServer) HandleConn(conn net.Conn, connID uint64, forceClose chan bo
 		bufSize = w.GetConfig().Collectors.PowerDNS.ChannelBufferSize
 	}
 	pdnsProcessor := NewPdnsProcessor(int(connID), peerName, w.GetConfig(), w.GetLogger(), w.GetName(), bufSize)
+	pdnsProcessor.SetMetrics(w.metrics)
 	pdnsProcessor.SetDefaultRoutes(w.GetDefaultRoutes())
 	pdnsProcessor.SetDefaultDropped(w.GetDroppedRoutes())
 	go pdnsProcessor.StartCollect()
