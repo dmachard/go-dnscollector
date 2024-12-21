@@ -15,6 +15,7 @@ type ReorderingTransform struct {
 	buffer      []dnsutils.DNSMessage
 	mutex       sync.Mutex
 	flushTicker *time.Ticker
+	flushSignal chan struct{}
 	stopChan    chan struct{}
 	nextWorkers []chan dnsutils.DNSMessage
 }
@@ -24,6 +25,7 @@ func NewReorderingTransform(config *pkgconfig.ConfigTransformers, logger *logger
 	t := &ReorderingTransform{
 		GenericTransformer: NewTransformer(config, logger, "reordering", name, instance, nextWorkers),
 		stopChan:           make(chan struct{}),
+		flushSignal:        make(chan struct{}),
 		nextWorkers:        nextWorkers,
 	}
 
@@ -37,7 +39,7 @@ func (t *ReorderingTransform) GetTransforms() ([]Subtransform, error) {
 		subtransforms = append(subtransforms, Subtransform{name: "reordering:sort-by-timestamp", processFunc: t.ReorderLogs})
 		// Start a goroutine to handle periodic flushing.
 		t.flushTicker = time.NewTicker(time.Duration(t.config.Reordering.FlushInterval) * time.Second)
-		t.buffer = make([]dnsutils.DNSMessage, t.config.Reordering.MaxBufferSize)
+		t.buffer = make([]dnsutils.DNSMessage, 0)
 		go t.flushPeriodically()
 
 	}
@@ -46,24 +48,28 @@ func (t *ReorderingTransform) GetTransforms() ([]Subtransform, error) {
 
 // ReorderLogs adds a log to the buffer and flushes if the buffer is full.
 func (t *ReorderingTransform) ReorderLogs(dm *dnsutils.DNSMessage) (int, error) {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
-
 	// Add the log to the buffer.
+	t.mutex.Lock()
 	t.buffer = append(t.buffer, *dm)
-
+	t.mutex.Unlock()
 	// If the buffer exceeds a certain size, flush it.
-	const bufferSize = 100
-	if len(t.buffer) >= bufferSize {
-		go t.flushBuffer()
+	if len(t.buffer) >= t.config.Reordering.MaxBufferSize {
+		select {
+		case t.flushSignal <- struct{}{}:
+		default:
+		}
 	}
 
-	return ReturnKeep, nil
+	return ReturnDrop, nil
 }
 
 // Close stops the periodic flushing.
 func (t *ReorderingTransform) Reset() {
-	close(t.stopChan)
+	select {
+	case <-t.stopChan:
+	default:
+		close(t.stopChan)
+	}
 }
 
 // flushPeriodically periodically flushes the buffer based on a timer.
@@ -71,6 +77,8 @@ func (t *ReorderingTransform) flushPeriodically() {
 	for {
 		select {
 		case <-t.flushTicker.C:
+			t.flushBuffer()
+		case <-t.flushSignal:
 			t.flushBuffer()
 		case <-t.stopChan:
 			t.flushTicker.Stop()
