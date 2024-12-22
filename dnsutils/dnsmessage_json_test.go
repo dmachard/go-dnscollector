@@ -101,7 +101,7 @@ func TestDnsMessage_Json_Collectors_Reference(t *testing.T) {
 	}{
 		{
 			collector: "powerdns",
-			dmRef: DNSMessage{PowerDNS: &PowerDNS{
+			dmRef: DNSMessage{PowerDNS: &CollectorPowerDNS{
 				OriginalRequestSubnet: "subnet",
 				AppliedPolicy:         "basicrpz",
 				AppliedPolicyHit:      "hit",
@@ -159,6 +159,49 @@ func TestDnsMessage_Json_Collectors_Reference(t *testing.T) {
 
 			if !reflect.DeepEqual(dmMap[tc.collector], refMap[tc.collector]) {
 				t.Errorf("json format different from reference, Get=%s Want=%s", dmMap[tc.collector], refMap[tc.collector])
+			}
+		})
+	}
+}
+
+func TestDnsMessage_Json_Loggers_Reference(t *testing.T) {
+	testcases := []struct {
+		logger  string
+		dmRef   DNSMessage
+		jsonRef string
+	}{
+		{
+			logger: "otel",
+			dmRef: DNSMessage{OpenTelemetry: &LoggerOpenTelemetry{
+				TraceID: "27c3e94ad6284eec9a50cfc5bd7384d6",
+			}},
+
+			jsonRef: `{
+						"opentelemetry": {
+							"trace-id": "27c3e94ad6284eec9a50cfc5bd7384d6"
+						}
+					}`,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.logger, func(t *testing.T) {
+
+			tc.dmRef.Init()
+
+			var dmMap map[string]interface{}
+			err := json.Unmarshal([]byte(tc.dmRef.ToJSON()), &dmMap)
+			if err != nil {
+				t.Fatalf("could not unmarshal dm json: %s\n", err)
+			}
+
+			var refMap map[string]interface{}
+			err = json.Unmarshal([]byte(tc.jsonRef), &refMap)
+			if err != nil {
+				t.Fatalf("could not unmarshal ref json: %s\n", err)
+			}
+
+			if !reflect.DeepEqual(dmMap[tc.logger], refMap[tc.logger]) {
+				t.Errorf("json format different from reference, Get=%s Want=%s", dmMap[tc.logger], refMap[tc.logger])
 			}
 		})
 	}
@@ -558,7 +601,7 @@ func TestDnsMessage_JsonFlatten_Collectors_Reference(t *testing.T) {
 	}{
 		{
 			collector: "powerdns",
-			dm: DNSMessage{PowerDNS: &PowerDNS{
+			dm: DNSMessage{PowerDNS: &CollectorPowerDNS{
 				OriginalRequestSubnet: "subnet",
 				AppliedPolicy:         "basicrpz",
 				AppliedPolicyHit:      "hit",

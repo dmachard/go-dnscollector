@@ -56,6 +56,7 @@
     - [`File`](docs/loggers/logger_file.md) with automatic rotation and compression
   - *Provide metrics and API*
     - [`Prometheus`](docs/loggers/logger_prometheus.md) exporter
+    - [`OpenTelemetry`](docs/loggers/logger_opentelemetry.md) tracing dns
     - [`Statsd`](docs/loggers/logger_statsd.md) support
     - [`REST API`](docs/loggers/logger_restapi.md) with [swagger](https://generator.swagger.io/?url=https://raw.githubusercontent.com/dmachard/go-dnscollector/main/docs/swagger.yml) to search DNS domains
   - *Send to remote host with generic transport protocol*

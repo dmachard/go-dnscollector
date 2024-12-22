@@ -5,10 +5,39 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
+
+var (
+	OtelDirectives            = regexp.MustCompile(`^otel-*`)
+	PdnsDirectives            = regexp.MustCompile(`^powerdns-*`)
+	GeoIPDirectives           = regexp.MustCompile(`^geoip-*`)
+	SuspiciousDirectives      = regexp.MustCompile(`^suspicious-*`)
+	PublicSuffixDirectives    = regexp.MustCompile(`^publixsuffix-*`)
+	ExtractedDirectives       = regexp.MustCompile(`^extracted-*`)
+	ReducerDirectives         = regexp.MustCompile(`^reducer-*`)
+	MachineLearningDirectives = regexp.MustCompile(`^ml-*`)
+	FilteringDirectives       = regexp.MustCompile(`^filtering-*`)
+	RawTextDirective          = regexp.MustCompile(`^ *\{.*\}`)
+	ATagsDirectives           = regexp.MustCompile(`^atags*`)
+)
+
+func (dm *DNSMessage) handleOpenTelemetryDirectives(directive string, s *strings.Builder) error {
+	if dm.OpenTelemetry == nil {
+		s.WriteString("-")
+	} else {
+		switch {
+		case directive == "otel-trace-id":
+			s.WriteString(dm.OpenTelemetry.TraceID)
+		default:
+			return errors.New(ErrorUnexpectedDirective + directive)
+		}
+	}
+	return nil
+}
 
 func (dm *DNSMessage) handleGeoIPDirectives(directive string, s *strings.Builder) error {
 	if dm.Geo == nil {
@@ -530,6 +559,13 @@ func (dm *DNSMessage) ToTextLine(format []string, fieldDelimiter string, fieldBo
 				}
 			} else {
 				s.WriteByte('-')
+			}
+
+		// more directives from loggers
+		case OtelDirectives.MatchString(directive):
+			err := dm.handleOpenTelemetryDirectives(directive, &s)
+			if err != nil {
+				return nil, err
 			}
 
 		// more directives from collectors

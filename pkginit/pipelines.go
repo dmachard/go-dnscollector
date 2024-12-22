@@ -199,6 +199,10 @@ func CreateStanza(stanzaName string, config *pkgconfig.Config, mapCollectors map
 		mapLoggers[stanzaName] = workers.NewDevNull(config, logger, stanzaName)
 		mapLoggers[stanzaName].SetMetrics(metrics)
 	}
+	if config.Loggers.OpenTelemetryClient.Enable {
+		mapLoggers[stanzaName] = workers.NewOpenTelemetryClient(config, logger, stanzaName)
+		mapLoggers[stanzaName].SetMetrics(metrics)
+	}
 
 	// register the collector if enabled
 	if config.Collectors.DNSMessage.Enable {

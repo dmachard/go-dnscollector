@@ -50,3 +50,6 @@ You will find below some examples of configurations to manage your DNS logs.
 
 - Security: suspicious traffic detector
   - [x] [Capture DNS packets and flag suspicious traffic](./_examples/use-case-19.yml)
+
+- Telemetry
+  - [x] [Opentelemetry tracing of your DNS traffic](./_examples/use-case-32.yml)

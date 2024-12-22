@@ -29,3 +29,4 @@ A worker can act as a collector or a logger.
 | [Falco](loggers/logger_falco.md)                      | Logger    | Falco plugin logger                                     |
 | [ClickHouse](loggers/logger_clickhouse.md)            | Logger    | ClickHouse logger                                       |
 | [DevNull](loggers/logger_devnull.md)                  | Logger    | For testing purpose                                     |
+| [OpenTelemetry](loggers/logger_opentelemetry.md)      | Logger    | Open Telemetry tracing - Experimental                   |

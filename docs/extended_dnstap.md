@@ -20,7 +20,7 @@ The following codec are supported:
 
 DNSTAP message can be extended by incorporating additional metadata added through transformations, such as filtering, geo, ATags.
 
-These metadata are encoded in the extra field with the following [protobuf structure](./../../dnsutils/extended_dnstap.proto).
+These metadata are encoded in the extra field with the following [protobuf structure](../dnsutils/extended_dnstap.proto).
 
 The following transformers are supported:
 
