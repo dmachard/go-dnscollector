@@ -274,7 +274,7 @@ func TestDnsMessage_TextFormat_InvalidDirectives(t *testing.T) {
 		},
 		{
 			name:   "powerdns",
-			dm:     DNSMessage{PowerDNS: &PowerDNS{}},
+			dm:     DNSMessage{PowerDNS: &CollectorPowerDNS{}},
 			format: "powerdns-invalid",
 		},
 		{
@@ -395,6 +395,43 @@ func TestDnsMessage_TextFormat_Directives_Geo(t *testing.T) {
 	}
 }
 
+func TestDnsMessage_TextFormat_Directives_OpenTelemetry(t *testing.T) {
+	config := pkgconfig.GetDefaultConfig()
+
+	testcases := []struct {
+		name     string
+		format   string
+		dm       DNSMessage
+		expected string
+	}{
+		{
+			name:     "undefined",
+			format:   "otel-trace-id",
+			dm:       DNSMessage{},
+			expected: "-",
+		},
+		{
+			name:     "default",
+			format:   "otel-trace-id",
+			dm:       DNSMessage{OpenTelemetry: &LoggerOpenTelemetry{TraceID: "27c3e94ad6284eec9a50cfc5bd7384d6"}},
+			expected: "27c3e94ad6284eec9a50cfc5bd7384d6",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			line := tc.dm.String(
+				strings.Fields(tc.format),
+				config.Global.TextFormatDelimiter,
+				config.Global.TextFormatBoundary,
+			)
+			if line != tc.expected {
+				t.Errorf("Want: %s, got: %s", tc.expected, line)
+			}
+		})
+	}
+}
+
 func TestDnsMessage_TextFormat_Directives_Pdns(t *testing.T) {
 	config := pkgconfig.GetDefaultConfig()
 
@@ -413,13 +450,13 @@ func TestDnsMessage_TextFormat_Directives_Pdns(t *testing.T) {
 		{
 			name:     "empty_attributes",
 			format:   "powerdns-tags powerdns-applied-policy powerdns-original-request-subnet powerdns-metadata",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{}},
+			dm:       DNSMessage{PowerDNS: &CollectorPowerDNS{}},
 			expected: "- - - -",
 		},
 		{
 			name:   "applied_policy",
 			format: "powerdns-applied-policy powerdns-applied-policy-hit powerdns-applied-policy-kind powerdns-applied-policy-trigger powerdns-applied-policy-type",
-			dm: DNSMessage{PowerDNS: &PowerDNS{
+			dm: DNSMessage{PowerDNS: &CollectorPowerDNS{
 				AppliedPolicy:        "policy",
 				AppliedPolicyHit:     "hit",
 				AppliedPolicyKind:    "kind",
@@ -431,67 +468,67 @@ func TestDnsMessage_TextFormat_Directives_Pdns(t *testing.T) {
 		{
 			name:     "original_request_subnet",
 			format:   "powerdns-original-request-subnet",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{OriginalRequestSubnet: "test"}},
+			dm:       DNSMessage{PowerDNS: &CollectorPowerDNS{OriginalRequestSubnet: "test"}},
 			expected: "test",
 		},
 		{
 			name:     "metadata_badsyntax",
 			format:   "powerdns-metadata",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{Metadata: map[string]string{"test_key1": "test_value1"}}},
+			dm:       DNSMessage{PowerDNS: &CollectorPowerDNS{Metadata: map[string]string{"test_key1": "test_value1"}}},
 			expected: "-",
 		},
 		{
 			name:     "metadata",
 			format:   "powerdns-metadata:test_key1",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{Metadata: map[string]string{"test_key1": "test_value1"}}},
+			dm:       DNSMessage{PowerDNS: &CollectorPowerDNS{Metadata: map[string]string{"test_key1": "test_value1"}}},
 			expected: "test_value1",
 		},
 		{
 			name:     "metadata_invalid",
 			format:   "powerdns-metadata:test_key2",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{Metadata: map[string]string{"test_key1": "test_value1"}}},
+			dm:       DNSMessage{PowerDNS: &CollectorPowerDNS{Metadata: map[string]string{"test_key1": "test_value1"}}},
 			expected: "-",
 		},
 		{
 			name:     "tags_all",
 			format:   "powerdns-tags",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{Tags: []string{"tag1", "tag2"}}},
+			dm:       DNSMessage{PowerDNS: &CollectorPowerDNS{Tags: []string{"tag1", "tag2"}}},
 			expected: "tag1,tag2",
 		},
 		{
 			name:     "tags_index",
 			format:   "powerdns-tags:1",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{Tags: []string{"tag1", "tag2"}}},
+			dm:       DNSMessage{PowerDNS: &CollectorPowerDNS{Tags: []string{"tag1", "tag2"}}},
 			expected: "tag2",
 		},
 		{
 			name:     "tags_invalid_index",
 			format:   "powerdns-tags:3",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{Tags: []string{"tag1", "tag2"}}},
+			dm:       DNSMessage{PowerDNS: &CollectorPowerDNS{Tags: []string{"tag1", "tag2"}}},
 			expected: "-",
 		},
 		{
 			name:     "message_id",
 			format:   "powerdns-message-id",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{MessageID: "27c3e94ad6284eec9a50cfc5bd7384d6"}},
+			dm:       DNSMessage{PowerDNS: &CollectorPowerDNS{MessageID: "27c3e94ad6284eec9a50cfc5bd7384d6"}},
 			expected: "27c3e94ad6284eec9a50cfc5bd7384d6",
 		},
 		{
 			name:     "initial_requestor_id",
 			format:   "powerdns-initial-requestor-id",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{InitialRequestorID: "5e006236c8a74f7eafc6af126e6d0689"}},
+			dm:       DNSMessage{PowerDNS: &CollectorPowerDNS{InitialRequestorID: "5e006236c8a74f7eafc6af126e6d0689"}},
 			expected: "5e006236c8a74f7eafc6af126e6d0689",
 		},
 		{
 			name:     "requestor_id",
 			format:   "powerdns-requestor-id",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{RequestorID: "5e006236c8a74f7eafc6af126e6d0689"}},
+			dm:       DNSMessage{PowerDNS: &CollectorPowerDNS{RequestorID: "5e006236c8a74f7eafc6af126e6d0689"}},
 			expected: "5e006236c8a74f7eafc6af126e6d0689",
 		},
 		{
 			name:     "device_id_name",
 			format:   "powerdns-device-id powerdns-device-name",
-			dm:       DNSMessage{PowerDNS: &PowerDNS{DeviceID: "5e006236c8a74f7eafc6af126e6d0689", DeviceName: "test"}},
+			dm:       DNSMessage{PowerDNS: &CollectorPowerDNS{DeviceID: "5e006236c8a74f7eafc6af126e6d0689", DeviceName: "test"}},
 			expected: "5e006236c8a74f7eafc6af126e6d0689 test",
 		},
 	}

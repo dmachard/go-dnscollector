@@ -2,8 +2,10 @@
 
 ## DNS tap
 
-Collector to logging DNStap stream from DNS servers.
+Collector to logging [DNStap](https://dnstap.info/) stream from DNS servers.
 The traffic can be a tcp or unix DNStap stream. TLS is also supported.
+
+> Follow this guide to enable DNStap on your DNS servers: [Enabling DNStap logging on most popular DNS servers](https://dmachard.github.io/posts/0001-dnstap-testing/).
 
 Options:
 

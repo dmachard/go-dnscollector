@@ -263,7 +263,7 @@ func (w *PdnsProcessor) StartCollect() {
 			dm.Init()
 
 			// init powerdns with default values
-			dm.PowerDNS = &dnsutils.PowerDNS{
+			dm.PowerDNS = &dnsutils.CollectorPowerDNS{
 				Tags:                  []string{},
 				OriginalRequestSubnet: "",
 				AppliedPolicy:         "",
@@ -318,7 +318,7 @@ func (w *PdnsProcessor) StartCollect() {
 			dm.DNS.Qtype = dnsutils.RdatatypeToString(int(pbdm.Question.GetQType()))
 
 			// get specific powerdns params
-			pdns := dnsutils.PowerDNS{}
+			pdns := dnsutils.CollectorPowerDNS{}
 
 			// get PowerDNS OriginalRequestSubnet
 			ip := pbdm.GetOriginalRequestorSubnet()

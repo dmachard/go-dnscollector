@@ -5,20 +5,10 @@ import (
 )
 
 var (
-	DNSQuery                  = "QUERY"
-	DNSQueryQuiet             = "Q"
-	DNSReply                  = "REPLY"
-	DNSReplyQuiet             = "R"
-	PdnsDirectives            = regexp.MustCompile(`^powerdns-*`)
-	GeoIPDirectives           = regexp.MustCompile(`^geoip-*`)
-	SuspiciousDirectives      = regexp.MustCompile(`^suspicious-*`)
-	PublicSuffixDirectives    = regexp.MustCompile(`^publixsuffix-*`)
-	ExtractedDirectives       = regexp.MustCompile(`^extracted-*`)
-	ReducerDirectives         = regexp.MustCompile(`^reducer-*`)
-	MachineLearningDirectives = regexp.MustCompile(`^ml-*`)
-	FilteringDirectives       = regexp.MustCompile(`^filtering-*`)
-	RawTextDirective          = regexp.MustCompile(`^ *\{.*\}`)
-	ATagsDirectives           = regexp.MustCompile(`^atags*`)
+	DNSQuery      = "QUERY"
+	DNSQueryQuiet = "Q"
+	DNSReply      = "REPLY"
+	DNSReplyQuiet = "R"
 )
 
 type DNSAnswer struct {
@@ -112,7 +102,7 @@ type DNSTap struct {
 	QueryZone        string  `json:"query-zone"`
 }
 
-type PowerDNS struct {
+type CollectorPowerDNS struct {
 	Tags                  []string          `json:"tags"`
 	OriginalRequestSubnet string            `json:"original-request-subnet"`
 	AppliedPolicy         string            `json:"applied-policy"`
@@ -127,6 +117,10 @@ type PowerDNS struct {
 	RequestorID           string            `json:"requestor-id"`
 	DeviceName            string            `json:"device-name"`
 	DeviceID              string            `json:"device-id"`
+}
+
+type LoggerOpenTelemetry struct {
+	TraceID string `json:"trace-id"`
 }
 
 type TransformDNSGeo struct {
@@ -209,8 +203,9 @@ type DNSMessage struct {
 	DNS             DNS                    `json:"dns"`
 	EDNS            DNSExtended            `json:"edns"`
 	DNSTap          DNSTap                 `json:"dnstap"`
+	PowerDNS        *CollectorPowerDNS     `json:"powerdns,omitempty"`
+	OpenTelemetry   *LoggerOpenTelemetry   `json:"opentelemetry,omitempty"`
 	Geo             *TransformDNSGeo       `json:"geoip,omitempty"`
-	PowerDNS        *PowerDNS              `json:"powerdns,omitempty"`
 	Suspicious      *TransformSuspicious   `json:"suspicious,omitempty"`
 	PublicSuffix    *TransformPublicSuffix `json:"publicsuffix,omitempty"`
 	Extracted       *TransformExtracted    `json:"extracted,omitempty"`
@@ -264,6 +259,7 @@ func (dm *DNSMessage) Init() {
 }
 
 func (dm *DNSMessage) InitTransforms() {
+	// init transforms
 	dm.ATags = &TransformATags{}
 	dm.Filtering = &TransformFiltering{}
 	dm.MachineLearning = &TransformML{}
@@ -271,7 +267,9 @@ func (dm *DNSMessage) InitTransforms() {
 	dm.Extracted = &TransformExtracted{}
 	dm.PublicSuffix = &TransformPublicSuffix{}
 	dm.Suspicious = &TransformSuspicious{}
-	dm.PowerDNS = &PowerDNS{}
 	dm.Geo = &TransformDNSGeo{}
 	dm.Relabeling = &TransformRelabeling{}
+	// init collectors & loggers
+	dm.PowerDNS = &CollectorPowerDNS{}
+	dm.OpenTelemetry = &LoggerOpenTelemetry{}
 }

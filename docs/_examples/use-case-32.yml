@@ -1,0 +1,46 @@
+global:
+  trace:
+    verbose: true
+
+pipelines:
+  - name: tap
+    powerdns:
+      listen-ip: 0.0.0.0
+      listen-port: 6000
+      tls-support: false
+      tls-min-version: 1.2
+      cert-file: ""
+      key-file: ""
+      reset-conn: true
+      chan-buffer-size: 0
+      add-dns-payload: false
+    transforms:
+      normalize:
+        qname-lowercase: true
+        qname-replace-nonprintable: true
+    routing-policy:
+      forward: [ reordering ]
+      dropped: [ ]
+
+  - name: reordering
+    dnsmessage:
+      matching:
+        include:
+    transforms:
+      reordering:
+        flush-interval: 5
+    routing-policy:
+      forward: [ otel ]
+      dropped: [ ]
+
+  - name: otel
+    opentelemetry:
+      otel-endpoint: "192.168.1.253:4317"
+    routing-policy:
+      forward: [ console ]
+      dropped: [ ]
+
+  - name: console
+    stdout:
+      mode: text
+      text-format: "timestamp-rfc3339ns identity operation qname qtype queryip responseip otel-trace-id"

@@ -235,6 +235,13 @@ type ConfigLoggers struct {
 		BasicAuthLogin    string `yaml:"basic-auth-login" default:""`
 		BasicAuthPwd      string `yaml:"basic-auth-pwd" default:""`
 	} `yaml:"elasticsearch"`
+	OpenTelemetryClient struct {
+		Enable               bool   `yaml:"enable" default:"false"`
+		ChannelBufferSize    int    `yaml:"chan-buffer-size" default:"0"`
+		CleanupSpansInterval int    `yaml:"cleanup-spans-interval" default:"30"`
+		MaxSpanTime          int    `yaml:"max-span-time" default:"120"`
+		OtelEndpoint         string `yaml:"otel-endpoint" default:""`
+	} `yaml:"opentelemetry"`
 	ScalyrClient struct {
 		Enable            bool                   `yaml:"enable" default:"false"`
 		Mode              string                 `yaml:"mode" default:"text"`

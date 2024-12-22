@@ -29,3 +29,4 @@ Transformers processing is currently in this order :
 | [JSON relabeling](transformers/transform_relabeling.md)           | JSON relabeling to rename or remove keys |
 | [DNS message rewrite](transformers/transform_rewrite.md)                      | Rewrite value for DNS messages structure |
 | [Newly Observed Domains](transformers/transform_newdomaintracker.md)          | Detect Newly Observed Domains |
+| [Reordering](transformers/transform_reordering.md)                            | Reordering DNS messages based on timestamps |
