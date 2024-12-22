@@ -1,6 +1,6 @@
 module github.com/dmachard/go-dnscollector
 
-go 1.22
+go 1.22.0
 
 toolchain go1.23.0
 
@@ -38,6 +38,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tinylib/msgp v1.2.5
 	go.opentelemetry.io/otel v1.33.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.28.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.28.0
 	go.opentelemetry.io/otel/sdk v1.28.0
 	go.opentelemetry.io/otel/trace v1.33.0
@@ -147,7 +148,6 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/collector/pdata v1.12.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.28.0 // indirect
 	go.opentelemetry.io/otel/metric v1.33.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
