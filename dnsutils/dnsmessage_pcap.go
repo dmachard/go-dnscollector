@@ -127,29 +127,58 @@ func (dm *DNSMessage) EncodeToPacketBytes(dst []byte, overwritePort bool) ([]byt
 		binary.BigEndian.PutUint16(tcpLenPrefix[:], uint16(dm.DNS.Length))
 	}
 
-	isIPv4 := dm.NetworkInfo.Family == netutils.ProtoIPv4
-	isIPv6 := dm.NetworkInfo.Family == netutils.ProtoIPv6
-	if !isIPv4 && !isIPv6 {
-		return dst, errFamilyNotImpl
-	}
+	isIPv4 := dm.NetworkInfo.Family == netutils.ProtoIPv4 || dm.NetworkInfo.Family == "INET"
+	isIPv6 := dm.NetworkInfo.Family == netutils.ProtoIPv6 || dm.NetworkInfo.Family == "INET6"
 
 	var srcIP4, dstIP4 [4]byte
 	var srcIP6, dstIP6 [16]byte
 
+	if !isIPv4 && !isIPv6 {
+		qIP := dm.NetworkInfo.GetQueryIP()
+		rIP := dm.NetworkInfo.GetResponseIP()
+		switch {
+		case dm.NetworkInfo.QueryIPLen == 16 || dm.NetworkInfo.ResponseIPLen == 16 ||
+			(qIP != "-" && parseIPv6Bytes(qIP, &srcIP6)) ||
+			(rIP != "-" && parseIPv6Bytes(rIP, &dstIP6)):
+			isIPv6 = true
+		case dm.NetworkInfo.QueryIPLen == 4 || dm.NetworkInfo.ResponseIPLen == 4 ||
+			(qIP != "-" && parseIPv4Bytes(qIP, &srcIP4)) ||
+			(rIP != "-" && parseIPv4Bytes(rIP, &dstIP4)) ||
+			parseIPv4Bytes(srcIPStr, &srcIP4) || parseIPv4Bytes(dstIPStr, &dstIP4):
+			isIPv4 = true
+		default:
+			return dst, errFamilyNotImpl
+		}
+	}
+
 	if isIPv4 {
 		if !parseIPv4Bytes(srcIPStr, &srcIP4) {
 			addr, err := netip.ParseAddr(srcIPStr)
-			if err != nil || !addr.Is4() {
+			if err != nil {
 				return dst, errInvalidIPAddress
 			}
-			srcIP4 = addr.As4()
+			switch {
+			case addr.Is4In6():
+				srcIP4 = addr.Unmap().As4()
+			case addr.Is4():
+				srcIP4 = addr.As4()
+			default:
+				return dst, errInvalidIPAddress
+			}
 		}
 		if !parseIPv4Bytes(dstIPStr, &dstIP4) {
 			addr, err := netip.ParseAddr(dstIPStr)
-			if err != nil || !addr.Is4() {
+			if err != nil {
 				return dst, errInvalidIPAddress
 			}
-			dstIP4 = addr.As4()
+			switch {
+			case addr.Is4In6():
+				dstIP4 = addr.Unmap().As4()
+			case addr.Is4():
+				dstIP4 = addr.As4()
+			default:
+				return dst, errInvalidIPAddress
+			}
 		}
 	} else {
 		if !parseIPv6Bytes(srcIPStr, &srcIP6) {
@@ -340,7 +369,34 @@ func (dm *DNSMessage) ToPacketLayer(overwritePort bool) ([]gopacket.Serializable
 
 	pkt := []gopacket.SerializableLayer{}
 
-	switch dm.NetworkInfo.Family {
+	family := dm.NetworkInfo.Family
+	if family != netutils.ProtoIPv4 && family != netutils.ProtoIPv6 {
+		qIP := dm.NetworkInfo.GetQueryIP()
+		rIP := dm.NetworkInfo.GetResponseIP()
+		switch {
+		case family == "INET":
+			family = netutils.ProtoIPv4
+		case family == "INET6":
+			family = netutils.ProtoIPv6
+		case dm.NetworkInfo.QueryIPLen == 16 || dm.NetworkInfo.ResponseIPLen == 16 ||
+			(qIP != "-" && net.ParseIP(qIP) != nil && net.ParseIP(qIP).To4() == nil) ||
+			(rIP != "-" && net.ParseIP(rIP) != nil && net.ParseIP(rIP).To4() == nil):
+			family = netutils.ProtoIPv6
+			if srcIP == "0.0.0.0" {
+				srcIP = "::"
+			}
+			if dstIP == "0.0.0.0" {
+				dstIP = "::"
+			}
+		case dm.NetworkInfo.QueryIPLen == 4 || dm.NetworkInfo.ResponseIPLen == 4 ||
+			(qIP != "-" && net.ParseIP(qIP).To4() != nil) ||
+			(rIP != "-" && net.ParseIP(rIP).To4() != nil) ||
+			net.ParseIP(srcIP).To4() != nil || net.ParseIP(dstIP).To4() != nil:
+			family = netutils.ProtoIPv4
+		}
+	}
+
+	switch family {
 	case netutils.ProtoIPv4:
 		eth.EthernetType = layers.EthernetTypeIPv4
 		ip4.SrcIP = net.ParseIP(srcIP)
@@ -365,7 +421,7 @@ func (dm *DNSMessage) ToPacketLayer(overwritePort bool) ([]gopacket.Serializable
 			udp.SrcPort = 53
 		}
 
-		switch dm.NetworkInfo.Family {
+		switch family {
 		case netutils.ProtoIPv4:
 			ip4.Protocol = layers.IPProtocolUDP
 			udp.SetNetworkLayerForChecksum(ip4)
@@ -392,7 +448,7 @@ func (dm *DNSMessage) ToPacketLayer(overwritePort bool) ([]gopacket.Serializable
 		dnsLengthField := make([]byte, 2)
 		binary.BigEndian.PutUint16(dnsLengthField[0:], uint16(dm.DNS.Length))
 
-		switch dm.NetworkInfo.Family {
+		switch family {
 		case netutils.ProtoIPv4:
 			ip4.Protocol = layers.IPProtocolTCP
 			tcp.SetNetworkLayerForChecksum(ip4)
@@ -414,7 +470,7 @@ func (dm *DNSMessage) ToPacketLayer(overwritePort bool) ([]gopacket.Serializable
 			udp.SrcPort = 53
 		}
 
-		switch dm.NetworkInfo.Family {
+		switch family {
 		case netutils.ProtoIPv4:
 			ip4.Protocol = layers.IPProtocolUDP
 			udp.SetNetworkLayerForChecksum(ip4)

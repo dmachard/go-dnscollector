@@ -100,7 +100,7 @@ func GetReferenceDNSMessage() DNSMessage {
 func GetIPPort(dm *DNSMessage) (string, int, string, int) {
 	srcIP, srcPort := "0.0.0.0", 53
 	dstIP, dstPort := "0.0.0.0", 53
-	if dm.NetworkInfo.Family == "INET6" {
+	if dm.NetworkInfo.Family == "INET6" || dm.NetworkInfo.Family == netutils.ProtoIPv6 {
 		srcIP, dstIP = "::", "::"
 	}
 

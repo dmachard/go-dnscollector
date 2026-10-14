@@ -28,6 +28,7 @@ var (
 
 	IPversion = map[string]string{
 		"INET6": "6", "INET": "4",
+		"IPv6": "6", "IPv4": "4",
 	}
 
 	Rcodes = map[string]string{

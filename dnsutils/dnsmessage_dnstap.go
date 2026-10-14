@@ -26,6 +26,10 @@ func (dm *DNSMessage) ToDNSTap(extended bool) ([]byte, error) {
 	var sf dnstap.SocketFamily
 	if ipNet, valid := netutils.IPToInet[dm.NetworkInfo.Family]; valid {
 		sf = dnstap.SocketFamily(dnstap.SocketFamily_value[ipNet])
+	} else if dm.NetworkInfo.Family == "INET" {
+		sf = dnstap.SocketFamily_INET
+	} else if dm.NetworkInfo.Family == "INET6" {
+		sf = dnstap.SocketFamily_INET6
 	}
 	sp := dnstap.SocketProtocol(dnstap.SocketProtocol_value[dm.NetworkInfo.Protocol])
 	tsec := uint64(dm.DNSTap.TimeSec)

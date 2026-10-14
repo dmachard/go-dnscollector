@@ -319,9 +319,9 @@ func GetFakeDNSTap(dnsquery []byte) *dnstap.Dnstap {
 	msg := &dnstap.Message{Type: &mt}
 	msg.SocketFamily = &sf
 	msg.SocketProtocol = &sp
-	msg.QueryAddress = net.ParseIP("127.0.0.1")
+	msg.QueryAddress = net.ParseIP("127.0.0.1").To4()
 	msg.QueryPort = &qport
-	msg.ResponseAddress = net.ParseIP("127.0.0.2")
+	msg.ResponseAddress = net.ParseIP("127.0.0.2").To4()
 	msg.ResponsePort = &rport
 
 	msg.QueryMessage = dnsquery
@@ -677,11 +677,20 @@ func (w *DNSTapProcessor) processFrame(
 
 		switch dt.GetMessage().GetSocketFamily() {
 		case dnstap.SocketFamily_INET:
-			dm.NetworkInfo.Family = "INET"
+			dm.NetworkInfo.Family = netutils.ProtoIPv4
 		case dnstap.SocketFamily_INET6:
-			dm.NetworkInfo.Family = "INET6"
+			dm.NetworkInfo.Family = netutils.ProtoIPv6
 		default:
-			dm.NetworkInfo.Family = config.StrUnknown
+			qAddr := dt.GetMessage().GetQueryAddress()
+			rAddr := dt.GetMessage().GetResponseAddress()
+			switch {
+			case len(qAddr) == 4 || len(rAddr) == 4:
+				dm.NetworkInfo.Family = netutils.ProtoIPv4
+			case len(qAddr) == 16 || len(rAddr) == 16:
+				dm.NetworkInfo.Family = netutils.ProtoIPv6
+			default:
+				dm.NetworkInfo.Family = config.StrUnknown
+			}
 		}
 
 		switch dt.GetMessage().GetSocketProtocol() {

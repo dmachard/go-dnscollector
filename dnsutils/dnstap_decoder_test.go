@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	dnstap "github.com/dmachard/go-dnstap-protobuf"
+	"github.com/dmachard/go-netutils"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -33,8 +34,8 @@ func TestDecodeDNSTapWire_QueryAndReply(t *testing.T) {
 	if decodedQuery.DNSTap.Operation != dmQuery.DNSTap.Operation {
 		t.Errorf("expected operation %s, got %s", dmQuery.DNSTap.Operation, decodedQuery.DNSTap.Operation)
 	}
-	if decodedQuery.NetworkInfo.Family != "INET" {
-		t.Errorf("expected family INET, got %s", decodedQuery.NetworkInfo.Family)
+	if decodedQuery.NetworkInfo.Family != netutils.ProtoIPv4 {
+		t.Errorf("expected family %s, got %s", netutils.ProtoIPv4, decodedQuery.NetworkInfo.Family)
 	}
 	if decodedQuery.NetworkInfo.Protocol != dmQuery.NetworkInfo.Protocol {
 		t.Errorf("expected protocol %s, got %s", dmQuery.NetworkInfo.Protocol, decodedQuery.NetworkInfo.Protocol)
@@ -69,6 +70,82 @@ func TestDecodeDNSTapWire_QueryAndReply(t *testing.T) {
 
 	if decodedReply.DNS.Type != DNSReply {
 		t.Errorf("expected DNS type %s, got %s", DNSReply, decodedReply.DNS.Type)
+	}
+}
+
+func TestDecodeDNSTapWire_SocketFamilyFallback(t *testing.T) {
+	dnsquery, err := GetFakeDNS()
+	if err != nil {
+		t.Fatalf("failed to pack fake dns: %v", err)
+	}
+
+	testCases := []struct {
+		name         string
+		family       *dnstap.SocketFamily
+		queryAddr    []byte
+		responseAddr []byte
+		expected     string
+	}{
+		{
+			name:      "INET_explicit",
+			family:    dnstap.SocketFamily_INET.Enum(),
+			queryAddr: []byte{1, 2, 3, 4},
+			expected:  netutils.ProtoIPv4,
+		},
+		{
+			name:      "INET6_explicit",
+			family:    dnstap.SocketFamily_INET6.Enum(),
+			queryAddr: []byte{0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+			expected:  netutils.ProtoIPv6,
+		},
+		{
+			name:      "Omitted_IPv4_Fallback",
+			family:    nil,
+			queryAddr: []byte{10, 1, 2, 3},
+			expected:  netutils.ProtoIPv4,
+		},
+		{
+			name:      "Omitted_IPv6_Fallback",
+			family:    nil,
+			queryAddr: []byte{0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+			expected:  netutils.ProtoIPv6,
+		},
+		{
+			name:     "Omitted_No_IP_Unknown",
+			family:   nil,
+			expected: "UNKNOWN",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			dt := &dnstap.Dnstap{
+				Type: dnstap.Dnstap_MESSAGE.Enum(),
+				Message: &dnstap.Message{
+					Type:            dnstap.Message_CLIENT_QUERY.Enum(),
+					SocketFamily:    tc.family,
+					SocketProtocol:  dnstap.SocketProtocol_UDP.Enum(),
+					QueryAddress:    tc.queryAddr,
+					ResponseAddress: tc.responseAddr,
+					QueryMessage:    dnsquery,
+				},
+			}
+
+			raw, err := proto.Marshal(dt)
+			if err != nil {
+				t.Fatalf("failed to marshal dnstap: %v", err)
+			}
+
+			dm := &DNSMessage{}
+			dm.Init()
+			if err := DecodeDNSTapWire(raw, dm); err != nil {
+				t.Fatalf("DecodeDNSTapWire failed: %v", err)
+			}
+
+			if dm.NetworkInfo.Family != tc.expected {
+				t.Errorf("expected family %q, got %q", tc.expected, dm.NetworkInfo.Family)
+			}
+		})
 	}
 }
 
