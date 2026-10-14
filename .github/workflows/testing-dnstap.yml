@@ -19,8 +19,8 @@ permissions:
 
 env:
   Q_VERSION: "0.19.12"
-  PYTHON_VERSION: "3.14"
-  GO_VERSION: "1.26"
+  PYTHON_VERSION: "3.x"
+  GO_VERSION: "1.27"
   COLLECTOR_USER: "pdns"
 
 jobs:
@@ -48,16 +48,14 @@ jobs:
     strategy:
       matrix:
         config:
-          - { service: "unbound", version: "1.24.2", mode: "tcp" }
-          - { service: "unbound", version: "1.25.0", mode: "tcp" }
-          - { service: "coredns", version: "1.14.4", mode: "tcp" }
-          - { service: "coredns", version: "1.14.4", mode: "tls" }
+          - { service: "unbound", version: "1.26.1", mode: "tcp" }
+          - { service: "coredns", version: "1.14.7", mode: "tcp" }
+          - { service: "coredns", version: "1.14.7", mode: "tls" }
           - { service: "dnsdist2", version: "20", mode: "tcp" }
           - { service: "dnsdist2", version: "20", mode: "doq" }
           - { service: "dnsdist2", version: "21", mode: "tcp" }
           - { service: "dnsdist2", version: "21", mode: "doq" }
-          - { service: "knotresolver", version: "6.0.16", mode: "unix" }
-          - { service: "knotresolver", version: "6.4.0", mode: "unix" }
+          - { service: "knotresolver", version: "6.5.0", mode: "unix" }
           # - { service: "bind9", version: "9.20.16-r0", mode: "unix" }
 
     steps:

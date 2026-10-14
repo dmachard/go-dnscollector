@@ -18,10 +18,10 @@ permissions:
   contents: read
 
 env:
-  PROM_VERSION: "3.13.0"
+  PROM_VERSION: "3.15.0"
   GENTAP: "1.1.2"
-  PYTHON_VERSION: '3.14'
-  GO_VERSION: '1.26'
+  PYTHON_VERSION: '3.x'
+  GO_VERSION: '1.27'
 
 jobs:
   build_bin:
