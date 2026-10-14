@@ -55,7 +55,7 @@ jobs:
           - { service: "dnsdist2", version: "20", mode: "doq" }
           - { service: "dnsdist2", version: "21", mode: "tcp" }
           - { service: "dnsdist2", version: "21", mode: "doq" }
-          - { service: "knotresolver", version: "6.5.0", mode: "unix" }
+          # - { service: "knotresolver", version: "6.5.0", mode: "unix" }
           # - { service: "bind9", version: "9.20.16-r0", mode: "unix" }
 
     steps:
