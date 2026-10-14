@@ -936,4 +936,3 @@ func Test_Dnstap_PcapOutput_Regression_Issue1388(t *testing.T) {
 		t.Errorf("case 4 (omitted SocketFamily IPv6): EncodeToPacketBytes failed: %v", err)
 	}
 }
-

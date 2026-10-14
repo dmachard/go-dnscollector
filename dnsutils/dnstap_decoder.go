@@ -298,11 +298,12 @@ func DecodeDNSTapWire(buf []byte, dm *DNSMessage) error {
 	case dnstap.SocketFamily_INET6:
 		dm.NetworkInfo.Family = netutils.ProtoIPv6
 	default:
-		if len(queryIP) == 4 || len(responseIP) == 4 {
+		switch {
+		case len(queryIP) == 4 || len(responseIP) == 4:
 			dm.NetworkInfo.Family = netutils.ProtoIPv4
-		} else if len(queryIP) == 16 || len(responseIP) == 16 {
+		case len(queryIP) == 16 || len(responseIP) == 16:
 			dm.NetworkInfo.Family = netutils.ProtoIPv6
-		} else {
+		default:
 			dm.NetworkInfo.Family = "UNKNOWN"
 		}
 	}

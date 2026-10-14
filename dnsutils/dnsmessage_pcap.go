@@ -136,16 +136,17 @@ func (dm *DNSMessage) EncodeToPacketBytes(dst []byte, overwritePort bool) ([]byt
 	if !isIPv4 && !isIPv6 {
 		qIP := dm.NetworkInfo.GetQueryIP()
 		rIP := dm.NetworkInfo.GetResponseIP()
-		if dm.NetworkInfo.QueryIPLen == 16 || dm.NetworkInfo.ResponseIPLen == 16 ||
+		switch {
+		case dm.NetworkInfo.QueryIPLen == 16 || dm.NetworkInfo.ResponseIPLen == 16 ||
 			(qIP != "-" && parseIPv6Bytes(qIP, &srcIP6)) ||
-			(rIP != "-" && parseIPv6Bytes(rIP, &dstIP6)) {
+			(rIP != "-" && parseIPv6Bytes(rIP, &dstIP6)):
 			isIPv6 = true
-		} else if dm.NetworkInfo.QueryIPLen == 4 || dm.NetworkInfo.ResponseIPLen == 4 ||
+		case dm.NetworkInfo.QueryIPLen == 4 || dm.NetworkInfo.ResponseIPLen == 4 ||
 			(qIP != "-" && parseIPv4Bytes(qIP, &srcIP4)) ||
 			(rIP != "-" && parseIPv4Bytes(rIP, &dstIP4)) ||
-			parseIPv4Bytes(srcIPStr, &srcIP4) || parseIPv4Bytes(dstIPStr, &dstIP4) {
+			parseIPv4Bytes(srcIPStr, &srcIP4) || parseIPv4Bytes(dstIPStr, &dstIP4):
 			isIPv4 = true
-		} else {
+		default:
 			return dst, errFamilyNotImpl
 		}
 	}
@@ -156,11 +157,12 @@ func (dm *DNSMessage) EncodeToPacketBytes(dst []byte, overwritePort bool) ([]byt
 			if err != nil {
 				return dst, errInvalidIPAddress
 			}
-			if addr.Is4In6() {
+			switch {
+			case addr.Is4In6():
 				srcIP4 = addr.Unmap().As4()
-			} else if addr.Is4() {
+			case addr.Is4():
 				srcIP4 = addr.As4()
-			} else {
+			default:
 				return dst, errInvalidIPAddress
 			}
 		}
@@ -169,11 +171,12 @@ func (dm *DNSMessage) EncodeToPacketBytes(dst []byte, overwritePort bool) ([]byt
 			if err != nil {
 				return dst, errInvalidIPAddress
 			}
-			if addr.Is4In6() {
+			switch {
+			case addr.Is4In6():
 				dstIP4 = addr.Unmap().As4()
-			} else if addr.Is4() {
+			case addr.Is4():
 				dstIP4 = addr.As4()
-			} else {
+			default:
 				return dst, errInvalidIPAddress
 			}
 		}
@@ -370,13 +373,14 @@ func (dm *DNSMessage) ToPacketLayer(overwritePort bool) ([]gopacket.Serializable
 	if family != netutils.ProtoIPv4 && family != netutils.ProtoIPv6 {
 		qIP := dm.NetworkInfo.GetQueryIP()
 		rIP := dm.NetworkInfo.GetResponseIP()
-		if family == "INET" {
+		switch {
+		case family == "INET":
 			family = netutils.ProtoIPv4
-		} else if family == "INET6" {
+		case family == "INET6":
 			family = netutils.ProtoIPv6
-		} else if dm.NetworkInfo.QueryIPLen == 16 || dm.NetworkInfo.ResponseIPLen == 16 ||
+		case dm.NetworkInfo.QueryIPLen == 16 || dm.NetworkInfo.ResponseIPLen == 16 ||
 			(qIP != "-" && net.ParseIP(qIP) != nil && net.ParseIP(qIP).To4() == nil) ||
-			(rIP != "-" && net.ParseIP(rIP) != nil && net.ParseIP(rIP).To4() == nil) {
+			(rIP != "-" && net.ParseIP(rIP) != nil && net.ParseIP(rIP).To4() == nil):
 			family = netutils.ProtoIPv6
 			if srcIP == "0.0.0.0" {
 				srcIP = "::"
@@ -384,10 +388,10 @@ func (dm *DNSMessage) ToPacketLayer(overwritePort bool) ([]gopacket.Serializable
 			if dstIP == "0.0.0.0" {
 				dstIP = "::"
 			}
-		} else if dm.NetworkInfo.QueryIPLen == 4 || dm.NetworkInfo.ResponseIPLen == 4 ||
+		case dm.NetworkInfo.QueryIPLen == 4 || dm.NetworkInfo.ResponseIPLen == 4 ||
 			(qIP != "-" && net.ParseIP(qIP).To4() != nil) ||
 			(rIP != "-" && net.ParseIP(rIP).To4() != nil) ||
-			net.ParseIP(srcIP).To4() != nil || net.ParseIP(dstIP).To4() != nil {
+			net.ParseIP(srcIP).To4() != nil || net.ParseIP(dstIP).To4() != nil:
 			family = netutils.ProtoIPv4
 		}
 	}

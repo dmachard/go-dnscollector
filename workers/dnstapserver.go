@@ -683,11 +683,12 @@ func (w *DNSTapProcessor) processFrame(
 		default:
 			qAddr := dt.GetMessage().GetQueryAddress()
 			rAddr := dt.GetMessage().GetResponseAddress()
-			if len(qAddr) == 4 || len(rAddr) == 4 {
+			switch {
+			case len(qAddr) == 4 || len(rAddr) == 4:
 				dm.NetworkInfo.Family = netutils.ProtoIPv4
-			} else if len(qAddr) == 16 || len(rAddr) == 16 {
+			case len(qAddr) == 16 || len(rAddr) == 16:
 				dm.NetworkInfo.Family = netutils.ProtoIPv6
-			} else {
+			default:
 				dm.NetworkInfo.Family = config.StrUnknown
 			}
 		}
