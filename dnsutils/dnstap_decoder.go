@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	dnstap "github.com/dmachard/go-dnstap-protobuf"
+	"github.com/dmachard/go-netutils"
 )
 
 var ErrInvalidDNSTapProtobuf = errors.New("invalid dnstap protobuf wire format")
@@ -293,11 +294,18 @@ func DecodeDNSTapWire(buf []byte, dm *DNSMessage) error {
 	// Family
 	switch dnstap.SocketFamily(socketFamily) {
 	case dnstap.SocketFamily_INET:
-		dm.NetworkInfo.Family = "INET"
+		dm.NetworkInfo.Family = netutils.ProtoIPv4
 	case dnstap.SocketFamily_INET6:
-		dm.NetworkInfo.Family = "INET6"
+		dm.NetworkInfo.Family = netutils.ProtoIPv6
 	default:
-		dm.NetworkInfo.Family = "UNKNOWN"
+		switch {
+		case len(queryIP) == 4 || len(responseIP) == 4:
+			dm.NetworkInfo.Family = netutils.ProtoIPv4
+		case len(queryIP) == 16 || len(responseIP) == 16:
+			dm.NetworkInfo.Family = netutils.ProtoIPv6
+		default:
+			dm.NetworkInfo.Family = "UNKNOWN"
+		}
 	}
 
 	// Protocol

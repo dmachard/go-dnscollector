@@ -332,7 +332,7 @@ type LoggerKafkaProducer struct {
 	FlushInterval  int    `yaml:"flush-interval" default:"10"`
 	ConnectTimeout int    `yaml:"connect-timeout" default:"5"`
 	Topic          string `yaml:"topic" default:"dnscollector"`
-	Partition      *int   `yaml:"partition" default:"nil"`
+	Partition      *int   `yaml:"partition" default:"-"`
 	Balancer       string `yaml:"balancer" default:"round-robin"`
 	Compression    string `yaml:"compression" default:"none"`
 }

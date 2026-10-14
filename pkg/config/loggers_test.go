@@ -18,4 +18,10 @@ func TestConfigLoggersSetDefault(t *testing.T) {
 	if config.Prometheus.Enable != false {
 		t.Errorf("prometheus should be disabled")
 	}
+	if config.KafkaProducer.Partition != nil {
+		t.Errorf("kafka partition should be nil by default")
+	}
+	if config.FalcoClient.URL != "http://127.0.0.1:9200" {
+		t.Errorf("falco URL should have its default value, got %q", config.FalcoClient.URL)
+	}
 }
