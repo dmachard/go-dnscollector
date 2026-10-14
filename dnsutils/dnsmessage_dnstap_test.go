@@ -57,6 +57,36 @@ func TestDnsMessage_ToDNSTap(t *testing.T) {
 	}
 }
 
+func TestDnsMessage_ToDNSTap_FamilyAliases(t *testing.T) {
+	testCases := []struct {
+		family   string
+		expected dnstap.SocketFamily
+	}{
+		{family: "IPv4", expected: dnstap.SocketFamily_INET},
+		{family: "INET", expected: dnstap.SocketFamily_INET},
+		{family: "IPv6", expected: dnstap.SocketFamily_INET6},
+		{family: "INET6", expected: dnstap.SocketFamily_INET6},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.family, func(t *testing.T) {
+			dm := GetFakeDNSMessageWithPayload()
+			dm.NetworkInfo.Family = tc.family
+			tapMsg, err := dm.ToDNSTap(false)
+			if err != nil {
+				t.Fatalf("could not encode to dnstap: %v", err)
+			}
+			dt := &dnstap.Dnstap{}
+			if err := proto.Unmarshal(tapMsg, dt); err != nil {
+				t.Fatalf("error decoding dnstap: %v", err)
+			}
+			if dt.GetMessage().GetSocketFamily() != tc.expected {
+				t.Errorf("expected socket family %v, got %v", tc.expected, dt.GetMessage().GetSocketFamily())
+			}
+		})
+	}
+}
+
 func BenchmarkDnsMessage_ToDNSTap(b *testing.B) {
 	dm := DNSMessage{}
 	dm.Init()

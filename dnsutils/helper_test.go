@@ -74,6 +74,51 @@ func TestHelper_GetIPPort(t *testing.T) {
 			wantDstIP:   "0.0.0.0",
 			wantDstPort: 53,
 		},
+		{
+			name: "Test ProtoIPv4 source and destination",
+			dm: &DNSMessage{
+				NetworkInfo: DNSNetInfo{
+					Family:  "IPv4",
+					QueryIP: "192.168.1.1", QueryPort: "1234",
+					ResponseIP: "192.168.1.2", ResponsePort: "5678",
+				},
+				DNS: DNS{Type: DNSQuery},
+			},
+			wantSrcIP:   "192.168.1.1",
+			wantSrcPort: 1234,
+			wantDstIP:   "192.168.1.2",
+			wantDstPort: 5678,
+		},
+		{
+			name: "Test ProtoIPv6 source and destination",
+			dm: &DNSMessage{
+				NetworkInfo: DNSNetInfo{
+					Family:  "IPv6",
+					QueryIP: "::1", QueryPort: "1234",
+					ResponseIP: "::2", ResponsePort: "5678",
+				},
+				DNS: DNS{Type: DNSQuery},
+			},
+			wantSrcIP:   "::1",
+			wantSrcPort: 1234,
+			wantDstIP:   "::2",
+			wantDstPort: 5678,
+		},
+		{
+			name: "Test missing QueryIP and ResponseIP IPv6",
+			dm: &DNSMessage{
+				NetworkInfo: DNSNetInfo{
+					Family:  "IPv6",
+					QueryIP: "-", QueryPort: "-",
+					ResponseIP: "-", ResponsePort: "-",
+				},
+				DNS: DNS{Type: DNSQuery},
+			},
+			wantSrcIP:   "::",
+			wantSrcPort: 53,
+			wantDstIP:   "::",
+			wantDstPort: 53,
+		},
 	}
 
 	for _, tt := range tests {

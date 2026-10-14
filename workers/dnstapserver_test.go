@@ -791,3 +791,149 @@ func Test_DnstapCollector_LowTrafficFlush(t *testing.T) {
 		}
 	}
 }
+
+func Test_Dnstap_PcapOutput_Regression_Issue1388(t *testing.T) {
+	testWorker := GetWorkerForTest(config.DefaultBufferSize)
+	cfg := config.GetDefaultConfig()
+	cfg.Collectors.Dnstap.ListenPort = 6003
+	cfg.Global.Worker.ChannelBufferSize = 1000
+
+	server := NewDnstapServer([]Worker{testWorker}, cfg, logger.New(false), "dnstap-pcap-test")
+	go server.StartCollect()
+	defer server.Stop()
+	time.Sleep(100 * time.Millisecond)
+
+	conn, err := net.Dial("tcp", ":6003")
+	if err != nil {
+		t.Fatalf("could not connect: %v", err)
+	}
+	defer conn.Close()
+
+	r := bufio.NewReader(conn)
+	w := bufio.NewWriter(conn)
+	fs := framestream.NewFstrm(r, w, conn, 5*time.Second, []byte("protobuf:dnstap.Dnstap"), true)
+	if err := fs.InitSender(); err != nil {
+		t.Fatalf("framestream init error: %v", err)
+	}
+
+	dnsquery, err := dnsutils.GetFakeDNS()
+	if err != nil {
+		t.Fatalf("dns question pack error: %v", err)
+	}
+
+	// 1. Message with SocketFamily_INET
+	dtINET := GetFakeDNSTap(dnsquery)
+	dataINET, err := proto.Marshal(dtINET)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+	frameINET := &framestream.Frame{}
+	frameINET.Write(dataINET)
+	if err := fs.SendFrame(frameINET); err != nil {
+		t.Fatalf("send frame error: %v", err)
+	}
+
+	// 2. Message with SocketFamily omitted/not set (reproducing issue #1388 with IPv4 addresses)
+	dtUnknown := GetFakeDNSTap(dnsquery)
+	dtUnknown.GetMessage().SocketFamily = nil // omit socket family
+	qIP := net.ParseIP("10.1.2.3").To4()
+	rIP := net.ParseIP("10.3.4.5").To4()
+	dtUnknown.GetMessage().QueryAddress = qIP
+	dtUnknown.GetMessage().ResponseAddress = rIP
+	dataUnknown, err := proto.Marshal(dtUnknown)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+	frameUnknown := &framestream.Frame{}
+	frameUnknown.Write(dataUnknown)
+	if err := fs.SendFrame(frameUnknown); err != nil {
+		t.Fatalf("send frame error: %v", err)
+	}
+
+	// 3. Message with SocketFamily_INET6
+	dtINET6 := GetFakeDNSTap(dnsquery)
+	sf6 := dnstap.SocketFamily_INET6
+	dtINET6.GetMessage().SocketFamily = &sf6
+	dtINET6.GetMessage().QueryAddress = net.ParseIP("2001:db8::1")
+	dtINET6.GetMessage().ResponseAddress = net.ParseIP("2001:db8::2")
+	dataINET6, err := proto.Marshal(dtINET6)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+	frameINET6 := &framestream.Frame{}
+	frameINET6.Write(dataINET6)
+	if err := fs.SendFrame(frameINET6); err != nil {
+		t.Fatalf("send frame error: %v", err)
+	}
+
+	// 4. Message with SocketFamily omitted but IPv6 addresses
+	dtUnknown6 := GetFakeDNSTap(dnsquery)
+	dtUnknown6.GetMessage().SocketFamily = nil
+	dtUnknown6.GetMessage().QueryAddress = net.ParseIP("2001:db8::10")
+	dtUnknown6.GetMessage().ResponseAddress = net.ParseIP("2001:db8::20")
+	dataUnknown6, err := proto.Marshal(dtUnknown6)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+	frameUnknown6 := &framestream.Frame{}
+	frameUnknown6.Write(dataUnknown6)
+	if err := fs.SendFrame(frameUnknown6); err != nil {
+		t.Fatalf("send frame error: %v", err)
+	}
+
+	// Read all 4 messages from worker channel
+	var messages []*dnsutils.DNSMessage
+	for len(messages) < 4 {
+		select {
+		case batch := <-testWorker.GetInputChannel():
+			messages = append(messages, batch.Messages...)
+		case <-time.After(2 * time.Second):
+			t.Fatalf("timeout waiting for messages, got %d/4", len(messages))
+		}
+	}
+
+	// Check 1: SocketFamily_INET message
+	msg1 := messages[0]
+	if msg1.NetworkInfo.Family != netutils.ProtoIPv4 {
+		t.Errorf("case 1 (INET): expected family %q, got %q", netutils.ProtoIPv4, msg1.NetworkInfo.Family)
+	}
+	var buf1 [512]byte
+	_, err = msg1.EncodeToPacketBytes(buf1[:0], true)
+	if err != nil {
+		t.Errorf("case 1 (INET): EncodeToPacketBytes failed: %v", err)
+	}
+
+	// Check 2: SocketFamily omitted IPv4 message
+	msg2 := messages[1]
+	if msg2.NetworkInfo.Family != netutils.ProtoIPv4 {
+		t.Errorf("case 2 (omitted SocketFamily IPv4): expected family %q, got %q", netutils.ProtoIPv4, msg2.NetworkInfo.Family)
+	}
+	var buf2 [512]byte
+	_, err = msg2.EncodeToPacketBytes(buf2[:0], true)
+	if err != nil {
+		t.Errorf("case 2 (omitted SocketFamily IPv4): EncodeToPacketBytes failed: %v", err)
+	}
+
+	// Check 3: SocketFamily_INET6 message
+	msg3 := messages[2]
+	if msg3.NetworkInfo.Family != netutils.ProtoIPv6 {
+		t.Errorf("case 3 (INET6): expected family %q, got %q", netutils.ProtoIPv6, msg3.NetworkInfo.Family)
+	}
+	var buf3 [512]byte
+	_, err = msg3.EncodeToPacketBytes(buf3[:0], true)
+	if err != nil {
+		t.Errorf("case 3 (INET6): EncodeToPacketBytes failed: %v", err)
+	}
+
+	// Check 4: SocketFamily omitted IPv6 message
+	msg4 := messages[3]
+	if msg4.NetworkInfo.Family != netutils.ProtoIPv6 {
+		t.Errorf("case 4 (omitted SocketFamily IPv6): expected family %q, got %q", netutils.ProtoIPv6, msg4.NetworkInfo.Family)
+	}
+	var buf4 [512]byte
+	_, err = msg4.EncodeToPacketBytes(buf4[:0], true)
+	if err != nil {
+		t.Errorf("case 4 (omitted SocketFamily IPv6): EncodeToPacketBytes failed: %v", err)
+	}
+}
+

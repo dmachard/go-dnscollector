@@ -101,6 +101,39 @@ func TestNormalize_QuietText(t *testing.T) {
 	}
 }
 
+func TestNormalize_QuietText_IPversion(t *testing.T) {
+	cfg := config.GetFakeConfigTransformers()
+	cfg.Normalize.Enable = true
+	cfg.Normalize.QuietText = true
+
+	outChans := []chan *dnsutils.DNSMessageBatch{}
+	norm := NewNormalizeTransform(&cfg.Normalize, logger.New(false), "test", 0, outChans)
+
+	testCases := []struct {
+		input    string
+		expected string
+	}{
+		{input: "IPv4", expected: "4"},
+		{input: "IPv6", expected: "6"},
+		{input: "INET", expected: "4"},
+		{input: "INET6", expected: "6"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.input, func(t *testing.T) {
+			dm := dnsutils.GetFakeDNSMessage()
+			dm.NetworkInfo.Family = tc.input
+			_, err := norm.QuietText(&dm)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if dm.NetworkInfo.Family != tc.expected {
+				t.Errorf("expected family %q, got %q", tc.expected, dm.NetworkInfo.Family)
+			}
+		})
+	}
+}
+
 func TestNormalize_AddTLD(t *testing.T) {
 	// enable feature
 	cfg := config.GetFakeConfigTransformers()
