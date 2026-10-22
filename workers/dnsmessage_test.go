@@ -2,6 +2,8 @@ package workers
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"testing"
 	"time"
@@ -10,6 +12,35 @@ import (
 	"github.com/dmachard/go-dnscollector/v3/pkg/config"
 	"github.com/dmachard/go-logger"
 )
+
+func TestDnsMessage_MatchSourceFromStringKeyMap(t *testing.T) {
+	matchListPath := filepath.Join(t.TempDir(), "ip_addr_per_line.conf")
+	if err := os.WriteFile(matchListPath, []byte("192.0.2.10\n"), 0600); err != nil {
+		t.Fatalf("failed to write match source file: %v", err)
+	}
+
+	cfg := config.GetDefaultConfig()
+	cfg.Collectors.DNSMessage.Matching.Include = map[string]interface{}{
+		"network.query-ip": map[string]interface{}{
+			"match-source": "file://" + matchListPath,
+			"source-kind":  "string_list",
+		},
+	}
+
+	c := NewDNSMessage(nil, cfg, logger.New(false), "test")
+
+	matchingMessage := dnsutils.GetFakeDNSMessage()
+	matchingMessage.NetworkInfo.QueryIP = "192.0.2.10"
+	if !c.matcherInclude.Match(&matchingMessage) {
+		t.Fatal("expected query IP from match source to be included")
+	}
+
+	nonMatchingMessage := dnsutils.GetFakeDNSMessage()
+	nonMatchingMessage.NetworkInfo.QueryIP = "192.0.2.11"
+	if c.matcherInclude.Match(&nonMatchingMessage) {
+		t.Fatal("expected query IP absent from match source to be excluded")
+	}
+}
 
 func TestDnsMessage_RoutingPolicy(t *testing.T) {
 	// simulate next workers

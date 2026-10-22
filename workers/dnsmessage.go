@@ -62,11 +62,22 @@ func (w *DNSMessage) ReadConfigMatching(value interface{}) {
 			if err != nil {
 				w.LogFatal(err)
 			}
+			var sourceList interface{}
 			if len(sourceData.regexList) > 0 {
-				value.(map[interface{}]interface{})[srcKind] = sourceData.regexList
+				sourceList = sourceData.regexList
 			}
 			if len(sourceData.stringList) > 0 {
-				value.(map[interface{}]interface{})[srcKind] = sourceData.stringList
+				sourceList = sourceData.stringList
+			}
+			if sourceList != nil {
+				switch matchingMap := value.(type) {
+				case map[string]interface{}:
+					matchingMap[srcKind] = sourceList
+				case map[interface{}]interface{}:
+					matchingMap[srcKind] = sourceList
+				default:
+					w.LogError("unsupported matching configuration type: %T", value)
+				}
 			}
 		}
 	}
