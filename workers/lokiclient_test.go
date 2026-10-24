@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -308,5 +309,116 @@ func Test_LokiClientRelabelInput(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// Test_LokiClient_SlowSinkDrops reproduces discussion #1392.
+//
+// Topology:
+//
+//	burst sender → LokiClient.inputChannel → StartCollect → outputChannel
+//	                                                       → StartLogging → SendEntries → slow HTTP
+//
+// When SendEntries blocks on a slow HTTP server, StartLogging cannot drain
+// the outputChannel, which causes StartCollect to block on its send, which
+// causes the inputChannel to fill up. Senders then drop with WorkerIsBusy.
+//
+// This test verifies the saturation directly: after a burst with a slow
+// Loki server, the inputChannel must be at capacity (len == cap).
+// After the fix (async SendEntries), this assertion should be inverted.
+func Test_LokiClient_SlowSinkDrops(t *testing.T) {
+	const (
+		lokiSlowDelay = 200 * time.Millisecond
+		lokiChanSize  = 8
+		lokiBurstSize = 64 // >> lokiChanSize so we guarantee saturation
+	)
+
+	// fake slow Loki server
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+
+	var httpHits atomic.Int64
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				return
+			}
+			go func(c net.Conn) {
+				defer c.Close()
+				req, err := http.ReadRequest(bufio.NewReader(c))
+				if err != nil {
+					return
+				}
+				io.Copy(io.Discard, req.Body)
+				time.Sleep(lokiSlowDelay) // simulate slow Loki
+				c.Write([]byte("HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n"))
+				httpHits.Add(1)
+			}(conn)
+		}
+	}()
+
+	cfg := config.GetDefaultConfig()
+	cfg.Loggers.LokiClient.ServerURL = "http://" + ln.Addr().String() + "/loki/api/v1/push"
+	cfg.Loggers.LokiClient.BatchSize = 0 // flush on every message
+	cfg.Global.Worker.ChannelBufferSize = lokiChanSize
+
+	w := NewLokiClient(cfg, logger.New(false), "test-slow-loki")
+	go w.StartCollect()
+	defer func() {
+		// drain the input channel so Stop() can complete without deadlock
+		go func() {
+			for range w.GetInputChannel() {
+			}
+		}()
+		w.Stop()
+	}()
+
+	// give worker goroutines a moment to start
+	time.Sleep(20 * time.Millisecond)
+
+	// send first batch so StartLogging calls SendEntries and blocks there
+	dm := dnsutils.GetFakeDNSMessage()
+	dm.DNSTap.Identity = "test"
+	w.GetInputChannel() <- dnsutils.NewDNSMessageBatch(&dm)
+
+	// give StartLogging time to pick it up and block inside SendEntries
+	time.Sleep(50 * time.Millisecond)
+
+	// now flood the input channel — it should fill up because
+	// StartCollect is blocked trying to send to the full outputChannel
+	var dropped int
+	for i := 0; i < lokiBurstSize; i++ {
+		time.Sleep(100 * time.Microsecond)
+		select {
+		case w.GetInputChannel() <- dnsutils.NewDNSMessageBatch(&dm):
+		default:
+			dropped++
+		}
+	}
+
+	// give workers a moment to drain the burst
+	time.Sleep(20 * time.Millisecond)
+
+	chanLen := len(w.GetInputChannel())
+	chanCap := cap(w.GetInputChannel())
+
+	t.Logf("inputChannel: len=%d cap=%d  dropped=%d  Loki hits=%d",
+		chanLen, chanCap, dropped, httpHits.Load())
+
+	// With buffered async sending, StartLogging is not blocked in SendEntries
+	// and drains the channels even when Loki server is slow: zero drops and drained channel.
+	if dropped > 0 {
+		t.Errorf("expected 0 dropped messages with async buffered sending, got %d dropped", dropped)
+	}
+	if chanLen >= chanCap {
+		t.Errorf(
+			"expected inputChannel to be drained (len=%d should be < cap=%d); "+
+				"worker still blocked on slow sink",
+			chanLen, chanCap,
+		)
 	}
 }

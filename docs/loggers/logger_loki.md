@@ -23,6 +23,9 @@ Options:
 * `batch-size` (integer)
   > batch size for log entries in bytes
 
+* `batch-channel-size` (integer)
+  > maximum number of batches in buffer before dropping them if Loki is slow or unreachable
+
 * `retry-interval` (integer)
   > interval in second between before to retry to send batch
 
@@ -72,6 +75,7 @@ lokiclient:
   mode: "text"
   flush-interval: 5
   batch-size: 1048576
+  batch-channel-size: 10
   retry-interval: 10
   text-format: ""
   proxy-url: ""
