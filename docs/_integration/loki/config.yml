@@ -19,6 +19,7 @@ pipelines:
       mode: "text"
       flush-interval: 5
       batch-size: 1048576
+      batch-channel-size: 10
       retry-interval: 10
       text-format: ""
       proxy-url: ""

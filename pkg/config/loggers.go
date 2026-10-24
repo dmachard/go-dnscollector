@@ -207,6 +207,7 @@ type LoggerLokiClient struct {
 	Mode             string            `yaml:"mode" default:"text"`
 	FlushInterval    int               `yaml:"flush-interval" default:"5"`
 	BatchSize        int               `yaml:"batch-size" default:"1048576"`
+	BatchChannelSize int               `yaml:"batch-channel-size" default:"10"`
 	RetryInterval    int               `yaml:"retry-interval" default:"10"`
 	TextFormat       string            `yaml:"text-format" default:""`
 	ProxyURL         string            `yaml:"proxy-url" default:""`

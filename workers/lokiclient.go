@@ -269,15 +269,46 @@ func (w *LokiClient) StartLogging() {
 	tflushInterval := time.Duration(w.GetConfig().Loggers.LokiClient.FlushInterval) * time.Second
 	tflush := time.NewTimer(tflushInterval)
 
+	chanSize := w.GetConfig().Loggers.LokiClient.BatchChannelSize
+	if chanSize <= 0 {
+		chanSize = 10
+	}
+	if w.GetConfig().Global.Worker.ChannelBufferSize > 0 && w.GetConfig().Global.Worker.ChannelBufferSize < chanSize {
+		chanSize = w.GetConfig().Global.Worker.ChannelBufferSize
+	}
+
+	dataBuffer := make(chan []byte, chanSize)
+	senderDone := make(chan struct{})
+
+	go func() {
+		defer close(senderDone)
+		for data := range dataBuffer {
+			w.SendEntries(data)
+		}
+	}()
+
+	sendBatch := func(buf []byte) {
+		select {
+		case dataBuffer <- buf:
+		default:
+			w.CountEgressDiscarded()
+			w.LogWarning("send buffer is full, batch dropped")
+		}
+	}
+
 	for {
 		select {
 		case <-w.OnLoggerStopped():
+			close(dataBuffer)
+			<-senderDone
 			return
 
 		// incoming dns message to process
 		case batch, opened := <-w.GetOutputChannel():
 			if !opened {
 				w.LogInfo("output channel closed!")
+				close(dataBuffer)
+				<-senderDone
 				return
 			}
 
@@ -418,8 +449,8 @@ func (w *LokiClient) StartLogging() {
 						return
 					}
 
-					// send all entries
-					w.SendEntries(buf)
+					// send batch to queue
+					sendBatch(buf)
 
 					// reset entries and push request
 					ls.ResetEntries()
@@ -443,8 +474,8 @@ func (w *LokiClient) StartLogging() {
 						return
 					}
 
-					// send all entries
-					w.SendEntries(buf)
+					// send batch to queue
+					sendBatch(buf)
 
 					// reset entries and push request
 					s.ResetEntries()
@@ -459,7 +490,7 @@ func (w *LokiClient) StartLogging() {
 
 func (w *LokiClient) SendEntries(buf []byte) {
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(w.Context())
 	defer cancel()
 
 	MinBackoff := 500 * time.Millisecond
@@ -494,6 +525,9 @@ func (w *LokiClient) SendEntries(buf []byte) {
 		// send post and read response
 		resp, err := w.httpclient.Do(post)
 		if err != nil {
+			if ctx.Err() != nil {
+				return
+			}
 			w.LogError("do http error: %s", err)
 			return
 		}
