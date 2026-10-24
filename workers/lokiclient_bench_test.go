@@ -113,7 +113,8 @@ func benchmarkLokiClientThroughput(b *testing.B, sinkDelay time.Duration, batchS
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		batch := dnsutils.NewDNSMessageBatch(&dm)
+		msg := dm
+		batch := dnsutils.NewDNSMessageBatch(&msg)
 		inChan <- batch
 	}
 }

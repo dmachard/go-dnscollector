@@ -393,8 +393,10 @@ func Test_LokiClient_SlowSinkDrops(t *testing.T) {
 	var dropped int
 	for i := 0; i < lokiBurstSize; i++ {
 		time.Sleep(100 * time.Microsecond)
+		msg := dnsutils.GetFakeDNSMessage()
+		msg.DNSTap.Identity = "test"
 		select {
-		case w.GetInputChannel() <- dnsutils.NewDNSMessageBatch(&dm):
+		case w.GetInputChannel() <- dnsutils.NewDNSMessageBatch(&msg):
 		default:
 			dropped++
 		}
